@@ -79,6 +79,10 @@ class SimpleObject(object):
 
             yield k, v
 
+    @classmethod
+    def from_dict(cls, dict):
+        pass
+
 
 class PlatformMetadata(SimpleObject):
     def __init__(self, code=None):
@@ -114,10 +118,11 @@ class ExtentMetadata(SimpleObject):
                  to_dt=None):
         """
 
-        :type reference_system:
+        :type reference_system: str
         :type from_dt:
         :type to_dt:
         """
+        # Example: 'WGS84'
         self.reference_system = reference_system
 
         self.coord = coord
@@ -133,7 +138,9 @@ class GridSpatialMetadata(SimpleObject):
         :type dimensions: list of DimensionMetadata
         :type projection: ProjectionMetadata
         """
+        # TODO: We don't have a single set of dimensions? Per band?
         self.dimensions = dimensions
+
         self.projection = projection
 
 
@@ -141,7 +148,7 @@ class ProjectionMetadata(SimpleObject):
     def __init__(self, centre_point=None,
                  geo_ref_points=None,
                  datum=None, ellipsoid=None, point_in_pixel=None,
-                 projection=None,
+                 map_projection=None,
                  resampling_option=None,
                  zone=None):
         # The units of these points are dependent on the reference system.
@@ -163,7 +170,7 @@ class ProjectionMetadata(SimpleObject):
 
         self.point_in_pixel = point_in_pixel
 
-        self.projection = projection
+        self.map_projection = map_projection
 
         self.resampling_option = resampling_option
         self.zone = zone
@@ -255,12 +262,16 @@ class AncillaryMetadata(SimpleObject):
 
 class LineageMetadata(SimpleObject):
     def __init__(self, algorithm=None, machine=None, ancillary=None, source_datasets=None):
+        #: :type: AlgorithmMetadata
         self.algorithm = algorithm
 
+        #: :type: MachineMetadata
         self.machine = machine
 
+        #: :type: dict of (str, AncillaryMetadata)
         self.ancillary = ancillary
 
+        #: :type: dict of (str, DatasetMetadata)
         self.source_datasets = source_datasets
 
 
@@ -285,26 +296,33 @@ class DatasetMetadata(SimpleObject):
         self.id_ = id_ or uuid.uuid1()
         self.creation_dt = creation_dt or datetime.datetime.utcnow()
 
+        #: :type: int
         self.size_bytes = size_bytes
         self.ga_label = ga_label
         self.usgs_dataset_id = usgs_dataset_id
 
         self.product_type = product_type
 
+        #: :type: PlatformMetadata
         self.platform = platform
+        #: :type: InstrumentMetadata
         self.instrument = instrument
+        #: :type: FormatMetadata
         self.format_ = format_
 
+        #: :type: AcquisitionMetadata
         self.acquisition = acquisition
 
+        #: :type: ExtentMetadata
         self.extent = extent
 
+        #: :type: GridSpatialMetadata
         self.grid_spatial = grid_spatial
-
+        #: :type: dict of (str, BrowseMetadata)
         self.browse = browse
-
+        #: :type: ImageMetadata
         self.image = image
-
+        #: :type: LineageMetadata
         self.lineage = lineage
 
 

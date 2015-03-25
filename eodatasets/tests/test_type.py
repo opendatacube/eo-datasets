@@ -111,7 +111,7 @@ def _build_ls8_ortho():
                 datum='GDA94',
                 ellipsoid='GRS80',
                 point_in_pixel='UL',
-                projection='UTM',
+                map_projection='UTM',
                 resampling_option='CUBIC_CONVOLUTION',
                 zone=-53
             )
@@ -407,7 +407,7 @@ def _build_ls8_nbar():
                 datum='GDA94',
                 ellipsoid='GRS80',
                 point_in_pixel='UL',
-                projection='UTM',
+                map_projection='UTM',
                 resampling_option='CUBIC_CONVOLUTION',
                 zone=-53
             )
@@ -497,11 +497,27 @@ class PackageTypeTests(unittest.TestCase):
 
     def test_equivalence(self):
 
-        self.assertEqual(_build_ls8_raw(), _build_ls8_raw())
+        ls8_raw = _build_ls8_raw()
+        self.assertEqual(ls8_raw, ls8_raw, msg='RAW mismatch')
 
-        self.assertEqual(_build_ls8_nbar(), _build_ls8_nbar())
+        self.assertNotEqual(ls8_raw, _build_ls7_wofs(), msg='Different datasets should not be equal')
 
-        self.assertNotEqual(_build_ls8_raw(), _build_ls7_wofs())
+        ls8_nbar = _build_ls8_nbar()
+        self.assertEqual(ls8_nbar, ls8_nbar, msg='NBAR mismatch')
+
+
+    def test_serialise(self):
+
+        ls8_raw = _build_ls8_raw()
+
+        # To YAML then from YAML. Is equal?
+        self.assertEqual(ls8_raw, ls8_raw, msg='RAW mismatch')
+
+        self.assertNotEqual(ls8_raw, _build_ls7_wofs(), msg='Different datasets should not be equal')
+
+        ls8_nbar = _build_ls8_nbar()
+        self.assertEqual(ls8_nbar, ls8_nbar, msg='NBAR mismatch')
+
 
 
 if __name__ == '__main__':
