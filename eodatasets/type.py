@@ -190,10 +190,16 @@ class BrowseMetadata(SimpleObject):
 
 
 class BandMetadata(SimpleObject):
-    def __init__(self, path=None, type=None, number=None, shape=None, cell_size=None, checksum_md5=None):
+    def __init__(self, path=None, type=None, label=None, number=None, shape=None, cell_size=None, checksum_md5=None):
         self.path = path
         self.type = type
+
+        # Eg. 'visible_red'
+        self.label = label
+
+        # Band number. Not always a number (eg. 'QA')
         self.number = number
+
         self.shape = shape
         self.cell_size = cell_size
         self.checksum_md5 = checksum_md5
@@ -414,7 +420,7 @@ class DimensionMetadata(SimpleObject):
 
 
 class AcquisitionMetadata(SimpleObject):
-    def __init__(self, aos, los, groundstation, heading, platform_orbit):
+    def __init__(self, aos=None, los=None, groundstation=None, heading=None, platform_orbit=None):
         """
         :type groundstation: GroundstationMetadata
         :type platform_orbit: int
