@@ -1,4 +1,5 @@
 import datetime
+import glob
 from os.path import join, dirname, relpath
 
 from gaip.mtl import load_mtl
@@ -206,15 +207,27 @@ def new_dataset_md(uuid=None):
     return md
 
 
-if __name__ == '__main__':
-    # import doctest
-    # doctest.testmod(type)
-    package_dir = '/Users/jeremyhooke/ops/package-eg/LS8_OLITIRS_OTH_P51_GALPGS01-032_101_078_20141012'
-    mtl_path = package_dir + '/scene01/LC81010782014285LGN00_MTL.txt'
+def package(directory):
+
+    mtl_file = glob.glob(join(directory, '*_MTL.txt'))[0]  # Crude but effective
 
     d = new_dataset_md()
-    m = read_mtl(mtl_path, package_dir, md=d)
+    d = read_mtl(mtl_file, directory, md=d)
 
-    print ptype.yaml.dump(d, default_flow_style=False, indent=4)
+    # Create browse
+    # Checksum?
+    # Connect source datasets
+
+    with open('ga-metadata.yaml', 'wc') as f:
+        f.write(ptype.yaml.dump(d, default_flow_style=False, indent=4))
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
+    package('/Users/jeremyhooke/ops/package-eg/LS8_OLITIRS_OTH_P51_GALPGS01-032_101_078_20141012/scene01')
+
+
+
+
 
 
