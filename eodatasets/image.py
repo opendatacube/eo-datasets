@@ -21,10 +21,46 @@ def run_command(command, work_dir):
     _LOG.debug('Finished %s', command[0])
 
 
+def _calculate_scale_offset(nodata, band):
+    nbits = gdal.GetDataTypeSize(band.DataType)
+    dfScaleDstMin, dfScaleDstMax = 0.0, 255.0
+    if nbits == 16:
+        count = 32767 + nodata
+        histogram = band.GetHistogram(-32767, 32767, 65536)
+    else:
+        count = 0
+        histogram = band.GetHistogram()
+    total = 0
+    cliplower = int(0.01 * (sum(histogram) - histogram[count]))
+    clipupper = int(0.99 * (sum(histogram) - histogram[count]))
+    while total < cliplower and count < len(histogram) - 1:
+        count += 1
+        total += int(histogram[count])
+        dfScaleSrcMin = count
+    if nbits == 16:
+        count = 32767 + nodata
+    else:
+        count = 0
+    total = 0
+    while total < clipupper and count < len(histogram) - 1:
+        count += 1
+        total += int(histogram[count])
+        dfScaleSrcMax = count
+    if nbits == 16:
+        dfScaleSrcMin -= 32768
+        dfScaleSrcMax -= 32768
+
+    # Determine gain and offset
+    dfScale = (dfScaleDstMax - dfScaleDstMin) / (dfScaleSrcMax - dfScaleSrcMin)
+    dfOffset = -1 * dfScaleSrcMin * dfScale + dfScaleDstMin
+
+    return dfScale, dfOffset
+
+
 def create_thumbnail(red_file, green_file, blue_file, thumbnail_image,
                      outcols=1024, nodata=-999, work_dir=None, overwrite=True):
     """
-        Create JPEG thumbnail image using individual R, G, B images.
+    Create JPEG thumbnail image using individual R, G, B images.
 
     :param red_file: red band data file
     :param green_file: green band data file
@@ -39,6 +75,7 @@ def create_thumbnail(red_file, green_file, blue_file, thumbnail_image,
     of the input images.
 
     """
+    nodata = int(nodata)
 
     if os.path.exists(thumbnail_image) and not overwrite:
         _LOG.warning('File already exists. Skipping creation of %s', thumbnail_image)
@@ -80,63 +117,20 @@ def create_thumbnail(red_file, green_file, blue_file, thumbnail_image,
 
     # Open VRT file to array
     vrt = gdal.Open(warp_to_file)
-    bands = (1, 2, 3)
     driver = gdal.GetDriverByName("GTiff")
     outdataset = driver.Create(outtif, outcols, outrows, 3, gdalconst.GDT_Byte)
 
     # Loop through bands and apply Scale and Offset
-    for bandnum, band in enumerate(bands):
+    for band_number in (1, 2, 3):
+        band = vrt.GetRasterBand(band_number)
 
-        start = time.time()
-        vrtband = vrt.GetRasterBand(band)
-        vrtband_array = vrtband.ReadAsArray()
-        nbits = gdal.GetDataTypeSize(vrtband.DataType)
-        dfScaleDstMin, dfScaleDstMax = 0.0, 255.0
-
-        if nbits == 16:
-            count = 32767 + int(nodata)
-            histogram = vrtband.GetHistogram(-32767, 32767, 65536)
-        else:
-            count = 0
-            histogram = vrtband.GetHistogram()
-        total = 0
-
-        cliplower = int(0.01 * (sum(histogram) - histogram[count]))
-        clipupper = int(0.99 * (sum(histogram) - histogram[count]))
-
-        while total < cliplower and count < len(histogram) - 1:
-            count += 1
-            total += int(histogram[count])
-            dfScaleSrcMin = count
-
-        if nbits == 16:
-            count = 32767 + int(nodata)
-        else:
-            count = 0
-
-        total = 0
-        while total < clipupper and count < len(histogram) - 1:
-            count += 1
-            total += int(histogram[count])
-            dfScaleSrcMax = count
-
-        if nbits == 16:
-            dfScaleSrcMin -= 32768
-            dfScaleSrcMax -= 32768
-
-        # Determine gain and offset
-        dfScale = (dfScaleDstMax - dfScaleDstMin) / (dfScaleSrcMax - dfScaleSrcMin)
-        dfOffset = -1 * dfScaleSrcMin * dfScale + dfScaleDstMin
-
-        _LOG.info('Scaling param calculated in %s', time.time()-start)
-        start = time.time()
+        scale, offset = _calculate_scale_offset(nodata, band)
 
         # Apply gain and offset
-        outdataset.GetRasterBand(band).WriteArray(
-            (numpy.ma.masked_less_equal(vrtband_array, int(nodata)) * dfScale) + dfOffset
+        outdataset.GetRasterBand(band_number).WriteArray(
+            (numpy.ma.masked_less_equal(band.ReadAsArray(), nodata) * scale) + offset
         )
 
-        _LOG.info('Band in %s', time.time()-start)
 
     # Must close dataset to flush to disk.
     # noinspection PyUnusedLocal
@@ -158,7 +152,7 @@ def create_thumbnail(red_file, green_file, blue_file, thumbnail_image,
 
 if __name__ == '__main__':
     logging.basicConfig()
-    _LOG.setLevel(logging.INFO)
+    _LOG.setLevel(logging.DEBUG)
     #     red_band=7,
     # green_band=5,
     # blue_band=1
