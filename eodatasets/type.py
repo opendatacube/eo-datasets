@@ -391,11 +391,21 @@ def uuid_representer(dumper, data):
     return dumper.represent_scalar(u'tag:yaml.org,2002:str', '%s' % data)
 
 
+def unicode_representer(dumper, data):
+    """
+    It's strange that PyYaml doesn't use unicode internally... but we're doing everything in UTF-8 so we'll translate.
+    :type dumper: BaseRepresenter
+    :type data: unicode
+    :rtype: yaml.nodes.Node
+    """
+    return dumper.represent_scalar(u'tag:yaml.org,2002:str', data.encode('utf-8'))
+
+
 yaml.add_multi_representer(SimpleObject, simpleobject_representer)
 yaml.add_multi_representer(uuid.UUID, uuid_representer)
 # TODO: This shouldn't be performed globally as it changes the output behaviour for a built-in type.
 yaml.add_multi_representer(collections.OrderedDict, ordereddict_representer)
-
+yaml.add_representer(unicode, unicode_representer)
 
 class Point(SimpleObject):
     def __init__(self, x, y, z=None):
