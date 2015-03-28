@@ -10,6 +10,7 @@ import tempfile
 import gdalconst
 import gdal
 import numpy
+from pathlib import Path
 
 from eodatasets.type import BrowseMetadata
 
@@ -59,7 +60,7 @@ def _calculate_scale_offset(nodata, band):
     return dfScale, dfOffset
 
 
-def create_thumbnail(red_file, green_file, blue_file, thumbnail_image,
+def create_thumbnail(red_file, green_file, blue_file, thumb_image,
                      outcols=1024, nodata=-999, work_dir=None, overwrite=True):
     """
     Create JPEG thumbnail image using individual R, G, B images.
@@ -80,10 +81,10 @@ def create_thumbnail(red_file, green_file, blue_file, thumbnail_image,
     nodata = int(nodata)
 
     # GDAL calls need absolute paths.
-    thumbnail_image = os.path.abspath(thumbnail_image)
+    thumbnail_path = Path(thumb_image).absolute()
 
-    if os.path.exists(thumbnail_image) and not overwrite:
-        _LOG.warning('File already exists. Skipping creation of %s', thumbnail_image)
+    if thumbnail_path.exists() and not overwrite:
+        _LOG.warning('File already exists. Skipping creation of %s', thumbnail_path)
         return
 
     # thumbnail_image = os.path.abspath(thumbnail_image)
@@ -98,7 +99,7 @@ def create_thumbnail(red_file, green_file, blue_file, thumbnail_image,
     # file_to = os.path.abspath(file_to)
 
     # Build the RGB Virtual Raster at full resolution
-    run_command(["gdalbuildvrt", "-overwrite", "-separate", file_to, red_file, green_file, blue_file], work_dir)
+    run_command(["gdalbuildvrt", "-overwrite", "-separate", file_to, str(red_file), str(green_file), str(blue_file)], work_dir)
     assert os.path.exists(file_to), "VRT must exist"
 
     # Determine the pixel scaling to get the correct width thumbnail
@@ -144,7 +145,7 @@ def create_thumbnail(red_file, green_file, blue_file, thumbnail_image,
     outdataset = None
 
     # GDAL Create doesn't support JPEG so we need to make a copy of the GeoTIFF
-    run_command(["gdal_translate", "-of", "JPEG", outtif, thumbnail_image], work_dir)
+    run_command(["gdal_translate", "-of", "JPEG", outtif, str(thumbnail_path)], work_dir)
 
     # Clean up work files
     for f in [file_to, warp_to_file, outtif]:
@@ -168,12 +169,15 @@ def create_browse(red_band, green_band, blue_band, destination_file):
     """
     cols, rows, output_res = create_thumbnail(red_band.path, green_band.path, blue_band.path, destination_file)
 
+    _LOG.info('Checksumming browse %r', destination_file)
     md5 = _md5_file(destination_file)
+
+
 
     return BrowseMetadata(
         path=destination_file,
         file_type='image/jpg',
-        checksum_md5=md5,
+        checksum_md5=md5.encode('hex'),
         sample_pixel_resolution=output_res,
         red_band=red_band.number,
         green_band=green_band.number,
@@ -184,7 +188,7 @@ def create_browse(red_band, green_band, blue_band, destination_file):
 def _md5_file(filename):
     m = hashlib.md5()
 
-    with open(filename, 'r') as f:
+    with Path(filename).open('rb') as f:
         while True:
             d = f.read(4096)
             if not d:
@@ -198,6 +202,7 @@ def _md5_file(filename):
 if __name__ == '__main__':
     logging.basicConfig()
     logging.getLogger().setLevel(logging.DEBUG)
+
     #     red_band=7,
     # green_band=5,
     # blue_band=1

@@ -1,15 +1,20 @@
 import datetime
-import glob
 import os
-from os.path import join, dirname, relpath
+
+import shutil
+import logging
+
+import pathlib
+import yaml
+from pathlib import Path, PosixPath
 
 from gaip.mtl import load_mtl
 from eodatasets import image
 import eodatasets.type as ptype
-import logging
-from pathlib import Path, PosixPath
+
 
 _LOG = logging.getLogger(__name__)
+
 
 def _get(dictionary, *keys):
     """
@@ -43,7 +48,8 @@ def _read_mtl_band_filenames(mtl_):
     ...    'file_name_band_11': "LC81010782014285LGN00_B11.TIF",
     ...    'file_name_band_quality': "LC81010782014285LGN00_BQA.TIF"
     ...    }})
-    {'9': 'LC81010782014285LGN00_B9.TIF', '11': 'LC81010782014285LGN00_B11.TIF', 'quality': 'LC81010782014285LGN00_BQA.TIF'}
+    {'9': 'LC81010782014285LGN00_B9.TIF', '11': 'LC81010782014285LGN00_B11.TIF', 'quality':
+    'LC81010782014285LGN00_BQA.TIF'}
     >>> _read_mtl_band_filenames({'PRODUCT_METADATA': {
     ...    'file_name_band_9': "LC81010782014285LGN00_B9.TIF",
     ...    'corner_ul_lat_product': -24.98805,
@@ -66,14 +72,14 @@ def _read_bands(mtl_, folder_path):
     """
     bs = _read_mtl_band_filenames(mtl_)
     # TODO: shape, size, md5
-    return dict([(number, ptype.BandMetadata(path=folder_path/filename))
+    return dict([(number, ptype.BandMetadata(path=folder_path / filename))
                  for (number, filename) in bs.items()])
 
 
 def read_mtl(mtl_path, md=None):
     """
 
-    :param mtl_path: Path to mtl file
+    :param mtl_file: Path to mtl file
     :param metadata_directory: directory where this metadata will reside (for calculating relative band paths)
     :type md: eodatasets.type.DatasetMetadata
     :type output_path: pathlib.Path
@@ -83,7 +89,9 @@ def read_mtl(mtl_path, md=None):
     if not md:
         md = ptype.DatasetMetadata()
 
-    mtl_ = load_mtl(mtl_path)
+    mtl_path = Path(mtl_path).absolute()
+
+    mtl_ = load_mtl(str(mtl_path))
 
 
     # md.id_=None,
@@ -171,7 +179,7 @@ def read_mtl(mtl_path, md=None):
     md.image.geometric_rmse_model_y = _get(image_md, 'geometric_rmse_model_y')
     md.image.geometric_rmse_model_x = _get(image_md, 'geometric_rmse_model_x')
 
-    md.image.bands.update(_read_bands(mtl_, Path(mtl_path).parent))
+    md.image.bands.update(_read_bands(mtl_, mtl_path.parent))
 
     # Example "LPGS_2.3.0"
     soft_v = _get(mtl_, 'METADATA_FILE_INFO', 'processing_software_version')
@@ -214,32 +222,67 @@ def new_dataset_md(uuid=None):
 
 
 def package(image_directory, target_directory):
+    # TODO: If image directory is not inside target directory, copy images.
 
-    mtl_file = glob.glob(join(image_directory, '*_MTL.txt'))[0]  # Crude but effective
+    target_directory = Path(target_directory).absolute()
+
+    package_directory = target_directory / 'package'
+
+    _LOG.info('Copying %r -> %r', image_directory, package_directory)
+    # TODO: Handle partial packages existing.
+    if not package_directory.exists():
+        shutil.copytree(str(image_directory), str(package_directory))
+
+    mtl_file = next(Path(package_directory).glob('*_MTL.txt'))  # Crude but effective
+
+    _LOG.info('Reading MTL %r', mtl_file)
 
     d = new_dataset_md()
-    d = read_mtl(mtl_file, target_directory, md=d)
+    d = read_mtl(mtl_file, md=d)
 
-    if not os.path.exists(target_directory):
-        os.mkdir(target_directory)
+    if not target_directory.exists():
+        target_directory.mkdir()
 
     # Create browse
 
     # TODO: band files are relative.
-    image.create_browse(
-        d.image.bands['7'],
-        d.image.bands['5'],
-        d.image.bands['1'],
-        join(target_directory, 'thumb.jpg')
-    )
+    d.browse = {
+        'medium': image.create_browse(
+            d.image.bands['7'],
+            d.image.bands['5'],
+            d.image.bands['1'],
+            target_directory / 'thumb.jpg'
+        )
+    }
     # Checksum?
     # Connect source datasets
 
-    with open(join(target_directory, 'ga-metadata.yaml'), 'w') as f:
-        f.write(ptype.yaml.dump(d, default_flow_style=False, indent=4))
+    with open(str(target_directory / 'ga-metadata.yaml'), 'w') as f:
+        target_relative = create_relative_dumper(target_directory)
+        home_relative = create_relative_dumper(os.path.expanduser('~'))
+        ptype.yaml.dump(d, f, default_flow_style=False, indent=4, Dumper=target_relative, allow_unicode=True)
+
+
+def create_relative_dumper(folder):
+    class RelativeDumper(yaml.Dumper):
+        pass
+
+    def path_representer(dumper, data):
+        """
+        :type dumper: BaseRepresenter
+        :type data: pathlib.Path
+        :rtype: yaml.nodes.Node
+        """
+        return dumper.represent_scalar(u'tag:yaml.org,2002:str', str(data.relative_to(folder)))
+
+    RelativeDumper.add_multi_representer(pathlib.Path, path_representer)
+
+    return RelativeDumper
+
 
 if __name__ == '__main__':
     import doctest
+
     doctest.testmod()
     logging.basicConfig()
     logging.getLogger().setLevel(logging.DEBUG)
