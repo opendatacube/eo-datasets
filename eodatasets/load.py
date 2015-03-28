@@ -8,6 +8,8 @@ import pathlib
 import yaml
 from pathlib import Path, PosixPath
 
+from gaip import acquisition
+
 from gaip.mtl import load_mtl
 from eodatasets import image
 import eodatasets.type as ptype
@@ -60,7 +62,26 @@ def _read_mtl_band_filenames(mtl_):
     return dict([(k.split('_')[-1], v) for (k, v) in product_md.items() if k.startswith('file_name_band_')])
 
 
-def _read_bands(mtl_, folder_path):
+def expand_band_information(satellite, sensor, band_metadata):
+    """
+    Use the gaip reference table to add per-band metadata if availabe.
+    :param satellite: satellite as reported by LPGS (eg. LANDSAT_8)
+    :param sensor: sensor as reported by LPGS (eg. OLI_TIRS)
+    :type band_metadata: ptype.BandMetadata
+    :rtype: ptype.BandMetadata
+    """
+    bands = acquisition.SENSORS[satellite]['sensors'][sensor]['bands']
+
+    band = bands.get(band_metadata.number)
+    if band:
+        band_metadata.label = band['desc']
+        band_metadata.cell_size = band['resolution']
+        band_metadata.type = band['type_desc'].lower()
+
+    return band_metadata
+
+
+def _read_bands(mtl_, satellite, sensor, folder_path):
     """
 
     :param mtl_:
@@ -71,9 +92,17 @@ def _read_bands(mtl_, folder_path):
     {'9': BandMetadata(path=PosixPath('product/LC81010782014285LGN00_B9.TIF'))}
     """
     bs = _read_mtl_band_filenames(mtl_)
+
     # TODO: shape, size, md5
-    return dict([(number, ptype.BandMetadata(path=folder_path / filename))
-                 for (number, filename) in bs.items()])
+    return dict([
+        (
+            number,
+            expand_band_information(
+                satellite, sensor,
+                ptype.BandMetadata(path=folder_path / filename, number=number)
+            )
+        )
+        for (number, filename) in bs.items()])
 
 
 def read_mtl(mtl_path, md=None):
@@ -101,9 +130,11 @@ def read_mtl(mtl_path, md=None):
     # md.product_type=None,
 
     # md.size_bytes=None,
-    md.platform.code = _get(mtl_, 'PRODUCT_METADATA', 'spacecraft_id')
+    satellite_id = _get(mtl_, 'PRODUCT_METADATA', 'spacecraft_id')
+    md.platform.code = satellite_id
 
-    md.instrument.name = _get(mtl_, 'PRODUCT_METADATA', 'sensor_id')
+    sensor_id = _get(mtl_, 'PRODUCT_METADATA', 'sensor_id')
+    md.instrument.name = sensor_id
     # type
     # operation mode
 
@@ -179,7 +210,7 @@ def read_mtl(mtl_path, md=None):
     md.image.geometric_rmse_model_y = _get(image_md, 'geometric_rmse_model_y')
     md.image.geometric_rmse_model_x = _get(image_md, 'geometric_rmse_model_x')
 
-    md.image.bands.update(_read_bands(mtl_, mtl_path.parent))
+    md.image.bands.update(_read_bands(mtl_, satellite_id, sensor_id, mtl_path.parent))
 
     # Example "LPGS_2.3.0"
     soft_v = _get(mtl_, 'METADATA_FILE_INFO', 'processing_software_version')
@@ -221,7 +252,7 @@ def new_dataset_md(uuid=None):
     return md
 
 
-def package(image_directory, target_directory):
+def package(image_directory, target_directory, source_datasets=None):
     # TODO: If image directory is not inside target directory, copy images.
 
     target_directory = Path(target_directory).absolute()
@@ -244,8 +275,7 @@ def package(image_directory, target_directory):
         target_directory.mkdir()
 
     # Create browse
-
-    # TODO: band files are relative.
+    # TODO: Full resolution too?
     d.browse = {
         'medium': image.create_browse(
             d.image.bands['7'],
@@ -254,10 +284,18 @@ def package(image_directory, target_directory):
             target_directory / 'thumb.jpg'
         )
     }
-    # Checksum?
-    # Connect source datasets
 
-    with open(str(target_directory / 'ga-metadata.yaml'), 'w') as f:
+    # Checksum bands
+
+    for number, band_metadata in d.image.bands.items():
+        _LOG.info('Checksumming band %r', number)
+        band_metadata.checksum_md5 = image.calculate_file_md5(band_metadata.path)
+
+    d.lineage.source_datasets = source_datasets
+
+    target_metadata_file = target_directory / 'ga-metadata.yaml'
+    _LOG.info('Writing metadata file %r',)
+    with open(str(target_metadata_file), 'w') as f:
         ptype.yaml.dump(
             d,
             f,

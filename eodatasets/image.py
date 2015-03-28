@@ -170,12 +170,12 @@ def create_browse(red_band, green_band, blue_band, destination_file):
     cols, rows, output_res = create_thumbnail(red_band.path, green_band.path, blue_band.path, destination_file)
 
     _LOG.info('Checksumming browse %r', destination_file)
-    md5 = _md5_file(destination_file)
+    md5 = calculate_file_md5(destination_file)
 
     return BrowseMetadata(
         path=destination_file,
         file_type='image/jpg',
-        checksum_md5=md5.encode('hex'),
+        checksum_md5=md5,
         sample_pixel_resolution=output_res,
         red_band=red_band.number,
         green_band=green_band.number,
@@ -183,7 +183,7 @@ def create_browse(red_band, green_band, blue_band, destination_file):
     )
 
 
-def _md5_file(filename):
+def calculate_file_md5(filename):
     m = hashlib.md5()
 
     with Path(filename).open('rb') as f:
@@ -194,7 +194,7 @@ def _md5_file(filename):
 
             m.update(d)
 
-    return m.digest()
+    return m.digest().encode('hex')
 
 
 if __name__ == '__main__':
