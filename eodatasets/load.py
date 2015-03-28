@@ -1,10 +1,15 @@
 import datetime
 import glob
+import os
 from os.path import join, dirname, relpath
 
 from gaip.mtl import load_mtl
+from eodatasets import image
 import eodatasets.type as ptype
+import logging
+from pathlib import Path, PosixPath
 
+_LOG = logging.getLogger(__name__)
 
 def _get(dictionary, *keys):
     """
@@ -49,28 +54,29 @@ def _read_mtl_band_filenames(mtl_):
     return dict([(k.split('_')[-1], v) for (k, v) in product_md.items() if k.startswith('file_name_band_')])
 
 
-def _read_bands(mtl_, path_offset):
+def _read_bands(mtl_, folder_path):
     """
 
     :param mtl_:
     :param relative_from_dir:
     >>> _read_bands({'PRODUCT_METADATA': {
     ...     'file_name_band_9': "LC81010782014285LGN00_B9.TIF"}
-    ... }, path_offset='product/')
-    {'9': BandMetadata(path='product/LC81010782014285LGN00_B9.TIF')}
+    ... }, folder_path=PosixPath('product/'))
+    {'9': BandMetadata(path=PosixPath('product/LC81010782014285LGN00_B9.TIF'))}
     """
     bs = _read_mtl_band_filenames(mtl_)
     # TODO: shape, size, md5
-    return dict([(number, ptype.BandMetadata(path=join(path_offset, filename)))
+    return dict([(number, ptype.BandMetadata(path=folder_path/filename))
                  for (number, filename) in bs.items()])
 
 
-def read_mtl(mtl_path, output_dir, md=None):
+def read_mtl(mtl_path, md=None):
     """
 
     :param mtl_path: Path to mtl file
     :param metadata_directory: directory where this metadata will reside (for calculating relative band paths)
     :type md: eodatasets.type.DatasetMetadata
+    :type output_path: pathlib.Path
     :return:
     """
 
@@ -78,7 +84,7 @@ def read_mtl(mtl_path, output_dir, md=None):
         md = ptype.DatasetMetadata()
 
     mtl_ = load_mtl(mtl_path)
-    mtl_dir = relpath(dirname(mtl_path), start=output_dir)
+
 
     # md.id_=None,
     # md.ga_label=None,
@@ -165,7 +171,7 @@ def read_mtl(mtl_path, output_dir, md=None):
     md.image.geometric_rmse_model_y = _get(image_md, 'geometric_rmse_model_y')
     md.image.geometric_rmse_model_x = _get(image_md, 'geometric_rmse_model_x')
 
-    md.image.bands.update(_read_bands(mtl_, mtl_dir))
+    md.image.bands.update(_read_bands(mtl_, Path(mtl_path).parent))
 
     # Example "LPGS_2.3.0"
     soft_v = _get(mtl_, 'METADATA_FILE_INFO', 'processing_software_version')
@@ -207,25 +213,39 @@ def new_dataset_md(uuid=None):
     return md
 
 
-def package(directory):
+def package(image_directory, target_directory):
 
-    mtl_file = glob.glob(join(directory, '*_MTL.txt'))[0]  # Crude but effective
+    mtl_file = glob.glob(join(image_directory, '*_MTL.txt'))[0]  # Crude but effective
 
     d = new_dataset_md()
-    d = read_mtl(mtl_file, directory, md=d)
+    d = read_mtl(mtl_file, target_directory, md=d)
+
+    if not os.path.exists(target_directory):
+        os.mkdir(target_directory)
 
     # Create browse
+
+    # TODO: band files are relative.
+    image.create_browse(
+        d.image.bands['7'],
+        d.image.bands['5'],
+        d.image.bands['1'],
+        join(target_directory, 'thumb.jpg')
+    )
     # Checksum?
     # Connect source datasets
 
-    with open('ga-metadata.yaml', 'wc') as f:
+    with open(join(target_directory, 'ga-metadata.yaml'), 'w') as f:
         f.write(ptype.yaml.dump(d, default_flow_style=False, indent=4))
 
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
-    package('/Users/jeremyhooke/ops/package-eg/LS8_OLITIRS_OTH_P51_GALPGS01-032_101_078_20141012/scene01')
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
 
+    package(os.path.expanduser('~/ops/inputs/LS8_something'), 'out-ls8-test')
+    # package(os.path.expanduser('~/ops/inputs/lpgsOut/LE7_20150202_091_075'), 'out-ls7-test')
 
 
 

@@ -8,10 +8,11 @@ import time
 import logging
 
 import dateutil.parser
+from pathlib import Path
 import yaml
 
 
-_log = logging.getLogger()
+_LOG = logging.getLogger()
 
 
 class SimpleObject(object):
@@ -179,6 +180,8 @@ class ProjectionMetadata(SimpleObject):
 class BrowseMetadata(SimpleObject):
     def __init__(self, path=None, file_type=None, checksum_md5=None,
                  sample_pixel_resolution=None, red_band=None, green_band=None, blue_band=None):
+
+        #: :type: pathlib.Path
         self.path = path
         self.file_type = file_type
         self.checksum_md5 = checksum_md5
@@ -191,7 +194,12 @@ class BrowseMetadata(SimpleObject):
 
 class BandMetadata(SimpleObject):
     def __init__(self, path=None, type=None, label=None, number=None, shape=None, cell_size=None, checksum_md5=None):
+
+        # Prefer absolute paths. Path objects can be converted to relative
+        # during serialisation (relative to whatever we want).
+        #: :type: pathlib.Path
         self.path = path
+
         self.type = type
 
         # Eg. 'visible_red'
@@ -445,7 +453,7 @@ class GroundstationMetadata(SimpleObject):
         self.antenna_coord = antenna_coord
 
 
-def as_flat_key_value(o, key_separator='.', key_prefix=''):
+def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
     """
     Output as a flat stream of keys and values. No nesting.
 
@@ -457,6 +465,8 @@ def as_flat_key_value(o, key_separator='.', key_prefix=''):
     >>> list(as_flat_key_value({'a': {'b': 1}, 'c': 2}))
     [('a.b', 1), ('c', 2)]
     """
+    if relative_to is None:
+        relative_to = os.getcwd()
 
     def namespace(k, key_prefix):
         clean_arg = lambda arg: arg[:-1] if arg.endswith('_') else arg
@@ -484,6 +494,11 @@ def as_flat_key_value(o, key_separator='.', key_prefix=''):
         yield key_prefix, time.strftime('%Y-%m-%dT%H:%M:%S', o)
     elif isinstance(o, uuid.UUID):
         yield key_prefix, str(o)
+    elif isinstance(o, Path):
+        if not o.is_absolute():
+            _LOG.warn('Non-absolute path: %r', o)
+        val = o.relative_to(relative_to) if o.is_absolute() else o
+        yield key_prefix, str(val)
     elif o is None:
         yield key_prefix, None
     elif isinstance(o, SimpleObject):
@@ -491,6 +506,6 @@ def as_flat_key_value(o, key_separator='.', key_prefix=''):
             for nested_k, nested_v in as_flat_key_value(v, key_prefix=namespace(k, key_prefix)):
                 yield nested_k, nested_v
     else:
-        _log.debug('Unhandled type: %s (%s.%s). Value: %s', type(o), type(o).__module__, type(o).__name__, repr(o))
+        _LOG.debug('Unhandled type: %s (%s.%s). Value: %s', type(o), type(o).__module__, type(o).__name__, repr(o))
         for nested_k, nested_v in as_flat_key_value(o.__dict__, key_prefix=key_prefix):
             yield nested_k, nested_v

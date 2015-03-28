@@ -1,4 +1,5 @@
 import glob
+import hashlib
 import logging
 import os
 from subprocess import check_call
@@ -9,7 +10,8 @@ import tempfile
 import gdalconst
 import gdal
 import numpy
-import time
+
+from eodatasets.type import BrowseMetadata
 
 
 _LOG = logging.getLogger(__name__)
@@ -77,6 +79,9 @@ def create_thumbnail(red_file, green_file, blue_file, thumbnail_image,
     """
     nodata = int(nodata)
 
+    # GDAL calls need absolute paths.
+    thumbnail_image = os.path.abspath(thumbnail_image)
+
     if os.path.exists(thumbnail_image) and not overwrite:
         _LOG.warning('File already exists. Skipping creation of %s', thumbnail_image)
         return
@@ -105,6 +110,8 @@ def create_thumbnail(red_file, green_file, blue_file, thumbnail_image,
     incols = vrt.RasterXSize
 
     outresx = inpixelx * incols / outcols
+    _LOG.info('Input pixel res %r, output pixel res %r', inpixelx, outresx)
+
     outrows = int(math.ceil((float(inrows) / float(incols)) * outcols))
 
     run_command([
@@ -130,7 +137,7 @@ def create_thumbnail(red_file, green_file, blue_file, thumbnail_image,
         outdataset.GetRasterBand(band_number).WriteArray(
             (numpy.ma.masked_less_equal(band.ReadAsArray(), nodata) * scale) + offset
         )
-
+        _LOG.debug('Scale %r, offset %r', scale, offset)
 
     # Must close dataset to flush to disk.
     # noinspection PyUnusedLocal
@@ -147,20 +154,58 @@ def create_thumbnail(red_file, green_file, blue_file, thumbnail_image,
             if e.errno != errno.ENOENT:
                 raise
 
-    return outcols, outrows
+    return outcols, outrows, outresx
+
+
+def create_browse(red_band, green_band, blue_band, destination_file):
+    """
+
+    :type red_band: eodatasets.type.BandMetadata
+    :type green_band: eodatasets.type.BandMetadata
+    :type blue_band: eodatasets.type.BandMetadata
+    :param destination_file:
+    :return:
+    """
+    cols, rows, output_res = create_thumbnail(red_band.path, green_band.path, blue_band.path, destination_file)
+
+    md5 = _md5_file(destination_file)
+
+    return BrowseMetadata(
+        path=destination_file,
+        file_type='image/jpg',
+        checksum_md5=md5,
+        sample_pixel_resolution=output_res,
+        red_band=red_band.number,
+        green_band=green_band.number,
+        blue_band=blue_band.number
+    )
+
+
+def _md5_file(filename):
+    m = hashlib.md5()
+
+    with open(filename, 'r') as f:
+        while True:
+            d = f.read(4096)
+            if not d:
+                break
+
+            m.update(d)
+
+    return m.digest()
 
 
 if __name__ == '__main__':
     logging.basicConfig()
-    _LOG.setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.DEBUG)
     #     red_band=7,
     # green_band=5,
     # blue_band=1
     _dir = os.path.expanduser('~/ops/package-eg/LS8_OLITIRS_OTH_P51_GALPGS01-032_101_078_20141012/scene01')
     create_thumbnail(
-        glob.glob(_dir+'/*_B7.TIF')[0],
-        glob.glob(_dir+'/*_B5.TIF')[0],
-        glob.glob(_dir+'/*_B1.TIF')[0],
+        glob.glob(_dir + '/*_B7.TIF')[0],
+        glob.glob(_dir + '/*_B5.TIF')[0],
+        glob.glob(_dir + '/*_B1.TIF')[0],
         thumbnail_image='test-thumb.jpg',
         work_dir=os.path.abspath('out-tmp')
     )
