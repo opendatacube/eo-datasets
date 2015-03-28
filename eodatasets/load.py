@@ -258,9 +258,14 @@ def package(image_directory, target_directory):
     # Connect source datasets
 
     with open(str(target_directory / 'ga-metadata.yaml'), 'w') as f:
-        target_relative = create_relative_dumper(target_directory)
-        home_relative = create_relative_dumper(os.path.expanduser('~'))
-        ptype.yaml.dump(d, f, default_flow_style=False, indent=4, Dumper=target_relative, allow_unicode=True)
+        ptype.yaml.dump(
+            d,
+            f,
+            default_flow_style=False,
+            indent=4,
+            Dumper=create_relative_dumper(target_directory),
+            allow_unicode=True
+        )
 
 
 def create_relative_dumper(folder):

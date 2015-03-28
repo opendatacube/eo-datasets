@@ -172,8 +172,6 @@ def create_browse(red_band, green_band, blue_band, destination_file):
     _LOG.info('Checksumming browse %r', destination_file)
     md5 = _md5_file(destination_file)
 
-
-
     return BrowseMetadata(
         path=destination_file,
         file_type='image/jpg',
