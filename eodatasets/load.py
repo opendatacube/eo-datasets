@@ -33,6 +33,7 @@ def _get(dictionary, *keys):
     s = dictionary
     for k in keys:
         if k not in s:
+            _LOG.debug('Not found %r', keys)
             return None
 
         s = s[k]
@@ -50,8 +51,7 @@ def _read_mtl_band_filenames(mtl_):
     ...    'file_name_band_11': "LC81010782014285LGN00_B11.TIF",
     ...    'file_name_band_quality': "LC81010782014285LGN00_BQA.TIF"
     ...    }})
-    {'9': 'LC81010782014285LGN00_B9.TIF', '11': 'LC81010782014285LGN00_B11.TIF', 'quality':
-    'LC81010782014285LGN00_BQA.TIF'}
+    {'9': 'LC81010782014285LGN00_B9.TIF', '11': 'LC81010782014285LGN00_B11.TIF', 'quality': 'LC81010782014285LGN00_BQA.TIF'}
     >>> _read_mtl_band_filenames({'PRODUCT_METADATA': {
     ...    'file_name_band_9': "LC81010782014285LGN00_B9.TIF",
     ...    'corner_ul_lat_product': -24.98805,
@@ -88,8 +88,8 @@ def _read_bands(mtl_, satellite, sensor, folder_path):
     :param relative_from_dir:
     >>> _read_bands({'PRODUCT_METADATA': {
     ...     'file_name_band_9': "LC81010782014285LGN00_B9.TIF"}
-    ... }, folder_path=PosixPath('product/'))
-    {'9': BandMetadata(path=PosixPath('product/LC81010782014285LGN00_B9.TIF'))}
+    ... }, 'LANDSAT_8', 'OLI_TIRS', folder_path=PosixPath('product/'))
+    {'9': BandMetadata(path=PosixPath('product/LC81010782014285LGN00_B9.TIF'), type=u'atmosphere', label=u'Cirrus', number='9', cell_size=25.0)}
     """
     bs = _read_mtl_band_filenames(mtl_)
 
@@ -105,29 +105,33 @@ def _read_bands(mtl_, satellite, sensor, folder_path):
         for (number, filename) in bs.items()])
 
 
-def read_mtl(mtl_path, md=None):
+def populate_from_mtl(md, mtl_path):
     """
 
-    :param mtl_file: Path to mtl file
-    :param metadata_directory: directory where this metadata will reside (for calculating relative band paths)
-    :type md: eodatasets.type.DatasetMetadata
-    :type output_path: pathlib.Path
-    :return:
+    :type md: eodatasets.type.DatasetMetad
+    :param mtl_path:
+    :rtype: eodatasets.type.DatasetMetad
     """
-
     if not md:
         md = ptype.DatasetMetadata()
 
     mtl_path = Path(mtl_path).absolute()
-
     mtl_ = load_mtl(str(mtl_path))
+    return populate_from_mtl_dict(md, mtl_, mtl_path.parent)
 
 
-    # md.id_=None,
-    # md.ga_label=None,
-    md.usgs_dataset_id = _get(mtl_, 'metadata_file_info', 'landsat_scene_id') or md.usgs_dataset_id
-    md.creation_dt = _get(mtl_, 'metadata_file_info', 'file_date')
-    # md.product_type=None,
+def populate_from_mtl_dict(md, mtl_, folder):
+    """
+
+    :param mtl_: Parsed mtl file
+    :param folder: Folder containing imagery (and mtl)
+    :type md: eodatasets.type.DatasetMetadata
+    :type mtl_: dict of (str, obj)
+    :rtype: eodatasets.type.DatasetMetad
+    """
+    md.usgs_dataset_id = _get(mtl_, 'METADATA_FILE_INFO', 'landsat_scene_id') or md.usgs_dataset_id
+    md.creation_dt = _get(mtl_, 'METADATA_FILE_INFO', 'file_date')
+    md.product_type=None,
 
     # md.size_bytes=None,
     satellite_id = _get(mtl_, 'PRODUCT_METADATA', 'spacecraft_id')
@@ -140,7 +144,7 @@ def read_mtl(mtl_path, md=None):
 
     # md.format_=None,
 
-    md.acquisition.groundstation = ptype.GroundstationMetadata(code=_get(mtl_, "METADATA_FILE_INFO", "STATIONID"))
+    md.acquisition.groundstation = ptype.GroundstationMetadata(code=_get(mtl_, "METADATA_FILE_INFO", "station_id"))
     # md.acquisition.groundstation.antenna_coord
     # aos, los, groundstation, heading, platform_orbit
 
@@ -178,20 +182,15 @@ def read_mtl(mtl_path, md=None):
     md.grid_spatial.projection.datum = _get(projection_md, 'datum')
     md.grid_spatial.projection.ellipsoid = _get(projection_md, 'ellipsoid')
 
+
     # Where does this come from? 'ul' etc.
     # point_in_pixel=None,
     md.grid_spatial.projection.map_projection = _get(projection_md, 'map_projection')
-    # resampling_option=None,
-    md.grid_spatial.projection.map_projection = _get(projection_md, 'map_projection')
+    md.grid_spatial.projection.resampling_option=_get(projection_md, 'resampling_option')
     md.grid_spatial.projection.datum = _get(projection_md, 'datum')
     md.grid_spatial.projection.ellipsoid = _get(projection_md, 'ellipsoid')
     md.grid_spatial.projection.zone = _get(projection_md, 'utm_zone')
-
-    # md.grid_spatial.projection. = _get(projection_md, 'orientation') # "NORTH_UP"
-    # md.grid_spatial.projection. = _get(projection_md, 'resampling_option') # "CUBIC_CONVOLUTION"
-
-    # No browse image
-    # md.browse=None,
+    md.grid_spatial.projection.orientation = _get(projection_md, 'orientation')
 
     image_md = _get(mtl_, 'IMAGE_ATTRIBUTES')
 
@@ -210,7 +209,7 @@ def read_mtl(mtl_path, md=None):
     md.image.geometric_rmse_model_y = _get(image_md, 'geometric_rmse_model_y')
     md.image.geometric_rmse_model_x = _get(image_md, 'geometric_rmse_model_x')
 
-    md.image.bands.update(_read_bands(mtl_, satellite_id, sensor_id, mtl_path.parent))
+    md.image.bands.update(_read_bands(mtl_, satellite_id, sensor_id, folder))
 
     # Example "LPGS_2.3.0"
     soft_v = _get(mtl_, 'METADATA_FILE_INFO', 'processing_software_version')
@@ -228,7 +227,7 @@ def read_mtl(mtl_path, md=None):
     return md
 
 
-def new_dataset_md(uuid=None):
+def init_local_dataset(uuid=None):
     """
     Create blank metadata for a newly created dataset on this machine.
     :param uuid: The existing dataset_id, if any.
@@ -252,6 +251,42 @@ def new_dataset_md(uuid=None):
     return md
 
 
+def create_browse_images(d, target_directory):
+    # Create browse
+    # TODO: Full resolution too?
+    d.browse = {
+        'medium': image.create_browse(
+            d.image.bands['7'],
+            d.image.bands['5'],
+            d.image.bands['1'],
+            target_directory / 'thumb.jpg'
+        )
+    }
+
+    return d
+
+
+def checksum_bands(d):
+    for number, band_metadata in d.image.bands.items():
+        _LOG.info('Checksumming band %r', number)
+        band_metadata.checksum_md5 = image.calculate_file_md5(band_metadata.path)
+
+    return d
+
+
+def write_yaml_metadata(d, target_directory, metadata_file):
+    _LOG.info('Writing metadata file %r', metadata_file)
+    with open(str(metadata_file), 'w') as f:
+        ptype.yaml.dump(
+            d,
+            f,
+            default_flow_style=False,
+            indent=4,
+            Dumper=create_relative_dumper(target_directory),
+            allow_unicode=True
+        )
+
+
 def package(image_directory, target_directory, source_datasets=None):
     # TODO: If image directory is not inside target directory, copy images.
 
@@ -268,42 +303,18 @@ def package(image_directory, target_directory, source_datasets=None):
 
     _LOG.info('Reading MTL %r', mtl_file)
 
-    d = new_dataset_md()
-    d = read_mtl(mtl_file, md=d)
+    d = init_local_dataset()
+    d = populate_from_mtl(d, mtl_file)
 
     if not target_directory.exists():
         target_directory.mkdir()
 
-    # Create browse
-    # TODO: Full resolution too?
-    d.browse = {
-        'medium': image.create_browse(
-            d.image.bands['7'],
-            d.image.bands['5'],
-            d.image.bands['1'],
-            target_directory / 'thumb.jpg'
-        )
-    }
-
-    # Checksum bands
-
-    for number, band_metadata in d.image.bands.items():
-        _LOG.info('Checksumming band %r', number)
-        band_metadata.checksum_md5 = image.calculate_file_md5(band_metadata.path)
+    create_browse_images(d, target_directory)
+    checksum_bands(d)
 
     d.lineage.source_datasets = source_datasets
 
-    target_metadata_file = target_directory / 'ga-metadata.yaml'
-    _LOG.info('Writing metadata file %r',)
-    with open(str(target_metadata_file), 'w') as f:
-        ptype.yaml.dump(
-            d,
-            f,
-            default_flow_style=False,
-            indent=4,
-            Dumper=create_relative_dumper(target_directory),
-            allow_unicode=True
-        )
+    write_yaml_metadata(d, target_directory, target_directory / 'ga-metadata.yaml')
 
 
 def create_relative_dumper(folder):
@@ -328,7 +339,7 @@ if __name__ == '__main__':
 
     doctest.testmod()
     logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.INFO)
 
     package(os.path.expanduser('~/ops/inputs/LS8_something'), 'out-ls8-test')
     # package(os.path.expanduser('~/ops/inputs/lpgsOut/LE7_20150202_091_075'), 'out-ls7-test')

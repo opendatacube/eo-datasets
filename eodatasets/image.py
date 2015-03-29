@@ -176,7 +176,7 @@ def create_browse(red_band, green_band, blue_band, destination_file):
         path=destination_file,
         file_type='image/jpg',
         checksum_md5=md5,
-        sample_pixel_resolution=output_res,
+        cell_size=output_res,
         red_band=red_band.number,
         green_band=green_band.number,
         blue_band=blue_band.number

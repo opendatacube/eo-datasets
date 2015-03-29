@@ -150,6 +150,7 @@ class ProjectionMetadata(SimpleObject):
                  geo_ref_points=None,
                  datum=None, ellipsoid=None, point_in_pixel=None,
                  map_projection=None,
+                 orientation=None,
                  resampling_option=None,
                  zone=None):
         # The units of these points are dependent on the reference system.
@@ -171,6 +172,8 @@ class ProjectionMetadata(SimpleObject):
 
         self.point_in_pixel = point_in_pixel
 
+        self.orientation = orientation
+
         self.map_projection = map_projection
 
         self.resampling_option = resampling_option
@@ -179,14 +182,14 @@ class ProjectionMetadata(SimpleObject):
 
 class BrowseMetadata(SimpleObject):
     def __init__(self, path=None, file_type=None, checksum_md5=None,
-                 sample_pixel_resolution=None, red_band=None, green_band=None, blue_band=None):
+                 cell_size=None, red_band=None, green_band=None, blue_band=None):
 
         #: :type: pathlib.Path
         self.path = path
         self.file_type = file_type
         self.checksum_md5 = checksum_md5
 
-        self.sample_pixel_resolution = sample_pixel_resolution
+        self.cell_size = cell_size
         self.red_band = red_band
         self.green_band = green_band
         self.blue_band = blue_band

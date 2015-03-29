@@ -124,7 +124,7 @@ def _build_ls8_ortho():
                  path=Path('product/LS8_OLITIRS_OTH_P51_GALPGS01-032_101_078_20141012.jpg'),
                  file_type='image/jpg',
                  checksum_md5='6dd96d4e93e48eb8b15c842cfb40f466',
-                 sample_pixel_resolution=219.75,
+                 cell_size=219.75,
                  red_band=7,
                  green_band=5,
                  blue_band=1
@@ -134,7 +134,7 @@ def _build_ls8_ortho():
                  path=Path('LS8_OLITIRS_OTH_P51_GALPGS01-032_101_078_20141012_FR.jpg'),
                  file_type='image/jpg',
                  checksum_md5='232606ffabd1596431acb6ad9f488cf4',
-                 sample_pixel_resolution=25.0,
+                 cell_size=25.0,
                  red_band=7,
                  green_band=5,
                  blue_band=1
@@ -420,7 +420,7 @@ def _build_ls8_nbar():
                     path=Path('LS8_OLI_TIRS_NBAR_P54_GANBAR01-015_101_078_20141012.tif'),
                     file_type='image/jpg',
                     checksum_md5='bbb81e0bc01baf029a7c99323593f53c',
-                    sample_pixel_resolution=219.75,
+                    cell_size=219.75,
                     red_band=7,
                     green_band=5,
                     blue_band=2
@@ -430,7 +430,7 @@ def _build_ls8_nbar():
                     path=Path('LS8_OLI_TIRS_NBAR_P54_GANBAR01-015_101_078_20141012_FR.tif'),
                     file_type='image/jpg',
                     checksum_md5='92a1716e4f9bb0773b0916c37f4a2e4f',
-                    sample_pixel_resolution=25.0,
+                    cell_size=25.0,
                     red_band=7,
                     green_band=5,
                     blue_band=2
