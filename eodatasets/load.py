@@ -84,8 +84,8 @@ def expand_band_information(satellite, sensor, band_metadata):
 def _read_bands(mtl_, satellite, sensor, folder_path):
     """
 
-    :param mtl_:
-    :param relative_from_dir:
+    :type mtl_: dict of (str, obj)
+    :type folder_path: pathlib.Path
     >>> _read_bands({'PRODUCT_METADATA': {
     ...     'file_name_band_9': "LC81010782014285LGN00_B9.TIF"}
     ... }, 'LANDSAT_8', 'OLI_TIRS', folder_path=PosixPath('product/'))
