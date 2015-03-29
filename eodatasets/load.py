@@ -131,18 +131,20 @@ def populate_from_mtl_dict(md, mtl_, folder):
     """
     md.usgs_dataset_id = _get(mtl_, 'METADATA_FILE_INFO', 'landsat_scene_id') or md.usgs_dataset_id
     md.creation_dt = _get(mtl_, 'METADATA_FILE_INFO', 'file_date')
-    md.product_type=None,
+
+    # TODO: elsewhere we've used 'GAORTHO01' etc. Here it's 'L1T' etc.
+    md.product_type = _get(mtl_, 'PRODUCT_METADATA', 'data_type')
 
     # md.size_bytes=None,
     satellite_id = _get(mtl_, 'PRODUCT_METADATA', 'spacecraft_id')
     md.platform.code = satellite_id
 
+    md.format_ = ptype.FormatMetadata(name=_get(mtl_, 'PRODUCT_METADATA', 'output_format'))
+
     sensor_id = _get(mtl_, 'PRODUCT_METADATA', 'sensor_id')
     md.instrument.name = sensor_id
     # type
     # operation mode
-
-    # md.format_=None,
 
     md.acquisition.groundstation = ptype.GroundstationMetadata(code=_get(mtl_, "METADATA_FILE_INFO", "station_id"))
     # md.acquisition.groundstation.antenna_coord
