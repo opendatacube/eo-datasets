@@ -263,17 +263,8 @@ def init_local_dataset(uuid=None):
     """
     md = ptype.DatasetMetadata(
         id_=uuid,
-        platform=ptype.PlatformMetadata(),
-        instrument=ptype.InstrumentMetadata(),
-        acquisition=ptype.AcquisitionMetadata(),
-        extent=ptype.ExtentMetadata(),
-        grid_spatial=ptype.GridSpatialMetadata(projection=ptype.ProjectionMetadata()),
-        image=ptype.ImageMetadata(bands={}),
         lineage=ptype.LineageMetadata(
-            algorithm=ptype.AlgorithmMetadata(),
             machine=ptype.MachineMetadata(),
-            ancillary={},
-            source_datasets={}
         )
     )
     return md
