@@ -137,22 +137,30 @@ def populate_from_mtl_dict(md, mtl_, folder):
 
     # md.size_bytes=None,
     satellite_id = _get(mtl_, 'PRODUCT_METADATA', 'spacecraft_id')
+    if not md.platform:
+        md.platform = ptype.PlatformMetadata()
     md.platform.code = satellite_id
 
     md.format_ = ptype.FormatMetadata(name=_get(mtl_, 'PRODUCT_METADATA', 'output_format'))
 
     sensor_id = _get(mtl_, 'PRODUCT_METADATA', 'sensor_id')
+    if not md.instrument:
+        md.instrument = ptype.InstrumentMetadata()
     md.instrument.name = sensor_id
     # type
     # operation mode
+
+    if not md.acquisition:
+        md.acquisition = ptype.AcquisitionMetadata()
 
     md.acquisition.groundstation = ptype.GroundstationMetadata(code=_get(mtl_, "METADATA_FILE_INFO", "station_id"))
     # md.acquisition.groundstation.antenna_coord
     # aos, los, groundstation, heading, platform_orbit
 
     # Extent
+    if not md.extent:
+        md.extent = ptype.ExtentMetadata()
     product_md = _get(mtl_, 'PRODUCT_METADATA')
-
     date = _get(product_md, 'date_acquired')
     center_time = _get(product_md, 'scene_center_time')
     md.extent.center_dt = datetime.datetime.combine(date, center_time)
@@ -168,7 +176,12 @@ def populate_from_mtl_dict(md, mtl_, folder):
     # to_dt=None
 
     # We don't have a single set of dimensions. Depends on the band?
-    # md.grid_spatial.dimensions = []   
+    # md.grid_spatial.dimensions = []
+    if not md.grid_spatial:
+        md.grid_spatial = ptype.GridSpatialMetadata()
+    if not md.grid_spatial.projection:
+        md.grid_spatial.projection = ptype.ProjectionMetadata()
+
     md.grid_spatial.projection.geo_ref_points = ptype.Polygon(
         ul=ptype.Point(x=_get(product_md, 'corner_ul_projection_x_product'),
                        y=_get(product_md, 'corner_ul_projection_y_product')),
@@ -196,6 +209,9 @@ def populate_from_mtl_dict(md, mtl_, folder):
 
     image_md = _get(mtl_, 'IMAGE_ATTRIBUTES')
 
+    if not md.image:
+        md.image = ptype.ImageMetadata()
+
     md.image.satellite_ref_point_start = ptype.Point(
         _get(product_md, 'wrs_path'),
         _get(product_md, 'wrs_row')
@@ -211,13 +227,23 @@ def populate_from_mtl_dict(md, mtl_, folder):
     md.image.geometric_rmse_model_y = _get(image_md, 'geometric_rmse_model_y')
     md.image.geometric_rmse_model_x = _get(image_md, 'geometric_rmse_model_x')
 
+    if not md.image.bands:
+        md.image.bands = {}
+
     md.image.bands.update(_read_bands(mtl_, satellite_id, sensor_id, folder))
 
+    if not md.lineage:
+        md.lineage = ptype.LineageMetadata()
+    if not md.lineage.algorithm:
+        md.lineage.algorithm = ptype.AlgorithmMetadata()
     # Example "LPGS_2.3.0"
     soft_v = _get(mtl_, 'METADATA_FILE_INFO', 'processing_software_version')
     md.lineage.algorithm.name, md.lineage.algorithm.version = soft_v.split('_')
 
     md.lineage.algorithm.parameters = {}  # ? TODO
+
+    if not md.lineage.ancillary:
+        md.lineage.ancillary = {}
 
     md.lineage.ancillary.update({
         'cpf': ptype.AncillaryMetadata(name=_get(product_md, 'cpf_name')),
