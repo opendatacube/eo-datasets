@@ -3,6 +3,7 @@ import os
 
 import shutil
 import logging
+from subprocess import check_call
 
 import pathlib
 import yaml
@@ -306,17 +307,53 @@ def write_yaml_metadata(d, target_directory, metadata_file):
         )
 
 
+def transfer_target_imagery(image_directory, package_directory):
+    """
+
+    :type image_directory: pathlib.Path
+    :type package_directory: pathlib.Path
+    :return:
+    """
+    # TODO: Handle partial packages existing.
+    if not package_directory.exists():
+        package_directory.mkdir()
+
+    # Loop through files, copy them.
+    # If file is tif, use translate instead.
+
+    for source_path in image_directory.iterdir():
+        if source_path.name.startswith('.'):
+            continue
+
+        destination_path = package_directory.joinpath(source_path.name)
+
+        if destination_path.exists() and (destination_path.stat().st_size == source_path.stat().st_size):
+            continue
+
+        source_file = str(source_path)
+        destination_file = str(destination_path)
+
+        suffix = source_path.suffix.lower()
+        # If an image, copy losslessly compressed.
+        if suffix == '.tif':
+            _LOG.info('Copying compressed %r -> %r', source_file, destination_file)
+            check_call(['gdal_translate', '-co', 'COMPRESS=deflate', source_file, destination_file])
+        else:
+            _LOG.info('Copying %r -> %r', source_file, destination_file)
+            shutil.copy(source_file, destination_file)
+
+
 def package(image_directory, target_directory, source_datasets=None):
     # TODO: If image directory is not inside target directory, copy images.
 
-    target_directory = Path(target_directory).absolute()
+    # TODO: If copying the image, why not compress it?
 
-    package_directory = target_directory / 'package'
+    target_path = Path(target_directory).absolute()
+    image_path = Path(image_directory)
 
-    _LOG.info('Copying %r -> %r', image_directory, package_directory)
-    # TODO: Handle partial packages existing.
-    if not package_directory.exists():
-        shutil.copytree(str(image_directory), str(package_directory))
+    package_directory = target_path.joinpath('package')
+
+    transfer_target_imagery(image_path, package_directory)
 
     mtl_file = next(Path(package_directory).glob('*_MTL.txt'))  # Crude but effective
 
@@ -325,15 +362,15 @@ def package(image_directory, target_directory, source_datasets=None):
     d = init_local_dataset()
     d = populate_from_mtl(d, mtl_file)
 
-    if not target_directory.exists():
-        target_directory.mkdir()
+    if not target_path.exists():
+        target_path.mkdir()
 
-    create_browse_images(d, target_directory)
+    create_browse_images(d, target_path)
     checksum_bands(d)
 
     d.lineage.source_datasets = source_datasets
 
-    write_yaml_metadata(d, target_directory, target_directory / 'ga-metadata.yaml')
+    write_yaml_metadata(d, target_path, target_path / 'ga-metadata.yaml')
 
 
 def create_relative_dumper(folder):
@@ -362,8 +399,3 @@ if __name__ == '__main__':
 
     package(os.path.expanduser('~/ops/inputs/LS8_something'), 'out-ls8-test')
     # package(os.path.expanduser('~/ops/inputs/lpgsOut/LE7_20150202_091_075'), 'out-ls7-test')
-
-
-
-
-
