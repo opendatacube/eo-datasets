@@ -1,6 +1,5 @@
 import datetime
 import os
-
 import shutil
 import logging
 from subprocess import check_call
@@ -10,7 +9,6 @@ import yaml
 from pathlib import Path, PosixPath
 
 from gaip import acquisition
-
 from gaip.mtl import load_mtl
 from eodatasets import image
 import eodatasets.type as ptype
@@ -198,11 +196,10 @@ def populate_from_mtl_dict(md, mtl_, folder):
     md.grid_spatial.projection.datum = _get(projection_md, 'datum')
     md.grid_spatial.projection.ellipsoid = _get(projection_md, 'ellipsoid')
 
-
     # Where does this come from? 'ul' etc.
     # point_in_pixel=None,
     md.grid_spatial.projection.map_projection = _get(projection_md, 'map_projection')
-    md.grid_spatial.projection.resampling_option=_get(projection_md, 'resampling_option')
+    md.grid_spatial.projection.resampling_option = _get(projection_md, 'resampling_option')
     md.grid_spatial.projection.datum = _get(projection_md, 'datum')
     md.grid_spatial.projection.ellipsoid = _get(projection_md, 'ellipsoid')
     md.grid_spatial.projection.zone = _get(projection_md, 'utm_zone')
@@ -307,7 +304,7 @@ def write_yaml_metadata(d, target_directory, metadata_file):
         )
 
 
-def transfer_target_imagery(image_directory, package_directory):
+def transfer_target_imagery(image_directory, package_directory, compress_imagery=True):
     """
 
     :type image_directory: pathlib.Path
@@ -334,10 +331,19 @@ def transfer_target_imagery(image_directory, package_directory):
         destination_file = str(destination_path)
 
         suffix = source_path.suffix.lower()
-        # If an image, copy losslessly compressed.
-        if suffix == '.tif':
+
+        # If a tif image, copy losslessly compressed.
+        if suffix == '.tif' and compress_imagery:
             _LOG.info('Copying compressed %r -> %r', source_file, destination_file)
-            check_call(['gdal_translate', '-co', 'COMPRESS=deflate', source_file, destination_file])
+            check_call(
+                [
+                    'gdal_translate',
+                    '--config', 'GDAL_CACHEMAX', '512',
+                    '--config', 'TILED', 'YES',
+                    '-co', 'COMPRESS=lzw',
+                    source_file, destination_file
+                ]
+            )
         else:
             _LOG.info('Copying %r -> %r', source_file, destination_file)
             shutil.copy(source_file, destination_file)
@@ -391,11 +397,15 @@ def create_relative_dumper(folder):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
     import doctest
-
     doctest.testmod()
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging.DEBUG)
 
+    import time
+
+    start = time.time()
     package(os.path.expanduser('~/ops/inputs/LS8_something'), 'out-ls8-test')
+    _LOG.info('Packaged in %r', time.time()-start)
+
     # package(os.path.expanduser('~/ops/inputs/lpgsOut/LE7_20150202_091_075'), 'out-ls7-test')
