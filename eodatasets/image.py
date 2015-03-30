@@ -14,6 +14,7 @@ from pathlib import Path
 
 from eodatasets.type import BrowseMetadata
 
+GDAL_CACHE_MAX_MB = 512
 
 _LOG = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ def create_thumbnail(red_file, green_file, blue_file, thumb_image,
     :param red_file: red band data file
     :param green_file: green band data file
     :param blue_file: blue band data file
-    :param thumbnail_image: thumbnail file to write to.
+    :param thumb_image: thumbnail file to write to.
     :param outcols: thumbnail width
     :param nodata: null/fill data value
     :param work_dir: temp/work directory to use.
@@ -99,7 +100,15 @@ def create_thumbnail(red_file, green_file, blue_file, thumb_image,
     # file_to = os.path.abspath(file_to)
 
     # Build the RGB Virtual Raster at full resolution
-    run_command(["gdalbuildvrt", "-overwrite", "-separate", file_to, str(red_file), str(green_file), str(blue_file)], work_dir)
+    run_command(
+        [
+            "gdalbuildvrt",
+            "-overwrite", "-separate",
+            file_to,
+            str(red_file), str(green_file), str(blue_file)
+        ],
+        work_dir
+    )
     assert os.path.exists(file_to), "VRT must exist"
 
     # Determine the pixel scaling to get the correct width thumbnail
@@ -116,12 +125,17 @@ def create_thumbnail(red_file, green_file, blue_file, thumb_image,
     outrows = int(math.ceil((float(inrows) / float(incols)) * outcols))
 
     run_command([
-        "gdalwarp", "-of", "VRT",
+        "gdalwarp",
+        "--config", "GDAL_CACHEMAX", str(GDAL_CACHE_MAX_MB),
+        "-of", "VRT",
         "-tr", str(outresx), str(outresx),
         "-r", "near",
         "-overwrite", file_to,
         warp_to_file
     ], work_dir)
+
+    _LOG.debug('Current GDAL cache max %rMB. Setting to %rMB', gdal.GetCacheMax()/1024/1024, GDAL_CACHE_MAX_MB)
+    gdal.SetCacheMax(GDAL_CACHE_MAX_MB * 1024 * 1024)
 
     # Open VRT file to array
     vrt = gdal.Open(warp_to_file)
@@ -145,8 +159,17 @@ def create_thumbnail(red_file, green_file, blue_file, thumb_image,
     outdataset = None
 
     # GDAL Create doesn't support JPEG so we need to make a copy of the GeoTIFF
-    run_command(["gdal_translate", "-of", "JPEG", outtif, str(thumbnail_path)], work_dir)
+    run_command(
+        [
+            "gdal_translate",
+            "--config", "GDAL_CACHEMAX", str(GDAL_CACHE_MAX_MB),
+            "-of", "JPEG",
+            outtif,
+            str(thumbnail_path)
+        ],
+        work_dir)
 
+    _LOG.debug('Cleaning work files')
     # Clean up work files
     for f in [file_to, warp_to_file, outtif]:
         try:
