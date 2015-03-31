@@ -507,7 +507,6 @@ class PackageTypeTests(unittest.TestCase):
         ls8_nbar = _build_ls8_nbar()
         self.assertEqual(ls8_nbar, ls8_nbar, msg='NBAR mismatch')
 
-
     def test_serialise(self):
 
         ls8_raw = _build_ls8_raw()
@@ -519,7 +518,6 @@ class PackageTypeTests(unittest.TestCase):
 
         ls8_nbar = _build_ls8_nbar()
         self.assertEqual(ls8_nbar, ls8_nbar, msg='NBAR mismatch')
-
 
 
 if __name__ == '__main__':

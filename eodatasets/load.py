@@ -18,7 +18,7 @@ import eodatasets.type as ptype
 _LOG = logging.getLogger(__name__)
 
 
-def expand_band_information(satellite, sensor, band_metadata):
+def expand_band_information(satellite, sensor, band_metadata, checksum=True):
     """
     Use the gaip reference table to add per-band metadata if availabe.
     :param satellite: satellite as reported by LPGS (eg. LANDSAT_8)
@@ -34,8 +34,9 @@ def expand_band_information(satellite, sensor, band_metadata):
         band_metadata.cell_size = band['resolution']
         band_metadata.type = band['type_desc'].lower()
 
-    _LOG.info('Checksumming band %r', band_metadata.number)
-    band_metadata.checksum_md5 = image.calculate_file_md5(band_metadata.path)
+    if checksum:
+        _LOG.info('Checksumming band %r', band_metadata.number)
+        band_metadata.checksum_md5 = image.calculate_file_md5(band_metadata.path)
 
     return band_metadata
 
