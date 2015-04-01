@@ -186,6 +186,7 @@ def populate_from_mtl_dict(md, mtl_, folder):
     md.image.cloud_cover_percentage = _get(image_md, 'cloud_cover')
     md.image.sun_elevation = _get(image_md, 'sun_elevation')
     md.image.sun_azimuth = _get(image_md, 'sun_azimuth')
+    md.image.sun_earth_distance = _get(image_md, 'earth_sun_distance')
 
     md.image.ground_control_points_model = _get(image_md, 'ground_control_points_model')
     # md.image. = _get(image_md, 'earth_sun_distance')

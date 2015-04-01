@@ -283,6 +283,7 @@ _EXPECTED_OUT = DatasetMetadata(
         cloud_cover_percentage=0.01,
         sun_azimuth=59.57807899,
         sun_elevation=57.89670734,
+        sun_earth_distance=0.998137,
         ground_control_points_model=420,
         geometric_rmse_model=4.61,
         geometric_rmse_model_x=2.968,
