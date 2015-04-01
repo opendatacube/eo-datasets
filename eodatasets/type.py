@@ -7,7 +7,6 @@ import uuid
 import time
 import logging
 
-import dateutil.parser
 from pathlib import Path
 import yaml
 
@@ -224,6 +223,7 @@ class ImageMetadata(SimpleObject):
                  cloud_cover_details=None,
                  sun_azimuth=None,
                  sun_elevation=None,
+                 sun_earth_distance=None,
                  ground_control_points_model=None,
                  geometric_rmse_model=None,
                  geometric_rmse_model_x=None,
@@ -238,6 +238,7 @@ class ImageMetadata(SimpleObject):
         self.cloud_cover_details = cloud_cover_details
         self.sun_azimuth = sun_azimuth
         self.sun_elevation = sun_elevation
+        self.sun_earth_distance = sun_earth_distance
 
         self.ground_control_points_model = ground_control_points_model
         self.geometric_rmse_model = geometric_rmse_model
@@ -295,6 +296,7 @@ class LineageMetadata(SimpleObject):
 class DatasetMetadata(SimpleObject):
     def __init__(self, id_=None,
                  ga_label=None,
+                 ga_level=None,
                  usgs_dataset_id=None,
                  product_type=None,
                  creation_dt=None,
@@ -316,6 +318,7 @@ class DatasetMetadata(SimpleObject):
         #: :type: int
         self.size_bytes = size_bytes
         self.ga_label = ga_label
+        self.ga_level = ga_level
         self.usgs_dataset_id = usgs_dataset_id
 
         self.product_type = product_type
