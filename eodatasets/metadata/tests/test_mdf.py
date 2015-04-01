@@ -21,7 +21,8 @@ class MdfTests(unittest.TestCase):
         self.assertEquals(metadata.image.satellite_ref_point_end, ptype.Point(88, 76))
 
         self.assertEquals(metadata.acquisition.groundstation.code, 'ASA')
-        self.assertEqual(metadata.extent.center_dt, datetime.date(2013, 9, 11))
+        # No longer bother with vague center date.
+        # self.assertEqual(metadata.extent.center_dt, datetime.date(2013, 9, 11))
 
     def test_directory(self):
         d = write_files({
@@ -42,7 +43,8 @@ class MdfTests(unittest.TestCase):
             self.assertEquals(metadata.image.satellite_ref_point_start, ptype.Point(88, 75))
             self.assertEquals(metadata.image.satellite_ref_point_end, ptype.Point(88, 76))
             self.assertEquals(metadata.acquisition.groundstation.code, 'ASA')
-            self.assertEqual(metadata.extent.center_dt, datetime.date(2013, 9, 11))
+            # No longer bother with vague center date.
+            # self.assertEqual(metadata.extent.center_dt, datetime.date(2013, 9, 11))
             self.assertEqual(metadata.acquisition.aos, datetime.datetime(2013, 9, 11, 23, 36, 11))
             self.assertEqual(metadata.acquisition.los, datetime.datetime(2013, 9, 11, 23, 37, 14))
 
