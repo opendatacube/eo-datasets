@@ -3,8 +3,8 @@ import unittest
 
 import datetime
 
-import eodatasets.read.adsfolder as adsfolder
-from eodatasets.read.tests import write_files
+import eodatasets.metadata.adsfolder as adsfolder
+from eodatasets.metadata.tests import write_files
 import eodatasets.type as ptype
 
 

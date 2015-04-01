@@ -11,7 +11,7 @@ from pathlib import Path
 from gaip import acquisition
 
 from eodatasets import image
-from eodatasets.read import mdf, mtl, adsfolder
+from eodatasets.metadata import mdf, mtl, adsfolder
 import eodatasets.type as ptype
 
 

@@ -3,7 +3,7 @@ import unittest
 from pathlib import PosixPath
 
 import eodatasets.load as load
-from eodatasets.read.tests import write_files
+from eodatasets.metadata.tests import write_files
 from eodatasets.type import *
 
 

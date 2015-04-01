@@ -2,7 +2,7 @@ import unittest
 
 from pathlib import PosixPath
 
-from eodatasets.read import mtl
+from eodatasets.metadata import mtl
 from eodatasets.type import *
 
 

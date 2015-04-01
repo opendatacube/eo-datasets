@@ -4,8 +4,8 @@ import unittest
 import datetime
 import pathlib
 
-import eodatasets.read.mdf as mdf
-from eodatasets.read.tests import write_files
+import eodatasets.metadata.mdf as mdf
+from eodatasets.metadata.tests import write_files
 import eodatasets.type as ptype
 
 
