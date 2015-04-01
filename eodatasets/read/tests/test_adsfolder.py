@@ -23,13 +23,13 @@ class AdsFolderExtractionTest(unittest.TestCase):
         })
 
         # Read orbit from folder name
-        d = os.path.join(d, 'LANDSAT-8.11308')
+        d = d.joinpath('LANDSAT-8.11308')
         ds = ptype.DatasetMetadata()
         metadata = adsfolder.extract_md(ds, d)
         self.assertEqual(metadata.acquisition.platform_orbit, 11308)
 
         # Read orbit from parent folder name.
-        d = os.path.join(d, 'LC80880750762013254ASA00')
+        d = d.joinpath('LC80880750762013254ASA00')
         ds = ptype.DatasetMetadata()
         metadata = adsfolder.extract_md(ds, d)
         self.assertEqual(metadata.acquisition.platform_orbit, 11308)

@@ -51,14 +51,14 @@ def _get(dictionary, *keys):
     return s
 
 
-def _read_bands(mtl_, satellite, sensor, folder_path):
+def _read_bands(mtl_, folder_path):
     """
 
     :type mtl_: dict of (str, obj)
     :type folder_path: pathlib.Path
     >>> _read_bands({'PRODUCT_METADATA': {
     ...     'file_name_band_9': "LC81010782014285LGN00_B9.TIF"}
-    ... }, 'LANDSAT_8', 'OLI_TIRS', folder_path=PosixPath('product/'))
+    ... }, 'LANDSAT_8', 'OLI_TIRS', folder_path=Path('product/'))
     {'9': BandMetadata(path=PosixPath('product/LC81010782014285LGN00_B9.TIF'), type=u'atmosphere', label=u'Cirrus', number='9', cell_size=25.0)}
     """
     bs = _read_mtl_band_filenames(mtl_)
@@ -75,15 +75,14 @@ def _read_bands(mtl_, satellite, sensor, folder_path):
 def populate_from_mtl(md, mtl_path):
     """
 
-    :type md: eodatasets.type.DatasetMetad
-    :param mtl_path:
-    :rtype: eodatasets.type.DatasetMetad
+    :type md: eodatasets.type.DatasetMetadata
+    :type mtl_path: Path
+    :rtype: eodatasets.type.DatasetMetadata
     """
     if not md:
         md = ptype.DatasetMetadata()
 
-    mtl_path = Path(mtl_path).absolute()
-    mtl_ = load_mtl(str(mtl_path))
+    mtl_ = load_mtl(str(mtl_path.absolute()))
     return populate_from_mtl_dict(md, mtl_, mtl_path.parent)
 
 
@@ -94,7 +93,7 @@ def populate_from_mtl_dict(md, mtl_, folder):
     :param folder: Folder containing imagery (and mtl)
     :type md: eodatasets.type.DatasetMetadata
     :type mtl_: dict of (str, obj)
-    :rtype: eodatasets.type.DatasetMetad
+    :rtype: eodatasets.type.DatasetMetadata
     """
     md.usgs_dataset_id = _get(mtl_, 'METADATA_FILE_INFO', 'landsat_scene_id') or md.usgs_dataset_id
     md.creation_dt = _get(mtl_, 'METADATA_FILE_INFO', 'file_date')
@@ -197,7 +196,7 @@ def populate_from_mtl_dict(md, mtl_, folder):
     if not md.image.bands:
         md.image.bands = {}
 
-    md.image.bands.update(_read_bands(mtl_, satellite_id, sensor_id, folder))
+    md.image.bands.update(_read_bands(mtl_, folder))
 
     if not md.lineage:
         md.lineage = ptype.LineageMetadata()

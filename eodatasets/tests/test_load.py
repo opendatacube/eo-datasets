@@ -150,15 +150,15 @@ class TestBandExpansion(unittest.TestCase):
     def test_expand_band(self):
         # Create fake image file.
         image_file = write_files({'LC81010782014285LGN00_B6.TIF': 'test'})
-        image_file = os.path.join(image_file, 'LC81010782014285LGN00_B6.TIF')
+        image_file = image_file.joinpath( 'LC81010782014285LGN00_B6.TIF')
 
         md = load.expand_band_information(
             'LANDSAT_8', 'OLI_TIRS',
-            BandMetadata(path=PosixPath(image_file), number='6')
+            BandMetadata(path=image_file, number='6')
         )
 
         expected = BandMetadata(
-            path=PosixPath(image_file),
+            path=Path(image_file),
             type=u'reflective',
             label=u'Short-wave Infrared 1',
             number='6',
@@ -173,3 +173,29 @@ class TestBandExpansion(unittest.TestCase):
             load.expand_band_information('LANDSAT_8', 'OLI_TIRS', band_metadata, checksum=False)
 
         self.assertEqual(BASIC_BANDS, EXPANDED_BANDS)
+
+    def test_prepare_same_destination(self):
+        dataset_path = write_files({'LC81010782014285LGN00_B6.TIF': 'test'})
+
+        size_bytes= load.prepare_target_imagery(dataset_path, dataset_path, compress_imagery=False)
+        self.assertEqual(size_bytes, 4)
+
+    def test_prepare_copy_destination(self):
+        test_path = write_files({'source_dir': {'LC81010782014285LGN00_B6.TIF': 'test'}})
+        source_path = test_path.joinpath('source_dir')
+        dest_path = test_path.joinpath('dest_dir')
+
+        size_bytes = load.prepare_target_imagery(source_path, dest_path, compress_imagery=False)
+        self.assertEqual(size_bytes, 4)
+
+        # Ensure dest file was created.
+        self.assertTrue(dest_path.is_dir())
+        dest_file = dest_path.joinpath('LC81010782014285LGN00_B6.TIF')
+        self.assertTrue(dest_file.is_file())
+        self.assertTrue(dest_file.stat().st_size, 4)
+
+        # Ensure source path was not touched.
+        source_file = dest_path.joinpath('LC81010782014285LGN00_B6.TIF')
+        self.assertTrue(source_file.is_file())
+        self.assertTrue(source_file.stat().st_size, 4)
+

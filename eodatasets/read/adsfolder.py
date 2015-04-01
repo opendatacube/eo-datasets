@@ -19,15 +19,15 @@ def extract_md(md, directory):
         LANDSAT-8.3108
         NPP.VIIRS.10014.ALICE
 
-    :type md: neocommon.metadata.PassMetadata
-    :type directory: str
-    :rtype: neocommon.metadata.PassMetadata
+    :type md: ptype.DatasetMetadata
+    :type directory: pathlib.Path
+    :rtype: ptype.DatasetMetadata
     """
 
-    directory = os.path.abspath(directory)
-    parent_dir = os.path.dirname(directory)
+    directory = directory.absolute()
+    parent_dir = directory.parent
 
-    orbit = _extract_orbit(directory) or _extract_orbit(parent_dir)
+    orbit = _extract_orbit(directory.name) or _extract_orbit(parent_dir.name)
 
     if not md.acquisition:
         md.acquisition = ptype.AcquisitionMetadata()
@@ -50,14 +50,11 @@ def _extract_orbit(name):
     73100
     >>> _extract_orbit('LANDSAT-8.3108')
     3108
-    >>> _extract_orbit('/tmp/some/abs/path/LANDSAT-8.3108')
-    3108
     >>> _extract_orbit('NPP.VIIRS.10014.ALICE')
     10014
     >>> _extract_orbit('not_an_ads_dir')
     >>> _extract_orbit('LANDSAT-8.FAKE')
     """
-    name = os.path.basename(name)
     m = re.search("(?P<sat>AQUA|TERRA|LANDSAT-\d|NPP\.VIIRS)\.(?P<orbit>\d+)(\.\w+)?", name)
 
     if m is None:

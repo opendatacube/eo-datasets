@@ -1,5 +1,5 @@
-__author__ = 'jez'
 
+import pathlib
 import atexit
 import os
 import shutil
@@ -17,7 +17,7 @@ def write_files(file_dict):
     writeFiles({'test.txt': 'contents of text file'})
 
     :type file_dict: dict
-    :rtype: str
+    :rtype: pathlib.Path
     :return: Created temporary directory path
     """
     containing_dir = tempfile.mkdtemp(suffix='neotestrun')
@@ -28,7 +28,7 @@ def write_files(file_dict):
             shutil.rmtree(path)
 
     atexit.register(remove_if_exists, containing_dir)
-    return containing_dir
+    return pathlib.Path(containing_dir)
 
 
 def _write_files_to_dir(directory_path, file_dict):

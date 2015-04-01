@@ -10,10 +10,12 @@ import time
 
 import eodatasets.type as ptype
 
+LS8_SENSORS = {"C": "OLI_TIRS", "O": "OLI", "T": "TIRS"}
+
 _log = logging.getLogger(__name__)
 
 
-def extract_md(base_md, directory):
+def extract_md(base_md, directory_path):
     """
     Extract metadata from a directory of MDF files
 
@@ -35,29 +37,29 @@ def extract_md(base_md, directory):
 
     for example LC80850800822013137ASA00
 
-    :type base_md: PassMetadata
-    :type directory: str
-    :rtype: PassMetadata
+    :type base_md: ptype.DatasetMetadata
+    :type directory_path: Path
+    :rtype: ptype.DatasetMetadata
     """
 
-    directory, files = find_mdf_files(directory)
+    directory_path, files = find_mdf_files(directory_path)
 
-    if not directory or len(files) < 1:
+    if not directory_path or len(files) < 1:
         _log.debug("No MDF data found")
         return base_md
 
-    _log.info("Found MDF files %r in directory %r", files, directory)
+    _log.info("Found MDF files %r in directory %r", files, directory_path)
 
-    return _extract_mdf_file_data(base_md, directory, files)
+    return _extract_mdf_file_data(base_md, directory_path, files)
 
 
 def _extract_mdf_file_data(base_md, directory, files):
     """
 
     :type base_md: ptype.DatasetMetadata
-    :param directory:
-    :param files:
-    :return:
+    :type directory: pathlib.Path
+    :type files: list of pathlib.Path
+    :rtype: ptype.DatasetMetadata
     """
     base_md = _extract_mdf_directory_fields(base_md, directory)
     base_md = _extract_mdf_file_fields(base_md, files)
@@ -76,11 +78,9 @@ def _extract_mdf_directory_fields(base_md, directory):
     """
     V I N ppp RRR rrr YYYY ddd GSI vv
     :type base_md: ptype.DatasetMetadata
-    :type directory: str
+    :type directory: pathlib.Path
     :rtype: ptype.DatasetMetadata
     """
-    SENSORS = {"C": "OLI_TIRS", "O": "OLI", "T": "TIRS"}
-
     m = re.search(
         "(?P<vehicle>L)" +
         "(?P<instrument>[OTC])" +
@@ -91,11 +91,11 @@ def _extract_mdf_directory_fields(base_md, directory):
         "(?P<acq_date>\d{7})" +
         "(?P<gsi>\w{3})" +
         "(?P<version>\d{2})",
-        directory)
+        directory.name)
 
     fields = m.groupdict()
 
-    base_md.usgs_dataset_id = os.path.basename(directory)
+    base_md.usgs_dataset_id = directory.name
 
     if not base_md.platform:
         base_md.platform = ptype.PlatformMetadata()
@@ -104,7 +104,7 @@ def _extract_mdf_directory_fields(base_md, directory):
 
     if not base_md.instrument:
         base_md.instrument = ptype.InstrumentMetadata()
-    base_md.instrument.name = SENSORS[fields["instrument"]]
+    base_md.instrument.name = LS8_SENSORS[fields["instrument"]]
 
     path = int(fields["path"])
 
@@ -148,7 +148,7 @@ def _extract_mdf_file_fields(base_md, files):
       for example 383.000.2013137232105971.ASA
 
     :type base_md: ptype.DatasetMetadata
-    :type files: list of str
+    :type files: list of pathlib.Path
     :rtype: ptype.DatasetMetadata
     """
 
@@ -164,7 +164,7 @@ def _extract_mdf_file_fields(base_md, files):
             "(?P<date_time_ms>\d{3})" +
             "\." +
             "(?P<gsi>\w{3})",
-            f)
+            f.name)
 
         fields = m.groupdict()
 
@@ -247,22 +247,24 @@ def is_mdf_file(filename):
 def find_mdf_files(directory):
     """
     Find a MDF directory and list of matching mdf files.
-    :rtype: (str, [str])
+    :type directory: pathlib.Path
+    :rtype: (pathlib.Path, [pathlib.Path])
     """
     mdf_dir = None
     mdf_files = None
 
     # Were we given the MDF directory itself?
-    if is_mdf_directory(os.path.basename(directory)):
+    if is_mdf_directory(directory.name):
         mdf_dir = directory
 
     # Is there a single MDF sub-directory?
     else:
-        dirs = [d for d in os.listdir(directory) if is_mdf_directory(d)]
+        dirs = [d for d in directory.iterdir() if is_mdf_directory(d.name)]
         if dirs and len(dirs) == 1:
-            mdf_dir = os.path.join(directory, dirs[0])
+            mdf_dir = dirs[0]
 
     if mdf_dir:
-        mdf_files = [f for f in os.listdir(mdf_dir) if is_mdf_file(f)]
+        mdf_files = [f for f in mdf_dir.iterdir() if is_mdf_file(f.name)]
 
     return mdf_dir, mdf_files
+

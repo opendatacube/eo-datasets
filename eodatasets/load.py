@@ -11,7 +11,7 @@ from pathlib import Path
 from gaip import acquisition
 
 from eodatasets import image
-from eodatasets.read import mdf, mtl
+from eodatasets.read import mdf, mtl, adsfolder
 import eodatasets.type as ptype
 
 
@@ -87,49 +87,76 @@ def write_yaml_metadata(d, target_directory, metadata_file):
         )
 
 
-def transfer_target_imagery(image_directory, package_directory, compress_imagery=True):
+def _copy_file(source_path, destination_path, compress_imagery=True):
     """
+    Copy a file from source to destination if needed. Maybe apply compression.
 
-    :type image_directory: pathlib.Path
-    :type package_directory: pathlib.Path
-    :return:
+    (it's generally faster to compress during a copy operation than as a separate step)
+
+    :type source_path: Path
+    :type destination_path: Path
+    :type compress_imagery: bool
+    :return: Size in bytes of destionation file.
+    :rtype int
+    """
+    source_size_bytes = source_path.stat().st_size
+
+    if destination_path.exists():
+        if source_path.resolve() == destination_path.resolve():
+            return source_size_bytes
+
+        if destination_path.stat().st_size == source_size_bytes:
+            return source_size_bytes
+
+    source_file = str(source_path)
+    destination_file = str(destination_path)
+
+    # Copy to destination path.
+
+    suffix = source_path.suffix.lower()
+
+    # If a tif image, losslessly compress it.
+    if suffix == '.tif' and compress_imagery:
+        _LOG.info('Copying compressed %r -> %r', source_file, destination_file)
+        check_call(
+            [
+                'gdal_translate',
+                '--config', 'GDAL_CACHEMAX', '512',
+                '--config', 'TILED', 'YES',
+                '-co', 'COMPRESS=lzw',
+                source_file, destination_file
+            ]
+        )
+    else:
+        _LOG.info('Copying %r -> %r', source_file, destination_file)
+        shutil.copy(source_file, destination_file)
+
+    return destination_path.stat().st_size
+
+
+def prepare_target_imagery(image_directory, package_directory, compress_imagery=True):
+    """
+    Copy a directory of files if not already there. Possibly compress images.
+
+    :type image_directory: Path
+    :type package_directory: Path
+    :return: Total size of imagery in bytes
+    :rtype int
     """
     # TODO: Handle partial packages existing.
     if not package_directory.exists():
         package_directory.mkdir()
 
-    # Loop through files, copy them.
-    # If file is tif, use translate instead.
-
+    size_bytes = 0
     for source_path in image_directory.iterdir():
         if source_path.name.startswith('.'):
             continue
 
         destination_path = package_directory.joinpath(source_path.name)
 
-        if destination_path.exists() and (destination_path.stat().st_size == source_path.stat().st_size):
-            continue
+        size_bytes += _copy_file(source_path, destination_path, compress_imagery)
 
-        source_file = str(source_path)
-        destination_file = str(destination_path)
-
-        suffix = source_path.suffix.lower()
-
-        # If a tif image, copy losslessly compressed.
-        if suffix == '.tif' and compress_imagery:
-            _LOG.info('Copying compressed %r -> %r', source_file, destination_file)
-            check_call(
-                [
-                    'gdal_translate',
-                    '--config', 'GDAL_CACHEMAX', '512',
-                    '--config', 'TILED', 'YES',
-                    '-co', 'COMPRESS=lzw',
-                    source_file, destination_file
-                ]
-            )
-        else:
-            _LOG.info('Copying %r -> %r', source_file, destination_file)
-            shutil.copy(source_file, destination_file)
+    return size_bytes
 
 
 def package(image_directory, target_directory, source_datasets=None):
@@ -138,18 +165,19 @@ def package(image_directory, target_directory, source_datasets=None):
     # TODO: If copying the image, why not compress it?
 
     target_path = Path(target_directory).absolute()
-    image_path = Path(image_directory)
+    image_path = Path(image_directory).absolute()
 
     package_directory = target_path.joinpath('package')
 
-    transfer_target_imagery(image_path, package_directory)
+    size_bytes = prepare_target_imagery(image_path, package_directory)
 
-    mtl_file = next(Path(package_directory).glob('*_MTL.txt'))  # Crude but effective
+    mtl_path = next(Path(package_directory).glob('*_MTL.txt'))  # Crude but effective
 
-    _LOG.info('Reading MTL %r', mtl_file)
+    _LOG.info('Reading MTL %r', mtl_path)
 
     d = init_local_dataset()
-    d = mtl.populate_from_mtl(d, mtl_file)
+    d = mtl.populate_from_mtl(d, mtl_path)
+    d.size_bytes = size_bytes
 
     if not target_path.exists():
         target_path.mkdir()
@@ -161,6 +189,29 @@ def package(image_directory, target_directory, source_datasets=None):
 
     d.lineage.source_datasets = source_datasets
 
+    write_yaml_metadata(d, target_path, target_path / 'ga-metadata.yaml')
+
+
+def package_nbar(image_directory, target_directory, source_datasets=None):
+    # copy datasets.
+    # Load bands
+
+    # Generic package function: Pass a DatasetMetadata, image folder, browse bands.
+    # Method hashes and generates browse.
+    pass
+
+
+def package_raw(image_directory, target_directory):
+    image_path = Path(image_directory).absolute()
+    target_path = Path(target_directory).absolute()
+
+    # We don't need to modify/copy anything. Just generate metadata.
+    d = init_local_dataset()
+    d = mdf.extract_md(d,image_path)
+    d = adsfolder.extract_md(d, image_path)
+    prepare_target_imagery(image_path, target_path)
+
+    # TODO: Bands?
     write_yaml_metadata(d, target_path, target_path / 'ga-metadata.yaml')
 
 
@@ -191,6 +242,11 @@ if __name__ == '__main__':
 
     start = time.time()
     package(os.path.expanduser('~/ops/inputs/LS8_something'), 'out-ls8-test')
-    _LOG.info('Packaged in %r', time.time()-start)
+    _LOG.info('Packaged ORTHO in %r', time.time()-start)
+
+    start = time.time()
+    raw_ls8_dir = os.path.expanduser('~/ops/inputs/LANDSAT-8.11308/LC81160740742015089ASA00')
+    package_raw(raw_ls8_dir, raw_ls8_dir)
+    _LOG.info('Packaged RAW in %r', time.time()-start)
 
     # package(os.path.expanduser('~/ops/inputs/lpgsOut/LE7_20150202_091_075'), 'out-ls7-test')
