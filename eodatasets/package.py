@@ -190,7 +190,7 @@ def package(image_directory, target_directory, source_datasets=None):
 
     d.lineage.source_datasets = source_datasets
 
-    serialise.write_yaml_metadata(d, target_path, target_path / 'ga-metadata.yaml')
+    serialise.write_yaml_metadata(d, target_path / 'ga-metadata.yaml', target_path)
 
 
 def package_nbar(image_directory, target_directory, source_datasets=None):
@@ -215,7 +215,7 @@ def package_raw(image_directory, target_directory):
     # TODO: Bands?
     # TODO: Antenna coords for groundstation? Heading?
 
-    serialise.write_yaml_metadata(d, target_path, target_path / 'ga-metadata.yaml')
+    serialise.write_yaml_metadata(d, target_path / 'ga-metadata.yaml', target_path)
 
 
 if __name__ == '__main__':
