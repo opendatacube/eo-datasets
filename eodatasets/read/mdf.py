@@ -115,10 +115,11 @@ def _extract_mdf_directory_fields(base_md, directory):
 
     # base_md.version = int(fields["version"]) or base_md.version
 
-    if not base_md.extent:
-        base_md.extent = ptype.ExtentMetadata()
-
-    base_md.extent.center_dt = base_md.extent.center_dt or datetime.strptime(fields["acq_date"], "%Y%j").date()
+    # Probably less than useful without time.
+    # if not base_md.extent:
+    #     base_md.extent = ptype.ExtentMetadata()
+    #
+    # base_md.extent.center_dt = base_md.extent.center_dt or datetime.strptime(fields["acq_date"], "%Y%j").date()
 
     if not base_md.acquisition:
         base_md.acquisition = ptype.AcquisitionMetadata()
@@ -172,6 +173,7 @@ def _extract_mdf_file_fields(base_md, files):
 
         times.append(t)
 
+    # TODO: This calculation comes from the old jobmanger code. Is it desirable?
     start = adjust_time(min(times), -60)  # 60 seconds before first segment's acquisition complete time
     stop = max(times)  # the last segment's acquisition complete time
 

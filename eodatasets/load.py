@@ -209,9 +209,11 @@ def package_raw(image_directory, target_directory):
     d = init_local_dataset()
     d = mdf.extract_md(d,image_path)
     d = adsfolder.extract_md(d, image_path)
-    prepare_target_imagery(image_path, target_path)
+    d.size_bytes = prepare_target_imagery(image_path, target_path)
 
     # TODO: Bands?
+    # TODO: Antenna coords for groundstation? Heading?
+
     write_yaml_metadata(d, target_path, target_path / 'ga-metadata.yaml')
 
 
