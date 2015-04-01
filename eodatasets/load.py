@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import logging
@@ -9,7 +8,6 @@ import yaml
 from pathlib import Path
 
 from gaip import acquisition
-
 from eodatasets import image
 from eodatasets.metadata import mdf, mtl, adsfolder
 import eodatasets.type as ptype
@@ -41,7 +39,6 @@ def expand_band_information(satellite, sensor, band_metadata, checksum=True):
     return band_metadata
 
 
-
 def init_local_dataset(uuid=None):
     """
     Create blank metadata for a newly created dataset on this machine.
@@ -57,29 +54,50 @@ def init_local_dataset(uuid=None):
     return md
 
 
-def create_browse_images(d, target_directory, red_band_id='7', green_band_id='5', blue_band_id='1', browse_filename='browse'):
-    # Create browse
-    # TODO: Full resolution too?
+def create_browse_images(
+        d,
+        target_directory,
+        red_band_id='7', green_band_id='5', blue_band_id='1',
+        browse_filename='browse'):
+    """
+
+    :type d: ptype.DatasetMetadata
+    :type target_directory: Path
+    :type red_band_id: str
+    :type green_band_id: str
+    :type blue_band_id: str
+    :type browse_filename: str
+    :return:
+    """
     d.browse = {
         'medium': image.create_browse(
             d.image.bands[red_band_id],
             d.image.bands[green_band_id],
             d.image.bands[blue_band_id],
-            target_directory / (browse_filename+'.jpg'),
+            target_directory / (browse_filename + '.jpg'),
             constrain_horizontal_res=1024
         ),
         'full': image.create_browse(
             d.image.bands[red_band_id],
             d.image.bands[green_band_id],
             d.image.bands[blue_band_id],
-            target_directory / (browse_filename+'.fr.jpg')
+            target_directory / (browse_filename + '.fr.jpg')
         )
     }
-
     return d
 
 
-def write_yaml_metadata(d, target_directory, metadata_file):
+def write_yaml_metadata(d, metadata_file, target_directory):
+    """
+    Write the given dataset to yaml.
+
+    All 'Path' values are converted to relative paths: relative to the given
+    target directroy.
+
+    :type d: ptype.DatasetMetadata
+    :type target_directory: str
+    :type metadata_file: str
+    """
     _LOG.info('Writing metadata file %r', metadata_file)
     with open(str(metadata_file), 'w') as f:
         ptype.yaml.dump(
@@ -164,7 +182,6 @@ def prepare_target_imagery(image_directory, package_directory, compress_imagery=
     return size_bytes
 
 
-
 def package(image_directory, target_directory, source_datasets=None):
     """
 
@@ -216,7 +233,7 @@ def package_raw(image_directory, target_directory):
 
     # We don't need to modify/copy anything. Just generate metadata.
     d = init_local_dataset()
-    d = mdf.extract_md(d,image_path)
+    d = mdf.extract_md(d, image_path)
     d = adsfolder.extract_md(d, image_path)
     d.size_bytes = prepare_target_imagery(image_path, target_path)
 
@@ -246,18 +263,21 @@ def create_relative_dumper(folder):
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
     import doctest
+
     doctest.testmod()
     logging.getLogger().setLevel(logging.DEBUG)
 
     import time
 
     start = time.time()
-    package(os.path.expanduser('~/ops/inputs/LS8_something'), 'out-ls8-test')
-    _LOG.info('Packaged ORTHO in %r', time.time()-start)
-
-    start = time.time()
     raw_ls8_dir = os.path.expanduser('~/ops/inputs/LANDSAT-8.11308/LC81160740742015089ASA00')
     package_raw(raw_ls8_dir, raw_ls8_dir)
-    _LOG.info('Packaged RAW in %r', time.time()-start)
+    _LOG.info('Packaged RAW in %r', time.time() - start)
+
+    # TODO: Link raw as source of  ortho.
+
+    start = time.time()
+    package(os.path.expanduser('~/ops/inputs/LS8_something'), 'out-ls8-test')
+    _LOG.info('Packaged ORTHO in %r', time.time() - start)
 
     # package(os.path.expanduser('~/ops/inputs/lpgsOut/LE7_20150202_091_075'), 'out-ls7-test')
