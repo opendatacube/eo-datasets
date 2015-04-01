@@ -57,21 +57,26 @@ def init_local_dataset(uuid=None):
     return md
 
 
-def create_browse_images(d, target_directory):
+def create_browse_images(d, target_directory, red_band_id='7', green_band_id='5', blue_band_id='1', browse_filename='browse'):
     # Create browse
     # TODO: Full resolution too?
     d.browse = {
         'medium': image.create_browse(
-            d.image.bands['7'],
-            d.image.bands['5'],
-            d.image.bands['1'],
-            target_directory / 'thumb.jpg'
+            d.image.bands[red_band_id],
+            d.image.bands[green_band_id],
+            d.image.bands[blue_band_id],
+            target_directory / (browse_filename+'.jpg'),
+            constrain_horizontal_res=1024
+        ),
+        'full': image.create_browse(
+            d.image.bands[red_band_id],
+            d.image.bands[green_band_id],
+            d.image.bands[blue_band_id],
+            target_directory / (browse_filename+'.fr.jpg')
         )
     }
 
     return d
-
-
 
 
 def write_yaml_metadata(d, target_directory, metadata_file):
@@ -159,11 +164,15 @@ def prepare_target_imagery(image_directory, package_directory, compress_imagery=
     return size_bytes
 
 
+
 def package(image_directory, target_directory, source_datasets=None):
-    # TODO: If image directory is not inside target directory, copy images.
+    """
 
-    # TODO: If copying the image, why not compress it?
-
+    :param image_directory:
+    :param target_directory:
+    :param source_datasets:
+    :return:
+    """
     target_path = Path(target_directory).absolute()
     image_path = Path(image_directory).absolute()
 
@@ -171,7 +180,7 @@ def package(image_directory, target_directory, source_datasets=None):
 
     size_bytes = prepare_target_imagery(image_path, package_directory)
 
-    mtl_path = next(Path(package_directory).glob('*_MTL.txt'))  # Crude but effective
+    mtl_path = next(package_directory.glob('*_MTL.txt'))  # Crude but effective
 
     _LOG.info('Reading MTL %r', mtl_path)
 

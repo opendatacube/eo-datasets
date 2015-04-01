@@ -14,6 +14,7 @@ from pathlib import Path
 
 from eodatasets.type import BrowseMetadata
 
+
 GDAL_CACHE_MAX_MB = 512
 
 _LOG = logging.getLogger(__name__)
@@ -62,7 +63,7 @@ def _calculate_scale_offset(nodata, band):
 
 
 def create_thumbnail(red_file, green_file, blue_file, thumb_image,
-                     outcols=1024, nodata=-999, work_dir=None, overwrite=True):
+                     outcols=None, nodata=-999, work_dir=None, overwrite=True):
     """
     Create JPEG thumbnail image using individual R, G, B images.
 
@@ -70,7 +71,7 @@ def create_thumbnail(red_file, green_file, blue_file, thumb_image,
     :param green_file: green band data file
     :param blue_file: blue band data file
     :param thumb_image: thumbnail file to write to.
-    :param outcols: thumbnail width
+    :param outcols: thumbnail width (if not full resolution)
     :param nodata: null/fill data value
     :param work_dir: temp/work directory to use.
     :param overwrite: overwrite existing thumbnail?
@@ -119,22 +120,30 @@ def create_thumbnail(red_file, green_file, blue_file, thumb_image,
     inrows = vrt.RasterYSize
     incols = vrt.RasterXSize
 
-    outresx = inpixelx * incols / outcols
-    _LOG.info('Input pixel res %r, output pixel res %r', inpixelx, outresx)
+    # If a specific resolution is asked for.
+    if outcols:
+        outresx = inpixelx * incols / outcols
+        _LOG.info('Input pixel res %r, output pixel res %r', inpixelx, outresx)
 
-    outrows = int(math.ceil((float(inrows) / float(incols)) * outcols))
+        outrows = int(math.ceil((float(inrows) / float(incols)) * outcols))
 
-    run_command([
-        "gdalwarp",
-        "--config", "GDAL_CACHEMAX", str(GDAL_CACHE_MAX_MB),
-        "-of", "VRT",
-        "-tr", str(outresx), str(outresx),
-        "-r", "near",
-        "-overwrite", file_to,
-        warp_to_file
-    ], work_dir)
+        run_command([
+            "gdalwarp",
+            "--config", "GDAL_CACHEMAX", str(GDAL_CACHE_MAX_MB),
+            "-of", "VRT",
+            "-tr", str(outresx), str(outresx),
+            "-r", "near",
+            "-overwrite", file_to,
+            warp_to_file
+        ], work_dir)
+    else:
+        # Otherwise use a full resolution browse image.
+        outrows = inrows
+        outcols = incols
+        warp_to_file = file_to
+        outresx = inpixelx
 
-    _LOG.debug('Current GDAL cache max %rMB. Setting to %rMB', gdal.GetCacheMax()/1024/1024, GDAL_CACHE_MAX_MB)
+    _LOG.debug('Current GDAL cache max %rMB. Setting to %rMB', gdal.GetCacheMax() / 1024 / 1024, GDAL_CACHE_MAX_MB)
     gdal.SetCacheMax(GDAL_CACHE_MAX_MB * 1024 * 1024)
 
     # Open VRT file to array
@@ -181,7 +190,7 @@ def create_thumbnail(red_file, green_file, blue_file, thumb_image,
     return outcols, outrows, outresx
 
 
-def create_browse(red_band, green_band, blue_band, destination_file):
+def create_browse(red_band, green_band, blue_band, destination_file, constrain_horizontal_res=None):
     """
 
     :type red_band: eodatasets.type.BandMetadata
@@ -190,7 +199,13 @@ def create_browse(red_band, green_band, blue_band, destination_file):
     :param destination_file:
     :return:
     """
-    cols, rows, output_res = create_thumbnail(red_band.path, green_band.path, blue_band.path, destination_file)
+    cols, rows, output_res = create_thumbnail(
+        red_band.path,
+        green_band.path,
+        blue_band.path,
+        destination_file,
+        outcols=constrain_horizontal_res
+    )
 
     _LOG.info('Checksumming browse %r', destination_file)
     md5 = calculate_file_md5(destination_file)
