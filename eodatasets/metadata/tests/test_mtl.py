@@ -1,6 +1,6 @@
 import unittest
 
-from pathlib import PosixPath
+from pathlib import Path, PosixPath
 
 from eodatasets.metadata import mtl
 from eodatasets.type import *

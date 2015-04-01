@@ -3,12 +3,10 @@ import shutil
 import logging
 from subprocess import check_call
 
-import pathlib
-import yaml
 from pathlib import Path
 
 from gaip import acquisition
-from eodatasets import image
+from eodatasets import image, serialise
 from eodatasets.metadata import mdf, mtl, adsfolder
 import eodatasets.type as ptype
 
@@ -85,29 +83,6 @@ def create_browse_images(
         )
     }
     return d
-
-
-def write_yaml_metadata(d, metadata_file, target_directory):
-    """
-    Write the given dataset to yaml.
-
-    All 'Path' values are converted to relative paths: relative to the given
-    target directroy.
-
-    :type d: ptype.DatasetMetadata
-    :type target_directory: str
-    :type metadata_file: str
-    """
-    _LOG.info('Writing metadata file %r', metadata_file)
-    with open(str(metadata_file), 'w') as f:
-        ptype.yaml.dump(
-            d,
-            f,
-            default_flow_style=False,
-            indent=4,
-            Dumper=create_relative_dumper(target_directory),
-            allow_unicode=True
-        )
 
 
 def _copy_file(source_path, destination_path, compress_imagery=True):
@@ -215,7 +190,7 @@ def package(image_directory, target_directory, source_datasets=None):
 
     d.lineage.source_datasets = source_datasets
 
-    write_yaml_metadata(d, target_path, target_path / 'ga-metadata.yaml')
+    serialise.write_yaml_metadata(d, target_path, target_path / 'ga-metadata.yaml')
 
 
 def package_nbar(image_directory, target_directory, source_datasets=None):
@@ -240,24 +215,7 @@ def package_raw(image_directory, target_directory):
     # TODO: Bands?
     # TODO: Antenna coords for groundstation? Heading?
 
-    write_yaml_metadata(d, target_path, target_path / 'ga-metadata.yaml')
-
-
-def create_relative_dumper(folder):
-    class RelativeDumper(yaml.Dumper):
-        pass
-
-    def path_representer(dumper, data):
-        """
-        :type dumper: BaseRepresenter
-        :type data: pathlib.Path
-        :rtype: yaml.nodes.Node
-        """
-        return dumper.represent_scalar(u'tag:yaml.org,2002:str', str(data.relative_to(folder)))
-
-    RelativeDumper.add_multi_representer(pathlib.Path, path_representer)
-
-    return RelativeDumper
+    serialise.write_yaml_metadata(d, target_path, target_path / 'ga-metadata.yaml')
 
 
 if __name__ == '__main__':
@@ -274,7 +232,7 @@ if __name__ == '__main__':
     package_raw(raw_ls8_dir, raw_ls8_dir)
     _LOG.info('Packaged RAW in %r', time.time() - start)
 
-    # TODO: Link raw as source of  ortho.
+    # TODO: Link raw as source of ortho.
 
     start = time.time()
     package(os.path.expanduser('~/ops/inputs/LS8_something'), 'out-ls8-test')

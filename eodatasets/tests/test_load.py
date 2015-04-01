@@ -1,8 +1,8 @@
 import unittest
 
-from pathlib import PosixPath
+from pathlib import PosixPath, Path
 
-import eodatasets.load as load
+import eodatasets.package as load
 from eodatasets.metadata.tests import write_files
 from eodatasets.type import *
 

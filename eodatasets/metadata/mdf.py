@@ -4,7 +4,6 @@ Metadata extraction from MDF files.
 import calendar
 from datetime import datetime
 import logging
-import os
 import re
 import time
 

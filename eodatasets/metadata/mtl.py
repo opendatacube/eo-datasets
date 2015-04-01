@@ -18,7 +18,8 @@ def _read_mtl_band_filenames(mtl_):
     ...    'file_name_band_11': "LC81010782014285LGN00_B11.TIF",
     ...    'file_name_band_quality': "LC81010782014285LGN00_BQA.TIF"
     ...    }})
-    {'9': 'LC81010782014285LGN00_B9.TIF', '11': 'LC81010782014285LGN00_B11.TIF', 'quality': 'LC81010782014285LGN00_BQA.TIF'}
+    {'9': 'LC81010782014285LGN00_B9.TIF', '11': 'LC81010782014285LGN00_B11.TIF', 'quality': \
+    'LC81010782014285LGN00_BQA.TIF'}
     >>> _read_mtl_band_filenames({'PRODUCT_METADATA': {
     ...    'file_name_band_9': "LC81010782014285LGN00_B9.TIF",
     ...    'corner_ul_lat_product': -24.98805,

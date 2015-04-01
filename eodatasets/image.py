@@ -247,6 +247,6 @@ if __name__ == '__main__':
         glob.glob(_dir + '/*_B7.TIF')[0],
         glob.glob(_dir + '/*_B5.TIF')[0],
         glob.glob(_dir + '/*_B1.TIF')[0],
-        thumbnail_image='test-thumb.jpg',
+        thumb_image='test-thumb.jpg',
         work_dir=os.path.abspath('out-tmp')
     )
