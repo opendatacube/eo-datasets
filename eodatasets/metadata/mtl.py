@@ -17,13 +17,13 @@ def _read_mtl_band_filenames(mtl_):
     ...    'file_name_band_9': "LC81010782014285LGN00_B9.TIF",
     ...    'file_name_band_11': "LC81010782014285LGN00_B11.TIF",
     ...    'file_name_band_quality': "LC81010782014285LGN00_BQA.TIF"
-    ...    }})
+    ... }})
     {'9': 'LC81010782014285LGN00_B9.TIF', '11': 'LC81010782014285LGN00_B11.TIF', 'quality': \
     'LC81010782014285LGN00_BQA.TIF'}
     >>> _read_mtl_band_filenames({'PRODUCT_METADATA': {
     ...    'file_name_band_9': "LC81010782014285LGN00_B9.TIF",
     ...    'corner_ul_lat_product': -24.98805,
-    ...    }})
+    ... }})
     {'9': 'LC81010782014285LGN00_B9.TIF'}
     """
     product_md = mtl_['PRODUCT_METADATA']
@@ -60,7 +60,8 @@ def _read_bands(mtl_, folder_path):
     >>> _read_bands({'PRODUCT_METADATA': {
     ...     'file_name_band_9': "LC81010782014285LGN00_B9.TIF"}
     ... }, 'LANDSAT_8', 'OLI_TIRS', folder_path=Path('product/'))
-    {'9': BandMetadata(path=PosixPath('product/LC81010782014285LGN00_B9.TIF'), type=u'atmosphere', label=u'Cirrus', number='9', cell_size=25.0)}
+    {'9': BandMetadata(path=PosixPath('product/LC81010782014285LGN00_B9.TIF'), \
+    type=u'atmosphere', label=u'Cirrus', number='9', cell_size=25.0)}
     """
     bs = _read_mtl_band_filenames(mtl_)
 

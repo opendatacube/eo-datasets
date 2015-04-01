@@ -74,10 +74,6 @@ class SimpleObject(object):
 
             yield k, v
 
-    @classmethod
-    def from_dict(cls, dict):
-        pass
-
 
 class PlatformMetadata(SimpleObject):
     def __init__(self, code=None):
@@ -190,14 +186,14 @@ class BrowseMetadata(SimpleObject):
 
 
 class BandMetadata(SimpleObject):
-    def __init__(self, path=None, type=None, label=None, number=None, shape=None, cell_size=None, checksum_md5=None):
+    def __init__(self, path=None, type_=None, label=None, number=None, shape=None, cell_size=None, checksum_md5=None):
 
         # Prefer absolute paths. Path objects can be converted to relative
         # during serialisation (relative to whatever we want).
         #: :type: pathlib.Path
         self.path = path
 
-        self.type = type
+        self.type_ = type_
 
         # Eg. 'visible_red'
         self.label = label

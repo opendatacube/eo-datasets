@@ -61,84 +61,84 @@ BASIC_BANDS = {
 EXPANDED_BANDS = {
     '11': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B11.TIF'),
-        type=u'thermal',
+        type_=u'thermal',
         label=u'Thermal Infrared 2',
         number='11',
         cell_size=25.0
     ),
     '10': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B10.TIF'),
-        type=u'thermal',
+        type_=u'thermal',
         label=u'Thermal Infrared 1',
         number='10',
         cell_size=25.0
     ),
     '1': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B1.TIF'),
-        type=u'reflective',
+        type_=u'reflective',
         label=u'Coastal Aerosol',
         number='1',
         cell_size=25.0
     ),
     '3': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B3.TIF'),
-        type=u'reflective',
+        type_=u'reflective',
         label=u'Visible Green',
         number='3',
         cell_size=25.0
     ),
     '2': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B2.TIF'),
-        type=u'reflective',
+        type_=u'reflective',
         label=u'Visible Blue',
         number='2',
         cell_size=25.0
     ),
     '5': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B5.TIF'),
-        type=u'reflective',
+        type_=u'reflective',
         label=u'Near Infrared',
         number='5',
         cell_size=25.0
     ),
     '4': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B4.TIF'),
-        type=u'reflective',
+        type_=u'reflective',
         label=u'Visible Red',
         number='4',
         cell_size=25.0
     ),
     '7': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B7.TIF'),
-        type=u'reflective',
+        type_=u'reflective',
         label=u'Short-wave Infrared 2',
         number='7',
         cell_size=25.0
     ),
     '6': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B6.TIF'),
-        type=u'reflective',
+        type_=u'reflective',
         label=u'Short-wave Infrared 1',
         number='6',
         cell_size=25.0
     ),
     '9': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B9.TIF'),
-        type=u'atmosphere',
+        type_=u'atmosphere',
         label=u'Cirrus',
         number='9',
         cell_size=25.0
     ),
     '8': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B8.TIF'),
-        type=u'panchromatic',
+        type_=u'panchromatic',
         label=u'Panchromatic',
         number='8',
         cell_size=12.5
     ),
     'quality': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_BQA.TIF'),
-        type=u'quality',
+        type_=u'quality',
         label=u'Quality',
         number='quality',
         cell_size=25.0
@@ -150,7 +150,7 @@ class TestBandExpansion(unittest.TestCase):
     def test_expand_band(self):
         # Create fake image file.
         image_file = write_files({'LC81010782014285LGN00_B6.TIF': 'test'})
-        image_file = image_file.joinpath( 'LC81010782014285LGN00_B6.TIF')
+        image_file = image_file.joinpath('LC81010782014285LGN00_B6.TIF')
 
         md = load.expand_band_information(
             'LANDSAT_8', 'OLI_TIRS',
@@ -159,7 +159,7 @@ class TestBandExpansion(unittest.TestCase):
 
         expected = BandMetadata(
             path=Path(image_file),
-            type=u'reflective',
+            type_=u'reflective',
             label=u'Short-wave Infrared 1',
             number='6',
             # MD5 of image contents ('test')
@@ -177,7 +177,7 @@ class TestBandExpansion(unittest.TestCase):
     def test_prepare_same_destination(self):
         dataset_path = write_files({'LC81010782014285LGN00_B6.TIF': 'test'})
 
-        size_bytes= load.prepare_target_imagery(dataset_path, dataset_path, compress_imagery=False)
+        size_bytes = load.prepare_target_imagery(dataset_path, dataset_path, compress_imagery=False)
         self.assertEqual(size_bytes, 4)
 
     def test_prepare_copy_destination(self):

@@ -28,7 +28,7 @@ def expand_band_information(satellite, sensor, band_metadata, checksum=True):
     if band:
         band_metadata.label = band['desc']
         band_metadata.cell_size = band['resolution']
-        band_metadata.type = band['type_desc'].lower()
+        band_metadata.type_ = band['type_desc'].lower()
 
     if checksum:
         _LOG.info('Checksumming band %r', band_metadata.number)

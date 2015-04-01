@@ -2,12 +2,12 @@ import logging
 import unittest
 import uuid
 import collections
+import os
 
 import dateutil.parser
 from pathlib import Path
 
 from eodatasets import type as ptype, serialise
-import os
 
 
 def _serialise_to_file(file_name, dataset):
@@ -62,7 +62,6 @@ def _build_ls8_raw():
 
 
 def _build_ls8_ortho():
-
     _reset_runtime_id()
     return ptype.DatasetMetadata(
         id_=uuid.UUID('17b92c16-51d3-11e4-909d-005056bb6972'),
@@ -81,13 +80,13 @@ def _build_ls8_ortho():
             reference_system='WGS84',
             coord=ptype.Polygon(
                 ul=ptype.Coord(lat=-24.97,
-                              lon=133.97969),
+                               lon=133.97969),
                 ur=ptype.Coord(lat=-24.96826,
-                              lon=136.24838),
+                               lon=136.24838),
                 lr=ptype.Coord(lat=-26.96338,
-                              lon=136.26962),
+                               lon=136.26962),
                 ll=ptype.Coord(lat=-26.96528,
-                              lon=133.96233)
+                               lon=133.96233)
             ),
             from_dt=dateutil.parser.parse("2014-10-12T00:55:54"),
             center_dt=dateutil.parser.parse("2014-10-12T00:56:06"),
@@ -158,56 +157,56 @@ def _build_ls8_ortho():
                 ('coastal_aerosol', ptype.BandMetadata(
                     path=Path('product/LC81010782014285LGN00_B1.TIF'),
                     number=1,
-                    type='reflective',
+                    type_='reflective',
                     cell_size=25.0,
                     checksum_md5='db31e11abe485fa3e78acd6f25b15d24'
                 )),
                 ('visible_blue', ptype.BandMetadata(
                     path=Path('product/LC81010782014285LGN00_B2.TIF'),
                     number=2,
-                    type='reflective',
+                    type_='reflective',
                     cell_size=25.0,
                     checksum_md5='c29c4edf7befa459b547bf7a9585e38a'
                 )),
                 ('visible_green', ptype.BandMetadata(
                     path=Path('product/LC81010782014285LGN00_B3.TIF'),
                     number=3,
-                    type='reflective',
+                    type_='reflective',
                     cell_size=25.0,
                     checksum_md5='d02f11a48ad72133332e94e0442fee15'
                 )),
                 ('visible_red', ptype.BandMetadata(
                     path=Path('product/LC81010782014285LGN00_B4.TIF'),
                     number=4,
-                    type='reflective',
+                    type_='reflective',
                     cell_size=25.0,
                     checksum_md5='dfb10aa259f44e30eb6b022d9b34394d'
                 )),
                 ('near_infrared', ptype.BandMetadata(
                     path=Path('product/LC81010782014285LGN00_B5.TIF'),
                     number=5,
-                    type='reflective',
+                    type_='reflective',
                     cell_size=25.0,
                     checksum_md5='371c364cea0068cdd706da24b771ce61'
                 )),
                 ('short_wave_infrared1', ptype.BandMetadata(
                     path=Path('product/LC81010782014285LGN00_B6.TIF'),
                     number=6,
-                    type='reflective',
+                    type_='reflective',
                     cell_size=25.0,
                     checksum_md5='bab291bf301289bd125de213889c5cae'
                 )),
                 ('short_wave_infrared2', ptype.BandMetadata(
                     path=Path('product/LC81010782014285LGN00_B7.TIF'),
                     number=7,
-                    type='reflective',
+                    type_='reflective',
                     cell_size=25.0,
                     checksum_md5='351329b7a6e2d45a0c43dfc4759e5b7e'
                 )),
                 ('panchromatic', ptype.BandMetadata(
                     path=Path('product/LC81010782014285LGN00_B8.TIF'),
                     number=8,
-                    type='panchromatic',
+                    type_='panchromatic',
                     cell_size=12.50,
                     shape=ptype.Point(17761, 18241),
                     checksum_md5='baddd6402559d773f36858931512a333'
@@ -215,13 +214,13 @@ def _build_ls8_ortho():
                 ('cirrus', ptype.BandMetadata(
                     path=Path('product/LC81010782014285LGN00_B9.TIF'),
                     number=9,
-                    type='atmosphere',
+                    type_='atmosphere',
                     checksum_md5='661ce050355f0fc1efc625857c9a9d97'
                 )),
                 ('thermal_infrared1', ptype.BandMetadata(
                     path=Path('product/LC81010782014285LGN00_B10.TIF'),
                     number=10,
-                    type='thermal',
+                    type_='thermal',
                     cell_size=25.0,
                     shape=ptype.Point(8881, 9121),
                     checksum_md5='4f2f5de0403e575f2712778de3877ddc'
@@ -229,7 +228,7 @@ def _build_ls8_ortho():
                 ('thermal_infrared2', ptype.BandMetadata(
                     path=Path('product/LC81010782014285LGN00_B11.TIF'),
                     number=11,
-                    type='thermal',
+                    type_='thermal',
                     cell_size=25.0,
                     shape=ptype.Point(8881, 9121),
                     checksum_md5='328dbb7324bc92c080d2acc9b62d1d9c'
@@ -237,7 +236,7 @@ def _build_ls8_ortho():
                 ('quality', ptype.BandMetadata(
                     path=Path('product/LC81010782014285LGN00_BQA.TIF'),
                     number='QA',
-                    type='quality',
+                    type_='quality',
                     checksum_md5='469bf4767d3b9e7dd4e8093a80455fca'
                 ))
             ])
@@ -254,22 +253,22 @@ def _build_ls8_ortho():
                 }
             ),
             machine=ptype.MachineMetadata(hostname='rhe-jm-prod08.prod.lan', type_id='jobmanager',
-                                         uname='Linux rhe-jm-dev08.dev.lan 2.6.32-279.22.1.el6.x86_64 #1 SMP Sun Oct '
-                                               '12 '
-                                               '09:21:40 EST 2014 x86_64 x86_64 x86_64 GNU/Linux'),
+                                          uname='Linux rhe-jm-dev08.dev.lan 2.6.32-279.22.1.el6.x86_64 #1 SMP Sun Oct '
+                                                '12 '
+                                                '09:21:40 EST 2014 x86_64 x86_64 x86_64 GNU/Linux'),
             ancillary={
                 'cpf':
                     ptype.AncillaryMetadata(name='L8CPF20141001_20141231.01',
-                                           uri='/eoancillarydata/sensor-specific/LANDSAT8/CalibrationParameterFile'
-                                               '/L8CPF20141001_20141231.01'),
+                                            uri='/eoancillarydata/sensor-specific/LANDSAT8/CalibrationParameterFile'
+                                                '/L8CPF20141001_20141231.01'),
                 'bpf_tirs':
                     ptype.AncillaryMetadata(name='LT8BPF20141012002432_20141012020301.01',
-                                           uri='/eoancillarydata/sensor-specific/LANDSAT8/BiasParameterFile/2014/10'
-                                               '/LT8BPF20141012002432_20141012020301.01'),
+                                            uri='/eoancillarydata/sensor-specific/LANDSAT8/BiasParameterFile/2014/10'
+                                                '/LT8BPF20141012002432_20141012020301.01'),
                 'bpf_oli':
                     ptype.AncillaryMetadata(name='LO8BPF20141012002825_20141012011100.01',
-                                           uri='/eoancillarydata/sensor-specific/LANDSAT8/BiasParameterFile/2014/10'
-                                               '/LT8BPF20141012002432_20141012020301.01'),
+                                            uri='/eoancillarydata/sensor-specific/LANDSAT8/BiasParameterFile/2014/10'
+                                                '/LT8BPF20141012002432_20141012020301.01'),
                 'rlut':
                     ptype.AncillaryMetadata(name='L8RLUT20130211_20431231v09.h5')
             },
@@ -378,13 +377,13 @@ def _build_ls8_nbar():
             reference_system='WGS84',
             coord=ptype.Polygon(
                 ul=ptype.Coord(lat=-24.97,
-                              lon=133.97969),
+                               lon=133.97969),
                 ur=ptype.Coord(lat=-24.96826,
-                              lon=136.24838),
+                               lon=136.24838),
                 lr=ptype.Coord(lat=-26.96338,
-                              lon=136.26962),
+                               lon=136.26962),
                 ll=ptype.Coord(lat=-26.96528,
-                              lon=133.96233)
+                               lon=133.96233)
             ),
             from_dt=dateutil.parser.parse("2014-10-12T00:55:54"),
             to_dt=dateutil.parser.parse("2014-10-12T00:56:18"),
@@ -493,9 +492,7 @@ def _build_ls8_nbar():
 
 
 class PackageTypeTests(unittest.TestCase):
-
     def test_equivalence(self):
-
         ls8_raw = _build_ls8_raw()
         self.assertEqual(ls8_raw, ls8_raw, msg='RAW mismatch')
 
@@ -505,7 +502,6 @@ class PackageTypeTests(unittest.TestCase):
         self.assertEqual(ls8_nbar, ls8_nbar, msg='NBAR mismatch')
 
     def test_serialise(self):
-
         ls8_raw = _build_ls8_raw()
 
         # To YAML then from YAML. Is equal?
@@ -523,5 +519,6 @@ if __name__ == '__main__':
     _serialise_to_file('wofs', _build_ls7_wofs())
 
     import doctest
+
     doctest.testmod(ptype)
     unittest.main()

@@ -9,6 +9,7 @@ import time
 
 import eodatasets.type as ptype
 
+
 LS8_SENSORS = {"C": "OLI_TIRS", "O": "OLI", "T": "TIRS"}
 
 _log = logging.getLogger(__name__)
