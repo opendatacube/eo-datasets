@@ -18,6 +18,9 @@ class SimpleObject(object):
     Beware of cyclic dependencies in properties
     """
 
+    # Constructors for specific property values (when parsed from a dict / json / yaml etc)
+    PROPERTY_PARSERS = {}
+
     def __repr__(self):
         """
         >>> class TestObj(SimpleObject):
@@ -48,6 +51,24 @@ class SimpleObject(object):
         else:
             return False
 
+    @classmethod
+    def item_defaults(cls):
+        """
+        Return properties in order with their default values.
+
+        (ordered output is primarily useful for readability: such as repr() or log output.)
+        :rtype: [(str, obj)]
+        """
+        constructor_spec = inspect.getargspec(cls.__init__)
+        constructor_args = constructor_spec.args[1:]
+
+        defaults = constructor_spec.defaults
+        # Record the default value for each property (from constructor)
+        defaultless_count = len(constructor_args) - len(defaults or [])
+        value_defaults = ([None] * defaultless_count) + list(defaults or [])
+
+        return zip(constructor_args, value_defaults)
+
     def items_ordered(self):
         """
         Generator of all properties as (k, v) tuples. Properties are output in the same order
@@ -56,23 +77,31 @@ class SimpleObject(object):
         (ordered output is primarily useful for readability: such as log output.)
         :return:
         """
-        constructor_spec = inspect.getargspec(self.__class__.__init__)
-        constructor_args = constructor_spec.args[1:]
-
-        # Record the default value for each property (from constructor)
-        defaultless_count = len(constructor_args) - len(constructor_spec.defaults or [])
-        value_defaults = ([None] * defaultless_count) + list(constructor_spec.defaults or [])
-        value_defaults.reverse()
-
-        for k in constructor_args:
-            v = getattr(self, k)
-            default_value = value_defaults.pop()
+        for prop, default_value in self.item_defaults():
+            value = getattr(self, prop)
 
             # Skip None properties that default to None
-            if v is None and default_value is None:
+            if value is None and default_value is None:
                 continue
 
-            yield k, v
+            yield prop, value
+
+    @classmethod
+    def from_dict(cls, dict_):
+        """
+        Create an instance of this class from a dictionary.
+
+        Embedded
+        :type dict_: dict of (str, obj)
+        """
+        out = dict_.copy()
+
+        for key, value in dict_.items():
+            if key in cls.PROPERTY_PARSERS:
+                parser = cls.PROPERTY_PARSERS[key]
+                out[key] = parser(value)
+
+        return cls(**out)
 
 
 class PlatformMetadata(SimpleObject):

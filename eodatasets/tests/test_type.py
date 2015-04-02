@@ -513,6 +513,83 @@ class PackageTypeTests(unittest.TestCase):
         self.assertEqual(ls8_nbar, ls8_nbar, msg='NBAR mismatch')
 
 
+class SimpleObjectTests(unittest.TestCase):
+    def test_properties(self):
+        class TestObj(ptype.SimpleObject):
+            def __init__(self, a, b, c=42):
+                self.a = a
+                self.b = b
+                self.c = c
+
+        self.assertEqual(TestObj.item_defaults(), [('a', None), ('b', None), ('c', 42)])
+        self.assertEqual(list(TestObj(1, 2, 3).items_ordered()), [('a', 1), ('b', 2), ('c', 3)])
+        self.assertEqual(list(TestObj(1, 2).items_ordered()), [('a', 1), ('b', 2), ('c', 42)])
+
+        self.assertEqual(repr(TestObj(1, 2)), "TestObj(a=1, b=2, c=42)")
+
+        class TestAllDefaults(ptype.SimpleObject):
+            def __init__(self, a=1, b=2, c=None):
+                self.a = a
+                self.b = b
+                self.c = c
+
+        self.assertEqual(TestAllDefaults.item_defaults(), [('a', 1), ('b', 2), ('c', None)])
+        self.assertEqual(list(TestAllDefaults(3, 2, 1).items_ordered()), [('a', 3), ('b', 2), ('c', 1)])
+
+        # None handling: Blank values with blank defaults are not included by items_ordered()
+        self.assertEqual(list(TestAllDefaults(2, 1).items_ordered()), [('a', 2), ('b', 1)])
+        self.assertEqual(repr(TestAllDefaults()), "TestAllDefaults(a=1, b=2)")
+
+        # Blank value with non-blank default is output.
+        self.assertEqual(list(TestAllDefaults(2, None).items_ordered()), [('a', 2), ('b', None)])
+        self.assertEqual(repr(TestAllDefaults(a=1, b=None)), "TestAllDefaults(a=1, b=None)")
+
+    def test_from_dict(self):
+        class TestObj(ptype.SimpleObject):
+            def __init__(self, a, b, c=42):
+                self.a = a
+                self.b = b
+                self.c = c
+
+        self.assertEqual(TestObj.from_dict({'a': 1, 'b': 2, 'c': 3}), TestObj(1, 2, 3))
+        self.assertEqual(TestObj.from_dict({'a': 1, 'b': 2}), TestObj(1, 2, 42))
+
+    def test_from_dict_embedded_obj(self):
+        class Doorhandle(ptype.SimpleObject):
+            def __init__(self, a=42):
+                self.a = a
+
+        class Door(ptype.SimpleObject):
+            PROPERTY_PARSERS = {
+                'handle': Doorhandle.from_dict
+            }
+
+            def __init__(self, a=42, handle=None):
+                self.a = a
+                self.handle = handle
+
+        class House(ptype.SimpleObject):
+            PROPERTY_PARSERS = {
+                'door': Door.from_dict
+            }
+
+            def __init__(self, door, b, c=42):
+                self.door = door
+                self.b = b
+                self.c = c
+
+        # Two levels
+        self.assertEqual(
+            House.from_dict({'b': 2, 'door': {'a': 1}}),
+            House(Door(a=1), b=2)
+        )
+
+        # Three levels
+        self.assertEqual(
+            House.from_dict({'b': 2, 'door': {'handle': {'a': 111}}}),
+            House(Door(a=42, handle=Doorhandle(a=111)), b=2)
+        )
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     _serialise_to_file('nbar', _build_ls8_nbar())
