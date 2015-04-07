@@ -10,6 +10,7 @@ from eodatasets import image, serialise
 from eodatasets.metadata import mdf, mtl, adsfolder
 import eodatasets.type as ptype
 
+GA_METADATA_FILE_NAME = 'ga-metadata.yaml'
 
 _LOG = logging.getLogger(__name__)
 
@@ -141,7 +142,6 @@ def prepare_target_imagery(image_directory, package_directory, compress_imagery=
     :return: Total size of imagery in bytes
     :rtype int
     """
-    # TODO: Handle partial packages existing.
     if not package_directory.exists():
         package_directory.mkdir()
 
@@ -157,12 +157,16 @@ def prepare_target_imagery(image_directory, package_directory, compress_imagery=
     return size_bytes
 
 
+def find_file(path, file_pattern):
+    # Crude but effective. TODO: multiple/no result handling.
+    return path.glob(file_pattern).next()
+
+
 def package(image_directory, target_directory, source_datasets=None):
     """
-
-    :param image_directory:
-    :param target_directory:
-    :param source_datasets:
+    :type image_directory: str
+    :type target_directory: str
+    :type source_datasets: dict of (str, ptype.DatasetMetadata)
     :return:
     """
     target_path = Path(target_directory).absolute()
@@ -172,7 +176,7 @@ def package(image_directory, target_directory, source_datasets=None):
 
     size_bytes = prepare_target_imagery(image_path, package_directory)
 
-    mtl_path = next(package_directory.glob('*_MTL.txt'))  # Crude but effective
+    mtl_path = find_file(package_directory, '*_MTL.txt')
 
     _LOG.info('Reading MTL %r', mtl_path)
 
@@ -215,7 +219,11 @@ def package_raw(image_directory, target_directory):
     # TODO: Bands?
     # TODO: Antenna coords for groundstation? Heading?
 
-    serialise.write_yaml_metadata(d, target_path / 'ga-metadata.yaml', target_path)
+    serialise.write_yaml_metadata(d, target_path / GA_METADATA_FILE_NAME, target_path)
+
+
+def get_dataset(directory):
+    return serialise.read_yaml_metadata(find_file(directory, GA_METADATA_FILE_NAME))
 
 
 if __name__ == '__main__':
@@ -227,15 +235,19 @@ if __name__ == '__main__':
 
     import time
 
+    # Package RAW
     start = time.time()
     raw_ls8_dir = os.path.expanduser('~/ops/inputs/LANDSAT-8.11308/LC81160740742015089ASA00')
     package_raw(raw_ls8_dir, raw_ls8_dir)
     _LOG.info('Packaged RAW in %r', time.time() - start)
 
-    # TODO: Link raw as source of ortho.
-
+    # Package ORTHO, linking to previous RAW.
     start = time.time()
-    package(os.path.expanduser('~/ops/inputs/LS8_something'), 'out-ls8-test')
+    package(
+        os.path.expanduser('~/ops/inputs/LS8_something'),
+        'out-ls8-test',
+        source_datasets={'raw': get_dataset(Path(raw_ls8_dir))}
+    )
     _LOG.info('Packaged ORTHO in %r', time.time() - start)
 
     # package(os.path.expanduser('~/ops/inputs/lpgsOut/LE7_20150202_091_075'), 'out-ls7-test')
