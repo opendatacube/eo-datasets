@@ -4,6 +4,7 @@ import os
 import socket
 import uuid
 import logging
+import pathlib
 
 
 _LOG = logging.getLogger()
@@ -94,14 +95,73 @@ class SimpleObject(object):
         Embedded
         :type dict_: dict of (str, obj)
         """
-        out = dict_.copy()
+        possible_properties = dict(cls.item_defaults())
+        props = {}
 
         for key, value in dict_.items():
+            if key not in possible_properties:
+
+                # Reserved python words may have an underscore appended
+                if key+'_' not in possible_properties:
+                    _LOG.warn('Unknown property %r in %r', key, cls.__name__)
+                    continue
+
+                key += '_'
+
             if key in cls.PROPERTY_PARSERS:
                 parser = cls.PROPERTY_PARSERS[key]
-                out[key] = parser(value)
+                try:
+                    value = parser(value)
+                except Exception:
+                    _LOG.error('Error in %r: %r', key, value)
+                    raise
 
-        return cls(**out)
+            props[key] = value
+
+        try:
+            o = cls(**props)
+        except TypeError:
+            _LOG.error('Incorrect props for %s: %r',cls.__name__, props)
+            raise
+
+        return o
+
+    @classmethod
+    def from_dicts(cls, lst):
+        """
+        Create a list of these objects.
+
+        Similar to from_dict, but will create a list of them.
+
+        :type lst: list of dict
+        :return: list of objects of this class
+        """
+        return map(cls.from_dict, lst)
+
+    @classmethod
+    def from_named_dicts(cls, dict_):
+        """
+        Create a dict of objects (maintaining the key name).
+
+        Similar to from_dicts(), but operates on a dict instead of a list.
+
+        :type dict_: dict of dict
+        :return: dict of objects of this class
+        """
+        return dict([(k, cls.from_dict(v)) for (k, v) in dict_.items()])
+
+
+class Point(SimpleObject):
+    def __init__(self, x, y, z=None):
+        self.x = x
+        self.y = y
+        self.z = z
+
+
+class Range(SimpleObject):
+    def __init__(self, from_, to):
+        self.from_ = from_
+        self.to = to
 
 
 class PlatformMetadata(SimpleObject):
@@ -129,7 +189,37 @@ class Coord(SimpleObject):
         self.height = height
 
 
+class Polygon(SimpleObject):
+    def __init__(self, ul, ur, ll, lr):
+        self.ul = ul
+        self.ur = ur
+        self.ll = ll
+        self.lr = lr
+
+
+class CoordPolygon(Polygon):
+    PROPERTY_PARSERS = {
+        'ul': Coord.from_dict,
+        'ur': Coord.from_dict,
+        'll': Coord.from_dict,
+        'lr': Coord.from_dict
+    }
+
+
+class PointPolygon(Polygon):
+    PROPERTY_PARSERS = {
+        'ul': Point.from_dict,
+        'ur': Point.from_dict,
+        'll': Point.from_dict,
+        'lr': Point.from_dict
+    }
+
+
 class ExtentMetadata(SimpleObject):
+    PROPERTY_PARSERS = {
+        'coord': CoordPolygon.from_dict
+    }
+
     def __init__(self,
                  reference_system=None,
                  coord=None,
@@ -152,19 +242,22 @@ class ExtentMetadata(SimpleObject):
         self.to_dt = to_dt
 
 
-class GridSpatialMetadata(SimpleObject):
-    def __init__(self, dimensions=None, projection=None):
-        """
-        :type dimensions: list of DimensionMetadata
-        :type projection: ProjectionMetadata
-        """
-        # TODO: We don't have a single set of dimensions? Per band?
-        self.dimensions = dimensions
-
-        self.projection = projection
+class DimensionMetadata(SimpleObject):
+    def __init__(self, name, resolution, size):
+        self.name = name
+        #: :type: float
+        self.resolution = resolution
+        #: :type: int
+        self.size = size
 
 
 class ProjectionMetadata(SimpleObject):
+
+    PROPERTY_PARSERS = {
+        'centre_point': Point.from_dict,
+        'geo_ref_points': PointPolygon.from_dict
+    }
+
     def __init__(self, centre_point=None,
                  geo_ref_points=None,
                  datum=None, ellipsoid=None, point_in_pixel=None,
@@ -199,7 +292,29 @@ class ProjectionMetadata(SimpleObject):
         self.zone = zone
 
 
+class GridSpatialMetadata(SimpleObject):
+    PROPERTY_PARSERS = {
+        'dimensions': DimensionMetadata.from_dicts,
+        'projection': ProjectionMetadata.from_dict
+    }
+
+    def __init__(self, dimensions=None, projection=None):
+        """
+        :type dimensions: list of DimensionMetadata
+        :type projection: ProjectionMetadata
+        """
+        # TODO: We don't have a single set of dimensions? Per band?
+        self.dimensions = dimensions
+
+        self.projection = projection
+
+
+
 class BrowseMetadata(SimpleObject):
+    PROPERTY_PARSERS = {
+        'path': pathlib.Path
+    }
+
     def __init__(self, path=None, file_type=None, checksum_md5=None,
                  cell_size=None, red_band=None, green_band=None, blue_band=None):
 
@@ -215,6 +330,11 @@ class BrowseMetadata(SimpleObject):
 
 
 class BandMetadata(SimpleObject):
+    PROPERTY_PARSERS = {
+        'path': pathlib.Path,
+        'shape': Point.from_dict
+    }
+
     def __init__(self, path=None, type_=None, label=None, number=None, shape=None, cell_size=None, checksum_md5=None):
 
         # Prefer absolute paths. Path objects can be converted to relative
@@ -236,6 +356,12 @@ class BandMetadata(SimpleObject):
 
 
 class ImageMetadata(SimpleObject):
+
+    PROPERTY_PARSERS = {
+        'satellite_ref_point_start': Point.from_dict,
+        'satellite_ref_point_end': Point.from_dict,
+        'bands': BandMetadata.from_named_dicts,
+    }
     def __init__(self,
                  satellite_ref_point_start=None,
                  satellite_ref_point_end=None,
@@ -283,6 +409,11 @@ _RUNTIME_ID = uuid.uuid1()
 
 
 class MachineMetadata(SimpleObject):
+
+    PROPERTY_PARSERS = {
+        'runtime_id': uuid.UUID
+    }
+
     def __init__(self, hostname=None, runtime_id=None, type_id=None, version=None, uname=None):
         self.hostname = hostname or socket.getfqdn()
         self.runtime_id = runtime_id or _RUNTIME_ID
@@ -299,6 +430,13 @@ class AncillaryMetadata(SimpleObject):
 
 
 class LineageMetadata(SimpleObject):
+
+    PROPERTY_PARSERS = {
+        'algorithm': AlgorithmMetadata.from_dict,
+        'machine': MachineMetadata.from_dict,
+        'ancillary': AncillaryMetadata.from_named_dicts
+    }
+
     def __init__(self, algorithm=None, machine=None, ancillary=None, source_datasets=None):
         #: :type: AlgorithmMetadata
         self.algorithm = algorithm
@@ -313,7 +451,54 @@ class LineageMetadata(SimpleObject):
         self.source_datasets = source_datasets
 
 
+class GroundstationMetadata(SimpleObject):
+    PROPERTY_PARSERS = {
+        'antenna_coord': Coord.from_dict
+    }
+
+    def __init__(self, code, antenna_coord=None):
+        """
+
+        :param code: The GSI of the groundstation ("ASA" etc)
+        :type antenna_coord: Coord
+        :return:
+        """
+
+        self.code = code
+        self.antenna_coord = antenna_coord
+
+
+class AcquisitionMetadata(SimpleObject):
+    PROPERTY_PARSERS = {
+        'groundstation': GroundstationMetadata.from_dict
+    }
+
+    def __init__(self, aos=None, los=None, groundstation=None, heading=None, platform_orbit=None):
+        """
+        :type groundstation: GroundstationMetadata
+        :type platform_orbit: int
+        """
+        self.aos = aos
+        self.los = los
+        self.groundstation = groundstation
+        self.heading = heading
+        self.platform_orbit = platform_orbit
+
+
 class DatasetMetadata(SimpleObject):
+    PROPERTY_PARSERS = {
+        'id_': uuid.UUID,
+        'platform': PlatformMetadata.from_dict,
+        'instrument': InstrumentMetadata.from_dict,
+        'format_': FormatMetadata.from_dict,
+        'acquisition': AcquisitionMetadata.from_dict,
+        'extent': ExtentMetadata.from_dict,
+        'grid_spatial': GridSpatialMetadata.from_dict,
+        'browse': BrowseMetadata.from_named_dicts,
+        'image': ImageMetadata.from_dict,
+        'lineage': LineageMetadata.from_dict
+    }
+
     def __init__(self, id_=None,
                  ga_label=None,
                  ga_level=None,
@@ -365,68 +550,5 @@ class DatasetMetadata(SimpleObject):
         #: :type: LineageMetadata
         self.lineage = lineage
 
-
-class IdentificationMd(object):
-    def __init__(self):
-        super(IdentificationMd, self).__init__()
-
-        self.dataset_id = None
-        self.citation = None
-        self.description = None
-
-
-
-class Point(SimpleObject):
-    def __init__(self, x, y, z=None):
-        self.x = x
-        self.y = y
-        self.z = z
-
-
-class Range(SimpleObject):
-    def __init__(self, from_, to):
-        self.from_ = from_
-        self.to = to
-
-
-class Polygon(SimpleObject):
-    def __init__(self, ul, ur, ll, lr):
-        self.ul = ul
-        self.ur = ur
-        self.ll = ll
-        self.lr = lr
-
-
-class DimensionMetadata(SimpleObject):
-    def __init__(self, name, resolution, size):
-        self.name = name
-        #: :type: float
-        self.resolution = resolution
-        #: :type: int
-        self.size = size
-
-
-class AcquisitionMetadata(SimpleObject):
-    def __init__(self, aos=None, los=None, groundstation=None, heading=None, platform_orbit=None):
-        """
-        :type groundstation: GroundstationMetadata
-        :type platform_orbit: int
-        """
-        self.aos = aos
-        self.los = los
-        self.groundstation = groundstation
-        self.heading = heading
-        self.platform_orbit = platform_orbit
-
-
-class GroundstationMetadata(SimpleObject):
-    def __init__(self, code, antenna_coord=None):
-        """
-
-        :param code: The GSI of the groundstation ("ASA" etc)
-        :type antenna_coord: Coord
-        :return:
-        """
-
-        self.code = code
-        self.antenna_coord = antenna_coord
+# Circular reference.
+LineageMetadata.PROPERTY_PARSERS['source_datasets'] = DatasetMetadata.from_named_dicts

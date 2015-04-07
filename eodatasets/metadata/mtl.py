@@ -134,7 +134,7 @@ def populate_from_mtl_dict(md, mtl_, folder):
     md.extent.center_dt = datetime.datetime.combine(date, center_time)
     # md.extent.reference_system = ?
 
-    md.extent.coord = ptype.Polygon(
+    md.extent.coord = ptype.CoordPolygon(
         ul=ptype.Coord(lat=_get(product_md, 'corner_ul_lat_product'), lon=_get(product_md, 'corner_ul_lon_product')),
         ur=ptype.Coord(lat=_get(product_md, 'corner_ur_lat_product'), lon=_get(product_md, 'corner_ur_lon_product')),
         ll=ptype.Coord(lat=_get(product_md, 'corner_ll_lat_product'), lon=_get(product_md, 'corner_ll_lon_product')),
@@ -150,7 +150,7 @@ def populate_from_mtl_dict(md, mtl_, folder):
     if not md.grid_spatial.projection:
         md.grid_spatial.projection = ptype.ProjectionMetadata()
 
-    md.grid_spatial.projection.geo_ref_points = ptype.Polygon(
+    md.grid_spatial.projection.geo_ref_points = ptype.PointPolygon(
         ul=ptype.Point(x=_get(product_md, 'corner_ul_projection_x_product'),
                        y=_get(product_md, 'corner_ul_projection_y_product')),
         ur=ptype.Point(x=_get(product_md, 'corner_ur_projection_x_product'),

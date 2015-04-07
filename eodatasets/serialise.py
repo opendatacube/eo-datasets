@@ -12,7 +12,7 @@ from pathlib import Path
 import pathlib
 import yaml
 
-from eodatasets.type import SimpleObject
+import eodatasets.type as ptype
 
 
 _LOG = logging.getLogger(__name__)
@@ -85,14 +85,16 @@ def create_relative_dumper(folder):
         :type data: pathlib.Path
         :rtype: yaml.nodes.Node
         """
-        return dumper.represent_scalar(u'tag:yaml.org,2002:str', str(data.absolute().relative_to(folder)))
+        if not data.is_absolute():
+            data = Path(folder).joinpath(data)
+        return dumper.represent_scalar(u'tag:yaml.org,2002:str', str(data.relative_to(folder)))
 
     RelativeDumper.add_multi_representer(pathlib.Path, path_representer)
 
     return RelativeDumper
 
 
-def write_yaml_metadata(d, metadata_file, target_directory):
+def write_yaml_metadata(d, metadata_file, target_directory=None):
     """
     Write the given dataset to yaml.
 
@@ -103,6 +105,9 @@ def write_yaml_metadata(d, metadata_file, target_directory):
     :type target_directory: str
     :type metadata_file: str
     """
+    if not target_directory:
+        target_directory = os.path.dirname(os.path.abspath(metadata_file))
+
     _LOG.info('Writing metadata file %r', metadata_file)
     with open(str(metadata_file), 'w') as f:
         yaml.dump(
@@ -113,6 +118,21 @@ def write_yaml_metadata(d, metadata_file, target_directory):
             Dumper=create_relative_dumper(target_directory),
             allow_unicode=True
         )
+
+
+def read_yaml_metadata(metadata_file):
+    """
+
+    :type metadata: str
+    :rtype: DatasetMetadata
+    """
+    with open(str(metadata_file), 'r') as f:
+        dict_ = yaml.load(f)
+    return read_dict_metadata(dict_)
+
+
+def read_dict_metadata(dict_):
+    return ptype.DatasetMetadata.from_dict(dict_)
 
 
 def write_property_metadata(d, metadata_file, target_directory):
@@ -173,7 +193,7 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
         yield key_prefix, str(val)
     elif o is None:
         yield key_prefix, None
-    elif isinstance(o, SimpleObject):
+    elif isinstance(o, ptype.SimpleObject):
         for k, v in o.items_ordered():
             for nested_k, nested_v in as_flat_key_value(v, key_prefix=namespace(k, key_prefix)):
                 yield nested_k, nested_v
@@ -183,7 +203,7 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
             yield nested_k, nested_v
 
 
-yaml.add_multi_representer(SimpleObject, simpleobject_representer)
+yaml.add_multi_representer(ptype.SimpleObject, simpleobject_representer)
 yaml.add_multi_representer(uuid.UUID, uuid_representer)
 # TODO: This proabbly shouldn't be performed globally as it changes the output behaviour for a built-in type.
 # (although the default behaviour doesn't seem very widely useful: it outputs as a list.)

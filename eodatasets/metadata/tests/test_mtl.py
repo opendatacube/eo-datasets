@@ -230,7 +230,7 @@ _EXPECTED_OUT = DatasetMetadata(
         )
     ),
     extent=ExtentMetadata(
-        coord=Polygon(
+        coord=CoordPolygon(
             ul=Coord(
                 lat=-24.98805,
                 lon=133.97954
@@ -252,7 +252,7 @@ _EXPECTED_OUT = DatasetMetadata(
     ),
     grid_spatial=GridSpatialMetadata(
         projection=ProjectionMetadata(
-            geo_ref_points=Polygon(
+            geo_ref_points=PointPolygon(
                 ul=Point(
                     x=397012.5,
                     y=7235987.5
@@ -365,7 +365,14 @@ class TestMtlRead(unittest.TestCase):
     def test_equivalence(self):
         ds = DatasetMetadata(id_=uuid.UUID('3ff71eb0-d5c5-11e4-aebb-1040f381a756'))
         ds = mtl.populate_from_mtl_dict(ds, _PARSED_MTL, folder=Path('/tmp/fake-folder'))
-        self.assertEqual(ds, _EXPECTED_OUT)
+
+        try:
+            self.assertEqual(ds, _EXPECTED_OUT)
+        except AssertionError:
+            # Easier comparisons...
+            print repr(ds)
+            print repr(_EXPECTED_OUT)
+            raise
 
         # Sanity check: different dataset_id is not equal.
         ds = DatasetMetadata()
