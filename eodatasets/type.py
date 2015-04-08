@@ -4,6 +4,7 @@ import os
 import socket
 import uuid
 import logging
+
 import pathlib
 
 
@@ -14,12 +15,15 @@ class SimpleObject(object):
     """
     An object with identical constructor arguments and properties.
 
-    Implements repr and eq methods that print/compare all properties.
+    Implements repr and eq methods, and allows easy (de)serialisation between
+    json/yaml/dicts.
 
-    Beware of cyclic dependencies in properties
+    Beware of cyclic object dependencies in properties
     """
 
-    # Constructors for specific property values (when parsed from a dict / json / yaml etc)
+    # Constructors for specific properties.
+    # Used for deserialisation from nested dicts (typically from parsed json/yaml)
+    # (property name, parse function)
     PROPERTY_PARSERS = {}
 
     def __repr__(self):
@@ -55,7 +59,7 @@ class SimpleObject(object):
     @classmethod
     def item_defaults(cls):
         """
-        Return properties in order with their default values.
+        Return property names and their defaults in constructor order.
 
         (ordered output is primarily useful for readability: such as repr() or log output.)
         :rtype: [(str, obj)]
@@ -72,11 +76,12 @@ class SimpleObject(object):
 
     def items_ordered(self):
         """
-        Generator of all properties as (k, v) tuples. Properties are output in the same order
-        as the constructor.
+        Generator of all property names and current values as (k, v) tuples.
+
+        Properties are output in the same order as the constructor.
 
         (ordered output is primarily useful for readability: such as log output.)
-        :return:
+        :rtype: [(str, obj)]
         """
         for prop, default_value in self.item_defaults():
             value = getattr(self, prop)
@@ -90,9 +95,13 @@ class SimpleObject(object):
     @classmethod
     def from_dict(cls, dict_):
         """
-        Create an instance of this class from a dictionary.
+        Create an instance of this class from a given dictionary.
 
-        Embedded
+        (intended for use with the nested dictionaries from parsed json/yaml files)
+
+        Subclasses can add to cls.PROPERTY_PARSERS to customise how some properties
+        are parsed.
+
         :type dict_: dict of (str, obj)
         """
         possible_properties = dict(cls.item_defaults())
@@ -100,9 +109,8 @@ class SimpleObject(object):
 
         for key, value in dict_.items():
             if key not in possible_properties:
-
                 # Reserved python words may have an underscore appended
-                if key+'_' not in possible_properties:
+                if key + '_' not in possible_properties:
                     _LOG.warn('Unknown property %r in %r', key, cls.__name__)
                     continue
 
@@ -121,22 +129,22 @@ class SimpleObject(object):
         try:
             o = cls(**props)
         except TypeError:
-            _LOG.error('Incorrect props for %s: %r',cls.__name__, props)
+            _LOG.error('Incorrect props for %s: %r', cls.__name__, props)
             raise
 
         return o
 
     @classmethod
-    def from_dicts(cls, lst):
+    def from_dicts(cls, list_):
         """
         Create a list of these objects.
 
         Similar to from_dict, but will create a list of them.
 
-        :type lst: list of dict
+        :type list_: Iterable[dict]
         :return: list of objects of this class
         """
-        return map(cls.from_dict, lst)
+        return map(cls.from_dict, list_)
 
     @classmethod
     def from_named_dicts(cls, dict_):
@@ -252,7 +260,6 @@ class DimensionMetadata(SimpleObject):
 
 
 class ProjectionMetadata(SimpleObject):
-
     PROPERTY_PARSERS = {
         'centre_point': Point.from_dict,
         'geo_ref_points': PointPolygon.from_dict
@@ -309,7 +316,6 @@ class GridSpatialMetadata(SimpleObject):
         self.projection = projection
 
 
-
 class BrowseMetadata(SimpleObject):
     PROPERTY_PARSERS = {
         'path': pathlib.Path
@@ -317,7 +323,6 @@ class BrowseMetadata(SimpleObject):
 
     def __init__(self, path=None, file_type=None, checksum_md5=None,
                  cell_size=None, red_band=None, green_band=None, blue_band=None):
-
         #: :type: pathlib.Path
         self.path = path
         self.file_type = file_type
@@ -336,7 +341,6 @@ class BandMetadata(SimpleObject):
     }
 
     def __init__(self, path=None, type_=None, label=None, number=None, shape=None, cell_size=None, checksum_md5=None):
-
         # Prefer absolute paths. Path objects can be converted to relative
         # during serialisation (relative to whatever we want).
         #: :type: pathlib.Path
@@ -356,12 +360,12 @@ class BandMetadata(SimpleObject):
 
 
 class ImageMetadata(SimpleObject):
-
     PROPERTY_PARSERS = {
         'satellite_ref_point_start': Point.from_dict,
         'satellite_ref_point_end': Point.from_dict,
         'bands': BandMetadata.from_named_dicts,
     }
+
     def __init__(self,
                  satellite_ref_point_start=None,
                  satellite_ref_point_end=None,
@@ -409,7 +413,6 @@ _RUNTIME_ID = uuid.uuid1()
 
 
 class MachineMetadata(SimpleObject):
-
     PROPERTY_PARSERS = {
         'runtime_id': uuid.UUID
     }
@@ -430,7 +433,6 @@ class AncillaryMetadata(SimpleObject):
 
 
 class LineageMetadata(SimpleObject):
-
     PROPERTY_PARSERS = {
         'algorithm': AlgorithmMetadata.from_dict,
         'machine': MachineMetadata.from_dict,
