@@ -240,13 +240,17 @@ class ExtentMetadata(SimpleObject):
         :type from_dt:
         :type to_dt:
         """
-        # Example: 'WGS84'
+        # Eg. 'WGS84'
         self.reference_system = reference_system
 
+        #: :type: CoordPolygon
         self.coord = coord
 
+        #: :type: datetime.datetime
         self.from_dt = from_dt
+        #: :type: datetime.datetime
         self.center_dt = center_dt
+        #: :type: datetime.datetime
         self.to_dt = to_dt
 
 
@@ -271,14 +275,15 @@ class ProjectionMetadata(SimpleObject):
                  map_projection=None,
                  orientation=None,
                  resampling_option=None,
-                 zone=None):
+                 zone=None,
+                 unit='metre'):
         # The units of these points are dependent on the reference system.
         # Eg. 'GDA94' points are a distance in meters.
 
         #: :type: Point
         self.centre_point = centre_point
 
-        #: :type: Polygon
+        #: :type: PointPolygon
         self.geo_ref_points = geo_ref_points
 
         # Eg. 'GDA94'
@@ -289,14 +294,29 @@ class ProjectionMetadata(SimpleObject):
         #: :type: str
         self.ellipsoid = ellipsoid
 
+        # Eg. 'UL'
+        #: :type: str
         self.point_in_pixel = point_in_pixel
 
+        #: Eg. 'NUP' (North up)
+        #: :type: str
         self.orientation = orientation
 
+        # Eg. 'UTM'
+        #: :type: :str
         self.map_projection = map_projection
 
+        # Eg. 'CUBIC_CONVOLUTION'
+        #: :type: str
         self.resampling_option = resampling_option
+
+        # Eg. -53
+        #: :type: int
         self.zone = zone
+
+        # Eg. 'metre'
+        #: :type: str
+        self.unit = unit
 
 
 class GridSpatialMetadata(SimpleObject):
@@ -381,7 +401,11 @@ class ImageMetadata(SimpleObject):
                  viewing_incidence_angle_long_track=None,
                  viewing_incidence_angle_x_track=None,
                  bands=None):
+
+        # Typically path/row for Landsat:
+        #: :type: Point
         self.satellite_ref_point_start = satellite_ref_point_start
+        #: :type: Point
         self.satellite_ref_point_end = satellite_ref_point_end
 
         self.cloud_cover_percentage = cloud_cover_percentage
