@@ -228,6 +228,11 @@ class ExtentMetadata(SimpleObject):
         'coord': CoordPolygon.from_dict
     }
 
+    _REFERENCE_SYSTEM_ALIASES = {
+        'WGS84': ['WGS 1984', 'EPSG:4326', '4326'],
+        'GRS80': ['GRS 1980']
+    }
+
     def __init__(self,
                  reference_system=None,
                  coord=None,
@@ -239,9 +244,21 @@ class ExtentMetadata(SimpleObject):
         :type reference_system: str
         :type from_dt:
         :type to_dt:
+
+        >>> ExtentMetadata(reference_system='4326')
+        ExtentMetadata(reference_system='WGS84')
+        >>> ExtentMetadata(reference_system='WGS84')
+        ExtentMetadata(reference_system='WGS84')
+        >>> ExtentMetadata(reference_system='NAD83')
+        ExtentMetadata(reference_system='NAD83')
         """
+
+        # Do we have a better name for this reference system?
+        better_ref_system_names = [name for (name, aliases) in self._REFERENCE_SYSTEM_ALIASES.items()
+                                   if reference_system in aliases]
+
         # Eg. 'WGS84'
-        self.reference_system = reference_system
+        self.reference_system = better_ref_system_names[0] if better_ref_system_names else reference_system
 
         #: :type: CoordPolygon
         self.coord = coord
