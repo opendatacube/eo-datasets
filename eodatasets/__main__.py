@@ -1,24 +1,27 @@
-import click
 import os
-from pathlib import Path
 import logging
 
-from eodatasets.package import package_ortho, package_nbar, package_raw, get_dataset
+import click
+from pathlib import Path
+
+from eodatasets.package import get_dataset, generate_raw_metadata, generate_ortho_metadata, do_package
 
 
 _DATASET_PACKAGERS = {
-    'ortho': package_ortho,
-    'nbar': package_nbar,
-    'raw': package_raw
+    'raw': generate_raw_metadata,
+    'ortho': generate_ortho_metadata,
+    # No nbar yet.
+    'nbar': lambda d, path: d
 }
 
+
 @click.command()
-@click.option('--ancestor', type=click.Path(exists=True, readable=True, writable=False), multiple=True)
+@click.option('--parent', type=click.Path(exists=True, readable=True, writable=False), multiple=True)
 @click.option('--debug', is_flag=True)
 @click.argument('type', type=click.Choice(_DATASET_PACKAGERS.keys()))
 @click.argument('dataset', type=click.Path(exists=True, readable=True, writable=False), nargs=-1)
 @click.argument('destination', type=click.Path(exists=True, readable=True, writable=True), nargs=1)
-def run_packaging(ancestor, debug, type, dataset, destination):
+def run_packaging(parent, debug, type, dataset, destination):
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
 
     if debug:
@@ -26,22 +29,22 @@ def run_packaging(ancestor, debug, type, dataset, destination):
     else:
         logging.getLogger('eodatasets').setLevel(logging.INFO)
 
-    ancestor_datasets = {}
+    parent_datasets = {}
 
-    # TODO: detect actual ancestor types.
-    if ancestor:
-        ancestor_datasets.update({'raw': get_dataset(Path(ancestor[0]))})
+    # TODO: detect actual parent datasets.
+    if parent:
+        parent_datasets.update({'raw': get_dataset(Path(parent[0]))})
 
     for dataset_path in dataset:
         destination = os.path.join(destination, type)
         if not os.path.exists(destination):
             os.mkdir(destination)
 
-        _DATASET_PACKAGERS[type](
+        do_package(
+            _DATASET_PACKAGERS[type],
             dataset_path,
             destination,
-            source_datasets=ancestor_datasets
+            source_datasets=parent_datasets
         )
-
 
 run_packaging()
