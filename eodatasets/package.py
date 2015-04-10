@@ -10,6 +10,7 @@ from eodatasets import image, serialise
 from eodatasets.metadata import mdf, mtl, adsfolder
 import eodatasets.type as ptype
 
+
 GA_METADATA_FILE_NAME = 'ga-metadata.yaml'
 
 _LOG = logging.getLogger(__name__)
@@ -68,21 +69,22 @@ def create_browse_images(
     :type browse_filename: str
     :return:
     """
-    d.browse = {
-        'medium': image.create_browse(
-            d.image.bands[red_band_id],
-            d.image.bands[green_band_id],
-            d.image.bands[blue_band_id],
-            target_directory / (browse_filename + '.jpg'),
-            constrain_horizontal_res=1024
-        ),
-        'full': image.create_browse(
-            d.image.bands[red_band_id],
-            d.image.bands[green_band_id],
-            d.image.bands[blue_band_id],
-            target_directory / (browse_filename + '.fr.jpg')
-        )
-    }
+    if d.image and d.image.bands:
+        d.browse = {
+            'medium': image.create_browse(
+                d.image.bands[red_band_id],
+                d.image.bands[green_band_id],
+                d.image.bands[blue_band_id],
+                target_directory / (browse_filename + '.jpg'),
+                constrain_horizontal_res=1024
+            ),
+            'full': image.create_browse(
+                d.image.bands[red_band_id],
+                d.image.bands[green_band_id],
+                d.image.bands[blue_band_id],
+                target_directory / (browse_filename + '.fr.jpg')
+            )
+        }
     return d
 
 
@@ -165,79 +167,66 @@ def find_file(path, file_pattern):
     return path.glob(file_pattern).next()
 
 
-def package_ortho(image_directory, target_directory, source_datasets=None):
+def do_package(metadata_extract_fn, image_directory, target_directory, source_datasets=None):
+
+    start = time.time()
+
+    target_path = Path(target_directory).absolute()
+    image_path = Path(image_directory).absolute()
+
+    target_metadata_path = target_path / GA_METADATA_FILE_NAME
+    if target_metadata_path.exists():
+        _LOG.info('Already packaged? Skipping %s', target_path)
+        return
+
+    _LOG.debug('Packaging %r -> %r', image_path, target_path)
+    if image_path.resolve() != target_path.resolve():
+        package_directory = target_path.joinpath('package')
+    else:
+        package_directory = target_path
+
+    size_bytes = prepare_target_imagery(image_path, package_directory)
+
+    if not target_path.exists():
+        target_path.mkdir()
+
+    d = metadata_extract_fn(init_local_dataset(), package_directory)
+    d.size_bytes = size_bytes
+
+    d.lineage.source_datasets = source_datasets
+
+    if d.image and d.image.bands:
+        for number, band_metadata in d.image.bands.items():
+            expand_band_information(d.platform.code, d.instrument.name, band_metadata)
+
+    create_browse_images(d, target_path)
+
+    serialise.write_yaml_metadata(d, target_metadata_path, target_path)
+
+    _LOG.info('Packaged in %.02f: %s', time.time()-start, target_metadata_path)
+
+
+def generate_ortho_metadata(d, package_directory):
     """
     :type image_directory: str
     :type target_directory: str
     :type source_datasets: dict of (str, ptype.DatasetMetadata)
     :return:
     """
-    target_path = Path(target_directory).absolute()
-    image_path = Path(image_directory).absolute()
-
-    _LOG.debug('Packaging %r -> %r', image_path, target_path)
-
-    package_directory = target_path.joinpath('package')
-
-    size_bytes = prepare_target_imagery(image_path, package_directory)
 
     mtl_path = find_file(package_directory, '*_MTL.txt')
-
     _LOG.info('Reading MTL %r', mtl_path)
 
-    d = init_local_dataset()
-    d = mtl.populate_from_mtl(d, mtl_path)
-    d.size_bytes = size_bytes
-
-    if not target_path.exists():
-        target_path.mkdir()
-
-    create_browse_images(d, target_path)
-
-    for number, band_metadata in d.image.bands.items():
-        expand_band_information(d.platform.code, d.instrument.name, band_metadata)
-
-    d.lineage.source_datasets = source_datasets
-
-    serialise.write_yaml_metadata(d, target_path / 'ga-metadata.yaml', target_path)
+    return mtl.populate_from_mtl(d, mtl_path)
 
 
-def package_nbar(image_directory, target_directory, source_datasets=None):
-    # copy datasets.
-    # Load bands
-    target_path = Path(target_directory).absolute()
-    image_path = Path(image_directory).absolute()
+def generate_raw_metadata(d, package_directory):
+    d = mdf.extract_md(d, package_directory)
+    d = adsfolder.extract_md(d, package_directory)
 
-    if not target_path.exists():
-        target_path.mkdir()
-
-    package_directory = target_path.joinpath('package')
-    size_bytes = prepare_target_imagery(image_path, package_directory)
-
-    _LOG.info('Copied %sMB of imagery', size_bytes / 1024 / 1024)
-
-    # Extract data from gdal bands
-    d = init_local_dataset()
-
-    # Generic package function: Pass a DatasetMetadata, image folder, browse bands.
-    # Method hashes and generates browse.
-    pass
-
-
-def package_raw(image_directory, target_directory, source_datasets=None):
-    image_path = Path(image_directory).absolute()
-    target_path = Path(target_directory).absolute()
-
-    # We don't need to modify/copy anything. Just generate metadata.
-    d = init_local_dataset()
-    d = mdf.extract_md(d, image_path)
-    d = adsfolder.extract_md(d, image_path)
-    d.size_bytes = prepare_target_imagery(image_path, target_path)
-
-    # TODO: Bands?
     # TODO: Antenna coords for groundstation? Heading?
-
-    serialise.write_yaml_metadata(d, target_path / GA_METADATA_FILE_NAME, target_path)
+    # TODO: Bands?
+    return d
 
 
 def get_dataset(directory):
@@ -254,22 +243,30 @@ if __name__ == '__main__':
     import time
 
     # Package RAW
-    start = time.time()
     raw_ls8_dir = os.path.expanduser('~/ops/inputs/LANDSAT-8.11308/LC81160740742015089ASA00')
-    package_raw(raw_ls8_dir, raw_ls8_dir)
-    _LOG.info('Packaged RAW in %r', time.time() - start)
+    do_package(generate_raw_metadata, raw_ls8_dir, raw_ls8_dir)
 
     # Package ORTHO, linking to previous RAW.
-    start = time.time()
-    package_ortho(
-        os.path.expanduser('~/ops/inputs/LS8_something'),
-        'out-ls8-test',
+    ls8_packaged_out = 'out-ls8-test'
+    do_package(
+        generate_ortho_metadata,
+        os.path.expanduser('~/ops/inputs/LS8_PINKMATTER_OUT'),
+        ls8_packaged_out,
         source_datasets={'raw': get_dataset(Path(raw_ls8_dir))}
     )
-    _LOG.info('Packaged ORTHO in %r', time.time() - start)
 
-    start = time.time()
-    package_nbar(os.path.expanduser('~/ops/inputs/nbar_out'), 'out-nbar-test')
-    _LOG.info('Packaged NBAR in %r', time.time() - start)
+    # Package NBAR, linking to previous ORTHO
+    def do_no_metadata(d, package_directory):
+        print 'No NBAR metadata yet'
+        print d, package_directory
+        return d
 
-    # package(os.path.expanduser('~/ops/inputs/lpgsOut/LE7_20150202_091_075'), 'out-ls7-test')
+    do_package(
+        do_no_metadata,
+        os.path.expanduser('~/ops/inputs/nbar_out'),
+        'out-nbar-test',
+        source_datasets={
+            'ortho': get_dataset(Path(ls8_packaged_out))
+        }
+    )
+
