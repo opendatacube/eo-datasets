@@ -18,53 +18,65 @@ import eodatasets.type as ptype
 _LOG = logging.getLogger(__name__)
 
 
-def simpleobject_representer(dumper, data):
+def init_yaml_handling():
     """
-
-    :type dumper: BaseRepresenter
-    :type data: SimpleObject
-    :rtype: yaml.nodes.Node
+    Allow load/dump of our custom classes in YAML.
     """
+    def simpleobject_representer(dumper, data):
+        """
 
-    # Loop through properties in order
-    # Represent them as needed.
-    # Return outer
+        Output the properties of a SimpleObject implementation as a map.
 
-    clean_arg = lambda arg: arg[:-1] if arg.endswith('_') else arg
+        We deliberately output in constructor-arg order for human readability.
 
-    k_v = [(clean_arg(k), v) for k, v in data.items_ordered()]
+        eg. the document id should be at the top of the document.
 
-    return dumper.represent_mapping(u'tag:yaml.org,2002:map', k_v)
+        :type dumper: BaseRepresenter
+        :type data: ptype.SimpleObject
+        :rtype: yaml.nodes.Node
+        """
+
+        # Fields ending in an underscore are reserved/used python words. We strip them off during output to yaml.
+        clean_arg = lambda arg: arg[:-1] if arg.endswith('_') else arg
+
+        k_v = [(clean_arg(k), v) for k, v in data.items_ordered()]
+
+        return dumper.represent_mapping(u'tag:yaml.org,2002:map', k_v)
+
+    def ordereddict_representer(dumper, data):
+        """
+        Output an OrderedDict as a dict. The order is purely for readability of the document.
+
+        :type dumper: BaseRepresenter
+        :type data: collections.OrderedDict
+        :rtype: yaml.nodes.Node
+        """
+        return dumper.represent_mapping(u'tag:yaml.org,2002:map', data.items())
+
+    def uuid_representer(dumper, data):
+        """
+        :type dumper: BaseRepresenter
+        :type data: uuid.UUID
+        :rtype: yaml.nodes.Node
+        """
+        return dumper.represent_scalar(u'tag:yaml.org,2002:str', '%s' % data)
+
+    def unicode_representer(dumper, data):
+        """
+        It's strange that PyYaml doesn't use unicode internally. We're doing everything in UTF-8 so we translate.
+        :type dumper: BaseRepresenter
+        :type data: unicode
+        :rtype: yaml.nodes.Node
+        """
+        return dumper.represent_scalar(u'tag:yaml.org,2002:str', data.encode('utf-8'))
 
 
-def ordereddict_representer(dumper, data):
-    """
-    Output an OrderedDict as a dict. The order is purely for readability of the document.
-
-    :type dumper: BaseRepresenter
-    :type data: collections.OrderedDict
-    :rtype: yaml.nodes.Node
-    """
-    return dumper.represent_mapping(u'tag:yaml.org,2002:map', data.items())
-
-
-def uuid_representer(dumper, data):
-    """
-    :type dumper: BaseRepresenter
-    :type data: uuid.UUID
-    :rtype: yaml.nodes.Node
-    """
-    return dumper.represent_scalar(u'tag:yaml.org,2002:str', '%s' % data)
-
-
-def unicode_representer(dumper, data):
-    """
-    It's strange that PyYaml doesn't use unicode internally. We're doing everything in UTF-8 so we translate.
-    :type dumper: BaseRepresenter
-    :type data: unicode
-    :rtype: yaml.nodes.Node
-    """
-    return dumper.represent_scalar(u'tag:yaml.org,2002:str', data.encode('utf-8'))
+    yaml.add_multi_representer(ptype.SimpleObject, simpleobject_representer)
+    yaml.add_multi_representer(uuid.UUID, uuid_representer)
+    # TODO: This proabbly shouldn't be performed globally as it changes the output behaviour for a built-in type.
+    # (although the default behaviour doesn't seem very widely useful: it outputs as a list.)
+    yaml.add_multi_representer(collections.OrderedDict, ordereddict_representer)
+    yaml.add_representer(unicode, unicode_representer)
 
 
 def create_relative_dumper(folder):
@@ -203,9 +215,4 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
             yield nested_k, nested_v
 
 
-yaml.add_multi_representer(ptype.SimpleObject, simpleobject_representer)
-yaml.add_multi_representer(uuid.UUID, uuid_representer)
-# TODO: This proabbly shouldn't be performed globally as it changes the output behaviour for a built-in type.
-# (although the default behaviour doesn't seem very widely useful: it outputs as a list.)
-yaml.add_multi_representer(collections.OrderedDict, ordereddict_representer)
-yaml.add_representer(unicode, unicode_representer)
+init_yaml_handling()
