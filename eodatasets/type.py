@@ -224,13 +224,18 @@ class PointPolygon(Polygon):
 
 
 class ExtentMetadata(SimpleObject):
+    """
+    Standardised spatial and temporal information.
+
+    This will use the same projection & datum across all datasets,
+    so the coordinates given here can be indexed for easy comparison.
+
+    (such as via a web service)
+
+    Everything is WGS84 & GDA94
+    """
     PROPERTY_PARSERS = {
         'coord': CoordPolygon.from_dict
-    }
-
-    _REFERENCE_SYSTEM_ALIASES = {
-        'WGS84': ['WGS 1984', 'EPSG:4326', '4326'],
-        'GRS80': ['GRS 1980']
     }
 
     def __init__(self,
@@ -244,21 +249,10 @@ class ExtentMetadata(SimpleObject):
         :type reference_system: str
         :type from_dt:
         :type to_dt:
-
-        >>> ExtentMetadata(reference_system='4326')
-        ExtentMetadata(reference_system='WGS84')
-        >>> ExtentMetadata(reference_system='WGS84')
-        ExtentMetadata(reference_system='WGS84')
-        >>> ExtentMetadata(reference_system='NAD83')
-        ExtentMetadata(reference_system='NAD83')
         """
 
-        # Do we have a better name for this reference system?
-        better_ref_system_names = [name for (name, aliases) in self._REFERENCE_SYSTEM_ALIASES.items()
-                                   if reference_system in aliases]
-
         # Eg. 'WGS84'
-        self.reference_system = better_ref_system_names[0] if better_ref_system_names else reference_system
+        self.reference_system = reference_system
 
         #: :type: CoordPolygon
         self.coord = coord
@@ -280,20 +274,81 @@ class DimensionMetadata(SimpleObject):
         self.size = size
 
 
+def _lookup_alias(aliases, value):
+    """
+    Translate to a common name if our value is an alias.
+
+    :type aliases: dict of (str, [str])
+    :type name: str
+    :rtype: str
+
+    >>> _lookup_alias({'name1': ['alias1']}, 'name1')
+    'name1'
+    >>> _lookup_alias({'name1': ['alias1', 'alias2']}, 'alias1')
+    'name1'
+    >>> _lookup_alias({'name1': ['alias1', 'alias2']}, 'alias2')
+    'name1'
+    >>> _lookup_alias({'name1': ['alias1']}, 'name2')
+    'name2'
+    """
+    better_name = [name for (name, aliases) in aliases.items()
+                   if value in aliases]
+    return better_name[0] if better_name else value
+
+
 class ProjectionMetadata(SimpleObject):
+    """
+    The projection and datum information of the current image.
+    """
     PROPERTY_PARSERS = {
         'centre_point': Point.from_dict,
         'geo_ref_points': PointPolygon.from_dict
     }
 
+    _ELLIPSOID_ALIASES = {
+        'WGS84': ['WGS 1984', 'EPSG:4326', '4326'],
+        'GRS80': ['GRS 1980']
+    }
+
+    _POINT_IN_PIXEL_ALIASES = {
+        'UL': ['Upper Left'],
+        'UR': ['Upper Right'],
+        'LL': ['Lower Left'],
+        'LR': ['Lower Right']
+    }
+
     def __init__(self, centre_point=None,
                  geo_ref_points=None,
-                 datum=None, ellipsoid=None, point_in_pixel=None,
+                 datum=None,
+                 ellipsoid=None,
+                 point_in_pixel=None,
                  map_projection=None,
                  orientation=None,
                  resampling_option=None,
                  zone=None,
-                 unit='metre'):
+                 unit=None):
+        """
+
+        :param centre_point:
+        :param geo_ref_points:
+        :param datum:
+        :param ellipsoid:
+        :param point_in_pixel:
+        :param map_projection:
+        :param orientation:
+        :param resampling_option:
+        :param zone:
+        :param unit:
+        :return:
+
+
+        >>> ProjectionMetadata(ellipsoid='4326')
+        ProjectionMetadata(ellipsoid='WGS84')
+        >>> ProjectionMetadata(ellipsoid='WGS84')
+        ProjectionMetadata(ellipsoid='WGS84')
+        >>> ProjectionMetadata(ellipsoid='NAD83')
+        ProjectionMetadata(ellipsoid='NAD83')
+        """
         # The units of these points are dependent on the reference system.
         # Eg. 'GDA94' points are a distance in meters.
 
@@ -309,11 +364,11 @@ class ProjectionMetadata(SimpleObject):
 
         # Eg. 'GRS80'
         #: :type: str
-        self.ellipsoid = ellipsoid
+        self.ellipsoid = _lookup_alias(self._ELLIPSOID_ALIASES, ellipsoid)
 
         # Eg. 'UL'
         #: :type: str
-        self.point_in_pixel = point_in_pixel
+        self.point_in_pixel = _lookup_alias(self._POINT_IN_PIXEL_ALIASES, point_in_pixel)
 
         #: Eg. 'NUP' (North up)
         #: :type: str
@@ -418,7 +473,6 @@ class ImageMetadata(SimpleObject):
                  viewing_incidence_angle_long_track=None,
                  viewing_incidence_angle_x_track=None,
                  bands=None):
-
         # Typically path/row for Landsat:
         #: :type: Point
         self.satellite_ref_point_start = satellite_ref_point_start
