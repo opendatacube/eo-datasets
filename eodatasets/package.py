@@ -95,7 +95,7 @@ def _copy_file(source_path, destination_path, compress_imagery=True):
     :type source_path: Path
     :type destination_path: Path
     :type compress_imagery: bool
-    :return: Size in bytes of destionation file.
+    :return: Size in bytes of destination file.
     :rtype int
     """
     source_size_bytes = source_path.stat().st_size
@@ -112,7 +112,7 @@ def _copy_file(source_path, destination_path, compress_imagery=True):
 
     # Copy to destination path.
 
-    suffix = source_path.suffix.lower()
+    suffix = destination_path.suffix.lower()
 
     # If a tif image, losslessly compress it.
     if suffix == '.tif' and compress_imagery:
@@ -147,10 +147,13 @@ def prepare_target_imagery(image_directory, package_directory, compress_imagery=
 
     size_bytes = 0
     for source_path in image_directory.iterdir():
-        if source_path.name.startswith('.'):
+        # Skip hidden files and envi headers. (envi files are converted to tif during copy)
+        if source_path.name.startswith('.') or source_path.suffix == '.hdr':
             continue
 
         destination_path = package_directory.joinpath(source_path.name)
+        if destination_path.suffix == '.bin':
+            destination_path = destination_path.with_suffix('.tif')
 
         size_bytes += _copy_file(source_path, destination_path, compress_imagery)
 
@@ -162,7 +165,7 @@ def find_file(path, file_pattern):
     return path.glob(file_pattern).next()
 
 
-def package(image_directory, target_directory, source_datasets=None):
+def package_ortho(image_directory, target_directory, source_datasets=None):
     """
     :type image_directory: str
     :type target_directory: str
@@ -171,6 +174,8 @@ def package(image_directory, target_directory, source_datasets=None):
     """
     target_path = Path(target_directory).absolute()
     image_path = Path(image_directory).absolute()
+
+    _LOG.debug('Packaging %r -> %r', image_path, target_path)
 
     package_directory = target_path.joinpath('package')
 
@@ -200,13 +205,26 @@ def package(image_directory, target_directory, source_datasets=None):
 def package_nbar(image_directory, target_directory, source_datasets=None):
     # copy datasets.
     # Load bands
+    target_path = Path(target_directory).absolute()
+    image_path = Path(image_directory).absolute()
+
+    if not target_path.exists():
+        target_path.mkdir()
+
+    package_directory = target_path.joinpath('package')
+    size_bytes = prepare_target_imagery(image_path, package_directory)
+
+    _LOG.info('Copied %sMB of imagery', size_bytes / 1024 / 1024)
+
+    # Extract data from gdal bands
+    d = init_local_dataset()
 
     # Generic package function: Pass a DatasetMetadata, image folder, browse bands.
     # Method hashes and generates browse.
     pass
 
 
-def package_raw(image_directory, target_directory):
+def package_raw(image_directory, target_directory, source_datasets=None):
     image_path = Path(image_directory).absolute()
     target_path = Path(target_directory).absolute()
 
@@ -243,11 +261,15 @@ if __name__ == '__main__':
 
     # Package ORTHO, linking to previous RAW.
     start = time.time()
-    package(
+    package_ortho(
         os.path.expanduser('~/ops/inputs/LS8_something'),
         'out-ls8-test',
         source_datasets={'raw': get_dataset(Path(raw_ls8_dir))}
     )
     _LOG.info('Packaged ORTHO in %r', time.time() - start)
+
+    start = time.time()
+    package_nbar(os.path.expanduser('~/ops/inputs/nbar_out'), 'out-nbar-test')
+    _LOG.info('Packaged NBAR in %r', time.time() - start)
 
     # package(os.path.expanduser('~/ops/inputs/lpgsOut/LE7_20150202_091_075'), 'out-ls7-test')
