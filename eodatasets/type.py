@@ -74,7 +74,7 @@ class SimpleObject(object):
 
         return zip(constructor_args, value_defaults)
 
-    def items_ordered(self):
+    def items_ordered(self, skip_nones=True):
         """
         Generator of all property names and current values as (k, v) tuples.
 
@@ -87,7 +87,7 @@ class SimpleObject(object):
             value = getattr(self, prop)
 
             # Skip None properties that default to None
-            if value is None and default_value is None:
+            if skip_nones and (value is None and default_value is None):
                 continue
 
             yield prop, value
@@ -466,6 +466,7 @@ class ImageMetadata(SimpleObject):
                  sun_azimuth=None,
                  sun_elevation=None,
                  sun_earth_distance=None,
+                 ground_control_points_version=None,
                  ground_control_points_model=None,
                  geometric_rmse_model=None,
                  geometric_rmse_model_x=None,
@@ -485,6 +486,7 @@ class ImageMetadata(SimpleObject):
         self.sun_elevation = sun_elevation
         self.sun_earth_distance = sun_earth_distance
 
+        self.ground_control_points_version = ground_control_points_version
         self.ground_control_points_model = ground_control_points_model
         self.geometric_rmse_model = geometric_rmse_model
         self.geometric_rmse_model_x = geometric_rmse_model_x
@@ -534,12 +536,16 @@ class LineageMetadata(SimpleObject):
         'ancillary': AncillaryMetadata.from_named_dicts
     }
 
-    def __init__(self, algorithm=None, machine=None, ancillary=None, source_datasets=None):
+    def __init__(self, algorithm=None, machine=None, ancillary_quality=None, ancillary=None, source_datasets=None):
         #: :type: AlgorithmMetadata
         self.algorithm = algorithm
 
         #: :type: MachineMetadata
         self.machine = machine
+
+        # 'PREDICTIVE' or 'DEFINITIVE'
+        # :type: str
+        self.ancillary_quality = ancillary_quality
 
         #: :type: dict of (str, AncillaryMetadata)
         self.ancillary = ancillary
