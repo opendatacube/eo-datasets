@@ -74,7 +74,7 @@ def _read_bands(mtl_, folder_path):
         for (number, filename) in bs.items()])
 
 
-def populate_from_mtl(md, mtl_path):
+def populate_from_mtl(md, mtl_path, base_folder=None):
     """
 
     :type md: eodatasets.type.DatasetMetadata
@@ -84,8 +84,10 @@ def populate_from_mtl(md, mtl_path):
     if not md:
         md = ptype.DatasetMetadata()
 
+    if not base_folder:
+        base_folder = mtl_path.parent
     mtl_ = load_mtl(str(mtl_path.absolute()))
-    return populate_from_mtl_dict(md, mtl_, mtl_path.parent)
+    return populate_from_mtl_dict(md, mtl_, base_folder)
 
 
 def populate_from_mtl_dict(md, mtl_, folder):
