@@ -73,7 +73,7 @@ EXPECTED_OUT = DatasetMetadata(
             map_projection='UTM',
             orientation='NORTH_UP',
             resampling_option='CUBIC_CONVOLUTION',
-            zone=-53
+            zone=-51
         )
     ),
     image=ImageMetadata(
@@ -82,11 +82,11 @@ EXPECTED_OUT = DatasetMetadata(
         sun_azimuth=46.93282849,
         sun_elevation=50.44317205,
         # sun_earth_distance=0.998137,
-        ground_control_points_version=2,
+        # ground_control_points_version=2,
         ground_control_points_model=47,
         geometric_rmse_model=4.582,
-        geometric_rmse_model_x=3.370,
-        geometric_rmse_model_y=3.104,
+        geometric_rmse_model_x=3.104,
+        geometric_rmse_model_y=3.370,
         bands={
             '1': BandMetadata(
                 path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B1.TIF'),

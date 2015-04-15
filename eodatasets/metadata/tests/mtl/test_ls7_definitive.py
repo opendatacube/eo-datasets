@@ -18,7 +18,7 @@ EXPECTED_OUT = DatasetMetadata(
         code='LANDSAT_7'
     ),
     instrument=InstrumentMetadata(
-        name='ETM+',
+        name='ETM',
         operation_mode='SAM'
     ),
     format_=FormatMetadata(
@@ -49,7 +49,7 @@ EXPECTED_OUT = DatasetMetadata(
             )
         ),
         # TODO: python dt is one digit less precise than mtl (02:03:36.9270519Z). Does this matter?
-        center_dt=datetime.datetime(2015, 1, 7, 2, 3, 36, 927051)
+        center_dt=datetime.datetime(2005, 1, 7, 2, 3, 36, 927051)
     ),
     grid_spatial=GridSpatialMetadata(
         projection=ProjectionMetadata(
@@ -112,13 +112,13 @@ EXPECTED_OUT = DatasetMetadata(
                 path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B5.TIF'),
                 number='5',
             ),
-            '6_VCID_1': BandMetadata(
+            '6_vcid_1': BandMetadata(
                 path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B6_VCID_1.TIF'),
-                number='6_VCID_1',
+                number='6_vcid_1',
             ),
-            '6_VCID_2': BandMetadata(
+            '6_vcid_2': BandMetadata(
                 path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B6_VCID_2.TIF'),
-                number='6_VCID_2',
+                number='6_vcid_2',
             ),
             '7': BandMetadata(
                 path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B7.TIF'),
@@ -139,7 +139,7 @@ EXPECTED_OUT = DatasetMetadata(
         ancillary_quality='DEFINITIVE',
         ancillary={
             'cpf': AncillaryMetadata(
-                name='L7CPF20150101_20150331_02'
+                name='L7CPF20050101_20050331.09'
             )
         }
     )

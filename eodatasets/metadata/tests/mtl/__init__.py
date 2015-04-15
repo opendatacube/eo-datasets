@@ -51,14 +51,17 @@ def _assert_same(o1, o2, prefix=''):
         for i, val in enumerate(o1):
             _compare(i, val, o2[i])
     elif isinstance(o1, dict) and isinstance(o2, dict):
-        assert len(o1) == len(o2), "Differing lengths: %s" % prefix
+        assert len(o1) == len(o2), "Differing lengths: %s\n\t%r\n\t%r" % (prefix, o1, o2)
 
         for k, val in o1.items():
+            assert k in o2, "%s[%r] is missing.\n\t%r\n\t%r" % (prefix, k, o1, o2)
             _compare(k, val, o2[k])
+
     elif o1 != o2:
         print repr(o1)
         print repr(o2)
         raise AssertionError("Mismatch for property %r:  %r != %r" % (prefix, o1, o2))
+
 
 
 if __name__ == '__main__':

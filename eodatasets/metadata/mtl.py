@@ -1,8 +1,11 @@
 import datetime
+import logging
+
+from pathlib import Path
+
 from gaip.mtl import load_mtl
 import eodatasets.type as ptype
-import logging
-from pathlib import Path
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -19,15 +22,19 @@ def _read_mtl_band_filenames(mtl_):
     ...    'file_name_band_quality': "LC81010782014285LGN00_BQA.TIF"
     ... }})
     {'9': 'LC81010782014285LGN00_B9.TIF', '11': 'LC81010782014285LGN00_B11.TIF', 'quality': \
-    'LC81010782014285LGN00_BQA.TIF'}
+'LC81010782014285LGN00_BQA.TIF'}
     >>> _read_mtl_band_filenames({'PRODUCT_METADATA': {
     ...    'file_name_band_9': "LC81010782014285LGN00_B9.TIF",
     ...    'corner_ul_lat_product': -24.98805,
     ... }})
     {'9': 'LC81010782014285LGN00_B9.TIF'}
+    >>> _read_mtl_band_filenames({'PRODUCT_METADATA': {
+    ...    'file_name_band_6_vcid_1': "LE71140732005007ASA00_B6_VCID_1.TIF"
+    ... }})
+    {'6_vcid_1': 'LE71140732005007ASA00_B6_VCID_1.TIF'}
     """
     product_md = mtl_['PRODUCT_METADATA']
-    return dict([(k.split('_')[-1], v) for (k, v) in product_md.items() if k.startswith('file_name_band_')])
+    return dict([(k.split('band_')[-1], v) for (k, v) in product_md.items() if k.startswith('file_name_band_')])
 
 
 def _get(dictionary, *keys):
@@ -59,9 +66,8 @@ def _read_bands(mtl_, folder_path):
     :type folder_path: pathlib.Path
     >>> _read_bands({'PRODUCT_METADATA': {
     ...     'file_name_band_9': "LC81010782014285LGN00_B9.TIF"}
-    ... }, 'LANDSAT_8', 'OLI_TIRS', folder_path=Path('product/'))
-    {'9': BandMetadata(path=PosixPath('product/LC81010782014285LGN00_B9.TIF'), \
-    type=u'atmosphere', label=u'Cirrus', number='9', cell_size=25.0)}
+    ... }, folder_path=Path('product/'))
+    {'9': BandMetadata(path=PosixPath('product/LC81010782014285LGN00_B9.TIF'), number='9')}
     """
     bs = _read_mtl_band_filenames(mtl_)
 
@@ -113,12 +119,13 @@ def populate_from_mtl_dict(md, mtl_, folder):
 
     md.format_ = ptype.FormatMetadata(name=_get(mtl_, 'PRODUCT_METADATA', 'output_format'))
 
+    product_md = _get(mtl_, 'PRODUCT_METADATA')
     sensor_id = _get(mtl_, 'PRODUCT_METADATA', 'sensor_id')
     if not md.instrument:
         md.instrument = ptype.InstrumentMetadata()
     md.instrument.name = sensor_id
-    # type
-    # operation mode
+    # md.instrument.type_
+    md.instrument.operation_mode = _get(product_md, 'sensor_mode')
 
     if not md.acquisition:
         md.acquisition = ptype.AcquisitionMetadata()
@@ -130,7 +137,7 @@ def populate_from_mtl_dict(md, mtl_, folder):
     # Extent
     if not md.extent:
         md.extent = ptype.ExtentMetadata()
-    product_md = _get(mtl_, 'PRODUCT_METADATA')
+
     date = _get(product_md, 'date_acquired')
     center_time = _get(product_md, 'scene_center_time')
     md.extent.center_dt = datetime.datetime.combine(date, center_time)
@@ -215,11 +222,33 @@ def populate_from_mtl_dict(md, mtl_, folder):
     if not md.lineage.ancillary:
         md.lineage.ancillary = {}
 
-    md.lineage.ancillary.update({
-        'cpf': ptype.AncillaryMetadata(name=_get(product_md, 'cpf_name')),
-        'bpf_oli': ptype.AncillaryMetadata(name=_get(product_md, 'bpf_name_oli')),
-        'bpf_tirs': ptype.AncillaryMetadata(name=_get(product_md, 'bpf_name_tirs')),
-        'rlut': ptype.AncillaryMetadata(name=_get(product_md, 'rlut_file_name'))
-    })
+    md.lineage.ancillary_quality = _get(product_md, 'ephemeris_type')
+    md.lineage.ancillary.update(
+        _wrap_ancillary({
+            'cpf': _get(product_md, 'cpf_name'),
+            'bpf_oli': _get(product_md, 'bpf_name_oli'),
+            'bpf_tirs': _get(product_md, 'bpf_name_tirs'),
+            'rlut': _get(product_md, 'rlut_file_name')
+        })
+    )
 
     return md
+
+
+def _wrap_ancillary(dict_):
+    """
+    Remove fields from the dict whose values are None.
+
+    Returns a new dict.
+    :type dict_: dict
+    :rtype dict
+
+    >>> _wrap_ancillary({'cpf': 'L7CPF20050101_20050331.09', 'rlut': None})
+    {'cpf': AncillaryMetadata(name='L7CPF20050101_20050331.09')}
+    >>> _wrap_ancillary({'cpf': 'L7CPF20050101_20050331.09', 'bpf_oli': 'LO8BPF20140127130115_20140127144056.01'})
+    {'bpf_oli': AncillaryMetadata(name='LO8BPF20140127130115_20140127144056.01'), \
+'cpf': AncillaryMetadata(name='L7CPF20050101_20050331.09')}
+    >>> _wrap_ancillary({})
+    {}
+    """
+    return {k: ptype.AncillaryMetadata(name=v) for k, v in dict_.iteritems() if v is not None}
