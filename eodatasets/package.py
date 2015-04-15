@@ -1,6 +1,8 @@
 import os
 import shutil
 import logging
+import time
+
 from subprocess import check_call
 
 from pathlib import Path
@@ -16,6 +18,35 @@ GA_METADATA_FILE_NAME = 'ga-metadata.yaml'
 _LOG = logging.getLogger(__name__)
 
 
+def _to_old_platform_names(satellite, sensor, band_number):
+    """
+    Translate names to those used by the old LPGS.
+
+    Older gaip code still uses the old names.
+
+    :type band_number: str
+    :type satellite: str
+    :type sensor: str
+    :return: satellite, sensor, band_name
+    :rtype (str, str, str)
+    """
+    # The sensor map uses old lpgs satellite names. Translate them to new LPGS names for now.
+    if satellite == 'LANDSAT_5':
+        satellite = 'Landsat5'
+    if satellite == 'LANDSAT_7':
+        satellite = 'Landsat7'
+
+        if sensor == 'ETM':
+            sensor = 'ETM+'
+
+        if str(band_number) == '6_vcid_1':
+            band_number = '61'
+        if str(band_number) == '6_vcid_2':
+            band_number = '62'
+
+    return satellite, sensor, band_number
+
+
 def expand_band_information(satellite, sensor, band_metadata, checksum=True):
     """
     Use the gaip reference table to add per-band metadata if availabe.
@@ -24,9 +55,12 @@ def expand_band_information(satellite, sensor, band_metadata, checksum=True):
     :type band_metadata: ptype.BandMetadata
     :rtype: ptype.BandMetadata
     """
+
+    satellite, sensor, band_number = _to_old_platform_names(satellite, sensor, band_metadata.number)
+
     bands = acquisition.SENSORS[satellite]['sensors'][sensor]['bands']
 
-    band = bands.get(band_metadata.number)
+    band = bands.get(band_number)
     if band:
         band_metadata.label = band['desc']
         band_metadata.cell_size = band['resolution']
@@ -239,8 +273,6 @@ if __name__ == '__main__':
 
     doctest.testmod()
     logging.getLogger().setLevel(logging.DEBUG)
-
-    import time
 
     # Package RAW
     raw_ls8_dir = os.path.expanduser('~/ops/inputs/LANDSAT-8.11308/LC81160740742015089ASA00')

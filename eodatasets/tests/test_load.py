@@ -4,10 +4,11 @@ from pathlib import PosixPath, Path
 
 import eodatasets.package as load
 from eodatasets.metadata.tests import write_files
+from eodatasets.tests import assert_same
 from eodatasets.type import *
 
 
-BASIC_BANDS = {
+BASIC_LS8_BANDS = {
     '11': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B11.TIF'),
         number='11',
@@ -58,7 +59,7 @@ BASIC_BANDS = {
     )
 }
 
-EXPANDED_BANDS = {
+EXPANDED_LS8_BANDS = {
     '11': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B11.TIF'),
         type_=u'thermal',
@@ -145,6 +146,146 @@ EXPANDED_BANDS = {
     )
 }
 
+BASIC_LS7_BANDS = {
+    '1': BandMetadata(path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B1.TIF'), number='1'),
+    '3': BandMetadata(path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B3.TIF'), number='3'),
+    '2': BandMetadata(path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B2.TIF'), number='2'),
+    '5': BandMetadata(path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B5.TIF'), number='5'),
+    '4': BandMetadata(path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B4.TIF'), number='4'),
+    '7': BandMetadata(path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B7.TIF'), number='7'),
+    '8': BandMetadata(path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B8.TIF'), number='8'),
+    '6_vcid_2': BandMetadata(path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B6_VCID_2.TIF'), number='6_vcid_2'),
+    '6_vcid_1': BandMetadata(path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B6_VCID_1.TIF'), number='6_vcid_1')
+}
+
+EXPANDED_LS7_BANDS = {
+    '1': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B1.TIF'),
+        type_=u'reflective',
+        label=u'Visible Blue',
+        number='1',
+        cell_size=25.0,
+    ),
+    '3': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B3.TIF'),
+        type_=u'reflective',
+        label=u'Visible Red',
+        number='3',
+        cell_size=25.0,
+    ),
+    '2': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B2.TIF'),
+        type_=u'reflective',
+        label=u'Visible Green',
+        number='2',
+        cell_size=25.0,
+    ),
+    '5': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B5.TIF'),
+        type_=u'reflective',
+        label=u'Middle Infrared 1',
+        number='5',
+        cell_size=25.0,
+    ),
+    '4': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B4.TIF'),
+        type_=u'reflective',
+        label=u'Near Infrared',
+        number='4',
+        cell_size=25.0,
+    ),
+    '7': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B7.TIF'),
+        type_=u'reflective',
+        label=u'Middle Infrared 2',
+        number='7',
+        cell_size=25.0,
+    ),
+    '8': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B8.TIF'),
+        type_=u'panchromatic',
+        label=u'Panchromatic',
+        number='8',
+        cell_size=12.5,
+    ),
+    '6_vcid_2': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B6_VCID_2.TIF'),
+        type_=u'thermal',
+        label=u'Thermal Infrared [High Gain]',
+        number='6_vcid_2',
+        cell_size=50.0,
+    ),
+    '6_vcid_1': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B6_VCID_1.TIF'),
+        type_=u'thermal',
+        label=u'Thermal Infrared [Low Gain]',
+        number='6_vcid_1',
+        cell_size=50.0,
+    )
+}
+
+BASIC_LS5_BANDS = {
+    '1': BandMetadata(path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B1.TIF'), number='1'),
+    '3': BandMetadata(path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B3.TIF'), number='3'),
+    '2': BandMetadata(path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B2.TIF'), number='2'),
+    '5': BandMetadata(path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B5.TIF'), number='5'),
+    '4': BandMetadata(path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B4.TIF'), number='4'),
+    '7': BandMetadata(path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B7.TIF'), number='7'),
+    '6': BandMetadata(path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B6.TIF'), number='6')
+}
+
+EXPANDED_LS5_BANDS = {
+    '1': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B1.TIF'),
+        type_=u'reflective',
+        label=u'Visible Blue',
+        number='1',
+        cell_size=25.0,
+    ),
+    '3': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B3.TIF'),
+        type_=u'reflective',
+        label=u'Visible Red',
+        number='3',
+        cell_size=25.0,
+    ),
+    '2': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B2.TIF'),
+        type_=u'reflective',
+        label=u'Visible Green',
+        number='2',
+        cell_size=25.0,
+    ),
+    '5': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B5.TIF'),
+        type_=u'reflective',
+        label=u'Middle Infrared 1',
+        number='5',
+        cell_size=25.0,
+    ),
+    '4': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B4.TIF'),
+        type_=u'reflective',
+        label=u'Near Infrared',
+        number='4',
+        cell_size=25.0,
+    ),
+    '7': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B7.TIF'),
+        type_=u'reflective',
+        label=u'Middle Infrared 2',
+        number='7',
+        cell_size=25.0,
+    ),
+    '6': BandMetadata(
+        path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B6.TIF'),
+        type_=u'thermal',
+        label=u'Thermal Infrared',
+        number='6',
+        cell_size=100.0,
+    )
+}
+
 
 class TestBandExpansion(unittest.TestCase):
     def test_expand_band(self):
@@ -166,13 +307,25 @@ class TestBandExpansion(unittest.TestCase):
             checksum_md5='098f6bcd4621d373cade4e832627b4f6',
             cell_size=25.0
         )
-        self.assertEqual(md, expected)
+        assert_same(md, expected)
 
-    def test_expand_all_bands(self):
-        for number, band_metadata in BASIC_BANDS.items():
+    def test_expand_all_ls8_bands(self):
+        for number, band_metadata in BASIC_LS8_BANDS.items():
             load.expand_band_information('LANDSAT_8', 'OLI_TIRS', band_metadata, checksum=False)
 
-        self.assertEqual(BASIC_BANDS, EXPANDED_BANDS)
+        assert_same(BASIC_LS8_BANDS, EXPANDED_LS8_BANDS)
+
+    def test_expand_all_ls7_bands(self):
+        for number, band_metadata in BASIC_LS7_BANDS.items():
+            load.expand_band_information('LANDSAT_7', 'ETM', band_metadata, checksum=False)
+
+        assert_same(BASIC_LS7_BANDS, EXPANDED_LS7_BANDS)
+
+    def test_expand_all_ls5_bands(self):
+        for number, band_metadata in BASIC_LS5_BANDS.items():
+            load.expand_band_information('LANDSAT_5', 'TM', band_metadata, checksum=False)
+
+        assert_same(BASIC_LS5_BANDS, EXPANDED_LS5_BANDS)
 
     def test_prepare_same_destination(self):
         dataset_path = write_files({'LC81010782014285LGN00_B6.TIF': 'test'})
