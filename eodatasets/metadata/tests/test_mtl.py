@@ -157,7 +157,6 @@ _EXPECTED_LS8_OUT = DatasetMetadata(
     )
 )
 
-
 _EXPECTED_LT5_OUT = DatasetMetadata(
     id_=uuid.UUID('3ff71eb0-d5c5-11e4-aebb-1040f381a756'),
     usgs_dataset_id='LT51130632005152ASA00',
@@ -285,6 +284,143 @@ _EXPECTED_LT5_OUT = DatasetMetadata(
 )
 
 
+_EXPECTED_L7_OUT = DatasetMetadata(
+    id_=uuid.UUID('3ff71eb0-d5c5-11e4-aebb-1040f381a756'),
+    usgs_dataset_id='LT51130632005152ASA00',
+    product_type='L1G',
+    creation_dt=datetime.datetime(2015, 2, 2, 23, 51, 34),
+    platform=PlatformMetadata(
+        code='Landsat7'
+    ),
+    instrument=InstrumentMetadata(
+        name='ETM+',
+        operation_mode='BUMPER'
+    ),
+    format_=FormatMetadata(
+        name='GEOTIFF'
+    ),
+    acquisition=AcquisitionMetadata(
+        groundstation=GroundstationMetadata(
+            code='ASA'
+        )
+    ),
+    extent=ExtentMetadata(
+        coord=CoordPolygon(
+            ul=Coord(
+                lat=-20.7084694,
+                lon=150.4270477
+            ),
+            ur=Coord(
+                lat=-20.7275238,
+                lon=152.7503967
+            ),
+            ll=Coord(
+                lat=-22.5948353,
+                lon=150.3933716
+            ),
+            lr=Coord(
+                lat=-22.6158047,
+                lon=152.7471313
+            )
+        ),
+        # TODO: python dt is one digit less precise than mtl (23:51:34.4665352Z). Does this matter?
+        center_dt=datetime.datetime(2015, 2, 2, 23, 51, 34, 466535)
+    ),
+    grid_spatial=GridSpatialMetadata(
+        projection=ProjectionMetadata(
+            geo_ref_points=PointPolygon(
+                ul=Point(
+                    x=232012.500,
+                    y=7707987.500
+                ),
+                ur=Point(
+                    x=474012.500,
+                    y=7707987.500
+                ),
+                ll=Point(
+                    x=232012.500,
+                    y=7498987.500
+                ),
+                lr=Point(
+                    x=474012.500,
+                    y=7498987.500
+                )
+            ),
+            datum='GDA94',
+            ellipsoid='GRS80',
+            map_projection='UTM',
+            orientation='NORTH_UP',
+            resampling_option='CUBIC_CONVOLUTION',
+            zone=-56
+        )
+    ),
+    image=ImageMetadata(
+        satellite_ref_point_start=Point(x=91, y=75),
+        satellite_ref_point_end=Point(x=91,y=75),
+        # cloud_cover_percentage=52.00,
+        sun_azimuth=87.1318112,
+        sun_elevation=57.6143237,
+        # sun_earth_distance=0.998137,
+        # ground_control_points_version=2,
+        # ground_control_points_model=47,
+        # geometric_rmse_model=4.582,
+        # geometric_rmse_model_x=3.370,
+        # geometric_rmse_model_y=3.104,
+        bands={
+            '1': BandMetadata(
+                path=PosixPath('/tmp/fake-folder/L71091075_07520150202_B10.TIF'),
+                number='1',
+            ),
+
+            '2': BandMetadata(
+                path=PosixPath('/tmp/fake-folder/L71091075_07520150202_B20.TIF'),
+                number='2',
+            ),
+            '3': BandMetadata(
+                path=PosixPath('/tmp/fake-folder/L71091075_07520150202_B30.TIF'),
+                number='3',
+            ),
+            '4': BandMetadata(
+                path=PosixPath('/tmp/fake-folder/L71091075_07520150202_B40.TIF'),
+                number='4',
+            ),
+            '5': BandMetadata(
+                path=PosixPath('/tmp/fake-folder/L71091075_07520150202_B50.TIF'),
+                number='5',
+            ),
+            '61': BandMetadata(
+                path=PosixPath('/tmp/fake-folder/L71091075_07520150202_B61.TIF'),
+                number='61',
+            ),
+            '62': BandMetadata(
+                path=PosixPath('/tmp/fake-folder/L72091075_07520150202_B62.TIF'),
+                number='62',
+            ),
+            '7': BandMetadata(
+                path=PosixPath('/tmp/fake-folder/L72091075_07520150202_B70.TIF'),
+                number='7',
+            ),
+            '8': BandMetadata(
+                path=PosixPath('/tmp/fake-folder/L72091075_07520150202_B80.TIF'),
+                number='8',
+            )
+        }
+    ),
+    lineage=LineageMetadata(
+        algorithm=AlgorithmMetadata(
+            name='LPGS',
+            version='11.6.0',
+            parameters={}
+        ),
+        ancillary_quality='PREDICTIVE',
+        ancillary={
+            'cpf': AncillaryMetadata(
+                name='L7CPF20150101_20150331_02'
+            )}
+    )
+)
+
+
 class TestMtlRead(unittest.TestCase):
     def test_ls8_equivalence(self):
 
@@ -308,6 +444,15 @@ class TestMtlRead(unittest.TestCase):
         ds = mtl.populate_from_mtl(ds, mtl_path, base_folder=Path('/tmp/fake-folder'))
 
         _assert_same(ds, _EXPECTED_LT5_OUT)
+
+    def test_ls7_equivalence(self):
+
+        mtl_path = Path(os.path.join(os.path.dirname(__file__), 'data', 'L7_MTL.txt'))
+
+        ds = DatasetMetadata(id_=uuid.UUID('3ff71eb0-d5c5-11e4-aebb-1040f381a756'))
+        ds = mtl.populate_from_mtl(ds, mtl_path, base_folder=Path('/tmp/fake-folder'))
+
+        _assert_same(ds, _EXPECTED_L7_OUT)
 
 
 def _assert_same(o1, o2, prefix=''):
