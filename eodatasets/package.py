@@ -2,14 +2,13 @@ import os
 import shutil
 import logging
 import time
-
 from subprocess import check_call
 
 from pathlib import Path
 
 from gaip import acquisition
 from eodatasets import image, serialise
-from eodatasets.metadata import mdf, mtl, adsfolder
+from eodatasets.metadata import mdf, mtl, adsfolder, image as md_image
 import eodatasets.type as ptype
 
 
@@ -91,7 +90,7 @@ def init_local_dataset(uuid=None):
 def create_browse_images(
         d,
         target_directory,
-        red_band_id='7', green_band_id='5', blue_band_id='1',
+        rgb_bands=('6', '5', '3'),
         browse_filename='browse'):
     """
 
@@ -103,6 +102,7 @@ def create_browse_images(
     :type browse_filename: str
     :return:
     """
+    red_band_id, green_band_id, blue_band_id = rgb_bands
     if d.image and d.image.bands:
         d.browse = {
             'medium': image.create_browse(
@@ -169,7 +169,7 @@ def _copy_file(source_path, destination_path, compress_imagery=True):
     return destination_path.stat().st_size
 
 
-def prepare_target_imagery(image_directory, package_directory, compress_imagery=True):
+def prepare_target_imagery(image_directory, package_directory, compress_imagery=True, required_prefix=None):
     """
     Copy a directory of files if not already there. Possibly compress images.
 
@@ -191,6 +191,9 @@ def prepare_target_imagery(image_directory, package_directory, compress_imagery=
         if destination_path.suffix == '.bin':
             destination_path = destination_path.with_suffix('.tif')
 
+        if required_prefix and not destination_path.name.startswith(required_prefix):
+            continue
+
         size_bytes += _copy_file(source_path, destination_path, compress_imagery)
 
     return size_bytes
@@ -201,8 +204,12 @@ def find_file(path, file_pattern):
     return path.glob(file_pattern).next()
 
 
-def do_package(metadata_extract_fn, image_directory, target_directory, source_datasets=None):
-
+def do_package(metadata_extract_fn,
+               image_directory,
+               target_directory,
+               source_datasets=None,
+               rgb_bands=('6', '5', '3'),
+               required_prefix=None):
     start = time.time()
 
     target_path = Path(target_directory).absolute()
@@ -219,7 +226,7 @@ def do_package(metadata_extract_fn, image_directory, target_directory, source_da
     else:
         package_directory = target_path
 
-    size_bytes = prepare_target_imagery(image_path, package_directory)
+    size_bytes = prepare_target_imagery(image_path, package_directory, required_prefix=required_prefix)
 
     if not target_path.exists():
         target_path.mkdir()
@@ -233,11 +240,11 @@ def do_package(metadata_extract_fn, image_directory, target_directory, source_da
         for number, band_metadata in d.image.bands.items():
             expand_band_information(d.platform.code, d.instrument.name, band_metadata)
 
-    create_browse_images(d, target_path)
+    create_browse_images(d, target_path, rgb_bands=rgb_bands)
 
     serialise.write_yaml_metadata(d, target_metadata_path, target_path)
 
-    _LOG.info('Packaged in %.02f: %s', time.time()-start, target_metadata_path)
+    _LOG.info('Packaged in %.02f: %s', time.time() - start, target_metadata_path)
 
 
 def generate_ortho_metadata(d, package_directory):
@@ -262,9 +269,33 @@ def generate_raw_metadata(d, package_directory):
     # TODO: Bands?
     return d
 
+
+def _find_nbar_bands(package_directory):
+    bands = {}
+    for band in Path(package_directory).glob('*.tif'):
+        band_number = band.stem.split('_')[-1]
+        bands[band_number] = ptype.BandMetadata(path=band.absolute(), number=band_number)
+    return bands
+
+
 def generate_nbar_metadata(d, package_directory):
-    # TODO
+    """
+    :type d: ptype.DatasetMetadata
+    :param d:
+    :param package_directory:
+    :return:
+    """
+    # TODO: Detect
+    d.platform = ptype.PlatformMetadata(code='LANDSAT_8')
+    d.instrument = ptype.InstrumentMetadata(name='OLI_TIRS')
+    # d.product_type
+    if not d.image:
+        d.image = ptype.ImageMetadata(bands={})
+
+    d.image.bands.update(_find_nbar_bands(package_directory))
+    md_image.populate_from_image_metadata(d)
     return d
+
 
 def get_dataset(directory):
     return serialise.read_yaml_metadata(find_file(directory, GA_METADATA_FILE_NAME))

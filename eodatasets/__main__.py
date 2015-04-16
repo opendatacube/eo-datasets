@@ -1,3 +1,4 @@
+import functools
 import os
 import logging
 
@@ -8,9 +9,11 @@ from eodatasets.package import get_dataset, generate_raw_metadata, generate_orth
 
 
 _DATASET_PACKAGERS = {
-    'raw': (generate_raw_metadata, None),
-    'ortho': (generate_ortho_metadata, 'raw'),
-    'nbar': (generate_nbar_metadata, 'ortho'),
+    # Tuple of (metadata function, expected source type)
+    'raw': (generate_raw_metadata, None, ''),
+    'ortho': (generate_ortho_metadata, 'raw', ''),
+    'nbar_terrain': (generate_nbar_metadata, 'ortho', 'reflectance_terrain'),
+    'nbar_brdf': (generate_nbar_metadata, 'ortho', 'reflectance_brdf'),
 }
 
 
@@ -39,13 +42,15 @@ def run_packaging(parent, debug, in_place, type, dataset, destination):
 
     parent_datasets = {}
 
-    extract_metdata, parent_name = _DATASET_PACKAGERS[type]
+    extract_metdata, parent_name, required_prefix = _DATASET_PACKAGERS[type]
 
     # TODO: Multiple parents?
     if parent:
         parent_datasets.update({parent_name: get_dataset(Path(parent[0]))})
 
+    # If we're packaging in-place (ie. generating metadata), all listed paths are datasets.
     if in_place:
+        dataset = list(dataset)
         dataset.append(destination)
         destination = None
 
@@ -61,7 +66,8 @@ def run_packaging(parent, debug, in_place, type, dataset, destination):
             extract_metdata,
             dataset_path,
             target_folder,
-            source_datasets=parent_datasets
+            source_datasets=parent_datasets,
+            required_prefix=required_prefix
         )
 
 run_packaging()

@@ -446,7 +446,9 @@ class BandMetadata(SimpleObject):
         # Band number. Not always a number (eg. 'QA')
         self.number = number
 
+        #: :type: Point
         self.shape = shape
+
         self.cell_size = cell_size
         self.checksum_md5 = checksum_md5
 
