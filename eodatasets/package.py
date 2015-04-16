@@ -3,6 +3,7 @@ import shutil
 import logging
 import time
 from subprocess import check_call
+import datetime
 
 from pathlib import Path
 
@@ -233,6 +234,8 @@ def do_package(metadata_extract_fn,
 
     d = metadata_extract_fn(init_local_dataset(), package_directory)
     d.size_bytes = size_bytes
+    # Default creation time is creation of the source folder.
+    d.creation_dt = datetime.datetime.utcfromtimestamp(image_path.stat().st_ctime)
 
     d.lineage.source_datasets = source_datasets
 
