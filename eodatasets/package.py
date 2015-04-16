@@ -262,6 +262,9 @@ def generate_raw_metadata(d, package_directory):
     # TODO: Bands?
     return d
 
+def generate_nbar_metadata(d, package_directory):
+    # TODO
+    return d
 
 def get_dataset(directory):
     return serialise.read_yaml_metadata(find_file(directory, GA_METADATA_FILE_NAME))
