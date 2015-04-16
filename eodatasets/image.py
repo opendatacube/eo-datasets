@@ -2,6 +2,7 @@ import glob
 import hashlib
 import logging
 import os
+import shutil
 from subprocess import check_call
 import math
 import errno
@@ -91,7 +92,7 @@ def create_thumbnail(red_file, green_file, blue_file, thumb_image,
 
     # thumbnail_image = os.path.abspath(thumbnail_image)
 
-    work_dir = os.path.abspath(work_dir) if work_dir else tempfile.mkdtemp('gaip-package')
+    work_dir = os.path.abspath(work_dir) if work_dir else tempfile.mkdtemp('-gaip-package')
 
     # working files
     file_to = os.path.join(work_dir, 'rgb.vrt')
@@ -180,12 +181,7 @@ def create_thumbnail(red_file, green_file, blue_file, thumb_image,
 
     _LOG.debug('Cleaning work files')
     # Clean up work files
-    for f in [file_to, warp_to_file, outtif]:
-        try:
-            os.unlink(f)
-        except OSError, e:
-            if e.errno != errno.ENOENT:
-                raise
+    shutil.rmtree(work_dir)
 
     return outcols, outrows, outresx
 
