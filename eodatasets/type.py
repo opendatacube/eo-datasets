@@ -417,13 +417,19 @@ class BrowseMetadata(SimpleObject):
                  cell_size=None, red_band=None, green_band=None, blue_band=None):
         #: :type: pathlib.Path
         self.path = path
-        self.file_type = file_type
-        self.checksum_md5 = checksum_md5
 
+        # eg 'image/jpeg'
+        self.file_type = file_type
+
+        # Size in metres
         self.cell_size = cell_size
+
+        # There are band numbers: They should correspond to a band key in the band list. (eg. '7' or '6_vcid_1')
         self.red_band = red_band
         self.green_band = green_band
         self.blue_band = blue_band
+
+        self.checksum_md5 = checksum_md5
 
 
 class BandMetadata(SimpleObject):
@@ -432,24 +438,39 @@ class BandMetadata(SimpleObject):
         'shape': Point.from_dict
     }
 
-    def __init__(self, path=None, type_=None, label=None, number=None, shape=None, cell_size=None, checksum_md5=None):
-        # Prefer absolute paths. Path objects can be converted to relative
+    def __init__(self, path=None, file_offset=None, type_=None, label=None, number=None, shape=None, cell_size=None, checksum_md5=None):
+        # The file path of the band.
+        #
+        # Try to use absolute paths. We translate all 'Path' objects to relative paths
         # during serialisation (relative to whatever we want).
         #: :type: pathlib.Path
         self.path = path
 
+        # The offset of this band within the file.
+        #
+        # This is useful when multiple bands are stored in one file.
+        #
+        # This is dependent on file type.
+        #   - GeoTIFF: A number (starting from 1, as in gdal)
+        #   - HDF5: The item key (eg. 'subgroup/datasetname')
+        self.file_offset = file_offset
+
+        # Eg. 'thermal'
         self.type_ = type_
 
         # Eg. 'visible_red'
         self.label = label
 
-        # Band number. Not always a number (eg. 'QA')
+        # Satellite band number. Not always a number (eg. 'qa' in landsat 7, or '6_vcid_1' in landsat 7)
         self.number = number
 
+        # Width/height
         #: :type: Point
         self.shape = shape
 
+        # Size in metres
         self.cell_size = cell_size
+
         self.checksum_md5 = checksum_md5
 
 
