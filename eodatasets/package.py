@@ -47,7 +47,7 @@ def _to_old_platform_names(satellite, sensor, band_number):
     return satellite, sensor, band_number
 
 
-def expand_band_information(satellite, sensor, band_metadata, checksum=True):
+def expand_band_information(satellite, sensor, band_metadata):
     """
     Use the gaip reference table to add per-band metadata if availabe.
     :param satellite: satellite as reported by LPGS (eg. LANDSAT_8)
@@ -65,10 +65,6 @@ def expand_band_information(satellite, sensor, band_metadata, checksum=True):
         band_metadata.label = band['desc']
         band_metadata.cell_size = band['resolution']
         band_metadata.type_ = band['type_desc'].lower()
-
-    if checksum:
-        _LOG.info('Checksumming band %r', band_metadata.number)
-        band_metadata.checksum_md5 = image.calculate_file_md5(band_metadata.path)
 
     return band_metadata
 

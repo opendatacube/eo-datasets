@@ -304,26 +304,25 @@ class TestBandExpansion(unittest.TestCase):
             label=u'Short-wave Infrared 1',
             number='6',
             # MD5 of image contents ('test')
-            checksum_md5='098f6bcd4621d373cade4e832627b4f6',
             cell_size=25.0
         )
         assert_same(md, expected)
 
     def test_expand_all_ls8_bands(self):
         for number, band_metadata in BASIC_LS8_BANDS.items():
-            load.expand_band_information('LANDSAT_8', 'OLI_TIRS', band_metadata, checksum=False)
+            load.expand_band_information('LANDSAT_8', 'OLI_TIRS', band_metadata)
 
         assert_same(BASIC_LS8_BANDS, EXPANDED_LS8_BANDS)
 
     def test_expand_all_ls7_bands(self):
         for number, band_metadata in BASIC_LS7_BANDS.items():
-            load.expand_band_information('LANDSAT_7', 'ETM', band_metadata, checksum=False)
+            load.expand_band_information('LANDSAT_7', 'ETM', band_metadata)
 
         assert_same(BASIC_LS7_BANDS, EXPANDED_LS7_BANDS)
 
     def test_expand_all_ls5_bands(self):
         for number, band_metadata in BASIC_LS5_BANDS.items():
-            load.expand_band_information('LANDSAT_5', 'TM', band_metadata, checksum=False)
+            load.expand_band_information('LANDSAT_5', 'TM', band_metadata)
 
         assert_same(BASIC_LS5_BANDS, EXPANDED_LS5_BANDS)
 

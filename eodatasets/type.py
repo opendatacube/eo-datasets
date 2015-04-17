@@ -279,7 +279,7 @@ def _lookup_alias(aliases, value):
     Translate to a common name if our value is an alias.
 
     :type aliases: dict of (str, [str])
-    :type name: str
+    :type value: str
     :rtype: str
 
     >>> _lookup_alias({'name1': ['alias1']}, 'name1')
@@ -413,8 +413,8 @@ class BrowseMetadata(SimpleObject):
         'path': pathlib.Path
     }
 
-    def __init__(self, path=None, file_type=None, checksum_md5=None,
-                 cell_size=None, red_band=None, green_band=None, blue_band=None):
+    def __init__(self, path=None, file_type=None, cell_size=None,
+                 red_band=None, green_band=None, blue_band=None):
         #: :type: pathlib.Path
         self.path = path
 
@@ -429,8 +429,6 @@ class BrowseMetadata(SimpleObject):
         self.green_band = green_band
         self.blue_band = blue_band
 
-        self.checksum_md5 = checksum_md5
-
 
 class BandMetadata(SimpleObject):
     PROPERTY_PARSERS = {
@@ -438,7 +436,7 @@ class BandMetadata(SimpleObject):
         'shape': Point.from_dict
     }
 
-    def __init__(self, path=None, file_offset=None, type_=None, label=None, number=None, shape=None, cell_size=None, checksum_md5=None):
+    def __init__(self, path=None, file_offset=None, type_=None, label=None, number=None, shape=None, cell_size=None):
         # The file path of the band.
         #
         # Try to use absolute paths. We translate all 'Path' objects to relative paths
@@ -470,8 +468,6 @@ class BandMetadata(SimpleObject):
 
         # Size in metres
         self.cell_size = cell_size
-
-        self.checksum_md5 = checksum_md5
 
 
 class ImageMetadata(SimpleObject):
