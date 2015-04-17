@@ -1,11 +1,9 @@
 import glob
-import hashlib
 import logging
 import os
 import shutil
 from subprocess import check_call
 import math
-import errno
 import tempfile
 
 import gdalconst
@@ -203,13 +201,9 @@ def create_browse(red_band, green_band, blue_band, destination_file, constrain_h
         outcols=constrain_horizontal_res
     )
 
-    _LOG.info('Checksumming browse %r', destination_file)
-    md5 = calculate_file_md5(destination_file)
-
     return BrowseMetadata(
         path=destination_file,
         file_type='image/jpg',
-        checksum_md5=md5,
         cell_size=output_res,
         red_band=red_band.number,
         green_band=green_band.number,
@@ -217,32 +211,17 @@ def create_browse(red_band, green_band, blue_band, destination_file, constrain_h
     )
 
 
-def calculate_file_md5(filename):
-    m = hashlib.md5()
-
-    with Path(filename).open('rb') as f:
-        while True:
-            d = f.read(4096)
-            if not d:
-                break
-
-            m.update(d)
-
-    return m.digest().encode('hex')
-
-
 if __name__ == '__main__':
     logging.basicConfig()
     logging.getLogger().setLevel(logging.DEBUG)
+    import sys
 
-    #     red_band=7,
-    # green_band=5,
-    # blue_band=1
-    _dir = os.path.expanduser('~/ops/package-eg/LS8_OLITIRS_OTH_P51_GALPGS01-032_101_078_20141012/scene01')
+    # Create thumb from the given image directory.
+    _dir = sys.argv[1]
+
     create_thumbnail(
         glob.glob(_dir + '/*_B7.TIF')[0],
         glob.glob(_dir + '/*_B5.TIF')[0],
         glob.glob(_dir + '/*_B1.TIF')[0],
-        thumb_image='test-thumb.jpg',
-        work_dir=os.path.abspath('out-tmp')
+        thumb_image='test-thumb.jpg'
     )
