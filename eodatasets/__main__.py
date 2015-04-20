@@ -5,23 +5,14 @@ import logging
 import click
 from pathlib import Path
 
-from eodatasets.package import get_dataset, generate_raw_metadata, generate_ortho_metadata, generate_nbar_metadata, do_package
 
-
-_DATASET_PACKAGERS = {
-    # Tuple of (metadata function, expected source type)
-    'raw': (generate_raw_metadata, None, ''),
-    'ortho': (generate_ortho_metadata, 'raw', ''),
-    'nbar_terrain': (generate_nbar_metadata, 'ortho', 'reflectance_terrain'),
-    'nbar_brdf': (generate_nbar_metadata, 'ortho', 'reflectance_brdf'),
-}
-
+import eodatasets.package as package
 
 @click.command()
 @click.option('--parent', type=click.Path(exists=True, readable=True, writable=False), multiple=True)
 @click.option('--debug', is_flag=True)
 @click.option('--in-place', is_flag=True)
-@click.argument('type', type=click.Choice(_DATASET_PACKAGERS.keys()))
+@click.argument('type', type=click.Choice(package.PACKAGE_DRIVERS.keys()))
 @click.argument('dataset', type=click.Path(exists=True, readable=True, writable=False), nargs=-1)
 @click.argument('destination', type=click.Path(exists=True, readable=True, writable=True), nargs=1)
 def run_packaging(parent, debug, in_place, type, dataset, destination):
@@ -42,11 +33,13 @@ def run_packaging(parent, debug, in_place, type, dataset, destination):
 
     parent_datasets = {}
 
-    extract_metdata, parent_name, required_prefix = _DATASET_PACKAGERS[type]
+    #: :type: package.DatasetDriver
+    driver = package.PACKAGE_DRIVERS[type]
 
     # TODO: Multiple parents?
     if parent:
-        parent_datasets.update({parent_name: get_dataset(Path(parent[0]))})
+        source_id = driver.expected_source().get_id()
+        parent_datasets.update({source_id: package.get_dataset(Path(parent[0]))})
 
     # If we're packaging in-place (ie. generating metadata), all listed paths are datasets.
     if in_place:
@@ -62,12 +55,11 @@ def run_packaging(parent, debug, in_place, type, dataset, destination):
             if not os.path.exists(target_folder):
                 os.mkdir(target_folder)
 
-        do_package(
-            extract_metdata,
+        package.do_package(
+            driver,
             dataset_path,
             target_folder,
-            source_datasets=parent_datasets,
-            required_prefix=required_prefix
+            source_datasets=parent_datasets
         )
 
 run_packaging()

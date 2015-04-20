@@ -1,4 +1,3 @@
-import os
 import shutil
 import logging
 import time
@@ -173,7 +172,7 @@ def _copy_file(source_path, destination_path, compress_imagery=True):
 def prepare_target_imagery(image_directory,
                            package_directory,
                            compress_imagery=True,
-                           required_prefix=None,
+                           filename_match=None,
                            after_file_copy=lambda file_path: None):
     """
     Copy a directory of files if not already there. Possibly compress images.
@@ -196,7 +195,7 @@ def prepare_target_imagery(image_directory,
         if destination_path.suffix == '.bin':
             destination_path = destination_path.with_suffix('.tif')
 
-        if required_prefix and not destination_path.name.startswith(required_prefix):
+        if filename_match and not filename_match(destination_path):
             continue
 
         size_bytes += _copy_file(source_path, destination_path, compress_imagery)
@@ -210,21 +209,16 @@ def find_file(path, file_pattern):
     return path.glob(file_pattern).next()
 
 
-def do_package(metadata_extract_fn,
+def do_package(dataset_driver,
                image_directory,
                target_directory,
-               source_datasets=None,
-               rgb_bands=('6', '5', '3'),
-               required_prefix=None):
+               source_datasets=None):
     """
-
-    :type metadata_extract_fn: (ptype.DatasetMetadata, Path) -> ptype.DatasetMetadata)
-    :param image_directory:
-    :param target_directory:
-    :param source_datasets:
-    :param rgb_bands:
-    :param required_prefix:
-    :return:
+    Package the given dataset folder.
+    :type dataset_driver: DatasetDriver
+    :type image_directory: Path or str
+    :type target_directory: Path or str
+    :type source_datasets: dict of (str, ptype.DatasetMetadata)
     """
     start = time.time()
     checksums = verify.PackageChecksum()
@@ -247,7 +241,7 @@ def do_package(metadata_extract_fn,
     size_bytes = prepare_target_imagery(
         image_path,
         package_directory,
-        required_prefix=required_prefix,
+        filename_match=dataset_driver.match_file,
         after_file_copy=checksums.add_file
     )
 
@@ -255,7 +249,8 @@ def do_package(metadata_extract_fn,
         target_path.mkdir()
 
     #: :type: ptype.DatasetMetadata
-    d = metadata_extract_fn(init_local_dataset(), package_directory)
+    d = dataset_driver.fill_metadata(init_local_dataset(), package_directory)
+    d.product_type = dataset_driver.get_id()
     d.size_bytes = size_bytes
     d.checksum_path = target_checksums_path
     # Default creation time is creation of the source folder.
@@ -270,7 +265,7 @@ def do_package(metadata_extract_fn,
     create_browse_images(
         d,
         target_path,
-        rgb_bands=rgb_bands,
+        rgb_bands=dataset_driver.browse_image_bands(d),
         after_file_creation=checksums.add_file
     )
 
@@ -281,58 +276,137 @@ def do_package(metadata_extract_fn,
     _LOG.info('Packaged in %.02f: %s', time.time() - start, target_metadata_path)
 
 
-def generate_ortho_metadata(d, package_directory):
-    """
-    :type package_directory: Path
-    :type d: ptype.DatasetMetadata
-    :return:
-    """
-
-    mtl_path = find_file(package_directory, '*_MTL.txt')
-    _LOG.info('Reading MTL %r', mtl_path)
-
-    return mtl.populate_from_mtl(d, mtl_path)
-
-
-def generate_raw_metadata(d, package_directory):
-    d = mdf.extract_md(d, package_directory)
-    d = adsfolder.extract_md(d, package_directory)
-
-    # TODO: Antenna coords for groundstation? Heading?
-    # TODO: Bands?
-    return d
-
-
-def _find_nbar_bands(package_directory):
-    bands = {}
-    for band in Path(package_directory).glob('*.tif'):
-        band_number = band.stem.split('_')[-1]
-        bands[band_number] = ptype.BandMetadata(path=band.absolute(), number=band_number)
-    return bands
-
-
-def generate_nbar_metadata(d, package_directory):
-    """
-    :type d: ptype.DatasetMetadata
-    :param d:
-    :param package_directory:
-    :return:
-    """
-    # TODO: Detect
-    d.platform = ptype.PlatformMetadata(code='LANDSAT_8')
-    d.instrument = ptype.InstrumentMetadata(name='OLI_TIRS')
-    # d.product_type
-    if not d.image:
-        d.image = ptype.ImageMetadata(bands={})
-
-    d.image.bands.update(_find_nbar_bands(package_directory))
-    md_image.populate_from_image_metadata(d)
-    return d
-
-
 def get_dataset(directory):
     return serialise.read_yaml_metadata(find_file(directory, GA_METADATA_FILE_NAME))
 
+
+class DatasetDriver(object):
+    def get_id(self):
+        """
+        A short identifier for this type of dataset.
+
+        eg. 'ortho'
+
+        :rtype: str
+        """
+        raise NotImplementedError()
+
+    def expected_source(self):
+        """
+        Expected source dataset types.
+        :rtype: DatasetDriver
+        """
+        return None
+
+    def match_file(self, file_path):
+        return True
+
+    def browse_image_bands(self, d):
+        """
+        Band ids for for an rgb browse image.
+        :type d: ptype.DatasetMetadata
+        :rtype (str, str, str)
+        """
+        # Defaults for satellites. Different products may override this.
+        _SATELLITE_BROWSE_BANDS = {
+            'LANDSAT_5': ('5', '4', '2'),
+            'LANDSAT_7': ('5', '4', '2'),
+            'LANDSAT_8': ('6', '5', '3'),
+        }
+        browse_bands = _SATELLITE_BROWSE_BANDS.get(d.platform.code)
+        if not browse_bands:
+            raise ValueError('Unknown browse bands for satellite %s' % d.platform.code)
+
+        return browse_bands
+
+    def fill_metadata(self, dataset, path):
+        """
+        Populate the given dataset metadata, for the path given.
+
+        :type dataset: ptype.DatasetMetadata
+        :type path: Path
+        """
+        raise NotImplementedError()
+
+
+class RawPackage(DatasetDriver):
+    def get_id(self):
+        return 'RAW'
+
+    def fill_metadata(self, dataset, path):
+        dataset = mdf.extract_md(dataset, path)
+        dataset = adsfolder.extract_md(dataset, path)
+
+        # TODO: Antenna coords for groundstation? Heading?
+        # TODO: Bands?
+        return dataset
+
+
+class OrthoPackage(DatasetDriver):
+    def get_id(self):
+        return 'ortho'
+
+    def expected_source(self):
+        return RawPackage()
+
+    def fill_metadata(self, d, package_directory):
+        """
+        :type package_directory: Path
+        :type d: ptype.DatasetMetadata
+        :return:
+        """
+        mtl_path = find_file(package_directory, '*_MTL.txt')
+        _LOG.info('Reading MTL %r', mtl_path)
+        return mtl.populate_from_mtl(d, mtl_path)
+
+
+class NbarPackage(DatasetDriver):
+    # 'nbar_terrain': (generate_nbar_metadata, 'ortho', 'reflectance_terrain'),
+    # 'nbar_brdf': (generate_nbar_metadata, 'ortho', 'reflectance_brdf'),
+    def __init__(self, subset_name):
+        self.subset_name = subset_name
+
+    def get_id(self):
+        return 'nbar_{}'.format(self.subset_name)
+
+    def expected_source(self):
+        return OrthoPackage()
+
+    def match_file(self, file_path):
+        file_prefix = 'reflectance_{}'.format(self.subset_name)
+        return file_path.name.startswith(file_prefix)
+
+    def _find_nbar_bands(self, package_directory):
+        bands = {}
+        for band in Path(package_directory).glob('*.tif'):
+            band_number = band.stem.split('_')[-1]
+            bands[band_number] = ptype.BandMetadata(path=band.absolute(), number=band_number)
+        return bands
+
+    def fill_metadata(self, dataset, path):
+        """
+        :type dataset: ptype.DatasetMetadata
+        :type path: Path
+        :rtype: ptype.DatasetMetadata
+        """
+        # TODO: Detect
+        dataset.platform = ptype.PlatformMetadata(code='LANDSAT_8')
+        dataset.instrument = ptype.InstrumentMetadata(name='OLI_TIRS')
+        # d.product_type
+        if not dataset.image:
+            dataset.image = ptype.ImageMetadata(bands={})
+
+        dataset.image.bands.update(self._find_nbar_bands(path))
+        md_image.populate_from_image_metadata(dataset)
+        return dataset
+
+
+PACKAGE_DRIVERS = {
+    'raw': RawPackage(),
+    'ortho': OrthoPackage(),
+    'nbar_brdf': NbarPackage('brdf'),
+    'nbar_terrain': NbarPackage('terrain')
+}
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
@@ -341,31 +415,4 @@ if __name__ == '__main__':
     doctest.testmod()
     logging.getLogger().setLevel(logging.DEBUG)
 
-    # Package RAW
-    raw_ls8_dir = os.path.expanduser('~/ops/inputs/LANDSAT-8.11308/LC81160740742015089ASA00')
-    do_package(generate_raw_metadata, raw_ls8_dir, raw_ls8_dir)
-
-    # Package ORTHO, linking to previous RAW.
-    ls8_packaged_out = 'out-ls8-test'
-    do_package(
-        generate_ortho_metadata,
-        os.path.expanduser('~/ops/inputs/LS8_PINKMATTER_OUT'),
-        ls8_packaged_out,
-        source_datasets={'raw': get_dataset(Path(raw_ls8_dir))}
-    )
-
-    # Package NBAR, linking to previous ORTHO
-    def do_no_metadata(d, package_directory):
-        print 'No NBAR metadata yet'
-        print d, package_directory
-        return d
-
-    do_package(
-        do_no_metadata,
-        os.path.expanduser('~/ops/inputs/nbar_out'),
-        'out-nbar-test',
-        source_datasets={
-            'ortho': get_dataset(Path(ls8_packaged_out))
-        }
-    )
 
