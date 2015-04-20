@@ -1,7 +1,7 @@
 import unittest
 
 import eodatasets.metadata.adsfolder as adsfolder
-from eodatasets.metadata.tests import write_files
+from eodatasets.tests import write_files
 import eodatasets.type as ptype
 
 

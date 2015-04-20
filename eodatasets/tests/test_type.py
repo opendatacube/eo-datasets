@@ -9,7 +9,7 @@ import dateutil.parser
 from pathlib import Path
 
 from eodatasets import type as ptype, serialise
-from eodatasets.metadata.tests import temp_file
+from eodatasets.tests import temp_file
 
 
 def _serialise_to_file(file_name, dataset):

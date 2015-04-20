@@ -5,7 +5,7 @@ import datetime
 import pathlib
 
 import eodatasets.metadata.mdf as mdf
-from eodatasets.metadata.tests import write_files
+from eodatasets.tests import write_files
 import eodatasets.type as ptype
 
 
