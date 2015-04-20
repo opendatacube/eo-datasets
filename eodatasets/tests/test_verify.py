@@ -34,8 +34,8 @@ class VerifyTests(unittest.TestCase):
         c = verify.PackageChecksum()
 
         c.add_file(d.joinpath('test1.txt'))
-        c.add_file(d.joinpath('package', 'test2.txt'))
-        c.add_file(d.joinpath('package', 'test3.txt').absolute())
+        c.add_file(d.joinpath('package', 'test3.txt'))
+        c.add_file(d.joinpath('package', 'test2.txt').absolute())
 
         checksums_file = d.joinpath('package.sha1')
         c.write(checksums_file)
@@ -43,8 +43,10 @@ class VerifyTests(unittest.TestCase):
         with checksums_file.open('r') as f:
             doc = f.read()
 
-        # One (hash, file) per line separated by a tab. File name must be relative to the output checksum file.
-        self.assertEqual("""a94a8fe5ccb19ba61c4c0873d391e987982fbbd3\ttest1.txt
-109f4b3c50d7b0df729d299bc6f8e9ef9066971f\tpackage/test2.txt
+        # One (hash, file) per line separated by a tab.
+        #  - File paths must be relative to the checksum file.
+        #  - Output in filename alphabetical order.
+        self.assertEqual("""109f4b3c50d7b0df729d299bc6f8e9ef9066971f\tpackage/test2.txt
 3ebfa301dc59196f18593c45e519287a23297589\tpackage/test3.txt
+a94a8fe5ccb19ba61c4c0873d391e987982fbbd3\ttest1.txt
 """, doc)

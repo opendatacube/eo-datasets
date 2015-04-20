@@ -8,12 +8,13 @@ import datetime
 from pathlib import Path
 
 from gaip import acquisition
-from eodatasets import image, serialise
+from eodatasets import image, serialise, verify
 from eodatasets.metadata import mdf, mtl, adsfolder, image as md_image
 import eodatasets.type as ptype
 
 
 GA_METADATA_FILE_NAME = 'ga-metadata.yaml'
+GA_CHECKSUMS_FILE_NAME = 'package.sha1'
 
 _LOG = logging.getLogger(__name__)
 
@@ -88,34 +89,37 @@ def create_browse_images(
         d,
         target_directory,
         rgb_bands=('6', '5', '3'),
-        browse_filename='browse'):
+        browse_filename='browse',
+        after_file_creation=lambda file_path: None):
     """
 
     :type d: ptype.DatasetMetadata
     :type target_directory: Path
-    :type red_band_id: str
-    :type green_band_id: str
-    :type blue_band_id: str
+    :type rgb_bands: (str, str, str)
     :type browse_filename: str
     :return:
     """
     red_band_id, green_band_id, blue_band_id = rgb_bands
     if d.image and d.image.bands:
+        medium_path = target_directory / (browse_filename + '.jpg')
+        fr_path = target_directory / (browse_filename + '.fr.jpg')
         d.browse = {
             'medium': image.create_browse(
                 d.image.bands[red_band_id],
                 d.image.bands[green_band_id],
                 d.image.bands[blue_band_id],
-                target_directory / (browse_filename + '.jpg'),
+                medium_path,
                 constrain_horizontal_res=1024
             ),
             'full': image.create_browse(
                 d.image.bands[red_band_id],
                 d.image.bands[green_band_id],
                 d.image.bands[blue_band_id],
-                target_directory / (browse_filename + '.fr.jpg')
+                fr_path
             )
         }
+        after_file_creation(medium_path)
+        after_file_creation(fr_path)
     return d
 
 
@@ -166,7 +170,11 @@ def _copy_file(source_path, destination_path, compress_imagery=True):
     return destination_path.stat().st_size
 
 
-def prepare_target_imagery(image_directory, package_directory, compress_imagery=True, required_prefix=None):
+def prepare_target_imagery(image_directory,
+                           package_directory,
+                           compress_imagery=True,
+                           required_prefix=None,
+                           after_file_copy=lambda file_path: None):
     """
     Copy a directory of files if not already there. Possibly compress images.
 
@@ -192,6 +200,7 @@ def prepare_target_imagery(image_directory, package_directory, compress_imagery=
             continue
 
         size_bytes += _copy_file(source_path, destination_path, compress_imagery)
+        after_file_copy(destination_path)
 
     return size_bytes
 
@@ -207,7 +216,18 @@ def do_package(metadata_extract_fn,
                source_datasets=None,
                rgb_bands=('6', '5', '3'),
                required_prefix=None):
+    """
+
+    :type metadata_extract_fn: (ptype.DatasetMetadata, Path) -> ptype.DatasetMetadata)
+    :param image_directory:
+    :param target_directory:
+    :param source_datasets:
+    :param rgb_bands:
+    :param required_prefix:
+    :return:
+    """
     start = time.time()
+    checksums = verify.PackageChecksum()
 
     target_path = Path(target_directory).absolute()
     image_path = Path(image_directory).absolute()
@@ -216,6 +236,7 @@ def do_package(metadata_extract_fn,
     if target_metadata_path.exists():
         _LOG.info('Already packaged? Skipping %s', target_path)
         return
+    target_checksums_path = target_path / GA_CHECKSUMS_FILE_NAME
 
     _LOG.debug('Packaging %r -> %r', image_path, target_path)
     if image_path.resolve() != target_path.resolve():
@@ -223,13 +244,20 @@ def do_package(metadata_extract_fn,
     else:
         package_directory = target_path
 
-    size_bytes = prepare_target_imagery(image_path, package_directory, required_prefix=required_prefix)
+    size_bytes = prepare_target_imagery(
+        image_path,
+        package_directory,
+        required_prefix=required_prefix,
+        after_file_copy=checksums.add_file
+    )
 
     if not target_path.exists():
         target_path.mkdir()
 
+    #: :type: ptype.DatasetMetadata
     d = metadata_extract_fn(init_local_dataset(), package_directory)
     d.size_bytes = size_bytes
+    d.checksum_path = target_checksums_path
     # Default creation time is creation of the source folder.
     d.creation_dt = datetime.datetime.utcfromtimestamp(image_path.stat().st_ctime)
 
@@ -239,18 +267,24 @@ def do_package(metadata_extract_fn,
         for number, band_metadata in d.image.bands.items():
             expand_band_information(d.platform.code, d.instrument.name, band_metadata)
 
-    create_browse_images(d, target_path, rgb_bands=rgb_bands)
+    create_browse_images(
+        d,
+        target_path,
+        rgb_bands=rgb_bands,
+        after_file_creation=checksums.add_file
+    )
 
     serialise.write_yaml_metadata(d, target_metadata_path, target_path)
+    checksums.add_file(target_metadata_path)
 
+    checksums.write(target_checksums_path)
     _LOG.info('Packaged in %.02f: %s', time.time() - start, target_metadata_path)
 
 
 def generate_ortho_metadata(d, package_directory):
     """
-    :type image_directory: str
-    :type target_directory: str
-    :type source_datasets: dict of (str, ptype.DatasetMetadata)
+    :type package_directory: Path
+    :type d: ptype.DatasetMetadata
     :return:
     """
 

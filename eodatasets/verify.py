@@ -1,6 +1,9 @@
 import hashlib
 import binascii
 from pathlib import Path
+import logging
+
+_LOG = logging.getLogger(__name__)
 
 
 def calculate_file_hash(filename, hash_fn=hashlib.sha1, block_size=4096):
@@ -53,12 +56,22 @@ class PackageChecksum(object):
         self.file_hashes = []
 
     def add_file(self, file_path):
-        hash = calculate_file_hash(file_path)
-
-        self.file_hashes.append((Path(file_path), hash))
+        """
+        Add a file to the checksum list.
+        :type file_path: Path or str
+        """
+        _LOG.info('Checksumming %r', file_path)
+        hash_ = calculate_file_hash(file_path)
+        _LOG.debug('%r -> %r', file_path, hash_)
+        self.file_hashes.append((Path(file_path), hash_))
 
     def write(self, output_file):
+        """
+        Write checksums to the given file.
+        :type output_file: Path or str
+        """
         output_file = Path(output_file)
+        self.file_hashes.sort()
         with output_file.open('w') as f:
             f.writelines((u'{0}\t{1}\n'.format(str(hash_), str(filename.relative_to(output_file.parent)))
                           for filename, hash_ in self.file_hashes))

@@ -628,6 +628,7 @@ class DatasetMetadata(SimpleObject):
                  product_type=None,
                  creation_dt=None,
                  size_bytes=None,
+                 checksum_path=None,
                  platform=None,
                  instrument=None,
                  format_=None,
@@ -647,6 +648,8 @@ class DatasetMetadata(SimpleObject):
         self.ga_label = ga_label
         self.ga_level = ga_level
         self.usgs_dataset_id = usgs_dataset_id
+
+        self.checksum_path = checksum_path
 
         self.product_type = product_type
 
