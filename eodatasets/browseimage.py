@@ -232,7 +232,7 @@ def create_dataset_browse_images(
     :type target_directory: Path
     :rtype: ptype.DatasetMetadata
     """
-    if not dataset.image and not dataset.image.bands:
+    if not dataset.image or not dataset.image.bands:
         # A dataset without defined bands doesn't get a browse image (eg. raw file)
         _LOG.info('No bands defined. Skipping browse image.')
         return dataset
