@@ -1,3 +1,4 @@
+import json
 import shutil
 import logging
 import time
@@ -6,7 +7,6 @@ import datetime
 
 from pathlib import Path
 
-from gaip import acquisition
 from eodatasets import serialise, verify, drivers
 from eodatasets.browseimage import create_dataset_browse_images
 
@@ -17,50 +17,23 @@ GA_CHECKSUMS_FILE_NAME = 'package.sha1'
 
 _LOG = logging.getLogger(__name__)
 
-
-def _to_old_platform_names(satellite, sensor, band_number):
-    """
-    Translate names to those used by the old LPGS.
-
-    Older gaip code still uses the old names.
-
-    :type band_number: str
-    :type satellite: str
-    :type sensor: str
-    :return: satellite, sensor, band_name
-    :rtype (str, str, str)
-    """
-    # The sensor map uses old lpgs satellite names. Translate them to new LPGS names for now.
-    if satellite == 'LANDSAT_5':
-        satellite = 'Landsat5'
-    if satellite == 'LANDSAT_7':
-        satellite = 'Landsat7'
-
-        if sensor == 'ETM':
-            sensor = 'ETM+'
-
-        if str(band_number) == '6_vcid_1':
-            band_number = '61'
-        if str(band_number) == '6_vcid_2':
-            band_number = '62'
-
-    return satellite, sensor, band_number
+# From the gaip codebase. Lookup table for sensor information.
+with Path(__file__).parent.joinpath('sensors.json').open() as fo:
+    SENSORS = json.load(fo)
 
 
 def expand_band_information(satellite, sensor, band_metadata):
     """
-    Use the gaip reference table to add per-band metadata if availabe.
+    Use the gaip reference table to add per-band metadata if available.
     :param satellite: satellite as reported by LPGS (eg. LANDSAT_8)
     :param sensor: sensor as reported by LPGS (eg. OLI_TIRS)
     :type band_metadata: ptype.BandMetadata
     :rtype: ptype.BandMetadata
     """
 
-    satellite, sensor, band_number = _to_old_platform_names(satellite, sensor, band_metadata.number)
+    bands = SENSORS[satellite]['sensors'][sensor]['bands']
 
-    bands = acquisition.SENSORS[satellite]['sensors'][sensor]['bands']
-
-    band = bands.get(band_number)
+    band = bands.get(band_metadata.number)
     if band:
         band_metadata.label = band['desc']
         band_metadata.cell_size = band['resolution']
