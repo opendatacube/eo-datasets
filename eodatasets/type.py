@@ -410,10 +410,12 @@ class GridSpatialMetadata(SimpleObject):
 
 class BrowseMetadata(SimpleObject):
     PROPERTY_PARSERS = {
-        'path': pathlib.Path
+        'path': pathlib.Path,
+        'shape': Point.from_dict,
     }
 
     def __init__(self, path=None, file_type=None, cell_size=None,
+                 shape=None,
                  red_band=None, green_band=None, blue_band=None):
         #: :type: pathlib.Path
         self.path = path
@@ -423,6 +425,10 @@ class BrowseMetadata(SimpleObject):
 
         # Size in metres
         self.cell_size = cell_size
+
+        # x/y size (or constraints). Either x or y may be None (if unconstrained/unknown).
+        #: :type: Point
+        self.shape = shape
 
         # There are band numbers: They should correspond to a band key in the band list. (eg. '7' or '6_vcid_1')
         self.red_band = red_band

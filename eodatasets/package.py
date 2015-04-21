@@ -7,12 +7,12 @@ import datetime
 from pathlib import Path
 
 from gaip import acquisition
-from eodatasets import image, serialise, verify
-from eodatasets.metadata import mdf, mtl, adsfolder, image as md_image
+from eodatasets import serialise, verify, drivers
+from eodatasets.browseimage import create_dataset_browse_images
+
 import eodatasets.type as ptype
 
 
-GA_METADATA_FILE_NAME = 'ga-metadata.yaml'
 GA_CHECKSUMS_FILE_NAME = 'package.sha1'
 
 _LOG = logging.getLogger(__name__)
@@ -82,44 +82,6 @@ def init_local_dataset(uuid=None):
         )
     )
     return md
-
-
-def create_browse_images(
-        d,
-        target_directory,
-        rgb_bands=('6', '5', '3'),
-        browse_filename='browse',
-        after_file_creation=lambda file_path: None):
-    """
-
-    :type d: ptype.DatasetMetadata
-    :type target_directory: Path
-    :type rgb_bands: (str, str, str)
-    :type browse_filename: str
-    :return:
-    """
-    red_band_id, green_band_id, blue_band_id = rgb_bands
-    if d.image and d.image.bands:
-        medium_path = target_directory / (browse_filename + '.jpg')
-        fr_path = target_directory / (browse_filename + '.fr.jpg')
-        d.browse = {
-            'medium': image.create_browse(
-                d.image.bands[red_band_id],
-                d.image.bands[green_band_id],
-                d.image.bands[blue_band_id],
-                medium_path,
-                constrain_horizontal_res=1024
-            ),
-            'full': image.create_browse(
-                d.image.bands[red_band_id],
-                d.image.bands[green_band_id],
-                d.image.bands[blue_band_id],
-                fr_path
-            )
-        }
-        after_file_creation(medium_path)
-        after_file_creation(fr_path)
-    return d
 
 
 def _copy_file(source_path, destination_path, compress_imagery=True):
@@ -204,18 +166,13 @@ def prepare_target_imagery(image_directory,
     return size_bytes
 
 
-def find_file(path, file_pattern):
-    # Crude but effective. TODO: multiple/no result handling.
-    return path.glob(file_pattern).next()
-
-
 def do_package(dataset_driver,
                image_directory,
                target_directory,
                source_datasets=None):
     """
     Package the given dataset folder.
-    :type dataset_driver: DatasetDriver
+    :type dataset_driver: drivers.DatasetDriver
     :type image_directory: Path or str
     :type target_directory: Path or str
     :type source_datasets: dict of (str, ptype.DatasetMetadata)
@@ -226,7 +183,7 @@ def do_package(dataset_driver,
     target_path = Path(target_directory).absolute()
     image_path = Path(image_directory).absolute()
 
-    target_metadata_path = target_path / GA_METADATA_FILE_NAME
+    target_metadata_path = serialise.expected_metadata_path(target_path)
     if target_metadata_path.exists():
         _LOG.info('Already packaged? Skipping %s', target_path)
         return
@@ -241,7 +198,7 @@ def do_package(dataset_driver,
     size_bytes = prepare_target_imagery(
         image_path,
         package_directory,
-        filename_match=dataset_driver.match_file,
+        filename_match=dataset_driver.file_is_pertinent,
         after_file_copy=checksums.add_file
     )
 
@@ -262,151 +219,18 @@ def do_package(dataset_driver,
         for number, band_metadata in d.image.bands.items():
             expand_band_information(d.platform.code, d.instrument.name, band_metadata)
 
-    create_browse_images(
+    create_dataset_browse_images(
+        dataset_driver,
         d,
         target_path,
-        rgb_bands=dataset_driver.browse_image_bands(d),
         after_file_creation=checksums.add_file
     )
 
-    serialise.write_yaml_metadata(d, target_metadata_path, target_path)
+    target_metadata_path = serialise.write_dataset_metadata(target_path, d)
     checksums.add_file(target_metadata_path)
 
     checksums.write(target_checksums_path)
     _LOG.info('Packaged in %.02f: %s', time.time() - start, target_metadata_path)
-
-
-def get_dataset(directory):
-    return serialise.read_yaml_metadata(find_file(directory, GA_METADATA_FILE_NAME))
-
-
-class DatasetDriver(object):
-    def get_id(self):
-        """
-        A short identifier for this type of dataset.
-
-        eg. 'ortho'
-
-        :rtype: str
-        """
-        raise NotImplementedError()
-
-    def expected_source(self):
-        """
-        Expected source dataset types.
-        :rtype: DatasetDriver
-        """
-        return None
-
-    def match_file(self, file_path):
-        return True
-
-    def browse_image_bands(self, d):
-        """
-        Band ids for for an rgb browse image.
-        :type d: ptype.DatasetMetadata
-        :rtype (str, str, str)
-        """
-        # Defaults for satellites. Different products may override this.
-        # These values come from the ARG25 spec.
-        _SATELLITE_BROWSE_BANDS = {
-            'LANDSAT_5': ('7', '4', '1'),
-            'LANDSAT_7': ('7', '4', '1'),
-            'LANDSAT_8': ('7', '5', '2'),
-        }
-        browse_bands = _SATELLITE_BROWSE_BANDS.get(d.platform.code)
-        if not browse_bands:
-            raise ValueError('Unknown browse bands for satellite %s' % d.platform.code)
-
-        return browse_bands
-
-    def fill_metadata(self, dataset, path):
-        """
-        Populate the given dataset metadata, for the path given.
-
-        :type dataset: ptype.DatasetMetadata
-        :type path: Path
-        """
-        raise NotImplementedError()
-
-
-class RawDriver(DatasetDriver):
-    def get_id(self):
-        return 'raw'
-
-    def fill_metadata(self, dataset, path):
-        dataset = mdf.extract_md(dataset, path)
-        dataset = adsfolder.extract_md(dataset, path)
-
-        # TODO: Antenna coords for groundstation? Heading?
-        # TODO: Bands?
-        return dataset
-
-
-class OrthoDriver(DatasetDriver):
-    def get_id(self):
-        return 'ortho'
-
-    def expected_source(self):
-        return RawDriver()
-
-    def fill_metadata(self, d, package_directory):
-        """
-        :type package_directory: Path
-        :type d: ptype.DatasetMetadata
-        :return:
-        """
-        mtl_path = find_file(package_directory, '*_MTL.txt')
-        _LOG.info('Reading MTL %r', mtl_path)
-        return mtl.populate_from_mtl(d, mtl_path)
-
-
-class NbarDriver(DatasetDriver):
-    def __init__(self, subset_name):
-        # Subset is typically "brdf" or "terrain" -- which NBAR portion to package.
-        self.subset_name = subset_name
-
-    def get_id(self):
-        return 'nbar_{}'.format(self.subset_name)
-
-    def expected_source(self):
-        return OrthoDriver()
-
-    def match_file(self, file_path):
-        file_prefix = 'reflectance_{}'.format(self.subset_name)
-        return file_path.name.startswith(file_prefix)
-
-    def _find_nbar_bands(self, package_directory):
-        bands = {}
-        for band in Path(package_directory).glob('*.tif'):
-            band_number = band.stem.split('_')[-1]
-            bands[band_number] = ptype.BandMetadata(path=band.absolute(), number=band_number)
-        return bands
-
-    def fill_metadata(self, dataset, path):
-        """
-        :type dataset: ptype.DatasetMetadata
-        :type path: Path
-        :rtype: ptype.DatasetMetadata
-        """
-        # TODO: Detect
-        dataset.platform = ptype.PlatformMetadata(code='LANDSAT_8')
-        dataset.instrument = ptype.InstrumentMetadata(name='OLI_TIRS')
-        # d.product_type
-        if not dataset.image:
-            dataset.image = ptype.ImageMetadata(bands={})
-
-        dataset.image.bands.update(self._find_nbar_bands(path))
-        md_image.populate_from_image_metadata(dataset)
-        return dataset
-
-
-PACKAGE_DRIVERS = {
-    'raw': RawDriver(),
-    'ortho': OrthoDriver(),
-    'nbar_brdf': NbarDriver('brdf'),
-    'nbar_terrain': NbarDriver('terrain')
-}
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')

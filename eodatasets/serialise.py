@@ -18,6 +18,54 @@ import eodatasets.type as ptype
 _LOG = logging.getLogger(__name__)
 
 
+def expected_metadata_path(dataset_path):
+    """
+    Get the path where we expect a metadata file for this dataset.
+
+    :type dataset_path: Path
+    :rtype: Path
+    """
+
+    # - A dataset directory expects file 'ga-metadata.yaml'.
+    # - A dataset file expects a sibling file with suffix '.ga-md.yaml'.
+
+    if dataset_path.is_dir():
+        return dataset_path.joinpath('ga-metadata.yaml')
+
+    if dataset_path.is_file():
+        return dataset_path.parent.joinpath('{}.ga-md.yaml'.format(dataset_path.name))
+
+    raise ValueError('Unhandled path type for %r' % dataset_path)
+
+
+def read_dataset_metadata(dataset_path):
+    """
+    Read the metadata for a dataset
+
+    :type dataset_path: Path
+    :rtype: ptype.DatasetMetadata
+    """
+    metadata_path = expected_metadata_path(dataset_path)
+    if not metadata_path.exists():
+        return None
+
+    return read_yaml_metadata(metadata_path)
+
+
+def write_dataset_metadata(dataset_path, dataset_metadata):
+    """
+    Write the given metadata for the given dataset path.
+
+    :type dataset_path: Path
+    :type dataset_metadata: ptype.DatasetMetadata
+    :rtype: Path
+    :return Path to the metadata file.
+    """
+    metadata_path = expected_metadata_path(dataset_path)
+    _write_yaml_metadata(dataset_metadata, metadata_path)
+    return metadata_path
+
+
 def init_yaml_handling():
     """
     Allow load/dump of our custom classes in YAML.
@@ -79,7 +127,7 @@ def init_yaml_handling():
     yaml.add_representer(unicode, unicode_representer)
 
 
-def create_relative_dumper(folder):
+def _create_relative_dumper(folder):
     """
     Create a Dump implementation that can dump pathlib.Path() objects as relative paths.
 
@@ -106,7 +154,7 @@ def create_relative_dumper(folder):
     return RelativeDumper
 
 
-def write_yaml_metadata(d, metadata_file, target_directory=None):
+def _write_yaml_metadata(d, metadata_path, target_directory=None):
     """
     Write the given dataset to yaml.
 
@@ -114,9 +162,10 @@ def write_yaml_metadata(d, metadata_file, target_directory=None):
     target directory.
 
     :type d: DatasetMetadata
-    :type target_directory: str
-    :type metadata_file: str
+    :type target_directory: str or Path
+    :type metadata_path: str or Path
     """
+    metadata_file = str(metadata_path)
     if not target_directory:
         target_directory = os.path.dirname(os.path.abspath(metadata_file))
 
@@ -127,7 +176,7 @@ def write_yaml_metadata(d, metadata_file, target_directory=None):
             f,
             default_flow_style=False,
             indent=4,
-            Dumper=create_relative_dumper(target_directory),
+            Dumper=_create_relative_dumper(str(target_directory)),
             allow_unicode=True
         )
 

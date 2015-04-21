@@ -8,10 +8,12 @@ import tempfile
 
 import gdalconst
 import gdal
+import click
 import numpy
 from pathlib import Path
+from eodatasets import serialise, drivers, verify
 
-from eodatasets.type import BrowseMetadata
+import eodatasets.type as ptype
 
 
 GDAL_CACHE_MAX_MB = 512
@@ -26,6 +28,9 @@ def run_command(command, work_dir):
 
 
 def _calculate_scale_offset(nodata, band):
+    """
+    This method comes from the old ULA codebase.
+    """
     nbits = gdal.GetDataTypeSize(band.DataType)
     dfScaleDstMin, dfScaleDstMax = 0.0, 255.0
     if nbits == 16:
@@ -61,16 +66,18 @@ def _calculate_scale_offset(nodata, band):
     return dfScale, dfOffset
 
 
-def create_thumbnail(red_file, green_file, blue_file, thumb_image,
-                     outcols=None, nodata=-999, work_dir=None, overwrite=True):
+def _create_thumbnail(red_file, green_file, blue_file, thumb_image,
+                     x_constraint=None, nodata=-999, work_dir=None, overwrite=True):
     """
     Create JPEG thumbnail image using individual R, G, B images.
+
+    This method comes from the old ULA codebase.
 
     :param red_file: red band data file
     :param green_file: green band data file
     :param blue_file: blue band data file
     :param thumb_image: thumbnail file to write to.
-    :param outcols: thumbnail width (if not full resolution)
+    :param x_constraint: thumbnail width (if not full resolution)
     :param nodata: null/fill data value
     :param work_dir: temp/work directory to use.
     :param overwrite: overwrite existing thumbnail?
@@ -120,11 +127,11 @@ def create_thumbnail(red_file, green_file, blue_file, thumb_image,
     incols = vrt.RasterXSize
 
     # If a specific resolution is asked for.
-    if outcols:
-        outresx = inpixelx * incols / outcols
+    if x_constraint:
+        outresx = inpixelx * incols / x_constraint
         _LOG.info('Input pixel res %r, output pixel res %r', inpixelx, outresx)
 
-        outrows = int(math.ceil((float(inrows) / float(incols)) * outcols))
+        outrows = int(math.ceil((float(inrows) / float(incols)) * x_constraint))
 
         run_command([
             "gdalwarp",
@@ -138,7 +145,7 @@ def create_thumbnail(red_file, green_file, blue_file, thumb_image,
     else:
         # Otherwise use a full resolution browse image.
         outrows = inrows
-        outcols = incols
+        x_constraint = incols
         warp_to_file = file_to
         outresx = inpixelx
 
@@ -148,7 +155,7 @@ def create_thumbnail(red_file, green_file, blue_file, thumb_image,
     # Open VRT file to array
     vrt = gdal.Open(warp_to_file)
     driver = gdal.GetDriverByName("GTiff")
-    outdataset = driver.Create(outtif, outcols, outrows, 3, gdalconst.GDT_Byte)
+    outdataset = driver.Create(outtif, x_constraint, outrows, 3, gdalconst.GDT_Byte)
 
     # Loop through bands and apply Scale and Offset
     for band_number in (1, 2, 3):
@@ -181,47 +188,122 @@ def create_thumbnail(red_file, green_file, blue_file, thumb_image,
     # Clean up work files
     shutil.rmtree(work_dir)
 
-    return outcols, outrows, outresx
+    return x_constraint, outrows, outresx
 
 
-def create_browse(red_band, green_band, blue_band, destination_file, constrain_horizontal_res=None):
+def create_typical_browse_metadata(dataset_driver, dataset, destination_directory):
     """
-
-    :type red_band: eodatasets.type.BandMetadata
-    :type green_band: eodatasets.type.BandMetadata
-    :type blue_band: eodatasets.type.BandMetadata
-    :param destination_file:
+    Create browse metadata.
+    :type dataset_driver: eodatasets.package.DatasetDriver
+    :type dataset: ptype.DatasetMetadata
+    :type destination_directory: Path
+    :type constrain_horizontal_res:
     :return:
     """
-    cols, rows, output_res = create_thumbnail(
-        red_band.path,
-        green_band.path,
-        blue_band.path,
-        destination_file,
-        outcols=constrain_horizontal_res
-    )
+    rgb_bands = dataset_driver.browse_image_bands(dataset)
+    dataset.browse = {
+        'medium': ptype.BrowseMetadata(
+            path=destination_directory.joinpath('browse.jpg'),
+            file_type='image/jpg',
+            # cell_size=output_res,
+            shape=ptype.Point(1024, None),
+            red_band=rgb_bands[0],
+            green_band=rgb_bands[1],
+            blue_band=rgb_bands[2]
+        ),
+        'full': ptype.BrowseMetadata(
+            path=destination_directory.joinpath('browse.fr.jpg'),
+            file_type='image/jpg',
+            # cell_size=output_res,
+            red_band=rgb_bands[0],
+            green_band=rgb_bands[1],
+            blue_band=rgb_bands[2]
+        )
+    }
+    return dataset
 
-    return BrowseMetadata(
-        path=destination_file,
-        file_type='image/jpg',
-        cell_size=output_res,
-        red_band=red_band.number,
-        green_band=green_band.number,
-        blue_band=blue_band.number
-    )
 
+def create_dataset_browse_images(
+        dataset_driver,
+        dataset,
+        target_directory,
+        after_file_creation=lambda file_path: None):
+    """
+
+    :type dataset: ptype.DatasetMetadata
+    :type target_directory: Path
+    :rtype: ptype.DatasetMetadata
+    """
+    if not dataset.image and not dataset.image.bands:
+        # A dataset without defined bands doesn't get a browse image (eg. raw file)
+        _LOG.info('No bands defined. Skipping browse image.')
+        return dataset
+
+    # Create browse image metadata if missing.
+    if not dataset.browse:
+        create_typical_browse_metadata(dataset_driver, dataset, target_directory)
+
+    # Create browse images based on the metadata.
+    for browse_id, browse_metadata in dataset.browse.items():
+        x_constraint = None
+        if browse_metadata.shape:
+            x_constraint = browse_metadata.shape.x
+
+        cols, rows, output_res = _create_thumbnail(
+            dataset.image.bands[browse_metadata.red_band].path,
+            dataset.image.bands[browse_metadata.green_band].path,
+            dataset.image.bands[browse_metadata.blue_band].path,
+            browse_metadata.path,
+            x_constraint=x_constraint
+        )
+        # Update with the exact shape information.
+        browse_metadata.shape = ptype.Point(cols, rows)
+        browse_metadata.cell_size = output_res
+
+        after_file_creation(browse_metadata.path)
+
+    return dataset
+
+
+def regenerate_browse_image(dataset_directory):
+    """
+    Regenerate the browse image for a given dataset path.
+
+    (TODO: This doesn't regenerate package checksums yet. It's mostly useful for development.)
+
+    :param dataset_directory:
+    :return:
+    """
+    dataset_metadata = serialise.read_dataset_metadata(dataset_directory)
+
+    product_type = dataset_metadata.product_type
+    dataset_driver = drivers.PACKAGE_DRIVERS[product_type]
+
+    # Clear existing browse metadata, so we can create updated info.
+    dataset_metadata.browse = None
+
+    dataset_metadata = create_dataset_browse_images(dataset_driver, dataset_metadata, dataset_directory)
+
+    serialise.write_dataset_metadata(dataset_directory, dataset_metadata)
+
+
+@click.command()
+@click.option('--debug', is_flag=True)
+@click.argument('dataset', type=click.Path(exists=True, readable=True, writable=False), nargs=-1)
+def run_regeneration(is_debug, dataset):
+    """
+    Regenerate browse images for the given datasets.
+    :param is_debug:
+    :param dataset:
+    :return:
+    """
+    logging.basicConfig(level=logging.INFO)
+    if is_debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    for d in dataset:
+        regenerate_browse_image(d)
 
 if __name__ == '__main__':
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
-    import sys
+    run_regeneration()
 
-    # Create thumb from the given image directory.
-    _dir = sys.argv[1]
-
-    create_thumbnail(
-        glob.glob(_dir + '/*_B7.TIF')[0],
-        glob.glob(_dir + '/*_B5.TIF')[0],
-        glob.glob(_dir + '/*_B1.TIF')[0],
-        thumb_image='test-thumb.jpg'
-    )

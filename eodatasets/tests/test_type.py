@@ -19,7 +19,7 @@ def _serialise_to_file(file_name, dataset):
     :type dataset: ptype.DatasetMetadata
     :return:
     """
-    serialise.write_yaml_metadata(dataset, '%s.yaml' % file_name, os.getcwd())
+    serialise._write_yaml_metadata(dataset, '%s.yaml' % file_name, os.getcwd())
     serialise.write_property_metadata(dataset, '%s.properties' % file_name, os.getcwd())
 
 
@@ -503,7 +503,7 @@ class PackageTypeTests(unittest.TestCase):
 
         # Serialise, deserialize, then compare to the original.
         yaml_file = temp_file(suffix='ls8-raw-test.yaml')
-        serialise.write_yaml_metadata(ls8_raw, yaml_file)
+        serialise._write_yaml_metadata(ls8_raw, yaml_file)
         serialised_ls8_raw = serialise.read_yaml_metadata(yaml_file)
         self.assertEqual(ls8_raw, serialised_ls8_raw, msg='RAW mismatch')
 
@@ -526,7 +526,7 @@ class PackageTypeTests(unittest.TestCase):
 
         # Serialise, deserialize, then compare to the original.
         yaml_file = temp_file(suffix='ls8-nbar-test.yaml')
-        serialise.write_yaml_metadata(ls8_nbar, yaml_file)
+        serialise._write_yaml_metadata(ls8_nbar, yaml_file)
         serialised_d = serialise.read_yaml_metadata(yaml_file)
 
         # Compare bands first
