@@ -308,10 +308,11 @@ class DatasetDriver(object):
         :rtype (str, str, str)
         """
         # Defaults for satellites. Different products may override this.
+        # These values come from the ARG25 spec.
         _SATELLITE_BROWSE_BANDS = {
-            'LANDSAT_5': ('5', '4', '2'),
-            'LANDSAT_7': ('5', '4', '2'),
-            'LANDSAT_8': ('6', '5', '3'),
+            'LANDSAT_5': ('7', '4', '1'),
+            'LANDSAT_7': ('7', '4', '1'),
+            'LANDSAT_8': ('7', '5', '2'),
         }
         browse_bands = _SATELLITE_BROWSE_BANDS.get(d.platform.code)
         if not browse_bands:
@@ -331,7 +332,7 @@ class DatasetDriver(object):
 
 class RawPackage(DatasetDriver):
     def get_id(self):
-        return 'RAW'
+        return 'raw'
 
     def fill_metadata(self, dataset, path):
         dataset = mdf.extract_md(dataset, path)
@@ -361,9 +362,8 @@ class OrthoPackage(DatasetDriver):
 
 
 class NbarPackage(DatasetDriver):
-    # 'nbar_terrain': (generate_nbar_metadata, 'ortho', 'reflectance_terrain'),
-    # 'nbar_brdf': (generate_nbar_metadata, 'ortho', 'reflectance_brdf'),
     def __init__(self, subset_name):
+        # Subset is typically "brdf" or "terrain" -- which NBAR portion to package.
         self.subset_name = subset_name
 
     def get_id(self):
