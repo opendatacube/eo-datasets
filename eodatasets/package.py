@@ -330,7 +330,7 @@ class DatasetDriver(object):
         raise NotImplementedError()
 
 
-class RawPackage(DatasetDriver):
+class RawDriver(DatasetDriver):
     def get_id(self):
         return 'raw'
 
@@ -343,12 +343,12 @@ class RawPackage(DatasetDriver):
         return dataset
 
 
-class OrthoPackage(DatasetDriver):
+class OrthoDriver(DatasetDriver):
     def get_id(self):
         return 'ortho'
 
     def expected_source(self):
-        return RawPackage()
+        return RawDriver()
 
     def fill_metadata(self, d, package_directory):
         """
@@ -361,7 +361,7 @@ class OrthoPackage(DatasetDriver):
         return mtl.populate_from_mtl(d, mtl_path)
 
 
-class NbarPackage(DatasetDriver):
+class NbarDriver(DatasetDriver):
     def __init__(self, subset_name):
         # Subset is typically "brdf" or "terrain" -- which NBAR portion to package.
         self.subset_name = subset_name
@@ -370,7 +370,7 @@ class NbarPackage(DatasetDriver):
         return 'nbar_{}'.format(self.subset_name)
 
     def expected_source(self):
-        return OrthoPackage()
+        return OrthoDriver()
 
     def match_file(self, file_path):
         file_prefix = 'reflectance_{}'.format(self.subset_name)
@@ -402,10 +402,10 @@ class NbarPackage(DatasetDriver):
 
 
 PACKAGE_DRIVERS = {
-    'raw': RawPackage(),
-    'ortho': OrthoPackage(),
-    'nbar_brdf': NbarPackage('brdf'),
-    'nbar_terrain': NbarPackage('terrain')
+    'raw': RawDriver(),
+    'ortho': OrthoDriver(),
+    'nbar_brdf': NbarDriver('brdf'),
+    'nbar_terrain': NbarDriver('terrain')
 }
 
 if __name__ == '__main__':
