@@ -62,7 +62,7 @@ def write_dataset_metadata(dataset_path, dataset_metadata):
     :return Path to the metadata file.
     """
     metadata_path = expected_metadata_path(dataset_path)
-    _write_yaml_metadata(dataset_metadata, metadata_path)
+    write_yaml_metadata(dataset_metadata, metadata_path)
     return metadata_path
 
 
@@ -154,7 +154,7 @@ def _create_relative_dumper(folder):
     return RelativeDumper
 
 
-def _write_yaml_metadata(d, metadata_path, target_directory=None):
+def write_yaml_metadata(d, metadata_path, target_directory=None):
     """
     Write the given dataset to yaml.
 
