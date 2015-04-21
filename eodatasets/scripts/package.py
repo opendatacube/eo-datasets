@@ -4,8 +4,8 @@ import logging
 import click
 from pathlib import Path
 
-
 from eodatasets import package, drivers, serialise
+
 
 @click.command()
 @click.option('--parent', type=click.Path(exists=True, readable=True, writable=False), multiple=True)
@@ -60,5 +60,6 @@ def run_packaging(parent, debug, in_place, type, dataset, destination):
             target_folder,
             source_datasets=parent_datasets
         )
+
 
 run_packaging()

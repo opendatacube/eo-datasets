@@ -8,10 +8,16 @@ setup(
     packages=find_packages(),
     install_requires=[
         'click',
-        'dateutil',
+        'python-dateutil',
         'gdal',
         'numpy',
         'pathlib',
         'pyyaml',
-    ]
+    ],
+    entry_points='''
+        [console_scripts]
+        eod-package=eodatasets.scripts.package:cli
+        eod-generate-browse=eodatasets.scripts.generatebrowse:cli
+    ''',
+
 )

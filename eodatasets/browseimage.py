@@ -1,4 +1,3 @@
-import glob
 import logging
 import os
 import shutil
@@ -8,11 +7,10 @@ import tempfile
 
 import gdalconst
 import gdal
-import click
 import numpy
 from pathlib import Path
-from eodatasets import serialise, drivers, verify
 
+from eodatasets import serialise, drivers
 import eodatasets.type as ptype
 
 
@@ -67,7 +65,7 @@ def _calculate_scale_offset(nodata, band):
 
 
 def _create_thumbnail(red_file, green_file, blue_file, thumb_image,
-                     x_constraint=None, nodata=-999, work_dir=None, overwrite=True):
+                      x_constraint=None, nodata=-999, work_dir=None, overwrite=True):
     """
     Create JPEG thumbnail image using individual R, G, B images.
 
@@ -285,25 +283,3 @@ def regenerate_browse_image(dataset_directory):
     dataset_metadata = create_dataset_browse_images(dataset_driver, dataset_metadata, dataset_directory)
 
     serialise.write_dataset_metadata(dataset_directory, dataset_metadata)
-
-
-@click.command()
-@click.option('--debug', is_flag=True)
-@click.argument('dataset', type=click.Path(exists=True, readable=True, writable=False), nargs=-1)
-def run_regeneration(is_debug, dataset):
-    """
-    Regenerate browse images for the given datasets.
-    :param is_debug:
-    :param dataset:
-    :return:
-    """
-    logging.basicConfig(level=logging.INFO)
-    if is_debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-
-    for d in dataset:
-        regenerate_browse_image(d)
-
-if __name__ == '__main__':
-    run_regeneration()
-
