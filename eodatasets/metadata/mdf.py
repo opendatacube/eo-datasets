@@ -2,7 +2,7 @@
 Metadata extraction from MDF files.
 """
 import calendar
-from datetime import datetime
+import datetime
 import logging
 import re
 import time
@@ -161,24 +161,23 @@ def _extract_mdf_file_fields(base_md, files):
             "\." +
             "(?P<root_file_sequence>\d{3})" +
             "\." +
-            "(?P<date_time>\d{13})" +
-            "(?P<date_time_ms>\d{3})" +
+            "(?P<date_time>\d{16})" +
             "\." +
             "(?P<gsi>\w{3})",
             f.name)
 
         fields = m.groupdict()
 
-        t = time.strptime(fields["date_time"], "%Y%j%H%M%S")
+        t = datetime.datetime.strptime(fields["date_time"], "%Y%j%H%M%S%f")
 
         times.append(t)
 
     # TODO: This calculation comes from the old jobmanger code. Is it desirable?
-    start = adjust_time(min(times), -60)  # 60 seconds before first segment's acquisition complete time
+    start = min(times) - datetime.timedelta(seconds=60)  # 60 seconds before first segment's acquisition complete time
     stop = max(times)  # the last segment's acquisition complete time
 
-    base_md.acquisition.aos = base_md.acquisition.aos or datetime.fromtimestamp(time.mktime(start))
-    base_md.acquisition.los = base_md.acquisition.los or datetime.fromtimestamp(time.mktime(stop))
+    base_md.acquisition.aos = base_md.acquisition.aos or start
+    base_md.acquisition.los = base_md.acquisition.los or stop
 
     return base_md
 

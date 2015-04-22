@@ -45,8 +45,8 @@ class MdfTests(unittest.TestCase):
             self.assertEquals(metadata.acquisition.groundstation.code, 'ASA')
             # No longer bother with vague center date.
             # self.assertEqual(metadata.extent.center_dt, datetime.date(2013, 9, 11))
-            self.assertEqual(metadata.acquisition.aos, datetime.datetime(2013, 9, 11, 23, 36, 11))
-            self.assertEqual(metadata.acquisition.los, datetime.datetime(2013, 9, 11, 23, 37, 14))
+            self.assertEqual(metadata.acquisition.aos, datetime.datetime(2013, 9, 11, 23, 36, 11, 482000))
+            self.assertEqual(metadata.acquisition.los, datetime.datetime(2013, 9, 11, 23, 37, 14, 881000))
 
         metadata = mdf.extract_md(ptype.DatasetMetadata(), d)
         _test_mdf_output(metadata)
