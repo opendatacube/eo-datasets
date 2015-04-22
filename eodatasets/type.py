@@ -179,6 +179,11 @@ class PlatformMetadata(SimpleObject):
 
 class InstrumentMetadata(SimpleObject):
     def __init__(self, name=None, type_=None, operation_mode=None):
+        """
+        :type name: str
+        :type type_: str
+        :type operation_mode: str
+        """
         self.name = name
         self.type_ = type_
         self.operation_mode = operation_mode

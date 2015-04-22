@@ -1,4 +1,6 @@
 import logging
+import string
+import json
 
 from pathlib import Path
 
@@ -12,6 +14,17 @@ _LOG = logging.getLogger(__name__)
 def find_file(path, file_pattern):
     # Crude but effective. TODO: multiple/no result handling.
     return path.glob(file_pattern).next()
+
+
+with Path(__file__).parent.joinpath('groundstations.json').open() as f:
+    _GROUNDSTATION_LIST = json.load(f)
+
+# Build groundstation alias lookup table.
+_GROUNDSTATION_ALIASES = {}
+for station in _GROUNDSTATION_LIST:
+    gsi_ = station['code']
+    _GROUNDSTATION_ALIASES[gsi_] = gsi_
+    _GROUNDSTATION_ALIASES.update({alias: gsi_ for alias in station['aliases']})
 
 
 class DatasetDriver(object):
@@ -77,6 +90,98 @@ class DatasetDriver(object):
         return browse_bands
 
 
+def normalise_gsi(gsi):
+    """
+    Normalise the given GSI.
+
+    Many old datasets and systems use common aliases instead of the actual gsi. We try to translate.
+    :type gsi: str
+    :rtype: str
+
+    >>> normalise_gsi('ALSP')
+    'ASA'
+    >>> normalise_gsi('ASA')
+    'ASA'
+    >>> normalise_gsi('Alice')
+    'ASA'
+    >>> normalise_gsi('TERSS')
+    'HOA'
+    """
+    return str(_GROUNDSTATION_ALIASES.get(gsi.upper()))
+
+
+def get_groundstation_code(gsi):
+    """
+    Translate a GSI code into an EODS domain code.
+
+    Domain codes are used in dataset_ids.
+
+    It will also translate common gsi aliases if needed.
+
+    :type gsi: str
+    :rtype: str
+
+    >>> get_groundstation_code('ASA')
+    '002'
+    >>> get_groundstation_code('HOA')
+    '011'
+    >>> # Aliases should work too.
+    >>> get_groundstation_code('ALSP')
+    '002'
+    """
+    gsi = normalise_gsi(gsi)
+    stations = [g for g in _GROUNDSTATION_LIST if g['code'].upper() == gsi]
+    if not stations:
+        _LOG.warn('Station GSI not known: %r', gsi)
+        return None
+
+    return str(stations[0]['eods_domain_code'])
+
+
+def _format_path_row(start_point, end_point=None):
+    """
+    Format path-row for display in a dataset id.
+
+    :type start_point: ptype.Point or None
+    :type end_point: ptype.Point or None
+    :rtype: (str, str)
+
+    >>> _format_path_row(ptype.Point(78, 132))
+    ('078', '132')
+    >>> _format_path_row(ptype.Point(12, 4))
+    ('012', '004')
+    >>> # Show the range of rows
+    >>> _format_path_row(ptype.Point(78, 78), end_point=ptype.Point(78, 80))
+    ('078', '078-080')
+    >>> # Identical rows: don't show a range
+    >>> _format_path_row(ptype.Point(78, 132), end_point=ptype.Point(78, 132))
+    ('078', '132')
+    >>> # This is odd behaviour, but we're doing it for consistency with the old codebases.
+    >>> # Lack of path/rows are represented as single-digit zeros.
+    >>> _format_path_row(None)
+    ('0', '0')
+    >>> _format_path_row(ptype.Point(None, None))
+    ('0', '0')
+    """
+    if start_point is None:
+        return '0', '0'
+
+    def _format_val(val):
+        if val:
+            return '%03d' % val
+        else:
+            return '0'
+
+    path = _format_val(start_point.x)
+    rows = _format_val(start_point.y)
+
+    # Add ending row if different.
+    if end_point and start_point.y != end_point.y:
+        rows += '-' + _format_val(end_point.y)
+
+    return path, rows
+
+
 class RawDriver(DatasetDriver):
     def get_id(self):
         return 'raw'
@@ -84,6 +189,39 @@ class RawDriver(DatasetDriver):
     def expected_source(self):
         # Raw dataset has no source.
         return None
+
+    def get_ga_label(self, dataset):
+        """
+        :type dataset: ptype.DatasetMetadata
+        :rtype: str
+        """
+        # Examples for each Landsat raw:
+        # 'LS8_OLITIRS_STD-MDF_P00_LC81160740742015089ASA00_116_074-084_20150330T022553Z20150330T022657'
+        # 'LS7_ETM_STD-RCC_P00_L7ET2005007020028ASA123_0_0_20050107T020028Z20050107T020719'
+        # 'LS5_TM_STD-RCC_P00_L5TB2005152015110ASA111_0_0_20050601T015110Z20050107T020719'
+
+        assert dataset.platform.code.startswith('LANDSAT_')
+
+
+        path, row = _format_path_row(
+            start_point=dataset.image.satellite_ref_point_start if dataset.image else None,
+            end_point=dataset.image.satellite_ref_point_end if dataset.image else None
+        )
+
+        sensor = dataset.instrument.name.translate(None, string.punctuation)
+        domain_code = get_groundstation_code(dataset.acquisition.groundstation.code)
+
+        return 'LS{satnumber}_{sensor}_STD-{format}_P00_{usgsid}_{path}_{rows}_{startdt}Z{enddt}'.format(
+            satnumber=dataset.platform.code.split('_')[-1],
+            sensor=sensor,
+            format=dataset.format_.name.upper(),
+            usgsid=dataset.usgs_dataset_id,
+            path=path,
+            rows=row,
+            stationcode='-' + domain_code if domain_code else '',
+            startdt=dataset.acquisition.aos.strftime("%Y%m%dT%H%M%S"),
+            enddt=dataset.acquisition.los.strftime("%Y%m%dT%H%M%S"),
+        )
 
     def fill_metadata(self, dataset, path):
         dataset = adsfolder.extract_md(dataset, path)

@@ -40,7 +40,7 @@ _LS5_RAW = ptype.DatasetMetadata(
 
 _LS7_RAW = ptype.DatasetMetadata(
     id_=UUID('c50c6bd4-e895-11e4-9814-1040f381a756'),
-    usgs_dataset_id='L7ET2005007020028ASA123I',
+    usgs_dataset_id='L7ET2005007020028ASA123',
     ga_level='P00',
     product_type='raw',
     creation_dt=datetime.datetime(2015, 4, 15, 1, 42, 47),
@@ -73,7 +73,7 @@ class TestDrivers(unittest.TestCase):
     def _get_raw_ls8(self):
         d = write_files({
             'LANDSAT-8.11308': {
-                'LC81160740742015089ASA00': {
+                'LC81160740842015089ASA00': {
                     '480.000.2015089022657325.ASA': '',
                     '481.000.2015089022653346.ASA': '',
                     'LC81160740742015089ASA00_IDF.xml': '',
@@ -85,7 +85,7 @@ class TestDrivers(unittest.TestCase):
         raw_driver = RawDriver()
         metadata = raw_driver.fill_metadata(
             ptype.DatasetMetadata(),
-            d.joinpath('LANDSAT-8.11308', 'LC81160740742015089ASA00')
+            d.joinpath('LANDSAT-8.11308', 'LC81160740842015089ASA00')
         )
         return metadata, raw_driver
 
@@ -109,36 +109,36 @@ class TestDrivers(unittest.TestCase):
     def test_raw_ls8_label(self):
         metadata, raw_driver = self._get_raw_ls8()
         self.assertEqual(
+            'LS8_OLITIRS_STD-MDF_P00_LC81160740842015089ASA00_116_074-084_20150330T022553Z20150330T022657',
             raw_driver.get_ga_label(metadata),
-            'LS8_OLITIRS_STD-MDF_P00_LC81160740742015089ASA00_116_074-084_20150330T022553Z20150330T022657'
         )
 
     def test_raw_ls5_label(self):
         self.assertEqual(
-            RawDriver().get_ga_label(_LS5_RAW),
-            'LS5_TM_STD-RCC_P00_L5TB2005152015110ASA111_0_0_20050601T015110Z20050107T020719'
+            'LS5_TM_STD-RCC_P00_L5TB2005152015110ASA111_0_0_20050601T015110Z20050601T020025',
+            RawDriver().get_ga_label(_LS5_RAW)
         )
 
     def test_raw_ls7_label(self):
         self.assertEqual(
-            RawDriver().get_ga_label(_LS7_RAW),
-            'LS7_ETM_STD-RCC_P00_L7ET2005007020028ASA123_0_0_20050107T020028Z20050107T020719'
+            'LS7_ETM_STD-RCC_P00_L7ET2005007020028ASA123_0_0_20050107T020028Z20050107T020719',
+            RawDriver().get_ga_label(_LS7_RAW)
         )
 
     def test_ortho_ls8_label(self):
         self.assertEqual(
-            OrthoDriver().get_ga_label(test_ls8.EXPECTED_OUT),
-            "LS8_OLITIRS_OTH_P41_GALPGS01-002_101_078_20141012"
+            "LS8_OLITIRS_OTH_P41_GALPGS01-002_101_078_20141012",
+            OrthoDriver().get_ga_label(test_ls8.EXPECTED_OUT)
         )
 
     def test_ortho_ls7_label(self):
         self.assertEqual(
-            OrthoDriver().get_ga_label(test_ls7_definitive.EXPECTED_OUT),
-            "LS7_ETM_SYS_P31_GALPGS01-002_114_73_20050107"
+            "LS7_ETM_SYS_P31_GALPGS01-002_114_73_20050107",
+            OrthoDriver().get_ga_label(test_ls7_definitive.EXPECTED_OUT)
         )
 
     def test_ortho_ls5_label(self):
         self.assertEqual(
-            OrthoDriver().get_ga_label(test_ls5_definitive.EXPECTED_OUT),
-            "LS5_TM_OTH_P51_GALPGS01-002_113_063_20050601"
+            "LS5_TM_OTH_P51_GALPGS01-002_113_063_20050601",
+            OrthoDriver().get_ga_label(test_ls5_definitive.EXPECTED_OUT)
         )

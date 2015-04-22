@@ -1,0 +1,184 @@
+[
+  {
+    "eods_domain_code": "001",
+    "code": "AGS",
+    "label": "Alaska",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "002",
+    "code": "ASA",
+    "label": "Alice Springs",
+    "aliases": [
+      "ALSP",
+      "ALCS",
+      "ALICE"
+    ]
+  },
+  {
+    "eods_domain_code": "002",
+    "code": "ASN",
+    "label": "Alice Springs",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "003",
+    "code": "BJC",
+    "label": "Beijing, China",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "004",
+    "code": "BKT",
+    "label": "Bangkok, Thailand",
+    "aliases": ["BNKS"]
+  },
+  {
+    "eods_domain_code": "005",
+    "code": "CHM",
+    "label": "Chetumal, Mexico",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "028",
+    "code": "COA",
+    "label": "Cordoba, Argentina",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "006",
+    "code": "CUB",
+    "label": "Cuiaba, Brazil",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "007",
+    "code": "DKI",
+    "label": "Parepare, Indonesia",
+    "aliases": ["PRPR"]
+  },
+  {
+    "eods_domain_code": "008",
+    "code": "EDC",
+    "label": "Sioux Falls, South Dakota",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "009",
+    "code": "GLC",
+    "label": "Gilmore Creek, Alaska",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "010",
+    "code": "GNC",
+    "label": "Gatineau, Canada",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "012",
+    "code": "HEOC",
+    "label": "Hatoyama, Japan",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "011",
+    "code": "HOA",
+    "label": "Hobart",
+    "aliases": [
+      "HBRT",
+      "HOBT",
+      "TERSS"
+    ]
+  },
+  {
+    "eods_domain_code": "013",
+    "code": "IKR",
+    "label": "Irkutsk, Russia",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "029",
+    "code": "JSA",
+    "label": "Hartebeesthoek, South Africa",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "030",
+    "code": "KHC",
+    "label": "KaShi, China",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "014",
+    "code": "KIS",
+    "label": "Kiruna, Sweden",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "032",
+    "code": "LGN",
+    "label": "Landsat Ground Network",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "015",
+    "code": "LGS",
+    "label": "Sioux Falls, South Dakota",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "016",
+    "code": "MGR",
+    "label": "Magadan, Russia",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "031",
+    "code": "MLK",
+    "label": "Malindi, Kenya",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "017",
+    "code": "MOR",
+    "label": "Moscow, Russia",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "018",
+    "code": "MPS",
+    "label": "Maspalomas, Spain",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "019",
+    "code": "MTI",
+    "label": "Matera, Italy",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "020",
+    "code": "PAC",
+    "label": "Prince Albert, Canada",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "021",
+    "code": "PFS",
+    "label": "Poker Flats, Alaska",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "022",
+    "code": "SGS",
+    "label": "Svalbard, Norway",
+    "aliases": []
+  },
+  {
+    "eods_domain_code": "023",
+    "code": "TKSC",
+    "label": "Tsukuba Space Cente, Japan",
+    "aliases": ["TKSC-DRTS-W-DRC"]
+  }
+]

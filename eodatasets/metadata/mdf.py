@@ -69,7 +69,7 @@ def _extract_mdf_file_data(base_md, directory, files):
 
     if not base_md.format_:
         base_md.format_ = ptype.FormatMetadata()
-    base_md.format_.name = 'MD'
+    base_md.format_.name = 'MDF'
 
     return base_md
 
