@@ -67,6 +67,19 @@ _INSTRUMENT_MODES = {
 }
 
 
+def _usgs_id_from_filename(filename):
+    """
+
+    :param filename:
+    :return:
+    >>> _usgs_id_from_filename('7EB2012028010752ASA111I.data')
+    '7EB2012028010752ASA111'
+    >>> _usgs_id_from_filename('L5TB2003339014237ASA111I00.data')
+    'L5TB2003339014237ASA111'
+    """
+    return filename[:filename.rindex('I')]
+
+
 def _extract_rcc_filename_fields(base_md, filename):
     """
     Landsat 5 and 7 RCC format specifications:
@@ -121,6 +134,8 @@ def _extract_rcc_filename_fields(base_md, filename):
     base_md.gsi = fields['gsi']
     if not base_md.acquisition.groundstation:
         base_md.acquisition.groundstation = ptype.GroundstationMetadata(code=fields['gsi'])
+
+    base_md.usgs_dataset_id = _usgs_id_from_filename(filename)
 
     # RCC is raw: P00
     base_md.ga_level = 'P00'
