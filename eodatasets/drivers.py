@@ -1,5 +1,5 @@
 
-from eodatasets.metadata import mdf, mtl, adsfolder, image as md_image
+from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, passinfo, image as md_image
 from eodatasets import type as ptype
 import logging
 from pathlib import Path
@@ -76,11 +76,13 @@ class RawDriver(DatasetDriver):
         return None
 
     def fill_metadata(self, dataset, path):
-        dataset = mdf.extract_md(dataset, path)
         dataset = adsfolder.extract_md(dataset, path)
+        dataset = rccfile.extract_md(dataset, path)
+        dataset = mdf.extract_md(dataset, path)
+        dataset = passinfo.extract_md(dataset, path)
 
         # TODO: Antenna coords for groundstation? Heading?
-        # TODO: Bands?
+        # TODO: Bands? (or eg. I/Q files?)
         return dataset
 
 

@@ -605,10 +605,16 @@ class AcquisitionMetadata(SimpleObject):
         """
         :type groundstation: GroundstationMetadata
         :type platform_orbit: int
+        :type aos: datetime.datetime
+        :type los: datetime.datetime
         """
+
+        # Acquisition/Loss Of signal
         self.aos = aos
         self.los = los
+
         self.groundstation = groundstation
+
         self.heading = heading
         self.platform_orbit = platform_orbit
 
