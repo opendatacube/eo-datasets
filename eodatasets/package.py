@@ -181,6 +181,7 @@ def do_package(dataset_driver,
     #: :type: ptype.DatasetMetadata
     d = dataset_driver.fill_metadata(init_local_dataset(), package_directory)
     d.product_type = dataset_driver.get_id()
+    d.ga_label = dataset_driver.get_ga_label(d)
     d.size_bytes = size_bytes
     d.checksum_path = target_checksums_path
     # Default creation time is creation of the source folder.
