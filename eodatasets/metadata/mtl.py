@@ -170,7 +170,7 @@ def populate_from_mtl_dict(md, mtl_, folder):
     md.creation_dt = _get(mtl_, 'METADATA_FILE_INFO', 'file_date')
 
     # TODO: elsewhere we've used 'GAORTHO01' etc. Here it's 'L1T' etc.
-    md.product_type = _get(mtl_, 'PRODUCT_METADATA', 'data_type')
+    md.product_level = _get(mtl_, 'PRODUCT_METADATA', 'data_type')
 
     # md.size_bytes=None,
     satellite_id = _get(mtl_, 'PRODUCT_METADATA', 'spacecraft_id')

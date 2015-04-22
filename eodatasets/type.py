@@ -643,6 +643,7 @@ class DatasetMetadata(SimpleObject):
                  ga_level=None,
                  usgs_dataset_id=None,
                  product_type=None,
+                 product_level=None,
                  creation_dt=None,
                  size_bytes=None,
                  checksum_path=None,
@@ -662,13 +663,32 @@ class DatasetMetadata(SimpleObject):
 
         #: :type: int
         self.size_bytes = size_bytes
+
+        # Formally known as 'dataset_id' within GA.
+        # Eg. 'LS7_ETM_SYS_P31_GALPGS01-002_114_73_20050107'
+        #: :type: str
         self.ga_label = ga_label
+
+        # Eg. 'P00', 'P51' etc.
+        #: :type: str
         self.ga_level = ga_level
+
+        # 'L1T', 'L1G', 'L1GT' etc if applicable.
+        # :type: str
+        self.product_level = product_level
+
+        # Currently correspond to driver ids:
+        # 'raw', 'ortho', 'nbar_terrain' etc.
+        #: :type: str
+        self.product_type = product_type
+
+        # Dataset id used by USGS software.
+        # Eg. 'LC81160740742015089ASA00'
+        #: :type: str
         self.usgs_dataset_id = usgs_dataset_id
 
+        #: :type: pathlib.Path
         self.checksum_path = checksum_path
-
-        self.product_type = product_type
 
         #: :type: PlatformMetadata
         self.platform = platform

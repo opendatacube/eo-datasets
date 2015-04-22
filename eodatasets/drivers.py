@@ -182,6 +182,81 @@ def _format_path_row(start_point, end_point=None):
     return path, rows
 
 
+def _get_process_code(dataset):
+    """
+
+    :type dataset: ptype.DatasetMetadata
+    :return:
+    """
+    level = dataset.product_level
+
+    if level:
+        level = level.upper()
+
+    orientation = None
+    if dataset.grid_spatial and dataset.grid_spatial.projection:
+        orientation = dataset.grid_spatial.projection.orientation
+
+    if level == 'L1T':
+        return 'OTH', 'P51'
+
+    if orientation == 'NORTH_UP':
+        if level == 'L1G':
+            return 'SYS', 'P31'
+        if level == 'L1GT':
+            return 'OTH', 'P41'
+
+    # Path
+    if orientation in ('NOMINAL', 'NOM'):
+        return 'SYS', 'P11'
+
+    if dataset.ga_level == 'P00':
+        return 'RAW', 'P00'
+
+    _LOG.warn('No process code mapped for level/orientation: %r, %r', level, orientation)
+    return None, None
+
+
+def _fill_dataset_label(dataset, format_str):
+    def _get_short_satellite_code(dataset):
+        assert dataset.platform.code.startswith('LANDSAT_')
+        sat_number = 'LS' + dataset.platform.code.split('_')[-1]
+        return sat_number
+
+    path, row = _format_path_row(
+        start_point=dataset.image.satellite_ref_point_start if dataset.image else None,
+        end_point=dataset.image.satellite_ref_point_end if dataset.image else None
+    )
+
+    def _format_dt(d):
+        if not d:
+            return None
+        return d.strftime("%Y%m%dT%H%M%S")
+
+    def _format_day(dataset):
+        day = (dataset.extent and dataset.extent.center_dt) or \
+              (dataset.acquisition and dataset.acquisition.aos)
+        return day.strftime('%Y%m%d')
+
+    level, ga_level = _get_process_code(dataset)
+
+    formatted_params = {
+        'satnumber': _get_short_satellite_code(dataset),
+        'sensor': dataset.instrument.name.translate(None, string.punctuation),
+        'format': dataset.format_.name.upper(),
+        'level': level,
+        'galevel': ga_level,
+        'usgsid': dataset.usgs_dataset_id,
+        'path': path,
+        'rows': row,
+        'stationcode': get_groundstation_code(dataset.acquisition.groundstation.code),
+        'startdt': _format_dt(dataset.acquisition.aos),
+        'enddt': _format_dt(dataset.acquisition.los),
+        'day': _format_day(dataset)
+    }
+    return format_str.format(**formatted_params)
+
+
 class RawDriver(DatasetDriver):
     def get_id(self):
         return 'raw'
@@ -200,27 +275,9 @@ class RawDriver(DatasetDriver):
         # 'LS7_ETM_STD-RCC_P00_L7ET2005007020028ASA123_0_0_20050107T020028Z20050107T020719'
         # 'LS5_TM_STD-RCC_P00_L5TB2005152015110ASA111_0_0_20050601T015110Z20050107T020719'
 
-        assert dataset.platform.code.startswith('LANDSAT_')
-
-
-        path, row = _format_path_row(
-            start_point=dataset.image.satellite_ref_point_start if dataset.image else None,
-            end_point=dataset.image.satellite_ref_point_end if dataset.image else None
-        )
-
-        sensor = dataset.instrument.name.translate(None, string.punctuation)
-        domain_code = get_groundstation_code(dataset.acquisition.groundstation.code)
-
-        return 'LS{satnumber}_{sensor}_STD-{format}_P00_{usgsid}_{path}_{rows}_{startdt}Z{enddt}'.format(
-            satnumber=dataset.platform.code.split('_')[-1],
-            sensor=sensor,
-            format=dataset.format_.name.upper(),
-            usgsid=dataset.usgs_dataset_id,
-            path=path,
-            rows=row,
-            stationcode='-' + domain_code if domain_code else '',
-            startdt=dataset.acquisition.aos.strftime("%Y%m%dT%H%M%S"),
-            enddt=dataset.acquisition.los.strftime("%Y%m%dT%H%M%S"),
+        return _fill_dataset_label(
+            dataset,
+            '{satnumber}_{sensor}_STD-{format}_P00_{usgsid}_{path}_{rows}_{startdt}Z{enddt}'
         )
 
     def fill_metadata(self, dataset, path):
@@ -249,7 +306,21 @@ class OrthoDriver(DatasetDriver):
         """
         mtl_path = find_file(package_directory, '*_MTL.txt')
         _LOG.info('Reading MTL %r', mtl_path)
-        return mtl.populate_from_mtl(d, mtl_path)
+
+        d = mtl.populate_from_mtl(d, mtl_path)
+
+        return d
+
+    def get_ga_label(self, dataset):
+        # Examples:
+        #     "LS8_OLITIRS_OTH_P41_GALPGS01-002_101_078_20141012"
+        #     "LS7_ETM_SYS_P31_GALPGS01-002_114_73_20050107"
+        #     "LS5_TM_OTH_P51_GALPGS01-002_113_063_20050601"
+
+        return _fill_dataset_label(
+            dataset,
+            '{satnumber}_{sensor}_{level}_{galevel}_GALPGS01-{stationcode}_{path}_{rows}_{day}'
+        )
 
 
 class NbarDriver(DatasetDriver):

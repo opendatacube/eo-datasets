@@ -13,8 +13,10 @@ import eodatasets.type as ptype
 _LS5_RAW = ptype.DatasetMetadata(
     id_=UUID('c86809b3-e894-11e4-8958-1040f381a756'),
     usgs_dataset_id='L5TB2005152015110ASA111',
-    ga_level='P00', product_type='raw',
-    creation_dt=datetime.datetime(2015, 4, 22, 0, 7, 48), size_bytes=5871413760,
+    ga_level='P00',
+    product_type='raw',
+    creation_dt=datetime.datetime(2015, 4, 22, 0, 7, 48),
+    size_bytes=5871413760,
     checksum_path=Path('package.sha1'),
     platform=ptype.PlatformMetadata(code='LANDSAT_5'),
     instrument=ptype.InstrumentMetadata(name='TM', operation_mode='BUMPER'),
@@ -127,13 +129,13 @@ class TestDrivers(unittest.TestCase):
 
     def test_ortho_ls8_label(self):
         self.assertEqual(
-            "LS8_OLITIRS_OTH_P41_GALPGS01-002_101_078_20141012",
+            "LS8_OLITIRS_OTH_P51_GALPGS01-032_101_078_20141012",
             OrthoDriver().get_ga_label(test_ls8.EXPECTED_OUT)
         )
 
     def test_ortho_ls7_label(self):
         self.assertEqual(
-            "LS7_ETM_SYS_P31_GALPGS01-002_114_73_20050107",
+            "LS7_ETM_SYS_P31_GALPGS01-002_114_073_20050107",
             OrthoDriver().get_ga_label(test_ls7_definitive.EXPECTED_OUT)
         )
 
