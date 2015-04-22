@@ -41,6 +41,7 @@ class TestRccExtract(unittest.TestCase):
         self.assertEqual(md.acquisition.groundstation.code, 'ASN')
         self.assertEqual(md.ga_level, 'P00')
         self.assertEqual(md.format_.name, 'RCC')
+        self.assertEqual(md.usgs_dataset_id, 'L7EB2013259012832ASN213')
 
         self.assertEqual(md.acquisition.aos, datetime.datetime(2013, 9, 16, 1, 28, 32))
 
@@ -58,6 +59,7 @@ class TestRccExtract(unittest.TestCase):
         self.assertEqual(md.instrument.name, 'TM')
         self.assertEqual(md.acquisition.groundstation.code, 'ASA')
         self.assertEqual(md.format_.name, 'RCC')
+        self.assertEqual(md.usgs_dataset_id, 'L5TB2003339014237ASA111')
 
         self.assertEqual(md.acquisition.aos, datetime.datetime(2003, 12, 5, 1, 42, 37))
 

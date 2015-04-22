@@ -1,8 +1,10 @@
+import logging
+
+from pathlib import Path
 
 from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, passinfo, image as md_image
 from eodatasets import type as ptype
-import logging
-from pathlib import Path
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -29,6 +31,14 @@ class DatasetDriver(object):
 
         :type dataset: ptype.DatasetMetadata
         :type path: Path
+        """
+        raise NotImplementedError()
+
+    def get_ga_label(self, dataset):
+        """
+        Generate the GA Label ("dataset id") for a dataset.
+        :type dataset:  ptype.DatasetMetadata
+        :rtype: str
         """
         raise NotImplementedError()
 
@@ -59,7 +69,7 @@ class DatasetDriver(object):
             'LANDSAT_5': ('7', '4', '1'),
             'LANDSAT_7': ('7', '4', '1'),
             'LANDSAT_8': ('7', '5', '2'),
-            }
+        }
         browse_bands = _SATELLITE_BROWSE_BANDS.get(d.platform.code)
         if not browse_bands:
             raise ValueError('Unknown browse bands for satellite %s' % d.platform.code)

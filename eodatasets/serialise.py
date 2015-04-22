@@ -61,6 +61,7 @@ def write_dataset_metadata(dataset_path, dataset_metadata):
     :rtype: Path
     :return Path to the metadata file.
     """
+    _LOG.debug('Generating YAML for dataset: %r', dataset_metadata)
     metadata_path = expected_metadata_path(dataset_path)
     write_yaml_metadata(dataset_metadata, metadata_path)
     return metadata_path
