@@ -22,6 +22,6 @@ def run_regeneration(debug, dataset):
     for d in dataset:
         regenerate_browse_image(d)
 
-
-run_regeneration()
+if __name__ == '__main__':
+    run_regeneration()
 

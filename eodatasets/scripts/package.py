@@ -61,5 +61,5 @@ def run_packaging(parent, debug, in_place, type, dataset, destination):
             source_datasets=parent_datasets
         )
 
-
-run_packaging()
+if __name__ == '__main__':
+    run_packaging()
