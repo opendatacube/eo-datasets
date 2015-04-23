@@ -629,6 +629,52 @@ class SimpleObjectTests(unittest.TestCase):
             House(Door(a=42, handle=DoorHandle(a=111)), b=2)
         )
 
+    def test_steal_properties_from(self):
+        class TestObj(ptype.SimpleObject):
+            def __init__(self, a, b=None, c=3):
+                self.a = a
+                self.b = b
+                self.c = c
+
+        # B and C are default values, so should be overridden.
+        # A is already set, so should remain.
+        o1 = TestObj(1)
+        o1.steal_fields_from(TestObj(2, 3, 4))
+        self.assertEqual(o1, TestObj(1, 3, 4))
+
+        # Should be unmodified when stealing for an all-default value.
+        clean = TestObj(1)
+        o1.steal_fields_from(clean)
+        self.assertEqual(o1, TestObj(1, 3, 4))
+
+        # Unmodified when stealing from itself.
+        o1.steal_fields_from(o1)
+        self.assertEqual(o1, TestObj(1, 3, 4))
+
+        # C is a default value and should be overridden.
+        o1.c = 3
+        o1.steal_fields_from(TestObj(9, 9, 9))
+        self.assertEqual(o1, TestObj(1, 3, 9))
+
+        # B is a default value and should be overridden.
+        o1.b = None
+        o1.steal_fields_from(TestObj(9, 9, 3))
+        self.assertEqual(o1, TestObj(1, 9, 9))
+
+        # A is compulsory and should be overridden if None.
+        o1.a = None
+        o1.steal_fields_from(TestObj(9, None, 3))
+        self.assertEqual(o1, TestObj(9, 9, 9))
+
+        # Don't override compulsory field (A) with None
+        o1.steal_fields_from(TestObj(None, None, 3))
+        self.assertEqual(o1, TestObj(9, 9, 9))
+
+
+
+
+
+
 
 class DeserializeTests(unittest.TestCase):
 

@@ -74,6 +74,16 @@ class SimpleObject(object):
 
         return zip(constructor_args, value_defaults)
 
+    def steal_fields_from(self, other):
+        """
+        Override any unset (default value) fields of mine with fields of the given object.
+        :type other:
+        :return:
+        """
+        for prop_name, default_value in self.__class__.item_defaults():
+            if getattr(self, prop_name) == default_value:
+                setattr(self, prop_name, getattr(other, prop_name))
+
     def items_ordered(self, skip_nones=True):
         """
         Generator of all property names and current values as (k, v) tuples.
@@ -589,16 +599,25 @@ class GroundstationMetadata(SimpleObject):
         'antenna_coord': Coord.from_dict
     }
 
-    def __init__(self, code, antenna_coord=None):
+    def __init__(self, code, label=None, eods_domain_code=None, antenna_coord=None):
         """
 
         :param code: The GSI of the groundstation ("ASA" etc)
+        :type code: str
         :type antenna_coord: Coord
+        :type label: str
         :return:
         """
-
         self.code = code
+        # A common name. Eg. 'Alice Springs'
+        self.label = label
+        # Coordinates of receiving antenna (at time of acquisition).
         self.antenna_coord = antenna_coord
+
+        # Domain code for this groundstation. As seen in EODS and GA dataset_id.
+        # Eg. '002' for Alice.
+        #: :type: str
+        self.eods_domain_code = eods_domain_code
 
 
 class AcquisitionMetadata(SimpleObject):
@@ -711,6 +730,7 @@ class DatasetMetadata(SimpleObject):
         self.image = image
         #: :type: LineageMetadata
         self.lineage = lineage
+
 
 # Circular reference.
 LineageMetadata.PROPERTY_PARSERS['source_datasets'] = DatasetMetadata.from_named_dicts
