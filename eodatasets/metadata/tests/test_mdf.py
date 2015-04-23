@@ -112,6 +112,22 @@ class MdfTests(unittest.TestCase):
             mdf.find_mdf_files(d.joinpath('LC80880750762013254ASA00', 'input'))
         )
 
+    def test_no_directory(self):
+        d = write_files({
+            'L7EB2013259012832ASN213I00.data': 'nothing',
+            'L7EB2013259012832ASN213Q00.data': 'nothing'
+        })
+
+        self.assertEqual((None, []), mdf.find_mdf_files(d))
+
+        # Make sure that metadata is not modified when no MDF is found.
+        startind_md = ptype.DatasetMetadata()
+        id_ = startind_md.id_
+        creation_dt = startind_md.creation_dt
+        expected_dt = ptype.DatasetMetadata(id_=id_, creation_dt=creation_dt)
+
+        output = mdf.extract_md(startind_md, d)
+        self.assertEqual(expected_dt, output)
 
 if __name__ == '__main__':
     import doctest
