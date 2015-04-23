@@ -110,6 +110,31 @@ def normalise_gsi(gsi):
     return str(_GROUNDSTATION_ALIASES.get(gsi.upper()))
 
 
+def get_groundstation(gsi):
+    """
+
+    :param gsi:
+    :rtype: ptype.GroundstationMetadata
+    >>> get_groundstation('ASA')
+    GroundstationMetadata(code='ASA', label='Alice Springs', eods_domain_code='002')
+    >>> # Aliases should work too
+    >>> get_groundstation('ALICE')
+    GroundstationMetadata(code='ASA', label='Alice Springs', eods_domain_code='002')
+    >>> get_groundstation('UNKNOWN_GSI')
+    """
+    gsi = normalise_gsi(gsi)
+    stations = [g for g in _GROUNDSTATION_LIST if g['code'].upper() == gsi]
+    if not stations:
+        _LOG.warn('Station GSI not known: %r', gsi)
+        return None
+    station = stations[0]
+    return ptype.GroundstationMetadata(
+        code=str(station['code']),
+        label=str(station['label']),
+        eods_domain_code=str(station['eods_domain_code'])
+    )
+
+
 def get_groundstation_code(gsi):
     """
     Translate a GSI code into an EODS domain code.
@@ -129,13 +154,12 @@ def get_groundstation_code(gsi):
     >>> get_groundstation_code('ALSP')
     '002'
     """
-    gsi = normalise_gsi(gsi)
-    stations = [g for g in _GROUNDSTATION_LIST if g['code'].upper() == gsi]
-    if not stations:
-        _LOG.warn('Station GSI not known: %r', gsi)
+    groundstation = get_groundstation(gsi)
+    if not groundstation:
         return None
 
-    return str(stations[0]['eods_domain_code'])
+    return groundstation.eods_domain_code
+
 
 
 def _format_path_row(start_point, end_point=None):

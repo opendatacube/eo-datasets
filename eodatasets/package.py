@@ -146,6 +146,23 @@ class IncompletePackage(Exception):
     pass
 
 
+def _expand_common_metadata(d):
+    """
+    :type d: ptype.DatasetMetadata
+    :rtype: ptype.DatasetMetadata
+    """
+    if d.image and d.image.bands:
+        for number, band_metadata in d.image.bands.items():
+            expand_band_information(d.platform.code, d.instrument.name, band_metadata)
+
+    # Fill any extra groundstation information we have.
+    if d.acquisition and d.acquisition.groundstation and d.acquisition.groundstation.code:
+        full_groundstation = drivers.get_groundstation(d.acquisition.groundstation.code)
+        d.acquisition.groundstation.steal_fields_from(full_groundstation)
+
+    return d
+
+
 def do_package(dataset_driver,
                image_directory,
                target_directory,
@@ -205,9 +222,7 @@ def do_package(dataset_driver,
 
     d.lineage.source_datasets = source_datasets
 
-    if d.image and d.image.bands:
-        for number, band_metadata in d.image.bands.items():
-            expand_band_information(d.platform.code, d.instrument.name, band_metadata)
+    d =_expand_common_metadata(d)
 
     create_dataset_browse_images(
         dataset_driver,
