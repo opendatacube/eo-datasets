@@ -206,6 +206,8 @@ def do_package(dataset_driver,
     checksums.write(target_checksums_path)
     _LOG.info('Packaged in %.02f: %s', time.time() - start, target_metadata_path)
 
+    return d.ga_label
+
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
     import doctest
