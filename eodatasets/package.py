@@ -139,6 +139,13 @@ def prepare_target_imagery(image_directory,
     return size_bytes
 
 
+class IncompletePackage(Exception):
+    """
+    Package is incomplete: (eg. Not enough metadata could be found.)
+    """
+    pass
+
+
 def do_package(dataset_driver,
                image_directory,
                target_directory,
@@ -149,6 +156,10 @@ def do_package(dataset_driver,
     :type image_directory: Path or str
     :type target_directory: Path or str
     :type source_datasets: dict of (str, ptype.DatasetMetadata)
+
+    :raises IncompletePackage: If not enough metadata can be extracted from the dataset.
+    :return: The generated GA Dataset ID (ga_label)
+    :rtype: str
     """
     start = time.time()
     checksums = verify.PackageChecksum()
@@ -180,6 +191,11 @@ def do_package(dataset_driver,
 
     #: :type: ptype.DatasetMetadata
     d = dataset_driver.fill_metadata(init_local_dataset(), package_directory)
+
+    # TODO: Add proper validation to dataset structure.
+    if not d.platform or not d.platform.code:
+        raise IncompletePackage('Incomplete dataset. Not enough metadata found: %r' % d)
+
     d.product_type = dataset_driver.get_id()
     d.ga_label = dataset_driver.get_ga_label(d)
     d.size_bytes = size_bytes
