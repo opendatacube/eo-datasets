@@ -252,20 +252,42 @@ def find_mdf_files(directory):
     :rtype: (pathlib.Path, [pathlib.Path])
     """
     mdf_dir = None
-    mdf_files = None
+
+    def _get_mdf_files(mdf_dir):
+        return [f for f in mdf_dir.iterdir() if is_mdf_file(f.name)]
 
     # Were we given the MDF directory itself?
     if is_mdf_directory(directory.name):
         mdf_dir = directory
+        return mdf_dir, _get_mdf_files(mdf_dir)
 
     # Is there a single MDF sub-directory?
-    else:
-        dirs = [d for d in directory.iterdir() if is_mdf_directory(d.name)]
-        if dirs and len(dirs) == 1:
-            mdf_dir = dirs[0]
+    mdf_subdirs = [d for d in directory.iterdir() if is_mdf_directory(d.name)]
+    if mdf_subdirs and len(mdf_subdirs) == 1:
+        return mdf_subdirs[0], _get_mdf_files(mdf_subdirs[0])
 
-    if mdf_dir:
-        mdf_files = [f for f in mdf_dir.iterdir() if is_mdf_file(f.name)]
+    # Otherwise we may have an unconventional NCI structure...
+    # Eg.
+    #      LC80910760902013148ASA00/
+    #           input/
+    #               132.000.2013148000123679.ASA
+    #               132.000.2013148000123679.ASA
+    #               ...
+    #           lpgsOut/
+    #               ...
+    #
+    # Note that the MDF directory doesn't directly contain the MDF files.
+    #  -> And there's usually a lot of sub directories containing other outputs which we don't want to touch.
+
+    # Does our given folder directly contain mdf files? If so, look for parent mdf directories.
+    mdf_files = _get_mdf_files(directory)
+
+    if mdf_files:
+        if is_mdf_directory(directory.parent.name):
+            mdf_dir = directory.parent
+
+        if is_mdf_directory(directory.parent.parent.name):
+            mdf_dir = directory.parent.parent
 
     return mdf_dir, mdf_files
 

@@ -1,7 +1,6 @@
-
 import unittest
-
 import datetime
+
 import pathlib
 
 import eodatasets.metadata.mdf as mdf
@@ -31,7 +30,7 @@ class MdfTests(unittest.TestCase):
                 '447.000.2013254233711482.ASA': 'a',
                 'LC80880750762013254ASA00_IDF.xml': 'a',
                 'LC80880750762013254ASA00_MD5.txt': 'a',
-                }
+            }
         })
 
         def _test_mdf_output(metadata):
@@ -54,6 +53,64 @@ class MdfTests(unittest.TestCase):
         # It should also work when given the specific MDF folder.
         metadata = mdf.extract_md(ptype.DatasetMetadata(), d.joinpath('LC80880750762013254ASA00'))
         _test_mdf_output(metadata)
+
+    def test_find_mdf_directory(self):
+        d = write_files({
+            'LC80880750762013254ASA00': {
+                '446.000.2013254233714881.ASA': 'a',
+                '447.000.2013254233711482.ASA': 'a',
+                'LC80880750762013254ASA00_IDF.xml': 'a',
+                'LC80880750762013254ASA00_MD5.txt': 'a',
+            }
+        })
+
+        expected_dir = d.joinpath('LC80880750762013254ASA00')
+        expected_return = (
+            expected_dir,
+            [
+                expected_dir.joinpath('446.000.2013254233714881.ASA'),
+                expected_dir.joinpath('447.000.2013254233711482.ASA')
+            ]
+        )
+
+        # The actual directory.
+        self.assertEqual(
+            expected_return,
+            mdf.find_mdf_files(d.joinpath('LC80880750762013254ASA00'))
+        )
+        # A directory containing just the actual directory.
+        self.assertEqual(
+            expected_return,
+            mdf.find_mdf_files(d)
+        )
+
+    def test_find_mdf_dir_with_input(self):
+        # A structure encountered from some NCI processors: An extra input-directory.
+        # The 'input' folder is passed as the dataset.
+        d = write_files({
+            'LC80880750762013254ASA00': {
+                'input': {
+                    '446.000.2013254233714881.ASA': 'a',
+                    '447.000.2013254233711482.ASA': 'a',
+                    'LC80880750762013254ASA00_IDF.xml': 'a',
+                    'LC80880750762013254ASA00_MD5.txt': 'a',
+                }
+            }
+        })
+
+        expected_dir = d.joinpath('LC80880750762013254ASA00')
+        expected_return = (
+            expected_dir,
+            [
+                expected_dir.joinpath('input', '446.000.2013254233714881.ASA'),
+                expected_dir.joinpath('input', '447.000.2013254233711482.ASA')
+            ]
+        )
+
+        self.assertEqual(
+            expected_return,
+            mdf.find_mdf_files(d.joinpath('LC80880750762013254ASA00', 'input'))
+        )
 
 
 if __name__ == '__main__':
