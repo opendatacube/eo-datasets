@@ -1,10 +1,18 @@
 #!/usr/bin/env python
 
+import os
+
 from setuptools import setup, find_packages
+
+version = "0.1b"
+
+# Append TeamCity build number if it gives us one.
+if 'BUILD_NUMBER' in os.environ and version.endswith('b'):
+    version += '' + os.environ['BUILD_NUMBER']
 
 setup(
     name="eodatasets",
-    version="0.1b",
+    version=version,
     packages=find_packages(),
     install_requires=[
         'click',
