@@ -1,11 +1,10 @@
 import logging
 import string
-import json
 
 from pathlib import Path
 
 from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, passinfo, image as md_image
-from eodatasets import type as ptype
+from eodatasets import type as ptype, metadata
 
 
 _LOG = logging.getLogger(__name__)
@@ -14,17 +13,6 @@ _LOG = logging.getLogger(__name__)
 def find_file(path, file_pattern):
     # Crude but effective. TODO: multiple/no result handling.
     return path.glob(file_pattern).next()
-
-
-with Path(__file__).parent.joinpath('groundstations.json').open() as f:
-    _GROUNDSTATION_LIST = json.load(f)
-
-# Build groundstation alias lookup table.
-_GROUNDSTATION_ALIASES = {}
-for station in _GROUNDSTATION_LIST:
-    gsi_ = station['code']
-    _GROUNDSTATION_ALIASES[gsi_] = gsi_
-    _GROUNDSTATION_ALIASES.update({alias: gsi_ for alias in station['aliases']})
 
 
 class DatasetDriver(object):
@@ -90,51 +78,6 @@ class DatasetDriver(object):
         return browse_bands
 
 
-def normalise_gsi(gsi):
-    """
-    Normalise the given GSI.
-
-    Many old datasets and systems use common aliases instead of the actual gsi. We try to translate.
-    :type gsi: str
-    :rtype: str
-
-    >>> normalise_gsi('ALSP')
-    'ASA'
-    >>> normalise_gsi('ASA')
-    'ASA'
-    >>> normalise_gsi('Alice')
-    'ASA'
-    >>> normalise_gsi('TERSS')
-    'HOA'
-    """
-    return str(_GROUNDSTATION_ALIASES.get(gsi.upper()))
-
-
-def get_groundstation(gsi):
-    """
-
-    :param gsi:
-    :rtype: ptype.GroundstationMetadata
-    >>> get_groundstation('ASA')
-    GroundstationMetadata(code='ASA', label='Alice Springs', eods_domain_code='002')
-    >>> # Aliases should work too
-    >>> get_groundstation('ALICE')
-    GroundstationMetadata(code='ASA', label='Alice Springs', eods_domain_code='002')
-    >>> get_groundstation('UNKNOWN_GSI')
-    """
-    gsi = normalise_gsi(gsi)
-    stations = [g for g in _GROUNDSTATION_LIST if g['code'].upper() == gsi]
-    if not stations:
-        _LOG.warn('Station GSI not known: %r', gsi)
-        return None
-    station = stations[0]
-    return ptype.GroundstationMetadata(
-        code=str(station['code']),
-        label=str(station['label']),
-        eods_domain_code=str(station['eods_domain_code'])
-    )
-
-
 def get_groundstation_code(gsi):
     """
     Translate a GSI code into an EODS domain code.
@@ -154,7 +97,7 @@ def get_groundstation_code(gsi):
     >>> get_groundstation_code('ALSP')
     '002'
     """
-    groundstation = get_groundstation(gsi)
+    groundstation = metadata.get_groundstation(gsi)
     if not groundstation:
         return None
 
@@ -241,9 +184,9 @@ def _get_process_code(dataset):
 
 
 def _fill_dataset_label(dataset, format_str):
-    def _get_short_satellite_code(dataset):
-        assert dataset.platform.code.startswith('LANDSAT_')
-        sat_number = 'LS' + dataset.platform.code.split('_')[-1]
+    def _get_short_satellite_code(dataset_):
+        assert dataset_.platform.code.startswith('LANDSAT_')
+        sat_number = 'LS' + dataset_.platform.code.split('_')[-1]
         return sat_number
 
     path, row = _format_path_row(
@@ -256,9 +199,9 @@ def _fill_dataset_label(dataset, format_str):
             return None
         return d.strftime("%Y%m%dT%H%M%S")
 
-    def _format_day(dataset):
-        day = (dataset.extent and dataset.extent.center_dt) or \
-              (dataset.acquisition and dataset.acquisition.aos)
+    def _format_day(dataset_):
+        day = (dataset_.extent and dataset_.extent.center_dt) or \
+              (dataset_.acquisition and dataset_.acquisition.aos)
         return day.strftime('%Y%m%d')
 
     level, ga_level = _get_process_code(dataset)

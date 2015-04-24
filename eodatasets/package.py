@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 import logging
@@ -7,40 +6,14 @@ from subprocess import check_call
 import datetime
 
 from pathlib import Path
-
-from eodatasets import serialise, verify, drivers
+from eodatasets import serialise, verify, drivers, metadata
 from eodatasets.browseimage import create_dataset_browse_images
-
 import eodatasets.type as ptype
 
 
 GA_CHECKSUMS_FILE_NAME = 'package.sha1'
 
 _LOG = logging.getLogger(__name__)
-
-# From the gaip codebase. Lookup table for sensor information.
-with Path(__file__).parent.joinpath('sensors.json').open() as fo:
-    SENSORS = json.load(fo)
-
-
-def expand_band_information(satellite, sensor, band_metadata):
-    """
-    Use the gaip reference table to add per-band metadata if available.
-    :param satellite: satellite as reported by LPGS (eg. LANDSAT_8)
-    :param sensor: sensor as reported by LPGS (eg. OLI_TIRS)
-    :type band_metadata: ptype.BandMetadata
-    :rtype: ptype.BandMetadata
-    """
-
-    bands = SENSORS[satellite]['sensors'][sensor]['bands']
-
-    band = bands.get(band_metadata.number)
-    if band:
-        band_metadata.label = band['desc']
-        band_metadata.cell_size = band['resolution']
-        band_metadata.type_ = band['type_desc'].lower()
-
-    return band_metadata
 
 
 def init_local_dataset(uuid=None):
@@ -67,6 +40,7 @@ def _copy_file(source_path, destination_path, compress_imagery=True, hard_link=F
     :type source_path: Path
     :type destination_path: Path
     :type compress_imagery: bool
+    :type hard_link: bool
     :return: Size in bytes of destination file.
     :rtype int
     """
@@ -83,7 +57,7 @@ def _copy_file(source_path, destination_path, compress_imagery=True, hard_link=F
     elif (original_suffix == suffix) and hard_link:
         _LOG.info('Hard linking %r -> %r', source_file, destination_file)
         os.link(source_file, destination_file)
-    # If a tif image, losslessly compress it.
+    # If a tif image, compress it losslessly.
     elif suffix == '.tif' and compress_imagery:
         _LOG.info('Copying compressed %r -> %r', source_file, destination_file)
         check_call(
@@ -143,23 +117,6 @@ class IncompletePackage(Exception):
     Package is incomplete: (eg. Not enough metadata could be found.)
     """
     pass
-
-
-def _expand_common_metadata(d):
-    """
-    :type d: ptype.DatasetMetadata
-    :rtype: ptype.DatasetMetadata
-    """
-    if d.image and d.image.bands:
-        for number, band_metadata in d.image.bands.items():
-            expand_band_information(d.platform.code, d.instrument.name, band_metadata)
-
-    # Fill any extra groundstation information we have.
-    if d.acquisition and d.acquisition.groundstation and d.acquisition.groundstation.code:
-        full_groundstation = drivers.get_groundstation(d.acquisition.groundstation.code)
-        d.acquisition.groundstation.steal_fields_from(full_groundstation)
-
-    return d
 
 
 def do_package(dataset_driver,
@@ -223,7 +180,7 @@ def do_package(dataset_driver,
 
     d.lineage.source_datasets = source_datasets
 
-    d =_expand_common_metadata(d)
+    d = metadata.expand_common_metadata(d)
 
     create_dataset_browse_images(
         dataset_driver,
@@ -239,12 +196,3 @@ def do_package(dataset_driver,
     _LOG.info('Packaged in %.02f: %s', time.time() - start, target_metadata_path)
 
     return d.ga_label
-
-if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
-    import doctest
-
-    doctest.testmod()
-    logging.getLogger().setLevel(logging.DEBUG)
-
-

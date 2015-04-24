@@ -184,8 +184,7 @@ def write_yaml_metadata(d, metadata_path, target_directory=None):
 
 def read_yaml_metadata(metadata_file):
     """
-
-    :type metadata: str
+    :type metadata_file: str
     :rtype: DatasetMetadata
     """
     with open(str(metadata_file), 'r') as f:
