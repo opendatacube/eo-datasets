@@ -1,11 +1,14 @@
 __author__ = 'jez'
 
-import eodatasets.type as ptype
-import pathlib
 import atexit
 import os
 import shutil
 import tempfile
+import sys
+
+import pathlib
+
+import eodatasets.type as ptype
 
 
 def assert_same(o1, o2, prefix=''):
@@ -43,8 +46,8 @@ def assert_same(o1, o2, prefix=''):
             _compare(k, val, o2[k])
 
     elif o1 != o2:
-        print repr(o1)
-        print repr(o2)
+        sys.stderr.write("%r\n" % o1)
+        sys.stderr.write("%r\n" % o2)
         raise AssertionError("Mismatch for property %r:  %r != %r" % (prefix, o1, o2))
 
 
