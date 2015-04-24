@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import logging
 import time
@@ -57,7 +58,7 @@ def init_local_dataset(uuid=None):
     return md
 
 
-def _copy_file(source_path, destination_path, compress_imagery=True):
+def _copy_file(source_path, destination_path, compress_imagery=True, hard_link=False):
     """
     Copy a file from source to destination if needed. Maybe apply compression.
 
@@ -69,24 +70,21 @@ def _copy_file(source_path, destination_path, compress_imagery=True):
     :return: Size in bytes of destination file.
     :rtype int
     """
-    source_size_bytes = source_path.stat().st_size
-
-    if destination_path.exists():
-        if source_path.resolve() == destination_path.resolve():
-            return source_size_bytes
-
-        if destination_path.stat().st_size == source_size_bytes:
-            return source_size_bytes
 
     source_file = str(source_path)
     destination_file = str(destination_path)
 
     # Copy to destination path.
-
+    original_suffix = source_path.suffix.lower()
     suffix = destination_path.suffix.lower()
 
+    if destination_path.exists():
+        _LOG.info('Destination exists: %r', destination_file)
+    elif (original_suffix == suffix) and hard_link:
+        _LOG.info('Hard linking %r -> %r', source_file, destination_file)
+        os.link(source_file, destination_file)
     # If a tif image, losslessly compress it.
-    if suffix == '.tif' and compress_imagery:
+    elif suffix == '.tif' and compress_imagery:
         _LOG.info('Copying compressed %r -> %r', source_file, destination_file)
         check_call(
             [
@@ -108,6 +106,7 @@ def prepare_target_imagery(image_directory,
                            package_directory,
                            compress_imagery=True,
                            filename_match=None,
+                           hard_link=False,
                            after_file_copy=lambda file_path: None):
     """
     Copy a directory of files if not already there. Possibly compress images.
@@ -133,7 +132,7 @@ def prepare_target_imagery(image_directory,
         if filename_match and not filename_match(destination_path):
             continue
 
-        size_bytes += _copy_file(source_path, destination_path, compress_imagery)
+        size_bytes += _copy_file(source_path, destination_path, compress_imagery, hard_link=hard_link)
         after_file_copy(destination_path)
 
     return size_bytes
@@ -166,6 +165,7 @@ def _expand_common_metadata(d):
 def do_package(dataset_driver,
                image_directory,
                target_directory,
+               hard_link=False,
                source_datasets=None):
     """
     Package the given dataset folder.
@@ -200,7 +200,8 @@ def do_package(dataset_driver,
         image_path,
         package_directory,
         filename_match=dataset_driver.file_is_pertinent,
-        after_file_copy=checksums.add_file
+        after_file_copy=checksums.add_file,
+        hard_link=hard_link
     )
 
     if not target_path.exists():

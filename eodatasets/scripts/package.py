@@ -11,10 +11,11 @@ from eodatasets import package, drivers, serialise
 @click.option('--parent', type=click.Path(exists=True, readable=True, writable=False), multiple=True)
 @click.option('--debug', is_flag=True)
 @click.option('--in-place', is_flag=True)
+@click.option('--hard-link', is_flag=True)
 @click.argument('type', type=click.Choice(drivers.PACKAGE_DRIVERS.keys()))
 @click.argument('dataset', type=click.Path(exists=True, readable=True, writable=False), nargs=-1)
 @click.argument('destination', type=click.Path(exists=True, readable=True, writable=True), nargs=1)
-def run_packaging(parent, debug, in_place, type, dataset, destination):
+def run_packaging(parent, debug, in_place, hard_link, type, dataset, destination):
     """
     :type parent: str
     :type debug: bool
@@ -58,7 +59,8 @@ def run_packaging(parent, debug, in_place, type, dataset, destination):
             driver,
             dataset_path,
             target_folder,
-            source_datasets=parent_datasets
+            source_datasets=parent_datasets,
+            hard_link=hard_link
         )
 
 if __name__ == '__main__':
