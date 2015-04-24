@@ -9,7 +9,7 @@ import dateutil.parser
 from pathlib import Path
 
 from eodatasets import type as ptype, serialise
-from eodatasets.tests import temp_file
+from eodatasets.tests import temp_file, assert_same
 
 
 def _serialise_to_file(file_name, dataset):
@@ -508,18 +508,7 @@ class PackageTypeTests(unittest.TestCase):
         self.assertEqual(ls8_raw, serialised_ls8_raw, msg='RAW mismatch')
 
     def _compare_bands(self, ds1, ds2):
-        b1 = ds1.image.bands
-        b2 = ds2.image.bands
-        try:
-            self.assertEqual(
-                b1,
-                b2
-            )
-        except AssertionError:
-            # Easier comparison
-            print repr([(k, b1[k]) for k in sorted(b1)])
-            print repr([(k, b2[k]) for k in sorted(b2)])
-            raise
+        assert_same(ds1.image.bands, ds2.image.bands)
 
     def test_nbar_serialise(self):
         ls8_nbar = _build_ls8_nbar()
@@ -538,13 +527,7 @@ class PackageTypeTests(unittest.TestCase):
         ls8_nbar.image.bands, ls8_nbar.lineage.source_datasets['ortho'].image.bands = {}, {}
         serialised_d.image.bands, serialised_d.lineage.source_datasets['ortho'].image.bands = {}, {}
 
-        try:
-            self.assertEqual(ls8_nbar, serialised_d, msg='NBAR mismatch')
-        except AssertionError:
-            # Easier comparison
-            print repr(ls8_nbar)
-            print repr(serialised_d)
-            raise
+        assert_same(ls8_nbar, serialised_d)
 
 
 class SimpleObjectTests(unittest.TestCase):

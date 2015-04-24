@@ -8,7 +8,6 @@ import shutil
 import tempfile
 
 
-
 def assert_same(o1, o2, prefix=''):
     """
     Assert the two are equal.
