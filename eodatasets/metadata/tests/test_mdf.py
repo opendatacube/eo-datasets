@@ -67,10 +67,10 @@ class MdfTests(unittest.TestCase):
         expected_dir = d.joinpath('LC80880750762013254ASA00')
         expected_return = (
             expected_dir,
-            [
+            {
                 expected_dir.joinpath('446.000.2013254233714881.ASA'),
                 expected_dir.joinpath('447.000.2013254233711482.ASA')
-            ]
+            }
         )
 
         # The actual directory.
@@ -101,10 +101,10 @@ class MdfTests(unittest.TestCase):
         expected_dir = d.joinpath('LC80880750762013254ASA00')
         expected_return = (
             expected_dir,
-            [
+            {
                 expected_dir.joinpath('input', '446.000.2013254233714881.ASA'),
                 expected_dir.joinpath('input', '447.000.2013254233711482.ASA')
-            ]
+            }
         )
 
         self.assertEqual(
@@ -118,7 +118,7 @@ class MdfTests(unittest.TestCase):
             'L7EB2013259012832ASN213Q00.data': 'nothing'
         })
 
-        self.assertEqual((None, []), mdf.find_mdf_files(d))
+        self.assertEqual((None, set()), mdf.find_mdf_files(d))
 
         # Make sure that metadata is not modified when no MDF is found.
         startind_md = ptype.DatasetMetadata()
@@ -128,6 +128,7 @@ class MdfTests(unittest.TestCase):
 
         output = mdf.extract_md(startind_md, d)
         self.assertEqual(expected_dt, output)
+
 
 if __name__ == '__main__':
     import doctest

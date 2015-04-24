@@ -254,7 +254,7 @@ def find_mdf_files(directory):
     mdf_dir = None
 
     def _get_mdf_files(mdf_dir):
-        return [f for f in mdf_dir.iterdir() if is_mdf_file(f.name)]
+        return {f for f in mdf_dir.iterdir() if is_mdf_file(f.name)}
 
     # Were we given the MDF directory itself?
     if is_mdf_directory(directory.name):
