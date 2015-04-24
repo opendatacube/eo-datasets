@@ -99,9 +99,12 @@ def expand_common_metadata(d):
         for number, band_metadata in d.image.bands.items():
             _expand_band_information(d.platform.code, d.instrument.name, band_metadata)
 
-    # Fill any extra groundstation information we have.
     if d.acquisition and d.acquisition.groundstation and d.acquisition.groundstation.code:
-        full_groundstation = drivers.get_groundstation(d.acquisition.groundstation.code)
-        d.acquisition.groundstation.steal_fields_from(full_groundstation)
+        gstation = d.acquisition.groundstation
+        # Ensure we're using a standard GSI code.
+        gstation.code = normalise_gsi(gstation.code)
+        # Set any missing fields for this groundstation.
+        full_groundstation = get_groundstation(gstation.code)
+        gstation.steal_fields_from(full_groundstation)
 
     return d
