@@ -1,4 +1,6 @@
 --index-url https://pypi.python.org/simple/
 
+pytest
+# Load the rest from setup.py:
 -e .
 
