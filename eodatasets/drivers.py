@@ -161,7 +161,6 @@ def get_groundstation_code(gsi):
     return groundstation.eods_domain_code
 
 
-
 def _format_path_row(start_point, end_point=None):
     """
     Format path-row for display in a dataset id.
@@ -264,6 +263,17 @@ def _fill_dataset_label(dataset, format_str):
 
     level, ga_level = _get_process_code(dataset)
 
+    station_code = None
+    start = None
+    end = None
+    if dataset.acquisition:
+        if dataset.acquisition.groundstation:
+            station_code = get_groundstation_code(dataset.acquisition.groundstation.code)
+        if dataset.acquisition.aos:
+            start = _format_dt(dataset.acquisition.aos)
+        if dataset.acquisition.los:
+            end = _format_dt(dataset.acquisition.los)
+
     formatted_params = {
         'satnumber': _get_short_satellite_code(dataset),
         'sensor': dataset.instrument.name.translate(None, string.punctuation),
@@ -273,9 +283,9 @@ def _fill_dataset_label(dataset, format_str):
         'usgsid': dataset.usgs_dataset_id,
         'path': path,
         'rows': row,
-        'stationcode': get_groundstation_code(dataset.acquisition.groundstation.code),
-        'startdt': _format_dt(dataset.acquisition.aos),
-        'enddt': _format_dt(dataset.acquisition.los),
+        'stationcode': station_code,
+        'startdt': start,
+        'enddt': end,
         'day': _format_day(dataset)
     }
     return format_str.format(**formatted_params)
@@ -369,6 +379,15 @@ class NbarDriver(DatasetDriver):
             bands[band_number] = ptype.BandMetadata(path=band.absolute(), number=band_number)
         return bands
 
+    def get_ga_label(self, dataset):
+        # Exmaple: LS8_OLITIRS_NBAR_P51_GALPGS01-032_090_085_20140115
+        # TODO
+        return None
+        # return _fill_dataset_label(
+        #     dataset,
+        #     '{satnumber}_{sensor}_NBAR_{galevel}_GALPGS01-{stationcode}_{path}_{rows}_{day}'
+        # )
+
     def fill_metadata(self, dataset, path):
         """
         :type dataset: ptype.DatasetMetadata
@@ -383,6 +402,9 @@ class NbarDriver(DatasetDriver):
             dataset.image = ptype.ImageMetadata(bands={})
 
         dataset.image.bands.update(self._find_nbar_bands(path))
+
+        dataset.format_ = ptype.FormatMetadata('GeoTIFF')
+
         md_image.populate_from_image_metadata(dataset)
         return dataset
 
