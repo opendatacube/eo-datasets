@@ -1,9 +1,9 @@
 # coding=utf-8
 from __future__ import absolute_import
+import uuid
+
 from pathlib import Path
 from eodatasets.tests import assert_same
-
-from eodatasets.type import *
 from eodatasets.metadata import mtl
 import eodatasets.type as ptype
 
@@ -18,7 +18,7 @@ def assert_expected_mtl(mtl_file, expected_ds, base_folder=Path('/tmp/fake-folde
 
     assigned_id = uuid.UUID('3ff71eb0-d5c5-11e4-aebb-1040f381a756')
 
-    ds = DatasetMetadata(id_=assigned_id)
+    ds = ptype.DatasetMetadata(id_=assigned_id)
     ds = mtl.populate_from_mtl(ds, mtl_file, base_folder=base_folder)
 
     expected_ds.id_ = assigned_id

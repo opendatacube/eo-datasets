@@ -1,71 +1,74 @@
 # coding=utf-8
 from __future__ import absolute_import
 import unittest
+import uuid
+import datetime
+import os
 
 from pathlib import PosixPath, Path
-from eodatasets.type import *
+import eodatasets.type as ptype
 from eodatasets.metadata.tests.mtl import assert_expected_mtl
 
 
 FILENAME = 'ls5_definitive_mtl.txt'
 
-EXPECTED_OUT = DatasetMetadata(
+EXPECTED_OUT = ptype.DatasetMetadata(
     id_=uuid.UUID('3ff71eb0-d5c5-11e4-aebb-1040f381a756'),
     usgs_dataset_id='LT51130632005152ASA00',
     product_level='L1T',
     creation_dt=datetime.datetime(2015, 4, 7, 1, 12, 3),
-    platform=PlatformMetadata(
+    platform=ptype.PlatformMetadata(
         code='LANDSAT_5'
     ),
-    instrument=InstrumentMetadata(
+    instrument=ptype.InstrumentMetadata(
         name='TM',
         operation_mode='BUMPER'
     ),
-    format_=FormatMetadata(
+    format_=ptype.FormatMetadata(
         name='GEOTIFF'
     ),
-    acquisition=AcquisitionMetadata(
-        groundstation=GroundstationMetadata(
+    acquisition=ptype.AcquisitionMetadata(
+        groundstation=ptype.GroundstationMetadata(
             code='ASA'
         )
     ),
-    extent=ExtentMetadata(
-        coord=CoordPolygon(
-            ul=Coord(
+    extent=ptype.ExtentMetadata(
+        coord=ptype.CoordPolygon(
+            ul=ptype.Coord(
                 lat=-3.38926,
                 lon=120.38133
             ),
-            ur=Coord(
+            ur=ptype.Coord(
                 lat=-3.39269,
                 lon=122.51399
             ),
-            ll=Coord(
+            ll=ptype.Coord(
                 lat=-5.26901,
                 lon=120.37486
             ),
-            lr=Coord(
+            lr=ptype.Coord(
                 lat=-5.27436,
                 lon=122.51278
             )
         ),
         center_dt=datetime.datetime(2005, 6, 1, 1, 51, 30, 434044)
     ),
-    grid_spatial=GridSpatialMetadata(
-        projection=ProjectionMetadata(
-            geo_ref_points=PointPolygon(
-                ul=Point(
+    grid_spatial=ptype.GridSpatialMetadata(
+        projection=ptype.ProjectionMetadata(
+            geo_ref_points=ptype.PointPolygon(
+                ul=ptype.Point(
                     x=209012.500,
                     y=9624987.500
                 ),
-                ur=Point(
+                ur=ptype.Point(
                     x=446012.500,
                     y=9624987.500
                 ),
-                ll=Point(
+                ll=ptype.Point(
                     x=209012.500,
                     y=9416987.500
                 ),
-                lr=Point(
+                lr=ptype.Point(
                     x=446012.500,
                     y=9416987.500
                 )
@@ -78,8 +81,8 @@ EXPECTED_OUT = DatasetMetadata(
             zone=-51
         )
     ),
-    image=ImageMetadata(
-        satellite_ref_point_start=Point(x=113, y=63),
+    image=ptype.ImageMetadata(
+        satellite_ref_point_start=ptype.Point(x=113, y=63),
         cloud_cover_percentage=52.00,
         sun_azimuth=46.93282849,
         sun_elevation=50.44317205,
@@ -90,46 +93,46 @@ EXPECTED_OUT = DatasetMetadata(
         geometric_rmse_model_x=3.104,
         geometric_rmse_model_y=3.370,
         bands={
-            '1': BandMetadata(
+            '1': ptype.BandMetadata(
                 path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B1.TIF'),
                 number='1',
             ),
 
-            '2': BandMetadata(
+            '2': ptype.BandMetadata(
                 path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B2.TIF'),
                 number='2',
             ),
-            '3': BandMetadata(
+            '3': ptype.BandMetadata(
                 path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B3.TIF'),
                 number='3',
             ),
-            '4': BandMetadata(
+            '4': ptype.BandMetadata(
                 path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B4.TIF'),
                 number='4',
             ),
-            '5': BandMetadata(
+            '5': ptype.BandMetadata(
                 path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B5.TIF'),
                 number='5',
             ),
-            '6': BandMetadata(
+            '6': ptype.BandMetadata(
                 path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B6.TIF'),
                 number='6',
             ),
-            '7': BandMetadata(
+            '7': ptype.BandMetadata(
                 path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B7.TIF'),
                 number='7',
             )
         }
     ),
-    lineage=LineageMetadata(
-        algorithm=AlgorithmMetadata(
+    lineage=ptype.LineageMetadata(
+        algorithm=ptype.AlgorithmMetadata(
             name='LPGS',
             version='12.5.0',
             parameters={}
         ),
         ancillary_quality='DEFINITIVE',
         ancillary={
-            'cpf': AncillaryMetadata(
+            'cpf': ptype.AncillaryMetadata(
                 name='L5CPF20050401_20050630.12'
             )}
     )
@@ -139,6 +142,6 @@ EXPECTED_OUT = DatasetMetadata(
 class TestMtlRead(unittest.TestCase):
     def test_ls5_equivalence(self):
         assert_expected_mtl(
-            Path(os.path.join(os.path.dirname(__file__), FILENAME)),
+            Path(os.path.join(ptype.os.path.dirname(__file__), FILENAME)),
             EXPECTED_OUT
         )
