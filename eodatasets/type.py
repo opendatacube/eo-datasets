@@ -155,7 +155,7 @@ class SimpleObject(object):
         :type list_: Iterable[dict]
         :return: list of objects of this class
         """
-        return map(cls.from_dict, list_)
+        return [cls.from_dict(d) for d in list_]
 
     @classmethod
     def from_named_dicts(cls, dict_):

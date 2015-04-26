@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import logging
+import re
 import string
 
 from pathlib import Path
@@ -220,7 +221,7 @@ def _fill_dataset_label(dataset, format_str):
 
     formatted_params = {
         'satnumber': _get_short_satellite_code(dataset),
-        'sensor': dataset.instrument.name.translate(None, string.punctuation),
+        'sensor': _remove_chars(string.punctuation, dataset.instrument.name),
         'format': dataset.format_.name.upper(),
         'level': level,
         'galevel': ga_level,
@@ -233,6 +234,24 @@ def _fill_dataset_label(dataset, format_str):
         'day': _format_day(dataset)
     }
     return format_str.format(**formatted_params)
+
+
+def _remove_chars(chars, s):
+    """
+
+    :param chars: string of characters to remove.
+    :param s: input string
+    :rtype: str
+
+    >>> _remove_chars(string.punctuation, 'OLI_TIRS+')
+    'OLITIRS'
+    >>> _remove_chars('_', 'A_B_C')
+    'ABC'
+    >>> _remove_chars(string.punctuation, None)
+    """
+    if not s:
+        return s
+    return re.sub('[' + re.escape(''.join(chars)) + ']', '', s)
 
 
 class RawDriver(DatasetDriver):

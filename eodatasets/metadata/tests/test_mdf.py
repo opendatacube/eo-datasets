@@ -3,7 +3,6 @@ import unittest
 import datetime
 import uuid
 
-import pathlib
 import eodatasets.metadata.mdf as mdf
 from eodatasets.tests import write_files, assert_same
 import eodatasets.type as ptype

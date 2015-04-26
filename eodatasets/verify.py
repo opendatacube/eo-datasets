@@ -24,7 +24,7 @@ def calculate_file_hash(filename, hash_fn=hashlib.sha1, block_size=4096):
                 break
             m.update(d)
 
-    return m.digest().encode('hex')
+    return binascii.hexlify(m.digest()).decode('ascii')
 
 
 # 16K seems to be the sweet spot in performance on my machine.

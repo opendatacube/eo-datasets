@@ -78,13 +78,13 @@ def _read_mtl_band_filenames(mtl_):
     :type mtl_: dict of (str, obj)
     :rtype: dict of (str, str)
 
-    >>> _read_mtl_band_filenames({'PRODUCT_METADATA': {
+    >>> sorted(_read_mtl_band_filenames({'PRODUCT_METADATA': {
     ...    'file_name_band_9': "LC81010782014285LGN00_B9.TIF",
     ...    'file_name_band_11': "LC81010782014285LGN00_B11.TIF",
     ...    'file_name_band_quality': "LC81010782014285LGN00_BQA.TIF"
-    ... }})
-    {'9': 'LC81010782014285LGN00_B9.TIF', '11': 'LC81010782014285LGN00_B11.TIF', 'quality': \
-'LC81010782014285LGN00_BQA.TIF'}
+    ... }}).items())
+    [('11', 'LC81010782014285LGN00_B11.TIF'), ('9', 'LC81010782014285LGN00_B9.TIF'), ('quality', \
+'LC81010782014285LGN00_BQA.TIF')]
     >>> _read_mtl_band_filenames({'PRODUCT_METADATA': {
     ...    'file_name_band_9': "LC81010782014285LGN00_B9.TIF",
     ...    'corner_ul_lat_product': -24.98805,
@@ -307,10 +307,15 @@ def _wrap_ancillary(dict_):
 
     >>> _wrap_ancillary({'cpf': 'L7CPF20050101_20050331.09', 'rlut': None})
     {'cpf': AncillaryMetadata(name='L7CPF20050101_20050331.09')}
-    >>> _wrap_ancillary({'cpf': 'L7CPF20050101_20050331.09', 'bpf_oli': 'LO8BPF20140127130115_20140127144056.01'})
-    {'bpf_oli': AncillaryMetadata(name='LO8BPF20140127130115_20140127144056.01'), \
-'cpf': AncillaryMetadata(name='L7CPF20050101_20050331.09')}
+    >>> sorted(
+    ...     _wrap_ancillary({
+    ...         'cpf': 'L7CPF20050101_20050331.09',
+    ...         'bpf_oli': 'LO8BPF20140127130115_20140127144056.01'
+    ...     }).items()
+    ...  )
+    [('bpf_oli', AncillaryMetadata(name='LO8BPF20140127130115_20140127144056.01')), \
+('cpf', AncillaryMetadata(name='L7CPF20050101_20050331.09'))]
     >>> _wrap_ancillary({})
     {}
     """
-    return {k: ptype.AncillaryMetadata(name=v) for k, v in dict_.iteritems() if v is not None}
+    return {k: ptype.AncillaryMetadata(name=v) for k, v in dict_.items() if v is not None}

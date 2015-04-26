@@ -10,7 +10,7 @@ import dateutil.parser
 from pathlib import Path
 
 from eodatasets import type as ptype, serialise
-from eodatasets.tests import temp_file, assert_same
+from eodatasets.tests import temp_file, assert_same, TestCase
 
 
 def _serialise_to_file(file_name, dataset):
@@ -522,7 +522,10 @@ class PackageTypeTests(unittest.TestCase):
         # Compare bands first
         self._compare_bands(ls8_nbar, serialised_d)
 
-        self._compare_bands(ls8_nbar.lineage.source_datasets['ortho'], serialised_d.lineage.source_datasets['ortho'])
+        self._compare_bands(
+            ls8_nbar.lineage.source_datasets['ortho'],
+            serialised_d.lineage.source_datasets['ortho']
+        )
 
         # Clear bands to compare remaining object:
         ls8_nbar.image.bands, ls8_nbar.lineage.source_datasets['ortho'].image.bands = {}, {}
@@ -531,7 +534,7 @@ class PackageTypeTests(unittest.TestCase):
         assert_same(ls8_nbar, serialised_d)
 
 
-class SimpleObjectTests(unittest.TestCase):
+class SimpleObjectTests(TestCase):
     def test_properties(self):
         class TestObj(ptype.SimpleObject):
             def __init__(self, a, b, c=42):
@@ -539,9 +542,9 @@ class SimpleObjectTests(unittest.TestCase):
                 self.b = b
                 self.c = c
 
-        self.assertEqual(TestObj.item_defaults(), [('a', None), ('b', None), ('c', 42)])
-        self.assertEqual(list(TestObj(1, 2, 3).items_ordered()), [('a', 1), ('b', 2), ('c', 3)])
-        self.assertEqual(list(TestObj(1, 2).items_ordered()), [('a', 1), ('b', 2), ('c', 42)])
+        self.assert_values_equal(TestObj.item_defaults(), [('a', None), ('b', None), ('c', 42)])
+        self.assert_values_equal(TestObj(1, 2, 3).items_ordered(), [('a', 1), ('b', 2), ('c', 3)])
+        self.assert_values_equal(TestObj(1, 2).items_ordered(), [('a', 1), ('b', 2), ('c', 42)])
 
         self.assertEqual(repr(TestObj(1, 2)), "TestObj(a=1, b=2, c=42)")
 
@@ -556,15 +559,15 @@ class SimpleObjectTests(unittest.TestCase):
                 self.b = b
                 self.c = c
 
-        self.assertEqual(TestAllDefaults.item_defaults(), [('a', 1), ('b', 2), ('c', None)])
-        self.assertEqual(list(TestAllDefaults(3, 2, 1).items_ordered()), [('a', 3), ('b', 2), ('c', 1)])
+        self.assert_values_equal(TestAllDefaults.item_defaults(), [('a', 1), ('b', 2), ('c', None)])
+        self.assert_values_equal(TestAllDefaults(3, 2, 1).items_ordered(), [('a', 3), ('b', 2), ('c', 1)])
 
         # None handling: Blank values with blank defaults are not included by items_ordered()
-        self.assertEqual(list(TestAllDefaults(2, 1).items_ordered()), [('a', 2), ('b', 1)])
+        self.assert_values_equal(TestAllDefaults(2, 1).items_ordered(), [('a', 2), ('b', 1)])
         self.assertEqual(repr(TestAllDefaults()), "TestAllDefaults(a=1, b=2)")
 
         # Blank value with non-blank default is output.
-        self.assertEqual(list(TestAllDefaults(2, None).items_ordered()), [('a', 2), ('b', None)])
+        self.assert_values_equal(TestAllDefaults(2, None).items_ordered(), [('a', 2), ('b', None)])
         self.assertEqual(repr(TestAllDefaults(a=1, b=None)), "TestAllDefaults(a=1, b=None)")
 
     def test_from_dict(self):

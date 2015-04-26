@@ -8,6 +8,7 @@ import collections
 import uuid
 import time
 import logging
+from eodatasets import compat
 
 from pathlib import Path
 import pathlib
@@ -126,7 +127,8 @@ def init_yaml_handling():
     # TODO: This proabbly shouldn't be performed globally as it changes the output behaviour for a built-in type.
     # (although the default behaviour doesn't seem very widely useful: it outputs as a list.)
     yaml.add_multi_representer(collections.OrderedDict, ordereddict_representer)
-    yaml.add_representer(unicode, unicode_representer)
+    if compat.PY2:
+        yaml.add_representer(unicode, unicode_representer)
 
 
 def _create_relative_dumper(folder):
@@ -216,7 +218,7 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
     This is suitable for storage in simple key-value stores, such
     as the metadata in a gdal image.
 
-    >>> list(as_flat_key_value({'a': {'b': 1}, 'c': 2}))
+    >>> sorted(list(as_flat_key_value({'a': {'b': 1}, 'c': 2})))
     [('a.b', 1), ('c', 2)]
     """
     if relative_to is None:
@@ -232,10 +234,10 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
         key = key_separator.join([key_prefix, k])
         return key
 
-    if type(o) in (unicode, str, int, float):
+    if type(o) in compat.string_types or type(o) in (int, float):
         yield key_prefix, o
     elif isinstance(o, dict):
-        for k, v in o.iteritems():
+        for k, v in o.items():
             for nested_k, nested_v in as_flat_key_value(v, key_prefix=namespace(k, key_prefix)):
                 yield nested_k, nested_v
     elif isinstance(o, (list, set)):

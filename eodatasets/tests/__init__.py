@@ -1,11 +1,12 @@
 from __future__ import absolute_import
-__author__ = 'jez'
-
+import unittest
 import atexit
 import os
 import shutil
 import tempfile
 import sys
+
+from eodatasets import compat
 
 import pathlib
 
@@ -52,6 +53,19 @@ def assert_same(o1, o2, prefix=''):
         raise AssertionError("Mismatch for property %r:  %r != %r" % (prefix, o1, o2))
 
 
+class TestCase(unittest.TestCase):
+    def assert_values_equal(self, a, b, msg=None):
+        """
+        Assert sequences of values are equal.
+
+        This is like assertSeqEqual, but doesn't require len() or indexing.
+        (ie. it works with generators and general iterables)
+        """
+        self.assertListEqual(list(a), list(b), msg=msg)
+
+    assert_same = assert_same
+
+
 def write_files(file_dict):
     """
     Convenience method for writing a bunch of files to a temporary directory.
@@ -93,7 +107,7 @@ def _write_files_to_dir(directory_path, file_dict):
             with open(path, 'w') as f:
                 if isinstance(contents, list):
                     f.writelines(contents)
-                elif isinstance(contents, (str, unicode)):
+                elif isinstance(contents, compat.string_types):
                     f.write(contents)
                 else:
                     raise Exception('Unexpected file contents: %s' % type(contents))
