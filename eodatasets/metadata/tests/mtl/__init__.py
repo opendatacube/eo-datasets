@@ -25,8 +25,3 @@ def assert_expected_mtl(mtl_file, expected_ds, base_folder=Path('/tmp/fake-folde
 
     assert_same(ds, expected_ds)
 
-
-if __name__ == '__main__':
-    import unittest
-
-    unittest.main()

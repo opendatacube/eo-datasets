@@ -4,13 +4,11 @@ Most serialisation tests are coupled with the type tests (test_type.py)
 """
 from __future__ import absolute_import
 
-import unittest
-
-from eodatasets.tests import write_files
-from eodatasets import serialise
+from eodatasets.tests import write_files, TestCase
+from eodatasets import serialise, compat, type as ptype
 
 
-class TestSerialise(unittest.TestCase):
+class TestSerialise(TestCase):
     def test_expected_metadata_path(self):
         files = write_files({
             'directory_dataset': {'file1.txt': 'test'},
@@ -32,3 +30,54 @@ class TestSerialise(unittest.TestCase):
         # Nonexistent dataset raises a ValueError.
         with self.assertRaises(ValueError):
             serialise.expected_metadata_path(files.joinpath('missing-dataset.tif'))
+
+    def test_as_key_value(self):
+        self.assert_values_equal(
+            serialise.as_flat_key_value({
+                'a': 1,
+                'b': compat.long_int(2),
+                'c': 2.3,
+                'd': {
+                    'd_inner': {
+                        'a': 42
+                    }
+                }
+            }),
+            [
+                ('a', 1),
+                ('b', compat.long_int(2)),
+                ('c', 2.3),
+                ('d.d_inner.a', 42)
+            ]
+        )
+
+    def test_key_value_simple_obj(self):
+        class Test1(ptype.SimpleObject):
+            def __init__(self, a, b, c, d=None):
+                self.a = a
+                self.b = b
+                self.c = c
+                self.d = d
+
+        self.assert_values_equal(
+            serialise.as_flat_key_value(
+                Test1(
+                    a=1,
+                    b=compat.long_int(2),
+                    c=2.3,
+                    d=Test1(
+                        a=1,
+                        b=2,
+                        c={'a': 42}
+                    )
+                )
+            ),
+            [
+                ('a', 1),
+                ('b', compat.long_int(2)),
+                ('c', 2.3),
+                ('d.a', 1),
+                ('d.b', 2),
+                ('d.c.a', 42)
+            ]
+        )

@@ -1,19 +1,18 @@
 from __future__ import absolute_import
 
-
-from yaml.representer import BaseRepresenter
 import datetime
 import os
 import collections
 import uuid
 import time
 import logging
-from eodatasets import compat
 
-from pathlib import Path
-import pathlib
+from yaml.representer import BaseRepresenter
 import yaml
 
+from eodatasets import compat
+from pathlib import Path
+import pathlib
 import eodatasets.type as ptype
 
 
@@ -73,6 +72,7 @@ def init_yaml_handling():
     """
     Allow load/dump of our custom classes in YAML.
     """
+
     def simpleobject_representer(dumper, data):
         """
 
@@ -140,6 +140,7 @@ def _create_relative_dumper(folder):
     :type folder: str
     :rtype: yaml.Dumper
     """
+
     class RelativeDumper(yaml.Dumper):
         pass
 
@@ -205,6 +206,7 @@ def write_property_metadata(d, metadata_file, target_directory):
             return str(v.relative_to(target_directory))
 
         return v
+
     with open(str(metadata_file), 'w') as f:
         f.writelines(['%s=%r\n' % (k, _clean_val(v)) for k, v in as_flat_key_value(d)])
 
@@ -234,10 +236,13 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
         key = key_separator.join([key_prefix, k])
         return key
 
-    if type(o) in compat.string_types or type(o) in (int, float):
+    if type(o) in compat.string_types or \
+                    type(o) in compat.integer_types or \
+                    type(o) == float:
         yield key_prefix, o
     elif isinstance(o, dict):
-        for k, v in o.items():
+        for k in sorted(o):
+            v = o[k]
             for nested_k, nested_v in as_flat_key_value(v, key_prefix=namespace(k, key_prefix)):
                 yield nested_k, nested_v
     elif isinstance(o, (list, set)):
