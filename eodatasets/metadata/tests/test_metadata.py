@@ -1,17 +1,16 @@
+# coding=utf-8
 from __future__ import absolute_import
 import unittest
 import uuid
 import datetime
 
 from pathlib import PosixPath, Path
-
-
 from eodatasets.tests import write_files
 from eodatasets.tests import assert_same
 from eodatasets.type import BandMetadata
 import eodatasets.type as ptype
-
 from eodatasets import metadata
+
 
 BASIC_LS8_BANDS = {
     '11': BandMetadata(
@@ -293,12 +292,11 @@ EXPANDED_LS5_BANDS = {
 
 
 class TestBandExpansion(unittest.TestCase):
-
     def test_expand_metadata(self):
-        id = uuid.uuid1()
+        id_ = uuid.uuid1()
         create_dt = datetime.datetime.utcnow()
         d = ptype.DatasetMetadata(
-            id_=id,
+            id_=id_,
             creation_dt=create_dt,
             platform=ptype.PlatformMetadata(code='LANDSAT_8'),
             instrument=ptype.InstrumentMetadata(name='OLI_TIRS'),
@@ -316,7 +314,7 @@ class TestBandExpansion(unittest.TestCase):
         assert_same(
             metadata.expand_common_metadata(d),
             ptype.DatasetMetadata(
-                id_=id,
+                id_=id_,
                 creation_dt=create_dt,
                 platform=ptype.PlatformMetadata(code='LANDSAT_8'),
                 instrument=ptype.InstrumentMetadata(name='OLI_TIRS'),

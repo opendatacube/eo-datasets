@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 Most serialisation tests are coupled with the type tests (test_type.py)
 """

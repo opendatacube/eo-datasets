@@ -1,8 +1,10 @@
+# coding=utf-8
 """
 Extract metadata from ADS directory names.
 """
 from __future__ import absolute_import
 import re
+
 import eodatasets.type as ptype
 
 
@@ -62,4 +64,3 @@ def _extract_orbit(name):
 
     fields = m.groupdict()
     return int(fields['orbit'])
-

@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import absolute_import
 import unittest
 import datetime
@@ -74,7 +75,7 @@ class MdfTests(unittest.TestCase):
             '447.000.2013254233711482.ASA': 'a',
             'LC80880750762013254ASA00_IDF.xml': 'a',
             'LC80880750762013254ASA00_MD5.txt': 'a',
-            })
+        })
 
         def _test_mdf_output(metadata):
             self.assertEquals(metadata.usgs_dataset_id, 'LC80880750762013254ASA00')

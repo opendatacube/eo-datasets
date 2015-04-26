@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import absolute_import
 import logging
 
@@ -22,6 +23,7 @@ def run_regeneration(debug, dataset):
 
     for d in dataset:
         regenerate_browse_image(d)
+
 
 if __name__ == '__main__':
     run_regeneration()

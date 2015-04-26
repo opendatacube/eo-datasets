@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import absolute_import
 import logging
 import unittest
@@ -8,7 +9,6 @@ import datetime
 import dateutil.parser
 
 from pathlib import Path
-
 from eodatasets import type as ptype, serialise
 from eodatasets.tests import temp_file, assert_same, TestCase
 
@@ -658,13 +658,7 @@ class SimpleObjectTests(TestCase):
         self.assertEqual(o1, TestObj(9, 9, 9))
 
 
-
-
-
-
-
 class DeserializeTests(unittest.TestCase):
-
     def test_deserialize_dataset(self):
         ls8_parsed_yaml_dict = {'acquisition': {'groundstation': {'code': 'LGN'}},
                                 'browse': {'full': {'blue_band': '1',
@@ -812,6 +806,7 @@ class DeserializeTests(unittest.TestCase):
                                 'usgs_dataset_id': 'LC81010782014285LGN00'}
 
         ptype.DatasetMetadata.from_dict(ls8_parsed_yaml_dict)
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

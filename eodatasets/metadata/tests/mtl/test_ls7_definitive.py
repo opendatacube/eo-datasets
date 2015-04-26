@@ -1,10 +1,9 @@
+# coding=utf-8
 from __future__ import absolute_import
 import unittest
 
 from pathlib import Path, PosixPath
-
 from eodatasets.type import *
-
 from eodatasets.metadata.tests.mtl import assert_expected_mtl
 
 

@@ -1,10 +1,12 @@
+# coding=utf-8
 from __future__ import absolute_import
-__author__ = 'jez'
 
-from pathlib import Path
 import json
 import logging
+
+from pathlib import Path
 import eodatasets.type as ptype
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -17,10 +19,10 @@ with Path(__file__).parent.joinpath('groundstations.json').open() as f:
 
 # Build groundstation alias lookup table.
 _GROUNDSTATION_ALIASES = {}
-for station in _GROUNDSTATION_LIST:
-    gsi_ = station['code']
+for _station in _GROUNDSTATION_LIST:
+    gsi_ = _station['code']
     _GROUNDSTATION_ALIASES[gsi_] = gsi_
-    _GROUNDSTATION_ALIASES.update({alias: gsi_ for alias in station['aliases']})
+    _GROUNDSTATION_ALIASES.update({alias: gsi_ for alias in _station['aliases']})
 
 
 def normalise_gsi(gsi):

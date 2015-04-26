@@ -1,8 +1,11 @@
+# coding=utf-8
 from __future__ import absolute_import
 import hashlib
 import binascii
-from pathlib import Path
 import logging
+
+from pathlib import Path
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -53,6 +56,7 @@ class PackageChecksum(object):
 
     (By building incrementally we can better take advantage of filesystem caching)
     """
+
     def __init__(self):
         self.file_hashes = []
 

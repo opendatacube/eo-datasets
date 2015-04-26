@@ -1,10 +1,10 @@
+# coding=utf-8
 from __future__ import absolute_import
 import logging
 import re
 import string
 
 from pathlib import Path
-
 from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, passinfo, image as md_image
 from eodatasets import type as ptype, metadata
 

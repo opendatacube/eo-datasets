@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 Metadata extraction from MDF files.
 """

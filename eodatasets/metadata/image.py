@@ -1,7 +1,8 @@
+# coding=utf-8
 from __future__ import absolute_import
-__author__ = 'jez'
 
 from osgeo import gdal, osr
+
 import eodatasets.type as ptype
 
 
@@ -117,10 +118,10 @@ def populate_from_image_metadata(md):
         # wkt_contents = spacial_ref.ExportToPrettyWkt()
         # TODO: if srs IsGeographic()? Otherwise srs IsProjected()?
         if not md.grid_spatial:
-            md.grid_spatial= ptype.GridSpatialMetadata()
+            md.grid_spatial = ptype.GridSpatialMetadata()
 
         if not md.grid_spatial.projection:
-            md.grid_spatial.projection  = ptype.ProjectionMetadata()
+            md.grid_spatial.projection = ptype.ProjectionMetadata()
 
         md.grid_spatial.projection.geo_ref_points = _get_gdal_image_coords(i)
 

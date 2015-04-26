@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import absolute_import
 import unittest
 
@@ -7,7 +8,6 @@ import eodatasets.type as ptype
 
 
 class AdsFolderExtractionTest(unittest.TestCase):
-
     def test_directory(self):
         d = write_files({
             'LANDSAT-8.11308': {
@@ -31,7 +31,6 @@ class AdsFolderExtractionTest(unittest.TestCase):
         ds = ptype.DatasetMetadata()
         metadata = adsfolder.extract_md(ds, d)
         self.assertEqual(metadata.acquisition.platform_orbit, 11308)
-
 
 
 if __name__ == '__main__':

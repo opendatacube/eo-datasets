@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 Metadata extraction from RCC files.
 """
@@ -8,8 +9,6 @@ import datetime
 
 from eodatasets import type as ptype
 
-
-__author__ = 'u63606'
 
 _log = logging.getLogger(__name__)
 
@@ -61,7 +60,7 @@ def find_rcc_files(directory):
     for f in files:
         yield f
 
-#  Landsat 5 & 7 modes.
+# Landsat 5 & 7 modes.
 _INSTRUMENT_MODES = {
     'T': 'SAM',
     'B': 'BUMPER'

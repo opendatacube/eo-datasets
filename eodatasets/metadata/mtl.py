@@ -1,12 +1,12 @@
+# coding=utf-8
 from __future__ import absolute_import
 import datetime
 import logging
+import re
 
 from pathlib import Path
-
 import eodatasets.type as ptype
 
-import re
 _LOG = logging.getLogger(__name__)
 
 
