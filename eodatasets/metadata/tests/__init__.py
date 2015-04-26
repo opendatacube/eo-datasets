@@ -1,7 +1,2 @@
-
-import pathlib
-import atexit
-import os
-import shutil
-import tempfile
+from __future__ import absolute_import
 

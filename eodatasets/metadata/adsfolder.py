@@ -1,6 +1,7 @@
 """
 Extract metadata from ADS directory names.
 """
+from __future__ import absolute_import
 import re
 import eodatasets.type as ptype
 

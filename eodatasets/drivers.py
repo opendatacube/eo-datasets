@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 import string
 
@@ -12,7 +13,7 @@ _LOG = logging.getLogger(__name__)
 
 def find_file(path, file_pattern):
     # Crude but effective. TODO: multiple/no result handling.
-    return path.glob(file_pattern).next()
+    return next(path.glob(file_pattern))
 
 
 class DatasetDriver(object):

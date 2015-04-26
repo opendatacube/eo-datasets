@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 import unittest
 from pathlib import Path, PosixPath

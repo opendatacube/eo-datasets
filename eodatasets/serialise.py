@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 
 
 from yaml.representer import BaseRepresenter
@@ -231,7 +232,7 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
         key = key_separator.join([key_prefix, k])
         return key
 
-    if type(o) in (unicode, str, int, long, float):
+    if type(o) in (unicode, str, int, float):
         yield key_prefix, o
     elif isinstance(o, dict):
         for k, v in o.iteritems():

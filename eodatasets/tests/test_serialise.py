@@ -1,6 +1,7 @@
 """
 Most serialisation tests are coupled with the type tests (test_type.py)
 """
+from __future__ import absolute_import
 
 import unittest
 
