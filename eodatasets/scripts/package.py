@@ -66,4 +66,6 @@ def run_packaging(parent, debug, in_place, hard_link, type, dataset, destination
         )
 
 if __name__ == '__main__':
+    # Click fills out the parameters, which confuses pylint.
+    # pylint: disable=no-value-for-parameter
     run_packaging()

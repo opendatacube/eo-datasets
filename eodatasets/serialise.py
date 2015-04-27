@@ -128,6 +128,8 @@ def init_yaml_handling():
     # (although the default behaviour doesn't seem very widely useful: it outputs as a list.)
     yaml.add_multi_representer(collections.OrderedDict, ordereddict_representer)
     if compat.PY2:
+        # 'unicode' is undefined in python 3
+        # pylint: disable=undefined-variable
         yaml.add_representer(unicode, unicode_representer)
 
 
