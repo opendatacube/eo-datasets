@@ -808,6 +808,114 @@ class DeserializeTests(unittest.TestCase):
         ptype.DatasetMetadata.from_dict(ls8_parsed_yaml_dict)
 
 
+class TestRewritePaths(TestCase):
+    def test_rewrite_paths(self):
+        class TestObj(ptype.SimpleObject):
+            def __init__(self, a, b=None, c=3):
+                self.a = a
+                self.b = b
+                self.c = c
+
+        o = ptype.rebase_paths(
+            Path('/tmp/from'),
+            Path('/tmp/to'),
+            TestObj(Path('/tmp/from/test.txt'))
+        )
+
+        assert o == TestObj(Path('/tmp/to/test.txt'))
+
+    def test_rewrite_paths_nested(self):
+        class TestObj(ptype.SimpleObject):
+            def __init__(self, a, b=None, c=3):
+                self.a = a
+                self.b = b
+                self.c = c
+
+        o = TestObj(
+            Path('/tmp/from/test1.txt'),
+            b=TestObj(Path('/tmp/from/test2.txt'))
+        )
+        o2 = ptype.rebase_paths(
+            Path('/tmp/from'),
+            Path('/tmp/to'),
+            o
+        )
+        assert o is not o2
+        self.assert_same(
+            o2,
+            TestObj(
+                Path('/tmp/to/test1.txt'),
+                b=TestObj(Path('/tmp/to/test2.txt'))
+            )
+        )
+
+    def test_rewrite_mixed_paths(self):
+        class TestObj(ptype.SimpleObject):
+            def __init__(self, a, b=None, c=3):
+                self.a = a
+                self.b = b
+                self.c = c
+
+        o = ptype.rebase_paths(
+            Path('/tmp/from'),
+            Path('/tmp/to'),
+            TestObj(
+                Path('/tmp/other'),
+                b=TestObj(Path('relative.txt')),
+                c=2
+            )
+        )
+        self.assert_same(o, TestObj(
+            Path('/tmp/other'),
+            b=TestObj(Path('relative.txt')),
+            c=2
+        ))
+
+    def test_rewrite_within_lists(self):
+        class TestObj(ptype.SimpleObject):
+            def __init__(self, a, b=None, c=3):
+                self.a = a
+                self.b = b
+                self.c = c
+
+        o = [TestObj(
+            Path('/tmp/from/test1.txt'),
+            b={'a': TestObj(Path('/tmp/from/test2.txt'))}
+        )]
+        o2 = ptype.rebase_paths(
+            Path('/tmp/from'),
+            Path('/tmp/to'),
+            o
+        )
+        assert o is not o2
+        self.assert_same(o2, [TestObj(
+            Path('/tmp/to/test1.txt'),
+            b={'a': TestObj(Path('/tmp/to/test2.txt'))}
+        )])
+
+    def test_map_vales(self):
+        class TestObj(ptype.SimpleObject):
+            def __init__(self, a, b=None, c=3):
+                self.a = a
+                self.b = b
+                self.c = c
+
+        o = [TestObj(a=(1,), b={'a': TestObj(3)})]
+        o2 = ptype.map_values(lambda a: a + 1, o, skip_nones=True)
+        # Should return a new object
+        assert o is not o2
+        # Paths translated.
+        self.assert_same(o2, [TestObj(a=(2,), b={'a': TestObj(a=4, c=4)}, c=4)])
+
+    def test_unchanged(self):
+        nbar = _build_ls8_nbar()
+        new_nbar = ptype.rebase_paths(Path('/not-exist'), Path('/not-exist2'), nbar)
+
+        # Should return a new object
+        assert nbar is not new_nbar
+        self.assert_same(nbar, new_nbar)
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     _serialise_to_file('nbar', _build_ls8_nbar())

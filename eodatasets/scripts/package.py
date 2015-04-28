@@ -55,12 +55,12 @@ def run_packaging(parent, debug, in_place, hard_link, type, dataset, destination
         else:
             target_folder = os.path.join(destination, type)
             if not os.path.exists(target_folder):
-                os.mkdir(target_folder)
+                os.mkdir(target_folder),
 
-        package.do_package(
+        package.package_existing_dataset(
             driver,
-            dataset_path,
-            target_folder,
+            Path(dataset_path),
+            Path(target_folder),
             source_datasets=parent_datasets,
             hard_link=hard_link
         )

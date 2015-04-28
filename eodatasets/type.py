@@ -2,12 +2,10 @@
 from __future__ import absolute_import
 import datetime
 import inspect
-import os
-import socket
 import uuid
 import logging
 
-import pathlib
+from pathlib import Path
 
 
 _LOG = logging.getLogger()
@@ -427,7 +425,7 @@ class GridSpatialMetadata(SimpleObject):
 
 class BrowseMetadata(SimpleObject):
     PROPERTY_PARSERS = {
-        'path': pathlib.Path,
+        'path': Path,
         'shape': Point.from_dict,
     }
 
@@ -455,7 +453,7 @@ class BrowseMetadata(SimpleObject):
 
 class BandMetadata(SimpleObject):
     PROPERTY_PARSERS = {
-        'path': pathlib.Path,
+        'path': Path,
         'shape': Point.from_dict
     }
 
@@ -548,20 +546,33 @@ class AlgorithmMetadata(SimpleObject):
         self.parameters = parameters
 
 
-_RUNTIME_ID = uuid.uuid1()
-
-
 class MachineMetadata(SimpleObject):
     PROPERTY_PARSERS = {
         'runtime_id': uuid.UUID
     }
 
-    def __init__(self, hostname=None, runtime_id=None, type_id=None, version=None, uname=None):
-        self.hostname = hostname or socket.getfqdn()
-        self.runtime_id = runtime_id or _RUNTIME_ID
-        self.type_id = type_id or 'jobmanager'
-        self.version = version or '2.4.0'
-        self.uname = uname or ' '.join(os.uname())
+    def __init__(self, hostname=None, runtime_id=None, type_id=None, version=None, software=None, uname=None):
+        # Hostname the dataset was processed on.
+        self.hostname = hostname
+        # A uuid generated each time a program runs.
+        # Allows for distinguishing between processss on the same machine.
+        #: :type: uuid.UUID
+        self.runtime_id = runtime_id
+        # Informal machine type/class. Often will correspond to the Puppet script used to create the machine.
+        #: :type: str
+        self.type_id = type_id
+        # Version of machine type/class (eg. puppet file VCS version)
+        self.version = version
+
+        # Software provenance on the machine at time of processing.
+        #: :type: eodatasets.provenance.SoftwareProvenance
+        self.software = software
+
+        # Uname information of machine.
+        #    - from python: ' '.join(os.uname()))
+        #    - from shell:  uname -a
+        #: :type: str
+        self.uname = uname
 
 
 class AncillaryMetadata(SimpleObject):
@@ -680,7 +691,10 @@ class DatasetMetadata(SimpleObject):
         super(DatasetMetadata, self).__init__()
 
         self.id_ = id_ or uuid.uuid1()
-        self.creation_dt = creation_dt or datetime.datetime.utcnow()
+
+        # When the dataset was created.
+        #: :type: datetime.datetime
+        self.creation_dt = creation_dt
 
         #: :type: int
         self.size_bytes = size_bytes
@@ -733,6 +747,87 @@ class DatasetMetadata(SimpleObject):
         #: :type: LineageMetadata
         self.lineage = lineage
 
+
+def rebase_path(from_root_path, to_root_path, path):
+    """
+    Rebase the path to a new root path.
+    :type path: pathlib.Path
+    :type from_root_path: pathlib.Path
+    :type to_root_path: pathlib.Path
+    :rtype: pathlib.Path
+    >>> source = Path('/tmp/from/something')
+    >>> dest = Path('/tmp/to')
+    >>> rebase_path(source, dest, Path('/tmp/from/something/test.txt'))
+    PosixPath('/tmp/to/test.txt')
+    >>> rebase_path(source, dest, Path('/tmp/other.txt'))
+    PosixPath('/tmp/other.txt')
+    >>> rebase_path(source, dest, Path('other.txt'))
+    PosixPath('other.txt')
+    >>> dest = Path('/tmp/to/something/else')
+    >>> rebase_path(source, dest, Path('/tmp/from/something/test.txt'))
+    PosixPath('/tmp/to/something/else/test.txt')
+    """
+    path = path.absolute()
+    if from_root_path not in path.parents:
+        return path
+
+    relative_path = path.relative_to(from_root_path)
+    return to_root_path.joinpath(relative_path)
+
+
+def map_values(f, o, skip_nones=False):
+    """
+    Apply a function to all values recursively. Recurses through dicts, lists and SimpleObjects.
+
+    Returns a new complete instance without modifying the original.
+
+    # More complex tests (for objects) are in test_type.
+    >>> map_values(lambda a: a+1, [1, 2, 3])
+    [2, 3, 4]
+    >>> map_values(lambda a: a+1, {'a': 1, 'b': 2, 'c': 3}) == {'a': 2, 'b': 3, 'c': 4}
+    True
+    >>> map_values(lambda a: a+1, {'a': 1, 'b': 2, 'c': 3}) == {'a': 2, 'b': 3, 'c': 4}
+    True
+    """
+
+    def recur(v):
+        return map_values(f, v, skip_nones=skip_nones)
+
+    # If is a container type, run recursively on values.
+    if isinstance(o, dict):
+        return {k: recur(v) for k, v in o.items()}
+    if isinstance(o, list):
+        return [recur(v) for v in o]
+    if isinstance(o, SimpleObject):
+        out = {}
+        for name, value in o.items_ordered(skip_nones=False):
+            out[name] = recur(value)
+
+        return o.__class__(**out)
+    if isinstance(o, tuple):
+        return tuple(recur(v) for v in o)
+
+    if o is None and skip_nones:
+        return None
+
+    # Otherwise map the value.
+    return f(o)
+
+
+def rebase_paths(source_path, destination_path, object):
+    """
+    Rebase all paths in a given object structure (list, dict, SimpleObject) from
+    one root path to another.
+
+    :type source_path: Path
+    :type destination_path: Path
+    """
+    def rebase_if_path(o):
+        if isinstance(o, Path):
+            return rebase_path(source_path, destination_path, o)
+        return o
+
+    return map_values(rebase_if_path, object)
 
 # Circular reference.
 LineageMetadata.PROPERTY_PARSERS['source_datasets'] = DatasetMetadata.from_named_dicts

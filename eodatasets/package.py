@@ -6,6 +6,8 @@ import logging
 import time
 from subprocess import check_call
 import datetime
+import uuid
+import socket
 
 from pathlib import Path
 from eodatasets import serialise, verify, drivers, metadata
@@ -17,17 +19,47 @@ GA_CHECKSUMS_FILE_NAME = 'package.sha1'
 
 _LOG = logging.getLogger(__name__)
 
+_RUNTIME_ID = uuid.uuid1()
 
-def init_local_dataset(uuid=None):
+
+def init_locally_processed_dataset(software_provenance, uuid=None):
     """
-    Create blank metadata for a newly created dataset on this machine.
+    Create a blank dataset for a newly created dataset on this machine.
+    :type software_provenance: eodatasets.provenance.SoftwareProvenance
     :param uuid: The existing dataset_id, if any.
     :rtype: ptype.DatasetMetadata
     """
     md = ptype.DatasetMetadata(
         id_=uuid,
         lineage=ptype.LineageMetadata(
-            machine=ptype.MachineMetadata(),
+            machine=ptype.MachineMetadata(
+                hostname=socket.getfqdn(),
+                runtime_id=_RUNTIME_ID,
+                software=software_provenance,
+                uname=' '.join(os.uname())
+            ),
+        )
+    )
+    return md
+
+
+def init_existing_dataset(software_provenance=None, uuid=None, source_hostname=None):
+    """
+    Init a dataset of mostly unknown origin.
+
+    Source hostname can be supplied if known.
+
+    :param uuid: The existing dataset_id, if any.
+    :param source_hostname: Hostname where processed, if known.
+    :rtype: ptype.DatasetMetadata
+    """
+    md = ptype.DatasetMetadata(
+        id_=uuid,
+        lineage=ptype.LineageMetadata(
+            machine=ptype.MachineMetadata(
+                hostname=source_hostname,
+                software=software_provenance
+            )
         )
     )
     return md
@@ -121,17 +153,54 @@ class IncompletePackage(Exception):
     pass
 
 
-def do_package(dataset_driver,
-               image_directory,
-               target_directory,
-               hard_link=False,
-               source_datasets=None):
+def package_existing_dataset(dataset_driver,
+                             image_directory,
+                             target_directory,
+                             hard_link=False,
+                             source_datasets=None):
+    """
+    Package an existing dataset folder (with mostly unknown provenance).
+
+    This is intended for old datasets where little information was recorded.
+
+    For brand new datasets, it's better to use package_dataset() with a dataset created via
+     init_locally_processed_dataset() to capture local machine information.
+
+    :param hard_link:
+        Hard link imagery files instead of copying them. Much faster.
+
+    :type dataset_driver: drivers.DatasetDriver
+    :type image_directory: Path or str
+    :type target_directory: Path or str
+    :type hard_link: bool
+    :type source_datasets: dict of (str, ptype.DatasetMetadata)
+
+    :raises IncompletePackage:
+        Mot enough metadata can be extracted from the dataset.
+
+    :return: The generated GA Dataset ID (ga_label)
+    :rtype: str
+    """
+    d = init_existing_dataset()
+    d.lineage.source_datasets = source_datasets
+
+    #: :type: ptype.DatasetMetadata
+    d = dataset_driver.fill_metadata(d, image_directory)
+
+    return package_dataset(dataset_driver, d, image_directory, target_directory, hard_link=hard_link)
+
+
+
+def package_dataset(dataset_driver,
+                    dataset,
+                    image_directory,
+                    target_directory,
+                    hard_link=False):
     """
     Package the given dataset folder.
     :type dataset_driver: drivers.DatasetDriver
     :type image_directory: Path or str
     :type target_directory: Path or str
-    :type source_datasets: dict of (str, ptype.DatasetMetadata)
 
     :raises IncompletePackage: If not enough metadata can be extracted from the dataset.
     :return: The generated GA Dataset ID (ga_label)
@@ -162,27 +231,24 @@ def do_package(dataset_driver,
         after_file_copy=checksums.add_file,
         hard_link=hard_link
     )
+    dataset = ptype.rebase_paths(image_path, package_directory, dataset)
 
     if not target_path.exists():
         target_path.mkdir()
 
-    #: :type: ptype.DatasetMetadata
-    d = dataset_driver.fill_metadata(init_local_dataset(), package_directory)
-
     # TODO: Add proper validation to dataset structure.
-    if not d.platform or not d.platform.code:
-        raise IncompletePackage('Incomplete dataset. Not enough metadata found: %r' % d)
+    if not dataset.platform or not dataset.platform.code:
+        raise IncompletePackage('Incomplete dataset. Not enough metadata found: %r' % dataset)
 
-    d.product_type = dataset_driver.get_id()
-    d.ga_label = dataset_driver.get_ga_label(d)
-    d.size_bytes = size_bytes
-    d.checksum_path = target_checksums_path
-    # Default creation time is creation of the source folder.
-    d.creation_dt = datetime.datetime.utcfromtimestamp(image_path.stat().st_ctime)
+    dataset.product_type = dataset_driver.get_id()
+    dataset.ga_label = dataset_driver.get_ga_label(dataset)
+    dataset.size_bytes = size_bytes
+    dataset.checksum_path = target_checksums_path
+    if not dataset.creation_dt:
+        # Default creation time is creation of the source folder.
+        dataset.creation_dt = datetime.datetime.utcfromtimestamp(image_path.stat().st_ctime)
 
-    d.lineage.source_datasets = source_datasets
-
-    d = metadata.expand_common_metadata(d)
+    d = metadata.expand_common_metadata(dataset)
 
     create_dataset_browse_images(
         dataset_driver,
