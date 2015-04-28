@@ -767,11 +767,10 @@ def rebase_path(from_root_path, to_root_path, path):
     >>> rebase_path(source, dest, Path('/tmp/from/something/test.txt'))
     PosixPath('/tmp/to/something/else/test.txt')
     """
-    path = path.absolute()
-    if from_root_path not in path.parents:
+    if from_root_path not in path.absolute().parents:
         return path
 
-    relative_path = path.relative_to(from_root_path)
+    relative_path = path.absolute().relative_to(from_root_path)
     return to_root_path.joinpath(relative_path)
 
 
