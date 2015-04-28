@@ -4,7 +4,7 @@ import os
 
 from setuptools import setup, find_packages
 
-version = "0.1b"
+from eodatasets import __version__ as version
 
 # Append TeamCity build number if it gives us one.
 if 'BUILD_NUMBER' in os.environ and version.endswith('b'):
