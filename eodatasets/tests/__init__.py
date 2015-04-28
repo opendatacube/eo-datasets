@@ -64,7 +64,16 @@ class TestCase(unittest.TestCase):
         """
         self.assertListEqual(list(a), list(b), msg=msg)
 
-    assert_same = assert_same
+    def assert_items_equal(self, a, b, msg=None):
+        """
+        Assert the two contain the same items, in any order.
+
+        (python 2 contained something similar, but appears to be removed in python 3?)
+        """
+        self.assertSetEqual(set(a), set(b), msg=None)
+
+    def assert_same(self, a, b, msg=None):
+        return assert_same(a, b)
 
 
 def write_files(file_dict):
