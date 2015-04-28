@@ -142,6 +142,6 @@ EXPECTED_OUT = ptype.DatasetMetadata(
 class TestMtlRead(unittest.TestCase):
     def test_ls5_equivalence(self):
         assert_expected_mtl(
-            Path(os.path.join(ptype.os.path.dirname(__file__), FILENAME)),
+            Path(os.path.join(os.path.dirname(__file__), FILENAME)),
             EXPECTED_OUT
         )
