@@ -14,6 +14,17 @@ import pathlib
 import eodatasets.type as ptype
 
 
+import pytest
+
+# An annotation for marking slow tests.
+#
+# Unit tests shouldn't usually take more than 30ms – it harms the feasibility of running them constantly.
+# (preferably much less than 20ms... but we often write to the filesystem in tests, due to the nature of this codebase.)
+#
+# This allows users (and CI servers) to selectively only run the slow/fast tests.
+slow = pytest.mark.slow
+
+
 def assert_same(o1, o2, prefix=''):
     """
     Assert the two are equal.
@@ -70,7 +81,8 @@ class TestCase(unittest.TestCase):
 
         (python 2 contained something similar, but appears to be removed in python 3?)
         """
-        self.assertSetEqual(set(a), set(b), msg=None)
+        self.assertEqual(len(a), len(b), msg=msg)
+        self.assertSetEqual(set(a), set(b), msg=msg)
 
     def assert_same(self, a, b, msg=None):
         return assert_same(a, b)

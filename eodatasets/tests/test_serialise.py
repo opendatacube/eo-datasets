@@ -4,8 +4,10 @@ Most serialisation tests are coupled with the type tests (test_type.py)
 """
 from __future__ import absolute_import
 
-from eodatasets.tests import write_files, TestCase
+from eodatasets.tests import write_files, TestCase, slow
 from eodatasets import serialise, compat, type as ptype
+from hypothesis import given
+from hypothesis.specifiers import dictionary
 
 
 class TestSerialise(TestCase):
@@ -49,6 +51,14 @@ class TestSerialise(TestCase):
                 ('c', 2.3),
                 ('d.d_inner.a', 42)
             ]
+        )
+
+    @slow
+    @given(dictionary(str, int))
+    def test_flat_dict_flattens_identically(self, dict_):
+        self.assert_items_equal(
+            dict_,
+            serialise.as_flat_key_value(dict_)
         )
 
     def test_key_value_simple_obj(self):
