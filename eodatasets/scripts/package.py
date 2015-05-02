@@ -23,7 +23,7 @@ def run_packaging(parent, debug, in_place, hard_link, type, dataset, destination
     :type debug: bool
     :type in_place: bool
     :type type: str
-    :type dataset: list of str
+    :type dataset: list[str]
     :type destination: str
     """
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')

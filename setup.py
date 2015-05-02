@@ -3,7 +3,6 @@
 import os
 
 from setuptools import setup, find_packages
-
 from eodatasets import __version__ as version
 
 # Append TeamCity build number if it gives us one.
@@ -27,5 +26,4 @@ setup(
         eod-package=eodatasets.scripts.package:cli
         eod-generate-browse=eodatasets.scripts.generatebrowse:cli
     ''',
-
 )

@@ -112,7 +112,7 @@ class SimpleObject(object):
         Subclasses can add to cls.PROPERTY_PARSERS to customise how some properties
         are parsed.
 
-        :type dict_: dict of (str, obj)
+        :type dict_: dict[str, obj]
         """
         possible_properties = dict(cls.item_defaults())
         props = {}
@@ -161,9 +161,9 @@ class SimpleObject(object):
         """
         Create a dict of objects (maintaining the key name).
 
-        Similar to from_dicts(), but operates on a dict instead of a list.
+        Similar to :py:func:`from_dicts`, but operates on a dict instead of a list.
 
-        :type dict_: dict of dict
+        :type dict_: dict[str, dict[str, ob]
         :return: dict of objects of this class
         """
         return dict([(k, cls.from_dict(v)) for (k, v) in dict_.items()])
@@ -776,11 +776,13 @@ def rebase_path(from_root_path, to_root_path, path):
 
 def map_values(f, o, skip_nones=False):
     """
-    Apply a function to all values recursively. Recurses through dicts, lists and SimpleObjects.
+    Apply a function to all values recursively.
 
-    Returns a new complete instance without modifying the original.
+    Recurses through container types (dicts, lists, tuples and and SimpleObjects).
 
-    # More complex tests (for objects) are in test_type.
+    Returns a new instance (deep copy) without modifying the original.
+
+    >>> # More complex tests (for objects etc) are in test_type.py
     >>> map_values(lambda a: a+1, [1, 2, 3])
     [2, 3, 4]
     >>> map_values(lambda a: a+1, {'a': 1, 'b': 2, 'c': 3}) == {'a': 2, 'b': 3, 'c': 4}
