@@ -81,8 +81,9 @@ class TestCase(unittest.TestCase):
 
         (python 2 contained something similar, but appears to be removed in python 3?)
         """
-        self.assertEqual(len(a), len(b), msg=msg)
-        self.assertSetEqual(set(a), set(b), msg=msg)
+        la, lb = list(a), list(b)
+        self.assertEqual(len(la), len(lb), msg=msg)
+        self.assertSetEqual(set(la), set(lb), msg=msg)
 
     def assert_same(self, a, b, msg=None):
         return assert_same(a, b)
