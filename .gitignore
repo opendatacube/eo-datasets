@@ -12,6 +12,7 @@ pip-log.txt
 .coverage
 .tox
 nosetests.xml
+.hypothesis
 
 # PyCharm / IntelliJ
 *.iml
