@@ -177,9 +177,11 @@ def _create_thumbnail(red_file, green_file, blue_file, thumb_image,
         )
         _LOG.debug('Scale %r, offset %r', scale, offset)
 
-    # Must close dataset to flush to disk.
+    # Must close datasets to flush to disk.
     # noinspection PyUnusedLocal
     outdataset = None
+    # noinspection PyUnusedLocal
+    vrt = None
 
     # GDAL Create doesn't support JPEG so we need to make a copy of the GeoTIFF
     run_command(
@@ -195,6 +197,14 @@ def _create_thumbnail(red_file, green_file, blue_file, thumb_image,
     _LOG.debug('Cleaning work files')
     # Clean up work files
     shutil.rmtree(work_dir)
+
+    # Newer versions of GDAL create aux files due to the histogram. Clean them up.
+    for f in (red_file, blue_file, green_file):
+        f = Path(f)
+        aux_file = f.with_name(f.name + '.aux.xml')
+        if aux_file.exists():
+            _LOG.info('Cleaning aux: %s', aux_file)
+            os.remove(str(aux_file.absolute()))
 
     return x_constraint, outrows, outresx
 

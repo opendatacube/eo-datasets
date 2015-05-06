@@ -9,7 +9,7 @@ from pathlib import Path
 import yaml
 
 import eodatasets.scripts.package
-from tests import temp_dir
+from tests import temp_dir, assert_file_structure
 
 script_path = Path(eodatasets.scripts.package.__file__)
 if script_path.suffix == '.pyc':
@@ -39,7 +39,24 @@ def test_package():
     )
 
     output_dataset = output_path.joinpath('LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126')
-    assert [output_dataset.name] == [f.name for f in output_path.iterdir()]
+
+    assert_file_structure(output_path, {
+        'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126': {
+            'browse.jpg': '',
+            'browse.fr.jpg': '',
+            'package': {
+                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B1.tif': '',
+                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B2.tif': '',
+                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B3.tif': '',
+                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif': '',
+                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B5.tif': '',
+                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B6.tif': '',
+                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B7.tif': '',
+            },
+            'ga-metadata.yaml': '',
+            'package.sha1': ''
+        }
+    })
 
     # TODO: Check metadata fields are sensible.
     output_metadata_path = output_dataset.joinpath('ga-metadata.yaml')

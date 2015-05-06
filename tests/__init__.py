@@ -13,7 +13,6 @@ import pathlib
 
 import eodatasets.type as ptype
 
-
 import pytest
 
 # An annotation for marking slow tests.
@@ -63,6 +62,38 @@ def assert_same(o1, o2, prefix=''):
         sys.stderr.write("%r\n" % o1)
         sys.stderr.write("%r\n" % o2)
         raise AssertionError("Mismatch for property %r:  %r != %r" % (prefix, o1, o2))
+
+
+def assert_file_structure(folder, expected_structure, root=''):
+    """
+    Assert that the contents of a folder (filenames and subfolder names recursively)
+    match the given nested dictionary structure.
+
+    :type folder: pathlib.Path
+    :type expected_structure: dict[str,str|dict]
+    """
+
+    expected_filenames = set(expected_structure.keys())
+    actual_filenames = {f.name for f in folder.iterdir()}
+
+    if expected_filenames != actual_filenames:
+        missing_files = expected_filenames - actual_filenames
+        missing_text = 'Missing: %r' % (sorted(list(missing_files)))
+        extra_files = actual_filenames - expected_filenames
+        added_text = 'Extra  : %r' % (sorted(list(extra_files)))
+        raise AssertionError('Folder mismatch of %r\n\t%s\n\t%s' % (root, missing_text, added_text))
+
+    for k, v in expected_structure.items():
+        id_ = '%s/%s' % (root, k) if root else k
+
+        f = folder.joinpath(k)
+        if isinstance(v, dict):
+            assert f.is_dir(), "%s is not a dir" % (id_,)
+            assert_file_structure(f, v, id_)
+        elif isinstance(v, compat.string_types):
+            assert f.is_file(), "%s is not a file" % (id_,)
+        else:
+            assert False, "Only strings and dicts expected when defining a folder structure."
 
 
 class TestCase(unittest.TestCase):
