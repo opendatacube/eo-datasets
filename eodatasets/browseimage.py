@@ -38,6 +38,7 @@ def _calculate_scale_offset(nodata, band):
     else:
         count = 0
         histogram = band.GetHistogram()
+    dfScaleSrcMin = count
     total = 0
     cliplower = int(0.01 * (sum(histogram) - histogram[count]))
     clipupper = int(0.99 * (sum(histogram) - histogram[count]))
@@ -50,6 +51,7 @@ def _calculate_scale_offset(nodata, band):
     else:
         count = 0
     total = 0
+    dfScaleSrcMax = count
     while total < clipupper and count < len(histogram) - 1:
         count += 1
         total += int(histogram[count])
@@ -59,7 +61,14 @@ def _calculate_scale_offset(nodata, band):
         dfScaleSrcMax -= 32768
 
     # Determine gain and offset
-    dfScale = (dfScaleDstMax - dfScaleDstMin) / (dfScaleSrcMax - dfScaleSrcMin)
+    diff_ = dfScaleSrcMax - dfScaleSrcMin
+
+    # From the old Jobmanager codebase: avoid divide by zero caused by some stats.
+    if diff_ == 0:
+        _LOG.warn("dfScaleSrc Min and Max are equal! Applying correction")
+        diff_ = 1
+
+    dfScale = (dfScaleDstMax - dfScaleDstMin) / diff_
     dfOffset = -1 * dfScaleSrcMin * dfScale + dfScaleDstMin
 
     return dfScale, dfOffset
