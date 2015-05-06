@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+import functools
 import os
 import shutil
 import logging
@@ -110,40 +111,47 @@ def _copy_file(source_path, destination_path, compress_imagery=True, hard_link=F
     return destination_path.stat().st_size
 
 
-def prepare_target_imagery(image_directory,
-                           package_directory,
-                           compress_imagery=True,
-                           filename_match=None,
-                           hard_link=False,
-                           after_file_copy=lambda file_path: None):
+def prepare_target_imagery(
+        image_directory,
+        package_directory,
+        to_band_fn,
+        compress_imagery=True,
+        hard_link=False,
+        after_file_copy=lambda file_path: None):
     """
     Copy a directory of files if not already there. Possibly compress images.
 
+    :type to_band_fn: (str) -> ptype.BandMetadata
     :type image_directory: Path
     :type package_directory: Path
-    :return: Total size of imagery in bytes
-    :rtype int
+    :type after_file_copy: Path -> None
+    :type hard_link: bool
+    :type compress_imagery: bool
+    :return: Total size of imagery in bytes, band dictionary.
+    :rtype (int, dict[str, ptype.BandMetadata])
     """
     if not package_directory.exists():
         package_directory.mkdir()
 
     size_bytes = 0
+    bands = {}
     for source_path in image_directory.iterdir():
-        # Skip hidden files and envi headers. (envi files are converted to tif during copy)
-        if source_path.name.startswith('.') or source_path.suffix == '.hdr':
+        # Skip hidden files
+        if source_path.name.startswith('.'):
             continue
 
-        destination_path = package_directory.joinpath(source_path.name)
-        if destination_path.suffix == '.bin':
-            destination_path = destination_path.with_suffix('.tif')
-
-        if filename_match and not filename_match(destination_path):
+        band = to_band_fn(source_path)
+        if band is None:
             continue
 
-        size_bytes += _copy_file(source_path, destination_path, compress_imagery, hard_link=hard_link)
-        after_file_copy(destination_path)
+        band.path = ptype.rebase_path(image_directory, package_directory, band.path)
 
-    return size_bytes
+        size_bytes += _copy_file(source_path, band.path, compress_imagery, hard_link=hard_link)
+
+        bands[band.number] = band
+        after_file_copy(band.path)
+
+    return size_bytes, bands
 
 
 class IncompletePackage(Exception):
@@ -225,13 +233,16 @@ def package_dataset(dataset_driver,
     else:
         package_directory = target_path
 
-    size_bytes = prepare_target_imagery(
+    size_bytes, bands = prepare_target_imagery(
         image_path,
         package_directory,
-        filename_match=dataset_driver.file_is_pertinent,
+        to_band_fn=functools.partial(dataset_driver.to_band, dataset),
         after_file_copy=checksums.add_file,
         hard_link=hard_link
     )
+    dataset.image.bands.update(bands)
+
+    #: :type: ptype.DatasetMetadata
     dataset = ptype.rebase_paths(image_path, package_directory, dataset)
 
     if not target_path.exists():

@@ -52,13 +52,14 @@ class DatasetDriver(object):
         """
         raise NotImplementedError()
 
-    def file_is_pertinent(self, file_path):
+    def to_band(self, dataset, file_path):
         """
-        Should the given file be included in this dataset package?
+        Translate to expected output file path.
+        :type dataset: ptype.DatasetMetadata
         :type file_path: Path
-        :rtype: bool
+        :rtype: ptype.BandMetadata
         """
-        return True
+        raise NotImplementedError()
 
     def browse_image_bands(self, d):
         """
@@ -335,7 +336,7 @@ class NbarDriver(DatasetDriver):
     def expected_source(self):
         return OrthoDriver()
 
-    def file_is_pertinent(self, file_path):
+    def _file_is_pertinent(self, file_path):
         return file_path.name.startswith('reflectance_{}'.format(self.subset_name))
 
     @staticmethod
@@ -363,6 +364,44 @@ class NbarDriver(DatasetDriver):
             '{satnumber}_{sensor}_{nbartype}_{galevel}_GALPGS01-{stationcode}_{path}_{rows}_{day}',
             nbartype=nbar_type
         )
+
+    def _read_band_number(self, file_path):
+        """
+
+        :type file_path: Path
+        :return:
+        >>> NbarDriver('brdf')._read_band_number(Path('reflectance_brdf_2.bin'))
+        '2'
+        >>> NbarDriver('brdf')._read_band_number(Path('reflectance_terrain_7.bin'))
+        '7'
+        """
+        return file_path.stem.split('_')[-1]
+
+    def to_band(self, dataset, source_path):
+        """
+
+        :type dataset: ptype.DatasetMetadata
+        :type source_path: Path
+        :rtype: Path
+        >>> from tests.metadata.mtl.test_ls8 import EXPECTED_OUT as ls8_dataset
+        >>> NbarDriver('terrain').to_band(ls8_dataset, Path('reflectance_terrain_7.bin'))
+        BandMetadata(path=PosixPath('LS8_OLITIRS_TNBAR_P51_GALPGS01-032_101_078_20141012_B7.tif'), number='7')
+        >>> # Should return None, as this is a BRDF driver instance.
+        >>> NbarDriver('brdf').to_band(ls8_dataset, Path('reflectance_terrain_7.bin'))
+        """
+        # Skip hidden files and envi headers. (envi files are converted to tif during copy)
+        if source_path.suffix != '.bin':
+            return None
+
+        if not self._file_is_pertinent(source_path):
+            return None
+
+        ga_label = self.get_ga_label(dataset)
+        band_number = self._read_band_number(source_path)
+
+        path = source_path.with_name('%s_B%s.tif' % (ga_label, band_number))
+
+        return ptype.BandMetadata(path=path, number=band_number)
 
     def fill_metadata(self, dataset, path):
         """

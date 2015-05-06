@@ -1,16 +1,30 @@
 # coding=utf-8
 from __future__ import absolute_import
 import unittest
+from pathlib import Path
 
-from eodatasets import package
+from eodatasets import package, type as ptype
 from tests import write_files, TestCase
+
+
+def _default_to_band(p):
+    """
+    :type p: str
+    :rtype: ptype.BandMetadata
+    """
+    return ptype.BandMetadata(path=Path(p), number=Path(p).stem.split('_')[-1])
 
 
 class TestPackage(TestCase):
     def test_prepare_same_destination(self):
         dataset_path = write_files({'LC81010782014285LGN00_B6.TIF': 'test'})
 
-        size_bytes = package.prepare_target_imagery(dataset_path, dataset_path, compress_imagery=False)
+        size_bytes, bands = package.prepare_target_imagery(
+            dataset_path,
+            dataset_path,
+            _default_to_band,
+            compress_imagery=False
+        )
         self.assertEqual(size_bytes, 4)
 
     def test_prepare_copy_destination(self):
@@ -20,7 +34,11 @@ class TestPackage(TestCase):
         source_path = test_path.joinpath('source_dir')
         dest_path = test_path.joinpath('dest_dir')
 
-        size_bytes = package.prepare_target_imagery(source_path, dest_path, compress_imagery=False)
+        size_bytes, bands = package.prepare_target_imagery(
+            source_path,
+            dest_path,
+            to_band_fn=_default_to_band,
+            compress_imagery=False)
         self.assertEqual(size_bytes, 4)
 
         # Ensure dest file was created.
@@ -43,9 +61,10 @@ class TestPackage(TestCase):
         source_path = test_path.joinpath('source_dir')
         dest_path = test_path.joinpath('dest_dir')
 
-        size_bytes = package.prepare_target_imagery(
+        size_bytes, bands = package.prepare_target_imagery(
             source_path,
             dest_path,
+            to_band_fn=_default_to_band,
             compress_imagery=False,
             hard_link=True
         )
