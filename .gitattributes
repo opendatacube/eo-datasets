@@ -8,4 +8,6 @@
 *.doc binary
 *.egg binary
 *.jpg binary
-
+*.hdr binary
+*.bin binary
+*.tif binary
