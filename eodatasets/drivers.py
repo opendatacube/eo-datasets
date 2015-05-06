@@ -185,7 +185,7 @@ def _get_process_code(dataset):
     return None, None
 
 
-def _fill_dataset_label(dataset, format_str):
+def _fill_dataset_label(dataset, format_str, **additionals):
     def _get_short_satellite_code(dataset_):
         assert dataset_.platform.code.startswith('LANDSAT_')
         sat_number = 'LS' + dataset_.platform.code.split('_')[-1]
@@ -207,6 +207,9 @@ def _fill_dataset_label(dataset, format_str):
         return day.strftime('%Y%m%d')
 
     level, ga_level = _get_process_code(dataset)
+
+    if not ga_level:
+        ga_level = dataset.ga_level
 
     station_code = None
     start = None
@@ -233,6 +236,7 @@ def _fill_dataset_label(dataset, format_str):
         'enddt': end,
         'day': _format_day(dataset)
     }
+    formatted_params.update(additionals)
     return format_str.format(**formatted_params)
 
 
@@ -310,7 +314,7 @@ class OrthoDriver(DatasetDriver):
 
     def get_ga_label(self, dataset):
         # Examples:
-        #     "LS8_OLITIRS_OTH_P41_GALPGS01-002_101_078_20141012"
+        # "LS8_OLITIRS_OTH_P41_GALPGS01-002_101_078_20141012"
         #     "LS7_ETM_SYS_P31_GALPGS01-002_114_73_20050107"
         #     "LS5_TM_OTH_P51_GALPGS01-002_113_063_20050601"
 
@@ -343,13 +347,22 @@ class NbarDriver(DatasetDriver):
         return bands
 
     def get_ga_label(self, dataset):
-        # Exmaple: LS8_OLITIRS_NBAR_P51_GALPGS01-032_090_085_20140115
-        # TODO
-        return None
-        # return _fill_dataset_label(
-        #     dataset,
-        #     '{satnumber}_{sensor}_NBAR_{galevel}_GALPGS01-{stationcode}_{path}_{rows}_{day}'
-        # )
+        # Example: LS8_OLITIRS_NBAR_P51_GALPGS01-032_090_085_20140115
+
+        codes = {
+            'terrain': 'TNBAR',
+            'brdf': 'NBAR'
+        }
+
+        nbar_type = codes.get(self.subset_name)
+        if not nbar_type:
+            raise ValueError('Unknown nbar subset type: %r. Expected one of %r' % (self.subset_name, codes.keys()))
+
+        return _fill_dataset_label(
+            dataset,
+            '{satnumber}_{sensor}_{nbartype}_{galevel}_GALPGS01-{stationcode}_{path}_{rows}_{day}',
+            nbartype=nbar_type
+        )
 
     def fill_metadata(self, dataset, path):
         """
@@ -357,18 +370,39 @@ class NbarDriver(DatasetDriver):
         :type path: Path
         :rtype: ptype.DatasetMetadata
         """
-        # TODO: Detect
-        dataset.platform = ptype.PlatformMetadata(code='LANDSAT_8')
-        dataset.instrument = ptype.InstrumentMetadata(name='OLI_TIRS')
-        # d.product_type
+
         if not dataset.image:
             dataset.image = ptype.ImageMetadata(bands={})
 
+        # Copy relevant fields from source ortho.
+        if 'ortho' in dataset.lineage.source_datasets:
+            ortho = dataset.lineage.source_datasets['ortho']
+
+            if not dataset.extent:
+                dataset.extent = ptype.ExtentMetadata()
+
+            dataset.extent.steal_fields_from(ortho.extent)
+
+            dataset.platform = ortho.platform
+            dataset.instrument = ortho.instrument
+
+            if not dataset.acquisition:
+                dataset.acquisition = ptype.AcquisitionMetadata()
+            dataset.acquisition.steal_fields_from(ortho.acquisition)
+
+            if not dataset.image.satellite_ref_point_start:
+                dataset.image.satellite_ref_point_start = ortho.image.satellite_ref_point_start
+                dataset.image.satellite_ref_point_end = ortho.image.satellite_ref_point_end
+
         dataset.image.bands.update(self._find_nbar_bands(path))
+
+        # All NBARs are P54. (source: Lan Wei)
+        dataset.ga_level = 'P54'
 
         dataset.format_ = ptype.FormatMetadata('GeoTIFF')
 
         md_image.populate_from_image_metadata(dataset)
+
         return dataset
 
 

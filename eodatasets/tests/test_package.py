@@ -3,10 +3,10 @@ from __future__ import absolute_import
 import unittest
 
 from eodatasets import package
-from eodatasets.tests import write_files
+from eodatasets.tests import write_files, TestCase
 
 
-class TestPackage(unittest.TestCase):
+class TestPackage(TestCase):
     def test_prepare_same_destination(self):
         dataset_path = write_files({'LC81010782014285LGN00_B6.TIF': 'test'})
 
@@ -68,4 +68,3 @@ class TestPackage(unittest.TestCase):
 
         # Ensure they were hard linked (share the same inode)
         self.assertEqual(source_file.stat().st_ino, dest_file.stat().st_ino)
-

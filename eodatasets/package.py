@@ -190,7 +190,6 @@ def package_existing_dataset(dataset_driver,
     return package_dataset(dataset_driver, d, image_directory, target_directory, hard_link=hard_link)
 
 
-
 def package_dataset(dataset_driver,
                     dataset,
                     image_directory,
@@ -198,7 +197,9 @@ def package_dataset(dataset_driver,
                     hard_link=False):
     """
     Package the given dataset folder.
+    :type hard_link: bool
     :type dataset_driver: drivers.DatasetDriver
+    :type dataset: ptype.Dataset
     :type image_directory: Path or str
     :type target_directory: Path or str
 

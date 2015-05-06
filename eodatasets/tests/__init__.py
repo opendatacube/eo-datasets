@@ -140,7 +140,7 @@ def temp_dir():
     """
     Create and return a temporary directory that will be deleted automatically on exit.
 
-    :rtype: str
+    :rtype: pathlib.Path
     """
     return write_files({})
 

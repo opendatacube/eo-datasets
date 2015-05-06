@@ -1,0 +1,215 @@
+id: 5cf41d98-eda9-11e4-8a8e-1040f381a756
+ga_label: LS8_OLITIRS_OTH_P51_GALPGS01-002_112_079_20140126
+usgs_dataset_id: LC81120792014026ASA00
+product_type: ortho
+product_level: L1T
+creation_dt: 2015-04-07 00:58:08
+size_bytes: 1854924494
+checksum_path: package.sha1
+platform:
+    code: LANDSAT_8
+instrument:
+    name: OLI_TIRS
+format:
+    name: GEOTIFF
+acquisition:
+    groundstation:
+        code: ASA
+        label: Alice Springs
+        eods_domain_code: '002'
+extent:
+    coord:
+        ul:
+            lat: -26.37259
+            lon: 116.58914
+        ur:
+            lat: -26.36025
+            lon: 118.92432
+        ll:
+            lat: -28.49412
+            lon: 116.58121
+        lr:
+            lat: -28.48062
+            lon: 118.96145
+    center_dt: 2014-01-26 02:05:23.126373
+grid_spatial:
+    projection:
+        geo_ref_points:
+            ul:
+                x: 459012.5
+                y: 7082987.5
+            ur:
+                x: 692012.5
+                y: 7082987.5
+            ll:
+                x: 459012.5
+                y: 6847987.5
+            lr:
+                x: 692012.5
+                y: 6847987.5
+        datum: GDA94
+        ellipsoid: GRS80
+        map_projection: UTM
+        orientation: NORTH_UP
+        resampling_option: CUBIC_CONVOLUTION
+        zone: -50
+browse:
+    full:
+        path: browse.fr.jpg
+        file_type: image/jpg
+        cell_size: 25.0
+        shape:
+            x: 9321
+            y: 9401
+        red_band: '7'
+        green_band: '5'
+        blue_band: '2'
+    medium:
+        path: browse.jpg
+        file_type: image/jpg
+        cell_size: 227.5634765625
+        shape:
+            x: 1024
+            y: 1033
+        red_band: '7'
+        green_band: '5'
+        blue_band: '2'
+image:
+    satellite_ref_point_start:
+        x: 112
+        y: 79
+    cloud_cover_percentage: 0.62
+    sun_azimuth: 82.05926755
+    sun_elevation: 57.68594289
+    sun_earth_distance: 0.9845943
+    ground_control_points_model: 380
+    geometric_rmse_model: 5.458
+    geometric_rmse_model_x: 3.74
+    geometric_rmse_model_y: 3.975
+    bands:
+        '1':
+            path: package/LC81120792014026ASA00_B1.TIF
+            type: reflective
+            label: Coastal Aerosol
+            number: '1'
+            cell_size: 25.0
+        '10':
+            path: package/LC81120792014026ASA00_B10.TIF
+            type: thermal
+            label: Thermal Infrared 1
+            number: '10'
+            cell_size: 25.0
+        '11':
+            path: package/LC81120792014026ASA00_B11.TIF
+            type: thermal
+            label: Thermal Infrared 2
+            number: '11'
+            cell_size: 25.0
+        '2':
+            path: package/LC81120792014026ASA00_B2.TIF
+            type: reflective
+            label: Visible Blue
+            number: '2'
+            cell_size: 25.0
+        '3':
+            path: package/LC81120792014026ASA00_B3.TIF
+            type: reflective
+            label: Visible Green
+            number: '3'
+            cell_size: 25.0
+        '4':
+            path: package/LC81120792014026ASA00_B4.TIF
+            type: reflective
+            label: Visible Red
+            number: '4'
+            cell_size: 25.0
+        '5':
+            path: package/LC81120792014026ASA00_B5.TIF
+            type: reflective
+            label: Near Infrared
+            number: '5'
+            cell_size: 25.0
+        '6':
+            path: package/LC81120792014026ASA00_B6.TIF
+            type: reflective
+            label: Short-wave Infrared 1
+            number: '6'
+            cell_size: 25.0
+        '7':
+            path: package/LC81120792014026ASA00_B7.TIF
+            type: reflective
+            label: Short-wave Infrared 2
+            number: '7'
+            cell_size: 25.0
+        '8':
+            path: package/LC81120792014026ASA00_B8.TIF
+            type: panchromatic
+            label: Panchromatic
+            number: '8'
+            cell_size: 12.5
+        '9':
+            path: package/LC81120792014026ASA00_B9.TIF
+            type: atmosphere
+            label: Cirrus
+            number: '9'
+            cell_size: 25.0
+        quality:
+            path: package/LC81120792014026ASA00_BQA.TIF
+            type: quality
+            label: Quality
+            number: quality
+            cell_size: 25.0
+lineage:
+    algorithm:
+        name: LPGS
+        version: 2.4.0
+        parameters: {}
+    machine: {}
+    ancillary:
+        bpf_oli:
+            name: LO8BPF20140127130115_20140127144056.01
+        bpf_tirs:
+            name: LT8BPF20140116023714_20140116032836.02
+        cpf:
+            name: L8CPF20140101_20140331.05
+        rlut:
+            name: L8RLUT20130211_20431231v09.h5
+    source_datasets:
+        raw:
+            id: 4ec8fe97-e8b9-11e4-87ff-1040f381a756
+            ga_label: LS8_OLITIRS_STD-MDF_P00_LC81160740742015089ASA00_116_074_20150330T022553Z20150330T022657
+            ga_level: P00
+            usgs_dataset_id: LC81160740742015089ASA00
+            product_type: raw
+            creation_dt: 2015-04-22 06:32:04
+            size_bytes: 637660782
+            checksum_path: package.sha1
+            platform:
+                code: LANDSAT_8
+            instrument:
+                name: OLI_TIRS
+            format:
+                name: MDF
+            acquisition:
+                aos: 2015-03-30 02:25:53.346000
+                los: 2015-03-30 02:26:57.325000
+                groundstation:
+                    code: ASA
+                platform_orbit: 11308
+            image:
+                satellite_ref_point_start:
+                    x: 116
+                    y: 74
+                satellite_ref_point_end:
+                    x: 116
+                    y: 74
+            lineage:
+                machine:
+                    hostname: niggle.local
+                    runtime_id: 4bc6225c-e8b9-11e4-8b66-1040f381a756
+                    type_id: jobmanager
+                    version: 2.4.0
+                    uname: 'Darwin niggle.local 14.3.0 Darwin Kernel Version 14.3.0:
+                        Mon Mar 23 11:59:05 PDT 2015; root:xnu-2782.20.48~5/RELEASE_X86_64
+                        x86_64'
+                source_datasets: {}
