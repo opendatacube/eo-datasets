@@ -4,7 +4,7 @@ Most serialisation tests are coupled with the type tests (test_type.py)
 """
 from __future__ import absolute_import
 
-from eodatasets.tests import write_files, TestCase, slow
+from tests import write_files, TestCase, slow
 from eodatasets import serialise, compat, type as ptype
 from hypothesis import given, strategy
 from hypothesis.specifiers import dictionary, strings

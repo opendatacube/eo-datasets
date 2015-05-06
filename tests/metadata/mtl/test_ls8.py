@@ -7,7 +7,7 @@ import os
 
 from pathlib import Path, PosixPath
 import eodatasets.type as ptype
-from eodatasets.metadata.tests.mtl import assert_expected_mtl
+from tests.metadata.mtl import assert_expected_mtl
 
 FILENAME = 'ls8_mtl.txt'
 

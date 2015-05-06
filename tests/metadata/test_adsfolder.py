@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import unittest
 
 import eodatasets.metadata.adsfolder as adsfolder
-from eodatasets.tests import write_files
+from tests import write_files
 import eodatasets.type as ptype
 
 

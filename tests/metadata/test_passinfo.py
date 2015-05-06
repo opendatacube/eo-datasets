@@ -5,7 +5,7 @@ import datetime
 
 from eodatasets import type as ptype
 from eodatasets.metadata import passinfo as extraction
-from eodatasets.tests import write_files
+from tests import write_files
 
 
 class TestPassinfo(unittest.TestCase):

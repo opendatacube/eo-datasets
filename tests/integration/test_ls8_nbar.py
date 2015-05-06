@@ -9,7 +9,7 @@ from pathlib import Path
 import yaml
 
 import eodatasets.scripts.package
-from eodatasets.tests import temp_dir
+from tests import temp_dir
 
 script_path = Path(eodatasets.scripts.package.__file__)
 if script_path.suffix == '.pyc':

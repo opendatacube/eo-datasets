@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import uuid
 
 from pathlib import Path
-from eodatasets.tests import assert_same
+from tests import assert_same
 from eodatasets.metadata import mtl
 import eodatasets.type as ptype
 

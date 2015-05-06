@@ -4,7 +4,7 @@ import hashlib
 import unittest
 
 from eodatasets import verify
-from eodatasets.tests import write_files
+from tests import write_files
 
 
 class VerifyTests(unittest.TestCase):

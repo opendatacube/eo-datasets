@@ -5,7 +5,7 @@ import datetime
 
 from eodatasets import type as ptype
 from eodatasets.metadata import rccfile
-from eodatasets.tests import write_files
+from tests import write_files
 
 
 class TestRccExtract(unittest.TestCase):

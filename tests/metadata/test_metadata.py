@@ -5,8 +5,8 @@ import uuid
 import datetime
 
 from pathlib import PosixPath, Path
-from eodatasets.tests import write_files
-from eodatasets.tests import assert_same
+from tests import write_files
+from tests import assert_same
 from eodatasets.type import BandMetadata
 import eodatasets.type as ptype
 from eodatasets import metadata

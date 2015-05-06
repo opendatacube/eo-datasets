@@ -5,7 +5,7 @@ import datetime
 import uuid
 
 import eodatasets.metadata.mdf as mdf
-from eodatasets.tests import write_files, assert_same
+from tests import write_files, assert_same
 import eodatasets.type as ptype
 
 

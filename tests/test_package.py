@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import unittest
 
 from eodatasets import package
-from eodatasets.tests import write_files, TestCase
+from tests import write_files, TestCase
 
 
 class TestPackage(TestCase):

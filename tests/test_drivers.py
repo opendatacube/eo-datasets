@@ -7,8 +7,9 @@ from uuid import UUID
 from pathlib import Path
 
 from eodatasets.drivers import RawDriver, OrthoDriver
-from eodatasets.metadata.tests.mtl import test_ls8, test_ls7_definitive, test_ls5_definitive
-from eodatasets.tests import write_files
+from tests.metadata.mtl import test_ls8, test_ls7_definitive, test_ls5_definitive
+from tests import write_files
+
 import eodatasets.type as ptype
 
 

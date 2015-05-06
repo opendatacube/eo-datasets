@@ -10,7 +10,7 @@ import dateutil.parser
 
 from pathlib import Path
 from eodatasets import type as ptype, serialise
-from eodatasets.tests import temp_file, assert_same, TestCase
+from tests import temp_file, assert_same, TestCase
 
 
 def _serialise_to_file(file_name, dataset):
