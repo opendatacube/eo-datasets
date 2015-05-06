@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 import os
 import logging
+import uuid
 
 import click
 from pathlib import Path
@@ -12,16 +13,14 @@ from eodatasets import package, drivers, serialise
 @click.command()
 @click.option('--parent', type=click.Path(exists=True, readable=True, writable=False), multiple=True)
 @click.option('--debug', is_flag=True)
-@click.option('--in-place', is_flag=True)
 @click.option('--hard-link', is_flag=True)
 @click.argument('type', type=click.Choice(drivers.PACKAGE_DRIVERS.keys()))
 @click.argument('dataset', type=click.Path(exists=True, readable=True, writable=False), nargs=-1)
 @click.argument('destination', type=click.Path(exists=True, readable=True, writable=True), nargs=1)
-def run_packaging(parent, debug, in_place, hard_link, type, dataset, destination):
+def run_packaging(parent, debug, hard_link, type, dataset, destination):
     """
     :type parent: str
     :type debug: bool
-    :type in_place: bool
     :type type: str
     :type dataset: list[str]
     :type destination: str
@@ -43,27 +42,21 @@ def run_packaging(parent, debug, in_place, hard_link, type, dataset, destination
         source_id = driver.expected_source().get_id()
         parent_datasets.update({source_id: serialise.read_dataset_metadata(Path(parent[0]))})
 
-    # If we're packaging in-place (ie. generating metadata), all listed paths are datasets.
-    if in_place:
-        dataset = list(dataset)
-        dataset.append(destination)
-        destination = None
-
     for dataset_path in dataset:
-        if in_place:
-            target_folder = dataset_path
-        else:
-            target_folder = os.path.join(destination, type)
-            if not os.path.exists(target_folder):
-                os.mkdir(target_folder),
+        temp_output_dir = os.path.join(destination, '.packagetmp.%s' % uuid.uuid1())
+        os.mkdir(temp_output_dir)
 
-        package.package_existing_dataset(
+        dataset_id = package.package_existing_dataset(
             driver,
             Path(dataset_path),
-            Path(target_folder),
+            Path(temp_output_dir),
             source_datasets=parent_datasets,
             hard_link=hard_link
         )
+
+        actual_output_dir = os.path.join(destination, dataset_id)
+        os.rename(temp_output_dir, actual_output_dir)
+
 
 if __name__ == '__main__':
     # Click fills out the parameters, which confuses pylint.
