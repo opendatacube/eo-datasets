@@ -162,7 +162,7 @@ def populate_from_mtl_dict(md, mtl_, folder):
     """
 
     :param mtl_: Parsed mtl file
-    :param folder: Folder containing imagery (and mtl)
+    :param folder: Folder containing imagery (and mtl). For fixing relative paths in the MTL.
     :type md: eodatasets.type.DatasetMetadata
     :type mtl_: dict of (str, obj)
     :rtype: eodatasets.type.DatasetMetadata
@@ -268,8 +268,6 @@ def populate_from_mtl_dict(md, mtl_, folder):
 
     if not md.image.bands:
         md.image.bands = {}
-
-    md.image.bands.update(_read_bands(mtl_, folder))
 
     if not md.lineage:
         md.lineage = ptype.LineageMetadata()

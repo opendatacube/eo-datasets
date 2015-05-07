@@ -365,9 +365,25 @@ class OrthoDriver(DatasetDriver):
         :type dataset: ptype.DatasetMetadata
         :type final_path: pathlib.Path
         :rtype: ptype.BandMetadata
+
+        >>> OrthoDriver().to_band(None, Path('/tmp/LC_SOMETHING_B1.TIF'), Path('/tmp/out/L8_SOMETHING_B1.tif'))
+        BandMetadata(path=Path('/tmp/out/L8_SOMETHING_B1.tif'), number='1')
+        >>> OrthoDriver().to_band(None, Path('/tmp/LC_SOMETHING_B12.TIF'), Path('/tmp/out/L8_SOMETHING_B12.tif'))
+        BandMetadata(path=Path('/tmp/out/L8_SOMETHING_B12.tif'), number='12')
+        >>> OrthoDriver().to_band(None, Path('/tmp/LC_SOMETHING_MTL.txt'), Path('/tmp/out/L8_SOMETHING_MTL.txt'))
+        None
         """
-        # No extra ortho files need to be specified as bands. We load bands from MTL metadata.
-        return None
+        if final_path.suffix != '.tif':
+            return None
+
+        # Images end in a band number (eg '_B12.tif'). Extract it.
+        last_component = source_path.name.split('_')[-1].lower()
+        if not last_component.startswith('b'):
+            raise ValueError('Unexpected tif image in ortho: %r' % final_path)
+
+        # Strip the leading 'B'
+        band_number = last_component[1:]
+        return ptype.BandMetadata(path=final_path, number=band_number)
 
     def get_ga_label(self, dataset):
         # Examples:
