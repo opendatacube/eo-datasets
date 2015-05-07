@@ -16,6 +16,7 @@ from tests.integration import get_script_path, load_checksum_filenames
 
 script_path = get_script_path(eodatasets.scripts.package)
 
+#: :type: Path
 source_folder = Path(__file__).parent.joinpath('input', 'ls8-ortho')
 assert source_folder.exists()
 
@@ -85,7 +86,8 @@ def test_package():
         'instrument': {'name': 'OLI_TIRS'},
         'usgs_dataset_id': 'LC81120792014026ASA00',
         'format': {'name': 'GEOTIFF'},
-        'creation_dt': datetime.datetime(2015, 4, 7, 0, 58, 8),
+        # Default creation date is the same as the input folder ctime.
+        'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),
         'platform': {'code': 'LANDSAT_8'},
         'product_level': 'L1T',
         'extent':
@@ -276,7 +278,8 @@ def test_package():
                             {
                                 'product_type': 'raw',
                                 'instrument': {'name': 'OLI_TIRS'},
-                                'ga_label': 'LS8_OLITIRS_STD-MDF_P00_LC81160740742015089ASA00_116_074_20150330T022553Z20150330T022657',
+                                'ga_label': ('LS8_OLITIRS_STD-MDF_P00_LC81160740742015089ASA00'
+                                             '_116_074_20150330T022553Z20150330T022657'),
                                 'image': {
                                     'satellite_ref_point_end': {'x': 116, 'y': 74},
                                     'satellite_ref_point_start': {'x': 116, 'y': 74}
@@ -301,7 +304,9 @@ def test_package():
                                                 'hostname': 'niggle.local',
                                                 'type_id': 'jobmanager',
                                                 'version': '2.4.0',
-                                                'uname': 'Darwin niggle.local 14.3.0 Darwin Kernel Version 14.3.0: Mon Mar 23 11:59:05 PDT 2015; root:xnu-2782.20.48~5/RELEASE_X86_64 x86_64',
+                                                'uname': 'Darwin niggle.local 14.3.0 Darwin Kernel Version 14.3.0: '
+                                                         'Mon Mar 23 11:59:05 PDT 2015; '
+                                                         'root:xnu-2782.20.48~5/RELEASE_X86_64 x86_64',
                                                 'runtime_id': '4bc6225c-e8b9-11e4-8b66-1040f381a756'
                                             },
                                         'source_datasets': {}
@@ -312,7 +317,6 @@ def test_package():
                     }
             }
     })
-
 
     # TODO: Asset all files are checksummed.
     output_checksum_path = output_dataset.joinpath('package.sha1')

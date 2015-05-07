@@ -16,6 +16,7 @@ from tests.integration import get_script_path, load_checksum_filenames
 
 packaging_script_path = get_script_path(eodatasets.scripts.package)
 
+#: :type: Path
 source_folder = Path(__file__).parent.joinpath('input', 'ls8-nbar')
 assert source_folder.exists()
 
@@ -69,6 +70,7 @@ def test_package():
     md['id'] = None
 
     # Check metadata is as expected.
+
     assert_same(
         md,
         {
@@ -79,7 +81,8 @@ def test_package():
             'ga_level': 'P54',
             'size_bytes': 4550,
             'platform': {'code': 'LANDSAT_8'},
-            'creation_dt': datetime.datetime(2015, 5, 7, 10, 47, 6),
+            # Default creation date is the same as the input folder ctime.
+            'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),
             'instrument': {'name': 'OLI_TIRS'},
             'format': {'name': 'GeoTIFF'},
             'extent': {
@@ -341,7 +344,8 @@ def test_package():
                                     'product_type': 'raw',
                                     'checksum_path': 'package.sha1',
                                     'id': '4ec8fe97-e8b9-11e4-87ff-1040f381a756',
-                                    'ga_label': 'LS8_OLITIRS_STD-MDF_P00_LC81160740742015089ASA00_116_074_20150330T022553Z20150330T022657',
+                                    'ga_label': 'LS8_OLITIRS_STD-MDF_P00_LC81160740742015089ASA00_'
+                                                '116_074_20150330T022553Z20150330T022657',
                                     'usgs_dataset_id': 'LC81160740742015089ASA00',
                                     'ga_level': 'P00',
                                     'image': {
@@ -375,7 +379,9 @@ def test_package():
                                             'runtime_id': '4bc6225c-e8b9-11e4-8b66-1040f381a756',
                                             'version': '2.4.0',
                                             'type_id': 'jobmanager',
-                                            'uname': 'Darwin niggle.local 14.3.0 Darwin Kernel Version 14.3.0: Mon Mar 23 11:59:05 PDT 2015; root:xnu-2782.20.48~5/RELEASE_X86_64 x86_64'},
+                                            'uname': 'Darwin niggle.local 14.3.0 Darwin Kernel Version 14.3.0: '
+                                                     'Mon Mar 23 11:59:05 PDT 2015; '
+                                                     'root:xnu-2782.20.48~5/RELEASE_X86_64 x86_64'},
                                         'source_datasets': {}
                                     }
                                 }
