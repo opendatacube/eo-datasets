@@ -57,9 +57,9 @@ BASIC_LS8_BANDS = {
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B8.TIF'),
         number='8',
     ),
-    'quality': BandMetadata(
+    'qa': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_BQA.TIF'),
-        number='quality',
+        number='qa',
     )
 }
 
@@ -141,11 +141,11 @@ EXPANDED_LS8_BANDS = {
         number='8',
         cell_size=12.5
     ),
-    'quality': BandMetadata(
+    'qa': BandMetadata(
         path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_BQA.TIF'),
         type_=u'quality',
         label=u'Quality',
-        number='quality',
+        number='qa',
         cell_size=25.0
     )
 }

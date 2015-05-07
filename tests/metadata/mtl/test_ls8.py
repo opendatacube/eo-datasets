@@ -5,9 +5,11 @@ import uuid
 import datetime
 import os
 
-from pathlib import Path, PosixPath
+from pathlib import Path
+
 import eodatasets.type as ptype
 from tests.metadata.mtl import assert_expected_mtl
+
 
 FILENAME = 'ls8_mtl.txt'
 
@@ -89,55 +91,7 @@ EXPECTED_OUT = ptype.DatasetMetadata(
         geometric_rmse_model=4.61,
         geometric_rmse_model_x=2.968,
         geometric_rmse_model_y=3.527,
-        bands={
-            '11': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B11.TIF'),
-                number='11',
-            ),
-            '10': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B10.TIF'),
-                number='10',
-            ),
-            '1': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B1.TIF'),
-                number='1',
-            ),
-            '3': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B3.TIF'),
-                number='3',
-            ),
-            '2': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B2.TIF'),
-                number='2',
-            ),
-            '5': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B5.TIF'),
-                number='5',
-            ),
-            '4': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B4.TIF'),
-                number='4',
-            ),
-            '7': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B7.TIF'),
-                number='7',
-            ),
-            '6': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B6.TIF'),
-                number='6',
-            ),
-            '9': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B9.TIF'),
-                number='9',
-            ),
-            '8': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_B8.TIF'),
-                number='8',
-            ),
-            'quality': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LC81010782014285LGN00_BQA.TIF'),
-                number='quality',
-            )}
+        bands={}
     ),
     lineage=ptype.LineageMetadata(
         algorithm=ptype.AlgorithmMetadata(

@@ -351,7 +351,7 @@
               1.390
             ]
           },
-          "quality": {
+          "qa": {
             "desc": "Quality",
             "resolution": 25.0,
             "type_desc": "Quality",
@@ -465,7 +465,7 @@
               1.390
             ]
           },
-          "quality": {
+          "qa": {
             "desc": "Quality",
             "resolution": 25.0,
             "type_desc": "Quality",

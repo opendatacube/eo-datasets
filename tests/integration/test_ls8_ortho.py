@@ -86,8 +86,8 @@ def test_package():
         'instrument': {'name': 'OLI_TIRS'},
         'usgs_dataset_id': 'LC81120792014026ASA00',
         'format': {'name': 'GEOTIFF'},
-        # Default creation date is the same as the input folder ctime.
-        'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),
+        # Creation date comes from the MTL.
+        'creation_dt': datetime.datetime(2015, 4, 7, 0, 58, 8),
         'platform': {'code': 'LANDSAT_8'},
         'product_level': 'L1T',
         'extent':
@@ -112,7 +112,7 @@ def test_package():
                             'type': 'panchromatic',
                             'cell_size': 12.5,
                             'label': 'Panchromatic',
-                            'path': 'package/LC81120792014026ASA00_B8.TIF'
+                            'path': 'package/LC81120792014026ASA00_B8.tif'
                         },
 
                         '2': {
@@ -120,7 +120,7 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Visible Blue',
-                            'path': 'package/LC81120792014026ASA00_B2.TIF'
+                            'path': 'package/LC81120792014026ASA00_B2.tif'
                         },
 
                         '7': {
@@ -128,31 +128,28 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Short-wave Infrared 2',
-                            'path': 'package/LC81120792014026ASA00_B7.TIF'
+                            'path': 'package/LC81120792014026ASA00_B7.tif'
                         },
-
-                        'quality': {
-                            'number': 'quality',
+                        'qa': {
+                            'number': 'qa',
                             'type': 'quality',
                             'cell_size': 25.0,
                             'label': 'Quality',
-                            'path': 'package/LC81120792014026ASA00_BQA.TIF'
+                            'path': 'package/LC81120792014026ASA00_BQA.tif'
                         },
-
                         '3': {
                             'number': '3',
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Visible Green',
-                            'path': 'package/LC81120792014026ASA00_B3.TIF'
+                            'path': 'package/LC81120792014026ASA00_B3.tif'
                         },
-
                         '9': {
                             'number': '9',
                             'type': 'atmosphere',
                             'cell_size': 25.0,
                             'label': 'Cirrus',
-                            'path': 'package/LC81120792014026ASA00_B9.TIF'
+                            'path': 'package/LC81120792014026ASA00_B9.tif'
                         },
 
                         '6': {
@@ -160,7 +157,7 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Short-wave Infrared 1',
-                            'path': 'package/LC81120792014026ASA00_B6.TIF'
+                            'path': 'package/LC81120792014026ASA00_B6.tif'
                         },
 
                         '11': {
@@ -168,7 +165,7 @@ def test_package():
                             'type': 'thermal',
                             'cell_size': 25.0,
                             'label': 'Thermal Infrared 2',
-                            'path': 'package/LC81120792014026ASA00_B11.TIF'
+                            'path': 'package/LC81120792014026ASA00_B11.tif'
                         },
 
                         '5': {
@@ -176,7 +173,7 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Near Infrared',
-                            'path': 'package/LC81120792014026ASA00_B5.TIF'
+                            'path': 'package/LC81120792014026ASA00_B5.tif'
                         },
 
                         '4': {
@@ -184,7 +181,7 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Visible Red',
-                            'path': 'package/LC81120792014026ASA00_B4.TIF'
+                            'path': 'package/LC81120792014026ASA00_B4.tif'
                         },
 
                         '10': {
@@ -192,14 +189,14 @@ def test_package():
                             'type': 'thermal',
                             'cell_size': 25.0,
                             'label': 'Thermal Infrared 1',
-                            'path': 'package/LC81120792014026ASA00_B10.TIF'
+                            'path': 'package/LC81120792014026ASA00_B10.tif'
                         },
                         '1': {
                             'number': '1',
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Coastal Aerosol',
-                            'path': 'package/LC81120792014026ASA00_B1.TIF'
+                            'path': 'package/LC81120792014026ASA00_B1.tif'
                         }
                     },
                 'sun_azimuth': 82.05926755,

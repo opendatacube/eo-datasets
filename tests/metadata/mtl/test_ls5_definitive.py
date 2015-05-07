@@ -5,7 +5,8 @@ import uuid
 import datetime
 import os
 
-from pathlib import PosixPath, Path
+from pathlib import Path
+
 import eodatasets.type as ptype
 from tests.metadata.mtl import assert_expected_mtl
 
@@ -92,37 +93,7 @@ EXPECTED_OUT = ptype.DatasetMetadata(
         geometric_rmse_model=4.582,
         geometric_rmse_model_x=3.104,
         geometric_rmse_model_y=3.370,
-        bands={
-            '1': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B1.TIF'),
-                number='1',
-            ),
-
-            '2': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B2.TIF'),
-                number='2',
-            ),
-            '3': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B3.TIF'),
-                number='3',
-            ),
-            '4': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B4.TIF'),
-                number='4',
-            ),
-            '5': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B5.TIF'),
-                number='5',
-            ),
-            '6': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B6.TIF'),
-                number='6',
-            ),
-            '7': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LT51130632005152ASA00_B7.TIF'),
-                number='7',
-            )
-        }
+        bands={}
     ),
     lineage=ptype.LineageMetadata(
         algorithm=ptype.AlgorithmMetadata(

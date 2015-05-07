@@ -93,45 +93,7 @@ EXPECTED_OUT = ptype.DatasetMetadata(
         # geometric_rmse_model=4.582,
         # geometric_rmse_model_x=3.370,
         # geometric_rmse_model_y=3.104,
-        bands={
-            '1': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B1.TIF'),
-                number='1',
-            ),
-
-            '2': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B2.TIF'),
-                number='2',
-            ),
-            '3': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B3.TIF'),
-                number='3',
-            ),
-            '4': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B4.TIF'),
-                number='4',
-            ),
-            '5': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B5.TIF'),
-                number='5',
-            ),
-            '6_vcid_1': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B6_VCID_1.TIF'),
-                number='6_vcid_1',
-            ),
-            '6_vcid_2': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B6_VCID_2.TIF'),
-                number='6_vcid_2',
-            ),
-            '7': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B7.TIF'),
-                number='7',
-            ),
-            '8': ptype.BandMetadata(
-                path=PosixPath('/tmp/fake-folder/LE71140732005007ASA00_B8.TIF'),
-                number='8',
-            )
-        }
+        bands={}
     ),
     lineage=ptype.LineageMetadata(
         algorithm=ptype.AlgorithmMetadata(
