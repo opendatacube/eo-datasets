@@ -10,7 +10,7 @@ from pathlib import Path
 import yaml
 
 import eodatasets.scripts.package
-from tests import temp_dir, assert_file_structure, assert_same
+from tests import temp_dir, assert_file_structure, assert_same, integration_test
 from tests.integration import get_script_path, load_checksum_filenames
 
 
@@ -27,6 +27,7 @@ parent_dataset = source_folder.joinpath('parent')
 assert parent_dataset.exists()
 
 
+@integration_test
 def test_package():
     output_path = temp_dir()
 

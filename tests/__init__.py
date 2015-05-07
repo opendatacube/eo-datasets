@@ -23,6 +23,9 @@ import pytest
 # This allows users (and CI servers) to selectively only run the slow/fast tests.
 slow = pytest.mark.slow
 
+# Mark integration tests. For now, we run them with the slow tests.
+integration_test = slow
+
 
 def assert_same(o1, o2, prefix=''):
     """
