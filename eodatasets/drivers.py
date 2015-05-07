@@ -5,6 +5,7 @@ import re
 import string
 
 from pathlib import Path
+
 from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, passinfo, image as md_image
 from eodatasets import type as ptype, metadata
 
@@ -52,11 +53,35 @@ class DatasetDriver(object):
         """
         raise NotImplementedError()
 
-    def to_band(self, dataset, file_path):
+    def translate_path(self, dataset, file_path):
         """
-        Translate to expected output file path.
+        Translate an input filename if desired.
+
+        Returning None will exclude the file from the output package.
+
         :type dataset: ptype.DatasetMetadata
         :type file_path: Path
+        :rtype: Path
+
+        >>> # Test default behaviour: all files included unchanged, suffix is lowercase.
+        >>> DatasetDriver().translate_path(None, Path('/tmp/fake_path.TXT'))
+        PosixPath('/tmp/fake_path.txt')
+        """
+        # Default behaviour: Include file unchanged, but keep suffixes consistently lowercase.
+        return file_path.with_suffix(file_path.suffix.lower())
+
+    def to_band(self, dataset, source_path, final_path):
+        """
+        Create a band definition for the given output file.
+
+        Return None if file should not be included as a band
+        (the file will still be included in the package).
+
+        :type dataset: ptype.DatasetMetadata
+        :type source_path: Path
+        :param source_path: The filename of the input file.
+        :type final_path: Path
+        :param final_path: The filename of the output file.
         :rtype: ptype.BandMetadata
         """
         raise NotImplementedError()
@@ -313,10 +338,41 @@ class OrthoDriver(DatasetDriver):
 
         return d
 
+    def translate_path(self, dataset, file_path):
+        """
+        Exclude .aux.xml paths.
+        :type dataset: ptype.DatasetMetadata
+        :type file_path: Path
+        :rtype: Path | None
+
+        >>> OrthoDriver().translate_path(None, Path('something.TIF'))
+        PosixPath('something.tif')
+        >>> OrthoDriver().translate_path(None, Path('something.TIF.aux.xml'))
+        """
+        # Inherit default behaviour
+        file_path = super(OrthoDriver, self).translate_path(dataset, file_path)
+
+        if not file_path:
+            return file_path
+
+        if file_path.name.endswith('.aux.xml'):
+            return None
+
+        return file_path
+
+    def to_band(self, dataset, source_path, final_path):
+        """
+        :type dataset: ptype.DatasetMetadata
+        :type final_path: pathlib.Path
+        :rtype: ptype.BandMetadata
+        """
+        # No extra ortho files need to be specified as bands. We load bands from MTL metadata.
+        return None
+
     def get_ga_label(self, dataset):
         # Examples:
         # "LS8_OLITIRS_OTH_P41_GALPGS01-002_101_078_20141012"
-        #     "LS7_ETM_SYS_P31_GALPGS01-002_114_73_20050107"
+        # "LS7_ETM_SYS_P31_GALPGS01-002_114_73_20050107"
         #     "LS5_TM_OTH_P51_GALPGS01-002_113_063_20050601"
 
         return _fill_dataset_label(
@@ -367,7 +423,6 @@ class NbarDriver(DatasetDriver):
 
     def _read_band_number(self, file_path):
         """
-
         :type file_path: Path
         :return:
         >>> NbarDriver('brdf')._read_band_number(Path('reflectance_brdf_2.bin'))
@@ -377,31 +432,38 @@ class NbarDriver(DatasetDriver):
         """
         return file_path.stem.split('_')[-1]
 
-    def to_band(self, dataset, source_path):
+    def translate_path(self, dataset, file_path):
         """
 
         :type dataset: ptype.DatasetMetadata
-        :type source_path: Path
+        :type file_path: Path
         :rtype: Path
         >>> from tests.metadata.mtl.test_ls8 import EXPECTED_OUT as ls8_dataset
-        >>> NbarDriver('terrain').to_band(ls8_dataset, Path('reflectance_terrain_7.bin'))
-        BandMetadata(path=PosixPath('LS8_OLITIRS_TNBAR_P51_GALPGS01-032_101_078_20141012_B7.tif'), number='7')
+        >>> NbarDriver('terrain').translate_path(ls8_dataset, Path('reflectance_terrain_7.bin'))
+        PosixPath('LS8_OLITIRS_TNBAR_P51_GALPGS01-032_101_078_20141012_B7.tif')
         >>> # Should return None, as this is a BRDF driver instance.
-        >>> NbarDriver('brdf').to_band(ls8_dataset, Path('reflectance_terrain_7.bin'))
+        >>> NbarDriver('brdf').translate_path(ls8_dataset, Path('reflectance_terrain_7.bin'))
         """
         # Skip hidden files and envi headers. (envi files are converted to tif during copy)
-        if source_path.suffix != '.bin':
+        if file_path.suffix != '.bin':
             return None
 
-        if not self._file_is_pertinent(source_path):
+        if not self._file_is_pertinent(file_path):
             return None
 
         ga_label = self.get_ga_label(dataset)
-        band_number = self._read_band_number(source_path)
+        band_number = self._read_band_number(file_path)
 
-        path = source_path.with_name('%s_B%s.tif' % (ga_label, band_number))
+        return file_path.with_name('%s_B%s.tif' % (ga_label, band_number))
 
-        return ptype.BandMetadata(path=path, number=band_number)
+    def to_band(self, dataset, source_path, final_path):
+        """
+        :type dataset: ptype.DatasetMetadata
+        :type source_path: Path
+        :type final_path: Path
+        :rtype: Path
+        """
+        return ptype.BandMetadata(path=final_path, number=self._read_band_number(source_path))
 
     def fill_metadata(self, dataset, path):
         """

@@ -1,28 +1,17 @@
 # coding=utf-8
 from __future__ import absolute_import
-import unittest
-from pathlib import Path
 
-from eodatasets import package, type as ptype
-from tests import write_files, TestCase
-
-
-def _default_to_band(p):
-    """
-    :type p: str
-    :rtype: ptype.BandMetadata
-    """
-    return ptype.BandMetadata(path=Path(p), number=Path(p).stem.split('_')[-1])
+from eodatasets import package
+from tests import write_files, TestCase, assert_file_structure
 
 
 class TestPackage(TestCase):
     def test_prepare_same_destination(self):
         dataset_path = write_files({'LC81010782014285LGN00_B6.TIF': 'test'})
 
-        size_bytes, bands = package.prepare_target_imagery(
+        size_bytes = package.prepare_target_imagery(
             dataset_path,
             dataset_path,
-            _default_to_band,
             compress_imagery=False
         )
         self.assertEqual(size_bytes, 4)
@@ -34,11 +23,11 @@ class TestPackage(TestCase):
         source_path = test_path.joinpath('source_dir')
         dest_path = test_path.joinpath('dest_dir')
 
-        size_bytes, bands = package.prepare_target_imagery(
+        size_bytes = package.prepare_target_imagery(
             source_path,
             dest_path,
-            to_band_fn=_default_to_band,
-            compress_imagery=False)
+            compress_imagery=False
+        )
         self.assertEqual(size_bytes, 4)
 
         # Ensure dest file was created.
@@ -61,10 +50,9 @@ class TestPackage(TestCase):
         source_path = test_path.joinpath('source_dir')
         dest_path = test_path.joinpath('dest_dir')
 
-        size_bytes, bands = package.prepare_target_imagery(
+        size_bytes = package.prepare_target_imagery(
             source_path,
             dest_path,
-            to_band_fn=_default_to_band,
             compress_imagery=False,
             hard_link=True
         )
@@ -87,3 +75,47 @@ class TestPackage(TestCase):
 
         # Ensure they were hard linked (share the same inode)
         self.assertEqual(source_file.stat().st_ino, dest_file.stat().st_ino)
+
+    def test_copy_callbacks_called(self):
+        test_path = write_files({'source_dir': {
+            'LC81010782014285LGN00_B6.img': 'test',
+            'LC81010782014285LGN00_B6.swamp': 'test'
+        }})
+        source_path = test_path.joinpath('source_dir')
+        dest_path = test_path.joinpath('dest_dir')
+
+        called_back = []
+        size_bytes = package.prepare_target_imagery(
+            source_path,
+            dest_path,
+            translate_path=lambda p: p.with_suffix('.tif') if p.suffix == '.img' else None,
+            after_file_copy=lambda source, dest: called_back.append((source, dest)),
+            compress_imagery=False
+        )
+        self.assertEqual(size_bytes, 4)
+        dest_file = dest_path.joinpath('LC81010782014285LGN00_B6.tif')
+
+        # The after_file_copy() callback should be called for each copied file.
+        # *.swamp should not be returned, as it received None from our path translation.
+        self.assertEqual(
+            [
+                (source_path.joinpath('LC81010782014285LGN00_B6.img'), dest_file)
+            ], called_back
+        )
+
+        assert_file_structure(
+            test_path,
+                {
+                    'source_dir': {
+                        'LC81010782014285LGN00_B6.img': 'test',
+                        'LC81010782014285LGN00_B6.swamp': 'test'
+                    },
+                    'dest_dir': {
+                        'LC81010782014285LGN00_B6.tif': 'test',
+                    }
+                }
+        )
+        self.assertTrue(dest_file.stat().st_size, 4)
+        # Ensure source path was not touched.
+        source_file = source_path.joinpath('LC81010782014285LGN00_B6.img')
+        self.assertTrue(source_file.stat().st_size, 4)

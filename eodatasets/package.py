@@ -1,6 +1,5 @@
 # coding=utf-8
 from __future__ import absolute_import
-import functools
 import os
 import shutil
 import logging
@@ -9,8 +8,10 @@ from subprocess import check_call
 import datetime
 import uuid
 import socket
+from functools import partial
 
 from pathlib import Path
+
 from eodatasets import serialise, verify, drivers, metadata
 from eodatasets.browseimage import create_dataset_browse_images
 import eodatasets.type as ptype
@@ -114,44 +115,42 @@ def _copy_file(source_path, destination_path, compress_imagery=True, hard_link=F
 def prepare_target_imagery(
         image_directory,
         package_directory,
-        to_band_fn,
+        translate_path=lambda path: path,
+        after_file_copy=lambda source_path, final_path: None,
         compress_imagery=True,
-        hard_link=False,
-        after_file_copy=lambda file_path: None):
+        hard_link=False):
     """
     Copy a directory of files if not already there. Possibly compress images.
 
-    :type to_band_fn: (str) -> ptype.BandMetadata
+    :type translate_path: (Path) -> Path
     :type image_directory: Path
     :type package_directory: Path
     :type after_file_copy: Path -> None
     :type hard_link: bool
     :type compress_imagery: bool
-    :return: Total size of imagery in bytes, band dictionary.
-    :rtype (int, dict[str, ptype.BandMetadata])
+    :return: Total size of imagery in bytes
+    :rtype int
     """
     if not package_directory.exists():
         package_directory.mkdir()
 
     size_bytes = 0
-    bands = {}
     for source_path in image_directory.iterdir():
         # Skip hidden files
         if source_path.name.startswith('.'):
             continue
 
-        band = to_band_fn(source_path)
-        if band is None:
+        target_path = translate_path(source_path)
+        if target_path is None:
             continue
 
-        band.path = ptype.rebase_path(image_directory, package_directory, band.path)
+        target_path = ptype.rebase_path(image_directory, package_directory, target_path)
 
-        size_bytes += _copy_file(source_path, band.path, compress_imagery, hard_link=hard_link)
+        size_bytes += _copy_file(source_path, target_path, compress_imagery, hard_link=hard_link)
 
-        bands[band.number] = band
-        after_file_copy(band.path)
+        after_file_copy(source_path, target_path)
 
-    return size_bytes, bands
+    return size_bytes
 
 
 class IncompletePackage(Exception):
@@ -233,20 +232,24 @@ def package_dataset(dataset_driver,
     else:
         package_directory = target_path
 
-    size_bytes, bands = prepare_target_imagery(
+    def after_file_copy(source_path, target_path):
+        checksums.add_file(target_path)
+
+        # Add as an image band, if the driver wants to.
+        band = dataset_driver.to_band(dataset, source_path, target_path)
+        if band:
+            dataset.image.bands[band.number] = band
+
+    size_bytes = prepare_target_imagery(
         image_path,
         package_directory,
-        to_band_fn=functools.partial(dataset_driver.to_band, dataset),
-        after_file_copy=checksums.add_file,
+        translate_path=partial(dataset_driver.translate_path, dataset),
+        after_file_copy=after_file_copy,
         hard_link=hard_link
     )
-    dataset.image.bands.update(bands)
 
     #: :type: ptype.DatasetMetadata
     dataset = ptype.rebase_paths(image_path, package_directory, dataset)
-
-    if not target_path.exists():
-        target_path.mkdir()
 
     # TODO: Add proper validation to dataset structure.
     if not dataset.platform or not dataset.platform.code:
