@@ -11,19 +11,27 @@ from eodatasets import package, drivers, serialise
 
 
 @click.command()
-@click.option('--parent', type=click.Path(exists=True, readable=True, writable=False), multiple=True)
-@click.option('--debug', is_flag=True)
-@click.option('--hard-link', is_flag=True)
-@click.argument('type', type=click.Choice(drivers.PACKAGE_DRIVERS.keys()))
-@click.argument('dataset', type=click.Path(exists=True, readable=True, writable=False), nargs=-1)
-@click.argument('destination', type=click.Path(exists=True, readable=True, writable=True), nargs=1)
+@click.option('--parent',
+              type=click.Path(exists=True, readable=True, writable=False),
+              multiple=True,
+              help='Path of the parent dataset (these datasets were derived from.)')
+@click.option('--debug',
+              is_flag=True,
+              help='Enable debug logging')
+@click.option('--hard-link',
+              is_flag=True,
+              help='Hard-link output files if possible (faster than copying)')
+@click.argument('type',
+                type=click.Choice(drivers.PACKAGE_DRIVERS.keys()))
+@click.argument('dataset',
+                type=click.Path(exists=True, readable=True, writable=False),
+                nargs=-1)
+@click.argument('destination',
+                type=click.Path(exists=True, readable=True, writable=True),
+                nargs=1)
 def run_packaging(parent, debug, hard_link, type, dataset, destination):
     """
-    :type parent: str
-    :type debug: bool
-    :type type: str
-    :type dataset: list[str]
-    :type destination: str
+    Package the given imagery folders.
     """
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
 
