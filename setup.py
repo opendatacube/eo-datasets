@@ -12,7 +12,7 @@ if 'BUILD_NUMBER' in os.environ and version.endswith('b'):
 setup(
     name="eodatasets",
     version=version,
-    packages=find_packages(),
+    packages=find_packages(exclude=('tests', 'tests.*')),
     install_requires=[
         'click',
         'python-dateutil',
