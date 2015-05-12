@@ -397,6 +397,34 @@ class OrthoDriver(DatasetDriver):
         )
 
 
+def borrow_single_sourced_fields(dataset, source_dataset):
+    """
+    Copy common metadata fields from a source dataset.
+
+    The fields copied assume a non-composite dataset with only one source.
+
+    :type dataset: ptype.DatasetMetadata
+    :type source_dataset: ptype.DatasetMetadata
+    :rtype: ptype.DatasetMetadata
+    """
+
+    if not dataset.image:
+        dataset.image = ptype.ImageMetadata(bands={})
+    if not dataset.extent:
+        dataset.extent = ptype.ExtentMetadata()
+    dataset.extent.steal_fields_from(source_dataset.extent)
+    dataset.platform = source_dataset.platform
+    dataset.instrument = source_dataset.instrument
+    if not dataset.acquisition:
+        dataset.acquisition = ptype.AcquisitionMetadata()
+    dataset.acquisition.steal_fields_from(source_dataset.acquisition)
+    if not dataset.image.satellite_ref_point_start:
+        dataset.image.satellite_ref_point_start = source_dataset.image.satellite_ref_point_start
+        dataset.image.satellite_ref_point_end = source_dataset.image.satellite_ref_point_end
+
+    return dataset
+
+
 class NbarDriver(DatasetDriver):
     def __init__(self, subset_name):
         # Subset is typically "brdf" or "terrain" -- which NBAR portion to package.
@@ -410,14 +438,6 @@ class NbarDriver(DatasetDriver):
 
     def _file_is_pertinent(self, file_path):
         return file_path.name.startswith('reflectance_{}'.format(self.subset_name))
-
-    @staticmethod
-    def _find_nbar_bands(package_directory):
-        bands = {}
-        for band in Path(package_directory).glob('*.tif'):
-            band_number = band.stem.split('_')[-1]
-            bands[band_number] = ptype.BandMetadata(path=band.absolute(), number=band_number)
-        return bands
 
     def get_ga_label(self, dataset):
         # Example: LS8_OLITIRS_NBAR_P51_GALPGS01-032_090_085_20140115
@@ -477,7 +497,13 @@ class NbarDriver(DatasetDriver):
         :type dataset: ptype.DatasetMetadata
         :type source_path: Path
         :type final_path: Path
-        :rtype: Path
+        :rtype: ptype.BandMetadata
+
+        >>> p = Path('/tmp/something/reflectance_terrain_3.bin')
+        >>> NbarDriver('terrain').to_band(None, p, None).number
+        '3'
+        >>> NbarDriver('terrain').to_band(None, p, p.with_suffix('.tif')).path
+        PosixPath('/tmp/something/reflectance_terrain_3.tif')
         """
         return ptype.BandMetadata(path=final_path, number=self._read_band_number(source_path))
 
@@ -488,30 +514,10 @@ class NbarDriver(DatasetDriver):
         :rtype: ptype.DatasetMetadata
         """
 
-        if not dataset.image:
-            dataset.image = ptype.ImageMetadata(bands={})
-
         # Copy relevant fields from source ortho.
         if 'ortho' in dataset.lineage.source_datasets:
             ortho = dataset.lineage.source_datasets['ortho']
-
-            if not dataset.extent:
-                dataset.extent = ptype.ExtentMetadata()
-
-            dataset.extent.steal_fields_from(ortho.extent)
-
-            dataset.platform = ortho.platform
-            dataset.instrument = ortho.instrument
-
-            if not dataset.acquisition:
-                dataset.acquisition = ptype.AcquisitionMetadata()
-            dataset.acquisition.steal_fields_from(ortho.acquisition)
-
-            if not dataset.image.satellite_ref_point_start:
-                dataset.image.satellite_ref_point_start = ortho.image.satellite_ref_point_start
-                dataset.image.satellite_ref_point_end = ortho.image.satellite_ref_point_end
-
-        dataset.image.bands.update(self._find_nbar_bands(path))
+            borrow_single_sourced_fields(dataset, ortho)
 
         # All NBARs are P54. (source: Lan Wei)
         dataset.ga_level = 'P54'
@@ -523,8 +529,57 @@ class NbarDriver(DatasetDriver):
         return dataset
 
 
+class PqaDriver(DatasetDriver):
+
+    def get_id(self):
+        return 'pqa'
+
+    def expected_source(self):
+        return 'nbar_brdf'
+
+    def get_ga_label(self, dataset):
+        # Eg. 'LS8_OLI_TIRS_PQ_P55_GAPQ01-032_090_081_20140726'
+        return _fill_dataset_label(
+            dataset,
+            '{satnumber}_{sensor}_PQ_{galevel}_GAPQ01-{stationcode}_{path}_{rows}_{day}',
+        )
+
+    def fill_metadata(self, dataset, path):
+        """
+        :type dataset: ptype.DatasetMetadata
+        :type path: Path
+        :rtype: ptype.DatasetMetadata
+        """
+        dataset.ga_level = 'P55'
+
+        # Copy relevant fields from source nbar.
+        if 'nbar_brdf' in dataset.lineage.source_datasets:
+            ortho = dataset.lineage.source_datasets['nbar_brdf']
+            borrow_single_sourced_fields(dataset, ortho)
+
+        dataset.format_ = ptype.FormatMetadata('GeoTIFF')
+
+        return dataset
+
+    def translate_path(self, dataset, file_path):
+        """
+        :type dataset: ptype.DatasetMetadata
+        :type file_path: pathlib.Path
+        :return:
+        """
+        ga_label = self.get_ga_label(dataset)
+        return file_path.with_name(ga_label+file_path.suffix)
+
+    def to_band(self, dataset, source_path, final_path):
+        if final_path.suffix != '.tif':
+            return None
+
+        return ptype.BandMetadata(path=final_path, number='pqa')
+
+
 PACKAGE_DRIVERS = {
     'raw': RawDriver(),
+    'pqa': PqaDriver(),
     'ortho': OrthoDriver(),
     'nbar_brdf': NbarDriver('brdf'),
     'nbar_terrain': NbarDriver('terrain')

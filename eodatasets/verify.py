@@ -63,7 +63,8 @@ class PackageChecksum(object):
     def add_file(self, file_path):
         """
         Add a file to the checksum list.
-        :type file_path: Path or str
+        :type file_path: Path
+        :rtype: None
         """
         _LOG.info('Checksumming %r', file_path)
         hash_ = calculate_file_hash(file_path)
@@ -76,7 +77,6 @@ class PackageChecksum(object):
         :type output_file: Path or str
         """
         output_file = Path(output_file)
-        self.file_hashes.sort()
         with output_file.open('w') as f:
             f.writelines((u'{0}\t{1}\n'.format(str(hash_), str(filename.relative_to(output_file.parent)))
-                          for filename, hash_ in self.file_hashes))
+                          for filename, hash_ in sorted(self.file_hashes)))

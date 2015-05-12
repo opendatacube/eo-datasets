@@ -247,9 +247,10 @@ def create_dataset_browse_images(
         target_directory,
         after_file_creation=lambda file_path: None):
     """
-
+    :type dataset_driver: drivers.DatasetDriver
     :type dataset: ptype.DatasetMetadata
     :type target_directory: Path
+    :type after_file_creation: (Path) -> None
     :rtype: ptype.DatasetMetadata
     """
     if not dataset.image or not dataset.image.bands:

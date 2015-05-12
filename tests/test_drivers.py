@@ -1,15 +1,13 @@
 # coding=utf-8
 from __future__ import absolute_import
 import datetime
-import unittest
 from uuid import UUID
 
 from pathlib import Path
 
-from eodatasets.drivers import RawDriver, OrthoDriver
+from eodatasets import drivers
 from tests.metadata.mtl import test_ls8, test_ls7_definitive, test_ls5_definitive
-from tests import write_files
-
+from tests import write_files, TestCase
 import eodatasets.type as ptype
 
 
@@ -73,8 +71,60 @@ _LS7_RAW = ptype.DatasetMetadata(
     )
 )
 
+_EXPECTED_NBAR = ptype.DatasetMetadata(
+    id_=UUID('c50c6bd4-e895-11e4-9814-1040f381a756'),
+    ga_level='P54',
+    platform=ptype.PlatformMetadata(code='LANDSAT_8'),
+    instrument=ptype.InstrumentMetadata(name='OLI_TIRS'),
+    format_=ptype.FormatMetadata(name='GeoTIFF'),
+    acquisition=ptype.AcquisitionMetadata(groundstation=ptype.GroundstationMetadata(code='LGN')),
+    extent=ptype.ExtentMetadata(
+        coord=ptype.CoordPolygon(
+            ul=ptype.Coord(lat=-24.98805, lon=133.97954),
+            ur=ptype.Coord(lat=-24.9864, lon=136.23866),
+            ll=ptype.Coord(lat=-26.99236, lon=133.96208),
+            lr=ptype.Coord(lat=-26.99055, lon=136.25985)
+        ),
+        center_dt=datetime.datetime(2014, 10, 12, 0, 56, 6, 5785)
+    ),
+    image=ptype.ImageMetadata(
+        satellite_ref_point_start=ptype.Point(x=101, y=78),
+        bands={}
+    ),
+    lineage=ptype.LineageMetadata(
+        source_datasets={'ortho': test_ls8.EXPECTED_OUT}
+    )
+)
 
-class TestDrivers(unittest.TestCase):
+
+_EXPECTED_PQA = ptype.DatasetMetadata(
+    id_=UUID('c50c6bd4-e895-11e4-9814-1040f381a756'),
+    ga_level='P55',
+    platform=ptype.PlatformMetadata(code='LANDSAT_8'),
+    instrument=ptype.InstrumentMetadata(name='OLI_TIRS'),
+    format_=ptype.FormatMetadata(name='GeoTIFF'),
+    acquisition=ptype.AcquisitionMetadata(groundstation=ptype.GroundstationMetadata(code='LGN')),
+    extent=ptype.ExtentMetadata(
+        coord=ptype.CoordPolygon(
+            ul=ptype.Coord(lat=-24.98805, lon=133.97954),
+            ur=ptype.Coord(lat=-24.9864, lon=136.23866),
+            ll=ptype.Coord(lat=-26.99236, lon=133.96208),
+            lr=ptype.Coord(lat=-26.99055, lon=136.25985)
+        ),
+        center_dt=datetime.datetime(2014, 10, 12, 0, 56, 6, 5785)
+    ),
+    image=ptype.ImageMetadata(
+        satellite_ref_point_start=ptype.Point(x=101, y=78),
+        bands={}
+    ),
+    lineage=ptype.LineageMetadata(
+        source_datasets={'nbar_brdf': _EXPECTED_NBAR}
+    )
+)
+
+
+
+class TestDrivers(TestCase):
     def _get_raw_ls8(self):
         d = write_files({
             'LANDSAT-8.11308': {
@@ -87,7 +137,7 @@ class TestDrivers(unittest.TestCase):
                 }
             }
         })
-        raw_driver = RawDriver()
+        raw_driver = drivers.RawDriver()
         metadata = raw_driver.fill_metadata(
             ptype.DatasetMetadata(),
             d.joinpath('LANDSAT-8.11308', 'LC81160740842015089ASA00')
@@ -121,29 +171,122 @@ class TestDrivers(unittest.TestCase):
     def test_raw_ls5_label(self):
         self.assertEqual(
             'LS5_TM_STD-RCC_P00_L5TB2005152015110ASA111_0_0_20050601T015110Z20050601T020025',
-            RawDriver().get_ga_label(_LS5_RAW)
+            drivers.RawDriver().get_ga_label(_LS5_RAW)
         )
 
     def test_raw_ls7_label(self):
         self.assertEqual(
             'LS7_ETM_STD-RCC_P00_L7ET2005007020028ASA123_0_0_20050107T020028Z20050107T020719',
-            RawDriver().get_ga_label(_LS7_RAW)
+            drivers.RawDriver().get_ga_label(_LS7_RAW)
         )
 
     def test_ortho_ls8_label(self):
         self.assertEqual(
             "LS8_OLITIRS_OTH_P51_GALPGS01-032_101_078_20141012",
-            OrthoDriver().get_ga_label(test_ls8.EXPECTED_OUT)
+            drivers.OrthoDriver().get_ga_label(test_ls8.EXPECTED_OUT)
         )
 
     def test_ortho_ls7_label(self):
         self.assertEqual(
             "LS7_ETM_SYS_P31_GALPGS01-002_114_073_20050107",
-            OrthoDriver().get_ga_label(test_ls7_definitive.EXPECTED_OUT)
+            drivers.OrthoDriver().get_ga_label(test_ls7_definitive.EXPECTED_OUT)
         )
 
     def test_ortho_ls5_label(self):
         self.assertEqual(
             "LS5_TM_OTH_P51_GALPGS01-002_113_063_20050601",
-            OrthoDriver().get_ga_label(test_ls5_definitive.EXPECTED_OUT)
+            drivers.OrthoDriver().get_ga_label(test_ls5_definitive.EXPECTED_OUT)
+        )
+
+    def test_nbar_fill_metadata(self):
+        input_folder = write_files({
+            'reflectance_brdf_1.bin': '',
+            'reflectance_brdf_1.bin.aux.xml': '',
+            'reflectance_brdf_1.hdr': '',
+            'reflectance_brdf_2.bin': '',
+            'reflectance_brdf_2.bin.aux.xml': '',
+            'reflectance_brdf_2.hdr': '',
+            'reflectance_brdf_3.bin': '',
+            'reflectance_brdf_3.bin.aux.xml': '',
+            'reflectance_brdf_3.hdr': '',
+            'reflectance_brdf_4.bin': '',
+            'reflectance_brdf_4.bin.aux.xml': '',
+            'reflectance_brdf_4.hdr': '',
+            'reflectance_brdf_5.bin': '',
+            'reflectance_brdf_5.bin.aux.xml': '',
+            'reflectance_brdf_5.hdr': '',
+            'reflectance_brdf_6.bin': '',
+            'reflectance_brdf_6.bin.aux.xml': '',
+            'reflectance_brdf_6.hdr': '',
+            'reflectance_brdf_7.bin': '',
+            'reflectance_brdf_7.bin.aux.xml': '',
+            'reflectance_brdf_7.hdr': '',
+            'reflectance_terrain_1.bin': '',
+            'reflectance_terrain_1.bin.aux.xml': '',
+            'reflectance_terrain_1.hdr': '',
+            'reflectance_terrain_2.bin': '',
+            'reflectance_terrain_2.bin.aux.xml': '',
+            'reflectance_terrain_2.hdr': '',
+            'reflectance_terrain_3.bin': '',
+            'reflectance_terrain_3.bin.aux.xml': '',
+            'reflectance_terrain_3.hdr': '',
+            'reflectance_terrain_4.bin': '',
+            'reflectance_terrain_4.bin.aux.xml': '',
+            'reflectance_terrain_4.hdr': '',
+            'reflectance_terrain_5.bin': '',
+            'reflectance_terrain_5.bin.aux.xml': '',
+            'reflectance_terrain_5.hdr': '',
+            'reflectance_terrain_6.bin': '',
+            'reflectance_terrain_6.bin.aux.xml': '',
+            'reflectance_terrain_6.hdr': '',
+            'reflectance_terrain_7.bin': '',
+            'reflectance_terrain_7.bin.aux.xml': '',
+            'reflectance_terrain_7.hdr': '',
+        })
+        dataset = ptype.DatasetMetadata(
+            id_=_EXPECTED_NBAR.id_,
+            lineage=ptype.LineageMetadata(
+                source_datasets={
+                    'ortho': test_ls8.EXPECTED_OUT
+                }
+            )
+        )
+        received_dataset = drivers.NbarDriver('terrain').fill_metadata(dataset, input_folder)
+
+        self.assert_same(_EXPECTED_NBAR, received_dataset)
+
+    def test_nbar_label(self):
+        self.assertEqual(
+            "LS8_OLITIRS_TNBAR_P54_GALPGS01-032_101_078_20141012",
+            drivers.NbarDriver('terrain').get_ga_label(_EXPECTED_NBAR)
+        )
+
+    def test_nbar_brdf_label(self):
+        self.assertEqual(
+            "LS8_OLITIRS_NBAR_P54_GALPGS01-032_101_078_20141012",
+            drivers.NbarDriver('brdf').get_ga_label(_EXPECTED_NBAR)
+        )
+
+    def test_pqa_fill(self):
+        input_folder = write_files({
+            'pqa.tif': ''
+        })
+
+        dataset = ptype.DatasetMetadata(
+            id_=_EXPECTED_PQA.id_,
+            lineage=ptype.LineageMetadata(
+                source_datasets={
+                    'nbar_brdf': _EXPECTED_NBAR
+                }
+            )
+        )
+
+        received_dataset = drivers.PqaDriver().fill_metadata(dataset, input_folder)
+
+        self.assert_same(_EXPECTED_PQA, received_dataset)
+
+    def test_pqa_label(self):
+        self.assertEqual(
+            "LS8_OLITIRS_PQ_P55_GAPQ01-032_101_078_20141012",
+            drivers.PqaDriver().get_ga_label(_EXPECTED_PQA)
         )
