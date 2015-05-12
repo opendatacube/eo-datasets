@@ -535,7 +535,7 @@ class PqaDriver(DatasetDriver):
         return 'pqa'
 
     def expected_source(self):
-        return 'nbar_brdf'
+        return NbarDriver('brdf')
 
     def get_ga_label(self, dataset):
         # Eg. 'LS8_OLI_TIRS_PQ_P55_GAPQ01-032_090_081_20140726'
@@ -575,6 +575,9 @@ class PqaDriver(DatasetDriver):
             return None
 
         return ptype.BandMetadata(path=final_path, number='pqa')
+
+    def browse_image_bands(self, d):
+        return 'pqa',
 
 
 PACKAGE_DRIVERS = {

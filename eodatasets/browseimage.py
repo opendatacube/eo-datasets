@@ -219,23 +219,31 @@ def create_typical_browse_metadata(dataset_driver, dataset, destination_director
     :return:
     """
     rgb_bands = dataset_driver.browse_image_bands(dataset)
+    if len(rgb_bands) == 3:
+        r, g, b = rgb_bands
+    elif len(rgb_bands) == 1:
+        band = rgb_bands[0]
+        r, g, b = band, band, band
+    else:
+        raise ValueError('Unexpected number of bands (%s). Received %r' % (len(rgb_bands), rgb_bands))
+
     dataset.browse = {
         'medium': ptype.BrowseMetadata(
             path=destination_directory.joinpath('browse.jpg'),
             file_type='image/jpg',
             # cell_size=output_res,
             shape=ptype.Point(1024, None),
-            red_band=rgb_bands[0],
-            green_band=rgb_bands[1],
-            blue_band=rgb_bands[2]
+            red_band=r,
+            green_band=g,
+            blue_band=b
         ),
         'full': ptype.BrowseMetadata(
             path=destination_directory.joinpath('browse.fr.jpg'),
             file_type='image/jpg',
             # cell_size=output_res,
-            red_band=rgb_bands[0],
-            green_band=rgb_bands[1],
-            blue_band=rgb_bands[2]
+            red_band=r,
+            green_band=g,
+            blue_band=b
         )
     }
     return dataset
