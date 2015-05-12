@@ -10,9 +10,10 @@ import logging
 from yaml.representer import BaseRepresenter
 import yaml
 
-from eodatasets import compat
 from pathlib import Path
 import pathlib
+
+from eodatasets import compat
 import eodatasets.type as ptype
 
 
@@ -228,6 +229,14 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
     if relative_to is None:
         relative_to = os.getcwd()
 
+    def recur(key, value) :
+        return as_flat_key_value(
+            value,
+            relative_to=relative_to,
+            key_separator=key_separator,
+            key_prefix=namespace(key, key_prefix)
+        )
+
     def namespace(k, key_prefix):
         clean_arg = lambda arg: arg[:-1] if arg.endswith('_') else arg
         k = clean_arg(k)
@@ -235,8 +244,7 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
         if not key_prefix:
             return k
 
-        key = key_separator.join([key_prefix, k])
-        return key
+        return key_separator.join([key_prefix, k])
 
     if type(o) in compat.string_types or \
                     type(o) in compat.integer_types or \
@@ -245,11 +253,11 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
     elif isinstance(o, dict):
         for k in sorted(o):
             v = o[k]
-            for nested_k, nested_v in as_flat_key_value(v, key_prefix=namespace(k, key_prefix)):
+            for nested_k, nested_v in recur(k, v):
                 yield nested_k, nested_v
     elif isinstance(o, (list, set)):
         for index, v in enumerate(o):
-            for nested_k, nested_v in as_flat_key_value(v, key_prefix=namespace(str(index), key_prefix)):
+            for nested_k, nested_v in recur(str(index), v):
                 yield nested_k, nested_v
     elif isinstance(o, (datetime.datetime, datetime.date)):
         yield key_prefix, o.isoformat()
@@ -266,12 +274,11 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
         yield key_prefix, None
     elif isinstance(o, ptype.SimpleObject):
         for k, v in o.items_ordered():
-            for nested_k, nested_v in as_flat_key_value(v, key_prefix=namespace(k, key_prefix)):
+            for nested_k, nested_v in recur(k, v):
                 yield nested_k, nested_v
     else:
-        _LOG.debug('Unhandled type: %s (%s.%s). Value: %s', type(o), type(o).__module__, type(o).__name__, repr(o))
-        for nested_k, nested_v in as_flat_key_value(o.__dict__, key_prefix=key_prefix):
-            yield nested_k, nested_v
+        raise ValueError('Unhandled type: %s (%s.%s). Value: %s' %
+                         (type(o), type(o).__module__, type(o).__name__, repr(o)))
 
 
 init_yaml_handling()

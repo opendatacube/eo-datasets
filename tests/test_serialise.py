@@ -3,11 +3,17 @@
 Most serialisation tests are coupled with the type tests (test_type.py)
 """
 from __future__ import absolute_import
+import uuid
+import datetime
+
+from pathlib import Path
+from hypothesis import given, strategy
+
+from hypothesis.specifiers import dictionary, strings
 
 from tests import write_files, TestCase, slow
 from eodatasets import serialise, compat, type as ptype
-from hypothesis import given, strategy
-from hypothesis.specifiers import dictionary, strings
+
 
 strings_without_trailing_underscore = strategy(
     strings([chr(i) for i in range(128)])
@@ -108,4 +114,42 @@ class TestSerialise(TestCase):
                 ('d.b', 2),
                 ('d.c.a', 42)
             ]
+        )
+
+    def test_key_value_types(self):
+        class Test1(ptype.SimpleObject):
+            def __init__(self, a, b, c, d=None):
+                self.a = a
+                self.b = b
+                self.c = c
+                self.d = d
+
+        uuid_ = uuid.uuid1()
+        date_ = datetime.datetime.utcnow()
+        self.assert_values_equal(
+            [
+                ('a:0', 'a'),
+                ('a:1', 'b'),
+                ('a:2:a', 1),
+                ('a:2:b', 2),
+                ('b', compat.long_int(2)),
+                ('c', date_.isoformat()),
+                ('d:a', str(uuid_)),
+                ('d:b', 'something/testpath.txt'),
+                ('d:c:a', 42)
+            ],
+            serialise.as_flat_key_value(
+                Test1(
+                    a=['a', 'b', Test1(1, 2, None)],
+                    b=compat.long_int(2),
+                    c=date_,
+                    d=Test1(
+                        a=uuid_,
+                        b=Path('/tmp/something/testpath.txt'),
+                        c={'a': 42}
+                    )
+                ),
+                relative_to=Path('/tmp'),
+                key_separator=':'
+            )
         )
