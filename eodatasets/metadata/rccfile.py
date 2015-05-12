@@ -173,5 +173,3 @@ def _calculate_stop_time(start_time, satellite=None, file_path=None):
         _log.debug("Calculated stop time %s", stop)
 
     return stop
-
-

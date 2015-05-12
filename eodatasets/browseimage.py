@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import absolute_import
 import logging
 import os
@@ -215,7 +216,6 @@ def create_typical_browse_metadata(dataset_driver, dataset, destination_director
     :type dataset_driver: eodatasets.package.DatasetDriver
     :type dataset: ptype.DatasetMetadata
     :type destination_directory: Path
-    :type constrain_horizontal_res:
     :return:
     """
     rgb_bands = dataset_driver.browse_image_bands(dataset)
@@ -250,7 +250,7 @@ def create_dataset_browse_images(
     :type dataset_driver: drivers.DatasetDriver
     :type dataset: ptype.DatasetMetadata
     :type target_directory: Path
-    :type after_file_creation: (Path) -> None
+    :type after_file_creation: Path -> None
     :rtype: ptype.DatasetMetadata
     """
     if not dataset.image or not dataset.image.bands:

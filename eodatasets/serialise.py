@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import absolute_import
 
 import datetime
@@ -87,11 +88,7 @@ def init_yaml_handling():
         :type data: ptype.SimpleObject
         :rtype: yaml.nodes.Node
         """
-
-        # Fields ending in an underscore are reserved/used python words. We strip them off during output to yaml.
-        clean_arg = lambda arg: arg[:-1] if arg.endswith('_') else arg
-
-        k_v = [(clean_arg(k), v) for k, v in data.items_ordered()]
+        k_v = [(_clean_identifier(k), v) for k, v in data.items_ordered()]
 
         return dumper.represent_mapping(u'tag:yaml.org,2002:map', k_v)
 
@@ -121,7 +118,6 @@ def init_yaml_handling():
         :rtype: yaml.nodes.Node
         """
         return dumper.represent_scalar(u'tag:yaml.org,2002:str', data.encode('utf-8'))
-
 
     yaml.add_multi_representer(ptype.SimpleObject, simpleobject_representer)
     yaml.add_multi_representer(uuid.UUID, uuid_representer)
@@ -191,7 +187,7 @@ def write_yaml_metadata(d, metadata_path, target_directory=None):
 
 def read_yaml_metadata(metadata_file):
     """
-    :type metadata_file: str
+    :type metadata_file: Path
     :rtype: DatasetMetadata
     """
     with open(str(metadata_file), 'r') as f:
@@ -214,6 +210,23 @@ def write_property_metadata(d, metadata_file, target_directory):
         f.writelines(['%s=%r\n' % (k, _clean_val(v)) for k, v in as_flat_key_value(d)])
 
 
+def _clean_identifier(arg):
+    """
+    Our class property names have an appended underscore when they clash with Python names.
+
+    This will strip off any trailing underscores, ready for serialisation.
+
+    :type arg: str
+    :rtype: str
+
+    >>> _clean_identifier('id_')
+    'id'
+    >>> _clean_identifier('id')
+    'id'
+    """
+    return arg[:-1] if arg.endswith('_') else arg
+
+
 def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
     """
     Output as a flat stream of keys and values. No nesting.
@@ -229,7 +242,7 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
     if relative_to is None:
         relative_to = os.getcwd()
 
-    def recur(key, value) :
+    def recur(key, value):
         return as_flat_key_value(
             value,
             relative_to=relative_to,
@@ -238,8 +251,7 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
         )
 
     def namespace(k, key_prefix):
-        clean_arg = lambda arg: arg[:-1] if arg.endswith('_') else arg
-        k = clean_arg(k)
+        k = _clean_identifier(k)
 
         if not key_prefix:
             return k
@@ -247,8 +259,8 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
         return key_separator.join([key_prefix, k])
 
     if type(o) in compat.string_types or \
-                    type(o) in compat.integer_types or \
-                    type(o) == float:
+            type(o) in compat.integer_types or \
+            type(o) == float:
         yield key_prefix, o
     elif isinstance(o, dict):
         for k in sorted(o):

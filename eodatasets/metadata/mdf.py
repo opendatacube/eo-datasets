@@ -226,7 +226,7 @@ def adjust_time(t, delta):
 def is_mdf_usgs_id(name):
     """
     Is this an MDF directory name?
-    :type directory: str or unicode or None
+    :type name: str or unicode or None
     :rtype: bool
 
     >>> is_mdf_usgs_id('LC80920740862013090LGN00')
@@ -322,4 +322,3 @@ def find_mdf_files(directory):
             mdf_dir = directory.parent.parent
 
     return mdf_dir, mdf_files
-

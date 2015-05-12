@@ -29,4 +29,3 @@ if __name__ == '__main__':
     # Click fills out the parameters, which confuses pylint.
     # pylint: disable=no-value-for-parameter
     run_regeneration()
-
