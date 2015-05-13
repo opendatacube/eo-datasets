@@ -6,6 +6,10 @@ Packaging, metadata and provenance libraries for GA EO datasets. See [LICENSE](L
 
     pip install -r requirements.txt
 
+
+Python 2.7+ and 3.4+ are supported. A [GDAL](http://www.gdal.org/) installation is required 
+when using packaging commands.
+
 ### Tests
 
 Run tests using [pytest](http://pytest.org/).
