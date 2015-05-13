@@ -12,7 +12,7 @@ from functools import partial
 
 from pathlib import Path
 
-from eodatasets import serialise, verify, drivers, metadata
+from eodatasets import serialise, verify, metadata
 from eodatasets.browseimage import create_dataset_browse_images
 import eodatasets.type as ptype
 
@@ -24,15 +24,15 @@ _LOG = logging.getLogger(__name__)
 _RUNTIME_ID = uuid.uuid1()
 
 
-def init_locally_processed_dataset(software_provenance, uuid=None):
+def init_locally_processed_dataset(software_provenance, uuid_=None):
     """
     Create a blank dataset for a newly created dataset on this machine.
     :type software_provenance: eodatasets.provenance.SoftwareProvenance
-    :param uuid: The existing dataset_id, if any.
+    :param uuid_: The existing dataset_id, if any.
     :rtype: ptype.DatasetMetadata
     """
     md = ptype.DatasetMetadata(
-        id_=uuid,
+        id_=uuid_,
         lineage=ptype.LineageMetadata(
             machine=ptype.MachineMetadata(
                 hostname=socket.getfqdn(),
@@ -45,18 +45,18 @@ def init_locally_processed_dataset(software_provenance, uuid=None):
     return md
 
 
-def init_existing_dataset(software_provenance=None, uuid=None, source_hostname=None):
+def init_existing_dataset(software_provenance=None, uuid_=None, source_hostname=None):
     """
     Init a dataset of mostly unknown origin.
 
     Source hostname can be supplied if known.
 
-    :param uuid: The existing dataset_id, if any.
+    :param uuid_: The existing dataset_id, if any.
     :param source_hostname: Hostname where processed, if known.
     :rtype: ptype.DatasetMetadata
     """
     md = ptype.DatasetMetadata(
-        id_=uuid,
+        id_=uuid_,
         lineage=ptype.LineageMetadata(
             machine=ptype.MachineMetadata(
                 hostname=source_hostname,
@@ -176,7 +176,7 @@ def package_existing_dataset(dataset_driver,
     :param hard_link:
         Hard link imagery files instead of copying them. Much faster.
 
-    :type dataset_driver: drivers.DatasetDriver
+    :type dataset_driver: eodatasets.drivers.DatasetDriver
     :type image_directory: Path or str
     :type target_directory: Path or str
     :type hard_link: bool
@@ -205,7 +205,7 @@ def package_dataset(dataset_driver,
     """
     Package the given dataset folder.
     :type hard_link: bool
-    :type dataset_driver: drivers.DatasetDriver
+    :type dataset_driver: eodatasets.drivers.DatasetDriver
     :type dataset: ptype.Dataset
     :type image_directory: Path or str
     :type target_directory: Path or str

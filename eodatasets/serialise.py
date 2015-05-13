@@ -8,9 +8,7 @@ import uuid
 import time
 import logging
 
-from yaml.representer import BaseRepresenter
 import yaml
-
 from pathlib import Path
 import pathlib
 
@@ -84,7 +82,7 @@ def init_yaml_handling():
 
         eg. the document id should be at the top of the document.
 
-        :type dumper: BaseRepresenter
+        :type dumper: yaml.representer.BaseRepresenter
         :type data: ptype.SimpleObject
         :rtype: yaml.nodes.Node
         """
@@ -96,7 +94,7 @@ def init_yaml_handling():
         """
         Output an OrderedDict as a dict. The order is purely for readability of the document.
 
-        :type dumper: BaseRepresenter
+        :type dumper: yaml.representer.BaseRepresenter
         :type data: collections.OrderedDict
         :rtype: yaml.nodes.Node
         """
@@ -104,7 +102,7 @@ def init_yaml_handling():
 
     def uuid_representer(dumper, data):
         """
-        :type dumper: BaseRepresenter
+        :type dumper: yaml.representer.BaseRepresenter
         :type data: uuid.UUID
         :rtype: yaml.nodes.Node
         """
@@ -113,7 +111,7 @@ def init_yaml_handling():
     def unicode_representer(dumper, data):
         """
         It's strange that PyYaml doesn't use unicode internally. We're doing everything in UTF-8 so we translate.
-        :type dumper: BaseRepresenter
+        :type dumper: yaml.representer.BaseRepresenter
         :type data: unicode
         :rtype: yaml.nodes.Node
         """
@@ -139,13 +137,14 @@ def _create_relative_dumper(folder):
     :type folder: str
     :rtype: yaml.Dumper
     """
-
+    # We can't control how many ancestors this dumper API uses, Pylint.
+    # pylint: disable=too-many-ancestors
     class RelativeDumper(yaml.Dumper):
         pass
 
     def path_representer(dumper, data):
         """
-        :type dumper: BaseRepresenter
+        :type dumper: yaml.representer.BaseRepresenter
         :type data: pathlib.Path
         :rtype: yaml.nodes.Node
         """
@@ -227,6 +226,7 @@ def _clean_identifier(arg):
     return arg[:-1] if arg.endswith('_') else arg
 
 
+# pylint: disable=too-many-branches
 def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
     """
     Output as a flat stream of keys and values. No nesting.
@@ -258,9 +258,9 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
 
         return key_separator.join([key_prefix, k])
 
-    if type(o) in compat.string_types or \
-            type(o) in compat.integer_types or \
-            type(o) == float:
+    if isinstance(o, compat.string_types) or \
+            isinstance(o, compat.integer_types) or \
+            isinstance(o, float):
         yield key_prefix, o
     elif isinstance(o, dict):
         for k in sorted(o):

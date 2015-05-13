@@ -1,4 +1,6 @@
 # coding=utf-8
+# Our metadata 'classes' validly have many arguments, to match the metadata format.
+# pylint: disable=too-many-arguments,too-many-instance-attributes,too-many-locals
 from __future__ import absolute_import
 import datetime
 import inspect
@@ -332,7 +334,8 @@ class ProjectionMetadata(SimpleObject):
         'LR': ['Lower Right']
     }
 
-    def __init__(self, centre_point=None,
+    def __init__(self,
+                 centre_point=None,
                  geo_ref_points=None,
                  datum=None,
                  ellipsoid=None,
@@ -815,7 +818,7 @@ def map_values(f, o, skip_nones=False):
     return f(o)
 
 
-def rebase_paths(source_path, destination_path, object):
+def rebase_paths(source_path, destination_path, object_):
     """
     Rebase all paths in a given object structure (list, dict, SimpleObject) from
     one root path to another.
@@ -828,7 +831,7 @@ def rebase_paths(source_path, destination_path, object):
             return rebase_path(source_path, destination_path, o)
         return o
 
-    return map_values(rebase_if_path, object)
+    return map_values(rebase_if_path, object_)
 
 # Circular reference.
 LineageMetadata.PROPERTY_PARSERS['source_datasets'] = DatasetMetadata.from_named_dicts

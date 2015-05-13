@@ -37,8 +37,8 @@ def extract_md(base_md, directory):
     try:
         with passinfo.open() as f:
             lines = f.readlines()
-    except Exception:
-        _log.exception("Exception Reading passinfo '%s'", passinfo)
+    except ValueError:
+        _log.exception("Exception reading passinfo '%s'", passinfo)
         return None
 
     return _parse_passinfo_md(base_md, lines)
@@ -51,7 +51,7 @@ def station_to_gsi(station):
         # Hobart
         gsi = 'HOA'
     else:
-        _log.warn("Unknown station value '%s'. Falling back to RCC extraction." % station)
+        _log.warn("Unknown station value %r. Falling back to RCC extraction.", station)
         gsi = None
     return gsi
 

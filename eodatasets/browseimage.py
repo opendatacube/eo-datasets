@@ -27,6 +27,8 @@ def run_command(command, work_dir):
     _LOG.debug('Finished %s', command[0])
 
 
+# This method comes from the old ULA codebase and should be cleaned up eventually.
+# pylint: disable=too-many-locals,invalid-name
 def _calculate_scale_offset(nodata, band):
     """
     This method comes from the old ULA codebase.
@@ -75,6 +77,8 @@ def _calculate_scale_offset(nodata, band):
     return dfScale, dfOffset
 
 
+# This method comes from the old ULA codebase and should be cleaned up eventually.
+# pylint: disable=too-many-locals
 def _create_thumbnail(red_file, green_file, blue_file, thumb_image,
                       x_constraint=None, nodata=-999, work_dir=None, overwrite=True):
     """
@@ -102,7 +106,7 @@ def _create_thumbnail(red_file, green_file, blue_file, thumb_image,
 
     if thumbnail_path.exists() and not overwrite:
         _LOG.warning('File already exists. Skipping creation of %s', thumbnail_path)
-        return
+        return None, None, None
 
     # thumbnail_image = os.path.abspath(thumbnail_image)
 

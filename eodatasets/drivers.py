@@ -94,12 +94,12 @@ class DatasetDriver(object):
         """
         # Defaults for satellites. Different products may override this.
         # These values come from the ARG25 spec.
-        _SATELLITE_BROWSE_BANDS = {
+        _satellite_browse_bands = {
             'LANDSAT_5': ('7', '4', '1'),
             'LANDSAT_7': ('7', '4', '1'),
             'LANDSAT_8': ('7', '5', '2'),
         }
-        browse_bands = _SATELLITE_BROWSE_BANDS.get(d.platform.code)
+        browse_bands = _satellite_browse_bands.get(d.platform.code)
         if not browse_bands:
             raise ValueError('Unknown browse bands for satellite %s' % d.platform.code)
 
@@ -178,7 +178,6 @@ def _format_path_row(start_point, end_point=None):
 
 def _get_process_code(dataset):
     """
-
     :type dataset: ptype.DatasetMetadata
     :return:
     """
@@ -268,7 +267,6 @@ def _fill_dataset_label(dataset, format_str, **additionals):
 
 def _remove_chars(chars, s):
     """
-
     :param chars: string of characters to remove.
     :param s: input string
     :rtype: str
@@ -316,6 +314,10 @@ class RawDriver(DatasetDriver):
         # TODO: Antenna coords for groundstation? Heading?
         # TODO: Bands? (or eg. I/Q files?)
         return dataset
+
+    def to_band(self, dataset, source_path, final_path):
+        # We don't record any bands for a raw dataset (yet?)
+        return None
 
 
 class OrthoDriver(DatasetDriver):

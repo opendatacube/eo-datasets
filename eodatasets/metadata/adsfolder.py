@@ -57,7 +57,7 @@ def _extract_orbit(name):
     >>> _extract_orbit('not_an_ads_dir')
     >>> _extract_orbit('LANDSAT-8.FAKE')
     """
-    m = re.search("(?P<sat>AQUA|TERRA|LANDSAT-\d|NPP\.VIIRS)\.(?P<orbit>\d+)(\.\w+)?", name)
+    m = re.search(r"(?P<sat>AQUA|TERRA|LANDSAT-\d|NPP\.VIIRS)\.(?P<orbit>\d+)(\.\w+)?", name)
 
     if m is None:
         return None

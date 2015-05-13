@@ -22,7 +22,7 @@ from eodatasets import package, drivers, serialise
 @click.option('--hard-link',
               is_flag=True,
               help='Hard-link output files if possible (faster than copying)')
-@click.argument('type',
+@click.argument('package_type',
                 type=click.Choice(drivers.PACKAGE_DRIVERS.keys()))
 @click.argument('dataset',
                 type=click.Path(exists=True, readable=True, writable=False),
@@ -30,7 +30,7 @@ from eodatasets import package, drivers, serialise
 @click.argument('destination',
                 type=click.Path(exists=True, readable=True, writable=True),
                 nargs=1)
-def run_packaging(parent, debug, hard_link, type, dataset, destination):
+def run_packaging(parent, debug, hard_link, package_type, dataset, destination):
     """
     Package the given imagery folders.
     """
@@ -44,7 +44,7 @@ def run_packaging(parent, debug, hard_link, type, dataset, destination):
     parent_datasets = {}
 
     #: :type: package.DatasetDriver
-    driver = drivers.PACKAGE_DRIVERS[type]
+    driver = drivers.PACKAGE_DRIVERS[package_type]
 
     # TODO: Multiple parents?
     if parent:

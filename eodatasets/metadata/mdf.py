@@ -109,15 +109,17 @@ def _extract_mdf_id_fields(base_md, mdf_usgs_id):
     :rtype: ptype.DatasetMetadata
     """
     m = re.search(
-        "(?P<vehicle>L)" +
-        "(?P<instrument>[OTC])" +
-        "(?P<vehicle_number>\d)" +
-        "(?P<path>\d{3})" +
-        "(?P<row_start>\d{3})" +
-        "(?P<row_end>\d{3})" +
-        "(?P<acq_date>\d{7})" +
-        "(?P<gsi>\w{3})" +
-        "(?P<version>\d{2})",
+        (
+            r"(?P<vehicle>L)"
+            r"(?P<instrument>[OTC])"
+            r"(?P<vehicle_number>\d)"
+            r"(?P<path>\d{3})"
+            r"(?P<row_start>\d{3})"
+            r"(?P<row_end>\d{3})"
+            r"(?P<acq_date>\d{7})"
+            r"(?P<gsi>\w{3})"
+            r"(?P<version>\d{2})"
+        ),
         mdf_usgs_id)
 
     fields = m.groupdict()
@@ -184,13 +186,15 @@ def _extract_mdf_file_fields(base_md, mdf_file_names):
 
     for f_name in mdf_file_names:
         m = re.search(
-            "(?P<root_file_number>\d{3})" +
-            "\." +
-            "(?P<root_file_sequence>\d{3})" +
-            "\." +
-            "(?P<date_time>\d{16})" +
-            "\." +
-            "(?P<gsi>\w{3})",
+            (
+                r"(?P<root_file_number>\d{3})"
+                r"\."
+                r"(?P<root_file_sequence>\d{3})"
+                r"\."
+                r"(?P<date_time>\d{16})"
+                r"\."
+                r"(?P<gsi>\w{3})"
+            ),
             f_name)
 
         fields = m.groupdict()
@@ -252,7 +256,7 @@ def is_mdf_usgs_id(name):
     """
     if not name:
         return False
-    return bool(re.match("^L[OTC]\d{17}[A-Z]{3}\d{2}$", name))
+    return bool(re.match(r"^L[OTC]\d{17}[A-Z]{3}\d{2}$", name))
 
 
 def is_mdf_file(filename):
@@ -274,7 +278,7 @@ def is_mdf_file(filename):
     :type filename: str or unicode
     :rtype: bool
     """
-    return bool(re.match("^\d{3}\.\d{3}.\d{16}.[A-Z]{3}$", filename))
+    return bool(re.match(r"^\d{3}\.\d{3}.\d{16}.[A-Z]{3}$", filename))
 
 
 def find_mdf_files(directory):

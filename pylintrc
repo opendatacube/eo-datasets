@@ -41,7 +41,7 @@ load-plugins=
 
 # trailing-whitespace is due to a dos line-endings bug. This is fixed in the next version of
 # pylint
-disable=bare-except,no-self-use,unused-argument,duplicate-code,trailing-whitespace,abstract-class-little-used,star-args,abstract-class-not-used
+disable=bare-except,no-self-use,unused-argument,duplicate-code,trailing-whitespace,abstract-class-little-used,star-args,abstract-class-not-used,missing-docstring,no-member,unused-variable,unused-import
 
 
 [REPORTS]
@@ -99,13 +99,13 @@ function-rgx=[a-z_][a-z0-9_]{2,30}$
 method-rgx=[a-z_][a-z0-9_]{2,30}$
 
 # Regular expression which should only match correct instance attribute names
-attr-rgx=[a-z_][a-z0-9_]{2,50}$
+attr-rgx=[a-z_][a-z0-9_]{0,50}$
 
 # Regular expression which should only match correct argument names
-argument-rgx=[a-z_][a-zA-Z0-9_]{0,50}$
+argument-rgx=[a-z_][a-z0-9_]{0,50}$
 
 # Regular expression which should only match correct variable names
-variable-rgx=[a-z_][a-zA-Z0-9_]{0,50}$
+variable-rgx=[a-z_][a-z0-9_]{0,50}$
 
 # Regular expression which should only match correct attribute names in class
 # bodies

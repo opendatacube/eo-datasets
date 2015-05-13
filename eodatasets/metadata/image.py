@@ -154,5 +154,4 @@ _GDA_94.ImportFromWkt('PROJCS["GDA94 / MGA zone 53",GEOGCS["GDA94",'
                       'PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",135],'
                       'PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],'
                       'PARAMETER["false_northing",10000000],'
-                      'UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","28353"]]'
-                      )
+                      'UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","28353"]]')

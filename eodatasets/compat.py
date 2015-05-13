@@ -1,6 +1,6 @@
 # coding=utf-8
 # We're using references that don't exist in python 3 (unicode, long):
-# pylint: disable=undefined-variable
+# pylint: disable=undefined-variable,invalid-name
 """
 Compatibility helpers for Python 2 and 3.
 
