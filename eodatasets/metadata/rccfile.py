@@ -69,7 +69,6 @@ _INSTRUMENT_MODES = {
 
 def _usgs_id_from_filename(filename):
     """
-
     :param filename:
     :return:
     >>> _usgs_id_from_filename('7EB2012028010752ASA111I.data')
@@ -78,6 +77,43 @@ def _usgs_id_from_filename(filename):
     'L5TB2003339014237ASA111'
     """
     return filename[:filename.rindex('I')]
+
+
+def _expand_platform_info(vehicle_char, vehicle_num, instrument_char, sensor_mode_char):
+    """
+
+    :type instrument_char: str
+    :type sensor_mode_char: str
+    :type vehicle_char: str
+    :type vehicle_num: str
+    :rtype: str, str, str
+    :return platform code, instrument name, operation mode
+
+    >>> _expand_platform_info('L', '7', 'E', 'B')
+    ('LANDSAT_7', 'ETM', 'BUMPER')
+    >>> _expand_platform_info('L', '5', 'T', 'T')
+    ('LANDSAT_5', 'TM', 'SAM')
+    """
+    platform_code, instrument_name, operation_mode = None, None, None
+    if vehicle_char == 'L':
+        platform_code = 'LANDSAT_%s' % vehicle_num
+
+        if vehicle_num == '7':
+            if instrument_char == 'E':
+                instrument_name = 'ETM'
+            else:
+                _log.warn('Unknown LS7 sensor char: %s', instrument_char)
+        elif vehicle_num == '5':
+            if instrument_char == 'T':
+                instrument_name = 'TM'
+            else:
+                _log.warn('Unknown LS4/5 sensor char: %s', instrument_char)
+
+        operation_mode = _INSTRUMENT_MODES.get(sensor_mode_char)
+
+    else:
+        _log.warn('Unknown vehicle: %s', vehicle_char)
+    return platform_code, instrument_name, operation_mode
 
 
 def _extract_rcc_filename_fields(base_md, filename):
@@ -91,7 +127,7 @@ def _extract_rcc_filename_fields(base_md, filename):
     :rtype: ptype.DatasetMetadata
     """
 
-    m = re.search('(?P<satsens>\w{4})(?P<date>\d{13})(?P<gsi>[^\d]+).*?(?P<version>\d\d)?\.data', filename)
+    m = re.search(r'(?P<satsens>\w{4})(?P<date>\d{13})(?P<gsi>[^\d]+).*?(?P<version>\d\d)?\.data', filename)
     fields = m.groupdict()
 
     if not base_md.platform or not base_md.platform.code:
@@ -102,28 +138,17 @@ def _extract_rcc_filename_fields(base_md, filename):
         instrument_short = satsens_[2]
         smode_short = satsens_[3]
 
-        if vehicle == 'L':
-            if not base_md.platform:
-                base_md.platform = ptype.PlatformMetadata()
-            base_md.platform.code = 'LANDSAT_%s' % vehicle_num
+        platform_code, instrument_name, operation_mode = _expand_platform_info(
+            vehicle, vehicle_num, instrument_short, smode_short
+        )
 
-            if not base_md.instrument:
-                base_md.instrument = ptype.InstrumentMetadata()
-
-            if vehicle_num == '7':
-                if instrument_short == 'E':
-                    base_md.instrument.name = 'ETM'
-                else:
-                    _log.warn('Unknown LS7 sensor char: %s', instrument_short)
-            elif vehicle_num == '5':
-                if instrument_short == 'T':
-                    base_md.instrument.name = 'TM'
-                else:
-                    _log.warn('Unknown LS4/5 sensor char: %s', instrument_short)
-
-            base_md.instrument.operation_mode = _INSTRUMENT_MODES.get(smode_short)
-        else:
-            _log.warn('Unknown vehicle: %s', vehicle)
+        if not base_md.platform:
+            base_md.platform = ptype.PlatformMetadata()
+        if not base_md.instrument:
+            base_md.instrument = ptype.InstrumentMetadata()
+        base_md.platform.code = platform_code
+        base_md.instrument.name = instrument_name
+        base_md.instrument.operation_mode = operation_mode
 
     if not base_md.acquisition:
         base_md.acquisition = ptype.AcquisitionMetadata()
