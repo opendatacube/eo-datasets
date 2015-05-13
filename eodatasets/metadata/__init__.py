@@ -98,9 +98,10 @@ def expand_common_metadata(d):
     :type d: ptype.DatasetMetadata
     :rtype: ptype.DatasetMetadata
     """
-    if d.image and d.image.bands:
-        for band_metadata in d.image.bands.values():
-            _expand_band_information(d.platform.code, d.instrument.name, band_metadata)
+    if d.platform and d.instrument:
+        if d.image and d.image.bands:
+            for band_metadata in d.image.bands.values():
+                _expand_band_information(d.platform.code, d.instrument.name, band_metadata)
 
     if d.acquisition and d.acquisition.groundstation and d.acquisition.groundstation.code:
         gstation = d.acquisition.groundstation

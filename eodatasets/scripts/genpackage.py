@@ -3,12 +3,15 @@
 from __future__ import absolute_import
 import os
 import logging
+import random
+import tempfile
 import uuid
 
 import click
 from pathlib import Path
 
 from eodatasets import package, drivers, serialise
+from eodatasets.scripts import init_logging
 
 
 @click.command()
@@ -34,12 +37,7 @@ def run_packaging(parent, debug, hard_link, package_type, dataset, destination):
     """
     Package the given imagery folders.
     """
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
-
-    if debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-    else:
-        logging.getLogger('eodatasets').setLevel(logging.INFO)
+    init_logging(debug)
 
     parent_datasets = {}
 
@@ -51,20 +49,19 @@ def run_packaging(parent, debug, hard_link, package_type, dataset, destination):
         source_id = driver.expected_source().get_id()
         parent_datasets.update({source_id: serialise.read_dataset_metadata(Path(parent[0]))})
 
-    for dataset_path in dataset:
-        temp_output_dir = os.path.join(destination, '.packagetmp.%s' % uuid.uuid1())
-        os.mkdir(temp_output_dir)
+    for dataset_folder in dataset:
+        dataset_path = Path(dataset_folder)
+        temp_output_dir = Path(tempfile.mkdtemp(prefix='.packagetmp.', dir=destination))
 
-        dataset_id = package.package_existing_dataset(
+        dataset_id = package.package_dataset(
             driver,
-            Path(dataset_path),
-            Path(temp_output_dir),
-            source_datasets=parent_datasets,
+            package.init_existing_dataset(dataset_path, driver, parent_datasets),
+            dataset_path,
+            temp_output_dir,
             hard_link=hard_link
         )
 
-        actual_output_dir = os.path.join(destination, dataset_id)
-        os.rename(temp_output_dir, actual_output_dir)
+        os.rename(str(temp_output_dir), os.path.join(destination, dataset_id))
 
 
 if __name__ == '__main__':

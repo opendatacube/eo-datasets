@@ -9,12 +9,12 @@ import datetime
 from pathlib import Path
 import yaml
 
-import eodatasets.scripts.package
+import eodatasets.scripts.genpackage
 from tests import temp_dir, assert_file_structure, assert_same, integration_test
 from tests.integration import get_script_path, load_checksum_filenames
 
 
-packaging_script_path = get_script_path(eodatasets.scripts.package)
+packaging_script_path = get_script_path(eodatasets.scripts.genpackage)
 
 #: :type: Path
 source_folder = Path(__file__).parent.joinpath('input', 'ls8-pqa')

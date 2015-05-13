@@ -24,7 +24,8 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        eod-package=eodatasets.scripts.package:cli
-        eod-generate-browse=eodatasets.scripts.generatebrowse:cli
+        eod-package=eodatasets.scripts.genpackage:cli
+        eod-generate-metadata=eodatasets.scripts.genmetadata:cli
+        eod-generate-browse=eodatasets.scripts.genbrowse:cli
     ''',
 )

@@ -70,7 +70,7 @@ class DatasetDriver(object):
         # Default behaviour: Include file unchanged, but keep suffixes consistently lowercase.
         return file_path.with_suffix(file_path.suffix.lower())
 
-    def to_band(self, dataset, source_path, final_path):
+    def to_band(self, dataset, path):
         """
         Create a band definition for the given output file.
 
@@ -78,10 +78,8 @@ class DatasetDriver(object):
         (the file will still be included in the package).
 
         :type dataset: ptype.DatasetMetadata
-        :type source_path: Path
-        :param source_path: The filename of the input file.
-        :type final_path: Path
-        :param final_path: The filename of the output file.
+        :type path: Path
+        :param path: The filename of the input file.
         :rtype: ptype.BandMetadata
         """
         raise NotImplementedError()
@@ -315,7 +313,7 @@ class RawDriver(DatasetDriver):
         # TODO: Bands? (or eg. I/Q files?)
         return dataset
 
-    def to_band(self, dataset, source_path, final_path):
+    def to_band(self, dataset, path):
         # We don't record any bands for a raw dataset (yet?)
         return None
 
@@ -362,30 +360,30 @@ class OrthoDriver(DatasetDriver):
 
         return file_path
 
-    def to_band(self, dataset, source_path, final_path):
+    def to_band(self, dataset, path):
         """
         :type dataset: ptype.DatasetMetadata
         :type final_path: pathlib.Path
         :rtype: ptype.BandMetadata
 
-        >>> OrthoDriver().to_band(None, Path('/tmp/LC_SOMETHING_B1.TIF'), Path('/tmp/out/L8_SOMETHING_B1.tif'))
+        >>> OrthoDriver().to_band(None, Path('/tmp/out/L8_SOMETHING_B1.tif'))
         BandMetadata(path=PosixPath('/tmp/out/L8_SOMETHING_B1.tif'), number='1')
-        >>> OrthoDriver().to_band(None, Path('/tmp/LC_SOMETHING_B12.TIF'), Path('/tmp/out/L8_SOMETHING_B12.tif'))
+        >>> OrthoDriver().to_band(None, Path('/tmp/out/L8_SOMETHING_B12.tif'))
         BandMetadata(path=PosixPath('/tmp/out/L8_SOMETHING_B12.tif'), number='12')
         >>> # No bands for non-tiff files.
-        >>> OrthoDriver().to_band(None, Path('/tmp/LC_SOMETHING_MTL.txt'), Path('/tmp/out/L8_SOMETHING_MTL.txt'))
+        >>> OrthoDriver().to_band(None, Path('/tmp/out/L8_SOMETHING_MTL.txt'))
         """
-        if final_path.suffix != '.tif':
+        if path.suffix != '.tif':
             return None
 
         # Images end in a band number (eg '_B12.tif'). Extract it.
-        last_component = source_path.stem.split('_')[-1].lower()
+        last_component = path.stem.split('_')[-1].lower()
         if not last_component.startswith('b'):
-            raise ValueError('Unexpected tif image in ortho: %r' % final_path)
+            raise ValueError('Unexpected tif image in ortho: %r' % path)
 
         # Strip the leading 'B'
         band_number = last_component[1:]
-        return ptype.BandMetadata(path=final_path, number=band_number)
+        return ptype.BandMetadata(path=path, number=band_number)
 
     def get_ga_label(self, dataset):
         # Examples:
@@ -467,8 +465,16 @@ class NbarDriver(DatasetDriver):
         '2'
         >>> NbarDriver('brdf')._read_band_number(Path('reflectance_terrain_7.bin'))
         '7'
+        >>> p = Path('/tmp/something/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif')
+        >>> NbarDriver('brdf')._read_band_number(p)
+        '4'
         """
-        return file_path.stem.split('_')[-1]
+        number = file_path.stem.split('_')[-1].lower()
+
+        if number.startswith('b'):
+            return number[1:]
+        else:
+            return number
 
     def translate_path(self, dataset, file_path):
         """
@@ -494,20 +500,22 @@ class NbarDriver(DatasetDriver):
 
         return file_path.with_name('%s_B%s.tif' % (ga_label, band_number))
 
-    def to_band(self, dataset, source_path, final_path):
+    def to_band(self, dataset, path):
         """
         :type dataset: ptype.DatasetMetadata
-        :type source_path: Path
-        :type final_path: Path
+        :type path: Path
         :rtype: ptype.BandMetadata
 
         >>> p = Path('/tmp/something/reflectance_terrain_3.bin')
-        >>> NbarDriver('terrain').to_band(None, p, None).number
+        >>> NbarDriver('terrain').to_band(None, p).number
         '3'
-        >>> NbarDriver('terrain').to_band(None, p, p.with_suffix('.tif')).path
-        PosixPath('/tmp/something/reflectance_terrain_3.tif')
+        >>> NbarDriver('terrain').to_band(None, p).path
+        PosixPath('/tmp/something/reflectance_terrain_3.bin')
+        >>> p = Path('/tmp/something/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif')
+        >>> NbarDriver('terrain').to_band(None, p).number
+        '4'
         """
-        return ptype.BandMetadata(path=final_path, number=self._read_band_number(source_path))
+        return ptype.BandMetadata(path=path, number=self._read_band_number(path))
 
     def fill_metadata(self, dataset, path):
         """
@@ -572,11 +580,11 @@ class PqaDriver(DatasetDriver):
         ga_label = self.get_ga_label(dataset)
         return file_path.with_name(ga_label+file_path.suffix)
 
-    def to_band(self, dataset, source_path, final_path):
-        if final_path.suffix != '.tif':
+    def to_band(self, dataset, path):
+        if path.suffix != '.tif':
             return None
 
-        return ptype.BandMetadata(path=final_path, number='pqa')
+        return ptype.BandMetadata(path=path, number='pqa')
 
     def browse_image_bands(self, d):
         return 'pqa',

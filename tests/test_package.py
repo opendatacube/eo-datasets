@@ -1,21 +1,11 @@
 # coding=utf-8
 from __future__ import absolute_import
 
-from eodatasets import package
+from eodatasets import package, drivers, type as ptype
 from tests import write_files, TestCase, assert_file_structure
 
 
 class TestPackage(TestCase):
-    def test_prepare_same_destination(self):
-        dataset_path = write_files({'LC81010782014285LGN00_B6.TIF': 'test'})
-
-        size_bytes = package.prepare_target_imagery(
-            dataset_path,
-            dataset_path,
-            compress_imagery=False
-        )
-        self.assertEqual(size_bytes, 4)
-
     def test_prepare_copy_destination(self):
         test_path = write_files({'source_dir': {
             'LC81010782014285LGN00_B6.img': 'test'
@@ -23,12 +13,11 @@ class TestPackage(TestCase):
         source_path = test_path.joinpath('source_dir')
         dest_path = test_path.joinpath('dest_dir')
 
-        size_bytes = package.prepare_target_imagery(
+        package.prepare_target_imagery(
             source_path,
             dest_path,
             compress_imagery=False
         )
-        self.assertEqual(size_bytes, 4)
 
         # Ensure dest file was created.
         self.assertTrue(dest_path.is_dir())
@@ -50,14 +39,12 @@ class TestPackage(TestCase):
         source_path = test_path.joinpath('source_dir')
         dest_path = test_path.joinpath('dest_dir')
 
-        size_bytes = package.prepare_target_imagery(
+        package.prepare_target_imagery(
             source_path,
             dest_path,
             compress_imagery=False,
             hard_link=True
         )
-        # Four bytes each == 8 bytes
-        self.assertEqual(size_bytes, 8)
 
         # Ensure dest files were created.
         self.assertTrue(dest_path.is_dir())
@@ -85,14 +72,13 @@ class TestPackage(TestCase):
         dest_path = test_path.joinpath('dest_dir')
 
         called_back = []
-        size_bytes = package.prepare_target_imagery(
+        package.prepare_target_imagery(
             source_path,
             dest_path,
             translate_path=lambda p: p.with_suffix('.tif') if p.suffix == '.img' else None,
             after_file_copy=lambda source, dest: called_back.append((source, dest)),
             compress_imagery=False
         )
-        self.assertEqual(size_bytes, 4)
         dest_file = dest_path.joinpath('LC81010782014285LGN00_B6.tif')
 
         # The after_file_copy() callback should be called for each copied file.
@@ -119,3 +105,50 @@ class TestPackage(TestCase):
         # Ensure source path was not touched.
         source_file = source_path.joinpath('LC81010782014285LGN00_B6.img')
         self.assertTrue(source_file.stat().st_size, 4)
+
+    def test_total_file_size(self):
+        # noinspection PyProtectedMember
+        f = write_files({
+            'first.txt': 'test',
+            'second.txt': 'test2'
+        })
+
+        self.assertEqual(9, package._file_size_bytes(*f.iterdir()))
+
+    def test_prepare_metadata(self):
+        f = write_files({
+            'first.txt': 'test',
+            'second.txt': 'test2'
+        })
+
+        class FauxDriver(drivers.DatasetDriver):
+            def to_band(self, dataset, path):
+                numbers = {
+                    'first': ptype.BandMetadata(path=path, number='1'),
+                    'second': None
+                }
+                return numbers.get(path.stem)
+
+            def get_ga_label(self, dataset):
+                return 'DATASET_ID_1234'
+
+            def get_id(self):
+                return 'faux'
+
+        d = ptype.DatasetMetadata()
+        d = package.expand_driver_metadata(FauxDriver(), d, list(f.iterdir()))
+
+        self.assert_same(
+            d,
+            ptype.DatasetMetadata(
+                id_=d.id_,
+                ga_label='DATASET_ID_1234',
+                product_type='faux',
+                size_bytes=9,
+                image=ptype.ImageMetadata(
+                    bands={
+                        '1': ptype.BandMetadata(path=f.joinpath('first.txt'), number='1')
+                    }
+                )
+            )
+        )

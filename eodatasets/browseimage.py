@@ -280,10 +280,20 @@ def create_dataset_browse_images(
         if browse_metadata.shape:
             x_constraint = browse_metadata.shape.x
 
+        bands = dataset.image.bands
+
+        necessary_bands = (browse_metadata.red_band, browse_metadata.green_band, browse_metadata.blue_band)
+        if not all([bands.get(band) for band in necessary_bands]):
+            raise ValueError(
+                'Some browse bands missing. Requires {!r}, has {!r}'
+                ''.format(necessary_bands, bands.keys())
+            )
+
+        r_path, g_path, b_path = [bands[p].path for p in necessary_bands]
         cols, rows, output_res = _create_thumbnail(
-            dataset.image.bands[browse_metadata.red_band].path,
-            dataset.image.bands[browse_metadata.green_band].path,
-            dataset.image.bands[browse_metadata.blue_band].path,
+            r_path,
+            g_path,
+            b_path,
             browse_metadata.path,
             x_constraint=x_constraint
         )
