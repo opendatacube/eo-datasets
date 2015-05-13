@@ -15,11 +15,11 @@ if not PY2:
     text_type = str
     string_types = (str,)
     integer_types = (int,)
-    unichr = chr
+    unicode_to_char = chr
     long_int = int
 else:
     text_type = unicode
     string_types = (str, unicode)
     integer_types = (int, long)
-    unichr = unichr
+    unicode_to_char = unichr
     long_int = long
