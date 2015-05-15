@@ -12,18 +12,17 @@ addons:
         - libproj-dev
         - gfortran
         - gdal-bin
-before_install:
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda/bin:$PATH
-  - conda update --yes conda
-  - travis_retry conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy scipy gdal
+        - libgdal1-dev
 install:
-  - travis_retry pip install pylint pep8
+  # Expand include path for building python-gdal bindings.
+  - export CPLUS_INCLUDE_PATH="/usr/include/gdal"
+  - export C_INCLUDE_PATH="/usr/include/gdal"
+  # GDAL python version must match system libgdal version.
+  - travis_retry pip install pylint pep8 GDAL==1.10.0
   - travis_retry pip install -r requirements.txt
 script: 
     - pep8 eodatasets --max-line-length 120
     - pylint eodatasets --reports no
-    - py.test eodatasets tests 
+    - py.test eodatasets tests --runslow -m 'not slow'
+    - py.test eodatasets tests --runslow -m 'slow'
 cache: apt
