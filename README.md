@@ -1,5 +1,7 @@
 ## eodatasets
 
+[![Build Status](https://travis-ci.org/GeoscienceAustralia/eodatasets.svg?branch=develop)](https://travis-ci.org/GeoscienceAustralia/eodatasets)
+
 Packaging, metadata and provenance libraries for GA EO datasets. See [LICENSE](LICENSE) for license details.
 
 ### Installation
