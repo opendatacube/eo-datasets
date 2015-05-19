@@ -18,10 +18,6 @@ def find_file(path, file_pattern):
     return next(path.glob(file_pattern))
 
 
-def NotPep8(object):
-    print('Not pep8. Teamcity should fail.')
-
-
 class DatasetDriver(object):
     def get_id(self):
         """
