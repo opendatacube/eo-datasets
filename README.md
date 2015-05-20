@@ -1,6 +1,7 @@
 ## eodatasets
 
 [![Build Status](https://travis-ci.org/GeoscienceAustralia/eodatasets.svg?branch=develop)](https://travis-ci.org/GeoscienceAustralia/eodatasets)
+[![Code Health](https://landscape.io/github/GeoscienceAustralia/eodatasets/develop/landscape.svg?style=flat)](https://landscape.io/github/GeoscienceAustralia/eodatasets/develop)
 
 Packaging, metadata and provenance libraries for GA EO datasets. See [LICENSE](LICENSE) for license details.
 
