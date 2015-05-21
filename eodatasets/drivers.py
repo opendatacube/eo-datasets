@@ -66,9 +66,14 @@ class DatasetDriver(object):
         >>> # Test default behaviour: all files included unchanged, suffix is lowercase.
         >>> DatasetDriver().translate_path(None, Path('/tmp/fake_path.TXT'))
         PosixPath('/tmp/fake_path.txt')
+        >>> DatasetDriver().translate_path(None, Path('/tmp/passinfo'))
+        PosixPath('/tmp/passinfo')
         """
         # Default behaviour: Include file unchanged, but keep suffixes consistently lowercase.
-        return file_path.with_suffix(file_path.suffix.lower())
+        if file_path.suffix:
+            return file_path.with_suffix(file_path.suffix.lower())
+        else:
+            return file_path
 
     def to_band(self, dataset, path):
         """
