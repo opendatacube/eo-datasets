@@ -27,9 +27,14 @@ def extract_md(base_md, directory):
     :type directory: Path
     :rtype: ptype.DatasetMetadata
     """
-    files = list(find_rcc_files(directory))
+    dirs_to_search = [directory, directory.joinpath('RCCDATA'), directory.joinpath('RCC')]
 
-    if len(files) < 1:
+    for d in dirs_to_search:
+        files = list(find_rcc_files(d))
+        if files:
+            _log.info('Found RCC files: %r', files)
+            break
+    else:
         _log.debug("No I.data file found in RCC directory")
         return base_md
 

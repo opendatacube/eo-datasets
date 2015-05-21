@@ -36,17 +36,26 @@ class TestRccExtract(unittest.TestCase):
             'L7EB2013259012832ASN213I00.data': 'nothing',
             'L7EB2013259012832ASN213Q00.data': 'nothing'
         })
-        md = rccfile.extract_md(ptype.DatasetMetadata(), d)
+        self._check_rcc_parse(d)
 
+    def test_parse_rcc_with_subdir(self):
+        d = write_files({
+            'RCCDATA': {
+                'L7EB2013259012832ASN213I00.data': 'nothing',
+                'L7EB2013259012832ASN213Q00.data': 'nothing'
+            }
+        })
+        self._check_rcc_parse(d)
+
+    def _check_rcc_parse(self, d):
+        md = rccfile.extract_md(ptype.DatasetMetadata(), d)
         self.assertEqual(md.platform.code, 'LANDSAT_7')
         self.assertEqual(md.instrument.name, 'ETM')
         self.assertEqual(md.acquisition.groundstation.code, 'ASN')
         self.assertEqual(md.ga_level, 'P00')
         self.assertEqual(md.format_.name, 'RCC')
         self.assertEqual(md.usgs_dataset_id, 'L7EB2013259012832ASN213')
-
         self.assertEqual(md.acquisition.aos, datetime.datetime(2013, 9, 16, 1, 28, 32))
-
         # From the old onreceipt codebase,
         # Default L7 LOS is: AOS + (I.data fileSize) * 8.0 / 75000000.0
         self.assertEqual(md.acquisition.los, datetime.datetime(2013, 9, 16, 1, 28, 32))

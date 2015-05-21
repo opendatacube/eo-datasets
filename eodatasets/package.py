@@ -209,10 +209,11 @@ def expand_driver_metadata(dataset_driver, dataset, image_paths):
     if image_paths:
         bands = [dataset_driver.to_band(dataset, path) for path in image_paths]
 
-        if bands and not dataset.image:
-            dataset.image = ptype.ImageMetadata()
+        if bands:
+            if not dataset.image:
+                dataset.image = ptype.ImageMetadata()
 
-        dataset.image.bands = {band.number: band for band in bands if band}
+            dataset.image.bands = {band.number: band for band in bands if band}
 
     return metadata.expand_common_metadata(dataset)
 
@@ -231,7 +232,7 @@ def package_inplace_dataset(dataset_driver, dataset, image_path):
     if typical_checksum_file.exists():
         dataset.checksum_path = typical_checksum_file
 
-    image_paths = image_path.iterdir() if image_path.is_dir() else [image_path]
+    image_paths = list(image_path.iterdir()) if image_path.is_dir() else [image_path]
 
     validate_metadata(dataset)
     dataset = expand_driver_metadata(dataset_driver, dataset, image_paths)
