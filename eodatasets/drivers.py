@@ -318,6 +318,10 @@ class RawDriver(DatasetDriver):
         # TODO: Bands? (or eg. I/Q files?)
         return dataset
 
+    def translate_path(self, dataset, file_path):
+        # Keep file paths unchanged.
+        return file_path
+
     def to_band(self, dataset, path):
         # We don't record any bands for a raw dataset (yet?)
         return None
