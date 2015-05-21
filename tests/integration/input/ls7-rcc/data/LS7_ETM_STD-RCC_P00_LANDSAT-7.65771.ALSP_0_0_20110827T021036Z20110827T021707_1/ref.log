@@ -1,0 +1,729 @@
+2011-08-27T02:10:06.334 LANDSAT-7.65771
+2011-08-27T02:10:06.340 start: 2011-08-27 02:10:36
+2011-08-27T02:10:06.340 stop:  2011-08-27 02:17:07
+2011-08-27T02:10:06.484 created tle file: /tmp/ingest.tle
+2011-08-27T02:10:06.484 starting: /station/rms/script/ingest -d etm -o /stripe/cacheroot/LANDSAT-7.65771 -L 1314411427.0 -l /archive/log/rms/ingest/LANDSAT-7.65771_R1 -w 1070065771 -e /tmp/ingest.tle -I "None"
+2011-08-27T02:10:06.486 pid: 11554
+Changed work directory to: /station/EDTpcd
+Loaded RS bitfile: sse_rs_decoder_5way.bit
+Require RS bitfile: sse_rs_decoder_5way.bit
+./initpcd -u 0 -f /station/rms/config/dis_edt_common.cfg
+
+calc vco freq last_divide = 2
+ICS 307 computations for reference frequency 10368100.000000
+
+Closest frequency to target frequency 66000000.00000 is 65996944.23077
+Parameters VDW=323, RDW=24, OD=2, LX=0
+Computations:
+F  = Ref * 2 * (VDW+8) / ((RDW+2) * (OD) * (LX+1) * 2)
+65996944.23077 = 10368100.00000 * 2 * (323+8) / ((24+2) * (2) * (1) * 2)
+Check = 65996944.23077
+Elapsed:   0.009433 seconds
+Programming value 29a198
+
+calc vco freq last_divide = 2
+ICS 307 computations for reference frequency 10368100.000000
+
+Closest frequency to target frequency 100000000.00000 is 99978107.14286
+Parameters VDW=127, RDW=5, OD=2, LX=0
+Computations:
+F  = Ref * 2 * (VDW+8) / ((RDW+2) * (OD) * (LX+1) * 2)
+99978107.14286 = 10368100.00000 * 2 * (127+8) / ((5+2) * (2) * (1) * 2)
+Check = 99978107.14286
+Elapsed:   0.009450 seconds
+Programming value 293f85
+./initpcd -u 0 -f /station/rms/config/dis_edt_individual.cfg
+exec /station/rms/dis/dis_etm -P -w 1070065771 -e /tmp/ingest.tle -o /stripe/cacheroot/LANDSAT-7.65771 -l /archive/log/rms/ingest/LANDSAT-7.65771_R1 -A 0 -L 1314411427.0 EDT0
+2011-08-27T02:10:06.900 Expected LOS: 2011-08-27T02:17:07.000
+2011-08-27T02:10:06.900 Input device: pcd unit 0 channel 0
+2011-08-27T02:10:06.900 DISDATA capacity: 16, blockSize: 1835072
+2011-08-27T02:10:06.940 start ingesting DIS data...
+2011-08-27T02:10:07.118 start reading, blockSize: 1835072 ...
+2011-08-27T02:10:11.486 monitor
+2011-08-27T02:17:08.696 output file size: 7528.8 MB
+2011-08-27T02:17:08.767 done
+2011-08-27T02:17:09.002 Reach LOS time.
+2011-08-27T02:17:09.002 4305 blocks processed.
+2011-08-27T02:24:08.327 Open /stripe/cacheroot/RCC11817I.data: 7
+2011-08-27T02:24:08.360 Open /stripe/cacheroot/RCC11817Q.data: 8
+2011-08-27T02:24:08.360 Input file: /stripe/cacheroot/LANDSAT-7.65771.dis
+2011-08-27T02:24:08.378 DISDATA capacity: 16, blockSize: 1835072
+2011-08-27T02:24:08.379 start reading, blockSize: 1835072 ...
+2011-08-27T02:24:08.379 start processing DIS data...
+2011-08-27T02:24:14.232 crc error and RS uncorrectable: 4
+2011-08-27T02:24:21.754 tlm frame sync established at 02:10:36.178, 544226609(4)
+2011-08-27T02:24:21.754 BER to 02:10:36.178: 0.0e+00 in 3.2e+01 bits: 0.0e+00
+2011-08-27T02:24:21.754 Locked in Q-channel at CADU 2
+2011-08-27T02:24:21.757 Output buffer full
+2011-08-27T02:24:21.767 Locked in I-channel at CADU 3
+2011-08-27T02:24:22.000 Output buffer full (repeat 6229)
+2011-08-27T02:24:22.177 BER to 02:10:37.000: 0.0e+00 in 4.7e+05 bits: 0.0e+00
+2011-08-27T02:24:22.621 BER to 02:10:38.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:23.000 Output buffer full (repeat 36448)
+2011-08-27T02:24:23.074 BER to 02:10:39.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:23.525 BER to 02:10:40.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:23.977 BER to 02:10:41.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:24.000 Output buffer full (repeat 39170)
+2011-08-27T02:24:24.449 BER to 02:10:42.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:24.905 BER to 02:10:43.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:25.000 Output buffer full (repeat 38183)
+2011-08-27T02:24:25.368 BER to 02:10:44.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:25.832 BER to 02:10:45.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:26.000 Output buffer full (repeat 38367)
+2011-08-27T02:24:26.299 BER to 02:10:46.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:26.786 BER to 02:10:47.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:27.000 Output buffer full (repeat 32511)
+2011-08-27T02:24:27.324 BER to 02:10:48.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:27.821 BER to 02:10:49.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:28.014 Output buffer full (repeat 28464)
+2011-08-27T02:24:28.397 BER to 02:10:50.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:29.761 Output buffer full (repeat 20987)
+2011-08-27T02:24:29.838 BER to 02:10:51.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:30.000 Output buffer full (repeat 6046)
+2011-08-27T02:24:30.396 BER to 02:10:52.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:30.943 BER to 02:10:53.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:31.000 Output buffer full (repeat 26286)
+2011-08-27T02:24:31.445 BER to 02:10:54.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:31.982 BER to 02:10:55.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:32.000 Output buffer full (repeat 28073)
+2011-08-27T02:24:32.528 BER to 02:10:56.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:33.748 Output buffer full (repeat 23062)
+2011-08-27T02:24:33.911 BER to 02:10:57.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:34.000 Output buffer full (repeat 9460)
+2011-08-27T02:24:34.404 BER to 02:10:58.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:34.895 BER to 02:10:59.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:35.000 Output buffer full (repeat 27662)
+2011-08-27T02:24:35.421 BER to 02:11:00.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:35.929 BER to 02:11:01.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:36.000 Output buffer full (repeat 31987)
+2011-08-27T02:24:36.476 BER to 02:11:02.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:37.800 Output buffer full (repeat 21561)
+2011-08-27T02:24:37.943 BER to 02:11:03.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:38.023 Output buffer full (repeat 5547)
+2011-08-27T02:24:38.509 BER to 02:11:04.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:39.000 Output buffer full (repeat 25708)
+2011-08-27T02:24:39.046 BER to 02:11:05.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:39.595 BER to 02:11:06.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:40.023 Output buffer full (repeat 23693)
+2011-08-27T02:24:40.219 BER to 02:11:07.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:40.764 BER to 02:11:08.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:41.808 Output buffer full (repeat 24072)
+2011-08-27T02:24:42.000 Output buffer full (repeat 5299)
+2011-08-27T02:24:42.123 BER to 02:11:09.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:42.657 BER to 02:11:10.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:43.000 Output buffer full (repeat 29758)
+2011-08-27T02:24:43.121 BER to 02:11:11.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:43.676 BER to 02:11:12.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:44.012 Output buffer full (repeat 27603)
+2011-08-27T02:24:44.185 BER to 02:11:13.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:44.739 BER to 02:11:14.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:45.780 Output buffer full (repeat 24567)
+2011-08-27T02:24:46.000 Output buffer full (repeat 5303)
+2011-08-27T02:24:46.118 BER to 02:11:15.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:46.624 BER to 02:11:16.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:47.000 Output buffer full (repeat 29009)
+2011-08-27T02:24:47.198 BER to 02:11:17.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:47.723 BER to 02:11:18.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:48.000 Output buffer full (repeat 26154)
+2011-08-27T02:24:48.286 BER to 02:11:19.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:48.901 BER to 02:11:20.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:49.941 Output buffer full (repeat 25053)
+2011-08-27T02:24:50.000 Output buffer full (repeat 2063)
+2011-08-27T02:24:50.339 BER to 02:11:21.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:50.869 BER to 02:11:22.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:51.000 Output buffer full (repeat 27926)
+2011-08-27T02:24:51.447 BER to 02:11:23.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:52.000 Output buffer full (repeat 22213)
+2011-08-27T02:24:52.090 BER to 02:11:24.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:52.620 BER to 02:11:25.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:53.042 Output buffer full (repeat 26889)
+2011-08-27T02:24:53.218 BER to 02:11:26.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:53.795 BER to 02:11:27.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:54.000 Output buffer full (repeat 25258)
+2011-08-27T02:24:54.393 BER to 02:11:28.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:55.000 Output buffer full (repeat 19451)
+2011-08-27T02:24:55.038 BER to 02:11:29.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:55.527 BER to 02:11:30.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:56.000 Output buffer full (repeat 27797)
+2011-08-27T02:24:56.083 BER to 02:11:31.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:56.667 BER to 02:11:32.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:57.875 Output buffer full (repeat 28062)
+2011-08-27T02:24:58.044 Output buffer full (repeat 2469)
+2011-08-27T02:24:58.099 BER to 02:11:33.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:58.618 BER to 02:11:34.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:59.000 Output buffer full (repeat 26634)
+2011-08-27T02:24:59.116 BER to 02:11:35.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:24:59.830 BER to 02:11:36.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:00.005 Output buffer full (repeat 20758)
+2011-08-27T02:25:00.443 BER to 02:11:37.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:00.961 BER to 02:11:38.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:01.000 Output buffer full (repeat 32041)
+2011-08-27T02:25:01.549 BER to 02:11:39.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:02.000 Output buffer full (repeat 26823)
+2011-08-27T02:25:02.104 BER to 02:11:40.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:02.614 BER to 02:11:41.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:03.000 Output buffer full (repeat 32420)
+2011-08-27T02:25:03.202 BER to 02:11:42.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:03.693 BER to 02:11:43.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:04.000 Output buffer full (repeat 30498)
+2011-08-27T02:25:04.236 BER to 02:11:44.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:04.772 BER to 02:11:45.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:05.000 Output buffer full (repeat 29347)
+2011-08-27T02:25:06.000 Output buffer full (repeat 4682)
+2011-08-27T02:25:06.132 BER to 02:11:46.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:06.657 BER to 02:11:47.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:07.000 Output buffer full (repeat 30788)
+2011-08-27T02:25:07.230 BER to 02:11:48.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:07.809 BER to 02:11:49.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:08.000 Output buffer full (repeat 23481)
+2011-08-27T02:25:08.388 BER to 02:11:50.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:08.937 BER to 02:11:51.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:09.032 Output buffer full (repeat 24513)
+2011-08-27T02:25:09.502 BER to 02:11:52.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:10.019 Output buffer full (repeat 25738)
+2011-08-27T02:25:10.128 BER to 02:11:53.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:10.721 BER to 02:11:54.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:11.000 Output buffer full (repeat 23486)
+2011-08-27T02:25:11.247 BER to 02:11:55.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:11.845 BER to 02:11:56.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:12.000 Output buffer full (repeat 27049)
+2011-08-27T02:25:12.370 BER to 02:11:57.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:12.975 BER to 02:11:58.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:13.005 Output buffer full (repeat 22741)
+2011-08-27T02:25:14.018 Output buffer full (repeat 2512)
+2011-08-27T02:25:14.430 BER to 02:11:59.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:14.986 BER to 02:12:00.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:15.000 Output buffer full (repeat 26331)
+2011-08-27T02:25:15.514 BER to 02:12:01.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:16.000 Output buffer full (repeat 25096)
+2011-08-27T02:25:16.101 BER to 02:12:02.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:16.657 BER to 02:12:03.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:17.000 Output buffer full (repeat 24409)
+2011-08-27T02:25:18.020 Output buffer full (repeat 2456)
+2011-08-27T02:25:18.102 BER to 02:12:04.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:18.659 BER to 02:12:05.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:19.000 Output buffer full (repeat 24850)
+2011-08-27T02:25:19.202 BER to 02:12:06.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:19.784 BER to 02:12:07.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:20.032 Output buffer full (repeat 26448)
+2011-08-27T02:25:20.328 BER to 02:12:08.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:20.879 BER to 02:12:09.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:21.000 Output buffer full (repeat 24806)
+2011-08-27T02:25:21.460 BER to 02:12:10.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:22.000 Output buffer full (repeat 25748)
+2011-08-27T02:25:22.002 BER to 02:12:11.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:22.579 BER to 02:12:12.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:23.000 Output buffer full (repeat 27935)
+2011-08-27T02:25:23.098 BER to 02:12:13.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:23.599 BER to 02:12:14.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:24.000 Output buffer full (repeat 27239)
+2011-08-27T02:25:24.174 BER to 02:12:15.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:24.704 BER to 02:12:16.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:25.000 Output buffer full (repeat 25391)
+2011-08-27T02:25:25.343 BER to 02:12:17.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:25.920 BER to 02:12:18.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:26.000 Output buffer full (repeat 23274)
+2011-08-27T02:25:26.470 BER to 02:12:19.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:27.042 BER to 02:12:20.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:27.044 Output buffer full (repeat 26452)
+2011-08-27T02:25:27.573 BER to 02:12:21.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:28.000 Output buffer full (repeat 24554)
+2011-08-27T02:25:28.126 BER to 02:12:22.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:28.730 BER to 02:12:23.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:29.000 Output buffer full (repeat 25677)
+2011-08-27T02:25:30.270 Output buffer full (repeat 4222)
+2011-08-27T02:25:30.345 BER to 02:12:24.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:31.000 Output buffer full (repeat 14994)
+2011-08-27T02:25:31.014 BER to 02:12:25.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:31.524 BER to 02:12:26.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:32.000 Output buffer full (repeat 32207)
+2011-08-27T02:25:32.051 BER to 02:12:27.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:32.632 BER to 02:12:28.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:33.000 Output buffer full (repeat 26856)
+2011-08-27T02:25:33.226 BER to 02:12:29.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:33.739 BER to 02:12:30.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:34.000 Output buffer full (repeat 32594)
+2011-08-27T02:25:35.093 Output buffer full (repeat 6011)
+2011-08-27T02:25:35.161 BER to 02:12:31.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:35.683 BER to 02:12:32.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:36.000 Output buffer full (repeat 24355)
+2011-08-27T02:25:36.305 BER to 02:12:33.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:36.840 BER to 02:12:34.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:37.000 Output buffer full (repeat 25423)
+2011-08-27T02:25:37.383 BER to 02:12:35.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:37.892 BER to 02:12:36.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:38.000 Output buffer full (repeat 26607)
+2011-08-27T02:25:39.158 Output buffer full (repeat 9143)
+2011-08-27T02:25:39.264 BER to 02:12:37.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:39.777 BER to 02:12:38.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:40.000 Output buffer full (repeat 23175)
+2011-08-27T02:25:40.327 BER to 02:12:39.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:40.826 BER to 02:12:40.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:41.000 Output buffer full (repeat 29623)
+2011-08-27T02:25:41.353 BER to 02:12:41.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:41.895 BER to 02:12:42.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:42.080 Output buffer full (repeat 27439)
+2011-08-27T02:25:43.142 Output buffer full (repeat 8946)
+2011-08-27T02:25:43.248 BER to 02:12:43.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:43.811 BER to 02:12:44.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:44.043 Output buffer full (repeat 23282)
+2011-08-27T02:25:44.325 BER to 02:12:45.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:44.832 BER to 02:12:46.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:45.012 Output buffer full (repeat 27929)
+2011-08-27T02:25:45.373 BER to 02:12:47.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:45.902 BER to 02:12:48.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:46.000 Output buffer full (repeat 29297)
+2011-08-27T02:25:47.216 Output buffer full (repeat 6886)
+2011-08-27T02:25:47.390 BER to 02:12:49.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:47.908 BER to 02:12:50.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:48.053 Output buffer full (repeat 21346)
+2011-08-27T02:25:48.415 BER to 02:12:51.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:48.931 BER to 02:12:52.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:49.000 Output buffer full (repeat 29245)
+2011-08-27T02:25:49.447 BER to 02:12:53.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:49.991 BER to 02:12:54.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:50.000 Output buffer full (repeat 27780)
+2011-08-27T02:25:51.232 Output buffer full (repeat 9711)
+2011-08-27T02:25:51.409 BER to 02:12:55.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:52.000 Output buffer full (repeat 17542)
+2011-08-27T02:25:52.014 BER to 02:12:56.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:52.544 BER to 02:12:57.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:53.000 Output buffer full (repeat 28544)
+2011-08-27T02:25:53.070 BER to 02:12:58.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:53.623 BER to 02:12:59.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:54.040 Output buffer full (repeat 26157)
+2011-08-27T02:25:54.170 BER to 02:13:00.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:55.275 Output buffer full (repeat 6502)
+2011-08-27T02:25:55.638 BER to 02:13:01.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:56.000 Output buffer full (repeat 18362)
+2011-08-27T02:25:56.157 BER to 02:13:02.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:56.752 BER to 02:13:03.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:57.000 Output buffer full (repeat 25304)
+2011-08-27T02:25:57.280 BER to 02:13:04.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:57.858 BER to 02:13:05.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:58.000 Output buffer full (repeat 26488)
+2011-08-27T02:25:59.289 Output buffer full (repeat 9406)
+2011-08-27T02:25:59.307 BER to 02:13:06.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:25:59.912 BER to 02:13:07.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:00.000 Output buffer full (repeat 18015)
+2011-08-27T02:26:00.458 BER to 02:13:08.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:01.000 Output buffer full (repeat 18171)
+2011-08-27T02:26:01.054 BER to 02:13:09.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:01.670 BER to 02:13:10.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:02.000 Output buffer full (repeat 23356)
+2011-08-27T02:26:02.248 BER to 02:13:11.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:03.302 Output buffer full (repeat 8166)
+2011-08-27T02:26:03.745 BER to 02:13:12.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:04.000 Output buffer full (repeat 14130)
+2011-08-27T02:26:04.409 BER to 02:13:13.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:05.002 Output buffer full (repeat 20940)
+2011-08-27T02:26:05.076 BER to 02:13:14.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:05.682 BER to 02:13:15.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:06.000 Output buffer full (repeat 21819)
+2011-08-27T02:26:06.223 BER to 02:13:16.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:07.344 Output buffer full (repeat 10727)
+2011-08-27T02:26:07.745 BER to 02:13:17.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:08.000 Output buffer full (repeat 17621)
+2011-08-27T02:26:08.257 BER to 02:13:18.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:08.865 BER to 02:13:19.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:09.000 Output buffer full (repeat 27040)
+2011-08-27T02:26:09.382 BER to 02:13:20.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:09.996 BER to 02:13:21.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:10.000 Output buffer full (repeat 23784)
+2011-08-27T02:26:11.350 Output buffer full (repeat 11512)
+2011-08-27T02:26:11.422 BER to 02:13:22.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:12.000 Output buffer full (repeat 15301)
+2011-08-27T02:26:12.039 BER to 02:13:23.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:12.617 BER to 02:13:24.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:13.000 Output buffer full (repeat 25082)
+2011-08-27T02:26:13.172 BER to 02:13:25.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:13.692 BER to 02:13:26.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:14.000 Output buffer full (repeat 24740)
+2011-08-27T02:26:14.294 BER to 02:13:27.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:15.392 Output buffer full (repeat 12187)
+2011-08-27T02:26:15.748 BER to 02:13:28.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:16.000 Output buffer full (repeat 16524)
+2011-08-27T02:26:16.289 BER to 02:13:29.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:16.845 BER to 02:13:30.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:17.000 Output buffer full (repeat 26801)
+2011-08-27T02:26:17.449 BER to 02:13:31.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:18.000 Output buffer full (repeat 28129)
+2011-08-27T02:26:18.039 BER to 02:13:32.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:19.445 Output buffer full (repeat 16715)
+2011-08-27T02:26:19.447 BER to 02:13:33.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:19.905 BER to 02:13:34.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:20.000 Output buffer full (repeat 21151)
+2011-08-27T02:26:20.402 BER to 02:13:35.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:20.945 BER to 02:13:36.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:21.027 Output buffer full (repeat 31649)
+2011-08-27T02:26:21.484 BER to 02:13:37.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:21.958 BER to 02:13:38.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:22.000 Output buffer full (repeat 34411)
+2011-08-27T02:26:22.430 BER to 02:13:39.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:23.471 Output buffer full (repeat 18852)
+2011-08-27T02:26:23.855 BER to 02:13:40.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:24.000 Output buffer full (repeat 17320)
+2011-08-27T02:26:24.410 BER to 02:13:41.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:24.908 BER to 02:13:42.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:25.000 Output buffer full (repeat 28265)
+2011-08-27T02:26:25.437 BER to 02:13:43.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:25.996 BER to 02:13:44.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:26.000 Output buffer full (repeat 25987)
+2011-08-27T02:26:26.490 BER to 02:13:45.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:27.524 Output buffer full (repeat 16985)
+2011-08-27T02:26:27.968 BER to 02:13:46.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:28.020 Output buffer full (repeat 13126)
+2011-08-27T02:26:28.492 BER to 02:13:47.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:29.000 Output buffer full (repeat 27396)
+2011-08-27T02:26:29.097 BER to 02:13:48.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:29.570 BER to 02:13:49.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:30.046 Output buffer full (repeat 28351)
+2011-08-27T02:26:30.108 BER to 02:13:50.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:31.499 Output buffer full (repeat 16098)
+2011-08-27T02:26:31.527 BER to 02:13:51.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:32.013 Output buffer full (repeat 15076)
+2011-08-27T02:26:32.081 BER to 02:13:52.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:32.589 BER to 02:13:53.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:33.000 Output buffer full (repeat 26915)
+2011-08-27T02:26:33.134 BER to 02:13:54.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:33.617 BER to 02:13:55.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:34.000 Output buffer full (repeat 29230)
+2011-08-27T02:26:34.167 BER to 02:13:56.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:34.803 BER to 02:13:57.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:35.006 Output buffer full (repeat 24076)
+2011-08-27T02:26:35.359 BER to 02:13:58.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:35.910 BER to 02:13:59.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:36.000 Output buffer full (repeat 27600)
+2011-08-27T02:26:36.446 BER to 02:14:00.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:36.996 BER to 02:14:01.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:37.018 Output buffer full (repeat 26257)
+2011-08-27T02:26:37.496 BER to 02:14:02.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:37.992 BER to 02:14:03.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:38.000 Output buffer full (repeat 28932)
+2011-08-27T02:26:38.497 BER to 02:14:04.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:39.535 Output buffer full (repeat 18378)
+2011-08-27T02:26:39.937 BER to 02:14:05.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:40.015 Output buffer full (repeat 12061)
+2011-08-27T02:26:40.501 BER to 02:14:06.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:41.005 Output buffer full (repeat 29088)
+2011-08-27T02:26:41.007 BER to 02:14:07.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:41.525 BER to 02:14:08.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:42.022 Output buffer full (repeat 32132)
+2011-08-27T02:26:42.044 BER to 02:14:09.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:42.587 BER to 02:14:10.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:43.596 Output buffer full (repeat 21492)
+2011-08-27T02:26:44.000 Output buffer full (repeat 11516)
+2011-08-27T02:26:44.028 BER to 02:14:11.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:44.531 BER to 02:14:12.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:45.040 Output buffer full (repeat 32614)
+2011-08-27T02:26:45.097 BER to 02:14:13.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:45.631 BER to 02:14:14.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:46.000 Output buffer full (repeat 30218)
+2011-08-27T02:26:46.178 BER to 02:14:15.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:46.688 BER to 02:14:16.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:47.653 Output buffer full (repeat 22693)
+2011-08-27T02:26:48.000 Output buffer full (repeat 13269)
+2011-08-27T02:26:48.061 BER to 02:14:17.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:48.642 BER to 02:14:18.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:49.000 Output buffer full (repeat 25882)
+2011-08-27T02:26:49.207 BER to 02:14:19.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:49.711 BER to 02:14:20.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:50.019 Output buffer full (repeat 29981)
+2011-08-27T02:26:50.282 BER to 02:14:21.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:50.882 BER to 02:14:22.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:51.000 Output buffer full (repeat 27104)
+2011-08-27T02:26:51.420 BER to 02:14:23.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:51.924 BER to 02:14:24.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:52.016 Output buffer full (repeat 32479)
+2011-08-27T02:26:52.464 BER to 02:14:25.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:53.000 Output buffer full (repeat 30419)
+2011-08-27T02:26:53.009 BER to 02:14:26.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:53.536 BER to 02:14:27.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:54.000 Output buffer full (repeat 31102)
+2011-08-27T02:26:54.068 BER to 02:14:28.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:54.589 BER to 02:14:29.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:55.647 Output buffer full (repeat 21837)
+2011-08-27T02:26:56.000 Output buffer full (repeat 12650)
+2011-08-27T02:26:56.003 BER to 02:14:30.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:56.534 BER to 02:14:31.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:57.000 Output buffer full (repeat 30832)
+2011-08-27T02:26:57.085 BER to 02:14:32.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:57.615 BER to 02:14:33.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:58.000 Output buffer full (repeat 30491)
+2011-08-27T02:26:58.142 BER to 02:14:34.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:58.688 BER to 02:14:35.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:26:59.836 Output buffer full (repeat 18604)
+2011-08-27T02:27:00.038 Output buffer full (repeat 6024)
+2011-08-27T02:27:00.263 BER to 02:14:36.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:00.764 BER to 02:14:37.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:01.000 Output buffer full (repeat 27623)
+2011-08-27T02:27:01.308 BER to 02:14:38.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:01.863 BER to 02:14:39.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:02.000 Output buffer full (repeat 29127)
+2011-08-27T02:27:02.411 BER to 02:14:40.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:03.688 Output buffer full (repeat 23168)
+2011-08-27T02:27:03.890 BER to 02:14:41.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:04.000 Output buffer full (repeat 9588)
+2011-08-27T02:27:04.392 BER to 02:14:42.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:04.951 BER to 02:14:43.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:05.000 Output buffer full (repeat 32944)
+2011-08-27T02:27:05.501 BER to 02:14:44.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:06.000 Output buffer full (repeat 28999)
+2011-08-27T02:27:06.024 BER to 02:14:45.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:06.584 BER to 02:14:46.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:07.701 Output buffer full (repeat 23317)
+2011-08-27T02:27:08.000 Output buffer full (repeat 8697)
+2011-08-27T02:27:08.050 BER to 02:14:47.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:08.576 BER to 02:14:48.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:09.000 Output buffer full (repeat 31545)
+2011-08-27T02:27:09.073 BER to 02:14:49.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:09.630 BER to 02:14:50.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:10.013 Output buffer full (repeat 30473)
+2011-08-27T02:27:10.150 BER to 02:14:51.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:10.728 BER to 02:14:52.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:11.782 Output buffer full (repeat 25446)
+2011-08-27T02:27:12.000 Output buffer full (repeat 6875)
+2011-08-27T02:27:12.147 BER to 02:14:53.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:12.657 BER to 02:14:54.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:13.016 Output buffer full (repeat 31520)
+2011-08-27T02:27:13.279 BER to 02:14:55.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:13.771 BER to 02:14:56.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:14.000 Output buffer full (repeat 31962)
+2011-08-27T02:27:14.277 BER to 02:14:57.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:14.870 BER to 02:14:58.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:15.012 Output buffer full (repeat 24766)
+2011-08-27T02:27:15.386 BER to 02:14:59.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:16.005 BER to 02:15:00.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:16.007 Output buffer full (repeat 25327)
+2011-08-27T02:27:16.597 BER to 02:15:01.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:17.000 Output buffer full (repeat 25053)
+2011-08-27T02:27:17.177 BER to 02:15:02.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:17.717 BER to 02:15:03.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:18.001 Output buffer full (repeat 26517)
+2011-08-27T02:27:18.267 BER to 02:15:04.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:18.836 BER to 02:15:05.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:19.000 Output buffer full (repeat 25317)
+2011-08-27T02:27:19.410 BER to 02:15:06.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:20.035 Output buffer full (repeat 23633)
+2011-08-27T02:27:20.051 BER to 02:15:07.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:20.597 BER to 02:15:08.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:21.050 Output buffer full (repeat 26711)
+2011-08-27T02:27:21.202 BER to 02:15:09.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:21.799 BER to 02:15:10.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:22.000 Output buffer full (repeat 25527)
+2011-08-27T02:27:22.281 BER to 02:15:11.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:22.858 BER to 02:15:12.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:23.829 Output buffer full (repeat 24630)
+2011-08-27T02:27:24.028 Output buffer full (repeat 3914)
+2011-08-27T02:27:24.359 BER to 02:15:13.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:24.970 BER to 02:15:14.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:25.000 Output buffer full (repeat 23256)
+2011-08-27T02:27:25.504 BER to 02:15:15.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:26.000 Output buffer full (repeat 25293)
+2011-08-27T02:27:26.044 BER to 02:15:16.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:26.652 BER to 02:15:17.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:27.000 Output buffer full (repeat 22677)
+2011-08-27T02:27:27.284 BER to 02:15:18.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:27.828 BER to 02:15:19.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:28.000 Output buffer full (repeat 26835)
+2011-08-27T02:27:28.381 BER to 02:15:20.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:28.931 BER to 02:15:21.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:29.030 Output buffer full (repeat 25633)
+2011-08-27T02:27:29.478 BER to 02:15:22.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:30.000 Output buffer full (repeat 24258)
+2011-08-27T02:27:30.053 BER to 02:15:23.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:30.640 BER to 02:15:24.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:31.000 Output buffer full (repeat 22353)
+2011-08-27T02:27:31.267 BER to 02:15:25.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:31.867 BER to 02:15:26.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:32.000 Output buffer full (repeat 24256)
+2011-08-27T02:27:32.431 BER to 02:15:27.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:33.000 Output buffer full (repeat 24293)
+2011-08-27T02:27:33.003 BER to 02:15:28.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:33.586 BER to 02:15:29.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:34.032 Output buffer full (repeat 25796)
+2011-08-27T02:27:34.118 BER to 02:15:30.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:34.705 BER to 02:15:31.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:35.882 Output buffer full (repeat 23032)
+2011-08-27T02:27:36.000 Output buffer full (repeat 991)
+2011-08-27T02:27:36.200 BER to 02:15:32.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:36.821 BER to 02:15:33.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:37.000 Output buffer full (repeat 22478)
+2011-08-27T02:27:37.454 BER to 02:15:34.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:38.043 Output buffer full (repeat 24420)
+2011-08-27T02:27:38.047 BER to 02:15:35.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:38.679 BER to 02:15:36.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:39.925 Output buffer full (repeat 22282)
+2011-08-27T02:27:40.000 Output buffer full (repeat 1773)
+2011-08-27T02:27:40.181 BER to 02:15:37.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:40.806 BER to 02:15:38.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:41.000 Output buffer full (repeat 23940)
+2011-08-27T02:27:41.392 BER to 02:15:39.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:41.937 BER to 02:15:40.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:42.001 Output buffer full (repeat 24820)
+2011-08-27T02:27:42.510 BER to 02:15:41.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:43.000 Output buffer full (repeat 24317)
+2011-08-27T02:27:43.105 BER to 02:15:42.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:43.722 BER to 02:15:43.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:44.000 Output buffer full (repeat 24916)
+2011-08-27T02:27:44.272 BER to 02:15:44.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:44.875 BER to 02:15:45.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:45.011 Output buffer full (repeat 24950)
+2011-08-27T02:27:45.417 BER to 02:15:46.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:46.000 Output buffer full (repeat 24267)
+2011-08-27T02:27:46.001 BER to 02:15:47.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:46.532 BER to 02:15:48.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:47.000 Output buffer full (repeat 24702)
+2011-08-27T02:27:48.000 Output buffer full (repeat 2370)
+2011-08-27T02:27:48.032 BER to 02:15:49.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:48.572 BER to 02:15:50.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:49.000 Output buffer full (repeat 26988)
+2011-08-27T02:27:49.133 BER to 02:15:51.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:49.673 BER to 02:15:52.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:50.000 Output buffer full (repeat 25003)
+2011-08-27T02:27:50.316 BER to 02:15:53.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:50.863 BER to 02:15:54.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:51.016 Output buffer full (repeat 21873)
+2011-08-27T02:27:52.000 Output buffer full (repeat 1337)
+2011-08-27T02:27:52.445 BER to 02:15:55.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:52.981 BER to 02:15:56.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:53.024 Output buffer full (repeat 25263)
+2011-08-27T02:27:53.525 BER to 02:15:57.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:54.057 Output buffer full (repeat 26691)
+2011-08-27T02:27:54.093 BER to 02:15:58.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:54.662 BER to 02:15:59.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:55.000 Output buffer full (repeat 27184)
+2011-08-27T02:27:56.034 Output buffer full (repeat 1996)
+2011-08-27T02:27:56.102 BER to 02:16:00.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:56.684 BER to 02:16:01.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:57.000 Output buffer full (repeat 23069)
+2011-08-27T02:27:57.227 BER to 02:16:02.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:57.777 BER to 02:16:03.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:58.016 Output buffer full (repeat 26207)
+2011-08-27T02:27:58.345 BER to 02:16:04.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:58.877 BER to 02:16:05.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:27:59.000 Output buffer full (repeat 27702)
+2011-08-27T02:28:00.057 Output buffer full (repeat 2599)
+2011-08-27T02:28:00.314 BER to 02:16:06.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:00.886 BER to 02:16:07.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:01.000 Output buffer full (repeat 24188)
+2011-08-27T02:28:01.420 BER to 02:16:08.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:02.000 Output buffer full (repeat 25005)
+2011-08-27T02:28:02.069 BER to 02:16:09.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:02.620 BER to 02:16:10.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:03.000 Output buffer full (repeat 24090)
+2011-08-27T02:28:04.077 Output buffer full (repeat 1993)
+2011-08-27T02:28:04.144 BER to 02:16:11.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:04.691 BER to 02:16:12.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:05.013 Output buffer full (repeat 23620)
+2011-08-27T02:28:05.315 BER to 02:16:13.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:05.865 BER to 02:16:14.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:06.014 Output buffer full (repeat 23034)
+2011-08-27T02:28:06.453 BER to 02:16:15.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:06.981 BER to 02:16:16.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:07.071 Output buffer full (repeat 25798)
+2011-08-27T02:28:08.303 Output buffer full (repeat 2419)
+2011-08-27T02:28:08.710 BER to 02:16:17.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:09.000 Output buffer full (repeat 19808)
+2011-08-27T02:28:09.309 BER to 02:16:18.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:09.835 BER to 02:16:19.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:10.000 Output buffer full (repeat 25953)
+2011-08-27T02:28:10.388 BER to 02:16:20.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:10.976 BER to 02:16:21.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:11.024 Output buffer full (repeat 24546)
+2011-08-27T02:28:11.642 BER to 02:16:22.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:12.000 Output buffer full (repeat 20278)
+2011-08-27T02:28:13.142 BER to 02:16:23.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:13.142 Output buffer full (repeat 5947)
+2011-08-27T02:28:13.716 BER to 02:16:24.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:14.000 Output buffer full (repeat 21278)
+2011-08-27T02:28:14.288 BER to 02:16:25.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:14.928 BER to 02:16:26.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:15.000 Output buffer full (repeat 24868)
+2011-08-27T02:28:15.486 BER to 02:16:27.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:16.000 Output buffer full (repeat 24759)
+2011-08-27T02:28:16.095 BER to 02:16:28.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:17.172 Output buffer full (repeat 6127)
+2011-08-27T02:28:17.535 BER to 02:16:29.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:18.000 Output buffer full (repeat 22842)
+2011-08-27T02:28:18.103 BER to 02:16:30.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:18.658 BER to 02:16:31.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:19.011 Output buffer full (repeat 23435)
+2011-08-27T02:28:19.288 BER to 02:16:32.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:19.896 BER to 02:16:33.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:20.025 Output buffer full (repeat 23246)
+2011-08-27T02:28:20.507 BER to 02:16:34.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:21.000 Output buffer full (repeat 23356)
+2011-08-27T02:28:21.089 BER to 02:16:35.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:21.640 BER to 02:16:36.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:22.000 Output buffer full (repeat 25610)
+2011-08-27T02:28:22.219 BER to 02:16:37.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:22.775 BER to 02:16:38.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:23.013 Output buffer full (repeat 25339)
+2011-08-27T02:28:23.325 BER to 02:16:39.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:23.863 BER to 02:16:40.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:24.038 Output buffer full (repeat 26989)
+2011-08-27T02:28:24.506 BER to 02:16:41.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:25.000 Output buffer full (repeat 18184)
+2011-08-27T02:28:25.259 BER to 02:16:42.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:25.802 BER to 02:16:43.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:26.000 Output buffer full (repeat 22874)
+2011-08-27T02:28:26.382 BER to 02:16:44.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:27.000 Output buffer full (repeat 23195)
+2011-08-27T02:28:27.004 BER to 02:16:45.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:27.563 BER to 02:16:46.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:28.000 Output buffer full (repeat 24792)
+2011-08-27T02:28:28.167 BER to 02:16:47.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:29.289 Output buffer full (repeat 8049)
+2011-08-27T02:28:29.592 BER to 02:16:48.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:30.000 Output buffer full (repeat 22799)
+2011-08-27T02:28:30.105 BER to 02:16:49.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:30.675 BER to 02:16:50.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:31.057 Output buffer full (repeat 27743)
+2011-08-27T02:28:31.217 BER to 02:16:51.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:31.728 BER to 02:16:52.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:32.006 Output buffer full (repeat 27688)
+2011-08-27T02:28:32.269 BER to 02:16:53.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:33.304 Output buffer full (repeat 12087)
+2011-08-27T02:28:33.670 BER to 02:16:54.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:34.000 Output buffer full (repeat 18311)
+2011-08-27T02:28:34.199 BER to 02:16:55.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:34.880 BER to 02:16:56.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:35.000 Output buffer full (repeat 25732)
+2011-08-27T02:28:35.381 BER to 02:16:57.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:35.944 BER to 02:16:58.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:36.011 Output buffer full (repeat 24961)
+2011-08-27T02:28:37.560 Output buffer full (repeat 10096)
+2011-08-27T02:28:37.664 BER to 02:16:59.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:38.014 Output buffer full (repeat 13258)
+2011-08-27T02:28:38.201 BER to 02:17:00.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:38.755 BER to 02:17:01.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:39.000 Output buffer full (repeat 26065)
+2011-08-27T02:28:39.340 BER to 02:17:02.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:39.894 BER to 02:17:03.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:40.000 Output buffer full (repeat 25343)
+2011-08-27T02:28:40.417 BER to 02:17:04.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:40.965 BER to 02:17:05.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:41.009 Output buffer full (repeat 25666)
+2011-08-27T02:28:42.289 Output buffer full (repeat 10038)
+2011-08-27T02:28:42.443 BER to 02:17:06.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:42.950 BER to 02:17:07.000: 0.0e+00 in 5.8e+05 bits: 0.0e+00
+2011-08-27T02:28:43.000 Output buffer full (repeat 21228)
+2011-08-27T02:28:43.068 tlm frame sync lost at 02:17:07.185, 7867018449(4)
+2011-08-27T02:28:43.072 crc error: 2
+2011-08-27T02:28:43.072 crc error: 1
+2011-08-27T02:28:43.494 Reach EOF.
+2011-08-27T02:28:43.805 forwarded sync losses:   0
+2011-08-27T02:28:43.805 frames processed:        7041147
+2011-08-27T02:28:43.805 frames ignored:          0
+2011-08-27T02:28:43.805 fill-frames emitted:     0
+2011-08-27T02:28:43.805 % error bins:(e-1..e-8)  0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+2011-08-27T02:28:43.805 % error bins at 0.0 BER: 100.0
+2011-08-27T02:28:43.805 Telem AOS time: 2011-08-27T02:10:18.029
+2011-08-27T02:28:43.817 Telem LOS time: 2011-08-27T02:17:07.185
+2011-08-27T02:28:43.817 Total CADU's read: 7041147
+2011-08-27T02:28:43.817 Total CADU's written: 7041146 (100.000%), I:3520573 Q:3520573
+2011-08-27T02:28:43.817 Zero pending: 1280048 for I-channel
+2011-08-27T02:28:43.820 Zero pending: 1280048 for Q-channel
+2011-08-27T02:28:45.656 total input frames: 7041147
+2011-08-27T02:28:45.656 total output frames: 0
