@@ -75,7 +75,8 @@ def test_metadata():
         'id': None,
         'ga_label': 'LS8_OLITIRS_STD-MDF_P00_LC81140740812015123LGN00_114_074-081_'
                     '20150503T031224Z20150503T031438',
-        'creation_dt': datetime.datetime(2015, 5, 22, 5, 15, 44),
+        # Default creation date is the same as the input folder ctime.
+        'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),
         'size_bytes': 4485,
         'product_type': 'raw',
         'usgs_dataset_id': 'LC81140740812015123LGN00',
