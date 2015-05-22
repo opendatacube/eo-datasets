@@ -47,7 +47,7 @@ def test_package():
         'LS8_OLITIRS_OTH_P51_GALPGS01-002_112_079_20140126': {
             'browse.jpg': '',
             'browse.fr.jpg': '',
-            'package': {
+            'product': {
                 'LC81120792014026ASA00_B1.tif': '',
                 'LC81120792014026ASA00_B2.tif': '',
                 'LC81120792014026ASA00_B3.tif': '',
@@ -113,7 +113,7 @@ def test_package():
                             'type': 'panchromatic',
                             'cell_size': 12.5,
                             'label': 'Panchromatic',
-                            'path': 'package/LC81120792014026ASA00_B8.tif'
+                            'path': 'product/LC81120792014026ASA00_B8.tif'
                         },
 
                         '2': {
@@ -121,7 +121,7 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Visible Blue',
-                            'path': 'package/LC81120792014026ASA00_B2.tif'
+                            'path': 'product/LC81120792014026ASA00_B2.tif'
                         },
 
                         '7': {
@@ -129,28 +129,28 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Short-wave Infrared 2',
-                            'path': 'package/LC81120792014026ASA00_B7.tif'
+                            'path': 'product/LC81120792014026ASA00_B7.tif'
                         },
                         'qa': {
                             'number': 'qa',
                             'type': 'quality',
                             'cell_size': 25.0,
                             'label': 'Quality',
-                            'path': 'package/LC81120792014026ASA00_BQA.tif'
+                            'path': 'product/LC81120792014026ASA00_BQA.tif'
                         },
                         '3': {
                             'number': '3',
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Visible Green',
-                            'path': 'package/LC81120792014026ASA00_B3.tif'
+                            'path': 'product/LC81120792014026ASA00_B3.tif'
                         },
                         '9': {
                             'number': '9',
                             'type': 'atmosphere',
                             'cell_size': 25.0,
                             'label': 'Cirrus',
-                            'path': 'package/LC81120792014026ASA00_B9.tif'
+                            'path': 'product/LC81120792014026ASA00_B9.tif'
                         },
 
                         '6': {
@@ -158,7 +158,7 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Short-wave Infrared 1',
-                            'path': 'package/LC81120792014026ASA00_B6.tif'
+                            'path': 'product/LC81120792014026ASA00_B6.tif'
                         },
 
                         '11': {
@@ -166,7 +166,7 @@ def test_package():
                             'type': 'thermal',
                             'cell_size': 25.0,
                             'label': 'Thermal Infrared 2',
-                            'path': 'package/LC81120792014026ASA00_B11.tif'
+                            'path': 'product/LC81120792014026ASA00_B11.tif'
                         },
 
                         '5': {
@@ -174,7 +174,7 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Near Infrared',
-                            'path': 'package/LC81120792014026ASA00_B5.tif'
+                            'path': 'product/LC81120792014026ASA00_B5.tif'
                         },
 
                         '4': {
@@ -182,7 +182,7 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Visible Red',
-                            'path': 'package/LC81120792014026ASA00_B4.tif'
+                            'path': 'product/LC81120792014026ASA00_B4.tif'
                         },
 
                         '10': {
@@ -190,14 +190,14 @@ def test_package():
                             'type': 'thermal',
                             'cell_size': 25.0,
                             'label': 'Thermal Infrared 1',
-                            'path': 'package/LC81120792014026ASA00_B10.tif'
+                            'path': 'product/LC81120792014026ASA00_B10.tif'
                         },
                         '1': {
                             'number': '1',
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Coastal Aerosol',
-                            'path': 'package/LC81120792014026ASA00_B1.tif'
+                            'path': 'product/LC81120792014026ASA00_B1.tif'
                         }
                     },
                 'sun_azimuth': 82.05926755,
@@ -325,21 +325,21 @@ def test_package():
         'browse.fr.jpg',
         'browse.jpg',
         'ga-metadata.yaml',
-        'package/LC81120792014026ASA00_B1.tif',
-        'package/LC81120792014026ASA00_B10.tif',
-        'package/LC81120792014026ASA00_B11.tif',
-        'package/LC81120792014026ASA00_B2.tif',
-        'package/LC81120792014026ASA00_B3.tif',
-        'package/LC81120792014026ASA00_B4.tif',
-        'package/LC81120792014026ASA00_B5.tif',
-        'package/LC81120792014026ASA00_B6.tif',
-        'package/LC81120792014026ASA00_B7.tif',
-        'package/LC81120792014026ASA00_B8.tif',
-        'package/LC81120792014026ASA00_B9.tif',
-        'package/LC81120792014026ASA00_BQA.tif',
-        'package/LC81120792014026ASA00_GCP.txt',
-        'package/LC81120792014026ASA00_MTL.txt',
-        'package/LO8_20140126_112_079_L1T.xml'
+        'product/LC81120792014026ASA00_B1.tif',
+        'product/LC81120792014026ASA00_B10.tif',
+        'product/LC81120792014026ASA00_B11.tif',
+        'product/LC81120792014026ASA00_B2.tif',
+        'product/LC81120792014026ASA00_B3.tif',
+        'product/LC81120792014026ASA00_B4.tif',
+        'product/LC81120792014026ASA00_B5.tif',
+        'product/LC81120792014026ASA00_B6.tif',
+        'product/LC81120792014026ASA00_B7.tif',
+        'product/LC81120792014026ASA00_B8.tif',
+        'product/LC81120792014026ASA00_B9.tif',
+        'product/LC81120792014026ASA00_BQA.tif',
+        'product/LC81120792014026ASA00_GCP.txt',
+        'product/LC81120792014026ASA00_MTL.txt',
+        'product/LO8_20140126_112_079_L1T.xml'
     ]
     assert set(checksummed_filenames) == set(expected_filenames)
     assert checksummed_filenames == expected_filenames

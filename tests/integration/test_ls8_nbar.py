@@ -46,7 +46,7 @@ def test_package():
         'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126': {
             'browse.jpg': '',
             'browse.fr.jpg': '',
-            'package': {
+            'product': {
                 'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B1.tif': '',
                 'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B2.tif': '',
                 'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B3.tif': '',
@@ -107,49 +107,49 @@ def test_package():
                     '4': {
                         'type': 'reflective',
                         'cell_size': 25.0,
-                        'path': 'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif',
+                        'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif',
                         'label': 'Visible Red',
                         'number': '4'
                     },
                     '6': {
                         'type': 'reflective',
                         'cell_size': 25.0,
-                        'path': 'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B6.tif',
+                        'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B6.tif',
                         'label': 'Short-wave Infrared 1',
                         'number': '6'
                     },
                     '1': {
                         'type': 'reflective',
                         'cell_size': 25.0,
-                        'path': 'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B1.tif',
+                        'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B1.tif',
                         'label': 'Coastal Aerosol',
                         'number': '1'
                     },
                     '2': {
                         'type': 'reflective',
                         'cell_size': 25.0,
-                        'path': 'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B2.tif',
+                        'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B2.tif',
                         'label': 'Visible Blue',
                         'number': '2'
                     },
                     '3': {
                         'type': 'reflective',
                         'cell_size': 25.0,
-                        'path': 'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B3.tif',
+                        'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B3.tif',
                         'label': 'Visible Green',
                         'number': '3'
                     },
                     '5': {
                         'type': 'reflective',
                         'cell_size': 25.0,
-                        'path': 'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B5.tif',
+                        'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B5.tif',
                         'label': 'Near Infrared',
                         'number': '5'
                     },
                     '7': {
                         'type': 'reflective',
                         'cell_size': 25.0,
-                        'path': 'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B7.tif',
+                        'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B7.tif',
                         'label': 'Short-wave Infrared 2',
                         'number': '7'
                     }
@@ -210,76 +210,76 @@ def test_package():
                                 '6': {
                                     'type': 'reflective',
                                     'cell_size': 25.0,
-                                    'path': 'package/LC81120792014026ASA00_B6.TIF',
+                                    'path': 'product/LC81120792014026ASA00_B6.TIF',
                                     'label': 'Short-wave Infrared 1',
                                     'number': '6'
                                 },
                                 '4': {
                                     'type': 'reflective',
                                     'cell_size': 25.0,
-                                    'path': 'package/LC81120792014026ASA00_B4.TIF',
+                                    'path': 'product/LC81120792014026ASA00_B4.TIF',
                                     'label': 'Visible Red',
                                     'number': '4'
                                 },
                                 '9': {
                                     'type': 'atmosphere',
                                     'cell_size': 25.0,
-                                    'path': 'package/LC81120792014026ASA00_B9.TIF',
+                                    'path': 'product/LC81120792014026ASA00_B9.TIF',
                                     'label': 'Cirrus',
                                     'number': '9'},
                                 '2': {
                                     'type': 'reflective',
                                     'cell_size': 25.0,
-                                    'path': 'package/LC81120792014026ASA00_B2.TIF',
+                                    'path': 'product/LC81120792014026ASA00_B2.TIF',
                                     'label': 'Visible Blue',
                                     'number': '2'},
                                 '8': {
                                     'type': 'panchromatic',
                                     'cell_size': 12.5,
-                                    'path': 'package/LC81120792014026ASA00_B8.TIF',
+                                    'path': 'product/LC81120792014026ASA00_B8.TIF',
                                     'label': 'Panchromatic',
                                     'number': '8'},
                                 '11': {
                                     'type': 'thermal',
                                     'cell_size': 25.0,
-                                    'path': 'package/LC81120792014026ASA00_B11.TIF',
+                                    'path': 'product/LC81120792014026ASA00_B11.TIF',
                                     'label': 'Thermal Infrared 2',
                                     'number': '11'},
                                 '5': {
                                     'type': 'reflective',
                                     'cell_size': 25.0,
-                                    'path': 'package/LC81120792014026ASA00_B5.TIF',
+                                    'path': 'product/LC81120792014026ASA00_B5.TIF',
                                     'label': 'Near Infrared',
                                     'number': '5'
                                 },
                                 'quality': {
                                     'type': 'quality',
                                     'cell_size': 25.0,
-                                    'path': 'package/LC81120792014026ASA00_BQA.TIF',
+                                    'path': 'product/LC81120792014026ASA00_BQA.TIF',
                                     'label': 'Quality',
                                     'number': 'quality'},
                                 '10': {
                                     'type': 'thermal',
                                     'cell_size': 25.0,
-                                    'path': 'package/LC81120792014026ASA00_B10.TIF',
+                                    'path': 'product/LC81120792014026ASA00_B10.TIF',
                                     'label': 'Thermal Infrared 1',
                                     'number': '10'},
                                 '1': {
                                     'type': 'reflective',
                                     'cell_size': 25.0,
-                                    'path': 'package/LC81120792014026ASA00_B1.TIF',
+                                    'path': 'product/LC81120792014026ASA00_B1.TIF',
                                     'label': 'Coastal Aerosol',
                                     'number': '1'},
                                 '3': {
                                     'type': 'reflective',
                                     'cell_size': 25.0,
-                                    'path': 'package/LC81120792014026ASA00_B3.TIF',
+                                    'path': 'product/LC81120792014026ASA00_B3.TIF',
                                     'label': 'Visible Green',
                                     'number': '3'},
                                 '7': {
                                     'type': 'reflective',
                                     'cell_size': 25.0,
-                                    'path': 'package/LC81120792014026ASA00_B7.TIF',
+                                    'path': 'product/LC81120792014026ASA00_B7.TIF',
                                     'label': 'Short-wave Infrared 2',
                                     'number': '7'}
                             },
@@ -412,11 +412,11 @@ def test_package():
         'browse.fr.jpg',
         'browse.jpg',
         'ga-metadata.yaml',
-        'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B1.tif',
-        'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B2.tif',
-        'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B3.tif',
-        'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif',
-        'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B5.tif',
-        'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B6.tif',
-        'package/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B7.tif'
+        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B1.tif',
+        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B2.tif',
+        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B3.tif',
+        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif',
+        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B5.tif',
+        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B6.tif',
+        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B7.tif'
     ]

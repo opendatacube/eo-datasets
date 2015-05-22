@@ -47,7 +47,7 @@ def test_package():
         'LS8_OLITIRS_PQ_P55_GAPQ01-032_090_081_20140726': {
             'browse.jpg': '',
             'browse.fr.jpg': '',
-            'package': {
+            'product': {
                 'LS8_OLITIRS_PQ_P55_GAPQ01-032_090_081_20140726.tif': '',
             },
             'ga-metadata.yaml': '',
@@ -92,7 +92,7 @@ def test_package():
                 'satellite_ref_point_start': {'x': 90, 'y': 81},
                 'bands': {
                     'pqa': {
-                        'path': 'package/LS8_OLITIRS_PQ_P55_GAPQ01-032_090_081_20140726.tif',
+                        'path': 'product/LS8_OLITIRS_PQ_P55_GAPQ01-032_090_081_20140726.tif',
                         'number': 'pqa'
                     }
                 }
@@ -287,84 +287,84 @@ def test_package():
                                             '1': {
                                                 'label': 'Coastal Aerosol',
                                                 'cell_size': 25.0,
-                                                'path': 'package/LC80900812014207LGN00_B1.TIF',
+                                                'path': 'product/LC80900812014207LGN00_B1.TIF',
                                                 'type': 'reflective',
                                                 'number': '1'
                                             },
                                             '6': {
                                                 'label': 'Short-wave Infrared 1',
                                                 'cell_size': 25.0,
-                                                'path': 'package/LC80900812014207LGN00_B6.TIF',
+                                                'path': 'product/LC80900812014207LGN00_B6.TIF',
                                                 'type': 'reflective',
                                                 'number': '6'
                                             },
                                             'quality': {
                                                 'label': 'Quality',
                                                 'cell_size': 25.0,
-                                                'path': 'package/LC80900812014207LGN00_BQA.TIF',
+                                                'path': 'product/LC80900812014207LGN00_BQA.TIF',
                                                 'type': 'quality',
                                                 'number': 'quality'
                                             },
                                             '8': {
                                                 'label': 'Panchromatic',
                                                 'cell_size': 12.5,
-                                                'path': 'package/LC80900812014207LGN00_B8.TIF',
+                                                'path': 'product/LC80900812014207LGN00_B8.TIF',
                                                 'type': 'panchromatic',
                                                 'number': '8'
                                             },
                                             '3': {
                                                 'label': 'Visible Green',
                                                 'cell_size': 25.0,
-                                                'path': 'package/LC80900812014207LGN00_B3.TIF',
+                                                'path': 'product/LC80900812014207LGN00_B3.TIF',
                                                 'type': 'reflective',
                                                 'number': '3'
                                             },
                                             '2': {
                                                 'label': 'Visible Blue',
                                                 'cell_size': 25.0,
-                                                'path': 'package/LC80900812014207LGN00_B2.TIF',
+                                                'path': 'product/LC80900812014207LGN00_B2.TIF',
                                                 'type': 'reflective',
                                                 'number': '2'
                                             },
                                             '5': {
                                                 'label': 'Near Infrared',
                                                 'cell_size': 25.0,
-                                                'path': 'package/LC80900812014207LGN00_B5.TIF',
+                                                'path': 'product/LC80900812014207LGN00_B5.TIF',
                                                 'type': 'reflective',
                                                 'number': '5'
                                             },
                                             '4': {
                                                 'label': 'Visible Red',
                                                 'cell_size': 25.0,
-                                                'path': 'package/LC80900812014207LGN00_B4.TIF',
+                                                'path': 'product/LC80900812014207LGN00_B4.TIF',
                                                 'type': 'reflective',
                                                 'number': '4'
                                             },
                                             '7': {
                                                 'label': 'Short-wave Infrared 2',
                                                 'cell_size': 25.0,
-                                                'path': 'package/LC80900812014207LGN00_B7.TIF',
+                                                'path': 'product/LC80900812014207LGN00_B7.TIF',
                                                 'type': 'reflective',
                                                 'number': '7'
                                             },
                                             '10': {
                                                 'label': 'Thermal Infrared 1',
                                                 'cell_size': 25.0,
-                                                'path': 'package/LC80900812014207LGN00_B10.TIF',
+                                                'path': 'product/LC80900812014207LGN00_B10.TIF',
                                                 'type': 'thermal',
                                                 'number': '10'
                                             },
                                             '11': {
                                                 'label': 'Thermal Infrared 2',
                                                 'cell_size': 25.0,
-                                                'path': 'package/LC80900812014207LGN00_B11.TIF',
+                                                'path': 'product/LC80900812014207LGN00_B11.TIF',
                                                 'type': 'thermal',
                                                 'number': '11'
                                             },
                                             '9': {
                                                 'label': 'Cirrus',
                                                 'cell_size': 25.0,
-                                                'path': 'package/LC80900812014207LGN00_B9.TIF',
+                                                'path': 'product/LC80900812014207LGN00_B9.TIF',
                                                 'type': 'atmosphere',
                                                 'number': '9'
                                             }
@@ -390,7 +390,7 @@ def test_package():
         'browse.fr.jpg',
         'browse.jpg',
         'ga-metadata.yaml',
-        'package/LS8_OLITIRS_PQ_P55_GAPQ01-032_090_081_20140726.tif',
+        'product/LS8_OLITIRS_PQ_P55_GAPQ01-032_090_081_20140726.tif',
     ]
 
 

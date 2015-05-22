@@ -128,73 +128,73 @@ lineage:
                 geometric_rmse_model_y: 5.194
                 bands:
                     '1':
-                        path: package/LC80900812014207LGN00_B1.TIF
+                        path: product/LC80900812014207LGN00_B1.TIF
                         type: reflective
                         label: Coastal Aerosol
                         number: '1'
                         cell_size: 25.0
                     '10':
-                        path: package/LC80900812014207LGN00_B10.TIF
+                        path: product/LC80900812014207LGN00_B10.TIF
                         type: thermal
                         label: Thermal Infrared 1
                         number: '10'
                         cell_size: 25.0
                     '11':
-                        path: package/LC80900812014207LGN00_B11.TIF
+                        path: product/LC80900812014207LGN00_B11.TIF
                         type: thermal
                         label: Thermal Infrared 2
                         number: '11'
                         cell_size: 25.0
                     '2':
-                        path: package/LC80900812014207LGN00_B2.TIF
+                        path: product/LC80900812014207LGN00_B2.TIF
                         type: reflective
                         label: Visible Blue
                         number: '2'
                         cell_size: 25.0
                     '3':
-                        path: package/LC80900812014207LGN00_B3.TIF
+                        path: product/LC80900812014207LGN00_B3.TIF
                         type: reflective
                         label: Visible Green
                         number: '3'
                         cell_size: 25.0
                     '4':
-                        path: package/LC80900812014207LGN00_B4.TIF
+                        path: product/LC80900812014207LGN00_B4.TIF
                         type: reflective
                         label: Visible Red
                         number: '4'
                         cell_size: 25.0
                     '5':
-                        path: package/LC80900812014207LGN00_B5.TIF
+                        path: product/LC80900812014207LGN00_B5.TIF
                         type: reflective
                         label: Near Infrared
                         number: '5'
                         cell_size: 25.0
                     '6':
-                        path: package/LC80900812014207LGN00_B6.TIF
+                        path: product/LC80900812014207LGN00_B6.TIF
                         type: reflective
                         label: Short-wave Infrared 1
                         number: '6'
                         cell_size: 25.0
                     '7':
-                        path: package/LC80900812014207LGN00_B7.TIF
+                        path: product/LC80900812014207LGN00_B7.TIF
                         type: reflective
                         label: Short-wave Infrared 2
                         number: '7'
                         cell_size: 25.0
                     '8':
-                        path: package/LC80900812014207LGN00_B8.TIF
+                        path: product/LC80900812014207LGN00_B8.TIF
                         type: panchromatic
                         label: Panchromatic
                         number: '8'
                         cell_size: 12.5
                     '9':
-                        path: package/LC80900812014207LGN00_B9.TIF
+                        path: product/LC80900812014207LGN00_B9.TIF
                         type: atmosphere
                         label: Cirrus
                         number: '9'
                         cell_size: 25.0
                     quality:
-                        path: package/LC80900812014207LGN00_BQA.TIF
+                        path: product/LC80900812014207LGN00_BQA.TIF
                         type: quality
                         label: Quality
                         number: quality

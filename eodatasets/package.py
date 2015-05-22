@@ -272,7 +272,7 @@ def package_dataset(dataset_driver,
         return
 
     _LOG.debug('Packaging %r -> %r', image_path, target_path)
-    package_directory = target_path.joinpath('package')
+    package_directory = target_path.joinpath('product')
 
     file_paths = []
 

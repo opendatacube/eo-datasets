@@ -47,7 +47,7 @@ def test_metadata():
 
     assert_file_structure(output_path, {
         'LS7_ETM_STD-RCC_P00_L7EB2011239021036ASA111_0_0_20110827T021036Z20110827T021707': {
-            'package': {
+            'product': {
                 'ephem.log': '',
                 'acs.log': '',
                 'L7EB2011239021036ASA111Q.data': '',
@@ -112,11 +112,11 @@ def test_metadata():
     checksummed_filenames = load_checksum_filenames(output_checksum_path)
     assert checksummed_filenames == [
         'ga-metadata.yaml',
-        'package/L7EB2011239021036ASA111I.data',
-        'package/L7EB2011239021036ASA111Q.data',
-        'package/acs.log',
-        'package/demod.log',
-        'package/ephem.log',
-        'package/passinfo',
-        'package/ref.log',
+        'product/L7EB2011239021036ASA111I.data',
+        'product/L7EB2011239021036ASA111Q.data',
+        'product/acs.log',
+        'product/demod.log',
+        'product/ephem.log',
+        'product/passinfo',
+        'product/ref.log',
     ]
