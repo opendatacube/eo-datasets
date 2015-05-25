@@ -9,7 +9,6 @@ import datetime
 
 from eodatasets import type as ptype
 
-
 _log = logging.getLogger(__name__)
 
 
@@ -80,8 +79,12 @@ def _usgs_id_from_filename(filename):
     '7EB2012028010752ASA111'
     >>> _usgs_id_from_filename('L5TB2003339014237ASA111I00.data')
     'L5TB2003339014237ASA111'
+    >>> _usgs_id_from_filename('L7EB2015118010116ASA213Q00.data')
+    'L7EB2015118010116ASA213'
     """
-    return filename[:filename.rindex('I')]
+    i, q = filename.rfind('I'), filename.rfind('Q')
+    assert i > 0 or q > 0
+    return filename[:max(i, q)]
 
 
 def _expand_platform_info(vehicle_char, vehicle_num, instrument_char, sensor_mode_char):

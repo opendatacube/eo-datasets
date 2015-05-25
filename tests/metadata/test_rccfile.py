@@ -1,14 +1,13 @@
 # coding=utf-8
 from __future__ import absolute_import
-import unittest
 import datetime
 
 from eodatasets import type as ptype
 from eodatasets.metadata import rccfile
-from tests import write_files
+from tests import write_files, TestCase
 
 
-class TestRccExtract(unittest.TestCase):
+class TestRccExtract(TestCase):
     def test_extract_ls7_rcc_filename_fields(self):
         md = rccfile._extract_rcc_filename_fields(ptype.DatasetMetadata(), 'L7EB2012028010752ASA111I.data')
         self.assertEqual(md.platform.code, 'LANDSAT_7')
@@ -77,3 +76,136 @@ class TestRccExtract(unittest.TestCase):
         # From the old onreceipt codebase,
         # Default L5 LOS is: AOS + (I.data fileSize) * 8.0 / 84900000.0
         self.assertEqual(md.acquisition.los, datetime.datetime(2003, 12, 5, 1, 42, 37))
+
+    def test_parse_variations(self):
+        new_examples = {
+            'L7EB2007303000923ASA222Q.data':
+                ptype.DatasetMetadata(
+                    ga_level='P00',
+                    usgs_dataset_id='L7EB2007303000923ASA222',
+                    platform=ptype.PlatformMetadata(code='LANDSAT_7'),
+                    instrument=ptype.InstrumentMetadata(name='ETM', operation_mode='BUMPER'),
+                    format_=ptype.FormatMetadata(name='RCC'),
+                    acquisition=ptype.AcquisitionMetadata(
+                        aos=datetime.datetime(2007, 10, 30, 0, 9, 23),
+                        groundstation=ptype.GroundstationMetadata(code='ASA')
+                    )
+                ),
+            'L7EB2015118010116ASA213Q00.data':
+                ptype.DatasetMetadata(
+                    ga_level='P00',
+                    usgs_dataset_id='L7EB2015118010116ASA213',
+                    platform=ptype.PlatformMetadata(code='LANDSAT_7'),
+                    instrument=ptype.InstrumentMetadata(name='ETM', operation_mode='BUMPER'),
+                    format_=ptype.FormatMetadata(name='RCC', version=0),
+                    acquisition=ptype.AcquisitionMetadata(
+                        aos=datetime.datetime(2015, 4, 28, 1, 1, 16),
+                        groundstation=ptype.GroundstationMetadata(code='ASA')
+                    )
+                ),
+            'L7EB2011239021036ASA111Q.data':
+                ptype.DatasetMetadata(
+                    ga_level='P00',
+                    usgs_dataset_id='L7EB2011239021036ASA111',
+                    platform=ptype.PlatformMetadata(code='LANDSAT_7'),
+                    instrument=ptype.InstrumentMetadata(name='ETM', operation_mode='BUMPER'),
+                    format_=ptype.FormatMetadata(name='RCC'),
+                    acquisition=ptype.AcquisitionMetadata(
+                        aos=datetime.datetime(2011, 8, 27, 2, 10, 36),
+                        groundstation=ptype.GroundstationMetadata(code='ASA')
+                    )
+                ),
+            'L5TB2005120001242ASA111I.data':
+                ptype.DatasetMetadata(
+                    ga_level='P00',
+                    usgs_dataset_id='L5TB2005120001242ASA111',
+                    platform=ptype.PlatformMetadata(code='LANDSAT_5'),
+                    instrument=ptype.InstrumentMetadata(name='TM', operation_mode='BUMPER'),
+                    format_=ptype.FormatMetadata(name='RCC'),
+                    acquisition=ptype.AcquisitionMetadata(
+                        aos=datetime.datetime(2005, 4, 30, 0, 12, 42),
+                        groundstation=ptype.GroundstationMetadata(code='ASA')
+                    )
+                ),
+            'L5TT1995117002206ASA111I00.data':
+                ptype.DatasetMetadata(
+                    ga_level='P00',
+                    usgs_dataset_id='L5TT1995117002206ASA111',
+                    platform=ptype.PlatformMetadata(code='LANDSAT_5'),
+                    instrument=ptype.InstrumentMetadata(name='TM', operation_mode='SAM'),
+                    format_=ptype.FormatMetadata(name='RCC', version=0),
+                    acquisition=ptype.AcquisitionMetadata(
+                        aos=datetime.datetime(1995, 4, 27, 0, 22, 6),
+                        groundstation=ptype.GroundstationMetadata(code='ASA')
+                    )
+                ),
+            'L5TT1990118013106ASA111I00.data':
+                ptype.DatasetMetadata(
+                    ga_level='P00',
+                    usgs_dataset_id='L5TT1990118013106ASA111',
+                    platform=ptype.PlatformMetadata(code='LANDSAT_5'),
+                    instrument=ptype.InstrumentMetadata(name='TM', operation_mode='SAM'),
+                    format_=ptype.FormatMetadata(name='RCC', version=0),
+                    acquisition=ptype.AcquisitionMetadata(
+                        aos=datetime.datetime(1990, 4, 28, 1, 31, 6),
+                        groundstation=ptype.GroundstationMetadata(code='ASA')
+                    )
+                ),
+            'L7ET2005302020634ASA123Q.data':
+                ptype.DatasetMetadata(
+                    ga_level='P00',
+                    usgs_dataset_id='L7ET2005302020634ASA123',
+                    platform=ptype.PlatformMetadata(code='LANDSAT_7'),
+                    instrument=ptype.InstrumentMetadata(name='ETM', operation_mode='SAM'),
+                    format_=ptype.FormatMetadata(name='RCC'),
+                    acquisition=ptype.AcquisitionMetadata(
+                        aos=datetime.datetime(2005, 10, 29, 2, 6, 34),
+                        groundstation=ptype.GroundstationMetadata(code='ASA')
+                    )
+                ),
+            'L5TB2011299000126ASA111I00.data':
+                ptype.DatasetMetadata(
+                    ga_level='P00',
+                    usgs_dataset_id='L5TB2011299000126ASA111',
+                    platform=ptype.PlatformMetadata(code='LANDSAT_5'),
+                    instrument=ptype.InstrumentMetadata(name='TM', operation_mode='BUMPER'),
+                    format_=ptype.FormatMetadata(name='RCC', version=0),
+                    acquisition=ptype.AcquisitionMetadata(
+                        aos=datetime.datetime(2011, 10, 26, 0, 1, 26),
+                        groundstation=ptype.GroundstationMetadata(code='ASA')
+                    )
+                ),
+            'L5TB2010119010045ASA214I.data':
+                ptype.DatasetMetadata(
+                    ga_level='P00',
+                    usgs_dataset_id='L5TB2010119010045ASA214',
+                    platform=ptype.PlatformMetadata(code='LANDSAT_5'),
+                    instrument=ptype.InstrumentMetadata(name='TM', operation_mode='BUMPER'),
+                    format_=ptype.FormatMetadata(name='RCC'),
+                    acquisition=ptype.AcquisitionMetadata(
+                        aos=datetime.datetime(2010, 4, 29, 1, 0, 45),
+                        groundstation=ptype.GroundstationMetadata(code='ASA')
+                    )
+                ),
+            'L7ET2000296234136ASA111Q.data':
+                ptype.DatasetMetadata(
+                    ga_level='P00',
+                    usgs_dataset_id='L7ET2000296234136ASA111',
+                    platform=ptype.PlatformMetadata(code='LANDSAT_7'),
+                    instrument=ptype.InstrumentMetadata(name='ETM', operation_mode='SAM'),
+                    format_=ptype.FormatMetadata(name='RCC'),
+                    acquisition=ptype.AcquisitionMetadata(
+                        aos=datetime.datetime(2000, 10, 22, 23, 41, 36),
+                        groundstation=ptype.GroundstationMetadata(code='ASA')
+                    )
+                ),
+        }
+
+        for file_name, expected_output in new_examples.items():
+            output = rccfile._extract_rcc_filename_fields(ptype.DatasetMetadata(), file_name)
+
+            # The ids will be different — clear them before comparison.
+            output.id_ = None
+            expected_output.id_ = None
+
+            self.assert_same(expected_output, output)
