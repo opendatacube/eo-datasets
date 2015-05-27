@@ -516,6 +516,7 @@ class ImageMetadata(SimpleObject):
                  geometric_rmse_model_y=None,
                  viewing_incidence_angle_long_track=None,
                  viewing_incidence_angle_x_track=None,
+                 day_percentage_estimate=None,
                  bands=None):
         # Typically path/row for Landsat:
         #: :type: Point
@@ -537,6 +538,10 @@ class ImageMetadata(SimpleObject):
 
         self.viewing_incidence_angle_long_track = viewing_incidence_angle_long_track
         self.viewing_incidence_angle_x_track = viewing_incidence_angle_x_track
+
+        # 0 to 100: Estimated percentage of image in daytime.
+        #: :type: float
+        self.day_percentage_estimate = day_percentage_estimate
 
         #: :type: dict of (str, BandMetadata)
         self.bands = bands

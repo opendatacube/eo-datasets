@@ -1,13 +1,31 @@
 # coding=utf-8
 from __future__ import absolute_import
+
 import hashlib
 import binascii
 import logging
 
 from pathlib import Path
 
+# PyLint doesn't recognise many distutils functions when in virtualenv. Not worth the effort.
+# pylint: disable=no-name-in-module
+from distutils import spawn
 
 _LOG = logging.getLogger(__name__)
+
+
+def find_exe(name):
+    """
+    Find the location of the given executable.
+
+    :return: the absolute path to the executable.
+    :rtype: str
+    """
+    executable = spawn.find_executable(name)
+    if not executable:
+        raise Exception('No %s command found.' % (name,))
+
+    return executable
 
 
 def calculate_file_hash(filename, hash_fn=hashlib.sha1, block_size=4096):
