@@ -30,7 +30,10 @@ install:
 script: 
     - pep8 eodatasets --max-line-length 120
     - pylint eodatasets --reports no
+    # We only count unit test coverage, not integration test coverage.
+    # Unit tests.
     - py.test --cov eodatasets eodatasets tests --runslow -m 'not slow'
+    # Integration tests.
     - py.test eodatasets tests --runslow -m 'slow'
 cache: apt
 after_success:
