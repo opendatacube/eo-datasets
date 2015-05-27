@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/GeoscienceAustralia/eodatasets.svg?branch=develop)](https://travis-ci.org/GeoscienceAustralia/eodatasets)
 [![Code Health](https://landscape.io/github/GeoscienceAustralia/eodatasets/develop/landscape.svg?style=flat)](https://landscape.io/github/GeoscienceAustralia/eodatasets/develop)
+[![Coverage Status](https://coveralls.io/repos/GeoscienceAustralia/eodatasets/badge.svg?branch=develop)](https://coveralls.io/r/GeoscienceAustralia/eodatasets)
 
 Packaging, metadata and provenance libraries for GA EO datasets. See [LICENSE](LICENSE) for license details.
 
