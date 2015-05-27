@@ -2,6 +2,7 @@
 
 pytest
 hypothesis
+mock
 
 # Load the rest from setup.py:
 -e .
