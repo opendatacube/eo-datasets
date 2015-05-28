@@ -10,7 +10,6 @@ from tests.metadata.mtl import test_ls8, test_ls7_definitive, test_ls5_definitiv
 from tests import write_files, TestCase
 import eodatasets.type as ptype
 
-
 _LS5_RAW = ptype.DatasetMetadata(
     id_=UUID('c86809b3-e894-11e4-8958-1040f381a756'),
     usgs_dataset_id='L5TB2005152015110ASA111',
@@ -290,3 +289,72 @@ class TestDrivers(TestCase):
             "LS8_OLITIRS_PQ_P55_GAPQ01-032_101_078_20141012",
             drivers.PqaDriver().get_ga_label(_EXPECTED_PQA)
         )
+
+    def test_pqa_translate_path(self):
+        input_folder = write_files({
+            'pqa.tif': '',
+            'process.log': '',
+            'passinfo': ''
+        })
+        self.assertEqual(
+            input_folder.joinpath('LS8_OLITIRS_PQ_P55_GAPQ01-032_101_078_20141012.tif'),
+            drivers.PqaDriver().translate_path(
+                _EXPECTED_PQA,
+                input_folder.joinpath('pqa.tif')
+            )
+        )
+        # Other files unchanged.
+        self.assertEqual(
+            input_folder.joinpath('process.log'),
+            drivers.PqaDriver().translate_path(
+                _EXPECTED_PQA,
+                input_folder.joinpath('process.log')
+            )
+        )
+        self.assertEqual(
+            input_folder.joinpath('passinfo'),
+            drivers.PqaDriver().translate_path(
+                _EXPECTED_PQA,
+                input_folder.joinpath('passinfo')
+            )
+        )
+
+    def test_default_landsat_bands(self):
+        # Default bands for each satellite.
+        d = drivers.OrthoDriver()
+        self.assertEqual(
+            ('7', '5', '2'),
+            d.browse_image_bands(test_ls8.EXPECTED_OUT)
+        )
+        self.assertEqual(
+            ('7', '4', '1'),
+            d.browse_image_bands(test_ls7_definitive.EXPECTED_OUT)
+        )
+        self.assertEqual(
+            ('7', '4', '1'),
+            d.browse_image_bands(test_ls5_definitive.EXPECTED_OUT)
+        )
+
+    def test_pqa_to_band(self):
+        input_folder = write_files({
+            'pqa.tif': '',
+            'process.log': '',
+            'passinfo': '',
+        })
+
+        # Creates a single band.
+        self.assertEqual(
+            ptype.BandMetadata(path=input_folder.joinpath('pqa.tif'), number='pqa'),
+            drivers.PqaDriver().to_band(None, input_folder.joinpath('pqa.tif'))
+        )
+
+        # Other files should not be bands.
+        self.assertIsNone(drivers.PqaDriver().to_band(None, input_folder.joinpath('process.log')))
+        self.assertIsNone(drivers.PqaDriver().to_band(None, input_folder.joinpath('passinfo')))
+
+    def test_pqa_defaults(self):
+        # A one-band browse image.
+        self.assertEqual(drivers.PqaDriver().browse_image_bands(_EXPECTED_PQA), ('pqa',))
+
+        self.assertEqual('pqa', drivers.PqaDriver().get_id())
+        self.assertEqual(drivers.NbarDriver('brdf'), drivers.PqaDriver().expected_source())

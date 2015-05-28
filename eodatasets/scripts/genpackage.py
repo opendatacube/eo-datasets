@@ -2,10 +2,7 @@
 # coding=utf-8
 from __future__ import absolute_import
 import os
-import logging
-import random
 import tempfile
-import uuid
 
 import click
 from pathlib import Path

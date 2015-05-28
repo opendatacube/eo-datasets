@@ -9,7 +9,6 @@ from pathlib import Path
 from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, passinfo, image as md_image
 from eodatasets import type as ptype, metadata
 
-
 _LOG = logging.getLogger(__name__)
 
 
@@ -82,7 +81,7 @@ class DatasetDriver(object):
         :type dataset: ptype.DatasetMetadata
         :type path: Path
         :param path: The filename of the input file.
-        :rtype: ptype.BandMetadata
+        :rtype: ptype.BandMetadata or None
         """
         raise NotImplementedError()
 
@@ -104,6 +103,12 @@ class DatasetDriver(object):
             raise ValueError('Unknown browse bands for satellite %s' % d.platform.code)
 
         return browse_bands
+
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+
+        return self.__dict__ == other.__dict__
 
 
 def get_groundstation_code(gsi):
@@ -583,10 +588,22 @@ class PqaDriver(DatasetDriver):
         :type file_path: pathlib.Path
         :return:
         """
-        ga_label = self.get_ga_label(dataset)
-        return file_path.with_name(ga_label+file_path.suffix)
+        # Tif file will be renamed to contain the ga_label.
+        suffix = file_path.suffix.lower()
+        if '.tif' == suffix:
+            ga_label = self.get_ga_label(dataset)
+            return file_path.with_name(ga_label+suffix)
+        else:
+            # All other files are kept in the package (log files etc, if any).
+            return file_path
 
     def to_band(self, dataset, path):
+        """
+        :type dataset: ptype.DatasetMetadata
+        :type path: Path
+        :param path: The filename of the input file.
+        :rtype: ptype.BandMetadata
+        """
         if path.suffix != '.tif':
             return None
 
