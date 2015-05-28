@@ -15,7 +15,7 @@ from eodatasets.scripts import init_logging
 @click.option('--parent',
               type=click.Path(exists=True, readable=True, writable=False),
               multiple=True,
-              help='Path of the parent dataset (these datasets were derived from.)')
+              help='Path of the parent dataset (that these datasets were derived from.)')
 @click.option('--debug',
               is_flag=True,
               help='Enable debug logging')
