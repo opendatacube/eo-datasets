@@ -8,12 +8,10 @@ import datetime
 
 from pathlib import Path
 from hypothesis import given, strategy
-
 from hypothesis.specifiers import dictionary, strings
 
 from tests import write_files, TestCase, slow
 from eodatasets import serialise, compat, type as ptype
-
 
 strings_without_trailing_underscore = strategy(
     strings([chr(i) for i in range(128)])
@@ -153,3 +151,11 @@ class TestSerialise(TestCase):
                 key_separator=':'
             )
         )
+
+    def test_fails_on_unknown(self):
+        class UnknownClass(object):
+            pass
+
+        with self.assertRaises(ValueError) as context:
+            # It returns a generator, so we have to wrap it in a list to force evaluation.
+            list(serialise.as_flat_key_value({'a': 1, 'b': UnknownClass()}))
