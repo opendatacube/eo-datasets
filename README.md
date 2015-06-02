@@ -1,8 +1,8 @@
-## eodatasets
+## Earth Observation Datasets
 
-[![Build Status](https://travis-ci.org/GeoscienceAustralia/eodatasets.svg?branch=develop)](https://travis-ci.org/GeoscienceAustralia/eodatasets)
-[![Code Health](https://landscape.io/github/GeoscienceAustralia/eodatasets/develop/landscape.svg?style=flat)](https://landscape.io/github/GeoscienceAustralia/eodatasets/develop)
-[![Coverage Status](https://coveralls.io/repos/GeoscienceAustralia/eodatasets/badge.svg?branch=develop)](https://coveralls.io/r/GeoscienceAustralia/eodatasets)
+[![Build Status](https://travis-ci.org/GeoscienceAustralia/eo-datasets.svg?branch=develop)](https://travis-ci.org/GeoscienceAustralia/eo-datasets)
+[![Code Health](https://landscape.io/github/GeoscienceAustralia/eo-datasets/develop/landscape.svg?style=flat)](https://landscape.io/github/GeoscienceAustralia/eo-datasets/develop)
+[![Coverage Status](https://coveralls.io/repos/GeoscienceAustralia/eo-datasets/badge.svg?branch=develop)](https://coveralls.io/r/GeoscienceAustralia/eo-datasets)
 
 Packaging, metadata and provenance libraries for GA EO datasets. See [LICENSE](LICENSE) for
 license details.
@@ -23,7 +23,7 @@ Run tests using [pytest](http://pytest.org/).
     py.test eodatasets tests
 
 Integration and other slow tests will not run by default (and are not included in reported
-[test coverage](https://coveralls.io/r/GeoscienceAustralia/eodatasets)). Include the `--runslow`
+[test coverage](https://coveralls.io/r/GeoscienceAustralia/eo-datasets)). Include the `--runslow`
 parameter to run all tests.
 
     py.test --runslow eodatasets tests
