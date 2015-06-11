@@ -14,7 +14,7 @@ class MdfTests(unittest.TestCase):
         dataset_id = 'LC80880750762013254ASA00'
         metadata = mdf._extract_mdf_id_fields(ptype.DatasetMetadata(), dataset_id)
 
-        self.assertEquals(metadata.usgs_dataset_id, dataset_id)
+        self.assertEquals(metadata.usgs.interval_id, dataset_id)
         self.assertEquals(metadata.platform.code, 'LANDSAT_8')
         self.assertEquals(metadata.instrument.name, 'OLI_TIRS')
         self.assertEquals(metadata.image.satellite_ref_point_start, ptype.Point(88, 75))
@@ -35,7 +35,7 @@ class MdfTests(unittest.TestCase):
         })
 
         def _test_mdf_output(metadata):
-            self.assertEquals(metadata.usgs_dataset_id, 'LC80880750762013254ASA00')
+            self.assertEquals(metadata.usgs.interval_id, 'LC80880750762013254ASA00')
             self.assertEquals(metadata.platform.code, 'LANDSAT_8')
             self.assertEquals(metadata.instrument.name, 'OLI_TIRS')
             self.assertEqual(metadata.format_.name, 'MDF')
@@ -78,7 +78,7 @@ class MdfTests(unittest.TestCase):
         })
 
         def _test_mdf_output(metadata):
-            self.assertEquals(metadata.usgs_dataset_id, 'LC80880750762013254ASA00')
+            self.assertEquals(metadata.usgs.interval_id, 'LC80880750762013254ASA00')
             self.assertEquals(metadata.platform.code, 'LANDSAT_8')
             self.assertEquals(metadata.instrument.name, 'OLI_TIRS')
             self.assertEqual(metadata.format_.name, 'MDF')

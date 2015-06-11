@@ -258,7 +258,7 @@ def _fill_dataset_label(dataset, format_str, **additionals):
         'format': dataset.format_.name.upper(),
         'level': level,
         'galevel': ga_level,
-        'usgsid': dataset.usgs_dataset_id,
+        'usgs': dataset.usgs,
         'path': path,
         'rows': row,
         'stationcode': station_code,
@@ -307,7 +307,7 @@ class RawDriver(DatasetDriver):
 
         return _fill_dataset_label(
             dataset,
-            '{satnumber}_{sensor}_STD-{format}_P00_{usgsid}_{path}_{rows}_{startdt}Z{enddt}'
+            '{satnumber}_{sensor}_STD-{format}_P00_{usgs.interval_id}_{path}_{rows}_{startdt}Z{enddt}'
         )
 
     def fill_metadata(self, dataset, path):

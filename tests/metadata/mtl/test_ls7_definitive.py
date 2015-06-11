@@ -14,7 +14,6 @@ FILENAME = 'ls7_definitive_mtl.txt'
 
 EXPECTED_OUT = ptype.DatasetMetadata(
     id_=uuid.UUID('3ff71eb0-d5c5-11e4-aebb-1040f381a756'),
-    usgs_dataset_id='LE71140732005007ASA00',
     product_level='L1G',
     creation_dt=datetime.datetime(2015, 4, 7, 1, 58, 25),
     platform=ptype.PlatformMetadata(
@@ -31,6 +30,9 @@ EXPECTED_OUT = ptype.DatasetMetadata(
         groundstation=ptype.GroundstationMetadata(
             code='ASA'
         )
+    ),
+    usgs=ptype.UsgsMetadata(
+        scene_id='LE71140732005007ASA00'
     ),
     extent=ptype.ExtentMetadata(
         coord=ptype.CoordPolygon(

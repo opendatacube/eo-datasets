@@ -13,7 +13,6 @@ import eodatasets.scripts.genpackage
 from tests import temp_dir, assert_file_structure, assert_same, integration_test
 from tests.integration import get_script_path, load_checksum_filenames
 
-
 script_path = get_script_path(eodatasets.scripts.genpackage)
 
 #: :type: Path
@@ -85,7 +84,9 @@ def test_package():
         'checksum_path': 'package.sha1',
         'size_bytes': 258695,
         'instrument': {'name': 'OLI_TIRS'},
-        'usgs_dataset_id': 'LC81120792014026ASA00',
+        'usgs': {
+            'scene_id': 'LC81120792014026ASA00'
+        },
         'format': {'name': 'GEOTIFF'},
         # Creation date comes from the MTL.
         'creation_dt': datetime.datetime(2015, 4, 7, 0, 58, 8),
@@ -285,6 +286,9 @@ def test_package():
                                 'checksum_path': 'package.sha1',
                                 'ga_level': 'P00',
                                 'id': '4ec8fe97-e8b9-11e4-87ff-1040f381a756',
+                                'usgs': {
+                                    'interval_id': 'LC81160740742015089ASA00'
+                                },
                                 'size_bytes': 637660782,
                                 'creation_dt': datetime.datetime(2015, 4, 22, 6, 32, 4),
                                 'acquisition':
@@ -310,8 +314,8 @@ def test_package():
                                         'source_datasets': {}
                                     },
                                 'platform': {'code': 'LANDSAT_8'},
-                                'usgs_dataset_id': 'LC81160740742015089ASA00',
-                                'format': {'name': 'MDF'}}
+                                'format': {'name': 'MDF'}
+                            }
                     }
             }
     })

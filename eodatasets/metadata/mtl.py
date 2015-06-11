@@ -263,7 +263,9 @@ def populate_from_mtl_dict(md, mtl_, folder):
     :type mtl_: dict of (str, obj)
     :rtype: eodatasets.type.DatasetMetadata
     """
-    md.usgs_dataset_id = _get(mtl_, 'METADATA_FILE_INFO', 'landsat_scene_id') or md.usgs_dataset_id
+    if not md.usgs:
+        md.usgs = ptype.UsgsMetadata()
+    md.usgs.scene_id = _get(mtl_, 'METADATA_FILE_INFO', 'landsat_scene_id')
     md.creation_dt = _get(mtl_, 'METADATA_FILE_INFO', 'file_date')
 
     # TODO: elsewhere we've used 'GAORTHO01' etc. Here it's 'L1T' etc.

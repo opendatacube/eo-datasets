@@ -53,7 +53,7 @@ class TestRccExtract(TestCase):
         self.assertEqual(md.acquisition.groundstation.code, 'ASN')
         self.assertEqual(md.ga_level, 'P00')
         self.assertEqual(md.format_.name, 'RCC')
-        self.assertEqual(md.usgs_dataset_id, 'L7EB2013259012832ASN213')
+        self.assertEqual(md.usgs.interval_id, 'L7EB2013259012832ASN213')
         self.assertEqual(md.acquisition.aos, datetime.datetime(2013, 9, 16, 1, 28, 32))
         # From the old onreceipt codebase,
         # Default L7 LOS is: AOS + (I.data fileSize) * 8.0 / 75000000.0
@@ -69,7 +69,7 @@ class TestRccExtract(TestCase):
         self.assertEqual(md.instrument.name, 'TM')
         self.assertEqual(md.acquisition.groundstation.code, 'ASA')
         self.assertEqual(md.format_.name, 'RCC')
-        self.assertEqual(md.usgs_dataset_id, 'L5TB2003339014237ASA111')
+        self.assertEqual(md.usgs.interval_id, 'L5TB2003339014237ASA111')
 
         self.assertEqual(md.acquisition.aos, datetime.datetime(2003, 12, 5, 1, 42, 37))
 
@@ -82,7 +82,7 @@ class TestRccExtract(TestCase):
             'L7EB2007303000923ASA222Q.data':
                 ptype.DatasetMetadata(
                     ga_level='P00',
-                    usgs_dataset_id='L7EB2007303000923ASA222',
+                    usgs=ptype.UsgsMetadata(interval_id='L7EB2007303000923ASA222'),
                     platform=ptype.PlatformMetadata(code='LANDSAT_7'),
                     instrument=ptype.InstrumentMetadata(name='ETM', operation_mode='BUMPER'),
                     format_=ptype.FormatMetadata(name='RCC'),
@@ -94,7 +94,7 @@ class TestRccExtract(TestCase):
             'L7EB2015118010116ASA213Q00.data':
                 ptype.DatasetMetadata(
                     ga_level='P00',
-                    usgs_dataset_id='L7EB2015118010116ASA213',
+                    usgs=ptype.UsgsMetadata(interval_id ='L7EB2015118010116ASA213'),
                     platform=ptype.PlatformMetadata(code='LANDSAT_7'),
                     instrument=ptype.InstrumentMetadata(name='ETM', operation_mode='BUMPER'),
                     format_=ptype.FormatMetadata(name='RCC', version=0),
@@ -106,7 +106,7 @@ class TestRccExtract(TestCase):
             'L7EB2011239021036ASA111Q.data':
                 ptype.DatasetMetadata(
                     ga_level='P00',
-                    usgs_dataset_id='L7EB2011239021036ASA111',
+                    usgs=ptype.UsgsMetadata(interval_id='L7EB2011239021036ASA111'),
                     platform=ptype.PlatformMetadata(code='LANDSAT_7'),
                     instrument=ptype.InstrumentMetadata(name='ETM', operation_mode='BUMPER'),
                     format_=ptype.FormatMetadata(name='RCC'),
@@ -118,7 +118,7 @@ class TestRccExtract(TestCase):
             'L5TB2005120001242ASA111I.data':
                 ptype.DatasetMetadata(
                     ga_level='P00',
-                    usgs_dataset_id='L5TB2005120001242ASA111',
+                    usgs=ptype.UsgsMetadata(interval_id='L5TB2005120001242ASA111'),
                     platform=ptype.PlatformMetadata(code='LANDSAT_5'),
                     instrument=ptype.InstrumentMetadata(name='TM', operation_mode='BUMPER'),
                     format_=ptype.FormatMetadata(name='RCC'),
@@ -130,7 +130,7 @@ class TestRccExtract(TestCase):
             'L5TT1995117002206ASA111I00.data':
                 ptype.DatasetMetadata(
                     ga_level='P00',
-                    usgs_dataset_id='L5TT1995117002206ASA111',
+                    usgs=ptype.UsgsMetadata(interval_id='L5TT1995117002206ASA111'),
                     platform=ptype.PlatformMetadata(code='LANDSAT_5'),
                     instrument=ptype.InstrumentMetadata(name='TM', operation_mode='SAM'),
                     format_=ptype.FormatMetadata(name='RCC', version=0),
@@ -142,7 +142,7 @@ class TestRccExtract(TestCase):
             'L5TT1990118013106ASA111I00.data':
                 ptype.DatasetMetadata(
                     ga_level='P00',
-                    usgs_dataset_id='L5TT1990118013106ASA111',
+                    usgs=ptype.UsgsMetadata(interval_id='L5TT1990118013106ASA111'),
                     platform=ptype.PlatformMetadata(code='LANDSAT_5'),
                     instrument=ptype.InstrumentMetadata(name='TM', operation_mode='SAM'),
                     format_=ptype.FormatMetadata(name='RCC', version=0),
@@ -154,7 +154,7 @@ class TestRccExtract(TestCase):
             'L7ET2005302020634ASA123Q.data':
                 ptype.DatasetMetadata(
                     ga_level='P00',
-                    usgs_dataset_id='L7ET2005302020634ASA123',
+                    usgs=ptype.UsgsMetadata(interval_id='L7ET2005302020634ASA123'),
                     platform=ptype.PlatformMetadata(code='LANDSAT_7'),
                     instrument=ptype.InstrumentMetadata(name='ETM', operation_mode='SAM'),
                     format_=ptype.FormatMetadata(name='RCC'),
@@ -166,7 +166,7 @@ class TestRccExtract(TestCase):
             'L5TB2011299000126ASA111I00.data':
                 ptype.DatasetMetadata(
                     ga_level='P00',
-                    usgs_dataset_id='L5TB2011299000126ASA111',
+                    usgs=ptype.UsgsMetadata(interval_id='L5TB2011299000126ASA111'),
                     platform=ptype.PlatformMetadata(code='LANDSAT_5'),
                     instrument=ptype.InstrumentMetadata(name='TM', operation_mode='BUMPER'),
                     format_=ptype.FormatMetadata(name='RCC', version=0),
@@ -178,7 +178,7 @@ class TestRccExtract(TestCase):
             'L5TB2010119010045ASA214I.data':
                 ptype.DatasetMetadata(
                     ga_level='P00',
-                    usgs_dataset_id='L5TB2010119010045ASA214',
+                    usgs=ptype.UsgsMetadata(interval_id='L5TB2010119010045ASA214'),
                     platform=ptype.PlatformMetadata(code='LANDSAT_5'),
                     instrument=ptype.InstrumentMetadata(name='TM', operation_mode='BUMPER'),
                     format_=ptype.FormatMetadata(name='RCC'),
@@ -190,7 +190,7 @@ class TestRccExtract(TestCase):
             'L7ET2000296234136ASA111Q.data':
                 ptype.DatasetMetadata(
                     ga_level='P00',
-                    usgs_dataset_id='L7ET2000296234136ASA111',
+                    usgs=ptype.UsgsMetadata(interval_id='L7ET2000296234136ASA111'),
                     platform=ptype.PlatformMetadata(code='LANDSAT_7'),
                     instrument=ptype.InstrumentMetadata(name='ETM', operation_mode='SAM'),
                     format_=ptype.FormatMetadata(name='RCC'),

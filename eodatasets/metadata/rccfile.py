@@ -168,7 +168,9 @@ def _extract_rcc_filename_fields(base_md, filename):
     if not base_md.acquisition.groundstation:
         base_md.acquisition.groundstation = ptype.GroundstationMetadata(code=fields['gsi'])
 
-    base_md.usgs_dataset_id = _usgs_id_from_filename(filename)
+    if not base_md.usgs:
+        base_md.usgs = ptype.UsgsMetadata()
+    base_md.usgs.interval_id = _usgs_id_from_filename(filename)
 
     # RCC is raw: P00
     base_md.ga_level = 'P00'

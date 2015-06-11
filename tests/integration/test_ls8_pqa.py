@@ -161,12 +161,14 @@ def test_package():
                         'lineage': {
                             'source_datasets': {
                                 'ortho': {
-                                    'usgs_dataset_id': 'LC80900812014207LGN00',
                                     'id': '7bff72fc-e96d-11e4-b15e-a0000100fe80',
                                     'size_bytes': 1758484367,
                                     'ga_label': 'LS8_OLITIRS_OTH_P51_GALPGS01-032_090_081_20140726',
                                     'platform': {'code': 'LANDSAT_8'},
                                     'instrument': {'name': 'OLI_TIRS'},
+                                    'usgs': {
+                                        'scene_id': 'LC80900812014207LGN00'
+                                    },
                                     'product_type': 'ortho',
                                     'creation_dt': datetime.datetime(2015, 4, 7, 3, 25, 59),
                                     'checksum_path': 'package.sha1',
@@ -242,13 +244,15 @@ def test_package():
                                                 'id': '99d53da0-e96a-11e4-b15e-a0000100fe80',
                                                 'size_bytes': 6138129367,
                                                 'checksum_path': 'package.sha1',
-                                                'usgs_dataset_id': 'LC80900750902014207LGN00',
                                                 'platform': {'code': 'LANDSAT_8'},
                                                 'instrument': {'name': 'OLI_TIRS'},
                                                 'product_type': 'raw',
                                                 'creation_dt': datetime.datetime(2015, 4, 7, 3, 25, 59),
                                                 'ga_level': 'P00',
                                                 'format': {'name': 'MDF'},
+                                                'usgs': {
+                                                    'interval_id': 'LC80900750902014207LGN00'
+                                                },
                                                 'ga_label': 'LS8_OLITIRS_STD-MDF_P00_LC80900750902014207LGN00_'
                                                             '090_075-090_20140727T005408Z20140727T005712',
                                                 'image': {

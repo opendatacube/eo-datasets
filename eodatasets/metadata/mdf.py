@@ -124,7 +124,10 @@ def _extract_mdf_id_fields(base_md, mdf_usgs_id):
 
     fields = m.groupdict()
 
-    base_md.usgs_dataset_id = mdf_usgs_id
+    if not base_md.usgs:
+        base_md.usgs = ptype.UsgsMetadata()
+
+    base_md.usgs.interval_id = mdf_usgs_id
 
     if not base_md.platform:
         base_md.platform = ptype.PlatformMetadata()

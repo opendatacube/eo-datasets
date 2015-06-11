@@ -12,7 +12,6 @@ import eodatasets.type as ptype
 
 _LS5_RAW = ptype.DatasetMetadata(
     id_=UUID('c86809b3-e894-11e4-8958-1040f381a756'),
-    usgs_dataset_id='L5TB2005152015110ASA111',
     ga_level='P00',
     product_type='raw',
     creation_dt=datetime.datetime(2015, 4, 22, 0, 7, 48),
@@ -26,6 +25,9 @@ _LS5_RAW = ptype.DatasetMetadata(
         los=datetime.datetime(2005, 6, 1, 2, 0, 25),
         groundstation=ptype.GroundstationMetadata(code='ASA'),
         platform_orbit=113025
+    ),
+    usgs=ptype.UsgsMetadata(
+        interval_id='L5TB2005152015110ASA111'
     ),
     lineage=ptype.LineageMetadata(
         machine=ptype.MachineMetadata(
@@ -42,12 +44,14 @@ _LS5_RAW = ptype.DatasetMetadata(
 
 _LS7_RAW = ptype.DatasetMetadata(
     id_=UUID('c50c6bd4-e895-11e4-9814-1040f381a756'),
-    usgs_dataset_id='L7ET2005007020028ASA123',
     ga_level='P00',
     product_type='raw',
     creation_dt=datetime.datetime(2015, 4, 15, 1, 42, 47),
     size_bytes=7698644992,
     checksum_path=Path('package.sha1'),
+    usgs=ptype.UsgsMetadata(
+        interval_id='L7ET2005007020028ASA123'
+    ),
     platform=ptype.PlatformMetadata(code='LANDSAT_7'),
     instrument=ptype.InstrumentMetadata(name='ETM', operation_mode='SAM'),
     format_=ptype.FormatMetadata(name='RCC'),

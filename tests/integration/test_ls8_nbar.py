@@ -182,7 +182,9 @@ def test_package():
                         'product_level': 'L1T',
                         'product_type': 'ortho',
                         'id': '5cf41d98-eda9-11e4-8a8e-1040f381a756',
-                        'usgs_dataset_id': 'LC81120792014026ASA00',
+                        'usgs': {
+                            'scene_id': 'LC81120792014026ASA00'
+                        },
                         'extent': {
                             'center_dt': datetime.datetime(2014, 1, 26, 2, 5, 23, 126373),
                             'coord': {
@@ -346,7 +348,9 @@ def test_package():
                                     'id': '4ec8fe97-e8b9-11e4-87ff-1040f381a756',
                                     'ga_label': 'LS8_OLITIRS_STD-MDF_P00_LC81160740742015089ASA00_'
                                                 '116_074_20150330T022553Z20150330T022657',
-                                    'usgs_dataset_id': 'LC81160740742015089ASA00',
+                                    'usgs': {
+                                        'interval_id': 'LC81160740742015089ASA00'
+                                    },
                                     'ga_level': 'P00',
                                     'image': {
                                         'satellite_ref_point_end': {

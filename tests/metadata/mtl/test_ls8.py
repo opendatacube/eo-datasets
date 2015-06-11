@@ -15,7 +15,6 @@ FILENAME = 'ls8_mtl.txt'
 
 EXPECTED_OUT = ptype.DatasetMetadata(
     id_=uuid.UUID('3ff71eb0-d5c5-11e4-aebb-1040f381a756'),
-    usgs_dataset_id='LC81010782014285LGN00',
     product_level='L1T',
     creation_dt=datetime.datetime(2014, 11, 12, 15, 8, 35),
     platform=ptype.PlatformMetadata(
@@ -31,6 +30,9 @@ EXPECTED_OUT = ptype.DatasetMetadata(
         groundstation=ptype.GroundstationMetadata(
             code='LGN'
         )
+    ),
+    usgs=ptype.UsgsMetadata(
+        scene_id='LC81010782014285LGN00'
     ),
     extent=ptype.ExtentMetadata(
         coord=ptype.CoordPolygon(

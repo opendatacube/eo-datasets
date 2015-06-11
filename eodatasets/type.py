@@ -664,6 +664,37 @@ class AcquisitionMetadata(SimpleObject):
         self.platform_orbit = platform_orbit
 
 
+class UsgsMetadata(SimpleObject):
+    def __init__(self, interval_id=None, scene_id=None, dataset_name=None, entity_id=None):
+        """
+        :type interval_id: str
+        :type scene_id: str
+        :type dataset_name: str
+        :type entity_id: str
+        """
+        # https://lta.cr.usgs.gov/landsat_dictionary.html
+        # Typical format: 'LXSPPPRRRYYYYDDDGSIVV'
+        #: :type: str
+        self.interval_id = interval_id
+        # Typical format: 'LXSPPPRRRYYYYDDDGSIVV'
+        #: :type: str
+        self.scene_id = scene_id
+
+        # ####
+        # A (dataset_name, entity_id) combination is used in the USGS API (and earth explorer) to
+        # identify specific datasets:
+        #
+
+        # "dataset_name" is the class of dataset in the USGS collection.
+        # eg. 'LANDSAT_8_MISSION' (which is raw), 'LANDSAT_8' (which is processed) etc.
+        #: :type: str
+        self.dataset_name = dataset_name
+        # Each dataset_name (collection) uses a different entity_id format.
+        # Sometimes it's a number, sometimes it's the scene_id.
+        #: :type: str
+        self.entity_id = entity_id
+
+
 class DatasetMetadata(SimpleObject):
     PROPERTY_PARSERS = {
         'id_': uuid.UUID,
@@ -672,6 +703,7 @@ class DatasetMetadata(SimpleObject):
         'format_': FormatMetadata.from_dict,
         'acquisition': AcquisitionMetadata.from_dict,
         'extent': ExtentMetadata.from_dict,
+        'usgs': UsgsMetadata.from_dict,
         'grid_spatial': GridSpatialMetadata.from_dict,
         'browse': BrowseMetadata.from_named_dicts,
         'image': ImageMetadata.from_dict,
@@ -681,7 +713,6 @@ class DatasetMetadata(SimpleObject):
     def __init__(self, id_=None,
                  ga_label=None,
                  ga_level=None,
-                 usgs_dataset_id=None,
                  product_type=None,
                  product_level=None,
                  creation_dt=None,
@@ -690,6 +721,7 @@ class DatasetMetadata(SimpleObject):
                  platform=None,
                  instrument=None,
                  format_=None,
+                 usgs=None,
                  acquisition=None,
                  extent=None,
                  grid_spatial=None,
@@ -725,10 +757,9 @@ class DatasetMetadata(SimpleObject):
         #: :type: str
         self.product_type = product_type
 
-        # Dataset id used by USGS software.
-        # Eg. 'LC81160740742015089ASA00'
-        #: :type: str
-        self.usgs_dataset_id = usgs_dataset_id
+        # USGS identifiers
+        #: :type: UsgsMetadata
+        self.usgs = usgs
 
         #: :type: pathlib.Path
         self.checksum_path = checksum_path

@@ -1,6 +1,7 @@
 id: 5cf41d98-eda9-11e4-8a8e-1040f381a756
 ga_label: LS8_OLITIRS_OTH_P51_GALPGS01-002_112_079_20140126
-usgs_dataset_id: LC81120792014026ASA00
+usgs:
+    scene_id: LC81120792014026ASA00
 product_type: ortho
 product_level: L1T
 creation_dt: 2015-04-07 00:58:08
@@ -179,7 +180,8 @@ lineage:
             id: 4ec8fe97-e8b9-11e4-87ff-1040f381a756
             ga_label: LS8_OLITIRS_STD-MDF_P00_LC81160740742015089ASA00_116_074_20150330T022553Z20150330T022657
             ga_level: P00
-            usgs_dataset_id: LC81160740742015089ASA00
+            usgs:
+                interval_id: LC81160740742015089ASA00
             product_type: raw
             creation_dt: 2015-04-22 06:32:04
             size_bytes: 637660782

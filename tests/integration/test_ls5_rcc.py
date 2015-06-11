@@ -78,7 +78,9 @@ def test_metadata():
             'format': {'version': 0, 'name': 'RCC'},
             'size_bytes': 226667,
             'product_type': 'raw',
-            'usgs_dataset_id': 'L5TB2011240002022ASA123',
+            'usgs': {
+                'interval_id': 'L5TB2011240002022ASA123'
+            },
             'instrument': {
                 'name': 'TM',
                 'operation_mode': 'BUMPER'

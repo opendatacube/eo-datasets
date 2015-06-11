@@ -81,7 +81,9 @@ def test_metadata():
             'name': 'ETM'
         },
         'ga_level': 'P00',
-        'usgs_dataset_id': 'L7EB2011239021036ASA111',
+        'usgs': {
+            'interval_id': 'L7EB2011239021036ASA111'
+        },
         'product_type': 'raw',
         'format': {'name': 'RCC'},
         # Default creation date is the same as the input folder ctime.

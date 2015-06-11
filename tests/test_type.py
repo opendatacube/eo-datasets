@@ -28,11 +28,13 @@ def _build_ls8_raw():
     _reset_runtime_id()
     raw = ptype.DatasetMetadata(
         id_=uuid.UUID('1c76a8ca-51ae-11e4-8644-0050568d59ac'),
-        usgs_dataset_id='LC81010782014285LGN00',
         creation_dt=dateutil.parser.parse("2014-10-12 04:18:01"),
         size_bytes=5680940 * 1024,
         ga_label='MDF_P00_LC81010700832014285LGN00_101_070-083_20141012T032336Z20141012T032910_1',
         product_type='RAW',
+        usgs=ptype.UsgsMetadata(
+            interval_id='LC81010782014285LGN00'
+        ),
         platform=ptype.PlatformMetadata(code='LANDSAT-8'),
         instrument=ptype.InstrumentMetadata(name='OLI_TIRS'),
         format_=ptype.FormatMetadata(name='MD'),
@@ -682,6 +684,9 @@ class DeserializeTests(unittest.TestCase):
                                                      'ul': {'lat': -24.98805, 'lon': 133.97954},
                                                      'ur': {'lat': -24.9864, 'lon': 136.23866}}},
                                 'format': {'name': 'GEOTIFF'},
+                                'usgs': {
+                                    'interval_id': 'LC81010782014285LGN00'
+                                },
                                 'grid_spatial': {'projection': {'datum': 'GDA94',
                                                                 'ellipsoid': 'GRS80',
                                                                 'geo_ref_points': {
@@ -802,8 +807,8 @@ class DeserializeTests(unittest.TestCase):
                                                         'version': '2.4.0'}},
                                 'platform': {'code': 'LANDSAT_8'},
                                 'product_type': 'L1T',
-                                'size_bytes': 1642703993,
-                                'usgs_dataset_id': 'LC81010782014285LGN00'}
+                                'size_bytes': 1642703993
+                                }
 
         ptype.DatasetMetadata.from_dict(ls8_parsed_yaml_dict)
 

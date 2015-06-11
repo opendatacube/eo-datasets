@@ -79,7 +79,9 @@ def test_metadata():
         'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),
         'size_bytes': 4485,
         'product_type': 'raw',
-        'usgs_dataset_id': 'LC81140740812015123LGN00',
+        'usgs':  {
+            'interval_id': 'LC81140740812015123LGN00'
+        },
         'format': {'name': 'MDF'},
         'ga_level': 'P00',
         'checksum_path': 'package.sha1',
