@@ -62,7 +62,7 @@ def extract_md(base_md, directory_path):
     """
     pds_file = find_pds_file(directory_path)
     if not pds_file:
-        _LOG.debug('No pds files found')
+        _LOG.debug('No PDS files found')
         return base_md
 
     # Extract PDS info.
