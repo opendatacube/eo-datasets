@@ -15,7 +15,7 @@ class TestNPPMetadataExtraction(TestCase):
             'RNSCA-RVIRS_npp_d20130422_t0357358_e0410333_b07686_c20130422041225898000_nfts_drl.h5'
         )
         self.assertEquals(metadata.platform.code, 'NPP')
-        self.assertEquals(metadata.instrument.name, 'VIRS')
+        self.assertEquals(metadata.instrument.name, 'VIIRS')
 
         self.assertEquals(metadata.acquisition.platform_orbit, 7686)
 
@@ -32,7 +32,7 @@ class TestNPPMetadataExtraction(TestCase):
         metadata = extraction.extract_md(ptype.DatasetMetadata(), d)
 
         self.assertEquals(metadata.platform.code, 'NPP')
-        self.assertEquals(metadata.instrument.name, 'VIRS')
+        self.assertEquals(metadata.instrument.name, 'VIIRS')
         self.assertEquals(metadata.ga_level, 'P00')
         self.assertEquals(metadata.product_level, None)
         self.assertEquals(metadata.format_.name, 'HDF5')
@@ -58,7 +58,7 @@ class TestNPPMetadataExtraction(TestCase):
         )
 
         self.assertEquals(metadata.platform.code, 'NPP')
-        self.assertEquals(metadata.instrument.name, 'VIRS')
+        self.assertEquals(metadata.instrument.name, 'VIIRS')
         self.assertEquals(metadata.ga_level, 'P00')
         self.assertEquals(metadata.format_.name, 'HDF5')
 
@@ -69,9 +69,9 @@ class TestNPPMetadataExtraction(TestCase):
         )
 
         self.assertEqual(metadata.acquisition.aos,
-                         datetime.datetime(2013, 4, 22, 3, 57, 35))
+                         datetime.datetime(2014, 1, 6, 4, 44, 9))
         self.assertEqual(metadata.acquisition.los,
-                         datetime.datetime(2013, 4, 22, 4, 12, 25))
+                         datetime.datetime(2014, 1, 6, 4, 59, 41))
 
         self.assertEquals(metadata.acquisition.platform_orbit, 11361)
 
