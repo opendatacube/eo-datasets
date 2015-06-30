@@ -32,6 +32,22 @@ class AdsFolderExtractionTest(unittest.TestCase):
         metadata = adsfolder.extract_md(ds, d)
         self.assertEqual(metadata.acquisition.platform_orbit, 11308)
 
+    def test_extract_groundstation(self):
+        d = write_files({
+            'LANDSAT-7.ALICE': {
+                'dataset': {}
+            }
+        })
+
+        d = d.joinpath('LANDSAT-7.ALICE')
+        md = adsfolder.extract_md(ptype.DatasetMetadata(), d)
+        self.assertIsNotNone(md.acquisition)
+        self.assertEqual(md.acquisition.groundstation, ptype.GroundstationMetadata(code='ASA'))
+
+        d = d.joinpath('dataset')
+        md = adsfolder.extract_md(ptype.DatasetMetadata(), d)
+        self.assertIsNotNone(md.acquisition)
+        self.assertEqual(md.acquisition.groundstation, ptype.GroundstationMetadata(code='ASA'))
 
 if __name__ == '__main__':
     import doctest

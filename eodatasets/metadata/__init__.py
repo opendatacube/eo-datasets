@@ -5,8 +5,8 @@ import json
 import logging
 
 from pathlib import Path
-import eodatasets.type as ptype
 
+import eodatasets.type as ptype
 
 _LOG = logging.getLogger(__name__)
 
@@ -43,6 +43,24 @@ def normalise_gsi(gsi):
     'HOA'
     """
     return str(_GROUNDSTATION_ALIASES.get(gsi.upper()))
+
+
+def is_groundstation_alias(alias):
+    """
+    Is this a known groundstation alias?
+    :type alias: str
+    :rtype: bool
+
+    >>> is_groundstation_alias('ALICE')
+    True
+    >>> is_groundstation_alias('alice')
+    True
+    >>> is_groundstation_alias('ASA')
+    True
+    >>> is_groundstation_alias('NOT_AN_ALIAS')
+    False
+    """
+    return alias.upper() in _GROUNDSTATION_ALIASES
 
 
 def get_groundstation(gsi):

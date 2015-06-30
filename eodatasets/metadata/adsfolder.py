@@ -4,6 +4,7 @@ Extract metadata from ADS directory names.
 """
 from __future__ import absolute_import
 import re
+from eodatasets import metadata
 
 import eodatasets.type as ptype
 
@@ -30,8 +31,9 @@ def extract_md(md, directory):
     parent_dir = directory.parent
 
     orbit = _extract_orbit(directory.name) or _extract_orbit(parent_dir.name)
-
     rms_string = _extract_rms_string(directory.name) or _extract_rms_string(parent_dir.name)
+    gsi = _extract_gsi(directory.name) or _extract_gsi(parent_dir.name)
+
     if rms_string:
         md.rms_string = rms_string
 
@@ -40,6 +42,9 @@ def extract_md(md, directory):
 
     if not md.acquisition.platform_orbit:
         md.acquisition.platform_orbit = orbit
+
+    if not md.acquisition.groundstation and gsi:
+        md.acquisition.groundstation = ptype.GroundstationMetadata(code=gsi)
 
     return md
 
@@ -80,6 +85,28 @@ def _extract_rms_string(name):
     >>> _extract_rms_string('LANDSAT-8.FAKE')
     """
     return _extract_sat_orbit_string(name)[2]
+
+
+def _extract_gsi(name):
+    """
+    Extract a normalised groundstation if available.
+    :param name:
+    :rtype: str
+
+    >>> _extract_gsi('LANDSAT-7.76773.S3A1C2D2R2')
+    >>> _extract_gsi('AQUA.60724.S1A1C2D2R2')
+    >>> _extract_gsi('TERRA.73100.S1A2C2D4R4')
+    >>> _extract_gsi('LANDSAT-8.3108')
+    >>> _extract_gsi('NPP.VIIRS.10014.ALICE')
+    'ASA'
+    >>> _extract_gsi('not_an_ads_dir')
+    >>> _extract_gsi('LANDSAT-8.FAKE')
+    """
+    last_component = name.split('.')[-1]
+    if not metadata.is_groundstation_alias(last_component):
+        return None
+
+    return metadata.normalise_gsi(last_component)
 
 
 def _extract_sat_orbit_string(name):
