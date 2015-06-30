@@ -154,7 +154,7 @@ def get_pdsinfo(pds_path):
     if not out:
         raise Exception('No output from pdsinfo')
 
-    vals = dict([d.strip().split(': ') for d in out.splitlines() if d.strip()])
+    vals = dict([d.strip().split(': ') for d in out.decode('utf-8').splitlines() if d.strip()])
 
     start_date = datetime.datetime.strptime(
         vals['first packet'],

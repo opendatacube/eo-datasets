@@ -70,7 +70,7 @@ def test_find_terra_pds_file():
 def test_get_pdsinfo(_run_pdsinfo_exe):
     pdsfile = Path('/tmp/pds')
 
-    _run_pdsinfo_exe.return_value = """APID 64: count 610338 invalid 0 missing 6255
+    _run_pdsinfo_exe.return_value = b"""APID 64: count 610338 invalid 0 missing 6255
 first packet: 2014/08/07 03:16:28.750910
 last packet: 2014/08/07 03:21:28.604695
 missing seconds: 2
@@ -96,7 +96,7 @@ def test_extract_md(_run_pdsinfo_exe):
     #
     #     return
 
-    _run_pdsinfo_exe.return_value = """APID 64: count 610338 invalid 0 missing 6255
+    _run_pdsinfo_exe.return_value = b"""APID 64: count 610338 invalid 0 missing 6255
     first packet: 2014/08/07 03:16:28.750910
     last packet: 2014/08/07 03:21:28.604695
     missing seconds: 2
