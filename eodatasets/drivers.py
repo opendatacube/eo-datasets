@@ -215,11 +215,37 @@ def _get_process_code(dataset):
     return None, None
 
 
+def _get_short_satellite_code(platform_code):
+    """
+    Get shortened form of satellite, as used in GA Dataset IDs. (eg. 'LS7')
+    :param platform_code:
+    :return:
+
+    >>> _get_short_satellite_code('LANDSAT_8')
+    'LS8'
+    >>> _get_short_satellite_code('LANDSAT_5')
+    'LS5'
+    >>> _get_short_satellite_code('LANDSAT_7')
+    'LS7'
+    >>> _get_short_satellite_code('AQUA')
+    'AQUA'
+    >>> _get_short_satellite_code('TERRA')
+    'TERRA'
+    >>> _get_short_satellite_code('Invalid')
+    Traceback (most recent call last):
+    ...
+    ValueError: Unknown platform code 'Invalid'
+    """
+    if platform_code.startswith('LANDSAT_'):
+        return 'LS' + platform_code.split('_')[-1]
+
+    if platform_code in ('AQUA', 'TERRA'):
+        return platform_code
+
+    raise ValueError('Unknown platform code %r' % platform_code)
+
+
 def _fill_dataset_label(dataset, format_str, **additionals):
-    def _get_short_satellite_code(dataset_):
-        assert dataset_.platform.code.startswith('LANDSAT_')
-        sat_number = 'LS' + dataset_.platform.code.split('_')[-1]
-        return sat_number
 
     path, row = _format_path_row(
         start_point=dataset.image.satellite_ref_point_start if dataset.image else None,
@@ -244,6 +270,7 @@ def _fill_dataset_label(dataset, format_str, **additionals):
     station_code = None
     start = None
     end = None
+    orbit = None
     if dataset.acquisition:
         if dataset.acquisition.groundstation:
             station_code = get_groundstation_code(dataset.acquisition.groundstation.code)
@@ -252,8 +279,10 @@ def _fill_dataset_label(dataset, format_str, **additionals):
         if dataset.acquisition.los:
             end = _format_dt(dataset.acquisition.los)
 
+        orbit = dataset.acquisition.platform_orbit
+
     formatted_params = {
-        'satnumber': _get_short_satellite_code(dataset),
+        'satnumber': _get_short_satellite_code(dataset.platform.code),
         'sensor': _remove_chars(string.punctuation, dataset.instrument.name),
         'format': dataset.format_.name.upper(),
         'level': level,
@@ -261,10 +290,12 @@ def _fill_dataset_label(dataset, format_str, **additionals):
         'usgs': dataset.usgs,
         'path': path,
         'rows': row,
+        'orbit': orbit,
         'stationcode': station_code,
         'startdt': start,
         'enddt': end,
-        'day': _format_day(dataset)
+        'rmsstring': dataset.rms_string,
+        'day': _format_day(dataset),
     }
     formatted_params.update(additionals)
     return format_str.format(**formatted_params)
@@ -300,14 +331,27 @@ class RawDriver(DatasetDriver):
         :type dataset: ptype.DatasetMetadata
         :rtype: str
         """
+        _LOG.info('Labelling dataset: %r', dataset)
         # Examples for each Landsat raw:
         # 'LS8_OLITIRS_STD-MDF_P00_LC81160740742015089ASA00_116_074-084_20150330T022553Z20150330T022657'
         # 'LS7_ETM_STD-RCC_P00_L7ET2005007020028ASA123_0_0_20050107T020028Z20050107T020719'
         # 'LS5_TM_STD-RCC_P00_L5TB2005152015110ASA111_0_0_20050601T015110Z20050107T020719'
 
+        # Raw datasets have a strange extra column derived from ADS folder names.
+        # It's an interval id for Landsat products, and mixtures of orbits/rms-strings otherwise.
+        folder_identifier = []
+        if dataset.usgs:
+            folder_identifier.append(dataset.usgs.interval_id)
+        else:
+            if dataset.acquisition.platform_orbit:
+                folder_identifier.append(str(dataset.acquisition.platform_orbit))
+            if dataset.rms_string:
+                folder_identifier.append(dataset.rms_string)
+
         return _fill_dataset_label(
             dataset,
-            '{satnumber}_{sensor}_STD-{format}_P00_{usgs.interval_id}_{path}_{rows}_{startdt}Z{enddt}'
+            '{satnumber}_{sensor}_STD-{format}_P00_{folderident}_{path}_{rows}_{startdt}Z{enddt}',
+            folderident='.'.join(folder_identifier)
         )
 
     def fill_metadata(self, dataset, path):

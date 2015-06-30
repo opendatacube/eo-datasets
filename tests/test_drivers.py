@@ -201,6 +201,32 @@ class TestDrivers(TestCase):
             drivers.OrthoDriver().get_ga_label(test_ls5_definitive.EXPECTED_OUT)
         )
 
+    def test_aqua_pds_label(self):
+        ds = ptype.DatasetMetadata(
+            id_=UUID('d083fa45-1edd-11e5-8f9e-1040f381a756'),
+            product_type='raw',
+            creation_dt=datetime.datetime(2015, 6, 11, 5, 51, 50),
+            platform=ptype.PlatformMetadata(code='AQUA'),
+            instrument=ptype.InstrumentMetadata(name='MODIS'),
+            format_=ptype.FormatMetadata(name='PDS'),
+            rms_string='S1A1C1D1R1',
+            acquisition=ptype.AcquisitionMetadata(
+                aos=datetime.datetime(2014, 8, 7, 3, 16, 28, 750910),
+                los=datetime.datetime(2014, 8, 7, 3, 16, 30, 228023),
+                platform_orbit=65208
+            ),
+            image=ptype.ImageMetadata(day_percentage_estimate=100.0),
+            lineage=ptype.LineageMetadata(
+                machine=ptype.MachineMetadata(),
+                source_datasets={}
+            )
+        )
+
+        self.assertEqual(
+            "AQUA_MODIS_STD-PDS_P00_65208.S1A1C1D1R1_0_0_20140807T031628Z20140807T031630",
+            drivers.RawDriver().get_ga_label(ds)
+        )
+
     def test_nbar_fill_metadata(self):
         input_folder = write_files({
             'reflectance_brdf_1.bin': '',
