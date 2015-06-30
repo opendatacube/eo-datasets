@@ -240,7 +240,7 @@ def _get_short_satellite_code(platform_code):
     if platform_code.startswith('LANDSAT_'):
         return 'LS' + platform_code.split('_')[-1]
 
-    if platform_code in ('AQUA', 'TERRA'):
+    if platform_code in ('AQUA', 'TERRA', 'NPP'):
         return platform_code
 
     raise ValueError('Unknown platform code %r' % platform_code)
@@ -348,6 +348,8 @@ class RawDriver(DatasetDriver):
                 folder_identifier.append(str(dataset.acquisition.platform_orbit))
             if dataset.rms_string:
                 folder_identifier.append(dataset.rms_string)
+            if dataset.acquisition.groundstation:
+                folder_identifier.append(dataset.acquisition.groundstation.code)
 
         return _fill_dataset_label(
             dataset,
