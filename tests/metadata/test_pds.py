@@ -110,6 +110,7 @@ def test_extract_md(_run_pdsinfo_exe):
     expected = ptype.DatasetMetadata(
         platform=ptype.PlatformMetadata(code='AQUA'),
         instrument=ptype.InstrumentMetadata(name='MODIS'),
+        format_=ptype.FormatMetadata(name='PDS'),
         acquisition=ptype.AcquisitionMetadata(
             aos=datetime.datetime(2014, 8, 7, 3, 16, 28, 750910),
             los=datetime.datetime(2014, 8, 7, 3, 21, 28, 604695)

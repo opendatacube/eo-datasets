@@ -68,6 +68,8 @@ def extract_md(base_md, directory_path):
     # Extract PDS info.
     _LOG.info('Using PDS file %r', pds_file)
 
+    base_md.format_ = ptype.FormatMetadata(name='PDS')
+
     base_md.platform = ptype.PlatformMetadata(code=_pds_satellite(pds_file.stem))
     base_md.instrument = ptype.InstrumentMetadata(name='MODIS')
 
