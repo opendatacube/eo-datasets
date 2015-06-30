@@ -83,27 +83,12 @@ def _extract_hdf5_filename_fields(base_md, filename):
                   r'_nfts_drl.h5', filename)
     fields = m.groupdict()
 
-    satellite = None
-    sensor = None
-    if not base_md.platform:
-        # TODO: Do we have a cleaner way to do this? A list of mappings?
-        temp = fields['satsens'].split('-')
-        if len(temp) > 0:
-            satsens = temp[-1].upper().replace('_', '-')[1:]
-            temp2 = satsens.split('-')
-            if len(temp2) > 1:
-                satellite = temp2[1]
-                sensor = temp2[0]
-            else:
-                _LOG.warn('Unknown NPP satellite-sensor combination: %s', satsens)
+    satellite, sensor = _split_sat_sen(fields['satsens'])
 
     if satellite:
         base_md.platform = ptype.PlatformMetadata(code=satellite)
-    if sensor:
-        # Remove shorthand. TODO: An alias map?
-        if sensor == 'VIRS':
-            sensor = 'VIIRS'
 
+    if sensor:
         base_md.instrument = ptype.InstrumentMetadata(name=sensor)
 
     if not base_md.acquisition:
@@ -117,3 +102,31 @@ def _extract_hdf5_filename_fields(base_md, filename):
         base_md.acquisition.platform_orbit = int(fields['orbit'])
 
     return base_md
+
+
+def _split_sat_sen(fields_satsens_):
+    """
+
+    :param fields_satsens_:
+    :return:
+    >>> _split_sat_sen("RNSCA-RVIRS_npp")
+    ('NPP', 'VIIRS')
+    """
+    satellite = None
+    sensor = None
+    # TODO: Do we have a cleaner way to do this? A list of mappings?
+    satsen = fields_satsens_.split('-')
+    if len(satsen) > 0:
+        sat_sen_prefixed = satsen[-1].upper()
+        sat_sen = sat_sen_prefixed[1:]
+        try:
+            sensor, satellite = sat_sen.split('_')
+        except ValueError:
+            # More than two values after splitting.
+            _LOG.error('Unknown NPP satellite-sensor combination: %s', sat_sen)
+
+    # Remove shorthand. TODO: An alias map?
+    if sensor == 'VIRS':
+        sensor = 'VIIRS'
+
+    return satellite, sensor
