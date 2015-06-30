@@ -100,6 +100,10 @@ def _extract_hdf5_filename_fields(base_md, filename):
     if satellite:
         base_md.platform = ptype.PlatformMetadata(code=satellite)
     if sensor:
+        # Remove shorthand. TODO: An alias map?
+        if sensor == 'VIRS':
+            sensor = 'VIIRS'
+
         base_md.instrument = ptype.InstrumentMetadata(name=sensor)
 
     if not base_md.acquisition:
