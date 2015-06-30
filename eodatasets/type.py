@@ -722,6 +722,7 @@ class DatasetMetadata(SimpleObject):
                  instrument=None,
                  format_=None,
                  usgs=None,
+                 rms_string=None,
                  acquisition=None,
                  extent=None,
                  grid_spatial=None,
@@ -760,6 +761,11 @@ class DatasetMetadata(SimpleObject):
         # USGS identifiers
         #: :type: UsgsMetadata
         self.usgs = usgs
+
+        # Receiving string from ASA's reception management system.
+        # Eg. 'S1A1C1D1R1'
+        #: :type: str
+        self.rms_string = rms_string
 
         #: :type: pathlib.Path
         self.checksum_path = checksum_path
