@@ -99,10 +99,14 @@ def _extract_gsi(name):
     >>> _extract_gsi('LANDSAT-8.3108')
     >>> _extract_gsi('NPP.VIIRS.10014.ALICE')
     'ASA'
+    >>> _extract_gsi('NPP_VIRS_STD-HDF5_P00_18966.ASA_0_0_20150626T053709Z20150626T055046')
+    'ASA'
     >>> _extract_gsi('not_an_ads_dir')
     >>> _extract_gsi('LANDSAT-8.FAKE')
     """
     last_component = name.split('.')[-1]
+    if '_' in last_component:
+        last_component = last_component.split('_')[0]
     if not metadata.is_groundstation_alias(last_component):
         return None
 
