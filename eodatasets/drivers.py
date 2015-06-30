@@ -6,7 +6,7 @@ import string
 
 from pathlib import Path
 
-from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, passinfo, image as md_image
+from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, passinfo, pds, image as md_image
 from eodatasets import type as ptype, metadata
 
 _LOG = logging.getLogger(__name__)
@@ -315,6 +315,7 @@ class RawDriver(DatasetDriver):
         dataset = rccfile.extract_md(dataset, path)
         dataset = mdf.extract_md(dataset, path)
         dataset = passinfo.extract_md(dataset, path)
+        dataset = pds.extract_md(dataset, path)
 
         # TODO: Antenna coords for groundstation? Heading?
         # TODO: Bands? (or eg. I/Q files?)
@@ -489,7 +490,6 @@ class NbarDriver(DatasetDriver):
 
     def translate_path(self, dataset, file_path):
         """
-
         :type dataset: ptype.DatasetMetadata
         :type file_path: Path
         :rtype: Path
