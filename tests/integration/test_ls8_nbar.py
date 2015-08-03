@@ -342,8 +342,8 @@ def test_package():
                             },
                             'machine': {},
                             'source_datasets': {
-                                'satellite-telemetry-data': {
-                                    'product_type': 'satellite-telemetry-data',
+                                'satellite_telemetry_data': {
+                                    'product_type': 'satellite_telemetry_data',
                                     'checksum_path': 'package.sha1',
                                     'id': '4ec8fe97-e8b9-11e4-87ff-1040f381a756',
                                     'ga_label': 'LS8_OLITIRS_STD-MD_P00_LC81160740742015089ASA00_'

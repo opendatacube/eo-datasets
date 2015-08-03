@@ -273,9 +273,9 @@ def test_package():
                 'source_datasets':
                     {
 
-                        'satellite-telemetry-data':
+                        'satellite_telemetry_data':
                             {
-                                'product_type': 'satellite-telemetry-data',
+                                'product_type': 'satellite_telemetry_data',
                                 'instrument': {'name': 'OLI_TIRS'},
                                 'ga_label': ('LS8_OLITIRS_STD-MD_P00_LC81160740742015089ASA00'
                                              '_116_074_20150330T022553Z20150330T022657'),

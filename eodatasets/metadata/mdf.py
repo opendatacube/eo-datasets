@@ -91,7 +91,7 @@ def extract_md(base_md, directory_path):
     if files:
         base_md = _extract_mdf_file_fields(base_md, [f.name for f in files])
 
-    base_md.product_type = 'satellite-telemetry-data'
+    base_md.product_type = 'satellite_telemetry_data'
     base_md.ga_level = 'P00'
 
     if not base_md.format_:

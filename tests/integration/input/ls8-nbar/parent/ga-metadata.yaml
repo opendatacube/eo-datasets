@@ -176,13 +176,13 @@ lineage:
         rlut:
             name: L8RLUT20130211_20431231v09.h5
     source_datasets:
-        satellite-telemetry-data:
+        satellite_telemetry_data:
             id: 4ec8fe97-e8b9-11e4-87ff-1040f381a756
             ga_label: LS8_OLITIRS_STD-MD_P00_LC81160740742015089ASA00_116_074_20150330T022553Z20150330T022657
             ga_level: P00
             usgs:
                 interval_id: LC81160740742015089ASA00
-            product_type: satellite-telemetry-data
+            product_type: satellite_telemetry_data
             creation_dt: 2015-04-22 06:32:04
             size_bytes: 637660782
             checksum_path: package.sha1

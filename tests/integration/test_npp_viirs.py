@@ -79,7 +79,7 @@ def test_metadata():
          'ga_level': 'P00',
          'format': {'name': 'HDF5'},
          'checksum_path': 'package.sha1',
-         'product_type': 'satellite-telemetry-data',
+         'product_type': 'satellite_telemetry_data',
          'acquisition': {
              'groundstation': {
                  'eods_domain_code': '002',

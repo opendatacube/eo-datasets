@@ -240,13 +240,13 @@ def test_package():
                                             'type_id': 'jobmanager'
                                         },
                                         'source_datasets': {
-                                            'satellite-telemetry-data': {
+                                            'satellite_telemetry_data': {
                                                 'id': '99d53da0-e96a-11e4-b15e-a0000100fe80',
                                                 'size_bytes': 6138129367,
                                                 'checksum_path': 'package.sha1',
                                                 'platform': {'code': 'LANDSAT_8'},
                                                 'instrument': {'name': 'OLI_TIRS'},
-                                                'product_type': 'satellite-telemetry-data',
+                                                'product_type': 'satellite_telemetry_data',
                                                 'creation_dt': datetime.datetime(2015, 4, 7, 3, 25, 59),
                                                 'ga_level': 'P00',
                                                 'format': {'name': 'MD'},
