@@ -99,7 +99,7 @@ def test_metadata():
         md,
         {
             'lineage': {'machine': {}, 'source_datasets': {}},
-            'product_type': 'raw',
+            'product_type': 'satellite-telemetry-data',
             'format': {'name': 'PDS'},
             'image': {'bands': {}, 'day_percentage_estimate': 100.0},
             # Default creation date is the same as the input folder ctime.

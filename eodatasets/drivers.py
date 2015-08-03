@@ -210,7 +210,7 @@ def _get_process_code(dataset):
         return 'SYS', 'P11'
 
     if dataset.ga_level == 'P00':
-        return 'RAW', 'P00'
+        return 'satellite-telemetry-data', 'P00'
 
     _LOG.warn('No process code mapped for level/orientation: %r, %r', level, orientation)
     return None, None
@@ -321,7 +321,7 @@ def _remove_chars(chars, s):
 
 class RawDriver(DatasetDriver):
     def get_id(self):
-        return 'raw'
+        return 'satellite-telemetry-data'
 
     def expected_source(self):
         # Raw dataset has no source.

@@ -13,7 +13,7 @@ import eodatasets.type as ptype
 _LS5_RAW = ptype.DatasetMetadata(
     id_=UUID('c86809b3-e894-11e4-8958-1040f381a756'),
     ga_level='P00',
-    product_type='raw',
+    product_type='satellite-telemetry-data',
     creation_dt=datetime.datetime(2015, 4, 22, 0, 7, 48),
     size_bytes=5871413760,
     checksum_path=Path('package.sha1'),
@@ -45,7 +45,7 @@ _LS5_RAW = ptype.DatasetMetadata(
 _LS7_RAW = ptype.DatasetMetadata(
     id_=UUID('c50c6bd4-e895-11e4-9814-1040f381a756'),
     ga_level='P00',
-    product_type='raw',
+    product_type='satellite-telemetry-data',
     creation_dt=datetime.datetime(2015, 4, 15, 1, 42, 47),
     size_bytes=7698644992,
     checksum_path=Path('package.sha1'),
@@ -204,7 +204,7 @@ class TestDrivers(TestCase):
     def test_aqua_pds_label(self):
         ds = ptype.DatasetMetadata(
             id_=UUID('d083fa45-1edd-11e5-8f9e-1040f381a756'),
-            product_type='raw',
+            product_type='satellite-telemetry-data',
             creation_dt=datetime.datetime(2015, 6, 11, 5, 51, 50),
             platform=ptype.PlatformMetadata(code='AQUA'),
             instrument=ptype.InstrumentMetadata(name='MODIS'),

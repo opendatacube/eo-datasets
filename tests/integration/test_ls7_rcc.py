@@ -84,7 +84,7 @@ def test_metadata():
         'usgs': {
             'interval_id': 'L7EB2011239021036ASA111'
         },
-        'product_type': 'raw',
+        'product_type': 'satellite-telemetry-data',
         'format': {'name': 'RCC'},
         # Default creation date is the same as the input folder ctime.
         'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),

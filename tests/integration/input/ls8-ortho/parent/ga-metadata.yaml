@@ -3,7 +3,7 @@ ga_label: LS8_OLITIRS_STD-MD_P00_LC81160740742015089ASA00_116_074_20150330T02255
 ga_level: P00
 usgs:
     interval_id: LC81160740742015089ASA00
-product_type: raw
+product_type: satellite-telemetry-data
 creation_dt: 2015-04-22 06:32:04
 size_bytes: 637660782
 checksum_path: package.sha1

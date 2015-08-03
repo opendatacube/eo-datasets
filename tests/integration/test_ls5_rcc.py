@@ -77,7 +77,7 @@ def test_metadata():
             'platform': {'code': 'LANDSAT_5'},
             'format': {'version': 0, 'name': 'RCC'},
             'size_bytes': 226667,
-            'product_type': 'raw',
+            'product_type': 'satellite-telemetry-data',
             'usgs': {
                 'interval_id': 'L5TB2011240002022ASA123'
             },

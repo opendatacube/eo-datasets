@@ -78,7 +78,7 @@ def test_metadata():
         # Default creation date is the same as the input folder ctime.
         'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),
         'size_bytes': 4485,
-        'product_type': 'raw',
+        'product_type': 'satellite-telemetry-data',
         'usgs':  {
             'interval_id': 'LC81140740812015123LGN00'
         },

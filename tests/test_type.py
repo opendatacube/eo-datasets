@@ -31,7 +31,7 @@ def _build_ls8_raw():
         creation_dt=dateutil.parser.parse("2014-10-12 04:18:01"),
         size_bytes=5680940 * 1024,
         ga_label='MD_P00_LC81010700832014285LGN00_101_070-083_20141012T032336Z20141012T032910_1',
-        product_type='RAW',
+        product_type='satellite-telemetry-data',
         usgs=ptype.UsgsMetadata(
             interval_id='LC81010782014285LGN00'
         ),
@@ -275,7 +275,7 @@ def _build_ls8_ortho():
                 'rlut':
                     ptype.AncillaryMetadata(name='L8RLUT20130211_20431231v09.h5')
             },
-            source_datasets={'raw': _build_ls8_raw()}
+            source_datasets={'satellite-telemetry-data': _build_ls8_raw()}
         )
     )
 
