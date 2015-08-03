@@ -249,11 +249,11 @@ def test_package():
                                                 'product_type': 'raw',
                                                 'creation_dt': datetime.datetime(2015, 4, 7, 3, 25, 59),
                                                 'ga_level': 'P00',
-                                                'format': {'name': 'MDF'},
+                                                'format': {'name': 'MD'},
                                                 'usgs': {
                                                     'interval_id': 'LC80900750902014207LGN00'
                                                 },
-                                                'ga_label': 'LS8_OLITIRS_STD-MDF_P00_LC80900750902014207LGN00_'
+                                                'ga_label': 'LS8_OLITIRS_STD-MD_P00_LC80900750902014207LGN00_'
                                                             '090_075-090_20140727T005408Z20140727T005712',
                                                 'image': {
                                                     'satellite_ref_point_end': {'x': 90, 'y': 90},

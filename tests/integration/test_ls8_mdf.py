@@ -21,7 +21,7 @@ assert source_folder.exists()
 
 source_dataset = source_folder.joinpath(
     'data',
-    'LS8_OLI-TIRS_STD-MDF_P00_LC81140740812015123LGN00_114_074-081_'
+    'LS8_OLI-TIRS_STD-MD_P00_LC81140740812015123LGN00_114_074-081_'
     '20150503T031224Z20150503T031438_1'
 )
 assert source_dataset.exists()
@@ -43,7 +43,7 @@ def test_metadata():
     )
 
     assert_file_structure(output_path, {
-        'LS8_OLITIRS_STD-MDF_P00_LC81140740812015123LGN00_114_074-081_'
+        'LS8_OLITIRS_STD-MD_P00_LC81140740812015123LGN00_114_074-081_'
         '20150503T031224Z20150503T031438': {
             'product': {
                 '270.000.2015123031324364.LGS': '',
@@ -59,7 +59,7 @@ def test_metadata():
         }
     })
     output_path = output_path.joinpath(
-        'LS8_OLITIRS_STD-MDF_P00_LC81140740812015123LGN00_114_074-081_'
+        'LS8_OLITIRS_STD-MD_P00_LC81140740812015123LGN00_114_074-081_'
         '20150503T031224Z20150503T031438')
 
     # TODO: Check metadata fields are sensible.
@@ -73,7 +73,7 @@ def test_metadata():
 
     assert_same(md, {
         'id': None,
-        'ga_label': 'LS8_OLITIRS_STD-MDF_P00_LC81140740812015123LGN00_114_074-081_'
+        'ga_label': 'LS8_OLITIRS_STD-MD_P00_LC81140740812015123LGN00_114_074-081_'
                     '20150503T031224Z20150503T031438',
         # Default creation date is the same as the input folder ctime.
         'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),
@@ -82,7 +82,7 @@ def test_metadata():
         'usgs':  {
             'interval_id': 'LC81140740812015123LGN00'
         },
-        'format': {'name': 'MDF'},
+        'format': {'name': 'MD'},
         'ga_level': 'P00',
         'checksum_path': 'package.sha1',
         'platform': {

@@ -277,7 +277,7 @@ def test_package():
                             {
                                 'product_type': 'raw',
                                 'instrument': {'name': 'OLI_TIRS'},
-                                'ga_label': ('LS8_OLITIRS_STD-MDF_P00_LC81160740742015089ASA00'
+                                'ga_label': ('LS8_OLITIRS_STD-MD_P00_LC81160740742015089ASA00'
                                              '_116_074_20150330T022553Z20150330T022657'),
                                 'image': {
                                     'satellite_ref_point_end': {'x': 116, 'y': 74},
@@ -314,7 +314,7 @@ def test_package():
                                         'source_datasets': {}
                                     },
                                 'platform': {'code': 'LANDSAT_8'},
-                                'format': {'name': 'MDF'}
+                                'format': {'name': 'MD'}
                             }
                     }
             }

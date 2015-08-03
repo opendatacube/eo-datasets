@@ -167,7 +167,7 @@ class TestDrivers(TestCase):
     def test_raw_ls8_label(self):
         metadata, raw_driver = self._get_raw_ls8()
         self.assertEqual(
-            'LS8_OLITIRS_STD-MDF_P00_LC81160740842015089ASA00_116_074-084_20150330T022553Z20150330T022657',
+            'LS8_OLITIRS_STD-MD_P00_LC81160740842015089ASA00_116_074-084_20150330T022553Z20150330T022657',
             raw_driver.get_ga_label(metadata),
         )
 

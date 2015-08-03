@@ -96,7 +96,7 @@ def extract_md(base_md, directory_path):
 
     if not base_md.format_:
         base_md.format_ = ptype.FormatMetadata()
-    base_md.format_.name = 'MDF'
+    base_md.format_.name = 'MD'
 
     return base_md
 

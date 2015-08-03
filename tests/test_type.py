@@ -30,7 +30,7 @@ def _build_ls8_raw():
         id_=uuid.UUID('1c76a8ca-51ae-11e4-8644-0050568d59ac'),
         creation_dt=dateutil.parser.parse("2014-10-12 04:18:01"),
         size_bytes=5680940 * 1024,
-        ga_label='MDF_P00_LC81010700832014285LGN00_101_070-083_20141012T032336Z20141012T032910_1',
+        ga_label='MD_P00_LC81010700832014285LGN00_101_070-083_20141012T032336Z20141012T032910_1',
         product_type='RAW',
         usgs=ptype.UsgsMetadata(
             interval_id='LC81010782014285LGN00'

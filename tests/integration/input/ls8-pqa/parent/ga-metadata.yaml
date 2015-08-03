@@ -224,7 +224,7 @@ lineage:
                 source_datasets:
                     raw:
                         id: 99d53da0-e96a-11e4-b15e-a0000100fe80
-                        ga_label: LS8_OLITIRS_STD-MDF_P00_LC80900750902014207LGN00_090_075-090_20140727T005408Z20140727T005712
+                        ga_label: LS8_OLITIRS_STD-MD_P00_LC80900750902014207LGN00_090_075-090_20140727T005408Z20140727T005712
                         ga_level: P00
                         usgs:
                             interval_id: LC80900750902014207LGN00
@@ -237,7 +237,7 @@ lineage:
                         instrument:
                             name: OLI_TIRS
                         format:
-                            name: MDF
+                            name: MD
                         acquisition:
                             aos: 2014-07-27 00:54:08.903000
                             los: 2014-07-27 00:57:12.457000

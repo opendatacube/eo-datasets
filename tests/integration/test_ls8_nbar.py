@@ -346,7 +346,7 @@ def test_package():
                                     'product_type': 'raw',
                                     'checksum_path': 'package.sha1',
                                     'id': '4ec8fe97-e8b9-11e4-87ff-1040f381a756',
-                                    'ga_label': 'LS8_OLITIRS_STD-MDF_P00_LC81160740742015089ASA00_'
+                                    'ga_label': 'LS8_OLITIRS_STD-MD_P00_LC81160740742015089ASA00_'
                                                 '116_074_20150330T022553Z20150330T022657',
                                     'usgs': {
                                         'interval_id': 'LC81160740742015089ASA00'
@@ -376,7 +376,7 @@ def test_package():
                                     'instrument': {
                                         'name': 'OLI_TIRS'},
                                     'format': {
-                                        'name': 'MDF'},
+                                        'name': 'MD'},
                                     'lineage': {
                                         'machine': {
                                             'hostname': 'niggle.local',

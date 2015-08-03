@@ -46,6 +46,6 @@ parameter to run all tests.
 
 Create a series of ortho packages with provenance linked to a (parent) raw dataset:
 
-     $ eod-package ortho --parent /data/packages/LS8_OLITIRS_STD-MDF_P00... \
+     $ eod-package ortho --parent /data/packages/LS8_OLITIRS_STD-MD_P00... \
               lpgs_out/* \
               /data/packages/   
