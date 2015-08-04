@@ -11,7 +11,25 @@ _LOG = logging.getLogger(__name__)
 
 
 def parse_type(s):
-    """Parse the string `s` and return a native python object."""
+    """Parse the string `s` and return a native python object.
+
+    >>> parse_type('01:40:54.7722350Z')
+    datetime.time(1, 40, 54, 772235)
+    >>> parse_type('2015-03-29')
+    datetime.date(2015, 3, 29)
+    >>> # Some have added quotes
+    >>> parse_type('"01:40:54.7722350Z"')
+    datetime.time(1, 40, 54, 772235)
+    >>> parse_type("NONE")
+    >>> parse_type("Y")
+    True
+    >>> parse_type("N")
+    False
+    >>> parse_type('Plain String')
+    'Plain String'
+    >>> parse_type('"Quoted String"')
+    'Quoted String'
+    """
 
     strptime = datetime.datetime.strptime
 
@@ -41,7 +59,7 @@ def parse_type(s):
 
     for parser in parsers:
         try:
-            return parser(s)
+            return parser(s.strip('"'))
         except ValueError:
             pass
     raise ValueError
@@ -165,6 +183,7 @@ def _populate_extent(md, product_md):
         md.extent = ptype.ExtentMetadata()
     date = _get(product_md, 'date_acquired')
     center_time = _get(product_md, 'scene_center_time')
+    _LOG.debug('Center date/time: %r, %r', date, center_time)
     md.extent.center_dt = datetime.datetime.combine(date, center_time)
     # md.extent.reference_system = ?
     md.extent.coord = ptype.CoordPolygon(
