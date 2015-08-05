@@ -426,23 +426,26 @@ class OrthoDriver(DatasetDriver):
         :type final_path: pathlib.Path
         :rtype: ptype.BandMetadata
 
-        >>> OrthoDriver().to_band(None, Path('/tmp/out/L8_SOMETHING_B1.tif'))
-        BandMetadata(path=PosixPath('/tmp/out/L8_SOMETHING_B1.tif'), number='1')
-        >>> OrthoDriver().to_band(None, Path('/tmp/out/L8_SOMETHING_B12.tif'))
-        BandMetadata(path=PosixPath('/tmp/out/L8_SOMETHING_B12.tif'), number='12')
+        >>> OrthoDriver().to_band(None, Path('/tmp/out/LT51030782005002ASA00_B3.TIF'))
+        BandMetadata(path=PosixPath('/tmp/out/LT51030782005002ASA00_B3.TIF'), number='3')
+        >>> OrthoDriver().to_band(None, Path('/tmp/out/LC81090852015088LGN00_B10.tif'))
+        BandMetadata(path=PosixPath('/tmp/out/LC81090852015088LGN00_B10.tif'), number='10')
+        >>> OrthoDriver().to_band(None, Path('/data/output/LE70900782007292ASA00_B6_VCID_2.TIF'))
+        BandMetadata(path=PosixPath('/data/output/LE70900782007292ASA00_B6_VCID_2.TIF'), number='6_vcid_2')
         >>> # No bands for non-tiff files.
-        >>> OrthoDriver().to_band(None, Path('/tmp/out/L8_SOMETHING_MTL.txt'))
+        >>> OrthoDriver().to_band(None, Path('/tmp/out/LC81090852015088LGN00_MTL.txt'))
+        >>> OrthoDriver().to_band(None, Path('/tmp/out/passinfo'))
         """
-        if path.suffix != '.tif':
+        if path.suffix.lower() != '.tif':
             return None
 
+        name = path.stem.lower()
         # Images end in a band number (eg '_B12.tif'). Extract it.
-        last_component = path.stem.split('_')[-1].lower()
-        if not last_component.startswith('b'):
+        position = name.rfind('_b')
+        if position == -1:
             raise ValueError('Unexpected tif image in ortho: %r' % path)
+        band_number = name[position+2:]
 
-        # Strip the leading 'B'
-        band_number = last_component[1:]
         return ptype.BandMetadata(path=path, number=band_number)
 
     def get_ga_label(self, dataset):
