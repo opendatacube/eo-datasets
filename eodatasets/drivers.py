@@ -402,6 +402,8 @@ class OrthoDriver(DatasetDriver):
         :rtype: Path | None
 
         >>> OrthoDriver().translate_path(None, Path('something.TIF'))
+        PosixPath('something.TIF')
+        >>> OrthoDriver().translate_path(None, Path('something.tif'))
         PosixPath('something.tif')
         >>> OrthoDriver().translate_path(None, Path('something.TIF.aux.xml'))
         """
@@ -414,11 +416,7 @@ class OrthoDriver(DatasetDriver):
         if file_path.name.endswith('.aux.xml'):
             return None
 
-        # Keep suffixes consistently lowercase.
-        if file_path.suffix:
-            return file_path.with_suffix(file_path.suffix.lower())
-        else:
-            return file_path
+        return file_path
 
     def to_band(self, dataset, path):
         """

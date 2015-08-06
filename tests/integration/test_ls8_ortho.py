@@ -47,18 +47,18 @@ def test_package():
             'browse.jpg': '',
             'browse.fr.jpg': '',
             'product': {
-                'LC81120792014026ASA00_B1.tif': '',
-                'LC81120792014026ASA00_B2.tif': '',
-                'LC81120792014026ASA00_B3.tif': '',
-                'LC81120792014026ASA00_B4.tif': '',
-                'LC81120792014026ASA00_B5.tif': '',
-                'LC81120792014026ASA00_B6.tif': '',
-                'LC81120792014026ASA00_B7.tif': '',
-                'LC81120792014026ASA00_B8.tif': '',
-                'LC81120792014026ASA00_B9.tif': '',
-                'LC81120792014026ASA00_B10.tif': '',
-                'LC81120792014026ASA00_B11.tif': '',
-                'LC81120792014026ASA00_BQA.tif': '',
+                'LC81120792014026ASA00_B1.TIF': '',
+                'LC81120792014026ASA00_B2.TIF': '',
+                'LC81120792014026ASA00_B3.TIF': '',
+                'LC81120792014026ASA00_B4.TIF': '',
+                'LC81120792014026ASA00_B5.TIF': '',
+                'LC81120792014026ASA00_B6.TIF': '',
+                'LC81120792014026ASA00_B7.TIF': '',
+                'LC81120792014026ASA00_B8.TIF': '',
+                'LC81120792014026ASA00_B9.TIF': '',
+                'LC81120792014026ASA00_B10.TIF': '',
+                'LC81120792014026ASA00_B11.TIF': '',
+                'LC81120792014026ASA00_BQA.TIF': '',
                 'LC81120792014026ASA00_GCP.txt': '',
                 'LC81120792014026ASA00_MTL.txt': '',
                 'LO8_20140126_112_079_L1T.xml': '',
@@ -114,7 +114,7 @@ def test_package():
                             'type': 'panchromatic',
                             'cell_size': 12.5,
                             'label': 'Panchromatic',
-                            'path': 'product/LC81120792014026ASA00_B8.tif'
+                            'path': 'product/LC81120792014026ASA00_B8.TIF'
                         },
 
                         '2': {
@@ -122,7 +122,7 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Visible Blue',
-                            'path': 'product/LC81120792014026ASA00_B2.tif'
+                            'path': 'product/LC81120792014026ASA00_B2.TIF'
                         },
 
                         '7': {
@@ -130,28 +130,28 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Short-wave Infrared 2',
-                            'path': 'product/LC81120792014026ASA00_B7.tif'
+                            'path': 'product/LC81120792014026ASA00_B7.TIF'
                         },
                         'qa': {
                             'number': 'qa',
                             'type': 'quality',
                             'cell_size': 25.0,
                             'label': 'Quality',
-                            'path': 'product/LC81120792014026ASA00_BQA.tif'
+                            'path': 'product/LC81120792014026ASA00_BQA.TIF'
                         },
                         '3': {
                             'number': '3',
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Visible Green',
-                            'path': 'product/LC81120792014026ASA00_B3.tif'
+                            'path': 'product/LC81120792014026ASA00_B3.TIF'
                         },
                         '9': {
                             'number': '9',
                             'type': 'atmosphere',
                             'cell_size': 25.0,
                             'label': 'Cirrus',
-                            'path': 'product/LC81120792014026ASA00_B9.tif'
+                            'path': 'product/LC81120792014026ASA00_B9.TIF'
                         },
 
                         '6': {
@@ -159,7 +159,7 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Short-wave Infrared 1',
-                            'path': 'product/LC81120792014026ASA00_B6.tif'
+                            'path': 'product/LC81120792014026ASA00_B6.TIF'
                         },
 
                         '11': {
@@ -167,7 +167,7 @@ def test_package():
                             'type': 'thermal',
                             'cell_size': 25.0,
                             'label': 'Thermal Infrared 2',
-                            'path': 'product/LC81120792014026ASA00_B11.tif'
+                            'path': 'product/LC81120792014026ASA00_B11.TIF'
                         },
 
                         '5': {
@@ -175,7 +175,7 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Near Infrared',
-                            'path': 'product/LC81120792014026ASA00_B5.tif'
+                            'path': 'product/LC81120792014026ASA00_B5.TIF'
                         },
 
                         '4': {
@@ -183,7 +183,7 @@ def test_package():
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Visible Red',
-                            'path': 'product/LC81120792014026ASA00_B4.tif'
+                            'path': 'product/LC81120792014026ASA00_B4.TIF'
                         },
 
                         '10': {
@@ -191,14 +191,14 @@ def test_package():
                             'type': 'thermal',
                             'cell_size': 25.0,
                             'label': 'Thermal Infrared 1',
-                            'path': 'product/LC81120792014026ASA00_B10.tif'
+                            'path': 'product/LC81120792014026ASA00_B10.TIF'
                         },
                         '1': {
                             'number': '1',
                             'type': 'reflective',
                             'cell_size': 25.0,
                             'label': 'Coastal Aerosol',
-                            'path': 'product/LC81120792014026ASA00_B1.tif'
+                            'path': 'product/LC81120792014026ASA00_B1.TIF'
                         }
                     },
                 'sun_azimuth': 82.05926755,
@@ -329,18 +329,18 @@ def test_package():
         'browse.fr.jpg',
         'browse.jpg',
         'ga-metadata.yaml',
-        'product/LC81120792014026ASA00_B1.tif',
-        'product/LC81120792014026ASA00_B10.tif',
-        'product/LC81120792014026ASA00_B11.tif',
-        'product/LC81120792014026ASA00_B2.tif',
-        'product/LC81120792014026ASA00_B3.tif',
-        'product/LC81120792014026ASA00_B4.tif',
-        'product/LC81120792014026ASA00_B5.tif',
-        'product/LC81120792014026ASA00_B6.tif',
-        'product/LC81120792014026ASA00_B7.tif',
-        'product/LC81120792014026ASA00_B8.tif',
-        'product/LC81120792014026ASA00_B9.tif',
-        'product/LC81120792014026ASA00_BQA.tif',
+        'product/LC81120792014026ASA00_B1.TIF',
+        'product/LC81120792014026ASA00_B10.TIF',
+        'product/LC81120792014026ASA00_B11.TIF',
+        'product/LC81120792014026ASA00_B2.TIF',
+        'product/LC81120792014026ASA00_B3.TIF',
+        'product/LC81120792014026ASA00_B4.TIF',
+        'product/LC81120792014026ASA00_B5.TIF',
+        'product/LC81120792014026ASA00_B6.TIF',
+        'product/LC81120792014026ASA00_B7.TIF',
+        'product/LC81120792014026ASA00_B8.TIF',
+        'product/LC81120792014026ASA00_B9.TIF',
+        'product/LC81120792014026ASA00_BQA.TIF',
         'product/LC81120792014026ASA00_GCP.txt',
         'product/LC81120792014026ASA00_MTL.txt',
         'product/LO8_20140126_112_079_L1T.xml'
