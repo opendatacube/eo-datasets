@@ -15,6 +15,9 @@ setup(
     description="Packaging, metadata and provenance for GA EO datasets",
     version=version,
     packages=find_packages(exclude=('tests', 'tests.*')),
+    package_data={
+        '': ['*.json'],
+     },
     install_requires=[
         'click',
         'python-dateutil',
