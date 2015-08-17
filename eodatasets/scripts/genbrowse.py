@@ -10,7 +10,7 @@ from eodatasets.browseimage import regenerate_browse_image
 @click.command()
 @click.option('--debug', is_flag=True)
 @click.argument('dataset', type=click.Path(exists=True, readable=True, writable=False), nargs=-1)
-def run_regeneration(debug, dataset):
+def run(debug, dataset):
     """
     Regenerate browse images for the given datasets.
     :param debug:
@@ -28,4 +28,4 @@ def run_regeneration(debug, dataset):
 if __name__ == '__main__':
     # Click fills out the parameters, which confuses pylint.
     # pylint: disable=no-value-for-parameter
-    run_regeneration()
+    run()

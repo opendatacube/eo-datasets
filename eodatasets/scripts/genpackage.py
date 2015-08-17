@@ -30,7 +30,7 @@ from eodatasets.scripts import init_logging
 @click.argument('destination',
                 type=click.Path(exists=True, readable=True, writable=True),
                 nargs=1)
-def run_packaging(parent, debug, hard_link, package_type, dataset, destination):
+def run(parent, debug, hard_link, package_type, dataset, destination):
     """
     Package the given imagery folders.
     """
@@ -64,4 +64,4 @@ def run_packaging(parent, debug, hard_link, package_type, dataset, destination):
 if __name__ == '__main__':
     # Click fills out the parameters, which confuses pylint.
     # pylint: disable=no-value-for-parameter
-    run_packaging()
+    run()

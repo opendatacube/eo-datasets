@@ -25,7 +25,7 @@ _LOG = logging.getLogger('eodatasets')
 @click.argument('datasets',
                 type=click.Path(exists=True, readable=True, writable=True),
                 nargs=-1)
-def run_packaging(parent, debug, package_type, datasets):
+def run(parent, debug, package_type, datasets):
     """
     Package the given imagery folders.
     """
@@ -54,4 +54,4 @@ def run_packaging(parent, debug, package_type, datasets):
 if __name__ == '__main__':
     # Click fills out the parameters, which confuses pylint.
     # pylint: disable=no-value-for-parameter
-    run_packaging()
+    run()
