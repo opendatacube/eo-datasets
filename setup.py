@@ -12,6 +12,7 @@ if 'BUILD_NUMBER' in os.environ and version.endswith('b'):
 
 setup(
     name="eodatasets",
+    description="Packaging, metadata and provenance for GA EO datasets",
     version=version,
     packages=find_packages(exclude=('tests', 'tests.*')),
     install_requires=[
