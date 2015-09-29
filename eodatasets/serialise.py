@@ -153,6 +153,7 @@ def _create_relative_dumper(folder):
         return dumper.represent_scalar(u'tag:yaml.org,2002:str', str(data.relative_to(folder)))
 
     RelativeDumper.add_multi_representer(pathlib.Path, path_representer)
+    RelativeDumper.ignore_aliases = lambda self, data: True
 
     return RelativeDumper
 

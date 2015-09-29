@@ -3,11 +3,13 @@ from __future__ import absolute_import
 import logging
 import re
 import string
+import datetime
 
 from pathlib import Path
 
 from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, \
     passinfo, pds, npphdf5, image as md_image
+from eodatasets.metadata import _GROUNDSTATION_LIST
 from eodatasets import type as ptype, metadata
 
 _LOG = logging.getLogger(__name__)
@@ -584,6 +586,9 @@ class NbarDriver(DatasetDriver):
         :rtype: ptype.DatasetMetadata
         """
 
+        if not dataset.image:
+            dataset.image = ptype.ImageMetadata(bands={})
+
         # Copy relevant fields from source ortho.
         if 'ortho' in dataset.lineage.source_datasets:
             ortho = dataset.lineage.source_datasets['ortho']
@@ -595,6 +600,96 @@ class NbarDriver(DatasetDriver):
         dataset.format_ = ptype.FormatMetadata('GeoTIFF')
 
         md_image.populate_from_image_metadata(dataset)
+
+        return dataset
+
+
+class EODSDriver(DatasetDriver):
+    def get_id(self):
+        return "EODS"
+
+    def get_ga_label(self, dataset):
+        return dataset.ga_label
+
+    def to_band(self, dataset, path):
+        """
+        :type dataset: ptype.DatasetMetadata
+        :type final_path: pathlib.Path
+        :rtype: ptype.BandMetadata
+        """
+        if path.suffix.lower() != '.tif':
+            return None
+
+        name = path.stem
+        # Images end in a band number (eg '_B12.tif'). Extract it.
+        position = name.rfind('_')
+        if position == -1:
+            raise ValueError('Unexpected tif image in eods: %r' % path)
+        if name[position+1].lower()=='b':
+            band_number = name[position+2:]
+        else:
+            band_number = name[position+1:]
+
+        return ptype.BandMetadata(path=path, number=band_number)
+
+    def fill_metadata(self, dataset, path):
+        """
+        :type dataset: ptype.DatasetMetadata
+        :type path: Path
+        :rtype: ptype.DatasetMetadata
+        """
+
+        m = re.match(
+            (
+                r"(?P<vehicle>LS[578])"
+                r"_(?P<instrument>OLI_TIRS|OLI|TIRS|TM|ETM)"
+                r"_(?P<type>NBAR|PQ|FC)"
+                r"_(?P<level>[^-_]*)"
+                r"_(?P<product>[^-_]*)"
+                r"-(?P<groundstation>[0-9]{3})"
+                r"_(?P<path>[0-9]{3})"
+                r"_(?P<row>[0-9]{3})"
+                r"_(?P<date>[12][0-9]{7})"
+                r"(_(?P<version>[0-9]+))?"
+                "$"
+            ),
+            path.stem)
+        fields = m.groupdict()
+
+        dataset.ga_level = fields["level"]
+        dataset.ga_label = path.stem
+        dataset.format_ = ptype.FormatMetadata(name='GeoTiff')
+
+        if not dataset.platform:
+            dataset.platform = ptype.PlatformMetadata()
+        dataset.platform.code = "LANDSAT_" + fields["vehicle"][2]
+
+        if not dataset.instrument:
+            dataset.instrument = ptype.InstrumentMetadata()
+        dataset.instrument.name = fields["instrument"]
+
+        if not dataset.image:
+            dataset.image = ptype.ImageMetadata(bands={})
+        dataset.image.satellite_ref_point_start = ptype.Point(int(fields["path"]), int(fields["row"]))
+        dataset.image.satellite_ref_point_end = ptype.Point(int(fields["path"]), int(fields["row"]))
+
+        for image_path in path.joinpath("scene01").iterdir():
+            band = self.to_band(dataset, image_path)
+            if band:
+                dataset.image.bands[band.number] = band
+        md_image.populate_from_image_metadata(dataset)
+
+        if not dataset.acquisition:
+            dataset.acquisition = ptype.AcquisitionMetadata()
+        dataset.acquisition.aos = datetime.datetime.strptime(fields["date"], "%Y%m%d").date()
+
+        for _station in _GROUNDSTATION_LIST:
+            if _station["eods_domain_code"] == fields["groundstation"]:
+                dataset.acquisition.groundstation = ptype.GroundstationMetadata(code=_station["code"])
+                break
+
+        if dataset.extent and not dataset.extent.center_dt:
+            dataset.extent.center_dt = dataset.acquisition.aos
 
         return dataset
 
@@ -667,5 +762,6 @@ PACKAGE_DRIVERS = {
     'pqa': PqaDriver(),
     'ortho': OrthoDriver(),
     'nbar_brdf': NbarDriver('brdf'),
-    'nbar_terrain': NbarDriver('terrain')
+    'nbar_terrain': NbarDriver('terrain'),
+    'eods': EODSDriver()
 }

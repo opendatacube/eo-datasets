@@ -108,11 +108,10 @@ def populate_from_image_metadata(md):
 
         spacial_ref = osr.SpatialReference(i.GetProjectionRef())
 
-        spacial_ref.GetUTMZone()
-
         # Extract actual image coords
         # md.grid_spatial.projection.
         band.shape = ptype.Point(i.RasterXSize, i.RasterYSize)
+        band.cell_size = ptype.Point(i.GetGeoTransform()[1], i.GetGeoTransform()[5])
 
         # TODO separately: create standardised WGS84 coords. for md.extent
         # wkt_contents = spacial_ref.ExportToPrettyWkt()
@@ -124,6 +123,8 @@ def populate_from_image_metadata(md):
             md.grid_spatial.projection = ptype.ProjectionMetadata()
 
         md.grid_spatial.projection.geo_ref_points = _get_gdal_image_coords(i)
+        md.grid_spatial.projection.unit = spacial_ref.GetLinearUnitsName()
+        md.grid_spatial.projection.zone = spacial_ref.GetUTMZone()
 
         # ?
         md.grid_spatial.projection.datum = 'GDA94'
@@ -131,7 +132,9 @@ def populate_from_image_metadata(md):
 
         # TODO: DATUM/Reference system etc.
 
-        # TODO: Extent
+        if not md.extent:
+            md.extent = ptype.ExtentMetadata()
+        md.extent.coord = reproject_coords(md.grid_spatial.projection.geo_ref_points, spacial_ref)
 
         # Get positional info, projection etc.
 
