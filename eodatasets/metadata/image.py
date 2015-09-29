@@ -111,7 +111,7 @@ def populate_from_image_metadata(md):
         # Extract actual image coords
         # md.grid_spatial.projection.
         band.shape = ptype.Point(i.RasterXSize, i.RasterYSize)
-        band.cell_size = ptype.Point(i.GetGeoTransform()[1], i.GetGeoTransform()[5])
+        band.cell_size = ptype.Point(abs(i.GetGeoTransform()[1]), abs(i.GetGeoTransform()[5]))
 
         # TODO separately: create standardised WGS84 coords. for md.extent
         # wkt_contents = spacial_ref.ExportToPrettyWkt()

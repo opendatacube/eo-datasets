@@ -625,7 +625,7 @@ class EODSDriver(DatasetDriver):
         position = name.rfind('_')
         if position == -1:
             raise ValueError('Unexpected tif image in eods: %r' % path)
-        if name[position+1].lower()=='b':
+        if re.match(r"[Bb]\d+", name[position+1:]):
             band_number = name[position+2:]
         else:
             band_number = name[position+1:]
