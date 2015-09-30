@@ -608,6 +608,13 @@ class EODSDriver(DatasetDriver):
     def get_id(self):
         return "EODS"
 
+    def expected_source(self):
+        """
+        Expected source dataset (driver).
+        :rtype: DatasetDriver
+        """
+        return None
+
     def get_ga_label(self, dataset):
         return dataset.ga_label
 
