@@ -688,15 +688,35 @@ class EODSDriver(DatasetDriver):
 
         if not dataset.acquisition:
             dataset.acquisition = ptype.AcquisitionMetadata()
-        dataset.acquisition.aos = datetime.datetime.strptime(fields["date"], "%Y%m%d").date()
 
         for _station in _GROUNDSTATION_LIST:
             if _station["eods_domain_code"] == fields["groundstation"]:
                 dataset.acquisition.groundstation = ptype.GroundstationMetadata(code=_station["code"])
                 break
 
-        if dataset.extent and not dataset.extent.center_dt:
-            dataset.extent.center_dt = dataset.acquisition.aos
+        def els2date(els, fmt):
+            if not els:
+                return None
+            return datetime.datetime.strptime(els[0].text, fmt)
+
+        import xml.etree.cElementTree as etree
+        doc = etree.parse(str(path.joinpath('metadata.xml')))
+        aos = els2date(doc.findall("./ACQUISITIONINFORMATION/EVENT/AOS"), "%Y%m%dT%H:%M:%S")
+        los = els2date(doc.findall("./ACQUISITIONINFORMATION/EVENT/LOS"), "%Y%m%dT%H:%M:%S")
+        start_time = els2date(doc.findall("./EXEXTENT/TEMPORALEXTENTFROM"), "%Y%m%d %H:%M:%S")
+        end_time = els2date(doc.findall("./EXEXTENT/TEMPORALEXTENTTO"), "%Y%m%d %H:%M:%S")
+
+        # check if the dates in the metadata file are at least as accurate as what we have
+        filename_time = datetime.datetime.strptime(fields["date"], "%Y%m%d")
+        if abs(start_time - filename_time).days == 0:
+            dataset.acquisition.aos = aos
+            dataset.acquisition.los = los
+            dataset.extent.center_dt = start_time + (end_time - start_time)/2
+        else:
+            dataset.acquisition.aos = filename_time.date()
+            dataset.acquisition.los = dataset.acquisition.aos
+            if dataset.extent and not dataset.extent.center_dt:
+                dataset.extent.center_dt = dataset.acquisition.aos
 
         return dataset
 
