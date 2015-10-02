@@ -646,7 +646,7 @@ class EODSDriver(DatasetDriver):
         :rtype: ptype.DatasetMetadata
         """
 
-        m = re.match(
+        fields = re.match(
             (
                 r"(?P<vehicle>LS[578])"
                 r"_(?P<instrument>OLI_TIRS|OLI|TIRS|TM|ETM)"
@@ -660,8 +660,7 @@ class EODSDriver(DatasetDriver):
                 r"(_(?P<version>[0-9]+))?"
                 "$"
             ),
-            path.stem)
-        fields = m.groupdict()
+            path.stem).groupdict()
 
         dataset.ga_level = fields["level"]
         dataset.ga_label = path.stem
