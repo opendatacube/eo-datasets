@@ -227,6 +227,53 @@ class TestDrivers(TestCase):
             drivers.RawDriver().get_ga_label(ds)
         )
 
+    def test_eods_fill_metadata(self):
+        dataset_folder = "LS8_OLI_TIRS_NBAR_P54_GANBAR01-015_101_078_20141012"
+        bandname = '10'
+        bandfile = dataset_folder+'_B'+bandname+'.tif'
+        input_folder = write_files({
+            dataset_folder: {
+                'metadata.xml': """<EODS_DATASET>
+                <ACQUISITIONINFORMATION>
+                <EVENT>
+                <AOS>20141012T03:23:36</AOS>
+                <LOS>20141012T03:29:10</LOS>
+                </EVENT>
+                </ACQUISITIONINFORMATION>
+                <EXEXTENT>
+                <TEMPORALEXTENTFROM>20141012 00:55:54</TEMPORALEXTENTFROM>
+                <TEMPORALEXTENTTO>20141012 00:56:18</TEMPORALEXTENTTO>
+                </EXEXTENT>
+                </EODS_DATASET>""",
+                'scene01': {
+                    bandfile: ''
+                }
+            }
+        })
+        expected = ptype.DatasetMetadata(
+            id_=_EXPECTED_NBAR.id_,
+            ga_label=dataset_folder,
+            ga_level='P54',
+            platform=ptype.PlatformMetadata(code='LANDSAT_8'),
+            instrument=ptype.InstrumentMetadata(name='OLI_TIRS'),
+            format_=ptype.FormatMetadata(name='GeoTiff'),
+            acquisition=ptype.AcquisitionMetadata(aos=datetime.datetime(2014, 10, 12, 3, 23, 36),
+                                                  los=datetime.datetime(2014, 10, 12, 3, 29, 10),
+                                                  groundstation=ptype.GroundstationMetadata(code='LGS')),
+            extent=ptype.ExtentMetadata(center_dt=datetime.datetime(2014, 10, 12, 0, 56, 6)),
+            image=ptype.ImageMetadata(satellite_ref_point_start=ptype.Point(x=101, y=78),
+                                      satellite_ref_point_end=ptype.Point(x=101, y=78),
+                                      bands={bandname: ptype.BandMetadata(number=bandname,
+                                                                    path=Path(input_folder, dataset_folder,
+                                                                              'scene01', bandfile))})
+        )
+        dataset = ptype.DatasetMetadata(
+            id_=_EXPECTED_NBAR.id_
+        )
+        received = drivers.EODSDriver().fill_metadata(dataset, input_folder.joinpath(dataset_folder))
+        self.assertEqual(expected, received)
+
+
     def test_nbar_fill_metadata(self):
         input_folder = write_files({
             'reflectance_brdf_1.bin': '',

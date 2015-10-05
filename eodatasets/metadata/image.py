@@ -105,7 +105,9 @@ def populate_from_image_metadata(md):
 
     for band_id, band in md.image.bands.items():
         i = gdal.Open(str(band.path))
-
+        if not i:
+            # TODO: log? throw?
+            continue
         spacial_ref = osr.SpatialReference(i.GetProjectionRef())
 
         # Extract actual image coords

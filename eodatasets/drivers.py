@@ -693,6 +693,9 @@ class EODSDriver(DatasetDriver):
                 dataset.acquisition.groundstation = ptype.GroundstationMetadata(code=_station["code"])
                 break
 
+        if not dataset.extent:
+            dataset.extent = ptype.ExtentMetadata()
+
         def els2date(els, fmt):
             if not els:
                 return None
