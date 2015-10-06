@@ -61,17 +61,17 @@ def reproject_coords(coords, source_spatial_ref):
     ... )
     >>> reproject_coords(c, _GDA_94)
     CoordPolygon(\
-ul=Coord(lat=133.9794200916146, lon=-24.9879409027833), \
-ur=Coord(lat=136.23877887843614, lon=-24.98628436689941), \
-ll=Coord(lat=133.96195524174112, lon=-26.992472356949904), \
-lr=Coord(lat=136.25997551867962, lon=-26.990662556011216)\
+ul=Coord(lat=-24.9879409027833, lon=133.9794200916146), \
+ur=Coord(lat=-24.98628436689941, lon=136.23877887843614), \
+ll=Coord(lat=-26.992472356949904, lon=133.96195524174112), \
+lr=Coord(lat=-26.990662556011216, lon=136.25997551867962)\
 )
     """
     transform = osr.CoordinateTransformation(source_spatial_ref, source_spatial_ref.CloneGeogCS())
 
     def _reproject_point(p):
         x, y, height = transform.TransformPoint(p.x, p.y)
-        return ptype.Coord(x, y)
+        return ptype.Coord(lon=x, lat=y)
 
     return _map_polygon(_reproject_point, coords)
 
