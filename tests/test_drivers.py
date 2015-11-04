@@ -1,14 +1,15 @@
 # coding=utf-8
 from __future__ import absolute_import
+
 import datetime
 from uuid import UUID
 
 from pathlib import Path
 
-from eodatasets import drivers
-from tests.metadata.mtl import test_ls8, test_ls7_definitive, test_ls5_definitive
-from tests import write_files, TestCase
 import eodatasets.type as ptype
+from eodatasets import drivers
+from tests import write_files, TestCase
+from tests.metadata.mtl import test_ls8, test_ls7_definitive, test_ls5_definitive
 
 _LS5_RAW = ptype.DatasetMetadata(
     id_=UUID('c86809b3-e894-11e4-8958-1040f381a756'),
@@ -260,7 +261,11 @@ class TestDrivers(TestCase):
             acquisition=ptype.AcquisitionMetadata(aos=datetime.datetime(2014, 10, 12, 3, 23, 36),
                                                   los=datetime.datetime(2014, 10, 12, 3, 29, 10),
                                                   groundstation=ptype.GroundstationMetadata(code='LGS')),
-            extent=ptype.ExtentMetadata(center_dt=datetime.datetime(2014, 10, 12, 0, 56, 6)),
+            extent=ptype.ExtentMetadata(
+                center_dt=datetime.datetime(2014, 10, 12, 0, 56, 6),
+                from_dt=datetime.datetime(2014, 10, 12, 0, 55, 54),
+                to_dt=datetime.datetime(2014, 10, 12, 0, 56, 18)
+            ),
             image=ptype.ImageMetadata(satellite_ref_point_start=ptype.Point(x=101, y=78),
                                       satellite_ref_point_end=ptype.Point(x=101, y=78),
                                       bands={bandname: ptype.BandMetadata(number=bandname,
@@ -271,8 +276,7 @@ class TestDrivers(TestCase):
             id_=_EXPECTED_NBAR.id_
         )
         received = drivers.EODSDriver().fill_metadata(dataset, input_folder.joinpath(dataset_folder))
-        self.assertEqual(expected, received)
-
+        self.assert_same(expected, received)
 
     def test_nbar_fill_metadata(self):
         input_folder = write_files({
