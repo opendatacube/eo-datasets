@@ -1,20 +1,20 @@
 # coding=utf-8
 from __future__ import absolute_import
+
 import logging
+import math
 import os
 import shutil
-from subprocess import check_call
-import math
 import tempfile
+from subprocess import check_call
 
-import gdalconst
 import gdal
+import gdalconst
 import numpy
-from pathlib import Path
+import pathlib
 
-from eodatasets import serialise, drivers
 import eodatasets.type as ptype
-
+from eodatasets import serialise, drivers
 
 GDAL_CACHE_MAX_MB = 512
 
@@ -68,7 +68,7 @@ def _calculate_scale_offset(nodata, band):
 
     # From the old Jobmanager codebase: avoid divide by zero caused by some stats.
     if diff_ == 0:
-        _LOG.warn("dfScaleSrc Min and Max are equal! Applying correction")
+        _LOG.warning("dfScaleSrc Min and Max are equal! Applying correction")
         diff_ = 1
 
     dfScale = (dfScaleDstMax - dfScaleDstMin) / diff_
@@ -102,7 +102,7 @@ def _create_thumbnail(red_file, green_file, blue_file, thumb_image,
     nodata = int(nodata)
 
     # GDAL calls need absolute paths.
-    thumbnail_path = Path(thumb_image).absolute()
+    thumbnail_path = pathlib.Path(thumb_image).absolute()
 
     if thumbnail_path.exists() and not overwrite:
         _LOG.warning('File already exists. Skipping creation of %s', thumbnail_path)
@@ -205,7 +205,7 @@ def _create_thumbnail(red_file, green_file, blue_file, thumb_image,
 
     # Newer versions of GDAL create aux files due to the histogram. Clean them up.
     for f in (red_file, blue_file, green_file):
-        f = Path(f)
+        f = pathlib.Path(f)
         aux_file = f.with_name(f.name + '.aux.xml')
         if aux_file.exists():
             _LOG.info('Cleaning aux: %s', aux_file)

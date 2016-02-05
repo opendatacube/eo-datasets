@@ -1,12 +1,12 @@
 # coding=utf-8
 from __future__ import absolute_import
+
+import datetime
 import logging
 import re
 import string
-import datetime
 import xml.etree.cElementTree as etree
 
-from pathlib import Path
 from dateutil.parser import parse
 import yaml
 
@@ -15,10 +15,11 @@ try:
 except ImportError:
     from yaml import SafeLoader
 
+from pathlib import Path
+from eodatasets import type as ptype, metadata
+from eodatasets.metadata import _GROUNDSTATION_LIST
 from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, \
     passinfo, pds, npphdf5, image as md_image
-from eodatasets.metadata import _GROUNDSTATION_LIST
-from eodatasets import type as ptype, metadata
 
 _LOG = logging.getLogger(__name__)
 
@@ -224,7 +225,7 @@ def _get_process_code(dataset):
     if dataset.ga_level == 'P00':
         return 'satellite_telemetry_data', 'P00'
 
-    _LOG.warn('No process code mapped for level/orientation: %r, %r', level, orientation)
+    _LOG.warning('No process code mapped for level/orientation: %r, %r', level, orientation)
     return None, None
 
 
@@ -792,18 +793,17 @@ class EODSDriver(DatasetDriver):
 
         # check if the dates in the metadata file are at least as accurate as what we have
         filename_time = datetime.datetime.strptime(fields["date"], "%Y%m%d")
-        if abs(start_time - filename_time).days == 0:
-            dataset.acquisition.aos = aos
-            dataset.acquisition.los = los
-            dataset.extent.center_dt = start_time + (end_time - start_time) / 2
-            dataset.extent.from_dt = start_time
-            dataset.extent.to_dt = end_time
-        else:
-            dataset.acquisition.aos = filename_time.date()
-            dataset.acquisition.los = dataset.acquisition.aos
-            if dataset.extent and not dataset.extent.center_dt:
-                dataset.extent.center_dt = dataset.acquisition.aos
+        time_diff = start_time - filename_time
 
+        # Is the EODS metadata extremely off?
+        if abs(time_diff).days != 0:
+            raise ValueError('EODS time information differs too much from source files: %s' % time_diff)
+
+        dataset.acquisition.aos = aos
+        dataset.acquisition.los = los
+        dataset.extent.center_dt = start_time + (end_time - start_time) / 2
+        dataset.extent.from_dt = start_time
+        dataset.extent.to_dt = end_time
         return dataset
 
 
@@ -846,7 +846,7 @@ class PqaDriver(DatasetDriver):
         """
         # Tif file will be renamed to contain the ga_label.
         suffix = file_path.suffix.lower()
-        if '.tif' == suffix:
+        if suffix == '.tif':
             ga_label = self.get_ga_label(dataset)
             return file_path.with_name(ga_label + suffix)
         else:

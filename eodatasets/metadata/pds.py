@@ -3,9 +3,10 @@
 PDF file metadata extraction.
 """
 from __future__ import absolute_import
+
+import datetime
 import logging
 import re
-import datetime
 from subprocess import check_output
 
 from pathlib import Path
@@ -101,7 +102,7 @@ def find_pds_file(path):
         return None
 
     if len(pds_files) > 1:
-        _LOG.warn('Multiple PDS files founds %s', pds_files)
+        _LOG.warning('Multiple PDS files founds %s', pds_files)
 
     return pds_files[0]
 

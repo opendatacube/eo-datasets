@@ -2,13 +2,13 @@
 # Our metadata 'classes' validly have many arguments, to match the metadata format.
 # pylint: disable=too-many-arguments,too-many-instance-attributes,too-many-locals
 from __future__ import absolute_import
+
 import datetime
 import inspect
-import uuid
 import logging
+import uuid
 
 from pathlib import Path
-
 
 _LOG = logging.getLogger()
 
@@ -66,6 +66,8 @@ class SimpleObject(object):
         (ordered output is primarily useful for readability: such as repr() or log output.)
         :rtype: [(str, obj)]
         """
+        # inspect.signature() is not available in Python 2.7, so we use the py3-deprecated getargspec().
+        # pylint: disable=deprecated-method
         constructor_spec = inspect.getargspec(cls.__init__)
         constructor_args = constructor_spec.args[1:]
 
@@ -123,7 +125,7 @@ class SimpleObject(object):
             if key not in possible_properties:
                 # Reserved python words may have an underscore appended
                 if key + '_' not in possible_properties:
-                    _LOG.warn('Unknown property %r in %r', key, cls.__name__)
+                    _LOG.warning('Unknown property %r in %r', key, cls.__name__)
                     continue
 
                 key += '_'
@@ -655,7 +657,9 @@ class AcquisitionMetadata(SimpleObject):
         """
 
         # Acquisition/Loss Of signal
+        #: :type: datetime.datetime or datetime.date
         self.aos = aos
+        #: :type: datetime.datetime or datetime.date
         self.los = los
 
         self.groundstation = groundstation
@@ -868,12 +872,14 @@ def rebase_paths(source_path, destination_path, object_):
     :type source_path: Path
     :type destination_path: Path
     """
+
     def rebase_if_path(o):
         if isinstance(o, Path):
             return rebase_path(source_path, destination_path, o)
         return o
 
     return map_values(rebase_if_path, object_)
+
 
 # Circular reference.
 LineageMetadata.PROPERTY_PARSERS['source_datasets'] = DatasetMetadata.from_named_dicts

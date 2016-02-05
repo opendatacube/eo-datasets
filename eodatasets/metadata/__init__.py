@@ -78,7 +78,7 @@ def get_groundstation(gsi):
     gsi = normalise_gsi(gsi)
     stations = [g for g in _GROUNDSTATION_LIST if g['code'].upper() == gsi]
     if not stations:
-        _LOG.warn('Station GSI not known: %r', gsi)
+        _LOG.warning('Station GSI not known: %r', gsi)
         return None
     station = stations[0]
     return ptype.GroundstationMetadata(

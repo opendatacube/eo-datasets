@@ -1,20 +1,18 @@
 # coding=utf-8
 from __future__ import absolute_import
 
-import datetime
-import os
 import collections
-import uuid
-import time
+import datetime
 import logging
+import os
+import time
+import uuid
 
 import yaml
 from pathlib import Path
-import pathlib
 
-from eodatasets import compat
 import eodatasets.type as ptype
-
+from eodatasets import compat
 
 _LOG = logging.getLogger(__name__)
 
@@ -137,6 +135,7 @@ def _create_relative_dumper(folder):
     :type folder: str
     :rtype: yaml.Dumper
     """
+
     # We can't control how many ancestors this dumper API uses, Pylint.
     # pylint: disable=too-many-ancestors
     class RelativeDumper(yaml.Dumper):
@@ -152,7 +151,7 @@ def _create_relative_dumper(folder):
             data = Path(folder).joinpath(data)
         return dumper.represent_scalar(u'tag:yaml.org,2002:str', str(data.relative_to(folder)))
 
-    RelativeDumper.add_multi_representer(pathlib.Path, path_representer)
+    RelativeDumper.add_multi_representer(Path, path_representer)
     RelativeDumper.ignore_aliases = lambda self, data: True
 
     return RelativeDumper
@@ -201,7 +200,7 @@ def read_dict_metadata(dict_):
 
 def write_property_metadata(d, metadata_file, target_directory):
     def _clean_val(v):
-        if isinstance(v, pathlib.Path):
+        if isinstance(v, Path):
             return str(v.relative_to(target_directory))
 
         return v
@@ -280,7 +279,7 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
         yield key_prefix, str(o)
     elif isinstance(o, Path):
         if not o.is_absolute():
-            _LOG.warn('Non-absolute path: %r', o)
+            _LOG.warning('Non-absolute path: %r', o)
         val = o.relative_to(relative_to) if o.is_absolute() else o
         yield key_prefix, str(val)
     elif o is None:

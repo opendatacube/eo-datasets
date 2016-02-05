@@ -3,11 +3,11 @@
 Metadata extraction from passinfo files.
 """
 from __future__ import absolute_import
-import logging
+
 import datetime
+import logging
 
 from eodatasets import type as ptype
-
 
 _log = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def extract_md(base_md, directory):
         return base_md
 
     if len(passinfos) > 1:
-        _log.warn('Multiple passinfo files in directory: %r', passinfos)
+        _log.warning('Multiple passinfo files in directory: %r', passinfos)
 
     passinfo = passinfos[0]
     _log.info("Found passinfo '%s'", passinfo)
@@ -51,7 +51,7 @@ def station_to_gsi(station):
         # Hobart
         gsi = 'HOA'
     else:
-        _log.warn("Unknown station value %r. Falling back to RCC extraction.", station)
+        _log.warning("Unknown station value %r. Falling back to RCC extraction.", station)
         gsi = None
     return gsi
 

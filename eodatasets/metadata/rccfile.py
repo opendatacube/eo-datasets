@@ -3,9 +3,10 @@
 Metadata extraction from RCC files.
 """
 from __future__ import absolute_import
+
+import datetime
 import logging
 import re
-import datetime
 
 from eodatasets import type as ptype
 
@@ -110,17 +111,17 @@ def _expand_platform_info(vehicle_char, vehicle_num, instrument_char, sensor_mod
             if instrument_char == 'E':
                 instrument_name = 'ETM'
             else:
-                _log.warn('Unknown LS7 sensor char: %s', instrument_char)
+                _log.warning('Unknown LS7 sensor char: %s', instrument_char)
         elif vehicle_num == '5':
             if instrument_char == 'T':
                 instrument_name = 'TM'
             else:
-                _log.warn('Unknown LS4/5 sensor char: %s', instrument_char)
+                _log.warning('Unknown LS4/5 sensor char: %s', instrument_char)
 
         operation_mode = _INSTRUMENT_MODES.get(sensor_mode_char)
 
     else:
-        _log.warn('Unknown vehicle: %s', vehicle_char)
+        _log.warning('Unknown vehicle: %s', vehicle_char)
     return platform_code, instrument_name, operation_mode
 
 
