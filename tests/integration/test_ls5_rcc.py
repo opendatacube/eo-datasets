@@ -3,9 +3,9 @@
 Package an LS5 RCC dataset.
 """
 from __future__ import absolute_import
-from subprocess import check_call
 import datetime
 
+from click.testing import CliRunner
 from pathlib import Path
 import yaml
 
@@ -30,15 +30,15 @@ assert source_dataset.exists()
 def test_metadata():
     output_path = temp_dir()
 
-    check_call(
+    runner = CliRunner()
+    runner.invoke(
+        eodatasets.scripts.genpackage.run,
         [
-            'python',
-            str(script_path),
             '--hard-link',
             'raw',
-            str(source_dataset),
-            str(output_path)
-        ]
+            str(source_dataset), str(output_path)
+        ],
+        catch_exceptions=False
     )
 
     assert_file_structure(output_path, {

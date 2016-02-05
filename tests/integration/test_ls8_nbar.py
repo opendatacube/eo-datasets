@@ -13,7 +13,6 @@ import eodatasets.scripts.genpackage
 from tests import temp_dir, assert_file_structure, assert_same, integration_test
 from tests.integration import get_script_path, load_checksum_filenames
 
-
 packaging_script_path = get_script_path(eodatasets.scripts.genpackage)
 
 #: :type: Path
@@ -26,18 +25,22 @@ assert source_dataset.exists()
 parent_dataset = source_folder.joinpath('parent')
 assert parent_dataset.exists()
 
+
 @integration_test
 def test_package():
     output_path = temp_dir()
 
-    check_call(
+    from click.testing import CliRunner
+
+    runner = CliRunner()
+    runner.invoke(
+        eodatasets.scripts.genpackage.run,
         [
-            'python',
-            str(packaging_script_path),
             'nbar_brdf',
             '--parent', str(parent_dataset),
             str(source_dataset), str(output_path)
-        ]
+        ],
+        catch_exceptions=False
     )
 
     output_dataset = output_path.joinpath('LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126')
