@@ -7,16 +7,13 @@ import uuid
 import datetime
 
 from pathlib import Path
-from hypothesis import given, strategy
-from hypothesis.specifiers import dictionary, strings
+from hypothesis import given
+from hypothesis.strategies import dictionaries as dictionary, characters, integers
 
 from tests import write_files, TestCase, slow
 from eodatasets import serialise, compat, type as ptype
 
-strings_without_trailing_underscore = strategy(
-    strings([chr(i) for i in range(128)])
-) \
-    .filter(lambda s: not s.endswith('_'))
+strings_without_trailing_underscore = characters(blacklist_characters='_')
 
 
 class TestSerialise(TestCase):
@@ -63,7 +60,7 @@ class TestSerialise(TestCase):
         )
 
     @slow
-    @given(dictionary(strings_without_trailing_underscore, int))
+    @given(dictionary(strings_without_trailing_underscore, integers()))
     def test_flat_dict_flattens_identically(self, dict_):
         print(dict_)
         self.assert_items_equal(
@@ -72,7 +69,7 @@ class TestSerialise(TestCase):
         )
 
     @slow
-    @given(dictionary(str, int))
+    @given(dictionary(characters(), integers()))
     def test_flat_dict_flattens_without_underscore_suffix(self, dict_):
         # A (single) trailing underscore should be stripped from key names if present, as these are added
         # for python name conflicts.
