@@ -8,6 +8,12 @@ import xml.etree.cElementTree as etree
 
 from pathlib import Path
 from dateutil.parser import parse
+import yaml
+
+try:
+    from yaml import CSafeLoader as SafeLoader
+except ImportError:
+    from yaml import SafeLoader
 
 from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, \
     passinfo, pds, npphdf5, image as md_image
@@ -53,6 +59,8 @@ class DatasetDriver(object):
     def expected_source(self):
         """
         Expected source dataset (driver).
+
+        Also known as parent dataset.
         :rtype: DatasetDriver
         """
         raise NotImplementedError()
@@ -251,7 +259,6 @@ def _get_short_satellite_code(platform_code):
 
 
 def _fill_dataset_label(dataset, format_str, **additionals):
-
     path, row = _format_path_row(
         start_point=dataset.image.satellite_ref_point_start if dataset.image else None,
         end_point=dataset.image.satellite_ref_point_end if dataset.image else None
@@ -446,7 +453,7 @@ class OrthoDriver(DatasetDriver):
         position = name.rfind('_b')
         if position == -1:
             raise ValueError('Unexpected tif image in ortho: %r' % path)
-        band_number = name[position+2:]
+        band_number = name[position + 2:]
 
         return ptype.BandMetadata(path=path, number=band_number)
 
@@ -491,6 +498,8 @@ def borrow_single_sourced_fields(dataset, source_dataset):
 
 
 class NbarDriver(DatasetDriver):
+    METADATA_FILE = 'nbar-metadata.yml'
+
     def __init__(self, subset_name):
         # Subset is typically "brdf" or "terrain" -- which NBAR portion to package.
         self.subset_name = subset_name
@@ -508,17 +517,18 @@ class NbarDriver(DatasetDriver):
         # Example: LS8_OLITIRS_NBAR_P51_GALPGS01-032_090_085_20140115
 
         codes = {
-            'terrain': 'TNBAR',
+            'terrain': 'NBART',
             'brdf': 'NBAR'
         }
 
         nbar_type = codes.get(self.subset_name)
         if not nbar_type:
-            raise ValueError('Unknown nbar subset type: %r. Expected one of %r' % (self.subset_name, codes.keys()))
+            raise ValueError('Unknown nbar subset type: %r.'
+                             'Expected one of %r' % (self.subset_name, codes.keys()))
 
         return _fill_dataset_label(
             dataset,
-            '{satnumber}_{sensor}_{nbartype}_{galevel}_GALPGS01-{stationcode}_{path}_{rows}_{day}',
+            '{satnumber}_{sensor}_{nbartype}_{galevel}_GALPGS01_{path}_{rows}_{day}',
             nbartype=nbar_type
         )
 
@@ -579,7 +589,7 @@ class NbarDriver(DatasetDriver):
         >>> NbarDriver('terrain').to_band(None, p).number
         '4'
         """
-        return ptype.BandMetadata(path=path, number=self._read_band_number(path))
+        return [ptype.BandMetadata(path=path, number=_read_band_number(path))]
 
     def fill_metadata(self, dataset, path):
         """
@@ -591,19 +601,89 @@ class NbarDriver(DatasetDriver):
         if not dataset.image:
             dataset.image = ptype.ImageMetadata(bands={})
 
+        with open(str(path.joinpath(NbarDriver.METADATA_FILE))) as f:
+            nbar_metadata = yaml.load(f, Loader=SafeLoader)
+
         # Copy relevant fields from source ortho.
         if 'ortho' in dataset.lineage.source_datasets:
             ortho = dataset.lineage.source_datasets['ortho']
             borrow_single_sourced_fields(dataset, ortho)
 
-        # All NBARs are P54. (source: Lan Wei)
-        dataset.ga_level = 'P54'
-
-        dataset.format_ = ptype.FormatMetadata('GeoTIFF')
-
         md_image.populate_from_image_metadata(dataset)
 
+        if not dataset.lineage:
+            dataset.lineage = ptype.LineageMetadata()
+
+        # FIXME: Should software version get shoved into here?
+        # We're missing some other bits like a UUID for the run
+        dataset.lineage.machine = (ptype.MachineMetadata(
+            uname=nbar_metadata['system_information']['node'].strip()
+        ))
+
+        # FIXME
+        # We have algorithm_version, arg25_doi, nbar_doi, nbar_terrain_corrected_doi, software_version
+        # and need to fit them into 'name', 'version', and 'parameters'
+        #
+        # dataset.lineage.algorithm = (ptype.AlgorithmMetadata.
+        #                              from_dict(nbar_metadata['algorithm_information']))
+
+
+        # FIXME: These ancillary files don't seem to fit here, the packager tries to copy! them??
+        # if not dataset.ancillary_files:
+        #     dataset.ancillary_files = []
+        #
+        # # Store the ancillary file data that is consistent for the whole dataset
+        # ancillary_types = ['aerosol', 'elevation', 'ozone', 'solar_distance', 'water_vapour']
+        # for ancil_type in ancillary_types:
+        #     ancil_data = nbar_metadata['ancillary_data'][ancil_type]
+        #     try:
+        #         value = 'Value: ' + str(ancil_data['value']
+        #                                 if 'value' in ancil_data else ancil_data['distance'])
+        #     except KeyError:
+        #         value = None
+        #
+        #     ancil_file = ptype.AncillaryFile(ancil_data['data_source'],
+        #                                      ancil_data['data_file'],
+        #                                      value)
+        #     dataset.ancillary_files.append(ancil_file)
+        #
+        # # Shove band specific ancillary files in too
+        # for band_name, band_files in nbar_metadata['ancillary_data']['brdf'].items():
+        #     for file_type, file_data in band_files.items():
+        #         ancil_file = ptype.AncillaryFile('_'.join([band_name, 'brdf', file_type]),
+        #                                          file_data['data_file'],
+        #                                          'Value: ' + str(file_data['value']))
+        #         dataset.ancillary_files.append(ancil_file)
+
+
+
+        # All NBARs are P54. (source: Lan Wei)
+        dataset.product_type = self.get_id()
+        dataset.ga_level = 'P54'
+        dataset.format_ = ptype.FormatMetadata('GeoTiff')
+        dataset.ga_label = self.get_ga_label(dataset)
+
         return dataset
+
+
+def _read_band_number(file_path):
+    """
+    :type file_path: Path
+    :return:
+    >>> _read_band_number(Path('reflectance_brdf_2.bin'))
+    '2'
+    >>> _read_band_number(Path('reflectance_terrain_7.bin'))
+    '7'
+    >>> p = Path('/tmp/something/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif')
+    >>> _read_band_number(p)
+    '4'
+    """
+    number = file_path.stem.split('_')[-1].lower()
+
+    if number.startswith('b'):
+        return number[1:]
+    else:
+        return number
 
 
 class EODSDriver(DatasetDriver):
@@ -612,6 +692,7 @@ class EODSDriver(DatasetDriver):
 
     We read whatever metadata we can.
     """
+
     def get_id(self):
         return "EODS"
 
@@ -639,10 +720,10 @@ class EODSDriver(DatasetDriver):
         position = name.rfind('_')
         if position == -1:
             raise ValueError('Unexpected tif image in eods: %r' % path)
-        if re.match(r"[Bb]\d+", name[position+1:]):
-            band_number = name[position+2:]
+        if re.match(r"[Bb]\d+", name[position + 1:]):
+            band_number = name[position + 2:]
         else:
-            band_number = name[position+1:]
+            band_number = name[position + 1:]
 
         return ptype.BandMetadata(path=path, number=band_number)
 
@@ -669,6 +750,7 @@ class EODSDriver(DatasetDriver):
             ),
             path.stem).groupdict()
 
+        dataset.product_type = "EODS_" + fields["type"]
         dataset.ga_level = fields["level"]
         dataset.ga_label = path.stem
         dataset.format_ = ptype.FormatMetadata(name='GeoTiff')
@@ -719,7 +801,7 @@ class EODSDriver(DatasetDriver):
         if abs(start_time - filename_time).days == 0:
             dataset.acquisition.aos = aos
             dataset.acquisition.los = los
-            dataset.extent.center_dt = start_time + (end_time - start_time)/2
+            dataset.extent.center_dt = start_time + (end_time - start_time) / 2
             dataset.extent.from_dt = start_time
             dataset.extent.to_dt = end_time
         else:
@@ -732,7 +814,6 @@ class EODSDriver(DatasetDriver):
 
 
 class PqaDriver(DatasetDriver):
-
     def get_id(self):
         return 'pqa'
 
@@ -773,7 +854,7 @@ class PqaDriver(DatasetDriver):
         suffix = file_path.suffix.lower()
         if '.tif' == suffix:
             ga_label = self.get_ga_label(dataset)
-            return file_path.with_name(ga_label+suffix)
+            return file_path.with_name(ga_label + suffix)
         else:
             # All other files are kept in the package (log files etc, if any).
             return file_path

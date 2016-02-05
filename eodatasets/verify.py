@@ -7,6 +7,7 @@ import logging
 
 from pathlib import Path
 
+
 # PyLint doesn't recognise many distutils functions when in virtualenv. Not worth the effort.
 # pylint: disable=no-name-in-module
 from distutils import spawn
