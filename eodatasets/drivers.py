@@ -528,7 +528,7 @@ class NbarDriver(DatasetDriver):
 
         return _fill_dataset_label(
             dataset,
-            '{satnumber}_{sensor}_{nbartype}_{galevel}_GALPGS01_{path}_{rows}_{day}',
+            '{satnumber}_{sensor}_{nbartype}_{galevel}_GALPGS01-{stationcode}_{path}_{rows}_{day}',
             nbartype=nbar_type
         )
 
@@ -558,7 +558,7 @@ class NbarDriver(DatasetDriver):
         :rtype: Path
         >>> from tests.metadata.mtl.test_ls8 import EXPECTED_OUT as ls8_dataset
         >>> NbarDriver('terrain').translate_path(ls8_dataset, Path('reflectance_terrain_7.bin'))
-        PosixPath('LS8_OLITIRS_TNBAR_P51_GALPGS01-032_101_078_20141012_B7.tif')
+        PosixPath('LS8_OLITIRS_NBART_P51_GALPGS01-032_101_078_20141012_B7.tif')
         >>> # Should return None, as this is a BRDF driver instance.
         >>> NbarDriver('brdf').translate_path(ls8_dataset, Path('reflectance_terrain_7.bin'))
         """
@@ -589,7 +589,7 @@ class NbarDriver(DatasetDriver):
         >>> NbarDriver('terrain').to_band(None, p).number
         '4'
         """
-        return [ptype.BandMetadata(path=path, number=_read_band_number(path))]
+        return ptype.BandMetadata(path=path, number=_read_band_number(path))
 
     def fill_metadata(self, dataset, path):
         """
@@ -613,12 +613,6 @@ class NbarDriver(DatasetDriver):
 
         if not dataset.lineage:
             dataset.lineage = ptype.LineageMetadata()
-
-        # FIXME: Should software version get shoved into here?
-        # We're missing some other bits like a UUID for the run
-        dataset.lineage.machine = (ptype.MachineMetadata(
-            uname=nbar_metadata['system_information']['node'].strip()
-        ))
 
         # FIXME
         # We have algorithm_version, arg25_doi, nbar_doi, nbar_terrain_corrected_doi, software_version

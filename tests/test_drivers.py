@@ -255,6 +255,7 @@ class TestDrivers(TestCase):
             id_=_EXPECTED_NBAR.id_,
             ga_label=dataset_folder,
             ga_level='P54',
+            product_type='EODS_NBAR',
             platform=ptype.PlatformMetadata(code='LANDSAT_8'),
             instrument=ptype.InstrumentMetadata(name='OLI_TIRS'),
             format_=ptype.FormatMetadata(name='GeoTiff'),
@@ -322,6 +323,7 @@ class TestDrivers(TestCase):
             'reflectance_terrain_7.bin': '',
             'reflectance_terrain_7.bin.aux.xml': '',
             'reflectance_terrain_7.hdr': '',
+            'nbar-metadata.yml': '',
         })
         dataset = ptype.DatasetMetadata(
             id_=_EXPECTED_NBAR.id_,
@@ -337,7 +339,7 @@ class TestDrivers(TestCase):
 
     def test_nbar_label(self):
         self.assertEqual(
-            "LS8_OLITIRS_TNBAR_P54_GALPGS01-032_101_078_20141012",
+            "LS8_OLITIRS_NBART_P54_GALPGS01-032_101_078_20141012",
             drivers.NbarDriver('terrain').get_ga_label(_EXPECTED_NBAR)
         )
 
