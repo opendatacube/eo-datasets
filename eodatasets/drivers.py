@@ -653,10 +653,9 @@ class NbarDriver(DatasetDriver):
 
 
         # All NBARs are P54. (source: Lan Wei)
-        dataset.product_type = self.get_id()
+        # dataset.product_type = self.get_id() # FIXME: Set or not?
         dataset.ga_level = 'P54'
-        dataset.format_ = ptype.FormatMetadata('GeoTiff')
-        dataset.ga_label = self.get_ga_label(dataset)
+        dataset.format_ = ptype.FormatMetadata('GeoTIFF')
 
         return dataset
 

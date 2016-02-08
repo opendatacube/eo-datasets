@@ -1,0 +1,132 @@
+algorithm_information:
+  algorithm_version: 2.0
+  arg25_doi: http://dx.doi.org/10.4225/25/5487CC0D4F40B
+  nbar_doi: http://dx.doi.org/10.1109/JSTARS.2010.2042281
+  nbar_terrain_corrected_doi: http://dx.doi.org/10.1016/j.rse.2012.06.018
+  software_version: 4.0
+ancillary_data:
+  aerosol:
+    data_file: /cmp/aot_mean_Oct_All_Aerosols
+    data_source: AATSR_CMP_MONTH
+    value: 0.085677542
+  brdf:
+    band_1:
+      geo:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b09.500m_0459_0479nm_brdf_par_fgeo.hdf.gz
+        data_source: BRDF
+        value: 0.0060000000000000001
+      iso:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b07.500m_0459_0479nm_brdf_par_fiso.hdf.gz
+        data_source: BRDF
+        value: 0.050341959145204583
+      vol:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b08.500m_0459_0479nm_brdf_par_fvol.hdf.gz
+        data_source: BRDF
+        value: 0.01196615239617268
+    band_2:
+      geo:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b09.500m_0459_0479nm_brdf_par_fgeo.hdf.gz
+        data_source: BRDF
+        value: 0.0060000000000000001
+      iso:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b07.500m_0459_0479nm_brdf_par_fiso.hdf.gz
+        data_source: BRDF
+        value: 0.050341959145204583
+      vol:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b08.500m_0459_0479nm_brdf_par_fvol.hdf.gz
+        data_source: BRDF
+        value: 0.01196615239617268
+    band_3:
+      geo:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b12.500m_0545_0565nm_brdf_par_fgeo.hdf.gz
+        data_source: BRDF
+        value: 0.015478406064331081
+      iso:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b10.500m_0545_0565nm_brdf_par_fiso.hdf.gz
+        data_source: BRDF
+        value: 0.077407211636959641
+      vol:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b11.500m_0545_0565nm_brdf_par_fvol.hdf.gz
+        data_source: BRDF
+        value: 0.019428211432083588
+    band_4:
+      geo:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b03.500m_0620_0670nm_brdf_par_fgeo.hdf.gz
+        data_source: BRDF
+        value: 0.022106301875192132
+      iso:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b01.500m_0620_0670nm_brdf_par_fiso.hdf.gz
+        data_source: BRDF
+        value: 0.095567189261194799
+      vol:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b02.500m_0620_0670nm_brdf_par_fvol.hdf.gz
+        data_source: BRDF
+        value: 0.0086805205451378209
+    band_5:
+      geo:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b06.500m_0841_0876nm_brdf_par_fgeo.hdf.gz
+        data_source: BRDF
+        value: 0.020659517537491442
+      iso:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b04.500m_0841_0876nm_brdf_par_fiso.hdf.gz
+        data_source: BRDF
+        value: 0.17845705336956297
+      vol:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b05.500m_0841_0876nm_brdf_par_fvol.hdf.gz
+        data_source: BRDF
+        value: 0.082863578851299496
+    band_6:
+      geo:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b18.500m_1628_1652nm_brdf_par_fgeo.hdf.gz
+        data_source: BRDF
+        value: 0.050325440393281441
+      iso:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b16.500m_1628_1652nm_brdf_par_fiso.hdf.gz
+        data_source: BRDF
+        value: 0.23321470708725933
+      vol:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b17.500m_1628_1652nm_brdf_par_fvol.hdf.gz
+        data_source: BRDF
+        value: 0.021591786153215897
+    band_7:
+      geo:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b21.500m_2105_2155nm_brdf_par_fgeo.hdf.gz
+        data_source: BRDF
+        value: 0.042619864485885652
+      iso:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b19.500m_2105_2155nm_brdf_par_fiso.hdf.gz
+        data_source: BRDF
+        value: 0.17525747681726064
+      vol:
+        data_file: /g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2015.09.22/MCD43A1.2015.265.aust.005.b20.500m_2105_2155nm_brdf_par_fvol.hdf.gz
+        data_source: BRDF
+        value: 0.0068211500276350538
+  elevation:
+    data_file: /g/data/v10/eoancillarydata/elevation/world_1deg/DEM_one_deg.tif
+    data_source: Elevation
+    value: 0.0
+  ozone:
+    data_file: /g/data/v10/eoancillarydata/lookup_tables/ozone/oct.tif
+    data_source: Ozone
+    value: 0.30599999
+  solar_distance:
+    data_file: /g/data/v10/eoancillarydata/lookup_tables/earthsun_distance/EarthSun_distanceLUT.txt
+    data_source: Solar Distance
+    distance: 1.00119
+  water_vapour:
+    data_file: /g/data/v10/eoancillarydata/water_vapour/pr_wtr.eatm.2015.tif
+    data_source: Water Vapour
+    value: 1.3199999809265137
+source_data:
+  path: 115
+  platform: LANDSAT_8
+  row: 79
+  scene_centre_datetime: 2015-10-01 02:22:49.495358
+  sensor: OLI_TIRS
+  source_scene: /g/data/v10/L1/2015-10/LS8_OLITIRS_OTH_P51_GALPGS01-032_115_079_20151001
+system_information:
+  node: 'Linux r1635 2.6.32-573.12.1.el6.x86_64 #1 SMP Tue Dec 15 21:19:08 UTC 2015
+    x86_64 x86_64 x86_64 GNU/Linux
+
+    '
+  time_processed: 2016-01-20 06:48:52.640817
