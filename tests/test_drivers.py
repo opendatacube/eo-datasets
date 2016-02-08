@@ -98,8 +98,8 @@ _EXPECTED_NBAR = ptype.DatasetMetadata(
     ),
     lineage=ptype.LineageMetadata(
         source_datasets={'ortho': test_ls8.EXPECTED_OUT},
-        algorithm=ptype.AlgorithmMetadata(name='terrain'),
-        machine=ptype.MachineMetadata()
+        algorithm=ptype.AlgorithmMetadata(name='terrain', version='1.0'),
+        machine=ptype.MachineMetadata(software='1.0')
     )
 )
 
@@ -327,8 +327,8 @@ class TestDrivers(TestCase):
             'nbar-metadata.yml': dedent(
                 """
                     algorithm_information:
-                        software_version:
-                        algorithm_version:
+                        software_version: 1.0
+                        algorithm_version: 1.0
                         arg25_doi:
                         nbar_doi:
                         nbar_terrain_corrected_doi:
