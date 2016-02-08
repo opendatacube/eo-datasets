@@ -84,6 +84,7 @@ def test_package():
             'ga_level': 'P54',
             'size_bytes': 4550,
             'platform': {'code': 'LANDSAT_8'},
+            'product_doi': 'http://dx.doi.org/10.4225/25/5487CC0D4F40B',
             # Default creation date is the same as the input folder ctime.
             'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),
             'instrument': {'name': 'OLI_TIRS'},
@@ -179,7 +180,14 @@ def test_package():
                 }
             },
             'lineage': {
-                'machine': {},
+                'algorithm': {
+                    'name': 'brdf',
+                    'doi': 'http://dx.doi.org/10.1109/JSTARS.2010.2042281',
+                    'version': '2.0'
+                },
+                'machine': {
+                    'software': '4.0'
+                },
                 'source_datasets': {
                     'ortho': {
                         'product_level': 'L1T',

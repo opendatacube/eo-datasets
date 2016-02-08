@@ -550,10 +550,11 @@ class ImageMetadata(SimpleObject):
 
 
 class AlgorithmMetadata(SimpleObject):
-    def __init__(self, name=None, version=None, parameters=None):
+    def __init__(self, name=None, version=None, parameters=None, doi=None):
         self.name = name
         self.version = version
         self.parameters = parameters
+        self.doi = doi
 
 
 class MachineMetadata(SimpleObject):
@@ -719,6 +720,7 @@ class DatasetMetadata(SimpleObject):
                  ga_level=None,
                  product_type=None,
                  product_level=None,
+                 product_doi=None,
                  creation_dt=None,
                  size_bytes=None,
                  checksum_path=None,
@@ -756,6 +758,10 @@ class DatasetMetadata(SimpleObject):
         # 'L1T', 'L1G', 'L1GT' etc if applicable.
         # :type: str
         self.product_level = product_level
+
+        # eg. http://dx.doi.org/10.4225/25/5487CC0D4F40B for ARG25
+        # :type: str
+        self.product_doi = product_doi
 
         # Currently correspond to driver ids:
         # 'raw', 'ortho', 'nbar_terrain' etc.

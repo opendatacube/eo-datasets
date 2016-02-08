@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 import datetime
 from uuid import UUID
+from textwrap import dedent
 
 from pathlib import Path
 
@@ -96,10 +97,11 @@ _EXPECTED_NBAR = ptype.DatasetMetadata(
         bands={}
     ),
     lineage=ptype.LineageMetadata(
-        source_datasets={'ortho': test_ls8.EXPECTED_OUT}
+        source_datasets={'ortho': test_ls8.EXPECTED_OUT},
+        algorithm=ptype.AlgorithmMetadata(name='terrain'),
+        machine=ptype.MachineMetadata()
     )
 )
-
 
 _EXPECTED_PQA = ptype.DatasetMetadata(
     id_=UUID('c50c6bd4-e895-11e4-9814-1040f381a756'),
@@ -125,7 +127,6 @@ _EXPECTED_PQA = ptype.DatasetMetadata(
         source_datasets={'nbar_brdf': _EXPECTED_NBAR}
     )
 )
-
 
 
 class TestDrivers(TestCase):
@@ -231,7 +232,7 @@ class TestDrivers(TestCase):
     def test_eods_fill_metadata(self):
         dataset_folder = "LS8_OLI_TIRS_NBAR_P54_GANBAR01-015_101_078_20141012"
         bandname = '10'
-        bandfile = dataset_folder+'_B'+bandname+'.tif'
+        bandfile = dataset_folder + '_B' + bandname + '.tif'
         input_folder = write_files({
             dataset_folder: {
                 'metadata.xml': """<EODS_DATASET>
@@ -270,8 +271,8 @@ class TestDrivers(TestCase):
             image=ptype.ImageMetadata(satellite_ref_point_start=ptype.Point(x=101, y=78),
                                       satellite_ref_point_end=ptype.Point(x=101, y=78),
                                       bands={bandname: ptype.BandMetadata(number=bandname,
-                                                                    path=Path(input_folder, dataset_folder,
-                                                                              'scene01', bandfile))})
+                                                                          path=Path(input_folder, dataset_folder,
+                                                                                    'scene01', bandfile))})
         )
         dataset = ptype.DatasetMetadata(
             id_=_EXPECTED_NBAR.id_
@@ -323,7 +324,15 @@ class TestDrivers(TestCase):
             'reflectance_terrain_7.bin': '',
             'reflectance_terrain_7.bin.aux.xml': '',
             'reflectance_terrain_7.hdr': '',
-            'nbar-metadata.yml': '',
+            'nbar-metadata.yml': dedent(
+                """
+                    algorithm_information:
+                        software_version:
+                        algorithm_version:
+                        arg25_doi:
+                        nbar_doi:
+                        nbar_terrain_corrected_doi:
+                """),
         })
         dataset = ptype.DatasetMetadata(
             id_=_EXPECTED_NBAR.id_,

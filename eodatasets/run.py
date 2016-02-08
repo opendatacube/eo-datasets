@@ -78,6 +78,7 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
     :type input_data_paths: list[pathlib.Path]
     :type destination_path: pathlib.Path
     :type parent_dataset_paths: list[pathlib.Path]
+    :type init_dataset: callable
     :type hard_link: bool
     :return:
     """

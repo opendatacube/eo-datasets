@@ -8,14 +8,13 @@ import string
 import xml.etree.cElementTree as etree
 
 from dateutil.parser import parse
+from pathlib import Path
 import yaml
-
 try:
     from yaml import CSafeLoader as SafeLoader
 except ImportError:
     from yaml import SafeLoader
 
-from pathlib import Path
 from eodatasets import type as ptype, metadata
 from eodatasets.metadata import _GROUNDSTATION_LIST
 from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, \
@@ -514,6 +513,9 @@ class NbarDriver(DatasetDriver):
     def _file_is_pertinent(self, file_path):
         return file_path.name.startswith('reflectance_{}'.format(self.subset_name))
 
+    def is_brdf(self):
+        return self.subset_name == 'brdf'
+
     def get_ga_label(self, dataset):
         # Example: LS8_OLITIRS_NBAR_P51_GALPGS01-032_090_085_20140115
 
@@ -615,42 +617,13 @@ class NbarDriver(DatasetDriver):
         if not dataset.lineage:
             dataset.lineage = ptype.LineageMetadata()
 
-        # FIXME
-        # We have algorithm_version, arg25_doi, nbar_doi, nbar_terrain_corrected_doi, software_version
-        # and need to fit them into 'name', 'version', and 'parameters'
-        #
-        # dataset.lineage.algorithm = (ptype.AlgorithmMetadata.
-        #                              from_dict(nbar_metadata['algorithm_information']))
+        self._fill_algorithm_information(dataset, nbar_metadata['algorithm_information'])
 
+        if not dataset.lineage.machine:
+            dataset.lineage.machine = ptype.MachineMetadata()
+        dataset.lineage.machine.software = str(nbar_metadata['algorithm_information']['software_version'])
 
-        # FIXME: These ancillary files don't seem to fit here, the packager tries to copy! them??
-        # if not dataset.ancillary_files:
-        #     dataset.ancillary_files = []
-        #
-        # # Store the ancillary file data that is consistent for the whole dataset
-        # ancillary_types = ['aerosol', 'elevation', 'ozone', 'solar_distance', 'water_vapour']
-        # for ancil_type in ancillary_types:
-        #     ancil_data = nbar_metadata['ancillary_data'][ancil_type]
-        #     try:
-        #         value = 'Value: ' + str(ancil_data['value']
-        #                                 if 'value' in ancil_data else ancil_data['distance'])
-        #     except KeyError:
-        #         value = None
-        #
-        #     ancil_file = ptype.AncillaryFile(ancil_data['data_source'],
-        #                                      ancil_data['data_file'],
-        #                                      value)
-        #     dataset.ancillary_files.append(ancil_file)
-        #
-        # # Shove band specific ancillary files in too
-        # for band_name, band_files in nbar_metadata['ancillary_data']['brdf'].items():
-        #     for file_type, file_data in band_files.items():
-        #         ancil_file = ptype.AncillaryFile('_'.join([band_name, 'brdf', file_type]),
-        #                                          file_data['data_file'],
-        #                                          'Value: ' + str(file_data['value']))
-        #         dataset.ancillary_files.append(ancil_file)
-
-
+        dataset.product_doi = nbar_metadata['algorithm_information']['arg25_doi']
 
         # All NBARs are P54. (source: Lan Wei)
         # dataset.product_type = self.get_id() # FIXME: Set or not?
@@ -658,6 +631,16 @@ class NbarDriver(DatasetDriver):
         dataset.format_ = ptype.FormatMetadata('GeoTIFF')
 
         return dataset
+
+    def _fill_algorithm_information(self, dataset, alg_src_info):
+        alg_meta = ptype.AlgorithmMetadata(name=self.subset_name,
+                                           version=str(alg_src_info['algorithm_version']))
+        if self.is_brdf():
+            alg_meta.doi = alg_src_info['nbar_doi']
+        else:
+            alg_meta.doi = alg_src_info['nbar_terrain_corrected_doi']
+
+        dataset.lineage.algorithm = alg_meta
 
 
 def _read_band_number(file_path):
