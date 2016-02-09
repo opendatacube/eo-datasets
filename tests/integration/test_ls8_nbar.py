@@ -183,7 +183,32 @@ def test_package():
                 'algorithm': {
                     'name': 'brdf',
                     'doi': 'http://dx.doi.org/10.1109/JSTARS.2010.2042281',
-                    'version': '2.0'
+                    'version': '2.0',
+                    'parameters': {
+                        'band_3_brdf_geo': 0.029762539794515593,
+                        'band_2_brdf_vol': 0.0641287443021489,
+                        'elevation': 0.168,
+                        'band_5_brdf_geo': 0.05726580475363577,
+                        'band_3_brdf_iso': 0.2494662967585558,
+                        'band_5_brdf_iso': 0.48908226159467477,
+                        'band_7_brdf_vol': 0.09830102426119791,
+                        'band_7_brdf_iso': 0.44022800551699187,
+                        'band_4_brdf_iso': 0.3316855374068447,
+                        'solar_distance': 0.9906,
+                        'band_5_brdf_vol': 0.15177135337529846,
+                        'band_4_brdf_geo': 0.03216758465378772,
+                        'band_4_brdf_vol': 0.14373983883221186,
+                        'band_3_brdf_vol': 0.09341573511323348,
+                        'band_1_brdf_iso': 0.06963196404022864,
+                        'band_7_brdf_geo': 0.058113631944287425,
+                        'ozone': 0.257,
+                        'band_1_brdf_vol': 0.03317581036104479,
+                        'aerosol': 0.066711,
+                        'water_vapour': 3.8899993896484375,
+                        'band_2_brdf_geo': 0.012102656283915781,
+                        'band_1_brdf_geo': 0.002104826893857174,
+                        'band_2_brdf_iso': 0.12737418602127198
+                    },
                 },
                 'machine': {
                     'software': '4.0'

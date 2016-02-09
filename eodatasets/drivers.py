@@ -625,6 +625,22 @@ class NbarDriver(DatasetDriver):
 
         dataset.product_doi = nbar_metadata['algorithm_information']['arg25_doi']
 
+        ## Extract ancillary file data and values
+        parameters = {}
+
+        ancil = nbar_metadata['ancillary_data']
+        brdfs = ancil.pop('brdf', {})
+        brdf_ancils = {'_'.join((band_name, 'brdf', ancil_type)): values
+                       for band_name, ancil_types in brdfs.items()
+                       for ancil_type, values in ancil_types.items()}
+        ancil.update(brdf_ancils)
+        for name, values in ancil.items():
+            parameters[name] = values['value']
+
+        if parameters:
+            dataset.lineage.algorithm.parameters = parameters
+
+
         # All NBARs are P54. (source: Lan Wei)
         dataset.ga_level = 'P54'
         dataset.format_ = ptype.FormatMetadata('GeoTIFF')

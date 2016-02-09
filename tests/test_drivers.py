@@ -332,6 +332,7 @@ class TestDrivers(TestCase):
                         arg25_doi:
                         nbar_doi:
                         nbar_terrain_corrected_doi:
+                    ancillary_data: {}
                 """),
         })
         dataset = ptype.DatasetMetadata(
