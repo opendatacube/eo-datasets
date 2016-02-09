@@ -11,8 +11,7 @@ import yaml
 
 import eodatasets.scripts.genpackage
 from tests import temp_dir, assert_file_structure, assert_same, integration_test
-from tests.integration import get_script_path, load_checksum_filenames
-
+from tests.integration import get_script_path, load_checksum_filenames, hardlink_arg
 
 packaging_script_path = get_script_path(eodatasets.scripts.genpackage)
 
@@ -35,6 +34,7 @@ def test_package():
         [
             'python',
             str(packaging_script_path),
+            hardlink_arg(output_path, source_dataset),
             'pqa',
             '--parent', str(parent_dataset),
             str(source_dataset), str(output_path)

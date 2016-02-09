@@ -11,7 +11,7 @@ import yaml
 
 import eodatasets.scripts.genpackage
 from tests import temp_dir, assert_file_structure, assert_same, integration_test
-from tests.integration import get_script_path, load_checksum_filenames
+from tests.integration import get_script_path, load_checksum_filenames, hardlink_arg
 
 script_path = get_script_path(eodatasets.scripts.genpackage)
 
@@ -34,7 +34,7 @@ def test_metadata():
     runner.invoke(
         eodatasets.scripts.genpackage.run,
         [
-            '--hard-link',
+            hardlink_arg(output_path, source_dataset),
             'raw',
             str(source_dataset), str(output_path)
         ],

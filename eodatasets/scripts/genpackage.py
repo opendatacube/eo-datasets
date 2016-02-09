@@ -17,8 +17,8 @@ from eodatasets.scripts import init_logging
 @click.option('--debug',
               is_flag=True,
               help='Enable debug logging')
-@click.option('--hard-link',
-              is_flag=True,
+@click.option('--hard-link/--no-hard-link',
+              default=False,
               help='Hard-link output files if possible (faster than copying)')
 @click.argument('package_type',
                 type=click.Choice(drivers.PACKAGE_DRIVERS.keys()))

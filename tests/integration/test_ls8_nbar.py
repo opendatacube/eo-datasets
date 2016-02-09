@@ -3,15 +3,16 @@
 Package an LS8 NBAR dataset.
 """
 from __future__ import absolute_import
-from subprocess import check_call
+
 import datetime
 
+from click.testing import CliRunner
 from pathlib import Path
 import yaml
 
 import eodatasets.scripts.genpackage
 from tests import temp_dir, assert_file_structure, assert_same, integration_test
-from tests.integration import get_script_path, load_checksum_filenames
+from tests.integration import get_script_path, load_checksum_filenames, hardlink_arg
 
 packaging_script_path = get_script_path(eodatasets.scripts.genpackage)
 
@@ -30,12 +31,11 @@ assert parent_dataset.exists()
 def test_package():
     output_path = temp_dir()
 
-    from click.testing import CliRunner
-
     runner = CliRunner()
     runner.invoke(
         eodatasets.scripts.genpackage.run,
         [
+            hardlink_arg(output_path, source_dataset),
             'nbar_brdf',
             '--parent', str(parent_dataset),
             str(source_dataset), str(output_path)
