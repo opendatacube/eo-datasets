@@ -626,7 +626,7 @@ class NbarDriver(DatasetDriver):
 
         dataset.product_doi = nbar_metadata['algorithm_information']['arg25_doi']
 
-        ## Extract ancillary file data and values
+        # Extract ancillary file data and values
         parameters = {}
 
         ancils = nbar_metadata['ancillary_data']
@@ -654,7 +654,6 @@ class NbarDriver(DatasetDriver):
 
         if ancil_files:
             dataset.lineage.ancillary = ancil_files
-
 
         # All NBARs are P54. (source: Lan Wei)
         dataset.ga_level = 'P54'
