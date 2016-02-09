@@ -169,10 +169,6 @@ class IncompletePackage(Exception):
     pass
 
 
-def _folder_contents_bytes(image_path):
-    return _file_size_bytes(image_path.iterdir())
-
-
 def _file_size_bytes(*file_paths):
     """
     Total file size for the given paths.
@@ -276,7 +272,7 @@ def package_dataset(dataset_driver,
 
     file_paths = []
 
-    def after_file_copy(source_path, target_path):
+    def save_target_checksums_and_paths(source_path, target_path):
         _LOG.debug('%r -> %r', source_path, target_path)
         checksums.add_file(target_path)
         file_paths.append(target_path)
@@ -285,7 +281,7 @@ def package_dataset(dataset_driver,
         image_path,
         package_directory,
         translate_path=partial(dataset_driver.translate_path, dataset),
-        after_file_copy=after_file_copy,
+        after_file_copy=save_target_checksums_and_paths,
         hard_link=hard_link
     )
 
