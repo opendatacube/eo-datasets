@@ -99,7 +99,7 @@ _EXPECTED_NBAR = ptype.DatasetMetadata(
     lineage=ptype.LineageMetadata(
         source_datasets={'ortho': test_ls8.EXPECTED_OUT},
         algorithm=ptype.AlgorithmMetadata(name='terrain', version='1.0'),
-        machine=ptype.MachineMetadata(software='1.0')
+        machine=ptype.MachineMetadata(software='1.0'),
     )
 )
 

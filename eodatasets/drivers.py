@@ -10,6 +10,7 @@ import xml.etree.cElementTree as etree
 from dateutil.parser import parse
 from pathlib import Path
 import yaml
+
 try:
     from yaml import CSafeLoader as SafeLoader
 except ImportError:
@@ -628,17 +629,31 @@ class NbarDriver(DatasetDriver):
         ## Extract ancillary file data and values
         parameters = {}
 
-        ancil = nbar_metadata['ancillary_data']
-        brdfs = ancil.pop('brdf', {})
+        ancils = nbar_metadata['ancillary_data']
+        brdfs = ancils.pop('brdf', {})
         brdf_ancils = {'_'.join((band_name, 'brdf', ancil_type)): values
                        for band_name, ancil_types in brdfs.items()
                        for ancil_type, values in ancil_types.items()}
-        ancil.update(brdf_ancils)
-        for name, values in ancil.items():
-            parameters[name] = values['value']
+        ancils.update(brdf_ancils)
 
+        # Add algorithm parameters
+        for name, values in ancils.items():
+            parameters[name] = values['value']
         if parameters:
             dataset.lineage.algorithm.parameters = parameters
+
+        # Add ancillary files
+        ancil_files = {}
+        for name, values in ancils.items():
+            ancil_files[name] = ptype.AncillaryMetadata(type_=name,
+                                                        name=values['data_file'].rpartition('/')[2],
+                                                        uri=values['data_file'],
+                                                        access_time=values['accessed'],
+                                                        modification_time=values['modified'],
+                                                        file_owner=values['user'])
+
+        if ancil_files:
+            dataset.lineage.ancillary = ancil_files
 
 
         # All NBARs are P54. (source: Lan Wei)

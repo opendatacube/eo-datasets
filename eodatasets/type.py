@@ -587,10 +587,14 @@ class MachineMetadata(SimpleObject):
 
 
 class AncillaryMetadata(SimpleObject):
-    def __init__(self, type_=None, name=None, uri=None):
+    def __init__(self, type_=None, name=None, uri=None, access_time=None,
+                 modification_time=None, file_owner=None):
         self.type_ = type_
         self.name = name
         self.uri = uri
+        self.access_time = access_time
+        self.modification_time = modification_time
+        self.file_owner = file_owner
 
 
 class LineageMetadata(SimpleObject):
