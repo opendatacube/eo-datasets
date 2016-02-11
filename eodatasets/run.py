@@ -3,6 +3,7 @@
 Higher-level commands to package directories on the filesystem.
 """
 from __future__ import absolute_import
+from contextlib import contextmanager
 
 import os
 import tempfile
@@ -67,8 +68,7 @@ def package_existing_data_folder(driver, input_data_paths, destination_path, par
 
 
 def _package_folder(driver, input_data_paths, destination_path, parent_dataset_paths,
-                    init_dataset,
-                    hard_link=True):
+                    init_dataset, hard_link=True):
     """
     Package a folder into a destination directory as the dataset id. The output is written atomically.
 
@@ -80,9 +80,10 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
     :type parent_dataset_paths: list[pathlib.Path]
     :type init_dataset: callable
     :type hard_link: bool
-    :return:
+    :return: list of created packages
     """
     parent_datasets = {}
+    created_packages = []
 
     # TODO: Multiple parents?
     if parent_dataset_paths:
@@ -90,16 +91,41 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
         parent_datasets.update({source_id: serialise.read_dataset_metadata(parent_dataset_paths[0])})
 
     for dataset_folder in input_data_paths:
-        temp_output_dir = Path(tempfile.mkdtemp(prefix='.packagetmp.', dir=str(destination_path)))
+        dataset_folder = Path(dataset_folder)
+        with temp_dir(prefix='.packagetmp.', dir=destination_path) as temp_output_dir:
 
-        dataset = init_dataset(dataset_folder, driver, parent_datasets)
+            dataset = init_dataset(dataset_folder, driver, parent_datasets)  # Calls fill metadata
 
-        dataset_id = package.package_dataset(
-            driver,
-            dataset,
-            dataset_folder,
-            temp_output_dir,
-            hard_link=hard_link
-        )
+            dataset_id = package.package_dataset(  # Also updates dataset
+                dataset_driver=driver,
+                dataset=dataset,
+                image_path=dataset_folder,
+                target_path=temp_output_dir,
+                hard_link=hard_link
+            )
 
-        os.rename(str(temp_output_dir), str(destination_path / dataset_id))
+            packaged_path = destination_path / dataset_id
+            temp_output_dir.rename(packaged_path)
+
+            created_packages.append(packaged_path)
+    return created_packages
+
+
+@contextmanager
+def temp_dir(prefix="", dir=None):
+    temp_output_dir = Path(tempfile.mkdtemp(prefix=prefix, dir=str(dir)))
+
+    yield Path(temp_output_dir)  # Make new Path, caller can rename, but we will
+                                 # only clean up the original pathname
+
+    with ignored(OSError):
+        temp_output_dir.rmdir()
+
+
+@contextmanager
+def ignored(*exceptions):
+    try:
+        yield
+    except exceptions:
+        pass
+

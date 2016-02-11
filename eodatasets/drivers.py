@@ -602,9 +602,6 @@ class NbarDriver(DatasetDriver):
         :rtype: ptype.DatasetMetadata
         """
 
-        if not dataset.image:
-            dataset.image = ptype.ImageMetadata(bands={})
-
         with open(str(path.joinpath(NbarDriver.METADATA_FILE))) as f:
             nbar_metadata = yaml.load(f, Loader=SafeLoader)
 

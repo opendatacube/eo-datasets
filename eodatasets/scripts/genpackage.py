@@ -34,10 +34,10 @@ def run(parent, debug, hard_link, package_type, dataset, destination):
     """
     init_logging(debug)
     run_package.package_existing_data_folder(
-        drivers.PACKAGE_DRIVERS[package_type],
-        [Path(p) for p in dataset],
-        Path(destination),
-        [Path(p) for p in parent],
+        driver=drivers.PACKAGE_DRIVERS[package_type],
+        input_data_paths=[Path(p) for p in dataset],
+        destination_path=Path(destination),
+        parent_dataset_paths=[Path(p) for p in parent],
         hard_link=hard_link
     )
 

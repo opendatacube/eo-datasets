@@ -247,6 +247,8 @@ def package_dataset(dataset_driver,
     metadata and checksum files, as well as optionally generating
     a browse image.
 
+    Validates, and *Modifies* the passed in dataset with extra metadata.
+
     :type hard_link: bool
     :type dataset_driver: eodatasets.drivers.DatasetDriver
     :type dataset: ptype.Dataset

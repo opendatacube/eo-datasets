@@ -27,6 +27,7 @@ def expected_metadata_path(dataset_path):
 
     # - A dataset directory expects file 'ga-metadata.yaml'.
     # - A dataset file expects a sibling file with suffix '.ga-md.yaml'.
+    dataset_path = Path(dataset_path)
 
     if dataset_path.is_dir():
         return dataset_path.joinpath('ga-metadata.yaml')
