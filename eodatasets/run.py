@@ -116,7 +116,7 @@ def temp_dir(prefix="", dir=None):
     temp_output_dir = Path(tempfile.mkdtemp(prefix=prefix, dir=str(dir)))
 
     yield Path(temp_output_dir)  # Make new Path, caller can rename, but we will
-                                 # only clean up the original pathname
+    #  only clean up the original pathname
 
     with ignored(OSError):
         temp_output_dir.rmdir()
@@ -128,4 +128,3 @@ def ignored(*exceptions):
         yield
     except exceptions:
         pass
-

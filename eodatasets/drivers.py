@@ -576,7 +576,7 @@ class NbarDriver(DatasetDriver):
         ga_label = self.get_ga_label(dataset)
         band_number = self._read_band_number(file_path)
 
-        return file_path.with_name('%s_B%s.tif' % (ga_label, band_number))
+        return Path('%s_B%s.tif' % (ga_label, band_number))
 
     def to_band(self, dataset, path):
         """

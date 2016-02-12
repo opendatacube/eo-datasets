@@ -146,7 +146,7 @@ def prepare_target_imagery(
     if not package_directory.exists():
         package_directory.mkdir()
 
-    for source_path in image_directory.iterdir():
+    for source_path in image_directory.rglob('*'):
         # Skip hidden files
         if source_path.name.startswith('.'):
             continue
@@ -155,7 +155,9 @@ def prepare_target_imagery(
         if target_path is None:
             continue
 
-        target_path = ptype.rebase_path(image_directory, package_directory, target_path)
+        target_path = ptype.rebase_path(from_root_path=image_directory,
+                                        to_root_path=package_directory,
+                                        path=target_path)
 
         _copy_file(source_path, target_path, compress_imagery, hard_link=hard_link)
 
