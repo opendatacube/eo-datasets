@@ -3,11 +3,12 @@
 Package an LS8 PQA dataset.
 """
 from __future__ import absolute_import
-from subprocess import check_call
+
 import datetime
 
-from pathlib import Path
 import yaml
+from click.testing import CliRunner
+from pathlib import Path
 
 import eodatasets.scripts.genpackage
 from tests import temp_dir, assert_file_structure, assert_same, integration_test
@@ -30,15 +31,16 @@ assert parent_dataset.exists()
 def test_package():
     output_path = temp_dir()
 
-    check_call(
+    runner = CliRunner()
+    runner.invoke(
+        eodatasets.scripts.genpackage.run,
         [
-            'python',
-            str(packaging_script_path),
             hardlink_arg(output_path, source_dataset),
             'pqa',
             '--parent', str(parent_dataset),
             str(source_dataset), str(output_path)
-        ]
+        ],
+        catch_exceptions=False
     )
 
     output_dataset = output_path.joinpath('LS8_OLITIRS_PQ_P55_GAPQ01-032_090_081_20140726')

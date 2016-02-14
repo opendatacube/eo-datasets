@@ -3,11 +3,12 @@
 Package a raw AQUA PDS dataset.
 """
 from __future__ import absolute_import
-from subprocess import check_call
+
 import datetime
 
-from pathlib import Path
 import yaml
+from click.testing import CliRunner
+from pathlib import Path
 
 import eodatasets.scripts.genpackage
 from tests import temp_dir, assert_file_structure, assert_same, integration_test
@@ -30,15 +31,15 @@ assert source_dataset.exists()
 def test_metadata():
     output_path = temp_dir()
 
-    check_call(
+    runner = CliRunner()
+    runner.invoke(
+        eodatasets.scripts.genpackage.run,
         [
-            'python',
-            str(script_path),
             hardlink_arg(output_path, source_dataset),
             'raw',
-            str(source_dataset),
-            str(output_path)
-        ]
+            str(source_dataset), str(output_path)
+        ],
+        catch_exceptions=False
     )
 
     # EODS LS7 dataset id:
