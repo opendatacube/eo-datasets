@@ -3,41 +3,21 @@
 Most serialisation tests are coupled with the type tests (test_type.py)
 """
 from __future__ import absolute_import
-import uuid
-import datetime
 
-from pathlib import Path
+import datetime
+import uuid
+
 from hypothesis import given
 from hypothesis.strategies import dictionaries as dictionary, characters, integers
+from pathlib import Path
 
-from tests import write_files, TestCase, slow
 from eodatasets import serialise, compat, type as ptype
+from tests import TestCase, slow
 
 strings_without_trailing_underscore = characters(blacklist_characters='_')
 
 
 class TestSerialise(TestCase):
-    def test_expected_metadata_path(self):
-        files = write_files({
-            'directory_dataset': {'file1.txt': 'test'},
-            'file_dataset.tif': 'test'
-        })
-
-        # A dataset directory will have an internal 'ga-metadata.yaml' file.
-        self.assertEqual(
-            serialise.expected_metadata_path(files.joinpath('directory_dataset')).absolute(),
-            files.joinpath('directory_dataset', 'ga-metadata.yaml').absolute()
-        )
-
-        # A dataset file will have a sibling file ending in 'ga-md.yaml'
-        self.assertEqual(
-            serialise.expected_metadata_path(files.joinpath('file_dataset.tif')).absolute(),
-            files.joinpath('file_dataset.tif.ga-md.yaml').absolute()
-        )
-
-        # Nonexistent dataset raises a ValueError.
-        with self.assertRaises(ValueError):
-            serialise.expected_metadata_path(files.joinpath('missing-dataset.tif'))
 
     def test_as_key_value(self):
         self.assert_values_equal(
