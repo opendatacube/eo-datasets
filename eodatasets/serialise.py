@@ -11,31 +11,10 @@ import uuid
 import yaml
 from pathlib import Path
 
+from eodatasets import compat, documents
 import eodatasets.type as ptype
-from eodatasets import compat
 
 _LOG = logging.getLogger(__name__)
-
-
-def expected_metadata_path(dataset_path):
-    """
-    Get the path where we expect a metadata file for this dataset.
-
-    :type dataset_path: Path
-    :rtype: Path
-    """
-
-    # - A dataset directory expects file 'ga-metadata.yaml'.
-    # - A dataset file expects a sibling file with suffix '.ga-md.yaml'.
-    dataset_path = Path(dataset_path)
-
-    if dataset_path.is_dir():
-        return dataset_path.joinpath('ga-metadata.yaml')
-
-    if dataset_path.is_file():
-        return dataset_path.parent.joinpath('{}.ga-md.yaml'.format(dataset_path.name))
-
-    raise ValueError('Unhandled path type for %r' % dataset_path)
 
 
 def read_dataset_metadata(dataset_path):
@@ -45,8 +24,8 @@ def read_dataset_metadata(dataset_path):
     :type dataset_path: Path
     :rtype: ptype.DatasetMetadata
     """
-    metadata_path = expected_metadata_path(dataset_path)
-    if not metadata_path.exists():
+    metadata_path = documents.find_metadata_path(dataset_path)
+    if metadata_path is None or not metadata_path.exists():
         return None
 
     return read_yaml_metadata(metadata_path)
@@ -62,7 +41,7 @@ def write_dataset_metadata(dataset_path, dataset_metadata):
     :return Path to the metadata file.
     """
     _LOG.debug('Generating YAML for dataset: %r', dataset_metadata)
-    metadata_path = expected_metadata_path(dataset_path)
+    metadata_path = documents.new_metadata_path(dataset_path)
     write_yaml_metadata(dataset_metadata, metadata_path)
     return metadata_path
 
@@ -190,9 +169,17 @@ def read_yaml_metadata(metadata_file):
     :type metadata_file: Path
     :rtype: DatasetMetadata
     """
-    with open(str(metadata_file), 'r') as f:
-        dict_ = yaml.load(f)
-    return read_dict_metadata(dict_)
+    doc = list(documents.read_documents(Path(metadata_file)))
+
+    if len(doc) > 1:
+        raise NotImplementedError(
+            'Multiple datasets in one metadata file is not yet supported: {}'.format(
+                metadata_file
+            )
+        )
+
+    _, doc = doc[0]
+    return read_dict_metadata(doc)
 
 
 def read_dict_metadata(dict_):
@@ -260,8 +247,8 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
         return key_separator.join([key_prefix, k])
 
     if isinstance(o, compat.string_types) or \
-            isinstance(o, compat.integer_types) or \
-            isinstance(o, float):
+        isinstance(o, compat.integer_types) or \
+        isinstance(o, float):
         yield key_prefix, o
     elif isinstance(o, dict):
         for k in sorted(o):

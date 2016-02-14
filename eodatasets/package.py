@@ -12,7 +12,7 @@ from functools import partial
 
 from pathlib import Path
 
-from eodatasets import serialise, verify, metadata
+from eodatasets import serialise, verify, metadata, documents
 from eodatasets.browseimage import create_dataset_browse_images
 import eodatasets.type as ptype
 
@@ -266,8 +266,8 @@ def package_dataset(dataset_driver,
     target_path = target_path.absolute()
     image_path = image_path.absolute()
 
-    target_metadata_path = serialise.expected_metadata_path(target_path)
-    if target_metadata_path.exists():
+    target_metadata_path = documents.find_metadata_path(target_path)
+    if target_metadata_path is not None and target_metadata_path.exists():
         _LOG.info('Already packaged? Skipping %s', target_path)
         return
 
