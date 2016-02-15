@@ -247,8 +247,8 @@ def as_flat_key_value(o, relative_to=None, key_separator='.', key_prefix=''):
         return key_separator.join([key_prefix, k])
 
     if isinstance(o, compat.string_types) or \
-        isinstance(o, compat.integer_types) or \
-        isinstance(o, float):
+            isinstance(o, compat.integer_types) or \
+            isinstance(o, float):
         yield key_prefix, o
     elif isinstance(o, dict):
         for k in sorted(o):

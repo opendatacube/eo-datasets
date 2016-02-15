@@ -92,7 +92,7 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
 
     for dataset_folder in input_data_paths:
         dataset_folder = Path(dataset_folder)
-        with temp_dir(prefix='.packagetmp.', dir=destination_path) as temp_output_dir:
+        with temp_dir(prefix='.packagetmp.', base_dir=destination_path) as temp_output_dir:
 
             dataset = init_dataset(dataset_folder, driver, parent_datasets)  # Calls fill metadata
 
@@ -112,8 +112,8 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
 
 
 @contextmanager
-def temp_dir(prefix="", dir=None):
-    temp_output_dir = Path(tempfile.mkdtemp(prefix=prefix, dir=str(dir)))
+def temp_dir(prefix="", base_dir=None):
+    temp_output_dir = Path(tempfile.mkdtemp(prefix=prefix, dir=str(base_dir)))
 
     yield Path(temp_output_dir)  # Make new Path, caller can rename, but we will
     #  only clean up the original pathname
