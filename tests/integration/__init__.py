@@ -15,3 +15,13 @@ def on_same_filesystem(path1, path2):
 
 def hardlink_arg(path1, path2):
     return '--hard-link' if on_same_filesystem(path1, path2) else '--no-hard-link'
+
+
+def directory_size(directory):
+    """
+    Total size of files in the given directory.
+    :type file_paths: Path
+    :rtype: int
+    """
+    return sum(p.stat().st_size
+               for p in directory.rglob('*') if p.is_file())
