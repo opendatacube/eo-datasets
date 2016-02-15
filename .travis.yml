@@ -1,40 +1,38 @@
 language: python
 python:
-  - "2.7"
-  - "3.4"
+- '2.7'
+- '3.4'
 sudo: true
 addons:
   apt:
     packages:
-        - libatlas-dev 
-        - libatlas-base-dev 
-        - liblapack-dev
-        - libproj-dev
-        - gfortran
-        - gdal-bin
-        - libgdal1-dev
+    - libatlas-dev
+    - libatlas-base-dev
+    - liblapack-dev
+    - libproj-dev
+    - gfortran
+    - gdal-bin
+    - libgdal1-dev
 install:
-  # Build pdsinfo and add it to the path.
-  - mkdir pdstools
-  - pushd pdstools
-  - travis_retry wget https://raw.githubusercontent.com/GeoscienceAustralia/pds-tools/988b0b6e8495f9224c384ec0ac4c720c054d022c/pdsinfo.c
-  - clang -O pdsinfo.c -lm -o pdsinfo
-  - export PATH="$(pwd):${PATH}"
-  - popd
-  # Expand include path for building python-gdal bindings.
-  - export CPLUS_INCLUDE_PATH="/usr/include/gdal"
-  - export C_INCLUDE_PATH="/usr/include/gdal"
-  # GDAL python version must match system libgdal version.
-  - travis_retry pip install pylint pytest-cov pep8 coveralls GDAL==1.10.0
-  - travis_retry pip install -r requirements.txt
-script: 
-    - pep8 eodatasets --max-line-length 120
-    - pylint eodatasets --reports no
-    # We only count unit test coverage, not integration test coverage.
-    # Unit tests.
-    - py.test --cov eodatasets eodatasets tests --runslow -m 'not slow'
-    # Integration tests.
-    - py.test eodatasets tests --runslow -m 'slow'
+- mkdir pdstools
+- pushd pdstools
+- travis_retry wget https://raw.githubusercontent.com/GeoscienceAustralia/pds-tools/988b0b6e8495f9224c384ec0ac4c720c054d022c/pdsinfo.c
+- clang -O pdsinfo.c -lm -o pdsinfo
+- export PATH="$(pwd):${PATH}"
+- popd
+- export CPLUS_INCLUDE_PATH="/usr/include/gdal"
+- export C_INCLUDE_PATH="/usr/include/gdal"
+- travis_retry pip install pylint pytest-cov pep8 coveralls GDAL==1.10.0
+- travis_retry pip install -r requirements.txt
+script:
+- pep8 eodatasets --max-line-length 120
+- pylint eodatasets --reports no
+- py.test --cov eodatasets eodatasets tests --runslow -m 'not slow'
+- py.test eodatasets tests --runslow -m 'slow'
 cache: apt
-after_success:
-  coveralls
+after_success: coveralls
+notifications:
+  slack:
+    on_success: change
+    on_failure: always
+    secure: lsNEGmbGTX8Dcu4ruuEchsrUjqtNisrnbE5qq7hWm0xYseav5RdokfJhXw2k++qOiKJntwqM5BrE1DQLDdhEEuViiy1Q8dyqnjIfiV41WjIPCm3qtBRvg5J+pHi6aBn0rNHRd8scCZEIX3BecLpkX61LDcX0Q0HTIe4bAccpIg7TjZk2Viln2G2oEfKkaLlXnF2SY2dUdkUrEDql+rGc1j1JGFZHwSEEZEF+dBX73wQPPHQRAhF5yL76qF2A1Ceh9v2ZT/4DcX9MEcZzHxc83zwiDL9/0UKb7cKDQk4kqqtq4E2l99HkTwdZmsjPnFvhh1Rt0dXYuwdEBkx/s9A+1ndgat7a9strOhnKZt8Bf6zWLEHab6opEZfEAn4+y2hotx3UKHeQWGCZ0GeWFQg+BUjL1gq7wGnmCjc+990nL74hk2FCKS65RXR77oY/D3jlWDIRnkC1hy7YH21C1sJH66MyyqbA1aPCOtHfGxQ5/EoIp9bN7sZHwz/VPX7YrGnf8Ams+S3hZJTL0N+YCYR2QLYw8uVZAw48zOb7tmnevpsAxlBHHTKUoYTzv8SpRdK1AhNVgIHmdk3dTsVvbs2MpjUsDKqM8rKqlb77KzQhYYVOpQIQZwDlqUT42UMW4s+wiVFgpwBFUddbKgyyh99lF2eIpW6Oi0Llc+5yCnULs8A=
