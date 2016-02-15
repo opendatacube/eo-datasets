@@ -91,15 +91,15 @@ class TestPackage(TestCase):
 
         assert_file_structure(
             test_path,
-                {
-                    'source_dir': {
-                        'LC81010782014285LGN00_B6.img': 'test',
-                        'LC81010782014285LGN00_B6.swamp': 'test'
-                    },
-                    'dest_dir': {
-                        'LC81010782014285LGN00_B6.tif': 'test',
-                    }
+            {
+                'source_dir': {
+                    'LC81010782014285LGN00_B6.img': 'test',
+                    'LC81010782014285LGN00_B6.swamp': 'test'
+                },
+                'dest_dir': {
+                    'LC81010782014285LGN00_B6.tif': 'test',
                 }
+            }
         )
         self.assertTrue(dest_file.stat().st_size, 4)
         # Ensure source path was not touched.
@@ -185,4 +185,3 @@ class TestPackage(TestCase):
                 size_bytes=9
             )
         )
-

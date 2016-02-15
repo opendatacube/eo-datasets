@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+
 import datetime
 import unittest
 
@@ -74,7 +75,6 @@ class TestNPPMetadataExtraction(TestCase):
                          datetime.datetime(2014, 1, 6, 4, 59, 41))
 
         self.assertEquals(metadata.acquisition.platform_orbit, 11361)
-
 
 
 if __name__ == '__main__':

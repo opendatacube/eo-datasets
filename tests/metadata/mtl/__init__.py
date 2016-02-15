@@ -1,11 +1,13 @@
 # coding=utf-8
 from __future__ import absolute_import
+
 import uuid
 
 from pathlib import Path
-from tests import assert_same
-from eodatasets.metadata import mtl
+
 import eodatasets.type as ptype
+from eodatasets.metadata import mtl
+from tests import assert_same
 
 
 def assert_expected_mtl(mtl_file, expected_ds, base_folder=Path('/tmp/fake-folder')):
@@ -24,4 +26,3 @@ def assert_expected_mtl(mtl_file, expected_ds, base_folder=Path('/tmp/fake-folde
     expected_ds.id_ = assigned_id
 
     assert_same(ds, expected_ds)
-

@@ -1,6 +1,7 @@
 # coding=utf-8
 
 from __future__ import absolute_import
+
 from eodatasets import browseimage, drivers, type as ptype
 from tests import write_files, assert_same
 
@@ -38,7 +39,6 @@ def test_create_typical_browse_metadata():
 
     expected.id_, dataset.id_ = None, None
     assert_same(expected, dataset)
-
 
 
 def test_create_mono_browse_metadata():

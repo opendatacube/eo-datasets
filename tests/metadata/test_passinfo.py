@@ -1,7 +1,8 @@
 # coding=utf-8
 from __future__ import absolute_import
-import unittest
+
 import datetime
+import unittest
 
 from eodatasets import type as ptype
 from eodatasets.metadata import passinfo as extraction
@@ -138,4 +139,3 @@ class TestPassinfo(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

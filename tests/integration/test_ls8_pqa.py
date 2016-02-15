@@ -83,6 +83,7 @@ def test_package():
         'product/LS8_OLITIRS_PQ_P55_GAPQ01-032_090_081_20140726.tif',
     ]
 
+
 EXPECTED_METADATA = {
     'format': {'name': 'GeoTIFF'},
     'ga_label': 'LS8_OLITIRS_PQ_P55_GAPQ01-032_090_081_20140726',

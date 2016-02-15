@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+
 import datetime
 
 from eodatasets import type as ptype
@@ -94,7 +95,7 @@ class TestRccExtract(TestCase):
             'L7EB2015118010116ASA213Q00.data':
                 ptype.DatasetMetadata(
                     ga_level='P00',
-                    usgs=ptype.UsgsMetadata(interval_id ='L7EB2015118010116ASA213'),
+                    usgs=ptype.UsgsMetadata(interval_id='L7EB2015118010116ASA213'),
                     platform=ptype.PlatformMetadata(code='LANDSAT_7'),
                     instrument=ptype.InstrumentMetadata(name='ETM', operation_mode='BUMPER'),
                     format_=ptype.FormatMetadata(name='RCC', version=0),
