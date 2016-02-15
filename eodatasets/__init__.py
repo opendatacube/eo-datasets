@@ -1,3 +1,5 @@
 # coding=utf-8
 
-__version__ = '0.1b'
+from .version import get_version
+
+__version__ = get_version()
