@@ -12,9 +12,7 @@ from pathlib import Path
 
 import eodatasets.scripts.genpackage
 from tests import temp_dir, assert_file_structure, assert_same, integration_test
-from tests.integration import get_script_path, load_checksum_filenames, hardlink_arg
-
-script_path = get_script_path(eodatasets.scripts.genpackage)
+from tests.integration import load_checksum_filenames, hardlink_arg
 
 #: :type: Path
 source_folder = Path(__file__).parent.joinpath('input', 'ls8-ortho')
