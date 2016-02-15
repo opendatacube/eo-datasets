@@ -1,7 +1,7 @@
 language: python
 python:
 - '2.7'
-- '3.4'
+- '3.5'
 sudo: true
 addons:
   apt:
@@ -25,10 +25,7 @@ install:
 - travis_retry pip install pylint pytest-cov pep8 coveralls GDAL==1.10.0
 - travis_retry pip install -r requirements.txt
 script:
-- pep8 eodatasets --max-line-length 120
-- pylint eodatasets --reports no
-- py.test --cov eodatasets eodatasets tests --runslow -m 'not slow'
-- py.test eodatasets tests --runslow -m 'slow'
+- ./check-code.sh --runslow
 cache: apt
 after_success: coveralls
 notifications:
