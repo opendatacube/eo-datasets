@@ -26,7 +26,7 @@ _LOG = logging.getLogger(__name__)
 
 def find_file(path, file_pattern):
     # Crude but effective. TODO: multiple/no result handling.
-    return next(path.glob(file_pattern))
+    return next(path.rglob(file_pattern))
 
 
 class DatasetDriver(object):
@@ -413,11 +413,11 @@ class OrthoDriver(DatasetDriver):
         :type file_path: Path
         :rtype: Path | None
 
-        >>> OrthoDriver().translate_path(None, Path('something.TIF'))
+        >>> OrthoDriver().translate_path(None, Path('scene01/something.TIF'))
         PosixPath('something.TIF')
-        >>> OrthoDriver().translate_path(None, Path('something.tif'))
+        >>> OrthoDriver().translate_path(None, Path('scene01/something.tif'))
         PosixPath('something.tif')
-        >>> OrthoDriver().translate_path(None, Path('something.TIF.aux.xml'))
+        >>> OrthoDriver().translate_path(None, Path('scene01/something.TIF.aux.xml'))
         """
         # Inherit default behaviour
         file_path = super(OrthoDriver, self).translate_path(dataset, file_path)
@@ -427,6 +427,12 @@ class OrthoDriver(DatasetDriver):
 
         if file_path.name.endswith('.aux.xml'):
             return None
+
+        if file_path.is_dir():
+            return None
+
+        if 'scene01' in str(file_path):
+            return file_path.parent.with_name(file_path.name)
 
         return file_path
 
@@ -561,10 +567,10 @@ class NbarDriver(DatasetDriver):
         :type file_path: Path
         :rtype: Path
         >>> from tests.metadata.mtl.test_ls8 import EXPECTED_OUT as ls8_dataset
-        >>> NbarDriver('terrain').translate_path(ls8_dataset, Path('reflectance_terrain_7.bin'))
+        >>> NbarDriver('terrain').translate_path(ls8_dataset, Path('Reflectance_output/reflectance_terrain_7.bin'))
         PosixPath('LS8_OLITIRS_NBART_P51_GALPGS01-032_101_078_20141012_B7.tif')
         >>> # Should return None, as this is a BRDF driver instance.
-        >>> NbarDriver('brdf').translate_path(ls8_dataset, Path('reflectance_terrain_7.bin'))
+        >>> NbarDriver('brdf').translate_path(ls8_dataset, Path('Reflectance_output/reflectance_terrain_7.bin'))
         """
         # Skip hidden files and envi headers. (envi files are converted to tif during copy)
         if file_path.suffix != '.bin':
@@ -576,7 +582,7 @@ class NbarDriver(DatasetDriver):
         ga_label = self.get_ga_label(dataset)
         band_number = self._read_band_number(file_path)
 
-        return Path('%s_B%s.tif' % (ga_label, band_number))
+        return file_path.parent.with_name('%s_B%s.tif' % (ga_label, band_number))
 
     def to_band(self, dataset, path):
         """
