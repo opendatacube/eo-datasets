@@ -81,6 +81,120 @@ def init_existing_dataset(directory, dataset_driver, source_datasets,
     return dataset_driver.fill_metadata(md, directory)
 
 
+def package_dataset(dataset_driver,
+                    dataset,
+                    image_path,
+                    target_path,
+                    hard_link=False):
+    """
+    Package the given dataset folder.
+
+    This includes copying the dataset into a folder, generating
+    metadata and checksum files, as well as optionally generating
+    a browse image.
+
+    Validates, and *Modifies* the passed in dataset with extra metadata.
+
+    :type hard_link: bool
+    :type dataset_driver: eodatasets.drivers.DatasetDriver
+    :type dataset: ptype.Dataset
+    :type image_path: Path
+    :type target_path: Path
+
+    :raises IncompletePackage: If not enough metadata can be extracted from the dataset.
+    :return: The generated GA Dataset ID (ga_label)
+    :rtype: str
+    """
+    checksums = verify.PackageChecksum()
+
+    target_path = target_path.absolute()
+    image_path = image_path.absolute()
+
+    target_metadata_path = documents.find_metadata_path(target_path)
+    if target_metadata_path is not None and target_metadata_path.exists():
+        _LOG.info('Already packaged? Skipping %s', target_path)
+        return
+
+    _LOG.debug('Packaging %r -> %r', image_path, target_path)
+    package_directory = target_path.joinpath('product')
+
+    file_paths = []
+
+    def save_target_checksums_and_paths(source_path, target_path):
+        _LOG.debug('%r -> %r', source_path, target_path)
+        checksums.add_file(target_path)
+        file_paths.append(target_path)
+
+    prepare_target_imagery(
+        image_path,
+        destination_directory=package_directory,
+        include_path=dataset_driver.include_file,
+        translate_path=partial(dataset_driver.translate_path, dataset),
+        after_file_copy=save_target_checksums_and_paths,
+        hard_link=hard_link
+    )
+
+    validate_metadata(dataset)
+    dataset = expand_driver_metadata(dataset_driver, dataset, file_paths)
+
+    #: :type: ptype.DatasetMetadata
+    dataset = ptype.rebase_paths(image_path, package_directory, dataset)
+
+    create_dataset_browse_images(
+        dataset_driver,
+        dataset,
+        target_path,
+        after_file_creation=checksums.add_file
+    )
+
+    target_checksums_path = target_path / GA_CHECKSUMS_FILE_NAME
+    dataset.checksum_path = target_checksums_path
+
+    target_metadata_path = serialise.write_dataset_metadata(target_path, dataset)
+
+    checksums.add_file(target_metadata_path)
+    checksums.write(target_checksums_path)
+
+    return dataset.ga_label
+
+
+def prepare_target_imagery(
+        source_directory,
+        destination_directory,
+        include_path=lambda path: True,
+        translate_path=lambda p: p,
+        after_file_copy=lambda source_path, final_path: None,
+        compress_imagery=True,
+        hard_link=False):
+    """
+    Copy a directory of files if not already there. Possibly compress images.
+
+    :type translate_path: (Path) -> Path
+    :type source_directory: Path
+    :type destination_directory: Path
+    :type after_file_copy: Path -> None
+    :type hard_link: bool
+    :type compress_imagery: bool
+    """
+    if not destination_directory.exists():
+        destination_directory.mkdir()
+
+    for source_file in source_directory.rglob('*'):
+        # Skip hidden files and directories
+        if source_file.name.startswith('.') or source_file.is_dir() or not include_path(source_file):
+            continue
+
+        rel_source_file = source_file.relative_to(source_directory)
+
+        rel_target_path = translate_path(rel_source_file)
+
+        absolute_target_path = destination_directory / rel_target_path
+
+        _copy_file(source_file, absolute_target_path, compress_imagery, hard_link=hard_link)
+
+        after_file_copy(source_file, absolute_target_path)
+
+
 def _copy_file(source_path, destination_path, compress_imagery=True, hard_link=False):
     """
     Copy a file from source to destination if needed. Maybe apply compression.
@@ -124,44 +238,6 @@ def _copy_file(source_path, destination_path, compress_imagery=True, hard_link=F
         shutil.copy(source_file, destination_file)
 
     return destination_path.stat().st_size
-
-
-def prepare_target_imagery(
-        image_directory,
-        package_directory,
-        translate_path=lambda path: path,
-        after_file_copy=lambda source_path, final_path: None,
-        compress_imagery=True,
-        hard_link=False):
-    """
-    Copy a directory of files if not already there. Possibly compress images.
-
-    :type translate_path: (Path) -> Path
-    :type image_directory: Path
-    :type package_directory: Path
-    :type after_file_copy: Path -> None
-    :type hard_link: bool
-    :type compress_imagery: bool
-    """
-    if not package_directory.exists():
-        package_directory.mkdir()
-
-    for source_path in image_directory.rglob('*'):
-        # Skip hidden files
-        if source_path.name.startswith('.'):
-            continue
-
-        target_path = translate_path(source_path)
-        if target_path is None:
-            continue
-
-        target_path = ptype.rebase_path(from_root_path=image_directory,
-                                        to_root_path=package_directory,
-                                        path=target_path)
-
-        _copy_file(source_path, target_path, compress_imagery, hard_link=hard_link)
-
-        after_file_copy(source_path, target_path)
 
 
 class IncompletePackage(Exception):
@@ -235,79 +311,3 @@ def package_inplace_dataset(dataset_driver, dataset, image_path):
     validate_metadata(dataset)
     dataset = expand_driver_metadata(dataset_driver, dataset, image_paths)
     return serialise.write_dataset_metadata(image_path, dataset)
-
-
-def package_dataset(dataset_driver,
-                    dataset,
-                    image_path,
-                    target_path,
-                    hard_link=False):
-    """
-    Package the given dataset folder.
-
-    This includes copying the dataset into a folder, generating
-    metadata and checksum files, as well as optionally generating
-    a browse image.
-
-    Validates, and *Modifies* the passed in dataset with extra metadata.
-
-    :type hard_link: bool
-    :type dataset_driver: eodatasets.drivers.DatasetDriver
-    :type dataset: ptype.Dataset
-    :type image_path: Path
-    :type target_path: Path
-
-    :raises IncompletePackage: If not enough metadata can be extracted from the dataset.
-    :return: The generated GA Dataset ID (ga_label)
-    :rtype: str
-    """
-    checksums = verify.PackageChecksum()
-
-    target_path = target_path.absolute()
-    image_path = image_path.absolute()
-
-    target_metadata_path = documents.find_metadata_path(target_path)
-    if target_metadata_path is not None and target_metadata_path.exists():
-        _LOG.info('Already packaged? Skipping %s', target_path)
-        return
-
-    _LOG.debug('Packaging %r -> %r', image_path, target_path)
-    package_directory = target_path.joinpath('product')
-
-    file_paths = []
-
-    def save_target_checksums_and_paths(source_path, target_path):
-        _LOG.debug('%r -> %r', source_path, target_path)
-        checksums.add_file(target_path)
-        file_paths.append(target_path)
-
-    prepare_target_imagery(
-        image_path,
-        package_directory,
-        translate_path=partial(dataset_driver.translate_path, dataset),
-        after_file_copy=save_target_checksums_and_paths,
-        hard_link=hard_link
-    )
-
-    validate_metadata(dataset)
-    dataset = expand_driver_metadata(dataset_driver, dataset, file_paths)
-
-    #: :type: ptype.DatasetMetadata
-    dataset = ptype.rebase_paths(image_path, package_directory, dataset)
-
-    create_dataset_browse_images(
-        dataset_driver,
-        dataset,
-        target_path,
-        after_file_creation=checksums.add_file
-    )
-
-    target_checksums_path = target_path / GA_CHECKSUMS_FILE_NAME
-    dataset.checksum_path = target_checksums_path
-
-    target_metadata_path = serialise.write_dataset_metadata(target_path, dataset)
-
-    checksums.add_file(target_metadata_path)
-    checksums.write(target_checksums_path)
-
-    return dataset.ga_label

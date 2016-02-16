@@ -66,6 +66,15 @@ class DatasetDriver(object):
         """
         raise NotImplementedError()
 
+    def include_file(self, file_path):
+        """
+        Return true if source `file_path` should be included in package
+
+        :param file_path: Source filename
+        :rtype: boolean
+        """
+        return True
+
     def translate_path(self, dataset, file_path):
         """
         Translate an input filename if desired.
@@ -76,7 +85,7 @@ class DatasetDriver(object):
         :type file_path: Path
         :rtype: Path
 
-        >>> # Test default behaviour: all files included unchanged, suffix is lowercase.
+        >>> # Test default behaviour: all files included unchanged.
         >>> DatasetDriver().translate_path(None, Path('/tmp/fake_path.TXT'))
         PosixPath('/tmp/fake_path.TXT')
         >>> DatasetDriver().translate_path(None, Path('/tmp/passinfo'))
@@ -406,9 +415,24 @@ class OrthoDriver(DatasetDriver):
 
         return d
 
+    def include_file(self, file_path):
+        """
+        Exclude .aux.xml paths
+        :param file_path:
+        :return:
+
+        >>> OrthoDriver().include_file(Path('scene01/something.TIF.aux.xml'))
+        False
+        """
+        if file_path.name.endswith('.aux.xml'):
+            return False
+        else:
+            return True
+
     def translate_path(self, dataset, file_path):
         """
-        Exclude .aux.xml paths.
+        Move files in scene01 into parent dir
+
         :type dataset: ptype.DatasetMetadata
         :type file_path: Path
         :rtype: Path | None
@@ -417,19 +441,10 @@ class OrthoDriver(DatasetDriver):
         PosixPath('something.TIF')
         >>> OrthoDriver().translate_path(None, Path('scene01/something.tif'))
         PosixPath('something.tif')
-        >>> OrthoDriver().translate_path(None, Path('scene01/something.TIF.aux.xml'))
+
         """
         # Inherit default behaviour
         file_path = super(OrthoDriver, self).translate_path(dataset, file_path)
-
-        if not file_path:
-            return file_path
-
-        if file_path.name.endswith('.aux.xml'):
-            return None
-
-        if file_path.is_dir():
-            return None
 
         if 'scene01' in str(file_path):
             return file_path.parent.with_name(file_path.name)
@@ -517,9 +532,6 @@ class NbarDriver(DatasetDriver):
     def expected_source(self):
         return OrthoDriver()
 
-    def _file_is_pertinent(self, file_path):
-        return file_path.name.startswith('reflectance_{}'.format(self.subset_name))
-
     def is_brdf(self):
         return self.subset_name == 'brdf'
 
@@ -561,6 +573,22 @@ class NbarDriver(DatasetDriver):
         else:
             return number
 
+    def include_file(self, file_path):
+        """
+        :param file_path:
+        :rtype: boolean
+        >>> NbarDriver('terrain').include_file(Path('Reflectance_output/reflectance_terrain_7.bin'))
+        True
+        >>> NbarDriver('brdf').include_file(Path('Reflectance_output/reflectance_terrain_7.bin'))
+        False
+        """
+        # Skip hidden files and envi headers. (envi files are converted to tif during copy)
+        if (file_path.suffix == '.bin' and
+                file_path.name.startswith('reflectance_%s' % self.subset_name)):
+            return True
+        else:
+            return False
+
     def translate_path(self, dataset, file_path):
         """
         :type dataset: ptype.DatasetMetadata
@@ -569,15 +597,7 @@ class NbarDriver(DatasetDriver):
         >>> from tests.metadata.mtl.test_ls8 import EXPECTED_OUT as ls8_dataset
         >>> NbarDriver('terrain').translate_path(ls8_dataset, Path('Reflectance_output/reflectance_terrain_7.bin'))
         PosixPath('LS8_OLITIRS_NBART_P51_GALPGS01-032_101_078_20141012_B7.tif')
-        >>> # Should return None, as this is a BRDF driver instance.
-        >>> NbarDriver('brdf').translate_path(ls8_dataset, Path('Reflectance_output/reflectance_terrain_7.bin'))
         """
-        # Skip hidden files and envi headers. (envi files are converted to tif during copy)
-        if file_path.suffix != '.bin':
-            return None
-
-        if not self._file_is_pertinent(file_path):
-            return None
 
         ga_label = self.get_ga_label(dataset)
         band_number = self._read_band_number(file_path)
@@ -864,7 +884,7 @@ class PqaDriver(DatasetDriver):
             ga_label = self.get_ga_label(dataset)
             return file_path.with_name(ga_label + suffix)
         else:
-            # All other files are kept in the package (log files etc, if any).
+            # All other files keep the same name (log files etc, if any).
             return file_path
 
     def to_band(self, dataset, path):

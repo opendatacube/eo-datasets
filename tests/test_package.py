@@ -75,7 +75,8 @@ class TestPackage(TestCase):
         package.prepare_target_imagery(
             source_path,
             dest_path,
-            translate_path=lambda p: p.with_suffix('.tif') if p.suffix == '.img' else None,
+            include_path=lambda p: p.suffix == '.img',
+            translate_path=lambda p: p.with_suffix('.tif'),
             after_file_copy=lambda source, dest: called_back.append((source, dest)),
             compress_imagery=False
         )
