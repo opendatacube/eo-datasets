@@ -7,11 +7,9 @@ from __future__ import absolute_import
 import datetime
 
 import yaml
-from click.testing import CliRunner
 from pathlib import Path
 
-import eodatasets.scripts.genpackage
-from tests import temp_dir, assert_file_structure, assert_same, integration_test
+from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
 from tests.integration import load_checksum_filenames, hardlink_arg
 
 #: :type: Path
@@ -28,16 +26,11 @@ assert source_dataset.exists()
 @integration_test
 def test_metadata():
     output_path = temp_dir()
-    runner = CliRunner()
-    runner.invoke(
-        eodatasets.scripts.genpackage.run,
-        [
-            hardlink_arg(output_path, source_dataset),
-            'raw',
-            str(source_dataset), str(output_path)
-        ],
-        catch_exceptions=False
-    )
+    run_packaging_cli([
+        hardlink_arg(output_path, source_dataset),
+        'raw',
+        str(source_dataset), str(output_path)
+    ])
 
     assert_file_structure(output_path, {
         'NPP_VIIRS_STD-HDF5_P00_18966.ASA_0_0_20150626T053709Z20150626T055046': {

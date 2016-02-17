@@ -1,19 +1,20 @@
 # coding=utf-8
 from __future__ import absolute_import
-import unittest
+
 import atexit
 import os
 import shutil
-import tempfile
 import sys
-
-from eodatasets import compat
+import tempfile
+import unittest
 
 import pathlib
-
-import eodatasets.type as ptype
-
 import pytest
+from click.testing import CliRunner
+
+import eodatasets.scripts.genpackage
+import eodatasets.type as ptype
+from eodatasets import compat
 
 # An annotation for marking slow tests.
 #
@@ -167,6 +168,16 @@ def _write_files_to_dir(directory_path, file_dict):
                     f.write(contents)
                 else:
                     raise Exception('Unexpected file contents: %s' % type(contents))
+
+
+def run_packaging_cli(args):
+    runner = CliRunner()
+    res = runner.invoke(
+        eodatasets.scripts.genpackage.run,
+        args,
+        catch_exceptions=False
+    )
+    assert res.exit_code == 0, "Error output: %r" % res.output
 
 
 def temp_dir():

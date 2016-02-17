@@ -7,11 +7,9 @@ from __future__ import absolute_import
 import datetime
 
 import yaml
-from click.testing import CliRunner
 from pathlib import Path
 
-import eodatasets.scripts.genpackage
-from tests import temp_dir, assert_file_structure, assert_same, integration_test
+from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
 from tests.integration import load_checksum_filenames, hardlink_arg
 
 #: :type: Path
@@ -29,16 +27,11 @@ assert source_dataset.exists()
 def test_metadata():
     output_path = temp_dir()
 
-    runner = CliRunner()
-    runner.invoke(
-        eodatasets.scripts.genpackage.run,
-        [
-            hardlink_arg(output_path, source_dataset),
-            'raw',
-            str(source_dataset), str(output_path)
-        ],
-        catch_exceptions=False
-    )
+    run_packaging_cli([
+        hardlink_arg(output_path, source_dataset),
+        'raw',
+        str(source_dataset), str(output_path)
+    ])
 
     # EODS LS7 dataset id:
     # 'LS7_ETM_STD-RCC_P00_LANDSAT-7.65771.ALSP_0_0_20110827T021036Z20110827T021707'

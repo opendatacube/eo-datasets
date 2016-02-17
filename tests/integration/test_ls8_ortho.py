@@ -8,12 +8,10 @@ import datetime
 import socket
 
 import yaml
-from click.testing import CliRunner
 from pathlib import Path
 
-import eodatasets.scripts.genpackage
 from eodatasets.package import _RUNTIME_ID
-from tests import temp_dir, assert_file_structure, assert_same, integration_test
+from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
 from tests.integration import load_checksum_filenames, hardlink_arg, directory_size
 
 #: :type: Path
@@ -31,19 +29,12 @@ assert parent_dataset.exists()
 def test_package():
     output_path = temp_dir()
 
-    runner = CliRunner()
-    res = runner.invoke(
-        eodatasets.scripts.genpackage.run,
-        [
-            hardlink_arg(output_path, source_dataset),
-            'ortho',
-            '--newly-processed',
-            '--parent', str(parent_dataset),
-            str(source_dataset), str(output_path)
-        ],
-        catch_exceptions=False
-    )
-    assert res.exit_code == 0, "Error output: %r" % res.output
+    run_packaging_cli([
+        hardlink_arg(output_path, source_dataset),
+        'ortho', '--newly-processed',
+        '--parent', str(parent_dataset),
+        str(source_dataset), str(output_path)
+    ])
 
     output_dataset = output_path.joinpath('LS8_OLITIRS_OTH_P51_GALPGS01-002_112_079_20140126')
 
