@@ -1,21 +1,20 @@
 # coding=utf-8
 from __future__ import absolute_import
+
+import datetime
+import logging
 import os
 import shutil
-import logging
-import time
-from subprocess import check_call
-import datetime
-import uuid
 import socket
+import uuid
 from functools import partial
+from subprocess import check_call
 
 from pathlib import Path
 
+import eodatasets.type as ptype
 from eodatasets import serialise, verify, metadata, documents
 from eodatasets.browseimage import create_dataset_browse_images
-import eodatasets.type as ptype
-
 
 GA_CHECKSUMS_FILE_NAME = 'package.sha1'
 
@@ -25,7 +24,7 @@ _RUNTIME_ID = uuid.uuid1()
 
 
 def init_locally_processed_dataset(directory, dataset_driver, source_datasets,
-                                   software_provenance, uuid_=None):
+                                   software_provenance=None, uuid_=None):
     """
     Create a blank dataset for a newly created dataset on this machine.
 
@@ -47,7 +46,6 @@ def init_locally_processed_dataset(directory, dataset_driver, source_datasets,
             source_datasets=source_datasets
         )
     )
-
     return dataset_driver.fill_metadata(md, directory)
 
 

@@ -3,12 +3,12 @@
 Higher-level commands to package directories on the filesystem.
 """
 from __future__ import absolute_import
+
+import tempfile
 from contextlib import contextmanager
 
-import os
-import tempfile
-
 from pathlib import Path
+
 from eodatasets import package, serialise
 
 
@@ -42,7 +42,8 @@ def package_newly_processed_data_folder(driver, input_data_paths, destination_pa
     )
 
 
-def package_existing_data_folder(driver, input_data_paths, destination_path, parent_dataset_paths, hard_link=False):
+def package_existing_data_folder(driver, input_data_paths, destination_path, parent_dataset_paths,
+                                 hard_link=False):
     """
     Package an input folder of possibly unknown origin.
 
@@ -93,7 +94,6 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
     for dataset_folder in input_data_paths:
         dataset_folder = Path(dataset_folder)
         with temp_dir(prefix='.packagetmp.', base_dir=destination_path) as temp_output_dir:
-
             dataset = init_dataset(dataset_folder, driver, parent_datasets)  # Calls fill metadata
 
             dataset_id = package.package_dataset(  # Also updates dataset

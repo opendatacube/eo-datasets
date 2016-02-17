@@ -5,12 +5,14 @@ Package an LS8 NBAR dataset.
 from __future__ import absolute_import
 
 import datetime
+import socket
 
 import yaml
 from click.testing import CliRunner
 from pathlib import Path
 
 import eodatasets.scripts.genpackage
+from eodatasets.package import _RUNTIME_ID
 from tests import temp_dir, assert_file_structure, assert_same, integration_test
 from tests.integration import load_checksum_filenames, hardlink_arg, directory_size
 
@@ -30,16 +32,18 @@ def test_package():
     output_path = temp_dir()
 
     runner = CliRunner()
-    runner.invoke(
+    res = runner.invoke(
         eodatasets.scripts.genpackage.run,
         [
             hardlink_arg(output_path, source_dataset),
             'ortho',
+            '--newly-processed',
             '--parent', str(parent_dataset),
             str(source_dataset), str(output_path)
         ],
         catch_exceptions=False
     )
+    assert res.exit_code == 0, "Error output: %r" % res.output
 
     output_dataset = output_path.joinpath('LS8_OLITIRS_OTH_P51_GALPGS01-002_112_079_20140126')
 
@@ -79,6 +83,12 @@ def test_package():
     md['id'] = None
 
     EXPECTED_METADATA['size_bytes'] = directory_size(output_dataset / 'product')
+
+    # A newly-processed dataset: extra fields
+    assert md['lineage']['machine']['uname'] is not None
+    del md['lineage']['machine']['uname']
+    EXPECTED_METADATA['lineage']['machine']['runtime_id'] = str(_RUNTIME_ID)
+    EXPECTED_METADATA['lineage']['machine']['hostname'] = socket.getfqdn()
 
     assert_same(md, EXPECTED_METADATA)
 

@@ -20,6 +20,9 @@ from eodatasets.scripts import init_logging
 @click.option('--hard-link/--no-hard-link',
               default=False,
               help='Hard-link output files if possible (faster than copying)')
+@click.option('--newly-processed/--external-dataset',
+              default=False,
+              help='Include provenance and processing time for the current machine.')
 @click.argument('package_type',
                 type=click.Choice(drivers.PACKAGE_DRIVERS.keys()))
 @click.argument('dataset',
@@ -28,18 +31,28 @@ from eodatasets.scripts import init_logging
 @click.argument('destination',
                 type=click.Path(exists=True, readable=True, writable=True),
                 nargs=1)
-def run(parent, debug, hard_link, package_type, dataset, destination):
+def run(parent, debug, hard_link, newly_processed, package_type, dataset, destination):
     """
     Package the given imagery folders.
     """
     init_logging(debug)
-    run_package.package_existing_data_folder(
-        driver=drivers.PACKAGE_DRIVERS[package_type],
-        input_data_paths=[Path(p) for p in dataset],
-        destination_path=Path(destination),
-        parent_dataset_paths=[Path(p) for p in parent],
-        hard_link=hard_link
-    )
+
+    if newly_processed:
+        run_package.package_newly_processed_data_folder(
+            driver=drivers.PACKAGE_DRIVERS[package_type],
+            input_data_paths=[Path(p) for p in dataset],
+            destination_path=Path(destination),
+            parent_dataset_paths=[Path(p) for p in parent],
+            hard_link=hard_link
+        )
+    else:
+        run_package.package_existing_data_folder(
+            driver=drivers.PACKAGE_DRIVERS[package_type],
+            input_data_paths=[Path(p) for p in dataset],
+            destination_path=Path(destination),
+            parent_dataset_paths=[Path(p) for p in parent],
+            hard_link=hard_link
+        )
 
 
 if __name__ == '__main__':
