@@ -7,9 +7,9 @@ import re
 import string
 import xml.etree.cElementTree as etree
 
+import yaml
 from dateutil.parser import parse
 from pathlib import Path
-import yaml
 
 try:
     from yaml import CSafeLoader as SafeLoader
@@ -24,9 +24,15 @@ from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, \
 _LOG = logging.getLogger(__name__)
 
 
-def find_file(path, file_pattern):
-    # Crude but effective. TODO: multiple/no result handling.
-    return next(path.rglob(file_pattern))
+def get_file(path, file_pattern):
+    found = list(path.rglob(file_pattern))
+
+    if not found:
+        raise RuntimeError('Not found: %r in %s' % (file_pattern, path))
+    if len(found) > 1:
+        raise RuntimeError('%s results found for pattern %r in %s' % (len(found), file_pattern, path))
+
+    return found[0]
 
 
 class DatasetDriver(object):
@@ -408,7 +414,7 @@ class OrthoDriver(DatasetDriver):
         :type d: ptype.DatasetMetadata
         :return:
         """
-        mtl_path = find_file(package_directory, '*_MTL.txt')
+        mtl_path = get_file(package_directory, '*_MTL.txt')
         _LOG.info('Reading MTL %r', mtl_path)
 
         d = mtl.populate_from_mtl(d, mtl_path)
