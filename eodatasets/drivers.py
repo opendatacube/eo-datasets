@@ -516,7 +516,7 @@ class NbarDriver(DatasetDriver):
 
         return _fill_dataset_label(
             dataset,
-            '{satnumber}_{sensor}_{nbartype}_{galevel}_GALPGS01-{stationcode}_{path}_{rows}_{day}',
+            '{satnumber}_{sensor}_{nbartype}_{galevel}_GA{nbartype}01-{stationcode}_{path}_{rows}_{day}',
             nbartype=nbar_type
         )
 
