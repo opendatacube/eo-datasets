@@ -578,7 +578,7 @@ class NbarDriver(DatasetDriver):
         '3'
         >>> NbarDriver('terrain').to_band(None, p).path
         PosixPath('/tmp/something/reflectance_terrain_3.bin')
-        >>> p = Path('/tmp/something/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif')
+        >>> p = Path('/tmp/something/LS8_OLITIRS_NBAR_P54_GANBART01-002_112_079_20140126_B4.tif')
         >>> NbarDriver('terrain').to_band(None, p).number
         '4'
         """

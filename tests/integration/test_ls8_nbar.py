@@ -124,49 +124,49 @@ EXPECTED_METADATA = {
             '4': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B4.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B4.tif',
                 'label': 'Visible Red',
                 'number': '4'
             },
             '6': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B6.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B6.tif',
                 'label': 'Short-wave Infrared 1',
                 'number': '6'
             },
             '1': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B1.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B1.tif',
                 'label': 'Coastal Aerosol',
                 'number': '1'
             },
             '2': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B2.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B2.tif',
                 'label': 'Visible Blue',
                 'number': '2'
             },
             '3': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B3.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B3.tif',
                 'label': 'Visible Green',
                 'number': '3'
             },
             '5': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B5.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B5.tif',
                 'label': 'Near Infrared',
                 'number': '5'
             },
             '7': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B7.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B7.tif',
                 'label': 'Short-wave Infrared 2',
                 'number': '7'
             }
