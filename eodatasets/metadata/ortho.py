@@ -417,14 +417,6 @@ def _populate_lineage(md, mtl_):
     if not md.lineage.ancillary:
         md.lineage.ancillary = {}
     md.lineage.ancillary_quality = _get(product_md, 'ephemeris_type')
-    md.lineage.ancillary.update(
-        _remove_missing({
-            'cpf': _get(product_md, 'cpf_name'),
-            'bpf_oli': _get(product_md, 'bpf_name_oli'),
-            'bpf_tirs': _get(product_md, 'bpf_name_tirs'),
-            'rlut': _get(product_md, 'rlut_file_name')
-        })
-    )
 
 
 def _populate_from_mtl_dict(md, mtl_, folder):
