@@ -5,12 +5,13 @@ Package an LS8 NBAR dataset.
 from __future__ import absolute_import
 
 import datetime
+import shutil
 import socket
 
 import yaml
 from pathlib import Path
 
-import eodatasets.metadata.ortho
+from eodatasets.metadata.ortho import _get_lpgs_out, _get_work_order
 from eodatasets.package import _RUNTIME_ID
 from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
 from tests.integration import load_checksum_filenames, hardlink_arg, directory_size, add_default_software_versions
@@ -27,56 +28,63 @@ assert parent_dataset.exists()
 
 
 @integration_test
-def test_package(monkeypatch):
-    output_path = temp_dir()
-    ancil_path = temp_dir()
+def test_package():
+    work_path = temp_dir()
+    output_path = work_path.joinpath('out')
+    output_path.mkdir(parents=True)
+    ancil_path = work_path.joinpath('ancil')
+    input_product_path = work_path.joinpath('product')
 
     # We have to override the ancillary directory lookup as they won't exist on test systems.
     ANCIL_FILES = {
         'cpf': (
-            './L0RpProcessing/CalibrationFile',
             ancil_path.joinpath('cpf'),
             ('L8CPF20140101_20140331.05',),
             'da39a3ee5e6b4b0d3255bfef95601890afd80709'
         ),
         'bpf_oli': (
-            './L1Processing/BPFOliFile',
             ancil_path.joinpath('bpf-oli'),
             ('LO8BPF20140127130115_20140127144056.01',),
             'da39a3ee5e6b4b0d3255bfef95601890afd80709'
         ),
         'bpf_tirs': (
-            './L1Processing/BPFTirsFile',
             ancil_path.joinpath('bpf-tirs'),
             ('LT8BPF20140116023714_20140116032836.02',),
             'da39a3ee5e6b4b0d3255bfef95601890afd80709'
         ),
         'rlut': (
-            './L1Processing/RlutFile',
             ancil_path.joinpath('rlut'),
             # It should search subdirectories too.
             ('2013', 'L8RLUT20130211_20431231v09.h5'),
             'da39a3ee5e6b4b0d3255bfef95601890afd80709'
         )
     }
-    for name, (_, dir, file_offset, _) in ANCIL_FILES.items():
+    for name, (dir, file_offset, _) in ANCIL_FILES.items():
         # Create directories
         dir.joinpath(*file_offset[:-1]).mkdir(parents=True)
         # Create blank ancil file.
         dir.joinpath(*file_offset).open('w').close()
 
-    def mock_get_node_text(offset, parsed_doc):
-        for name, (o, dir, _, _) in ANCIL_FILES.items():
-            if offset == o:
-                return dir
-        raise AssertionError("Unknown work_order.xml offset requested: " + offset)
+    # Write all our input data to a temp directory (so that we can use a custom work order)
+    shutil.copytree(str(source_dataset), str(input_product_path))
+    shutil.copy(
+        str(_get_lpgs_out(source_dataset)),
+        str(work_path.joinpath('lpgs_out.xml'))
+    )
+    # Write a work order with ancillary locations replaced.
+    with _get_work_order(source_dataset).open('rb') as wo:
+        wo_text = wo.read().decode('utf-8').format(
+            **{k + '_path': v[0] for k, v in ANCIL_FILES.items()}
+        )
+        with work_path.joinpath('work_order.xml').open('w') as out_wo:
+            out_wo.write(wo_text)
 
-    monkeypatch.setattr(eodatasets.metadata.ortho, '_get_node_text', mock_get_node_text)
+    # Run!
     run_packaging_cli([
         hardlink_arg(output_path, source_dataset),
         'ortho', '--newly-processed',
         '--parent', str(parent_dataset),
-        str(source_dataset), str(output_path)
+        str(input_product_path), str(output_path)
     ])
 
     output_dataset = output_path.joinpath('LS8_OLITIRS_OTH_P51_GALPGS01-002_112_079_20140126')
@@ -125,9 +133,10 @@ def test_package(monkeypatch):
     EXPECTED_METADATA['lineage']['machine']['runtime_id'] = str(_RUNTIME_ID)
     EXPECTED_METADATA['lineage']['machine']['hostname'] = socket.getfqdn()
 
+    # Create the expected ancillary information.
     for ancil_name, ancil_d in EXPECTED_METADATA['lineage']['ancillary'].items():
         assert ancil_name in ANCIL_FILES, 'Unexpected ancil type: ' + ancil_name
-        _, dir_, file_offset, chk = ANCIL_FILES[ancil_name]
+        dir_, file_offset, chk = ANCIL_FILES[ancil_name]
         #: :type: pathlib.Path
         ancil_path = dir_.joinpath(*file_offset)
         ancil_d['uri'] = str(ancil_path)

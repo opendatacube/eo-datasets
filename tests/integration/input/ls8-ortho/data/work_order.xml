@@ -12,14 +12,14 @@
 
     <L0RaProcessing>
         <CalibrationFile useDownloader="false">
-            /g/data/v10/eoancillarydata/sensor-specific/LANDSAT8/CalibrationParameterFile
+            {cpf_path}
         </CalibrationFile>
         <Parameters mayFallBackSensor="true"/>
     </L0RaProcessing>
 
     <L0RpProcessing maxConcurrentScenes="13">
         <CalibrationFile useDownloader="false">
-            /g/data/v10/eoancillarydata/sensor-specific/LANDSAT8/CalibrationParameterFile
+            {cpf_path}
         </CalibrationFile>
     </L0RpProcessing>
 
@@ -51,13 +51,11 @@
             <DEM format="srtm90">/g/data/v10/eoancillarydata/elevation/2.0</DEM>
             <GCP format="chips">/g/data/v10/eoancillarydata/GCP/GLS2005_GCP_CHIP</GCP>
         </L1T>
-        <RlutFile useDownloader="false">/g/data/v10/eoancillarydata/sensor-specific/LANDSAT8/RLUT</RlutFile>
+        <RlutFile useDownloader="false">{rlut_path}</RlutFile>
         <BPFTirsFile
-                useDownloader="false">/g/data/v10/eoancillarydata/sensor-specific/LANDSAT8/BiasParameterFile/2014/12
-        </BPFTirsFile>
+                useDownloader="false">{bpf_tirs_path}</BPFTirsFile>
         <BPFOliFile
-                useDownloader="false">/g/data/v10/eoancillarydata/sensor-specific/LANDSAT8/BiasParameterFile/2014/12
-        </BPFOliFile>
+                useDownloader="false">{bpf_oli_path}</BPFOliFile>
         <OutputPath additionalMetadata="false">/g/data/v10/agdc/jez/galpgs/test-out/tmp/scenes</OutputPath>
     </L1Processing>
 </LandsatProcessingRequest>

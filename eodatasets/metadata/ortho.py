@@ -21,9 +21,9 @@ def populate_ortho(md, base_folder):
     :type base_folder: pathlib.Path
     :rtype: eodatasets.type.DatasetMetadata
     """
-    mtl_path = _get_file(base_folder, '*_MTL.txt')
-    work_order = _find_parent_file(base_folder, 'work_order.xml')
-    lpgs_out = _find_parent_file(base_folder, 'lpgs_out.xml')
+    mtl_path = _get_mtl(base_folder)
+    work_order = _get_work_order(base_folder)
+    lpgs_out = _get_lpgs_out(base_folder)
 
     return _populate_ortho_from_files(
         base_folder, md,
@@ -31,6 +31,22 @@ def populate_ortho(md, base_folder):
         work_order_path=work_order,
         lpgs_out_path=lpgs_out
     )
+
+
+def _get_lpgs_out(base_folder):
+    lpgs_out = _find_parent_file(base_folder, 'lpgs_out.xml')
+    return lpgs_out
+
+
+def _get_work_order(base_folder):
+    """
+    :rtype: pathlib.Path
+    """
+    return _find_parent_file(base_folder, 'work_order.xml')
+
+
+def _get_mtl(base_folder):
+    return _get_file(base_folder, '*_MTL.txt')
 
 
 def _parse_type(s):
@@ -107,7 +123,7 @@ def _load_mtl(filename, root='L1_METADATA_FILE', pairs=r'(\w+)\s=\s(.*)'):
                     tree[key.lower()] = _parse_type(value)
 
     tree = {}
-    with open(filename, 'r') as fo:
+    with open(str(filename), 'r') as fo:
         parse(fo.readlines(), tree)
 
     return tree[root]
@@ -253,7 +269,7 @@ def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset, order_dir_offset):
 
 def _get_node_text(offset, parsed_doc):
     xml_node = parsed_doc.findall(offset)
-    file_search_directory = Path(xml_node[0].text)
+    file_search_directory = Path(str(xml_node[0].text).strip())
     return file_search_directory
 
 
@@ -264,48 +280,55 @@ def _populate_ortho_from_files(base_folder, md, mtl_path, work_order_path, lpgs_
         base_folder = mtl_path.parent
 
     _LOG.info('Reading MTL %r', mtl_path)
-    mtl_doc = _load_mtl(str(mtl_path.absolute()))
+    mtl_doc = _load_mtl(mtl_path.absolute())
 
-    work_order_doc = None
-    if work_order_path:
-        _LOG.info('Reading work order %r', work_order_path)
-        work_order_doc = etree.parse(str(work_order_path))
+    _LOG.info('Reading work order %r', work_order_path)
+    work_order_doc = _load_xml(work_order_path) if work_order_path else None
 
     md = _populate_from_mtl_dict(md, mtl_doc, base_folder)
-    md.lineage.ancillary.update(
-        _remove_missing({
-            'cpf': _get_ancillary_metadata(
-                mtl_doc, work_order_doc,
-                mtl_name_offset=('PRODUCT_METADATA', 'cpf_name'),
-                order_dir_offset='./L0RpProcessing/CalibrationFile'
-            ),
-            'bpf_oli': _get_ancillary_metadata(
-                mtl_doc, work_order_doc,
-                mtl_name_offset=('PRODUCT_METADATA', 'bpf_name_oli'),
-                order_dir_offset='./L1Processing/BPFOliFile'
-            ),
-            'bpf_tirs': _get_ancillary_metadata(
-                mtl_doc, work_order_doc,
-                mtl_name_offset=('PRODUCT_METADATA', 'bpf_name_tirs'),
-                order_dir_offset='./L1Processing/BPFTirsFile'
-            ),
-            'rlut': _get_ancillary_metadata(
-                mtl_doc, work_order_doc,
-                mtl_name_offset=('PRODUCT_METADATA', 'rlut_file_name'),
-                order_dir_offset='./L1Processing/RlutFile'
-            )
-        })
-    )
+
+    ancil_files = _get_ancil_files(mtl_doc, work_order_doc)
+    md.lineage.ancillary.update(ancil_files)
 
     if lpgs_out_path:
         _LOG.info('Reading lpgs_out: %r', lpgs_out_path)
-        lpgs_out_doc = etree.parse(str(lpgs_out_path))
+        lpgs_out_doc = _load_xml(lpgs_out_path)
         pinkmatter_version = lpgs_out_doc.findall('./Version')[0].text
 
         md.lineage.machine.note_software_version('pinkmatter', str(pinkmatter_version))
         # We could read the processing hostname, start & stop times too. Do we care? We get it elsewhere.
 
     return md
+
+
+def _load_xml(path):
+    return etree.parse(str(path))
+
+
+def _get_ancil_files(mtl_doc, work_order_doc):
+    ancil_files = _remove_missing({
+        'cpf': _get_ancillary_metadata(
+            mtl_doc, work_order_doc,
+            mtl_name_offset=('PRODUCT_METADATA', 'cpf_name'),
+            order_dir_offset='./L0RpProcessing/CalibrationFile'
+        ),
+        'bpf_oli': _get_ancillary_metadata(
+            mtl_doc, work_order_doc,
+            mtl_name_offset=('PRODUCT_METADATA', 'bpf_name_oli'),
+            order_dir_offset='./L1Processing/BPFOliFile'
+        ),
+        'bpf_tirs': _get_ancillary_metadata(
+            mtl_doc, work_order_doc,
+            mtl_name_offset=('PRODUCT_METADATA', 'bpf_name_tirs'),
+            order_dir_offset='./L1Processing/BPFTirsFile'
+        ),
+        'rlut': _get_ancillary_metadata(
+            mtl_doc, work_order_doc,
+            mtl_name_offset=('PRODUCT_METADATA', 'rlut_file_name'),
+            order_dir_offset='./L1Processing/RlutFile'
+        )
+    })
+    return ancil_files
 
 
 def _populate_extent(md, product_md):
