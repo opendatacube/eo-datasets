@@ -13,7 +13,7 @@ from pathlib import Path
 import eodatasets.metadata.ortho
 from eodatasets.package import _RUNTIME_ID
 from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
-from tests.integration import load_checksum_filenames, hardlink_arg, directory_size
+from tests.integration import load_checksum_filenames, hardlink_arg, directory_size, add_default_software_versions
 
 #: :type: Path
 source_folder = Path(__file__).parent.joinpath('input', 'ls8-ortho')
@@ -117,6 +117,7 @@ def test_package(monkeypatch):
     md['id'] = None
 
     EXPECTED_METADATA['size_bytes'] = directory_size(output_dataset / 'product')
+    add_default_software_versions(EXPECTED_METADATA)
 
     # A newly-processed dataset: extra fields
     assert md['lineage']['machine']['uname'] is not None

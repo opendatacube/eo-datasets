@@ -302,10 +302,8 @@ def _populate_ortho_from_files(base_folder, md, mtl_path, work_order_path, lpgs_
         lpgs_out_doc = etree.parse(str(lpgs_out_path))
         pinkmatter_version = lpgs_out_doc.findall('./Version')[0].text
 
-        if md.lineage.machine.software_versions is None:
-            md.lineage.machine.software_versions = {}
-        md.lineage.machine.software_versions['pinkmatter'] = str(pinkmatter_version)
-        # We could read processing hostname, start & stop times. Do we care? We currently get that info elsewhere.
+        md.lineage.machine.note_software_version('pinkmatter', str(pinkmatter_version))
+        # We could read the processing hostname, start & stop times too. Do we care? We get it elsewhere.
 
     return md
 

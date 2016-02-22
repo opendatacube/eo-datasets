@@ -10,7 +10,7 @@ import yaml
 from pathlib import Path
 
 from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
-from tests.integration import load_checksum_filenames, hardlink_arg
+from tests.integration import load_checksum_filenames, hardlink_arg, add_default_software_versions
 
 #: :type: Path
 source_folder = Path(__file__).parent.joinpath('input', 'aqua-pds')
@@ -87,29 +87,28 @@ def test_metadata():
     assert md['id'] is not None
     md['id'] = None
 
-    assert_same(
-        md,
-        {
-            'lineage': {'machine': {}, 'source_datasets': {}},
-            'product_type': 'satellite_telemetry_data',
-            'format': {'name': 'PDS'},
-            'image': {'bands': {}, 'day_percentage_estimate': 100.0},
-            # Default creation date is the same as the input folder ctime.
-            'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),
-            'rms_string': 'S1A1C1D1R1',
-            'instrument': {'name': 'MODIS'},
-            'ga_label': 'AQUA_MODIS_STD-PDS_P00_65208.S1A1C1D1R1_0_0_20140807T031628Z20140807T031630',
-            'platform': {'code': 'AQUA'},
-            'size_bytes': 2144280,
-            'checksum_path': 'package.sha1',
-            'id': None,
-            'acquisition': {
-                'los': datetime.datetime(2014, 8, 7, 3, 16, 30, 228023),
-                'platform_orbit': 65208,
-                'aos': datetime.datetime(2014, 8, 7, 3, 16, 28, 750910)
-            }
+    expected = {
+        'lineage': {'machine': {}, 'source_datasets': {}},
+        'product_type': 'satellite_telemetry_data',
+        'format': {'name': 'PDS'},
+        'image': {'bands': {}, 'day_percentage_estimate': 100.0},
+        # Default creation date is the same as the input folder ctime.
+        'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),
+        'rms_string': 'S1A1C1D1R1',
+        'instrument': {'name': 'MODIS'},
+        'ga_label': 'AQUA_MODIS_STD-PDS_P00_65208.S1A1C1D1R1_0_0_20140807T031628Z20140807T031630',
+        'platform': {'code': 'AQUA'},
+        'size_bytes': 2144280,
+        'checksum_path': 'package.sha1',
+        'id': None,
+        'acquisition': {
+            'los': datetime.datetime(2014, 8, 7, 3, 16, 30, 228023),
+            'platform_orbit': 65208,
+            'aos': datetime.datetime(2014, 8, 7, 3, 16, 28, 750910)
         }
-    )
+    }
+    add_default_software_versions(expected)
+    assert_same(md, expected)
 
     # Check all files are listed in checksum file.
     output_checksum_path = output_path.joinpath('package.sha1')

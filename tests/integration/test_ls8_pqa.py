@@ -10,7 +10,7 @@ import yaml
 from pathlib import Path
 
 from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
-from tests.integration import load_checksum_filenames, hardlink_arg, directory_size
+from tests.integration import load_checksum_filenames, hardlink_arg, directory_size, add_default_software_versions
 
 #: :type: Path
 source_folder = Path(__file__).parent.joinpath('input', 'ls8-pqa')
@@ -59,6 +59,7 @@ def test_package():
 
     # Check metadata is as expected.
     EXPECTED_METADATA['size_bytes'] = directory_size(output_dataset / 'product')
+    add_default_software_versions(EXPECTED_METADATA)
     assert_same(
         md,
         EXPECTED_METADATA

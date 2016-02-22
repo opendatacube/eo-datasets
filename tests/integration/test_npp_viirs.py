@@ -10,7 +10,7 @@ import yaml
 from pathlib import Path
 
 from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
-from tests.integration import load_checksum_filenames, hardlink_arg
+from tests.integration import load_checksum_filenames, hardlink_arg, add_default_software_versions
 
 #: :type: Path
 source_folder = Path(__file__).parent.joinpath('input', 'npp-viirs')
@@ -58,35 +58,35 @@ def test_metadata():
 
     sys.stderr.write('\n\n\n\n%r\n\n\n' % md)
 
-    assert_same(
-        md,
-        {'ga_label': 'NPP_VIIRS_STD-HDF5_P00_18966.ASA_0_0_20150626T053709Z20150626T055046',
-         'image': {'bands': {}},
-         'size_bytes': 0,
-         'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),
-         'id': None,
-         'platform': {'code': 'NPP'},
-         'instrument': {'name': 'VIIRS'},
-         'ga_level': 'P00',
-         'format': {'name': 'HDF5'},
-         'checksum_path': 'package.sha1',
-         'product_type': 'satellite_telemetry_data',
-         'acquisition': {
-             'groundstation': {
-                 'eods_domain_code': '002',
-                 'label': 'Alice Springs',
-                 'code': 'ASA'
-             },
-             'platform_orbit': 18966,
-             'los': datetime.datetime(2015, 6, 26, 5, 50, 46),
-             'aos': datetime.datetime(2015, 6, 26, 5, 37, 9)
-         },
-         'lineage': {
-             'machine': {},
-             'source_datasets': {}
-         },
-         }
-    )
+    expected = {
+        'ga_label': 'NPP_VIIRS_STD-HDF5_P00_18966.ASA_0_0_20150626T053709Z20150626T055046',
+        'image': {'bands': {}},
+        'size_bytes': 0,
+        'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),
+        'id': None,
+        'platform': {'code': 'NPP'},
+        'instrument': {'name': 'VIIRS'},
+        'ga_level': 'P00',
+        'format': {'name': 'HDF5'},
+        'checksum_path': 'package.sha1',
+        'product_type': 'satellite_telemetry_data',
+        'acquisition': {
+            'groundstation': {
+                'eods_domain_code': '002',
+                'label': 'Alice Springs',
+                'code': 'ASA'
+            },
+            'platform_orbit': 18966,
+            'los': datetime.datetime(2015, 6, 26, 5, 50, 46),
+            'aos': datetime.datetime(2015, 6, 26, 5, 37, 9)
+        },
+        'lineage': {
+            'machine': {},
+            'source_datasets': {}
+        },
+    }
+    add_default_software_versions(expected)
+    assert_same(md, expected)
 
     # Check all files are listed in checksum file.
     output_checksum_path = output_path.joinpath('package.sha1')

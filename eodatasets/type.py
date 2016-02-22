@@ -564,6 +564,16 @@ class MachineMetadata(SimpleObject):
         'runtime_id': uuid.UUID
     }
 
+    def note_software_version(self, software_code, version):
+        # TODO: Names are rather informal. Typically lowercase with underscores.
+        if not self.software_versions:
+            self.software_versions = {}
+
+        if software_code in self.software_versions:
+            raise ValueError('Version already recorded for %s' % software_code)
+
+        self.software_versions[software_code] = version
+
     def __init__(self, hostname=None, runtime_id=None, type_id=None, version=None, software_versions=None, uname=None):
         # Hostname the dataset was processed on.
         self.hostname = hostname
@@ -577,7 +587,6 @@ class MachineMetadata(SimpleObject):
         # Version of machine type/class (eg. puppet file VCS version)
         self.version = version
 
-        # TODO: This is rather informal. names of software used and their versions.
         #: :type: dict[str, str]
         self.software_versions = software_versions
 

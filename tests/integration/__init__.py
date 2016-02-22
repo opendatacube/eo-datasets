@@ -4,6 +4,8 @@ Module
 """
 from __future__ import absolute_import
 
+import eodatasets
+
 
 def load_checksum_filenames(output_metadata_path):
     return [line.split('\t')[-1][:-1] for line in output_metadata_path.open('r').readlines()]
@@ -25,3 +27,14 @@ def directory_size(directory):
     """
     return sum(p.stat().st_size
                for p in directory.rglob('*') if p.is_file())
+
+
+def add_default_software_versions(ds_dict):
+    m = ds_dict['lineage']['machine']
+
+    if 'software_versions' not in m:
+        m['software_versions'] = {}
+
+    m['software_versions']['eodatasets'] = eodatasets.__version__
+
+    return ds_dict
