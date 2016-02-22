@@ -564,7 +564,7 @@ class MachineMetadata(SimpleObject):
         'runtime_id': uuid.UUID
     }
 
-    def __init__(self, hostname=None, runtime_id=None, type_id=None, version=None, software=None, uname=None):
+    def __init__(self, hostname=None, runtime_id=None, type_id=None, version=None, software_versions=None, uname=None):
         # Hostname the dataset was processed on.
         self.hostname = hostname
         # A uuid generated each time a program runs.
@@ -577,9 +577,9 @@ class MachineMetadata(SimpleObject):
         # Version of machine type/class (eg. puppet file VCS version)
         self.version = version
 
-        # Software provenance on the machine at time of processing.
-        #: :type: eodatasets.provenance.SoftwareProvenance
-        self.software = software
+        # TODO: This is rather informal. names of software used and their versions.
+        #: :type: dict[str, str]
+        self.software_versions = software_versions
 
         # Uname information of machine.
         #    - from python: ' '.join(os.uname()))

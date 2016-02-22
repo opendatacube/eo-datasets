@@ -24,11 +24,11 @@ _RUNTIME_ID = uuid.uuid1()
 
 
 def init_locally_processed_dataset(directory, dataset_driver, source_datasets,
-                                   software_provenance=None, uuid_=None):
+                                   software_versions=None, uuid_=None):
     """
     Create a blank dataset for a newly created dataset on this machine.
 
-    :type software_provenance: eodatasets.provenance.SoftwareProvenance
+    :type software_versions: dict[str, str]
     :param uuid_: The existing dataset_id, if any.
     :rtype: ptype.DatasetMetadata
     """
@@ -40,7 +40,7 @@ def init_locally_processed_dataset(directory, dataset_driver, source_datasets,
             machine=ptype.MachineMetadata(
                 hostname=socket.getfqdn(),
                 runtime_id=_RUNTIME_ID,
-                software=software_provenance,
+                software_versions=software_versions,
                 uname=' '.join(os.uname())
             ),
             source_datasets=source_datasets
@@ -50,7 +50,7 @@ def init_locally_processed_dataset(directory, dataset_driver, source_datasets,
 
 
 def init_existing_dataset(directory, dataset_driver, source_datasets,
-                          software_provenance=None, uuid_=None, source_hostname=None):
+                          software_versions=None, uuid_=None, source_hostname=None):
     """
     Package an existing dataset folder (with mostly unknown provenance).
 
@@ -60,6 +60,7 @@ def init_existing_dataset(directory, dataset_driver, source_datasets,
     local machine information.
 
     :param uuid_: The existing dataset_id, if any.
+    :type software_versions: dict[str, str]
     :param source_hostname: Hostname where processed, if known.
     :rtype: ptype.DatasetMetadata
     """
@@ -70,7 +71,7 @@ def init_existing_dataset(directory, dataset_driver, source_datasets,
         lineage=ptype.LineageMetadata(
             machine=ptype.MachineMetadata(
                 hostname=source_hostname,
-                software=software_provenance
+                software_versions=software_versions
             ),
             source_datasets=source_datasets
 

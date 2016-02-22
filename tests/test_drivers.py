@@ -2,8 +2,8 @@
 from __future__ import absolute_import
 
 import datetime
-from uuid import UUID
 from textwrap import dedent
+from uuid import UUID
 
 from pathlib import Path
 
@@ -99,7 +99,7 @@ _EXPECTED_NBAR = ptype.DatasetMetadata(
     lineage=ptype.LineageMetadata(
         source_datasets={'ortho': test_ls8.EXPECTED_OUT},
         algorithm=ptype.AlgorithmMetadata(name='terrain', version='1.0'),
-        machine=ptype.MachineMetadata(software='1.0'),
+        machine=ptype.MachineMetadata(software_versions={'nbar': '1.0'}),
     )
 )
 

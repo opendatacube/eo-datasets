@@ -344,7 +344,11 @@ EXPECTED_METADATA = {
     },
     'lineage':
         {
-            'machine': {},
+            'machine': {
+                'software_versions': {
+                    'pinkmatter': '4.0.3616'
+                }
+            },
             'ancillary': {
                 'cpf': {
                     'name': 'L8CPF20140101_20140331.05'
@@ -404,7 +408,8 @@ EXPECTED_METADATA = {
                                             'uname': 'Darwin niggle.local 14.3.0 Darwin Kernel Version 14.3.0: '
                                                      'Mon Mar 23 11:59:05 PDT 2015; '
                                                      'root:xnu-2782.20.48~5/RELEASE_X86_64 x86_64',
-                                            'runtime_id': '4bc6225c-e8b9-11e4-8b66-1040f381a756'
+                                            'runtime_id': '4bc6225c-e8b9-11e4-8b66-1040f381a756',
+
                                         },
                                     'source_datasets': {}
                                 },

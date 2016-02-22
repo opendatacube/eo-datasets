@@ -23,8 +23,14 @@ def populate_ortho(md, base_folder):
     """
     mtl_path = _get_file(base_folder, '*_MTL.txt')
     work_order = _find_parent_file(base_folder, 'work_order.xml')
+    lpgs_out = _find_parent_file(base_folder, 'lpgs_out.xml')
 
-    return _populate_ortho_from_files(base_folder, md, mtl_path, work_order)
+    return _populate_ortho_from_files(
+        base_folder, md,
+        mtl_path=mtl_path,
+        work_order_path=work_order,
+        lpgs_out_path=lpgs_out
+    )
 
 
 def _parse_type(s):
@@ -251,7 +257,7 @@ def _get_node_text(offset, parsed_doc):
     return file_search_directory
 
 
-def _populate_ortho_from_files(base_folder, md, mtl_path, work_order):
+def _populate_ortho_from_files(base_folder, md, mtl_path, work_order_path, lpgs_out_path):
     if not md:
         md = ptype.DatasetMetadata()
     if not base_folder:
@@ -261,9 +267,9 @@ def _populate_ortho_from_files(base_folder, md, mtl_path, work_order):
     mtl_doc = _load_mtl(str(mtl_path.absolute()))
 
     work_order_doc = None
-    if work_order:
-        _LOG.info('Reading work order %r', work_order)
-        work_order_doc = etree.parse(str(work_order))
+    if work_order_path:
+        _LOG.info('Reading work order %r', work_order_path)
+        work_order_doc = etree.parse(str(work_order_path))
 
     md = _populate_from_mtl_dict(md, mtl_doc, base_folder)
     md.lineage.ancillary.update(
@@ -290,6 +296,16 @@ def _populate_ortho_from_files(base_folder, md, mtl_path, work_order):
             )
         })
     )
+
+    if lpgs_out_path:
+        _LOG.info('Reading lpgs_out: %r', lpgs_out_path)
+        lpgs_out_doc = etree.parse(str(lpgs_out_path))
+        pinkmatter_version = lpgs_out_doc.findall('./Version')[0].text
+
+        if md.lineage.machine.software_versions is None:
+            md.lineage.machine.software_versions = {}
+        md.lineage.machine.software_versions['pinkmatter'] = str(pinkmatter_version)
+        # We could read processing hostname, start & stop times. Do we care? We currently get that info elsewhere.
 
     return md
 

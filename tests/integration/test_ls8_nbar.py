@@ -224,7 +224,9 @@ EXPECTED_METADATA = {
             },
         },
         'machine': {
-            'software': '4.0'
+            'software_versions': {
+                'nbar': '4.0'
+            }
         },
         'ancillary': {
             'band_3_brdf_geo': {
