@@ -13,6 +13,7 @@ from eodatasets import package, serialise
 
 
 def package_newly_processed_data_folder(driver, input_data_paths, destination_path, parent_dataset_paths,
+                                        metadata_expand_fn=None,
                                         hard_link=False):
     """
     Package an input folder. This is assumed to have just been packaged on the current host.
@@ -31,6 +32,7 @@ def package_newly_processed_data_folder(driver, input_data_paths, destination_pa
     :type driver: eodatasets.drivers.DatasetDriver
     :type input_data_paths: list[pathlib.Path]
     :type destination_path: pathlib.Path
+    :type metadata_expand_fn: (eodatasets.type.DatasetMetadata) -> None
     :type parent_dataset_paths: list[pathlib.Path]
     :type hard_link: bool
     :return:
@@ -38,11 +40,12 @@ def package_newly_processed_data_folder(driver, input_data_paths, destination_pa
     return _package_folder(
         driver, input_data_paths, destination_path, parent_dataset_paths,
         package.init_locally_processed_dataset,
-        hard_link=hard_link
+        hard_link=hard_link, metadata_expand_fn=metadata_expand_fn
     )
 
 
 def package_existing_data_folder(driver, input_data_paths, destination_path, parent_dataset_paths,
+                                 metadata_expand_fn=None,
                                  hard_link=False):
     """
     Package an input folder of possibly unknown origin.
@@ -57,19 +60,21 @@ def package_existing_data_folder(driver, input_data_paths, destination_path, par
     :type driver: eodatasets.drivers.DatasetDriver
     :type input_data_paths: list[pathlib.Path]
     :type destination_path: pathlib.Path
+    :type metadata_expand_fn: (eodatasets.type.DatasetMetadata) -> None
     :type parent_dataset_paths: list[pathlib.Path]
+
     :type hard_link: bool
     :return:
     """
     return _package_folder(
         driver, input_data_paths, destination_path, parent_dataset_paths,
         package.init_existing_dataset,
-        hard_link=hard_link
+        hard_link=hard_link, metadata_expand_fn=metadata_expand_fn
     )
 
 
 def _package_folder(driver, input_data_paths, destination_path, parent_dataset_paths,
-                    init_dataset, hard_link=True):
+                    init_dataset, metadata_expand_fn=None, hard_link=True):
     """
     Package a folder into a destination directory as the dataset id. The output is written atomically.
 
@@ -79,6 +84,7 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
     :type input_data_paths: list[pathlib.Path]
     :type destination_path: pathlib.Path
     :type parent_dataset_paths: list[pathlib.Path]
+    :type metadata_expand_fn: (eodatasets.type.DatasetMetadata) -> None
     :type init_dataset: callable
     :type hard_link: bool
     :return: list of created packages
@@ -95,6 +101,8 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
         dataset_folder = Path(dataset_folder)
         with temp_dir(prefix='.packagetmp.', base_dir=destination_path) as temp_output_dir:
             dataset = init_dataset(dataset_folder, driver, parent_datasets)  # Calls fill metadata
+            if metadata_expand_fn is not None:
+                metadata_expand_fn(dataset)
 
             dataset_id = package.package_dataset(  # Also updates dataset
                 dataset_driver=driver,
