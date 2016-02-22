@@ -229,11 +229,7 @@ def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset, order_dir_offset):
     if not file_name:
         return None
 
-    file_search_directory = None
-
-    if wo_doc:
-        xml_node = wo_doc.findall(order_dir_offset)
-        file_search_directory = Path(xml_node[0].text)
+    file_search_directory = _get_node_text(order_dir_offset, wo_doc) if wo_doc else None
 
     if not file_search_directory or not file_search_directory.exists():
         _LOG.warning('No path found to locate ancillary file %s', file_name)
@@ -247,6 +243,12 @@ def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset, order_dir_offset):
 
     _LOG.info('Found ancillary path %s', file_path)
     return ptype.AncillaryMetadata.from_file(file_path)
+
+
+def _get_node_text(offset, parsed_doc):
+    xml_node = parsed_doc.findall(offset)
+    file_search_directory = Path(xml_node[0].text)
+    return file_search_directory
 
 
 def _populate_ortho_from_files(base_folder, md, mtl_path, work_order):

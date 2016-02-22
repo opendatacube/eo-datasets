@@ -10,6 +10,7 @@ import socket
 import yaml
 from pathlib import Path
 
+import eodatasets.metadata.ortho
 from eodatasets.package import _RUNTIME_ID
 from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
 from tests.integration import load_checksum_filenames, hardlink_arg, directory_size
@@ -26,9 +27,51 @@ assert parent_dataset.exists()
 
 
 @integration_test
-def test_package():
+def test_package(monkeypatch):
     output_path = temp_dir()
+    ancil_path = temp_dir()
 
+    # We have to override the ancillary directory lookup as they won't exist on test systems.
+    ANCIL_FILES = {
+        'cpf': (
+            './L0RpProcessing/CalibrationFile',
+            ancil_path.joinpath('cpf'),
+            ('L8CPF20140101_20140331.05',),
+            'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+        ),
+        'bpf_oli': (
+            './L1Processing/BPFOliFile',
+            ancil_path.joinpath('bpf-oli'),
+            ('LO8BPF20140127130115_20140127144056.01',),
+            'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+        ),
+        'bpf_tirs': (
+            './L1Processing/BPFTirsFile',
+            ancil_path.joinpath('bpf-tirs'),
+            ('LT8BPF20140116023714_20140116032836.02',),
+            'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+        ),
+        'rlut': (
+            './L1Processing/RlutFile',
+            ancil_path.joinpath('rlut'),
+            # It should search subdirectories too.
+            ('2013', 'L8RLUT20130211_20431231v09.h5'),
+            'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+        )
+    }
+    for name, (_, dir, file_offset, _) in ANCIL_FILES.items():
+        # Create directories
+        dir.joinpath(*file_offset[:-1]).mkdir(parents=True)
+        # Create blank ancil file.
+        dir.joinpath(*file_offset).open('w').close()
+
+    def mock_get_node_text(offset, parsed_doc):
+        for name, (o, dir, _, _) in ANCIL_FILES.items():
+            if offset == o:
+                return dir
+        raise AssertionError("Unknown work_order.xml offset requested: " + offset)
+
+    monkeypatch.setattr(eodatasets.metadata.ortho, '_get_node_text', mock_get_node_text)
     run_packaging_cli([
         hardlink_arg(output_path, source_dataset),
         'ortho', '--newly-processed',
@@ -80,6 +123,15 @@ def test_package():
     del md['lineage']['machine']['uname']
     EXPECTED_METADATA['lineage']['machine']['runtime_id'] = str(_RUNTIME_ID)
     EXPECTED_METADATA['lineage']['machine']['hostname'] = socket.getfqdn()
+
+    for ancil_name, ancil_d in EXPECTED_METADATA['lineage']['ancillary'].items():
+        assert ancil_name in ANCIL_FILES, 'Unexpected ancil type: ' + ancil_name
+        _, dir_, file_offset, chk = ANCIL_FILES[ancil_name]
+        #: :type: pathlib.Path
+        ancil_path = dir_.joinpath(*file_offset)
+        ancil_d['uri'] = str(ancil_path)
+        ancil_d['modification_time'] = datetime.datetime.fromtimestamp(ancil_path.stat().st_mtime)
+        ancil_d['checksum_sha1'] = chk
 
     assert_same(md, EXPECTED_METADATA)
 
