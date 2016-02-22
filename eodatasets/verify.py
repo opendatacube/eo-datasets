@@ -1,8 +1,8 @@
 # coding=utf-8
 from __future__ import absolute_import
 
-import hashlib
 import binascii
+import hashlib
 import logging
 
 # PyLint doesn't recognise many distutils functions when in virtualenv. Not worth the effort.
@@ -25,6 +25,14 @@ def find_exe(name):
         raise Exception('No %s command found.' % (name,))
 
     return executable
+
+
+def calculate_file_sha1(filename):
+    """
+    :type filename: str or Path
+    :rtype: str
+    """
+    return calculate_file_hash(filename, hash_fn=hashlib.sha1)
 
 
 def calculate_file_hash(filename, hash_fn=hashlib.sha1, block_size=4096):

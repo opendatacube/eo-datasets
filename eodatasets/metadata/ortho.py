@@ -1,33 +1,50 @@
 # coding=utf-8
 from __future__ import absolute_import
+
 import datetime
 import logging
 import re
+import xml.etree.cElementTree as etree
+
+from pathlib import Path
 
 import eodatasets.type as ptype
-
 
 _LOG = logging.getLogger(__name__)
 
 
-def parse_type(s):
+def populate_ortho(md, base_folder):
+    """
+    Find any relevant Ortho metadata files for the given dataset and populate it.
+
+    :type md: eodatasets.type.DatasetMetadata
+    :type base_folder: pathlib.Path
+    :rtype: eodatasets.type.DatasetMetadata
+    """
+    mtl_path = _get_file(base_folder, '*_MTL.txt')
+    work_order = _find_parent_file(base_folder, 'work_order.xml')
+
+    return _populate_ortho_from_files(base_folder, md, mtl_path, work_order)
+
+
+def _parse_type(s):
     """Parse the string `s` and return a native python object.
 
-    >>> parse_type('01:40:54.7722350Z')
+    >>> _parse_type('01:40:54.7722350Z')
     datetime.time(1, 40, 54, 772235)
-    >>> parse_type('2015-03-29')
+    >>> _parse_type('2015-03-29')
     datetime.date(2015, 3, 29)
     >>> # Some have added quotes
-    >>> parse_type('"01:40:54.7722350Z"')
+    >>> _parse_type('"01:40:54.7722350Z"')
     datetime.time(1, 40, 54, 772235)
-    >>> parse_type("NONE")
-    >>> parse_type("Y")
+    >>> _parse_type("NONE")
+    >>> _parse_type("Y")
     True
-    >>> parse_type("N")
+    >>> _parse_type("N")
     False
-    >>> parse_type('Plain String')
+    >>> _parse_type('Plain String')
     'Plain String'
-    >>> parse_type('"Quoted String"')
+    >>> _parse_type('"Quoted String"')
     'Quoted String'
     """
 
@@ -65,7 +82,7 @@ def parse_type(s):
     raise ValueError
 
 
-def load_mtl(filename, root='L1_METADATA_FILE', pairs=r'(\w+)\s=\s(.*)'):
+def _load_mtl(filename, root='L1_METADATA_FILE', pairs=r'(\w+)\s=\s(.*)'):
     """Parse an MTL file and return dict-of-dict's containing the metadata."""
 
     def parse(lines, tree, level=0):
@@ -81,7 +98,7 @@ def load_mtl(filename, root='L1_METADATA_FILE', pairs=r'(\w+)\s=\s(.*)'):
                 elif key == 'END_GROUP':
                     break
                 else:
-                    tree[key.lower()] = parse_type(value)
+                    tree[key.lower()] = _parse_type(value)
 
     tree = {}
     with open(filename, 'r') as fo:
@@ -153,28 +170,126 @@ def _read_bands(mtl_, folder_path):
     bs = _read_mtl_band_filenames(mtl_)
 
     # TODO: shape, size, md5
-    return dict([
-        (
-            number,
-            ptype.BandMetadata(path=folder_path / filename, number=number)
-        )
-        for (number, filename) in bs.items()])
+    return dict([(number, ptype.BandMetadata(path=folder_path / filename, number=number))
+                 for (number, filename) in bs.items()])
 
 
-def populate_from_mtl(md, mtl_path, base_folder=None):
+def _get_file(path, file_pattern, mandatory=True):
+    found = list(path.rglob(file_pattern))
+
+    if not found:
+        if mandatory:
+            raise RuntimeError('Not found: %r in %s' % (file_pattern, path))
+        return
+
+    if len(found) > 1:
+        raise RuntimeError('%s results found for pattern %r in %s' % (len(found), file_pattern, path))
+
+    return found[0]
+
+
+def _find_parent_file(path, pattern, max_levels=3):
+    found = list(path.glob(pattern))
+    if found:
+        return found[0]
+
+    if max_levels <= 1:
+        return None
+
+    # (pathlib "parent" of the root dir is the root dir.)
+    return _find_parent_file(path.parent, pattern, max_levels=max_levels - 1)
+
+
+def _remove_missing(dict_):
     """
+    Remove fields from the dict whose values are None.
 
-    :type md: eodatasets.type.DatasetMetadata
-    :type mtl_path: pathlib.Path
-    :rtype: eodatasets.type.DatasetMetadata
+    Returns a new dict.
+    :type dict_: dict
+    :rtype dict
+
+    >>> _remove_missing({'cpf': 'L7CPF20050101_20050331.09', 'rlut': None})
+    {'cpf': 'L7CPF20050101_20050331.09'}
+    >>> sorted(
+    ...     _remove_missing({
+    ...         'cpf': 'L7CPF20050101_20050331.09',
+    ...         'bpf_oli': 'LO8BPF20140127130115_20140127144056.01'
+    ...     }).items()
+    ...  )
+    [('bpf_oli', 'LO8BPF20140127130115_20140127144056.01'), \
+('cpf', 'L7CPF20050101_20050331.09')]
+    >>> _remove_missing({})
+    {}
     """
+    return {k: v for k, v in dict_.items() if v is not None}
+
+
+def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset, order_dir_offset):
+    file_name = _get(mtl_doc, *mtl_name_offset)
+    if not file_name:
+        return None
+
+    file_search_directory = None
+
+    if wo_doc:
+        xml_node = wo_doc.findall(order_dir_offset)
+        file_search_directory = Path(xml_node[0].text)
+
+    if not file_search_directory or not file_search_directory.exists():
+        _LOG.warning('No path found to locate ancillary file %s', file_name)
+        return ptype.AncillaryMetadata(name=file_name)
+
+    if file_search_directory.is_file():
+        # They specified an exact file to Pinkmatter rather than a search directory.
+        file_path = file_search_directory
+    else:
+        file_path = _get_file(file_search_directory, file_name)
+
+    _LOG.info('Found ancillary path %s', file_path)
+    return ptype.AncillaryMetadata.from_file(file_path)
+
+
+def _populate_ortho_from_files(base_folder, md, mtl_path, work_order):
     if not md:
         md = ptype.DatasetMetadata()
-
     if not base_folder:
         base_folder = mtl_path.parent
-    mtl_ = load_mtl(str(mtl_path.absolute()))
-    return populate_from_mtl_dict(md, mtl_, base_folder)
+
+    _LOG.info('Reading MTL %r', mtl_path)
+    mtl_doc = _load_mtl(str(mtl_path.absolute()))
+
+    work_order_doc = None
+    if work_order:
+        _LOG.info('Reading work order %r', work_order)
+        work_order_doc = etree.parse(str(work_order))
+
+    md = _populate_from_mtl_dict(md, mtl_doc, base_folder)
+    md.lineage.ancillary.update(
+        _remove_missing({
+            'cpf': _get_ancillary_metadata(
+                mtl_doc, work_order_doc,
+                mtl_name_offset=('PRODUCT_METADATA', 'cpf_name'),
+                order_dir_offset='./L0RpProcessing/CalibrationFile'
+            ),
+            'bpf_oli': _get_ancillary_metadata(
+                mtl_doc, work_order_doc,
+                mtl_name_offset=('PRODUCT_METADATA', 'bpf_name_oli'),
+                order_dir_offset='./L1Processing/BPFOliFile'
+            ),
+            'bpf_tirs': _get_ancillary_metadata(
+                mtl_doc, work_order_doc,
+                mtl_name_offset=('PRODUCT_METADATA', 'bpf_name_tirs'),
+                order_dir_offset='./L1Processing/BPFTirsFile'
+            ),
+            'rlut': _get_ancillary_metadata(
+                mtl_doc, work_order_doc,
+                mtl_name_offset=('PRODUCT_METADATA', 'rlut_file_name'),
+                order_dir_offset='./L1Processing/RlutFile'
+            )
+        })
+    )
+
+    return md
 
 
 def _populate_extent(md, product_md):
@@ -264,7 +379,7 @@ def _populate_lineage(md, mtl_):
         md.lineage.ancillary = {}
     md.lineage.ancillary_quality = _get(product_md, 'ephemeris_type')
     md.lineage.ancillary.update(
-        _wrap_ancillary({
+        _remove_missing({
             'cpf': _get(product_md, 'cpf_name'),
             'bpf_oli': _get(product_md, 'bpf_name_oli'),
             'bpf_tirs': _get(product_md, 'bpf_name_tirs'),
@@ -273,7 +388,7 @@ def _populate_lineage(md, mtl_):
     )
 
 
-def populate_from_mtl_dict(md, mtl_, folder):
+def _populate_from_mtl_dict(md, mtl_, folder):
     """
 
     :param mtl_: Parsed mtl file
@@ -319,27 +434,3 @@ def populate_from_mtl_dict(md, mtl_, folder):
     _populate_lineage(md, mtl_)
 
     return md
-
-
-def _wrap_ancillary(dict_):
-    """
-    Remove fields from the dict whose values are None.
-
-    Returns a new dict.
-    :type dict_: dict
-    :rtype dict
-
-    >>> _wrap_ancillary({'cpf': 'L7CPF20050101_20050331.09', 'rlut': None})
-    {'cpf': AncillaryMetadata(name='L7CPF20050101_20050331.09')}
-    >>> sorted(
-    ...     _wrap_ancillary({
-    ...         'cpf': 'L7CPF20050101_20050331.09',
-    ...         'bpf_oli': 'LO8BPF20140127130115_20140127144056.01'
-    ...     }).items()
-    ...  )
-    [('bpf_oli', AncillaryMetadata(name='LO8BPF20140127130115_20140127144056.01')), \
-('cpf', AncillaryMetadata(name='L7CPF20050101_20050331.09'))]
-    >>> _wrap_ancillary({})
-    {}
-    """
-    return {k: ptype.AncillaryMetadata(name=v) for k, v in dict_.items() if v is not None}

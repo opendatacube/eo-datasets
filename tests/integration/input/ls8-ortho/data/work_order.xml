@@ -1,0 +1,63 @@
+<?xml version="1.0" ?>
+<LandsatProcessingRequest id="LS8-20141201" version="2">
+    <Input format="MD" satellite="Landsat8" sensor="OLI_TIRS">
+        <WorkingFolder cleanAfter="no"
+                       cleanBefore="yes">/g/data/v10/agdc/jez/galpgs/test-out/tmp/process-work/pinkmatter
+        </WorkingFolder>
+        <InputPath linkInput="yes">
+            /g/data/v10/agdc/jez/galpgs/test-in/LS8_OLI-TIRS_STD-MDF_P00_LC80990610842014335LGN00_099_061-084_20141201T014819Z20141201T015258_1/product
+        </InputPath>
+        <Segment></Segment>
+    </Input>
+
+    <L0RaProcessing>
+        <CalibrationFile useDownloader="false">
+            /g/data/v10/eoancillarydata/sensor-specific/LANDSAT8/CalibrationParameterFile
+        </CalibrationFile>
+        <Parameters mayFallBackSensor="true"/>
+    </L0RaProcessing>
+
+    <L0RpProcessing maxConcurrentScenes="13">
+        <CalibrationFile useDownloader="false">
+            /g/data/v10/eoancillarydata/sensor-specific/LANDSAT8/CalibrationParameterFile
+        </CalibrationFile>
+    </L0RpProcessing>
+
+    <L1Processing maxConcurrentScenes="13">
+
+        <Parameters
+                datum="GDA94"
+                fallBackResampling="CC"
+                fallBackToL1G="false"
+                fallBackToL1Gt="true"
+                fallBackToL1R="false"
+                hemisphere="S"
+                mayPostDownloadBpfs="true"
+                orientationL1G="NUP"
+                orientationL1GT="NUP"
+                orientationL1T="NUP"
+                outputFormat="GeoTIFF"
+                panchromaticResolution="12.5"
+                pixelOrigin="UL"
+                productType="L1T"
+                projection="UTM"
+                reflectiveResolution="25.0"
+                resampling="CC"
+                scenePadding="40"
+                thermalResolution="25.0"
+        />
+        <L1T>
+            <Parameters minimumRequiredGCPs="30"/>
+            <DEM format="srtm90">/g/data/v10/eoancillarydata/elevation/2.0</DEM>
+            <GCP format="chips">/g/data/v10/eoancillarydata/GCP/GLS2005_GCP_CHIP</GCP>
+        </L1T>
+        <RlutFile useDownloader="false">/g/data/v10/eoancillarydata/sensor-specific/LANDSAT8/RLUT</RlutFile>
+        <BPFTirsFile
+                useDownloader="false">/g/data/v10/eoancillarydata/sensor-specific/LANDSAT8/BiasParameterFile/2014/12
+        </BPFTirsFile>
+        <BPFOliFile
+                useDownloader="false">/g/data/v10/eoancillarydata/sensor-specific/LANDSAT8/BiasParameterFile/2014/12
+        </BPFOliFile>
+        <OutputPath additionalMetadata="false">/g/data/v10/agdc/jez/galpgs/test-out/tmp/scenes</OutputPath>
+    </L1Processing>
+</LandsatProcessingRequest>

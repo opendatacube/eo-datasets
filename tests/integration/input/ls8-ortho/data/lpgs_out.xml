@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LandsatProcessingResult status="success">
+    <Message>Processing was successful</Message>
+    <LandsatProcessingRequest id="LS8-20141201" version="2">
+        <Input format="MD" satellite="LANDSAT8" sensor="OLI_TIRS">
+            <WorkingFolder cleanBefore="TRUE" cleanAfter="FALSE">
+                /g/data/v10/agdc/jez/galpgs/test-out/tmp/process-work/pinkmatter
+            </WorkingFolder>
+            <InputPath linkInput="TRUE">
+                /g/data/v10/agdc/jez/galpgs/test-in/LS8_OLI-TIRS_STD-MDF_P00_LC80990610842014335LGN00_099_061-084_20141201T014819Z20141201T015258_1/product
+            </InputPath>
+        </Input>
+    </LandsatProcessingRequest>
+    <Version>4.0.3616</Version>
+    <HostName>r68</HostName>
+    <StartTime>2016-02-19T11:53:17</StartTime>
+    <StopTime>2016-02-19T15:38:20</StopTime>
+    <TotalTime>03:45:03</TotalTime>
+    <L0RaProcessing status="succeeded"/>
+    <L0RpProcessing maxConcurrentScenes="13" fail="0" busy="0" queued="0" success="26" canceled="0" timedout="0">
+        <Succeeded sceneType="partial">099_060_060</Succeeded>
+        <Succeeded sceneType="full">099_061_061</Succeeded>
+        <Succeeded sceneType="full">099_062_062</Succeeded>
+        <Succeeded sceneType="full">099_063_063</Succeeded>
+        <Succeeded sceneType="full">099_064_064</Succeeded>
+        <Succeeded sceneType="full">099_065_065</Succeeded>
+        <Succeeded sceneType="full">099_066_066</Succeeded>
+        <Succeeded sceneType="full">099_067_067</Succeeded>
+        <Succeeded sceneType="full">099_068_068</Succeeded>
+        <Succeeded sceneType="full">099_069_069</Succeeded>
+        <Succeeded sceneType="full">099_070_070</Succeeded>
+        <Succeeded sceneType="full">099_071_071</Succeeded>
+        <Succeeded sceneType="full">099_072_072</Succeeded>
+        <Succeeded sceneType="full">099_073_073</Succeeded>
+        <Succeeded sceneType="full">099_074_074</Succeeded>
+        <Succeeded sceneType="full">099_075_075</Succeeded>
+        <Succeeded sceneType="full">099_076_076</Succeeded>
+        <Succeeded sceneType="full">099_077_077</Succeeded>
+        <Succeeded sceneType="full">099_078_078</Succeeded>
+        <Succeeded sceneType="full">099_079_079</Succeeded>
+        <Succeeded sceneType="full">099_080_080</Succeeded>
+        <Succeeded sceneType="full">099_081_081</Succeeded>
+        <Succeeded sceneType="full">099_082_082</Succeeded>
+        <Succeeded sceneType="full">099_083_083</Succeeded>
+        <Succeeded sceneType="full">099_084_084</Succeeded>
+        <Succeeded sceneType="partial">099_085_085</Succeeded>
+    </L0RpProcessing>
+    <L1Processing maxConcurrentScenes="13" fail="0" busy="0" queued="0" success="26" canceled="0" timedout="0" L1R="0"
+                  L1G="0" L1Gt="9" L1T="17">
+        <Succeeded sceneType="full" level="L1GT">099_071_071</Succeeded>
+        <Succeeded sceneType="full" level="L1GT">099_061_061</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_082_082</Succeeded>
+        <Succeeded sceneType="full" level="L1GT">099_063_063</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_076_076</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_083_083</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_068_068</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_075_075</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_073_073</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_074_074</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_069_069</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_081_081</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_078_078</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_079_079</Succeeded>
+        <Succeeded sceneType="full" level="L1GT">099_066_066</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_080_080</Succeeded>
+        <Succeeded sceneType="full" level="L1GT">099_062_062</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_067_067</Succeeded>
+        <Succeeded sceneType="partial" level="L1GT">099_060_060</Succeeded>
+        <Succeeded sceneType="full" level="L1GT">099_070_070</Succeeded>
+        <Succeeded sceneType="full" level="L1GT">099_065_065</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_077_077</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_084_084</Succeeded>
+        <Succeeded sceneType="partial" level="L1GT">099_085_085</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_072_072</Succeeded>
+        <Succeeded sceneType="full" level="L1T">099_064_064</Succeeded>
+    </L1Processing>
+</LandsatProcessingResult>

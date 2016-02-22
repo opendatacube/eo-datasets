@@ -1,0 +1,2 @@
+SceneID,Residual x ,Residual y ,Green,Teal,Blue,Yellow,Red,Mean Residual X,Mean Residual Y,StdDev Residual X,StdDev Residual Y,Iterative Mean Residual X,Iterative Mean Residual Y,Iterative StdDev Residual X,Iterative StdDev Residual Y,ABS Iterative Mean Residual X,ABS Iterative Mean Residual Y,Final GCP Count,CEP90
+LS8_OLITIRS_OTH_P41_GALPGS01-032_099_065_20141201,4.9,4.6,53,108,209,153,840,0.6,0.2,6.4,6.2,0.6,0.2,6.4,6.2,4.9,4.6,1363,429.7

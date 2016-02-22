@@ -18,7 +18,7 @@ from tests.integration import load_checksum_filenames, hardlink_arg, directory_s
 source_folder = Path(__file__).parent.joinpath('input', 'ls8-ortho')
 assert source_folder.exists()
 
-source_dataset = source_folder.joinpath('data')
+source_dataset = source_folder.joinpath('data', '112_079_079')
 assert source_dataset.exists()
 
 parent_dataset = source_folder.joinpath('parent')
@@ -294,10 +294,18 @@ EXPECTED_METADATA = {
         {
             'machine': {},
             'ancillary': {
-                'cpf': {'name': 'L8CPF20140101_20140331.05'},
-                'bpf_oli': {'name': 'LO8BPF20140127130115_20140127144056.01'},
-                'bpf_tirs': {'name': 'LT8BPF20140116023714_20140116032836.02'},
-                'rlut': {'name': 'L8RLUT20130211_20431231v09.h5'}
+                'cpf': {
+                    'name': 'L8CPF20140101_20140331.05'
+                },
+                'bpf_oli': {
+                    'name': 'LO8BPF20140127130115_20140127144056.01'
+                },
+                'bpf_tirs': {
+                    'name': 'LT8BPF20140116023714_20140116032836.02'
+                },
+                'rlut': {
+                    'name': 'L8RLUT20130211_20431231v09.h5'
+                }
             },
 
             'algorithm': {

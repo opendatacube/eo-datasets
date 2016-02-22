@@ -10,6 +10,8 @@ import uuid
 
 from pathlib import Path
 
+from eodatasets import verify
+
 _LOG = logging.getLogger()
 
 
@@ -588,13 +590,37 @@ class MachineMetadata(SimpleObject):
 
 class AncillaryMetadata(SimpleObject):
     def __init__(self, type_=None, name=None, uri=None, access_time=None,
-                 modification_time=None, file_owner=None):
+                 modification_time=None, file_owner=None,
+                 checksum_sha1=None):
         self.type_ = type_
         self.name = name
-        self.uri = uri
-        self.access_time = access_time
-        self.modification_time = modification_time
+
         self.file_owner = file_owner
+
+        #: :type: str
+        self.uri = uri
+        #: :type: datetime.datetime
+        self.access_time = access_time
+        #: :type: datetime.datetime
+        self.modification_time = modification_time
+
+        #: :type: str
+        self.checksum_sha1 = checksum_sha1
+
+    @classmethod
+    def from_file(cls, file_path):
+        """
+        :type file_path: pathlib.Path
+        """
+        if not file_path.exists():
+            raise ValueError('Ancil path given does not exist: {}'.format(file_path))
+
+        return AncillaryMetadata(
+            name=file_path.name,
+            uri=str(file_path),
+            modification_time=datetime.datetime.fromtimestamp(file_path.stat().st_mtime),
+            checksum_sha1=verify.calculate_file_sha1(file_path)
+        )
 
 
 class LineageMetadata(SimpleObject):

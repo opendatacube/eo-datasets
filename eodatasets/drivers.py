@@ -8,31 +8,19 @@ import string
 import xml.etree.cElementTree as etree
 
 import yaml
-from dateutil.parser import parse
-from pathlib import Path
-
 try:
     from yaml import CSafeLoader as SafeLoader
 except ImportError:
     from yaml import SafeLoader
+from dateutil.parser import parse
+from pathlib import Path
 
 from eodatasets import type as ptype, metadata
 from eodatasets.metadata import _GROUNDSTATION_LIST
-from eodatasets.metadata import mdf, mtl, adsfolder, rccfile, \
+from eodatasets.metadata import mdf, ortho, adsfolder, rccfile, \
     passinfo, pds, npphdf5, image as md_image
 
 _LOG = logging.getLogger(__name__)
-
-
-def get_file(path, file_pattern):
-    found = list(path.rglob(file_pattern))
-
-    if not found:
-        raise RuntimeError('Not found: %r in %s' % (file_pattern, path))
-    if len(found) > 1:
-        raise RuntimeError('%s results found for pattern %r in %s' % (len(found), file_pattern, path))
-
-    return found[0]
 
 
 class DatasetDriver(object):
@@ -414,12 +402,7 @@ class OrthoDriver(DatasetDriver):
         :type d: ptype.DatasetMetadata
         :return:
         """
-        mtl_path = get_file(package_directory, '*_MTL.txt')
-        _LOG.info('Reading MTL %r', mtl_path)
-
-        d = mtl.populate_from_mtl(d, mtl_path)
-
-        return d
+        return ortho.populate_ortho(d, package_directory)
 
     def include_file(self, file_path):
         """
@@ -427,35 +410,12 @@ class OrthoDriver(DatasetDriver):
         :param file_path:
         :return:
 
-        >>> OrthoDriver().include_file(Path('scene01/something.TIF.aux.xml'))
+        >>> OrthoDriver().include_file(Path('something.TIF.aux.xml'))
         False
+        >>> OrthoDriver().include_file(Path('LC81120792014026ASA00_B5.TIF'))
+        True
         """
-        if file_path.name.endswith('.aux.xml'):
-            return False
-        else:
-            return True
-
-    def translate_path(self, dataset, file_path):
-        """
-        Move files in scene01 into parent dir
-
-        :type dataset: ptype.DatasetMetadata
-        :type file_path: Path
-        :rtype: Path | None
-
-        >>> OrthoDriver().translate_path(None, Path('scene01/something.TIF'))
-        PosixPath('something.TIF')
-        >>> OrthoDriver().translate_path(None, Path('scene01/something.tif'))
-        PosixPath('something.tif')
-
-        """
-        # Inherit default behaviour
-        file_path = super(OrthoDriver, self).translate_path(dataset, file_path)
-
-        if 'scene01' in str(file_path):
-            return file_path.parent.with_name(file_path.name)
-
-        return file_path
+        return not file_path.name.endswith('.aux.xml')
 
     def to_band(self, dataset, path):
         """
@@ -636,8 +596,8 @@ class NbarDriver(DatasetDriver):
 
         # Copy relevant fields from source ortho.
         if 'ortho' in dataset.lineage.source_datasets:
-            ortho = dataset.lineage.source_datasets['ortho']
-            borrow_single_sourced_fields(dataset, ortho)
+            source_ortho = dataset.lineage.source_datasets['ortho']
+            borrow_single_sourced_fields(dataset, source_ortho)
 
         md_image.populate_from_image_metadata(dataset)
 
@@ -671,12 +631,15 @@ class NbarDriver(DatasetDriver):
         # Add ancillary files
         ancil_files = {}
         for name, values in ancils.items():
-            ancil_files[name] = ptype.AncillaryMetadata(type_=name,
-                                                        name=values['data_file'].rpartition('/')[2],
-                                                        uri=values['data_file'],
-                                                        access_time=values['accessed'],
-                                                        modification_time=values['modified'],
-                                                        file_owner=values['user'])
+            ancil_files[name] = ptype.AncillaryMetadata(
+                type_=name,
+                name=values['data_file'].rpartition('/')[2],
+                uri=values['data_file'],
+                file_owner=values['user'],
+                # PyYAML parses these as datetimes already.
+                access_time=values['accessed'],
+                modification_time=values['modified']
+            )
 
         if ancil_files:
             dataset.lineage.ancillary = ancil_files
@@ -868,8 +831,8 @@ class PqaDriver(DatasetDriver):
 
         # Copy relevant fields from source nbar.
         if 'nbar_brdf' in dataset.lineage.source_datasets:
-            ortho = dataset.lineage.source_datasets['nbar_brdf']
-            borrow_single_sourced_fields(dataset, ortho)
+            source_ortho = dataset.lineage.source_datasets['nbar_brdf']
+            borrow_single_sourced_fields(dataset, source_ortho)
 
         dataset.format_ = ptype.FormatMetadata('GeoTIFF')
 
