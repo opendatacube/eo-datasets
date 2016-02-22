@@ -589,8 +589,8 @@ class MachineMetadata(SimpleObject):
 
 
 class AncillaryMetadata(SimpleObject):
-    def __init__(self, type_=None, name=None, uri=None, access_time=None,
-                 modification_time=None, file_owner=None,
+    def __init__(self, type_=None, name=None, uri=None, access_dt=None,
+                 modification_dt=None, file_owner=None,
                  checksum_sha1=None):
         self.type_ = type_
         self.name = name
@@ -600,9 +600,9 @@ class AncillaryMetadata(SimpleObject):
         #: :type: str
         self.uri = uri
         #: :type: datetime.datetime
-        self.access_time = access_time
+        self.access_dt = access_dt
         #: :type: datetime.datetime
-        self.modification_time = modification_time
+        self.modification_dt = modification_dt
 
         #: :type: str
         self.checksum_sha1 = checksum_sha1
@@ -618,7 +618,7 @@ class AncillaryMetadata(SimpleObject):
         return AncillaryMetadata(
             name=file_path.name,
             uri=str(file_path),
-            modification_time=datetime.datetime.fromtimestamp(file_path.stat().st_mtime),
+            modification_dt=datetime.datetime.fromtimestamp(file_path.stat().st_mtime),
             checksum_sha1=verify.calculate_file_sha1(file_path)
         )
 

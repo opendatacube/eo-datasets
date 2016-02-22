@@ -637,8 +637,8 @@ class NbarDriver(DatasetDriver):
                 uri=values['data_file'],
                 file_owner=values['user'],
                 # PyYAML parses these as datetimes already.
-                access_time=values['accessed'],
-                modification_time=values['modified']
+                access_dt=values['accessed'],
+                modification_dt=values['modified']
             )
 
         if ancil_files:

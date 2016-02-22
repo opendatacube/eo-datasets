@@ -130,7 +130,7 @@ def test_package(monkeypatch):
         #: :type: pathlib.Path
         ancil_path = dir_.joinpath(*file_offset)
         ancil_d['uri'] = str(ancil_path)
-        ancil_d['modification_time'] = datetime.datetime.fromtimestamp(ancil_path.stat().st_mtime)
+        ancil_d['modification_dt'] = datetime.datetime.fromtimestamp(ancil_path.stat().st_mtime)
         ancil_d['checksum_sha1'] = chk
 
     assert_same(md, EXPECTED_METADATA)
