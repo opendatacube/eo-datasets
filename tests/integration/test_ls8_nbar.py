@@ -34,20 +34,20 @@ def test_package():
         str(source_dataset), str(output_path)
     ])
 
-    output_dataset = output_path.joinpath('LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126')
+    output_dataset = output_path.joinpath('LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126')
 
     assert_file_structure(output_path, {
-        'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126': {
+        'LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126': {
             'browse.jpg': '',
             'browse.fr.jpg': '',
             'product': {
-                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B1.tif': '',
-                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B2.tif': '',
-                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B3.tif': '',
-                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif': '',
-                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B5.tif': '',
-                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B6.tif': '',
-                'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B7.tif': '',
+                'LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B1.tif': '',
+                'LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B2.tif': '',
+                'LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B3.tif': '',
+                'LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B4.tif': '',
+                'LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B5.tif': '',
+                'LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B6.tif': '',
+                'LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B7.tif': '',
             },
             'ga-metadata.yaml': '',
             'package.sha1': ''
@@ -79,13 +79,13 @@ def test_package():
         'browse.fr.jpg',
         'browse.jpg',
         'ga-metadata.yaml',
-        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B1.tif',
-        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B2.tif',
-        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B3.tif',
-        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif',
-        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B5.tif',
-        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B6.tif',
-        'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B7.tif'
+        'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B1.tif',
+        'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B2.tif',
+        'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B3.tif',
+        'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B4.tif',
+        'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B5.tif',
+        'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B6.tif',
+        'product/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B7.tif'
     ]
 
 
@@ -93,7 +93,7 @@ EXPECTED_METADATA = {
     'id': None,
     'product_type': 'nbar_brdf',
     'checksum_path': 'package.sha1',
-    'ga_label': 'LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126',
+    'ga_label': 'LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126',
     'ga_level': 'P54',
     'size_bytes': 4550,
     'platform': {'code': 'LANDSAT_8'},
@@ -124,49 +124,49 @@ EXPECTED_METADATA = {
             '4': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B4.tif',
                 'label': 'Visible Red',
                 'number': '4'
             },
             '6': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B6.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B6.tif',
                 'label': 'Short-wave Infrared 1',
                 'number': '6'
             },
             '1': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B1.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B1.tif',
                 'label': 'Coastal Aerosol',
                 'number': '1'
             },
             '2': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B2.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B2.tif',
                 'label': 'Visible Blue',
                 'number': '2'
             },
             '3': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B3.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B3.tif',
                 'label': 'Visible Green',
                 'number': '3'
             },
             '5': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B5.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B5.tif',
                 'label': 'Near Infrared',
                 'number': '5'
             },
             '7': {
                 'type': 'reflective',
                 'cell_size': 25.0,
-                'path': 'product/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B7.tif',
+                'path': 'product/LS8_OLITIRS_NBAR_P54_GANBARS01-002_112_079_20140126_B7.tif',
                 'label': 'Short-wave Infrared 2',
                 'number': '7'
             }

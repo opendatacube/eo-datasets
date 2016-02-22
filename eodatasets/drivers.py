@@ -528,7 +528,7 @@ class NbarDriver(DatasetDriver):
         '2'
         >>> NbarDriver('brdf')._read_band_number(Path('reflectance_terrain_7.bin'))
         '7'
-        >>> p = Path('/tmp/something/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif')
+        >>> p = Path('/tmp/something/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B4.tif')
         >>> NbarDriver('brdf')._read_band_number(p)
         '4'
         """
@@ -559,7 +559,7 @@ class NbarDriver(DatasetDriver):
         :rtype: Path
         >>> from tests.metadata.mtl.test_ls8 import EXPECTED_OUT as ls8_dataset
         >>> NbarDriver('terrain').translate_path(ls8_dataset, Path('Reflectance_output/reflectance_terrain_7.bin'))
-        PosixPath('LS8_OLITIRS_NBART_P51_GALPGS01-032_101_078_20141012_B7.tif')
+        PosixPath('LS8_OLITIRS_NBART_P51_GANBART01-032_101_078_20141012_B7.tif')
         """
 
         ga_label = self.get_ga_label(dataset)

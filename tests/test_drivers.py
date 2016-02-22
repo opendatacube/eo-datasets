@@ -349,13 +349,13 @@ class TestDrivers(TestCase):
 
     def test_nbar_label(self):
         self.assertEqual(
-            "LS8_OLITIRS_NBART_P54_GALPGS01-032_101_078_20141012",
+            "LS8_OLITIRS_NBART_P54_GANBART01-032_101_078_20141012",
             drivers.NbarDriver('terrain').get_ga_label(_EXPECTED_NBAR)
         )
 
     def test_nbar_brdf_label(self):
         self.assertEqual(
-            "LS8_OLITIRS_NBAR_P54_GALPGS01-032_101_078_20141012",
+            "LS8_OLITIRS_NBAR_P54_GANBAR01-032_101_078_20141012",
             drivers.NbarDriver('brdf').get_ga_label(_EXPECTED_NBAR)
         )
 
