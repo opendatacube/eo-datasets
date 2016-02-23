@@ -8,6 +8,8 @@ import datetime
 import logging
 import re
 
+from .util import parse_type
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -39,7 +41,7 @@ def populate_from_gqa(md, gqa_file):
         rows = csv.reader(f)
         headers = next(rows)
         values = next(rows)
-    md.gqa.update({_clean_key(k): v for k, v in zip(headers, values)})
+    md.gqa.update({_clean_key(k): parse_type(v) for k, v in zip(headers, values)})
 
     return md
 

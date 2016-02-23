@@ -9,6 +9,7 @@ import xml.etree.cElementTree as etree
 from pathlib import Path
 
 import eodatasets.type as ptype
+from .util import parse_type
 
 _LOG = logging.getLogger(__name__)
 
@@ -49,61 +50,6 @@ def _get_mtl(base_folder):
     return _get_file(base_folder, '*_MTL.txt')
 
 
-def _parse_type(s):
-    """Parse the string `s` and return a native python object.
-
-    >>> _parse_type('01:40:54.7722350Z')
-    datetime.time(1, 40, 54, 772235)
-    >>> _parse_type('2015-03-29')
-    datetime.date(2015, 3, 29)
-    >>> # Some have added quotes
-    >>> _parse_type('"01:40:54.7722350Z"')
-    datetime.time(1, 40, 54, 772235)
-    >>> _parse_type("NONE")
-    >>> _parse_type("Y")
-    True
-    >>> _parse_type("N")
-    False
-    >>> _parse_type('Plain String')
-    'Plain String'
-    >>> _parse_type('"Quoted String"')
-    'Quoted String'
-    """
-
-    strptime = datetime.datetime.strptime
-
-    def yesno(s):
-        """Parse Y/N"""
-        if len(s) == 1:
-            if s == 'Y':
-                return True
-            if s == 'N':
-                return False
-        raise ValueError
-
-    def none(s):
-        """Parse a NONE"""
-        if len(s) == 4 and s == 'NONE':
-            return None
-        raise ValueError
-
-    parsers = [int,
-               float,
-               lambda x: strptime(x, '%Y-%m-%dT%H:%M:%SZ'),
-               lambda x: strptime(x, '%Y-%m-%d').date(),
-               lambda x: strptime(x[0:15], '%H:%M:%S.%f').time(),
-               yesno,
-               none,
-               str]
-
-    for parser in parsers:
-        try:
-            return parser(s.strip('"'))
-        except ValueError:
-            pass
-    raise ValueError
-
-
 def _load_mtl(filename, root='L1_METADATA_FILE', pairs=r'(\w+)\s=\s(.*)'):
     """Parse an MTL file and return dict-of-dict's containing the metadata."""
 
@@ -120,7 +66,7 @@ def _load_mtl(filename, root='L1_METADATA_FILE', pairs=r'(\w+)\s=\s(.*)'):
                 elif key == 'END_GROUP':
                     break
                 else:
-                    tree[key.lower()] = _parse_type(value)
+                    tree[key.lower()] = parse_type(value)
 
     tree = {}
     with open(str(filename), 'r') as fo:
