@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """
+Extract metadata from GQA 'results' csv files.
 """
 
 import logging
