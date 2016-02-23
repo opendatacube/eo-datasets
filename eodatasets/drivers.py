@@ -8,6 +8,7 @@ import string
 import xml.etree.cElementTree as etree
 
 import yaml
+
 try:
     from yaml import CSafeLoader as SafeLoader
 except ImportError:
@@ -18,7 +19,7 @@ from pathlib import Path
 from eodatasets import type as ptype, metadata
 from eodatasets.metadata import _GROUNDSTATION_LIST
 from eodatasets.metadata import mdf, ortho, adsfolder, rccfile, \
-    passinfo, pds, npphdf5, image as md_image
+    passinfo, pds, npphdf5, image as md_image, gqa
 
 _LOG = logging.getLogger(__name__)
 
@@ -410,7 +411,13 @@ class OrthoDriver(DatasetDriver):
         :type path: Path
         :rtype: ptype.DatasetMetadata
         """
-        return ortho.populate_ortho(dataset, path)
+        dataset = ortho.populate_ortho(dataset, path)
+
+        for f in additional_files:
+            if f.name.endswith('gqa_results.csv'):
+                dataset = gqa.populate_from_gqa(dataset, f)
+
+        return dataset
 
     def include_file(self, file_path):
         """

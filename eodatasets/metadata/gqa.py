@@ -3,12 +3,10 @@
 Extract metadata from GQA 'results' csv files.
 """
 
-import logging
 import csv
-
-import re
-
 import datetime
+import logging
+import re
 
 _LOG = logging.getLogger(__name__)
 
@@ -17,6 +15,7 @@ def populate_from_gqa(md, gqa_file):
     """
     :type md: eodatasets.type.DatasetMetadata
     :type gqa_file: pathlib.Path
+    :rtype eodatasets.type.DatasetMetadata
     """
     # Example: 20141201_20010425_B6_gqa_results.csv
     fields = re.match(
@@ -41,6 +40,8 @@ def populate_from_gqa(md, gqa_file):
         headers = next(rows)
         values = next(rows)
     md.gqa.update({_clean_key(k): v for k, v in zip(headers, values)})
+
+    return md
 
 
 def _clean_key(k):

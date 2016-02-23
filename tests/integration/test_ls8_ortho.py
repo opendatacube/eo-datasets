@@ -26,6 +26,9 @@ assert source_dataset.exists()
 parent_dataset = source_folder.joinpath('parent')
 assert parent_dataset.exists()
 
+gqa_file = source_folder.joinpath('20141201_20010425_B6_gqa_results.csv')
+assert gqa_file.exists()
+
 
 @integration_test
 def test_package():
@@ -87,6 +90,7 @@ def test_package():
         'ortho', '--newly-processed',
         '--parent', str(parent_dataset),
         '--add-file', str(output_work_order),
+        '--add-file', str(gqa_file),
         str(input_product_path), str(output_path)
     ])
 
@@ -114,7 +118,8 @@ def test_package():
                 'LO8_20140126_112_079_L1T.xml': '',
             },
             'additional': {
-                'work_order.xml': ''
+                'work_order.xml': '',
+                '20141201_20010425_B6_gqa_results.csv': ''
             },
             'ga-metadata.yaml': '',
             'package.sha1': ''
@@ -157,6 +162,7 @@ def test_package():
     checksummed_filenames = load_checksum_filenames(output_checksum_path)
 
     expected_filenames = [
+        'additional/20141201_20010425_B6_gqa_results.csv',
         'additional/work_order.xml',
         'browse.fr.jpg',
         'browse.jpg',
@@ -330,7 +336,31 @@ EXPECTED_METADATA = {
             }
         }
     },
-
+    'gqa': {
+        'abs_iterative_mean_residual_x': '1.3',
+        'abs_iterative_mean_residual_y': '1.2',
+        'acq_day': datetime.date(2014, 12, 1),
+        'band': '6',
+        'blue': '120',
+        'cep90': '212.0',
+        'final_gcp_count': '1493',
+        'green': '340',
+        'iterative_mean_residual_x': '-0.4',
+        'iterative_mean_residual_y': '0.5',
+        'iterative_stddev_residual_x': '2.5',
+        'iterative_stddev_residual_y': '2.5',
+        'mean_residual_x': '-0.4',
+        'mean_residual_y': '0.5',
+        'red': '321',
+        'ref_day': datetime.date(2001, 4, 25),
+        'residual_x': '1.9',
+        'residual_y': '1.8',
+        'sceneid': 'LS8_OLITIRS_OTH_P51_GALPGS01-032_099_072_20141201',
+        'stddev_residual_x': '3.6',
+        'stddev_residual_y': '3.6',
+        'teal': '735',
+        'yellow': '98',
+    },
     'acquisition':
         {
             'groundstation': {

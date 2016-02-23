@@ -767,6 +767,7 @@ class DatasetMetadata(SimpleObject):
                  instrument=None,
                  format_=None,
                  usgs=None,
+                 gqa=None,
                  rms_string=None,
                  acquisition=None,
                  extent=None,
@@ -810,6 +811,10 @@ class DatasetMetadata(SimpleObject):
         # USGS identifiers
         #: :type: UsgsMetadata
         self.usgs = usgs
+
+        # GQA values
+        #: :type: dict
+        self.gqa = gqa
 
         # Receiving string from ASA's reception management system.
         # Eg. 'S1A1C1D1R1'
