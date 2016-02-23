@@ -71,12 +71,14 @@ def test_package():
         str(_get_lpgs_out(source_dataset)),
         str(work_path.joinpath('lpgs_out.xml'))
     )
+    output_work_order = work_path.joinpath('work_order.xml')
+
     # Write a work order with ancillary locations replaced.
     with _get_work_order(source_dataset).open('rb') as wo:
         wo_text = wo.read().decode('utf-8').format(
             **{k + '_path': v[0] for k, v in ANCIL_FILES.items()}
         )
-        with work_path.joinpath('work_order.xml').open('w') as out_wo:
+        with output_work_order.open('w') as out_wo:
             out_wo.write(wo_text)
 
     # Run!
@@ -84,6 +86,7 @@ def test_package():
         hardlink_arg(output_path, source_dataset),
         'ortho', '--newly-processed',
         '--parent', str(parent_dataset),
+        '--add-file', str(output_work_order),
         str(input_product_path), str(output_path)
     ])
 
@@ -109,6 +112,9 @@ def test_package():
                 'LC81120792014026ASA00_GCP.txt': '',
                 'LC81120792014026ASA00_MTL.txt': '',
                 'LO8_20140126_112_079_L1T.xml': '',
+            },
+            'additional': {
+                'work_order.xml': ''
             },
             'ga-metadata.yaml': '',
             'package.sha1': ''
@@ -151,6 +157,7 @@ def test_package():
     checksummed_filenames = load_checksum_filenames(output_checksum_path)
 
     expected_filenames = [
+        'additional/work_order.xml',
         'browse.fr.jpg',
         'browse.jpg',
         'ga-metadata.yaml',

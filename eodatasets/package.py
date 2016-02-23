@@ -81,7 +81,8 @@ def package_dataset(dataset_driver,
                     dataset,
                     image_path,
                     target_path,
-                    hard_link=False):
+                    hard_link=False,
+                    additional_files=None):
     """
     Package the given dataset folder.
 
@@ -96,11 +97,17 @@ def package_dataset(dataset_driver,
     :type dataset: ptype.Dataset
     :type image_path: Path
     :type target_path: Path
+    :param additional_files: Additional files to record in the package. (key: output filename, value: source path)
+    :type additional_files: dict[str, Path]
 
     :raises IncompletePackage: If not enough metadata can be extracted from the dataset.
     :return: The generated GA Dataset ID (ga_label)
     :rtype: str
     """
+    if additional_files is None:
+        additional_files = {}
+    _check_additional_files_exist(additional_files)
+
     checksums = verify.PackageChecksum()
 
     target_path = target_path.absolute()
@@ -136,6 +143,8 @@ def package_dataset(dataset_driver,
     #: :type: ptype.DatasetMetadata
     dataset = ptype.rebase_paths(image_path, package_directory, dataset)
 
+    write_additional_files(additional_files, checksums, target_path)
+
     create_dataset_browse_images(
         dataset_driver,
         dataset,
@@ -152,6 +161,32 @@ def package_dataset(dataset_driver,
     checksums.write(target_checksums_path)
 
     return dataset.ga_label
+
+
+def _check_additional_files_exist(additional_files):
+    """
+    :type additional_files: dict[str, pathlib.Path]
+    """
+    # Check that all given additional paths exist.
+    for output_name, path in additional_files.items():
+        path = path.absolute()
+        if not path.is_file():
+            raise ValueError('Given file %s does not exist: %s' % (output_name, path))
+
+
+def write_additional_files(additional_files, checksums, target_path):
+    """
+    :type additional_files: dict[str, pathlib.Path]
+    :type checksums: eodatasets.verify.PackageChecksum
+    :type target_path: pathlib.Path
+    """
+    additional_directory = target_path.joinpath('additional')
+    for output_name, path in additional_files.items():
+        target_path = additional_directory.joinpath(output_name)
+        if not target_path.parent.exists():
+            target_path.parent.mkdir(parents=True)
+        shutil.copy(str(path.absolute()), str(target_path))
+        checksums.add_file(target_path)
 
 
 def prepare_target_imagery(
