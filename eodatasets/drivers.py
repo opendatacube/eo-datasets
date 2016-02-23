@@ -34,10 +34,11 @@ class DatasetDriver(object):
         """
         raise NotImplementedError()
 
-    def fill_metadata(self, dataset, path):
+    def fill_metadata(self, dataset, path, additional_files=()):
         """
         Populate the given dataset metadata from the path.
 
+        :type additional_files: tuple[Path]
         :type dataset: ptype.DatasetMetadata
         :type path: Path
         """
@@ -372,7 +373,13 @@ class RawDriver(DatasetDriver):
             folderident='.'.join(folder_identifier)
         )
 
-    def fill_metadata(self, dataset, path):
+    def fill_metadata(self, dataset, path, additional_files=()):
+        """
+        :type additional_files: tuple[Path]
+        :type dataset: ptype.DatasetMetadata
+        :type path: Path
+        :rtype: ptype.DatasetMetadata
+        """
         dataset = adsfolder.extract_md(dataset, path)
         dataset = rccfile.extract_md(dataset, path)
         dataset = mdf.extract_md(dataset, path)
@@ -396,13 +403,14 @@ class OrthoDriver(DatasetDriver):
     def expected_source(self):
         return RawDriver()
 
-    def fill_metadata(self, d, package_directory):
+    def fill_metadata(self, dataset, path, additional_files=()):
         """
-        :type package_directory: Path
-        :type d: ptype.DatasetMetadata
-        :return:
+        :type additional_files: tuple[Path]
+        :type dataset: ptype.DatasetMetadata
+        :type path: Path
+        :rtype: ptype.DatasetMetadata
         """
-        return ortho.populate_ortho(d, package_directory)
+        return ortho.populate_ortho(dataset, path)
 
     def include_file(self, file_path):
         """
@@ -584,8 +592,9 @@ class NbarDriver(DatasetDriver):
         """
         return ptype.BandMetadata(path=path, number=_read_band_number(path))
 
-    def fill_metadata(self, dataset, path):
+    def fill_metadata(self, dataset, path, additional_files=()):
         """
+        :type additional_files: tuple[Path]
         :type dataset: ptype.DatasetMetadata
         :type path: Path
         :rtype: ptype.DatasetMetadata
@@ -724,8 +733,9 @@ class EODSDriver(DatasetDriver):
 
         return ptype.BandMetadata(path=path, number=band_number)
 
-    def fill_metadata(self, dataset, path):
+    def fill_metadata(self, dataset, path, additional_files=()):
         """
+        :type additional_files: tuple[Path]
         :type dataset: ptype.DatasetMetadata
         :type path: Path
         :rtype: ptype.DatasetMetadata
@@ -823,8 +833,9 @@ class PqaDriver(DatasetDriver):
             '{satnumber}_{sensor}_PQ_{galevel}_GAPQ01-{stationcode}_{path}_{rows}_{day}',
         )
 
-    def fill_metadata(self, dataset, path):
+    def fill_metadata(self, dataset, path, additional_files=()):
         """
+        :type additional_files: tuple[Path]
         :type dataset: ptype.DatasetMetadata
         :type path: Path
         :rtype: ptype.DatasetMetadata

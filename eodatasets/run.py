@@ -37,8 +37,8 @@ def package_newly_processed_data_folder(driver, input_data_paths, destination_pa
     :type parent_dataset_paths: list[pathlib.Path]
     :type hard_link: bool
 
-    :param additional_files: Additional files to record in the package. (key: output filename, value: source path)
-    :type additional_files: dict[str, Path]
+    :param additional_files: Additional files to record in the package.
+    :type additional_files: tuple[Path]
     """
     return _package_folder(
         driver, input_data_paths, destination_path, parent_dataset_paths,
@@ -69,8 +69,8 @@ def package_existing_data_folder(driver, input_data_paths, destination_path, par
     :type metadata_expand_fn: (eodatasets.type.DatasetMetadata) -> None
     :type parent_dataset_paths: list[pathlib.Path]
 
-    :param additional_files: Additional files to record in the package. (key: output filename, value: source path)
-    :type additional_files: dict[str, Path]
+    :param additional_files: Additional files to record in the package.
+    :type additional_files: tuple[Path]
 
     :type hard_link: bool
     :return:
@@ -102,8 +102,8 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
     :type init_dataset: callable
     :type hard_link: bool
 
-    :param additional_files: Additional files to record in the package. (key: output filename, value: source path)
-    :type additional_files: dict[str, Path]
+    :param additional_files: Additional files to record in the package.
+    :type additional_files: tuple[Path]
 
     :return: list of created packages
     """
@@ -118,7 +118,7 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
     for dataset_folder in input_data_paths:
         dataset_folder = Path(dataset_folder)
         with temp_dir(prefix='.packagetmp.', base_dir=destination_path) as temp_output_dir:
-            dataset = init_dataset(dataset_folder, driver, parent_datasets)  # Calls fill metadata
+            dataset = init_dataset(dataset_folder, parent_datasets)
             if metadata_expand_fn is not None:
                 metadata_expand_fn(dataset)
 

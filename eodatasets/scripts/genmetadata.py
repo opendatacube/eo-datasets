@@ -45,7 +45,7 @@ def run(parent, debug, package_type, datasets):
         dataset_path = Path(dataset_file)
         md_path = package.package_inplace_dataset(
             driver,
-            package.init_existing_dataset(dataset_path, driver, parent_datasets),
+            package.init_existing_dataset(dataset_path, parent_datasets),
             dataset_path
         )
         _LOG.info('Wrote metadata file %s', md_path)

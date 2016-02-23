@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 _RUNTIME_ID = uuid.uuid1()
 
 
-def init_locally_processed_dataset(directory, dataset_driver, source_datasets, uuid_=None):
+def init_locally_processed_dataset(directory, source_datasets, uuid_=None):
     """
     Create a blank dataset for a newly created dataset on this machine.
 
@@ -45,10 +45,10 @@ def init_locally_processed_dataset(directory, dataset_driver, source_datasets, u
         )
     )
     md.lineage.machine.note_software_version('eodatasets', eodatasets.__version__)
-    return dataset_driver.fill_metadata(md, directory)
+    return md
 
 
-def init_existing_dataset(directory, dataset_driver, source_datasets, uuid_=None, source_hostname=None):
+def init_existing_dataset(directory, source_datasets, uuid_=None, source_hostname=None):
     """
     Package an existing dataset folder (with mostly unknown provenance).
 
@@ -70,11 +70,10 @@ def init_existing_dataset(directory, dataset_driver, source_datasets, uuid_=None
                 hostname=source_hostname
             ),
             source_datasets=source_datasets
-
         )
     )
     md.lineage.machine.note_software_version('eodatasets', eodatasets.__version__)
-    return dataset_driver.fill_metadata(md, directory)
+    return md
 
 
 def package_dataset(dataset_driver,
@@ -97,16 +96,18 @@ def package_dataset(dataset_driver,
     :type dataset: ptype.Dataset
     :type image_path: Path
     :type target_path: Path
-    :param additional_files: Additional files to record in the package. (key: output filename, value: source path)
-    :type additional_files: dict[str, Path]
+    :param additional_files: Additional files to record in the package.
+    :type additional_files: tuple[Path]
 
     :raises IncompletePackage: If not enough metadata can be extracted from the dataset.
     :return: The generated GA Dataset ID (ga_label)
     :rtype: str
     """
     if additional_files is None:
-        additional_files = {}
+        additional_files = []
     _check_additional_files_exist(additional_files)
+
+    dataset_driver.fill_metadata(dataset, image_path, additional_files=additional_files)
 
     checksums = verify.PackageChecksum()
 
@@ -137,13 +138,13 @@ def package_dataset(dataset_driver,
         hard_link=hard_link
     )
 
+    write_additional_files(additional_files, checksums, target_path)
+
     validate_metadata(dataset)
     dataset = expand_driver_metadata(dataset_driver, dataset, file_paths)
 
     #: :type: ptype.DatasetMetadata
     dataset = ptype.rebase_paths(image_path, package_directory, dataset)
-
-    write_additional_files(additional_files, checksums, target_path)
 
     create_dataset_browse_images(
         dataset_driver,
@@ -165,24 +166,24 @@ def package_dataset(dataset_driver,
 
 def _check_additional_files_exist(additional_files):
     """
-    :type additional_files: dict[str, pathlib.Path]
+    :type additional_files: tuple[Path]
     """
     # Check that all given additional paths exist.
-    for output_name, path in additional_files.items():
+    for path in additional_files:
         path = path.absolute()
         if not path.is_file():
-            raise ValueError('Given file %s does not exist: %s' % (output_name, path))
+            raise ValueError('Given file does not exist: %s' % (path,))
 
 
 def write_additional_files(additional_files, checksums, target_path):
     """
-    :type additional_files: dict[str, pathlib.Path]
+    :type additional_files: tuple[Path]
     :type checksums: eodatasets.verify.PackageChecksum
     :type target_path: pathlib.Path
     """
     additional_directory = target_path.joinpath('additional')
-    for output_name, path in additional_files.items():
-        target_path = additional_directory.joinpath(output_name)
+    for path in additional_files:
+        target_path = additional_directory.joinpath(path.name)
         if not target_path.parent.exists():
             target_path.parent.mkdir(parents=True)
         shutil.copy(str(path.absolute()), str(target_path))
@@ -333,6 +334,7 @@ def package_inplace_dataset(dataset_driver, dataset, image_path):
     :rtype: Path
     :return: Path to the created metadata file.
     """
+    dataset_driver.fill_metadata(dataset, image_path)
     typical_checksum_file = image_path.joinpath(GA_CHECKSUMS_FILE_NAME)
     if typical_checksum_file.exists():
         dataset.checksum_path = typical_checksum_file
