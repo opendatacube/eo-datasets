@@ -767,13 +767,13 @@ class DatasetMetadata(SimpleObject):
                  instrument=None,
                  format_=None,
                  usgs=None,
-                 gqa=None,
                  rms_string=None,
                  acquisition=None,
                  extent=None,
                  grid_spatial=None,
                  browse=None,
                  image=None,
+                 gqa=None,
                  lineage=None):
         super(DatasetMetadata, self).__init__()
 
