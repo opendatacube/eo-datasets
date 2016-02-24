@@ -628,6 +628,7 @@ class AncillaryMetadata(SimpleObject):
             name=file_path.name,
             uri=str(file_path),
             modification_dt=datetime.datetime.fromtimestamp(file_path.stat().st_mtime),
+            access_dt=datetime.datetime.fromtimestamp(file_path.stat().st_atime),
             checksum_sha1=verify.calculate_file_sha1(file_path)
         )
 

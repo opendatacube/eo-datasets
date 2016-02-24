@@ -154,6 +154,13 @@ def test_package():
         ancil_d['modification_dt'] = datetime.datetime.fromtimestamp(ancil_path.stat().st_mtime)
         ancil_d['checksum_sha1'] = chk
 
+        # Ensure the output has this ancillary file.
+        assert ancil_name in md['lineage']['ancillary']
+        # Ensure it has an access time
+        assert md['lineage']['ancillary'][ancil_name]['access_dt'] is not None
+        # Clear the access time: we can't compare it accurately (short of mocking)
+        del md['lineage']['ancillary'][ancil_name]['access_dt']
+
     assert_same(md, EXPECTED_METADATA)
 
     # TODO: Asset all files are checksummed.
