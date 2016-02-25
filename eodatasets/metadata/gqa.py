@@ -13,6 +13,45 @@ from .util import parse_type
 _LOG = logging.getLogger(__name__)
 
 
+def choose_and_populate_gqa(dataset, files):
+    """
+    Find any gqa results in the list of files and populate the dataset with them.
+
+    :type dataset: eodatasets.type.DatasetMetadata
+    :type files: tuple[pathlib.Path]
+    :rtype dataset: eodatasets.type.DatasetMetadata
+    """
+    gqa_file = _choose_gqa(files)
+    if gqa_file:
+        dataset = populate_from_gqa(dataset, gqa_file)
+    return dataset
+
+
+def _choose_gqa(additional_files):
+    """
+    Choose the latest GQA in a list of files (or none if there aren't any).
+    :type additional_files: tuple[pathlib.Path]
+    :rtype: pathlib.Path or None
+
+    >>> from pathlib import Path
+    >>> files = (
+    ...     Path('additional/20141201_19991029_B6_gqa_results.csv'),
+    ...     Path('additional/20141201_20000321_B6_gqa_results.csv')
+    ... )
+    >>> str(_choose_gqa(files))
+    'additional/20141201_20000321_B6_gqa_results.csv'
+    >>> str(_choose_gqa(files[:1]))
+    'additional/20141201_19991029_B6_gqa_results.csv'
+    >>> _choose_gqa(())
+    """
+    gqa_files = [f for f in additional_files if f.name.endswith('gqa_results.csv')]
+    if not gqa_files:
+        return None
+
+    newest_first = list(sorted(gqa_files, reverse=True))
+    return newest_first[0]
+
+
 def populate_from_gqa(md, gqa_file):
     """
     :type md: eodatasets.type.DatasetMetadata

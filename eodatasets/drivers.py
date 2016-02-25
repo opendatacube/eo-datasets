@@ -412,11 +412,7 @@ class OrthoDriver(DatasetDriver):
         :rtype: ptype.DatasetMetadata
         """
         dataset = ortho.populate_ortho(dataset, path)
-
-        for f in additional_files:
-            if f.name.endswith('gqa_results.csv'):
-                dataset = gqa.populate_from_gqa(dataset, f)
-
+        dataset = gqa.choose_and_populate_gqa(dataset, additional_files)
         return dataset
 
     def include_file(self, file_path):
