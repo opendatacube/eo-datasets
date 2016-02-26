@@ -76,6 +76,10 @@ def populate_from_gqa(md, gqa_file):
 
     with gqa_file.open('r') as f:
         gqa_values = yaml.safe_load(f)
+
+    # "Scene id" is just the name of the parent folder. Often wrong and misleading.
+    del gqa_values['scene_id']
+
     md.gqa.update(
         gqa_values
     )
