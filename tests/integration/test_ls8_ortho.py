@@ -26,7 +26,7 @@ assert source_dataset.exists()
 parent_dataset = source_folder.joinpath('parent')
 assert parent_dataset.exists()
 
-gqa_file = source_folder.joinpath('20141201_20010425_B6_gqa_results.csv')
+gqa_file = source_folder.joinpath('20141201_20010425_B6_gqa_results.yaml')
 assert gqa_file.exists()
 
 
@@ -119,7 +119,7 @@ def test_package():
             },
             'additional': {
                 'work_order.xml': '',
-                '20141201_20010425_B6_gqa_results.csv': ''
+                '20141201_20010425_B6_gqa_results.yaml': ''
             },
             'ga-metadata.yaml': '',
             'package.sha1': ''
@@ -169,7 +169,7 @@ def test_package():
     checksummed_filenames = load_checksum_filenames(output_checksum_path)
 
     expected_filenames = [
-        'additional/20141201_20010425_B6_gqa_results.csv',
+        'additional/20141201_20010425_B6_gqa_results.yaml',
         'additional/work_order.xml',
         'browse.fr.jpg',
         'browse.jpg',

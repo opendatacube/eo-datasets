@@ -3,12 +3,11 @@
 Extract metadata from GQA 'results' csv files.
 """
 
-import csv
 import datetime
 import logging
 import re
 
-from .util import parse_type
+import yaml
 
 _LOG = logging.getLogger(__name__)
 
@@ -35,16 +34,16 @@ def _choose_gqa(additional_files):
 
     >>> from pathlib import Path
     >>> files = (
-    ...     Path('additional/20141201_19991029_B6_gqa_results.csv'),
-    ...     Path('additional/20141201_20000321_B6_gqa_results.csv')
+    ...     Path('additional/20141201_19991029_B6_gqa_results.yaml'),
+    ...     Path('additional/20141201_20000321_B6_gqa_results.yaml')
     ... )
     >>> str(_choose_gqa(files))
-    'additional/20141201_20000321_B6_gqa_results.csv'
+    'additional/20141201_20000321_B6_gqa_results.yaml'
     >>> str(_choose_gqa(files[:1]))
-    'additional/20141201_19991029_B6_gqa_results.csv'
+    'additional/20141201_19991029_B6_gqa_results.yaml'
     >>> _choose_gqa(())
     """
-    gqa_files = [f for f in additional_files if f.name.endswith('gqa_results.csv')]
+    gqa_files = [f for f in additional_files if f.name.endswith('gqa_results.yaml')]
     if not gqa_files:
         return None
 
@@ -58,7 +57,7 @@ def populate_from_gqa(md, gqa_file):
     :type gqa_file: pathlib.Path
     :rtype eodatasets.type.DatasetMetadata
     """
-    # Example: 20141201_20010425_B6_gqa_results.csv
+    # Example: 20141201_20010425_B6_gqa_results.yaml
     fields = re.match(
         (
             r"(?P<acq_day>[0-9]{8})"
@@ -75,22 +74,13 @@ def populate_from_gqa(md, gqa_file):
         'band': fields['band']
     }
 
-    # Read values.
     with gqa_file.open('r') as f:
-        rows = csv.reader(f)
-        headers = next(rows)
-        values = next(rows)
-    md.gqa.update({_clean_key(k): parse_type(v) for k, v in zip(headers, values)})
+        gqa_values = yaml.safe_load(f)
+    md.gqa.update(
+        gqa_values
+    )
 
     return md
-
-
-def _clean_key(k):
-    """
-    >>> _clean_key('Iterative Mean Residual X')
-    'iterative_mean_residual_x'
-    """
-    return k.lower().strip().replace(' ', '_')
 
 
 def _parse_day(f, fields):

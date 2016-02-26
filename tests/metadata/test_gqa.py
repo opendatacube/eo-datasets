@@ -2,18 +2,17 @@
 """
 """
 
+import datetime
 import logging
 
-import datetime
-
-from eodatasets.type import DatasetMetadata
 from pathlib import Path
 
 from eodatasets.metadata import gqa
+from eodatasets.type import DatasetMetadata
 
 _LOG = logging.getLogger(__name__)
 
-_GQA_PATH = Path(__file__).absolute().parent.joinpath('20141201_20010425_B6_gqa_results.csv')
+_GQA_PATH = Path(__file__).absolute().parent.joinpath('20141201_20010425_B6_gqa_results.yaml')
 
 
 def test_gqa():
