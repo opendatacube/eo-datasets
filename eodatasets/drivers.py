@@ -411,7 +411,7 @@ class OrthoDriver(DatasetDriver):
         :type path: Path
         :rtype: ptype.DatasetMetadata
         """
-        dataset = ortho.populate_ortho(dataset, path)
+        dataset = ortho.populate_ortho(dataset, path, additional_files)
         dataset = gqa.choose_and_populate_gqa(dataset, additional_files)
         return dataset
 

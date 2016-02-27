@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 
 import datetime
+import fnmatch
 import logging
 import re
 import xml.etree.cElementTree as etree
@@ -14,17 +15,18 @@ from .util import parse_type
 _LOG = logging.getLogger(__name__)
 
 
-def populate_ortho(md, base_folder):
+def populate_ortho(md, base_folder, additional_files):
     """
     Find any relevant Ortho metadata files for the given dataset and populate it.
 
     :type md: eodatasets.type.DatasetMetadata
     :type base_folder: pathlib.Path
+    :type additional_files: tuple[Path]
     :rtype: eodatasets.type.DatasetMetadata
     """
     mtl_path = _get_mtl(base_folder)
-    work_order = _get_work_order(base_folder)
-    lpgs_out = _get_lpgs_out(base_folder)
+    work_order = _find_one('work_order.xml', additional_files) or _find_parent_file(base_folder, 'work_order.xml')
+    lpgs_out = _find_one('lpgs_out.xml', additional_files) or _find_parent_file(base_folder, 'lpgs_out.xml')
 
     return _populate_ortho_from_files(
         base_folder, md,
@@ -34,16 +36,18 @@ def populate_ortho(md, base_folder):
     )
 
 
-def _get_lpgs_out(base_folder):
-    lpgs_out = _find_parent_file(base_folder, 'lpgs_out.xml')
-    return lpgs_out
-
-
-def _get_work_order(base_folder):
+def _find_one(pattern, files):
     """
-    :rtype: pathlib.Path
+    :type files: tuple[pathlib.Path]
+    :rtype pathlib.Path
+    >>> str(_find_one('*.txt', (Path('/tmp/asdf.txt'),)))
+    '/tmp/asdf.txt'
+    >>> _find_one('*.txt', (Path('/tmp/asdf.tif'),))
     """
-    return _find_parent_file(base_folder, 'work_order.xml')
+    files = [f for f in files if fnmatch.fnmatch(f.name, pattern)]
+    if files:
+        return files[0]
+    return None
 
 
 def _get_mtl(base_folder):
