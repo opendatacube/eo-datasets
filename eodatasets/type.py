@@ -772,9 +772,9 @@ class DatasetMetadata(SimpleObject):
                  acquisition=None,
                  extent=None,
                  grid_spatial=None,
+                 gqa=None,
                  browse=None,
                  image=None,
-                 gqa=None,
                  lineage=None):
         super(DatasetMetadata, self).__init__()
 
