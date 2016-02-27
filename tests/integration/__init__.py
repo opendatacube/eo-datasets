@@ -4,7 +4,13 @@ Module
 """
 from __future__ import absolute_import
 
+import binascii
+import datetime
+import hashlib
+import socket
+
 import eodatasets
+from eodatasets.package import _RUNTIME_ID
 
 
 def load_checksum_filenames(output_metadata_path):
@@ -38,3 +44,82 @@ def add_default_software_versions(ds_dict):
     m['software_versions']['eodatasets'] = eodatasets.__version__
 
     return ds_dict
+
+
+class FakeAncilFile(object):
+    def __init__(self, base_folder, type_, filename, folder_offset=()):
+        """
+        :type base_folder: pathlib.Path
+        :type type_: str
+        :type filename: str
+        :type folder_offset: tuple[str]
+        :return:
+        """
+        self.base_folder = base_folder
+        self.type_ = type_
+        self.filename = filename
+        self.folder_offset = folder_offset
+
+    def create(self):
+        """Create our dummy ancillary file"""
+        self.containing_folder.mkdir(parents=True)
+        with self.file_path.open('wb') as f:
+            # Write the file path into it so that it has a unique checksum.
+            f.write(str(self.file_path).encode('utf8'))
+
+    @property
+    def checksum(self):
+        m = hashlib.sha1()
+        m.update(str(self.file_path).encode('utf8'))
+        return binascii.hexlify(m.digest()).decode('ascii')
+
+    @property
+    def containing_folder(self):
+        return self.base_folder.joinpath(self.type_, *self.folder_offset)
+
+    @property
+    def file_path(self):
+        return self.containing_folder.joinpath(self.filename)
+
+
+def prepare_datasets_for_comparison(expected_md, output_md, ancil_files, product_dir_path):
+    """
+    Set or clear any dynamic properties so that we can directly compare two datasets.
+
+    :type expected_md: dict
+    :type output_md: dict
+    :type ancil_files: tuple[FakeAncilFile]
+    :type product_dir_path: pathlib.Path
+    """
+    # ID is different every time: check not none, and clear it.
+    assert output_md['id'] is not None
+    output_md['id'] = None
+
+    expected_md['size_bytes'] = directory_size(product_dir_path)
+    add_default_software_versions(expected_md)
+    # A newly-processed dataset: extra fields
+    assert output_md['lineage']['machine']['uname'] is not None
+    del output_md['lineage']['machine']['uname']
+    expected_md['lineage']['machine']['runtime_id'] = str(_RUNTIME_ID)
+    expected_md['lineage']['machine']['hostname'] = socket.getfqdn()
+    # Create the expected ancillary information.
+    for ancil_name, ancil_d in expected_md['lineage']['ancillary'].items():
+        ancils = [a for a in ancil_files if a.type_ == ancil_name]
+        assert ancils, 'Unexpected ancil type: ' + ancil_name
+        ancil = ancils[0]
+        # filter ancil names.
+
+        #: :type: pathlib.Path
+        ancil_path = ancil.file_path
+        ancil_d['uri'] = str(ancil_path)
+        ancil_d['modification_dt'] = datetime.datetime.fromtimestamp(ancil_path.stat().st_mtime)
+        ancil_d['checksum_sha1'] = ancil.checksum
+
+        # Ensure the output has this ancillary file.
+        assert ancil_name in output_md['lineage']['ancillary']
+        # Ensure it has an access time
+        output_ancil = output_md['lineage']['ancillary'][ancil_name]
+        assert 'access_dt' in output_ancil
+        assert output_ancil['access_dt'] is not None
+        # Clear the access time: we can't compare it accurately (short of mocking)
+        del output_ancil['access_dt']

@@ -5,18 +5,15 @@ Package an LS8 NBAR dataset.
 from __future__ import absolute_import
 
 import datetime
-import shutil
-import socket
 
 import yaml
 from pathlib import Path
 
-from eodatasets.metadata.ortho import _get_lpgs_out, _get_work_order
-from eodatasets.package import _RUNTIME_ID
 from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
-from tests.integration import load_checksum_filenames, hardlink_arg, directory_size, add_default_software_versions
+from tests.integration import load_checksum_filenames, hardlink_arg, prepare_datasets_for_comparison, FakeAncilFile
 
 #: :type: Path
+
 source_folder = Path(__file__).parent.joinpath('input', 'ls8-ortho')
 assert source_folder.exists()
 
@@ -26,8 +23,10 @@ assert source_dataset.exists()
 parent_dataset = source_folder.joinpath('parent')
 assert parent_dataset.exists()
 
-gqa_file = source_folder.joinpath('20141201_20010425_B6_gqa_results.yaml')
-assert gqa_file.exists()
+additional_files = source_folder.joinpath('data', 'additional')
+assert additional_files.exists()
+
+WO_PATH = source_folder.joinpath('work_order.xml')
 
 
 @integration_test
@@ -36,63 +35,42 @@ def test_package():
     output_path = work_path.joinpath('out')
     output_path.mkdir(parents=True)
     ancil_path = work_path.joinpath('ancil')
-    input_product_path = work_path.joinpath('product')
 
     # We have to override the ancillary directory lookup as they won't exist on test systems.
-    ANCIL_FILES = {
-        'cpf': (
-            ancil_path.joinpath('cpf'),
-            ('L8CPF20140101_20140331.05',),
-            'da39a3ee5e6b4b0d3255bfef95601890afd80709'
-        ),
-        'bpf_oli': (
-            ancil_path.joinpath('bpf-oli'),
-            ('LO8BPF20140127130115_20140127144056.01',),
-            'da39a3ee5e6b4b0d3255bfef95601890afd80709'
-        ),
-        'bpf_tirs': (
-            ancil_path.joinpath('bpf-tirs'),
-            ('LT8BPF20140116023714_20140116032836.02',),
-            'da39a3ee5e6b4b0d3255bfef95601890afd80709'
-        ),
-        'rlut': (
-            ancil_path.joinpath('rlut'),
-            # It should search subdirectories too.
-            ('2013', 'L8RLUT20130211_20431231v09.h5'),
-            'da39a3ee5e6b4b0d3255bfef95601890afd80709'
-        )
-    }
-    for name, (dir, file_offset, _) in ANCIL_FILES.items():
-        # Create directories
-        dir.joinpath(*file_offset[:-1]).mkdir(parents=True)
-        # Create blank ancil file.
-        dir.joinpath(*file_offset).open('w').close()
-
-    # Write all our input data to a temp directory (so that we can use a custom work order)
-    shutil.copytree(str(source_dataset), str(input_product_path))
-    shutil.copy(
-        str(_get_lpgs_out(source_dataset)),
-        str(work_path.joinpath('lpgs_out.xml'))
+    ancil_files = (
+        FakeAncilFile(ancil_path, 'cpf', 'L8CPF20140101_20140331.05'),
+        FakeAncilFile(ancil_path, 'bpf_oli', 'LO8BPF20140127130115_20140127144056.01'),
+        FakeAncilFile(ancil_path, 'bpf_tirs', 'LT8BPF20140116023714_20140116032836.02'),
+        FakeAncilFile(ancil_path, 'rlut', 'L8RLUT20130211_20431231v09.h5', folder_offset=('2013',)),
     )
-    output_work_order = work_path.joinpath('work_order.xml')
+    # Create the dummy Ancil files.
+    for ancil in ancil_files:
+        ancil.create()
 
     # Write a work order with ancillary locations replaced.
-    with _get_work_order(source_dataset).open('rb') as wo:
+    output_work_order = work_path.joinpath('work_order.xml')
+    with WO_PATH.open('rb') as wo:
         wo_text = wo.read().decode('utf-8').format(
-            **{k + '_path': v[0] for k, v in ANCIL_FILES.items()}
+            **{a.type_ + '_path': a.file_path for a in ancil_files}
         )
         with output_work_order.open('w') as out_wo:
             out_wo.write(wo_text)
 
     # Run!
-    run_packaging_cli([
+    args = [
         hardlink_arg(output_path, source_dataset),
-        'ortho', '--newly-processed',
+        'ortho',
+        '--newly-processed',
         '--parent', str(parent_dataset),
-        '--add-file', str(output_work_order),
-        '--add-file', str(gqa_file),
-        str(input_product_path), str(output_path)
+        '--add-file', str(output_work_order)
+    ]
+    for additional_file in additional_files.iterdir():
+        args.extend(['--add-file', str(additional_file)])
+    args.extend([
+        str(source_dataset),
+        str(output_path)
     ])
+    run_packaging_cli(args)
 
     output_dataset = output_path.joinpath('LS8_OLITIRS_OTH_P51_GALPGS01-002_112_079_20140126')
 
@@ -119,6 +97,7 @@ def test_package():
             },
             'additional': {
                 'work_order.xml': '',
+                'lpgs_out.xml': '',
                 '20141201_20010425_B6_gqa_results.yaml': ''
             },
             'ga-metadata.yaml': '',
@@ -131,35 +110,12 @@ def test_package():
     assert output_metadata_path.exists()
     md = yaml.load(output_metadata_path.open('r'))
 
-    # ID is different every time: check not none, and clear it.
-    assert md['id'] is not None
-    md['id'] = None
-
-    EXPECTED_METADATA['size_bytes'] = directory_size(output_dataset / 'product')
-    add_default_software_versions(EXPECTED_METADATA)
-
-    # A newly-processed dataset: extra fields
-    assert md['lineage']['machine']['uname'] is not None
-    del md['lineage']['machine']['uname']
-    EXPECTED_METADATA['lineage']['machine']['runtime_id'] = str(_RUNTIME_ID)
-    EXPECTED_METADATA['lineage']['machine']['hostname'] = socket.getfqdn()
-
-    # Create the expected ancillary information.
-    for ancil_name, ancil_d in EXPECTED_METADATA['lineage']['ancillary'].items():
-        assert ancil_name in ANCIL_FILES, 'Unexpected ancil type: ' + ancil_name
-        dir_, file_offset, chk = ANCIL_FILES[ancil_name]
-        #: :type: pathlib.Path
-        ancil_path = dir_.joinpath(*file_offset)
-        ancil_d['uri'] = str(ancil_path)
-        ancil_d['modification_dt'] = datetime.datetime.fromtimestamp(ancil_path.stat().st_mtime)
-        ancil_d['checksum_sha1'] = chk
-
-        # Ensure the output has this ancillary file.
-        assert ancil_name in md['lineage']['ancillary']
-        # Ensure it has an access time
-        assert md['lineage']['ancillary'][ancil_name]['access_dt'] is not None
-        # Clear the access time: we can't compare it accurately (short of mocking)
-        del md['lineage']['ancillary'][ancil_name]['access_dt']
+    prepare_datasets_for_comparison(
+        EXPECTED_METADATA,
+        md,
+        ancil_files,
+        output_dataset.joinpath('product')
+    )
 
     assert_same(md, EXPECTED_METADATA)
 
@@ -170,6 +126,7 @@ def test_package():
 
     expected_filenames = [
         'additional/20141201_20010425_B6_gqa_results.yaml',
+        'additional/lpgs_out.xml',
         'additional/work_order.xml',
         'browse.fr.jpg',
         'browse.jpg',
@@ -344,30 +301,40 @@ EXPECTED_METADATA = {
         }
     },
     'gqa': {
-        'abs_iterative_mean_residual_x': 1.3,
-        'abs_iterative_mean_residual_y': 1.2,
+        'ref_source': 'GLS_v1',
+        'mean_residual': {
+            'y': 0.148098508713876,
+            'x': -0.18180196558570483
+        },
         'acq_day': datetime.date(2014, 12, 1),
-        # Bands are always strings. They can have odd names ("6_vcid_1").
-        'band': '6',
-        'blue': 120,
-        'cep90': 212.0,
-        'final_gcp_count': 1493,
-        'green': 340,
-        'iterative_mean_residual_x': -0.4,
-        'iterative_mean_residual_y': 0.5,
-        'iterative_stddev_residual_x': 2.5,
-        'iterative_stddev_residual_y': 2.5,
-        'mean_residual_x': -0.4,
-        'mean_residual_y': 0.5,
-        'red': 321,
         'ref_day': datetime.date(2001, 4, 25),
-        'residual_x': 1.9,
-        'residual_y': 1.8,
-        'sceneid': 'LS8_OLITIRS_OTH_P51_GALPGS01-032_099_072_20141201',
-        'stddev_residual_x': 3.6,
-        'stddev_residual_y': 3.6,
-        'teal': 735,
-        'yellow': 98,
+        # Bands are always strings as they can have letters.
+        'band': '6',
+        'final_gcp_count': 1461,
+        'iterative_mean_residual': {
+            'y': 0.05311033766826375,
+            'x': -0.14231046315309148
+        },
+        'abs_iterative_mean_residual': {
+            'y': 0.6841843509012092,
+            'x': 0.6114941044946384
+        },
+        'residual': {
+            'y': 0.9375190000000001,
+            'x': 0.8409989999999999
+        },
+        'colors': {
+            'blue': 121.0, 'green': 843.0, 'teal': 319.0, 'yellow': 104.0, 'red': 124.0
+        },
+        'iterative_stddev_residual': {
+            'y': 1.382672269713929,
+            'x': 1.263801209338813
+        },
+        'stddev_residual': {
+            'y': 2.361825254310523,
+            'x': 2.3751053554108696
+        },
+        'cep90': 79.42727444360659
     },
     'acquisition':
         {

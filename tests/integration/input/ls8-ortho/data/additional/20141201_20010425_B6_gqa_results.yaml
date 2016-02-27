@@ -1,0 +1,28 @@
+abs_iterative_mean_residual:
+    x: 0.6114941044946384
+    y: 0.6841843509012092
+cep90: 79.42727444360659
+colors:
+    blue: 121.0
+    green: 843.0
+    red: 124.0
+    teal: 319.0
+    yellow: 104.0
+final_gcp_count: 1461
+iterative_mean_residual:
+    x: -0.14231046315309148
+    y: 0.05311033766826375
+iterative_stddev_residual:
+    x: 1.263801209338813
+    y: 1.382672269713929
+mean_residual:
+    x: -0.18180196558570483
+    y: 0.148098508713876
+ref_source: GLS_v1
+residual:
+    x: 0.8409989999999999
+    y: 0.9375190000000001
+scene_id: scenes
+stddev_residual:
+    x: 2.3751053554108696
+    y: 2.361825254310523
