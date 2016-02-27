@@ -8,6 +8,9 @@ import binascii
 import datetime
 import hashlib
 import socket
+import tempfile
+
+from pathlib import Path
 
 import eodatasets
 from eodatasets.package import _RUNTIME_ID
@@ -123,3 +126,27 @@ def prepare_datasets_for_comparison(expected_md, output_md, ancil_files, product
         assert output_ancil['access_dt'] is not None
         # Clear the access time: we can't compare it accurately (short of mocking)
         del output_ancil['access_dt']
+
+
+def prepare_work_order(ancil_files, work_order_template_path):
+    """
+
+    :type ancil_files: tuple[FakeAncilFile]
+    :type work_order_template_path: pathlib.Path
+    :rtype: pathlib.Path
+    """
+    # Create the dummy Ancil files.
+    for ancil in ancil_files:
+        ancil.create()
+
+    work_dir = Path(tempfile.mkdtemp())
+    # Write a work order with ancillary locations replaced.
+    output_work_order = work_dir.joinpath('work_order.xml')
+    with work_order_template_path.open('rb') as wo:
+        wo_text = wo.read().decode('utf-8').format(
+            **{a.type_ + '_path': a.file_path for a in ancil_files}
+        )
+        with output_work_order.open('w') as out_wo:
+            out_wo.write(wo_text)
+
+    return output_work_order

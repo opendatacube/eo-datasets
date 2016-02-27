@@ -1,0 +1,29 @@
+id: b2a8f768-5e31-11e5-b592-ac162d791418
+ga_label: LS7_ETM_STD-RCC_P00_L7EB2013230232923ASA213_0_0_20130818T232923Z20130818T233416
+ga_level: P00
+product_type: satellite_telemetry_data
+creation_dt: 2015-09-18 18:18:21.878054
+size_bytes: 5488246784
+checksum_path: package.sha1
+platform:
+    code: LANDSAT_7
+instrument:
+    name: ETM
+    operation_mode: BUMPER
+format:
+    name: RCC
+    version: 0
+usgs:
+    interval_id: L7EB2013230232923ASA213
+acquisition:
+    aos: 2013-08-18 23:29:23
+    los: 2013-08-18 23:34:16
+    groundstation:
+        code: ASA
+        label: Alice Springs
+        eods_domain_code: '002'
+image:
+    bands: {}
+lineage:
+    machine: {}
+    source_datasets: {}

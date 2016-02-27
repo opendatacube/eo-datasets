@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LandsatProcessingResult status="success">
+	<Message>Processing was successful</Message>
+	<LandsatProcessingRequest id="LS7-20130818" version="2">
+		<Input format="RCC" satellite="LANDSAT7" sensor="ETM">
+			<WorkingFolder cleanBefore="TRUE" cleanAfter="FALSE">/g/data/v10/agdc/jez/galpgs/test-out2-ls7/tmp/LS7_ETM_STD-RCC_P00_L7EB2013230232923ASA213_0_0_20130818T232923Z20130818T233416/lpgs-work</WorkingFolder>
+			<InputPath linkInput="TRUE">/g/data/v10/agdc/jez/galpgs/test-in/ls7/LS7_ETM_STD-RCC_P00_L7EB2013230232923ASA213_0_0_20130818T232923Z20130818T233416_1/product</InputPath>
+		</Input>
+	</LandsatProcessingRequest>
+	<Version>4.1.4009</Version>
+	<HostName>r49</HostName>
+	<StartTime>2016-02-26T11:44:22</StartTime>
+	<StopTime>2016-02-26T12:40:02</StopTime>
+	<TotalTime>00:55:40</TotalTime>
+	<L0RaProcessing status="succeeded"/>
+	<L0RpProcessing maxConcurrentScenes="13" fail="0" busy="0" queued="0" success="10" canceled="0" timedout="0">
+		<Succeeded sceneType="partial">088_074_074</Succeeded>
+		<Succeeded sceneType="full">088_075_075</Succeeded>
+		<Succeeded sceneType="full">088_076_076</Succeeded>
+		<Succeeded sceneType="full">088_077_077</Succeeded>
+		<Succeeded sceneType="full">088_078_078</Succeeded>
+		<Succeeded sceneType="full">088_079_079</Succeeded>
+		<Succeeded sceneType="full">088_080_080</Succeeded>
+		<Succeeded sceneType="full">088_081_081</Succeeded>
+		<Succeeded sceneType="full">088_082_082</Succeeded>
+		<Succeeded sceneType="partial">088_083_083</Succeeded>
+	</L0RpProcessing>
+	<L1Processing maxConcurrentScenes="13" fail="1" busy="0" queued="0" success="9" canceled="0" timedout="0" L1R="0" L1G="7" L1Gt="0" L1T="2">
+		<Succeeded sceneType="full" level="L1G">088_075_075</Succeeded>
+		<Succeeded sceneType="full" level="L1T">088_082_082</Succeeded>
+		<Succeeded sceneType="full" level="L1G">088_076_076</Succeeded>
+		<Succeeded sceneType="full" level="L1G">088_077_077</Succeeded>
+		<Failed sceneType="partial" level="L1T">088_074_074</Failed>
+		<Succeeded sceneType="partial" level="L1G">088_083_083</Succeeded>
+		<Succeeded sceneType="full" level="L1G">088_080_080</Succeeded>
+		<Succeeded sceneType="full" level="L1G">088_079_079</Succeeded>
+		<Succeeded sceneType="full" level="L1T">088_081_081</Succeeded>
+		<Succeeded sceneType="full" level="L1G">088_078_078</Succeeded>
+	</L1Processing>
+</LandsatProcessingResult>

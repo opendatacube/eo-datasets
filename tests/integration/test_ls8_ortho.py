@@ -10,7 +10,8 @@ import yaml
 from pathlib import Path
 
 from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
-from tests.integration import load_checksum_filenames, hardlink_arg, prepare_datasets_for_comparison, FakeAncilFile
+from tests.integration import load_checksum_filenames, hardlink_arg, prepare_datasets_for_comparison, FakeAncilFile, \
+    prepare_work_order
 
 #: :type: Path
 
@@ -26,7 +27,7 @@ assert parent_dataset.exists()
 additional_files = source_folder.joinpath('data', 'additional')
 assert additional_files.exists()
 
-WO_PATH = source_folder.joinpath('work_order.xml')
+work_order_template_path = source_folder.joinpath('work_order.xml')
 
 
 @integration_test
@@ -43,18 +44,7 @@ def test_package():
         FakeAncilFile(ancil_path, 'bpf_tirs', 'LT8BPF20140116023714_20140116032836.02'),
         FakeAncilFile(ancil_path, 'rlut', 'L8RLUT20130211_20431231v09.h5', folder_offset=('2013',)),
     )
-    # Create the dummy Ancil files.
-    for ancil in ancil_files:
-        ancil.create()
-
-    # Write a work order with ancillary locations replaced.
-    output_work_order = work_path.joinpath('work_order.xml')
-    with WO_PATH.open('rb') as wo:
-        wo_text = wo.read().decode('utf-8').format(
-            **{a.type_ + '_path': a.file_path for a in ancil_files}
-        )
-        with output_work_order.open('w') as out_wo:
-            out_wo.write(wo_text)
+    work_order_path = prepare_work_order(ancil_files, work_order_template_path)
 
     # Run!
     args = [
@@ -62,7 +52,7 @@ def test_package():
         'ortho',
         '--newly-processed',
         '--parent', str(parent_dataset),
-        '--add-file', str(output_work_order)
+        '--add-file', str(work_order_path)
     ]
     for additional_file in additional_files.iterdir():
         args.extend(['--add-file', str(additional_file)])

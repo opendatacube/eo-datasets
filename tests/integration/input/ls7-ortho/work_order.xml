@@ -1,0 +1,54 @@
+<?xml version="1.0" ?>
+<LandsatProcessingRequest id="LS7-20130818" version="2">
+    <Input format="RCC" satellite="Landsat7" sensor="ETM+">
+    <WorkingFolder cleanAfter="no"
+                   cleanBefore="yes">/g/data/v10/agdc/jez/galpgs/test-out2-ls7/tmp/LS7_ETM_STD-RCC_P00_L7EB2013230232923ASA213_0_0_20130818T232923Z20130818T233416/lpgs-work</WorkingFolder>
+    <InputPath linkInput="yes">/g/data/v10/agdc/jez/galpgs/test-in/ls7/LS7_ETM_STD-RCC_P00_L7EB2013230232923ASA213_0_0_20130818T232923Z20130818T233416_1/product</InputPath>
+    <Segment></Segment>
+    </Input>
+
+    
+
+    <L0RaProcessing>
+        <CalibrationFile>
+            {cpf_path}
+        </CalibrationFile>
+    </L0RaProcessing>
+
+    <L0RpProcessing maxConcurrentScenes="13">
+        <CalibrationFile>
+            {cpf_path}
+        </CalibrationFile>
+    </L0RpProcessing>
+
+    <L1Processing maxConcurrentScenes="13">
+
+        <Parameters datum="GDA94"
+                    fallBackResampling="CC"
+                    hemisphere="S"
+                    orientationL1T="NUP"
+                    orientationL1GT="NUP"
+                    orientationL1G="NUP"
+                    outputFormat="GeoTIFF"
+                    panchromaticResolution="12.5"
+                    pixelOrigin="UL"
+                    productType="L1T"
+                    projection="UTM"
+                    radiometricCorrection="CPF"
+                    reflectiveResolution="25.0"
+                    resampling="CC"
+                    scanGapInterpolation="0"
+                    thermalResolution="25.0"
+                    fallBackToL1Gt="false"
+                    fallBackToL1G="true"
+                    fallBackToL1R="false"
+                    scenePadding="40"/>
+        <L1T>
+            <Parameters minimumRequiredGCPs="30"/>
+            <DEM format="srtm90">/g/data/v10/eoancillarydata/elevation/USGS_SRTM</DEM>
+            <GCP format="chips_30">/g/data/v10/eoancillarydata/GCP/Phase2_GCP</GCP>
+        </L1T>
+        <EphemerisFile>/g/data/v10/eoancillarydata/sensor-specific/LANDSAT7/DefinitiveEphemeris/LS7_YEAR/2013/L72013231ASADEF.S00</EphemerisFile>
+        <OutputPath additionalMetadata="false">/g/data/v10/agdc/jez/galpgs/test-out2-ls7/tmp/LS7_ETM_STD-RCC_P00_L7EB2013230232923ASA213_0_0_20130818T232923Z20130818T233416/scenes</OutputPath>
+    </L1Processing>
+</LandsatProcessingRequest>
