@@ -39,6 +39,7 @@ def test_package():
     # We have to override the ancillary directory lookup as they won't exist on test systems.
     ancil_files = (
         FakeAncilFile(ancil_base, 'cpf', 'L8CPF20140101_20140331.05'),
+        FakeAncilFile(ancil_base, 'ephemeris', 'L72013231ASADEF.S00'),
     )
     work_order = prepare_work_order(ancil_files, wo_template)
 
@@ -277,6 +278,9 @@ EXPECTED_METADATA = {
         'ancillary': {
             'cpf': {
                 'name': 'L8CPF20140101_20140331.05',
+            },
+            'ephemeris': {
+                'name': 'L72013231ASADEF.S00'
             }
         },
         'algorithm': {

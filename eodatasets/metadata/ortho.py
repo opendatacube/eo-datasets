@@ -196,22 +196,21 @@ def _remove_missing(dict_):
     return {k: v for k, v in dict_.items() if v is not None}
 
 
-def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset, order_dir_offset):
-    file_name = _get(mtl_doc, *mtl_name_offset)
-    if not file_name:
-        return None
+def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset=None, order_dir_offset=None):
+    specified_path = _get_node_text(order_dir_offset, wo_doc) if order_dir_offset and wo_doc else None
+    used_file_name = _get(mtl_doc, *mtl_name_offset) if mtl_name_offset and mtl_doc else None
 
-    file_search_directory = _get_node_text(order_dir_offset, wo_doc) if wo_doc else None
+    if not specified_path or not specified_path.exists():
+        _LOG.warning('No path found to locate ancillary file %s', used_file_name)
+        if not used_file_name:
+            return None
+        return ptype.AncillaryMetadata(name=used_file_name)
 
-    if not file_search_directory or not file_search_directory.exists():
-        _LOG.warning('No path found to locate ancillary file %s', file_name)
-        return ptype.AncillaryMetadata(name=file_name)
-
-    if file_search_directory.is_file():
+    if specified_path.is_file():
         # They specified an exact file to Pinkmatter rather than a search directory.
-        file_path = file_search_directory
+        file_path = specified_path
     else:
-        file_path = _get_file(file_search_directory, file_name)
+        file_path = _get_file(specified_path, used_file_name)
 
     _LOG.info('Found ancillary path %s', file_path)
     return ptype.AncillaryMetadata.from_file(file_path)
@@ -219,6 +218,9 @@ def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset, order_dir_offset):
 
 def _get_node_text(offset, parsed_doc):
     xml_node = parsed_doc.findall(offset)
+    if not xml_node:
+        _LOG.debug('XML doesn’t contain offset %r', offset)
+        return None
     file_search_directory = Path(str(xml_node[0].text).strip())
     return file_search_directory
 
@@ -276,6 +278,11 @@ def _get_ancil_files(mtl_doc, work_order_doc):
             mtl_doc, work_order_doc,
             mtl_name_offset=('PRODUCT_METADATA', 'rlut_file_name'),
             order_dir_offset='./L1Processing/RlutFile'
+        ),
+        'ephemeris': _get_ancillary_metadata(
+            mtl_doc, work_order_doc,
+            mtl_name_offset=None,
+            order_dir_offset='./L1Processing/EphemerisFile'
         )
     })
     return ancil_files

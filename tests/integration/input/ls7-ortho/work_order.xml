@@ -48,7 +48,7 @@
             <DEM format="srtm90">/g/data/v10/eoancillarydata/elevation/USGS_SRTM</DEM>
             <GCP format="chips_30">/g/data/v10/eoancillarydata/GCP/Phase2_GCP</GCP>
         </L1T>
-        <EphemerisFile>/g/data/v10/eoancillarydata/sensor-specific/LANDSAT7/DefinitiveEphemeris/LS7_YEAR/2013/L72013231ASADEF.S00</EphemerisFile>
+        <EphemerisFile>{ephemeris_path}</EphemerisFile>
         <OutputPath additionalMetadata="false">/g/data/v10/agdc/jez/galpgs/test-out2-ls7/tmp/LS7_ETM_STD-RCC_P00_L7EB2013230232923ASA213_0_0_20130818T232923Z20130818T233416/scenes</OutputPath>
     </L1Processing>
 </LandsatProcessingRequest>
