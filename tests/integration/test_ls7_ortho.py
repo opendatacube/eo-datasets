@@ -151,7 +151,10 @@ def test_package():
 EXPECTED_METADATA = {
     'checksum_path': 'package.sha1',
     'extent': {
-        'center_dt': datetime.datetime(2013, 8, 18, 23, 29, 40, 486803), 'coord': {
+        'center_dt': datetime.datetime(2013, 8, 18, 23, 29, 40, 486803),
+        'from_dt': datetime.datetime(2013, 8, 18, 23, 29, 27, 0),
+        'to_dt': datetime.datetime(2013, 8, 18, 23, 29, 53, 0),
+        'coord': {
             'ul': {
                 'lat': -20.701634, 'lon': 155.103565}, 'll': {
                 'lat': -22.576483, 'lon': 155.052864}, 'ur': {

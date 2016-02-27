@@ -7,6 +7,7 @@ import logging
 import re
 import xml.etree.cElementTree as etree
 
+import dateutil.parser
 from pathlib import Path
 
 import eodatasets.type as ptype
@@ -28,12 +29,21 @@ def populate_ortho(md, base_folder, additional_files):
     work_order = _find_one('work_order.xml', additional_files) or _find_parent_file(base_folder, 'work_order.xml')
     lpgs_out = _find_one('lpgs_out.xml', additional_files) or _find_parent_file(base_folder, 'lpgs_out.xml')
 
+    # In the same folder as the MTL is an XML file with start/stop times. An "EODS_DATASET", but output by Pinkmatter?
+    pseudo_eods_metadata = list(mtl_path.parent.glob('L*.xml'))
+
     return _populate_ortho_from_files(
         base_folder, md,
         mtl_path=mtl_path,
         work_order_path=work_order,
-        lpgs_out_path=lpgs_out
+        lpgs_out_path=lpgs_out,
+        pseudo_eods_metadata=pseudo_eods_metadata[0] if pseudo_eods_metadata else None
     )
+
+
+def _xml_val(doc):
+    from_dt = doc.findall("./EXEXTENT/TEMPORALEXTENTFROM")[0].text
+    return from_dt
 
 
 def _find_one(pattern, files):
@@ -197,7 +207,8 @@ def _remove_missing(dict_):
 
 
 def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset=None, order_dir_offset=None):
-    specified_path = _get_node_text(order_dir_offset, wo_doc) if order_dir_offset and wo_doc else None
+    #: :type: Path
+    specified_path = _get_node_text(order_dir_offset, wo_doc, Path) if order_dir_offset and wo_doc else None
     used_file_name = _get(mtl_doc, *mtl_name_offset) if mtl_name_offset and mtl_doc else None
 
     if not specified_path or not specified_path.exists():
@@ -216,16 +227,17 @@ def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset=None, order_dir_off
     return ptype.AncillaryMetadata.from_file(file_path)
 
 
-def _get_node_text(offset, parsed_doc):
+def _get_node_text(offset, parsed_doc, type_):
     xml_node = parsed_doc.findall(offset)
     if not xml_node:
         _LOG.debug('XML doesn’t contain offset %r', offset)
         return None
-    file_search_directory = Path(str(xml_node[0].text).strip())
-    return file_search_directory
+
+    return type_(str(xml_node[0].text).strip())
 
 
-def _populate_ortho_from_files(base_folder, md, mtl_path, work_order_path, lpgs_out_path):
+def _populate_ortho_from_files(base_folder, md, mtl_path, work_order_path,
+                               lpgs_out_path=None, pseudo_eods_metadata=None):
     if not md:
         md = ptype.DatasetMetadata()
     if not base_folder:
@@ -249,6 +261,13 @@ def _populate_ortho_from_files(base_folder, md, mtl_path, work_order_path, lpgs_
 
         md.lineage.machine.note_software_version('pinkmatter', str(pinkmatter_version))
         # We could read the processing hostname, start & stop times too. Do we care? We get it elsewhere.
+
+    if pseudo_eods_metadata:
+        doc = _load_xml(pseudo_eods_metadata)
+        from_dt = _get_node_text("./EXEXTENT/TEMPORALEXTENTFROM", doc, dateutil.parser.parse)
+        md.extent.from_dt = md.extent.from_dt or from_dt
+        to_dt = _get_node_text("./EXEXTENT/TEMPORALEXTENTTO", doc, dateutil.parser.parse)
+        md.extent.to_dt = md.extent.to_dt or to_dt
 
     return md
 
