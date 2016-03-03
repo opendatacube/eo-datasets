@@ -611,7 +611,9 @@ class NbarDriver(DatasetDriver):
             source_ortho = dataset.lineage.source_datasets['ortho']
             borrow_single_sourced_fields(dataset, source_ortho)
 
-        md_image.populate_from_image_metadata(dataset)
+            # TODO, it'd be better to grab this from the images, but they're generated after
+            # this code is run. Copying from Source will do for now
+            dataset.grid_spatial = dataset.lineage.source_datasets['ortho'].grid_spatial
 
         if not dataset.lineage:
             dataset.lineage = ptype.LineageMetadata()
@@ -849,6 +851,10 @@ class PqaDriver(DatasetDriver):
         if 'nbar_brdf' in dataset.lineage.source_datasets:
             source_ortho = dataset.lineage.source_datasets['nbar_brdf']
             borrow_single_sourced_fields(dataset, source_ortho)
+
+            # TODO, it'd be better to grab this from the images, but they're generated after
+            # this code is run. Copying from Source will do for now
+            dataset.grid_spatial = dataset.lineage.source_datasets['nbar_brdf'].grid_spatial
 
         dataset.format_ = ptype.FormatMetadata('GeoTIFF')
 

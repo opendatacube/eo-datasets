@@ -36,6 +36,27 @@ image:
         x: 90
         y: 81
     bands: {}
+grid_spatial:
+    projection:
+        geo_ref_points:
+            ul:
+                x: 194012.5
+                y: 6761987.5
+            ur:
+                x: 424012.5
+                y: 6761987.5
+            ll:
+                x: 194012.5
+                y: 6528987.5
+            lr:
+                x: 424012.5
+                y: 6528987.5
+        datum: GDA94
+        ellipsoid: GRS80
+        map_projection: UTM
+        orientation: NORTH_UP
+        resampling_option: CUBIC_CONVOLUTION
+        zone: -56
 lineage:
     machine: {}
     source_datasets:

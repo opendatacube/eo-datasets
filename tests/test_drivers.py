@@ -100,7 +100,35 @@ _EXPECTED_NBAR = ptype.DatasetMetadata(
         source_datasets={'ortho': test_ls8.EXPECTED_OUT},
         algorithm=ptype.AlgorithmMetadata(name='terrain', version='1.0'),
         machine=ptype.MachineMetadata(software_versions={'nbar': '1.0'}),
-    )
+    ),
+    grid_spatial=ptype.GridSpatialMetadata(
+        projection=ptype.ProjectionMetadata(
+            geo_ref_points=ptype.PointPolygon(
+                ul=ptype.Point(
+                    x=397012.5,
+                    y=7235987.5
+                ),
+                ur=ptype.Point(
+                    x=625012.5,
+                    y=7235987.5
+                ),
+                ll=ptype.Point(
+                    x=397012.5,
+                    y=7013987.5
+                ),
+                lr=ptype.Point(
+                    x=625012.5,
+                    y=7013987.5
+                )
+            ),
+            datum='GDA94',
+            ellipsoid='GRS80',
+            map_projection='UTM',
+            orientation='NORTH_UP',
+            resampling_option='CUBIC_CONVOLUTION',
+            zone=-53
+        )
+    ),
 )
 
 _EXPECTED_PQA = ptype.DatasetMetadata(
@@ -125,7 +153,35 @@ _EXPECTED_PQA = ptype.DatasetMetadata(
     ),
     lineage=ptype.LineageMetadata(
         source_datasets={'nbar_brdf': _EXPECTED_NBAR}
-    )
+    ),
+    grid_spatial=ptype.GridSpatialMetadata(
+        projection=ptype.ProjectionMetadata(
+            geo_ref_points=ptype.PointPolygon(
+                ul=ptype.Point(
+                    x=397012.5,
+                    y=7235987.5
+                ),
+                ur=ptype.Point(
+                    x=625012.5,
+                    y=7235987.5
+                ),
+                ll=ptype.Point(
+                    x=397012.5,
+                    y=7013987.5
+                ),
+                lr=ptype.Point(
+                    x=625012.5,
+                    y=7013987.5
+                )
+            ),
+            datum='GDA94',
+            ellipsoid='GRS80',
+            map_projection='UTM',
+            orientation='NORTH_UP',
+            resampling_option='CUBIC_CONVOLUTION',
+            zone=-53
+        )
+    ),
 )
 
 

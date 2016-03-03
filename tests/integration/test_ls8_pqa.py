@@ -115,6 +115,22 @@ EXPECTED_METADATA = {
             'code': 'LGN'
         }
     },
+    'grid_spatial': {
+        'projection': {
+            'map_projection': 'UTM',
+            'datum': 'GDA94',
+            'geo_ref_points': {
+                'll': {'x': 194012.5, 'y': 6528987.5},
+                'lr': {'x': 424012.5, 'y': 6528987.5},
+                'ul': {'x': 194012.5, 'y': 6761987.5},
+                'ur': {'x': 424012.5, 'y': 6761987.5}
+            },
+            'resampling_option': 'CUBIC_CONVOLUTION',
+            'ellipsoid': 'GRS80',
+            'orientation': 'NORTH_UP',
+            'zone': -56
+        }
+    },
     'browse': {
         'medium': {
             'cell_size': 0.9765625,
@@ -164,6 +180,22 @@ EXPECTED_METADATA = {
                         'label': 'Landsat Ground Network',
                         'eods_domain_code': '032',
                         'code': 'LGN'
+                    }
+                },
+                'grid_spatial': {
+                    'projection': {
+                        'map_projection': 'UTM',
+                        'datum': 'GDA94',
+                        'geo_ref_points': {
+                            'll': {'x': 194012.5, 'y': 6528987.5},
+                            'lr': {'x': 424012.5, 'y': 6528987.5},
+                            'ul': {'x': 194012.5, 'y': 6761987.5},
+                            'ur': {'x': 424012.5, 'y': 6761987.5}
+                        },
+                        'resampling_option': 'CUBIC_CONVOLUTION',
+                        'ellipsoid': 'GRS80',
+                        'orientation': 'NORTH_UP',
+                        'zone': -56
                     }
                 },
                 'checksum_path': 'package.sha1',
