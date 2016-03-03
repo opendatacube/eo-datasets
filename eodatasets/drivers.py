@@ -10,9 +10,9 @@ import xml.etree.cElementTree as etree
 import yaml
 
 try:
-    from yaml import CSafeLoader as SafeLoader
+    from yaml import CSafeLoader as Loader
 except ImportError:
-    from yaml import SafeLoader
+    from yaml import Loader
 from dateutil.parser import parse
 from pathlib import Path
 
@@ -604,7 +604,7 @@ class NbarDriver(DatasetDriver):
         """
 
         with open(str(path.joinpath(NbarDriver.METADATA_FILE))) as f:
-            nbar_metadata = yaml.load(f, Loader=SafeLoader)
+            nbar_metadata = yaml.load(f, Loader=Loader)
 
         # Copy relevant fields from source ortho.
         if 'ortho' in dataset.lineage.source_datasets:
