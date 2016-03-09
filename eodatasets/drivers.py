@@ -504,7 +504,12 @@ class NbarDriver(DatasetDriver):
         self.subset_name = subset_name
 
     def get_id(self):
-        return 'nbar_{}'.format(self.subset_name)
+        if self.subset_name == 'brdf':
+            return 'NBAR'
+        elif self.subset_name == 'terrain':
+            return 'NBART'
+        else:
+            raise RuntimeError('Unknown type of nbar')
 
     def expected_source(self):
         return OrthoDriver()

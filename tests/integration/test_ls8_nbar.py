@@ -92,7 +92,7 @@ def test_package():
 
 EXPECTED_METADATA = {
     'id': None,
-    'product_type': 'nbar_brdf',
+    'product_type': 'NBAR',
     'checksum_path': 'package.sha1',
     'ga_label': 'LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126',
     'ga_level': 'P54',
