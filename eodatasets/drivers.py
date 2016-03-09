@@ -498,42 +498,27 @@ def borrow_single_sourced_fields(dataset, source_dataset):
 
 class NbarDriver(DatasetDriver):
     METADATA_FILE = 'nbar-metadata.yml'
+    product_ids = {'brdf': 'nbar',
+                   'terrain': 'nbart'}
 
     def __init__(self, subset_name):
         # Subset is typically "brdf" or "terrain" -- which NBAR portion to package.
+        self.product_id = self.product_ids[subset_name]
         self.subset_name = subset_name
 
     def get_id(self):
-        if self.subset_name == 'brdf':
-            return 'NBAR'
-        elif self.subset_name == 'terrain':
-            return 'NBART'
-        else:
-            raise RuntimeError('Unknown type of nbar')
+        return self.product_id
 
     def expected_source(self):
         return OrthoDriver()
 
-    def is_brdf(self):
-        return self.subset_name == 'brdf'
-
     def get_ga_label(self, dataset):
         # Example: LS8_OLITIRS_NBAR_P51_GALPGS01-032_090_085_20140115
-
-        codes = {
-            'terrain': 'NBART',
-            'brdf': 'NBAR'
-        }
-
-        nbar_type = codes.get(self.subset_name)
-        if not nbar_type:
-            raise ValueError('Unknown nbar subset type: %r.'
-                             'Expected one of %r' % (self.subset_name, codes.keys()))
 
         return _fill_dataset_label(
             dataset,
             '{satnumber}_{sensor}_{nbartype}_{galevel}_GA{nbartype}01-{stationcode}_{path}_{rows}_{day}',
-            nbartype=nbar_type
+            nbartype=self.product_id.upper()
         )
 
     def _read_band_number(self, file_path):
@@ -542,7 +527,7 @@ class NbarDriver(DatasetDriver):
         :return:
         >>> NbarDriver('brdf')._read_band_number(Path('reflectance_brdf_2.bin'))
         '2'
-        >>> NbarDriver('brdf')._read_band_number(Path('reflectance_terrain_7.bin'))
+        >>> NbarDriver('terrain')._read_band_number(Path('reflectance_terrain_7.bin'))
         '7'
         >>> p = Path('/tmp/something/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B4.tif')
         >>> NbarDriver('brdf')._read_band_number(p)
@@ -566,7 +551,7 @@ class NbarDriver(DatasetDriver):
         """
         # Skip hidden files and envi headers. (envi files are converted to tif during copy)
         return (file_path.suffix == '.bin' and
-                file_path.name.startswith('reflectance_%s' % self.subset_name))
+                file_path.name.startswith('reflectance_%s_' % self.subset_name))
 
     def translate_path(self, dataset, file_path):
         """
@@ -674,7 +659,7 @@ class NbarDriver(DatasetDriver):
     def _fill_algorithm_information(self, dataset, alg_src_info):
         alg_meta = ptype.AlgorithmMetadata(name=self.subset_name,
                                            version=str(alg_src_info['algorithm_version']))
-        if self.is_brdf():
+        if self.subset_name == 'brdf':
             alg_meta.doi = alg_src_info['nbar_doi']
         else:
             alg_meta.doi = alg_src_info['nbar_terrain_corrected_doi']
@@ -853,13 +838,13 @@ class PqaDriver(DatasetDriver):
         dataset.ga_level = 'P55'
 
         # Copy relevant fields from source nbar.
-        if 'nbar_brdf' in dataset.lineage.source_datasets:
-            source_ortho = dataset.lineage.source_datasets['nbar_brdf']
+        if 'nbar' in dataset.lineage.source_datasets:
+            source_ortho = dataset.lineage.source_datasets['nbar']
             borrow_single_sourced_fields(dataset, source_ortho)
 
             # TODO, it'd be better to grab this from the images, but they're generated after
             # this code is run. Copying from Source will do for now
-            dataset.grid_spatial = dataset.lineage.source_datasets['nbar_brdf'].grid_spatial
+            dataset.grid_spatial = dataset.lineage.source_datasets['nbar'].grid_spatial
 
         dataset.format_ = ptype.FormatMetadata('GeoTIFF')
 
@@ -900,7 +885,7 @@ PACKAGE_DRIVERS = {
     'raw': RawDriver(),
     'pqa': PqaDriver(),
     'ortho': OrthoDriver(),
-    'nbar_brdf': NbarDriver('brdf'),
-    'nbar_terrain': NbarDriver('terrain'),
+    'nbar': NbarDriver('brdf'),
+    'nbart': NbarDriver('terrain'),
     'eods': EODSDriver()
 }
