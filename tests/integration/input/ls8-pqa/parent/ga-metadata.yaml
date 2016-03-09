@@ -1,7 +1,7 @@
 id: eb858ce1-f87c-11e4-a817-1040f381a756
 ga_label: LS8_OLITIRS_NBAR_P54_GALPGS01-032_090_081_20140726
 ga_level: P54
-product_type: nbar_brdf
+product_type: nbar
 creation_dt: 2015-05-08 00:26:22
 size_bytes: 0
 checksum_path: package.sha1

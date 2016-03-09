@@ -152,7 +152,7 @@ _EXPECTED_PQA = ptype.DatasetMetadata(
         bands={}
     ),
     lineage=ptype.LineageMetadata(
-        source_datasets={'nbar_brdf': _EXPECTED_NBAR}
+        source_datasets={'nbar': _EXPECTED_NBAR}
     ),
     grid_spatial=ptype.GridSpatialMetadata(
         projection=ptype.ProjectionMetadata(
@@ -424,7 +424,7 @@ class TestDrivers(TestCase):
             id_=_EXPECTED_PQA.id_,
             lineage=ptype.LineageMetadata(
                 source_datasets={
-                    'nbar_brdf': _EXPECTED_NBAR
+                    'nbar': _EXPECTED_NBAR
                 }
             )
         )

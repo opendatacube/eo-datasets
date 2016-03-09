@@ -29,7 +29,7 @@ def test_package():
 
     run_packaging_cli([
         hardlink_arg(output_path, source_dataset),
-        'nbar_brdf',
+        'nbar',
         '--parent', str(parent_dataset),
         str(source_dataset), str(output_path)
     ])
@@ -92,7 +92,7 @@ def test_package():
 
 EXPECTED_METADATA = {
     'id': None,
-    'product_type': 'NBAR',
+    'product_type': 'nbar',
     'checksum_path': 'package.sha1',
     'ga_label': 'LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126',
     'ga_level': 'P54',

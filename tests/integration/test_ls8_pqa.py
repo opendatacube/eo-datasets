@@ -154,7 +154,7 @@ EXPECTED_METADATA = {
     },
     'lineage': {
         'source_datasets': {
-            'nbar_brdf': {
+            'nbar': {
                 'ga_level': 'P54',
                 'extent': {
                     'center_dt': datetime.datetime(2014, 7, 26, 23, 49, 0, 343853),
@@ -167,7 +167,7 @@ EXPECTED_METADATA = {
                 },
                 'platform': {'code': 'LANDSAT_8'},
                 'instrument': {'name': 'OLI_TIRS'},
-                'product_type': 'nbar_brdf',
+                'product_type': 'nbar',
                 'creation_dt': datetime.datetime(2015, 5, 8, 0, 26, 22),
                 'format': {'name': 'GeoTIFF'},
                 'ga_label': 'LS8_OLITIRS_NBAR_P54_GALPGS01-032_090_081_20140726',
