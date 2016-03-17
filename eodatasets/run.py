@@ -4,6 +4,7 @@ Higher-level commands to package directories on the filesystem.
 """
 from __future__ import absolute_import
 
+import shutil
 import tempfile
 from contextlib import contextmanager
 
@@ -130,7 +131,9 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
                 hard_link=hard_link,
                 additional_files=additional_files
             )
-
+            # Output package permissions should match the parent dir.
+            shutil.copymode(str(destination_path), str(temp_output_dir))
+            # Move finished folder into place.
             packaged_path = destination_path / dataset_id
             temp_output_dir.rename(packaged_path)
 
