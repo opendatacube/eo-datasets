@@ -552,11 +552,11 @@ class ImageMetadata(SimpleObject):
 
 
 class AlgorithmMetadata(SimpleObject):
-    def __init__(self, name=None, version=None, parameters=None, doi=None):
+    def __init__(self, name=None, version=None, doi=None, parameters=None):
         self.name = name
         self.version = version
-        self.parameters = parameters
         self.doi = doi
+        self.parameters = parameters
 
 
 class MachineMetadata(SimpleObject):
