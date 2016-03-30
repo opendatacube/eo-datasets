@@ -1,0 +1,34 @@
+algorithm_information:
+  pq_doi: http://dx.doi.org/10.1109/IGARSS.2013.6723746
+  software_version: 4.0rc1+3.g4e2ec05.dirty
+ancillary:
+  land_sea_mask:
+    accessed: 2016-03-22 09:13:29
+    change: 2015-12-23 02:33:17
+    data_file: /g/data/v10/eoancillarydata/Land_Sea_Rasters/WORLDzone56.tif
+    data_source: Rasterised Land/Sea Mask
+    modified: 2013-11-04 01:30:18
+    user: Joshua Sixsmith
+source_data:
+  source_l1t: /g/data/v10/reprocess/ls5/ortho/2006/01/LS5_TM_OTH_P51_GALPGS01-002_090_080_20060125
+  source_nbar: /g/data/v10/reprocess/ls5/nbar/packaged/2006/01/LS5_TM_NBAR_P54_GANBAR01-002_090_080_20060125
+system_information:
+  node: 'Linux r143 2.6.32-573.12.1.el6.x86_64 #1 SMP Tue Dec 15 21:19:08 UTC 2015
+    x86_64 x86_64 x86_64 GNU/Linux
+
+    '
+  time_processed: 2016-03-22 09:16:09.038322
+tests_run:
+  band_1_saturated: true
+  band_2_saturated: true
+  band_3_saturated: true
+  band_4_saturated: true
+  band_5_saturated: true
+  band_6_saturated: true
+  band_7_saturated: true
+  cloud_acca: true
+  cloud_fmask: true
+  cloud_shadow_acca: true
+  cloud_shadow_fmask: true
+  contiguity: true
+  land_obs: true

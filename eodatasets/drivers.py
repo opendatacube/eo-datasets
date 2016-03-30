@@ -815,6 +815,8 @@ class EODSDriver(DatasetDriver):
 
 
 class PqaDriver(DatasetDriver):
+    METADATA_FILE = 'pq_metadata.yml'
+
     def get_id(self):
         return 'pqa'
 
@@ -847,6 +849,34 @@ class PqaDriver(DatasetDriver):
             dataset.grid_spatial = dataset.lineage.source_datasets['nbar'].grid_spatial
 
         dataset.format_ = ptype.FormatMetadata('GeoTIFF')
+
+        with open(str(path.joinpath(NbarDriver.METADATA_FILE))) as f:
+            pq_metadata = yaml.load(f, Loader=Loader)
+
+        if not dataset.lineage:
+            dataset.lineage = ptype.LineageMetadata()
+
+        dataset.lineage.algorithm = ptype.AlgorithmMetadata(
+            name='pqa',
+            version=pq_metadata['algorithm_information']['software_version'],
+            doi=pq_metadata['algorithm_information']['pq_doi'])
+
+        # Add ancillary files
+        ancils = pq_metadata['ancillary']
+        ancil_files = {}
+        for name, values in ancils.items():
+            ancil_files[name] = ptype.AncillaryMetadata(
+                type_=name,
+                name=values['data_source'],
+                uri=values['data_file'],
+                file_owner=values['user'],
+                # PyYAML parses these as datetimes already.
+                access_dt=values['accessed'],
+                modification_dt=values['modified']
+            )
+
+        if ancil_files:
+            dataset.lineage.ancillary = ancil_files
 
         return dataset
 
