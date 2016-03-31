@@ -154,15 +154,17 @@ EXPECTED_METADATA = {
     },
     'lineage': {
         'algorithm': {
+            'name': 'pqa',
             'doi': 'http://dx.doi.org/10.1109/IGARSS.2013.6723746',
             'version': '4.0rc1+3.g4e2ec05.dirty'
         },
         'ancillary': {
             'land_sea_mask': {
                 'file_owner': 'Joshua Sixsmith',
-                'modification_dt': datetime.datetime(2013, 11, 04, 01, 30, 18),
-                'access_dt': datetime.datetime(2016, 3, 22, 09, 13, 29),
-                'type': 'Rasterised Land/Sea Mask',
+                'modification_dt': datetime.datetime(2013, 11, 4, 1, 30, 18),
+                'access_dt': datetime.datetime(2016, 3, 22, 9, 13, 29),
+                'type': 'land_sea_mask',
+                'name': 'Rasterised Land/Sea Mask',
                 'uri': '/g/data/v10/eoancillarydata/Land_Sea_Rasters/WORLDzone56.tif'},
         },
         'source_datasets': {

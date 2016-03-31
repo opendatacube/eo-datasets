@@ -152,6 +152,7 @@ _EXPECTED_PQA = ptype.DatasetMetadata(
         bands={}
     ),
     lineage=ptype.LineageMetadata(
+        algorithm=ptype.AlgorithmMetadata(name='pqa', version='1.0'),
         source_datasets={'nbar': _EXPECTED_NBAR}
     ),
     grid_spatial=ptype.GridSpatialMetadata(
@@ -417,7 +418,14 @@ class TestDrivers(TestCase):
 
     def test_pqa_fill(self):
         input_folder = write_files({
-            'pqa.tif': ''
+            'pqa.tif': '',
+            'pq_metadata.yml': dedent(
+                """
+                    algorithm_information:
+                        software_version: 1.0
+                        pq_doi:
+                    ancillary: {}
+                """)
         })
 
         dataset = ptype.DatasetMetadata(

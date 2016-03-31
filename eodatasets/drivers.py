@@ -75,8 +75,6 @@ class DatasetDriver(object):
         """
         Translate an input filename if desired.
 
-        Returning None will exclude the file from the output package.
-
         :type dataset: ptype.DatasetMetadata
         :type file_path: Path
         :rtype: Path
@@ -593,7 +591,7 @@ class NbarDriver(DatasetDriver):
         :rtype: ptype.DatasetMetadata
         """
 
-        with open(str(path.joinpath(NbarDriver.METADATA_FILE))) as f:
+        with open(str(path.joinpath(self.METADATA_FILE))) as f:
             nbar_metadata = yaml.load(f, Loader=Loader)
 
         # Copy relevant fields from source ortho.
@@ -850,7 +848,7 @@ class PqaDriver(DatasetDriver):
 
         dataset.format_ = ptype.FormatMetadata('GeoTIFF')
 
-        with open(str(path.joinpath(NbarDriver.METADATA_FILE))) as f:
+        with open(str(path.joinpath(self.METADATA_FILE))) as f:
             pq_metadata = yaml.load(f, Loader=Loader)
 
         if not dataset.lineage:
@@ -858,7 +856,7 @@ class PqaDriver(DatasetDriver):
 
         dataset.lineage.algorithm = ptype.AlgorithmMetadata(
             name='pqa',
-            version=pq_metadata['algorithm_information']['software_version'],
+            version=str(pq_metadata['algorithm_information']['software_version']),
             doi=pq_metadata['algorithm_information']['pq_doi'])
 
         # Add ancillary files
@@ -880,19 +878,21 @@ class PqaDriver(DatasetDriver):
 
         return dataset
 
+    def include_file(self, file_path):
+        return file_path.suffix.lower() == '.tif'
+
     def translate_path(self, dataset, file_path):
         """
         :type dataset: ptype.DatasetMetadata
         :type file_path: pathlib.Path
         :return:
         """
-        # Tif file will be renamed to contain the ga_label.
+        # Rename to contain the ga_label.
         suffix = file_path.suffix.lower()
         if suffix == '.tif':
             ga_label = self.get_ga_label(dataset)
             return file_path.with_name(ga_label + suffix)
         else:
-            # All other files keep the same name (log files etc, if any).
             return file_path
 
     def to_band(self, dataset, path):
