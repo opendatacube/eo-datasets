@@ -90,6 +90,21 @@ EXPECTED_METADATA = {
     'product_type': 'pqa',
     # Default creation date is the same as the input folder ctime.
     'creation_dt': datetime.datetime.utcfromtimestamp(source_dataset.stat().st_ctime),
+    'product_flags': {
+        'tested_band_1_saturated': True,
+        'tested_band_2_saturated': True,
+        'tested_band_3_saturated': True,
+        'tested_band_4_saturated': True,
+        'tested_band_5_saturated': True,
+        'tested_band_6_saturated': True,
+        'tested_band_7_saturated': True,
+        'tested_cloud_acca': True,
+        'tested_cloud_fmask': True,
+        'tested_cloud_shadow_acca': True,
+        'tested_cloud_shadow_fmask': True,
+        'tested_contiguity': True,
+        'tested_land_obs': True,
+    },
     'extent': {
         'center_dt': datetime.datetime(2014, 7, 26, 23, 49, 0, 343853),
         'coord': {

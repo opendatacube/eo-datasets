@@ -876,6 +876,13 @@ class PqaDriver(DatasetDriver):
         if ancil_files:
             dataset.lineage.ancillary = ancil_files
 
+        product_flags = {}
+        # Record which tests where run in 'product_flags'
+        for test_name, val in pq_metadata['tests_run'].items():
+            product_flags['tested_%s' % test_name] = val
+
+        dataset.product_flags = product_flags
+
         return dataset
 
     def include_file(self, file_path):

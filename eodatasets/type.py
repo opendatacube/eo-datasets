@@ -775,7 +775,8 @@ class DatasetMetadata(SimpleObject):
                  gqa=None,
                  browse=None,
                  image=None,
-                 lineage=None):
+                 lineage=None,
+                 product_flags=None):
         super(DatasetMetadata, self).__init__()
 
         self.id_ = id_ or uuid.uuid1()
@@ -846,6 +847,9 @@ class DatasetMetadata(SimpleObject):
         self.image = image
         #: :type: LineageMetadata
         self.lineage = lineage
+
+        # Product flags, eg. which PQ tests were run
+        self.product_flags = product_flags
 
 
 def rebase_path(from_root_path, to_root_path, path):

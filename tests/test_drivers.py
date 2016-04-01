@@ -389,6 +389,7 @@ class TestDrivers(TestCase):
                         arg25_doi:
                         nbar_doi:
                         nbar_terrain_corrected_doi:
+                    tests_run: {}
                     ancillary_data: {}
                 """),
         })
