@@ -155,6 +155,7 @@ _EXPECTED_PQA = ptype.DatasetMetadata(
         algorithm=ptype.AlgorithmMetadata(name='pqa', version='1.0'),
         source_datasets={'nbar': _EXPECTED_NBAR}
     ),
+    product_flags={},
     grid_spatial=ptype.GridSpatialMetadata(
         projection=ptype.ProjectionMetadata(
             geo_ref_points=ptype.PointPolygon(
