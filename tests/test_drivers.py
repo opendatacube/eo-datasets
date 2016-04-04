@@ -389,7 +389,6 @@ class TestDrivers(TestCase):
                         arg25_doi:
                         nbar_doi:
                         nbar_terrain_corrected_doi:
-                    tests_run: {}
                     ancillary_data: {}
                 """),
         })
@@ -426,6 +425,7 @@ class TestDrivers(TestCase):
                         software_version: 1.0
                         pq_doi:
                     ancillary: {}
+                    tests_run: {}
                 """)
         })
 
