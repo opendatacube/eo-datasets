@@ -39,7 +39,7 @@ def package_newly_processed_data_folder(driver, input_data_paths, destination_pa
     :type hard_link: bool
 
     :param additional_files: Additional files to record in the package.
-    :type additional_files: tuple[Path]
+    :type additional_files: list[Path]
     """
     return _package_folder(
         driver, input_data_paths, destination_path, parent_dataset_paths,
@@ -104,7 +104,7 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
     :type hard_link: bool
 
     :param additional_files: Additional files to record in the package.
-    :type additional_files: tuple[Path]
+    :type additional_files: list[Path]
 
     :return: list of created packages
     """
