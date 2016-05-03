@@ -261,7 +261,8 @@ def _copy_file(source_path, destination_path, compress_imagery=True, hard_link=F
                 'gdal_translate',
                 '--config', 'GDAL_CACHEMAX', '512',
                 '--config', 'TILED', 'YES',
-                '-co', 'COMPRESS=deflate',
+                '-co', 'COMPRESS=lzw',
+                '-co', 'predictor=2',
                 source_file, destination_file
             ]
         )
