@@ -564,7 +564,15 @@ class MachineMetadata(SimpleObject):
         'runtime_id': uuid.UUID
     }
 
-    def note_software_version(self, software_code, version):
+    def note_current_system_software(self):
+        """
+        Record versions for the registered software of this machine.
+        :return:
+        """
+        for software_code, (version, url) in _REGISTERED_SOFTWARE.items():
+            self.note_software_version(software_code, version, repo_url=url)
+
+    def note_software_version(self, software_code, version, repo_url=None):
         # TODO: Names are rather informal. Typically lowercase with underscores.
         if not self.software_versions:
             self.software_versions = {}
@@ -572,7 +580,10 @@ class MachineMetadata(SimpleObject):
         if software_code in self.software_versions:
             raise ValueError('Version already recorded for %s' % software_code)
 
-        self.software_versions[software_code] = version
+        if repo_url:
+            self.software_versions[software_code] = {'version': version, 'repo_url': repo_url}
+        else:
+            self.software_versions[software_code] = version
 
     def __init__(self, hostname=None, runtime_id=None, type_id=None, version=None, software_versions=None, uname=None):
         # Hostname the dataset was processed on.
@@ -938,3 +949,14 @@ def rebase_paths(source_path, destination_path, object_):
 
 # Circular reference.
 LineageMetadata.PROPERTY_PARSERS['source_datasets'] = DatasetMetadata.from_named_dicts
+
+
+def register_software_version(software_code, version, repo_url=None):
+    # TODO: Names are rather informal. Typically lowercase with underscores.
+    if software_code in _REGISTERED_SOFTWARE:
+        raise ValueError('Version already recorded for %s' % software_code)
+
+    _REGISTERED_SOFTWARE[software_code] = (version, repo_url)
+
+
+_REGISTERED_SOFTWARE = dict()

@@ -44,8 +44,16 @@ def init_locally_processed_dataset(directory, source_datasets, uuid_=None):
             source_datasets=source_datasets
         )
     )
-    md.lineage.machine.note_software_version('eodatasets', eodatasets.__version__)
+    _note_package_vers(md)
     return md
+
+
+def _note_package_vers(md):
+    md.lineage.machine.note_software_version(
+        'eodatasets',
+        eodatasets.__version__,
+        repo_url=eodatasets.REPO_URL
+    )
 
 
 def init_existing_dataset(directory, source_datasets, uuid_=None, source_hostname=None):
@@ -72,7 +80,7 @@ def init_existing_dataset(directory, source_datasets, uuid_=None, source_hostnam
             source_datasets=source_datasets
         )
     )
-    md.lineage.machine.note_software_version('eodatasets', eodatasets.__version__)
+    _note_package_vers(md)
     return md
 
 

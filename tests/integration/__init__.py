@@ -44,7 +44,10 @@ def add_default_software_versions(ds_dict):
     if 'software_versions' not in m:
         m['software_versions'] = {}
 
-    m['software_versions']['eodatasets'] = eodatasets.__version__
+    m['software_versions']['eodatasets'] = {
+        'version': eodatasets.__version__,
+        'repo_url': eodatasets.REPO_URL
+    }
 
     return ds_dict
 
