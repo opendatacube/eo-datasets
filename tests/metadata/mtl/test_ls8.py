@@ -24,7 +24,7 @@ EXPECTED_OUT = ptype.DatasetMetadata(
         name='OLI_TIRS'
     ),
     format_=ptype.FormatMetadata(
-        name='GEOTIFF'
+        name='GeoTIFF'
     ),
     acquisition=ptype.AcquisitionMetadata(
         groundstation=ptype.GroundstationMetadata(

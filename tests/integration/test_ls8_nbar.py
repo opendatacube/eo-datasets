@@ -579,7 +579,7 @@ EXPECTED_METADATA = {
                         'label': 'Alice Springs'
                     }
                 },
-                'format': {'name': 'GEOTIFF'},
+                'format': {'name': 'GeoTIFF'},
                 'lineage': {
                     'algorithm': {
                         'name': 'LPGS',

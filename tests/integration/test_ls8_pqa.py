@@ -244,7 +244,7 @@ EXPECTED_METADATA = {
                             'product_type': 'ortho',
                             'creation_dt': datetime.datetime(2015, 4, 7, 3, 25, 59),
                             'checksum_path': 'package.sha1',
-                            'format': {'name': 'GEOTIFF'},
+                            'format': {'name': 'GeoTIFF'},
                             'extent': {
                                 'center_dt': datetime.datetime(2014, 7, 26, 23, 49, 0, 343853),
                                 'coord': {

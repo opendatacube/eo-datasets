@@ -207,7 +207,7 @@ class InstrumentMetadata(SimpleObject):
 
 class FormatMetadata(SimpleObject):
     def __init__(self, name=None, version=None):
-        self.name = name
+        self.name = _normalise_format_name(name)
         self.version = version
 
 
@@ -242,6 +242,22 @@ class PointPolygon(Polygon):
         'll': Point.from_dict,
         'lr': Point.from_dict
     }
+
+
+def _normalise_format_name(name):
+    """
+    >>> _normalise_format_name('GEOTIFF')
+    'GeoTIFF'
+    >>> _normalise_format_name('MD')
+    'MD'
+    """
+    if not name:
+        return name
+
+    if name.lower() == 'geotiff':
+        return 'GeoTIFF'
+
+    return name
 
 
 class ExtentMetadata(SimpleObject):

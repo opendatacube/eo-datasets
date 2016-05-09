@@ -25,7 +25,7 @@ EXPECTED_OUT = ptype.DatasetMetadata(
         operation_mode='BUMPER'
     ),
     format_=ptype.FormatMetadata(
-        name='GEOTIFF'
+        name='GeoTIFF'
     ),
     acquisition=ptype.AcquisitionMetadata(
         groundstation=ptype.GroundstationMetadata(

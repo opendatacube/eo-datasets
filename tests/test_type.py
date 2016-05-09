@@ -683,7 +683,7 @@ class DeserializeTests(unittest.TestCase):
                                                      'lr': {'lat': -26.99055, 'lon': 136.25985},
                                                      'ul': {'lat': -24.98805, 'lon': 133.97954},
                                                      'ur': {'lat': -24.9864, 'lon': 136.23866}}},
-                                'format': {'name': 'GEOTIFF'},
+                                'format': {'name': 'GeoTIFF'},
                                 'usgs': {
                                     'interval_id': 'LC81010782014285LGN00'
                                 },

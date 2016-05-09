@@ -268,7 +268,7 @@ EXPECTED_METADATA = {
             'y': 75, 'x': 88},
         'cloud_cover_percentage': 0.0},
     'format': {
-        'name': 'GEOTIFF'
+        'name': 'GeoTIFF'
     },
     'lineage': {
         'machine': {

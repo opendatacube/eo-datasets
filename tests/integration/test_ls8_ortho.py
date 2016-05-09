@@ -151,7 +151,7 @@ EXPECTED_METADATA = {
     'usgs': {
         'scene_id': 'LC81120792014026ASA00'
     },
-    'format': {'name': 'GEOTIFF'},
+    'format': {'name': 'GeoTIFF'},
     # Creation date comes from the MTL.
     'creation_dt': datetime.datetime(2015, 4, 7, 0, 58, 8),
     'platform': {'code': 'LANDSAT_8'},
