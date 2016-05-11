@@ -65,3 +65,17 @@ def test_gqa():
         'repo_url': "https://github.com/GeoscienceAustralia/gqa.git",
         'version': "0.4+20.gb0d00dc"
     }
+
+
+def test_override_gqa_version():
+    md = ptype.DatasetMetadata(lineage=ptype.LineageMetadata(machine=ptype.MachineMetadata()))
+
+    md.lineage.machine.note_software_version('gqa', '0.0.0')
+    gqa.populate_from_gqa(md, _GQA_PATH)
+
+    # It should have overridden it (more specific).
+    assert 'gqa' in md.lineage.machine.software_versions
+    assert md.lineage.machine.software_versions['gqa'] == {
+        'repo_url': "https://github.com/GeoscienceAustralia/gqa.git",
+        'version': "0.4+20.gb0d00dc"
+    }

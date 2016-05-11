@@ -588,12 +588,12 @@ class MachineMetadata(SimpleObject):
         for software_code, (version, url) in _REGISTERED_SOFTWARE.items():
             self.note_software_version(software_code, version, repo_url=url)
 
-    def note_software_version(self, software_code, version, repo_url=None):
+    def note_software_version(self, software_code, version, repo_url=None, allow_override=False):
         # TODO: Names are rather informal. Typically lowercase with underscores.
         if not self.software_versions:
             self.software_versions = {}
 
-        if software_code in self.software_versions:
+        if (not allow_override) and (software_code in self.software_versions):
             raise ValueError('Version already recorded for %s' % software_code)
 
         if repo_url:

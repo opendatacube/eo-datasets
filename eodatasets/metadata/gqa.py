@@ -67,8 +67,13 @@ def populate_from_gqa(md, gqa_file):
 
     md.gqa = {}
     md.gqa.update(gqa_values)
-    md.lineage.machine.note_software_version('gqa', version=version, repo_url=repo)
-
+    md.lineage.machine.note_software_version(
+        'gqa',
+        version=version,
+        repo_url=repo,
+        # We know this is more specific: so override existing versions.
+        allow_override=True
+    )
     return md
 
 
