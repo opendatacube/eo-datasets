@@ -5,7 +5,6 @@ Extract metadata from GQA 'results' csv files.
 
 import datetime
 import logging
-import re
 
 import yaml
 
@@ -57,32 +56,18 @@ def populate_from_gqa(md, gqa_file):
     :type gqa_file: pathlib.Path
     :rtype eodatasets.type.DatasetMetadata
     """
-    # Example: 20141201_20010425_B6_gqa_results.yaml
-    fields = re.match(
-        (
-            r"(?P<acq_day>[0-9]{8})"
-            r"_(?P<ref_day>[0-9]{8})"
-            r"_B(?P<band>[0-9a-zA-Z]+)"
-            r"_gqa_results"
-            "$"
-        ), gqa_file.stem).groupdict()
-
-    # Parse from filename: date, reference date, band
-    md.gqa = {
-        'acq_day': _parse_day('acq_day', fields),
-        'ref_day': _parse_day('ref_day', fields),
-        'band': fields['band']
-    }
-
     with gqa_file.open('r') as f:
         gqa_values = yaml.safe_load(f)
 
     # "Scene id" is just the name of the parent folder. Often wrong and misleading.
     del gqa_values['scene_id']
 
-    md.gqa.update(
-        gqa_values
-    )
+    version = gqa_values.pop('software_version')
+    repo = gqa_values.pop('software_repository')
+
+    md.gqa = {}
+    md.gqa.update(gqa_values)
+    md.lineage.machine.note_software_version('gqa', version=version, repo_url=repo)
 
     return md
 

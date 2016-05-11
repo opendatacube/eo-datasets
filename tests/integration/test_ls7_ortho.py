@@ -180,25 +180,44 @@ EXPECTED_METADATA = {
     'product_level': 'L1G',
     'product_type': 'ortho',
     'gqa': {
-        'colors': {
-            'teal': 0.0, 'blue': 10.0, 'red': 274.0, 'green': 0.0, 'yellow': 25.0}, 'band': '5',
-        'acq_day': datetime.date(2013, 8, 18),
-        'abs_iterative_mean_residual': {
-            'y': 4.081039145021645,
-            'x': 8.281189264069264},
-        'ref_source': 'GLS_v1', 'cep90': 440.00546272953613,
-        'final_gcp_count': 308,
-        'stddev_residual': {
-            'y': 4.524645392606803, 'x': 4.23604905517344},
-        'mean_residual': {
-            'y': 0.9739366558441558, 'x': 8.281189264069264},
-        'iterative_stddev_residual': {
-            'y': 4.524645392606803, 'x': 4.23604905517344},
-        'ref_day': datetime.date(2000, 1, 19),
-        'residual': {
-            'y': 4.070382, 'x': 8.266335},
-        'iterative_mean_residual': {
-            'y': 0.9739366558441558, 'x': 8.281189264069264}
+        "cep90": 0.41,
+        "colors": {
+            "blue": 600,
+            "green": 30164,
+            "red": 336,
+            "teal": 1340,
+            "yellow": 399
+        },
+        "final_gcp_count": 32582,
+        "ref_date": datetime.date(2000, 9, 4),
+        "ref_source": "GLS_v2",
+        "ref_source_path": "/g/data/v10/eoancillarydata/GCP/GQA_v2/wrs2/091/081/LE70910812000248ASA00_B5.TIF",
+        "residual": {
+            "abs": {
+                "x": 0.2,
+                "y": 0.23
+            },
+            "abs_iterative_mean": {
+                "x": 0.15,
+                "y": 0.17
+            },
+            "iterative_mean": {
+                "x": 0.02,
+                "y": 0
+            },
+            "iterative_stddev": {
+                "x": 0.32,
+                "y": 0.52
+            },
+            "mean": {
+                "x": 0.01,
+                "y": -0.03
+            },
+            "stddev": {
+                "x": 1.27,
+                "y": 3.94
+            }
+        }
     },
     'size_bytes': 21280,
     'grid_spatial': {
@@ -274,7 +293,11 @@ EXPECTED_METADATA = {
         'machine': {
             'runtime_id': 'fa9f288a-dcf3-11e5-a095-0023dfa0db82',
             'software_versions': {
-                'pinkmatter': '4.1.4009'
+                'pinkmatter': '4.1.4009',
+                'gqa': {
+                    'repo_url': 'https://github.com/GeoscienceAustralia/gqa.git',
+                    'version': '0.4+20.gb0d00dc'
+                }
             },
             'hostname': 'witzo.local'
         },

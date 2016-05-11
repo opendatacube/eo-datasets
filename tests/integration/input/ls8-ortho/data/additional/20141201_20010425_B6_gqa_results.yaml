@@ -1,28 +1,33 @@
-abs_iterative_mean_residual:
-    x: 0.6114941044946384
-    y: 0.6841843509012092
-cep90: 79.42727444360659
+cep90: 0.41
 colors:
-    blue: 121.0
-    green: 843.0
-    red: 124.0
-    teal: 319.0
-    yellow: 104.0
-final_gcp_count: 1461
-iterative_mean_residual:
-    x: -0.14231046315309148
-    y: 0.05311033766826375
-iterative_stddev_residual:
-    x: 1.263801209338813
-    y: 1.382672269713929
-mean_residual:
-    x: -0.18180196558570483
-    y: 0.148098508713876
-ref_source: GLS_v1
+    blue: 600.0
+    green: 30164.0
+    red: 336.0
+    teal: 1340.0
+    yellow: 399.0
+final_gcp_count: 32582
+ref_date: 2000-09-04
+ref_source: GLS_v2
+ref_source_path: /g/data/v10/eoancillarydata/GCP/GQA_v2/wrs2/091/081/LE70910812000248ASA00_B5.TIF
 residual:
-    x: 0.8409989999999999
-    y: 0.9375190000000001
-scene_id: scenes
-stddev_residual:
-    x: 2.3751053554108696
-    y: 2.361825254310523
+    abs:
+        x: 0.2
+        y: 0.23
+    abs_iterative_mean:
+        x: 0.15
+        y: 0.17
+    iterative_mean:
+        x: 0.02
+        y: 0.0
+    iterative_stddev:
+        x: 0.32
+        y: 0.52
+    mean:
+        x: 0.01
+        y: -0.03
+    stddev:
+        x: 1.27
+        y: 3.94
+scene_id: LS5_TM_OTH_P51_GALPGS01-002_091_081_20060812
+software_repository: https://github.com/GeoscienceAustralia/gqa.git
+software_version: 0.4+20.gb0d00dc
