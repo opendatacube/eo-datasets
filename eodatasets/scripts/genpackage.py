@@ -48,7 +48,7 @@ def run(parent, debug, hard_link, newly_processed, package_type, dataset, destin
             destination_path=Path(destination),
             parent_dataset_paths=[Path(p) for p in parent],
             hard_link=hard_link,
-            additional_files=[Path(p) for p in add_file]
+            additional_files=tuple(Path(p) for p in add_file)
         )
     else:
         run_package.package_existing_data_folder(
@@ -57,7 +57,7 @@ def run(parent, debug, hard_link, newly_processed, package_type, dataset, destin
             destination_path=Path(destination),
             parent_dataset_paths=[Path(p) for p in parent],
             hard_link=hard_link,
-            additional_files=[Path(p) for p in add_file]
+            additional_files=tuple(Path(p) for p in add_file)
         )
 
 
