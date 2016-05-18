@@ -833,7 +833,7 @@ class DatasetMetadata(SimpleObject):
         self.product_doi = product_doi
 
         # Currently correspond to driver ids:
-        # 'raw', 'ortho', 'nbar_terrain' etc.
+        # 'raw', 'level1', 'nbart' etc.
         #: :type: str
         self.product_type = product_type
 

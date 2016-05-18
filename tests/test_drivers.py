@@ -97,7 +97,7 @@ _EXPECTED_NBAR = ptype.DatasetMetadata(
         bands={}
     ),
     lineage=ptype.LineageMetadata(
-        source_datasets={'ortho': test_ls8.EXPECTED_OUT},
+        source_datasets={'level1': test_ls8.EXPECTED_OUT},
         algorithm=ptype.AlgorithmMetadata(name='terrain', version='1.0'),
         machine=ptype.MachineMetadata(software_versions={'nbar': '1.0'}),
     ),
@@ -397,7 +397,7 @@ class TestDrivers(TestCase):
             id_=_EXPECTED_NBAR.id_,
             lineage=ptype.LineageMetadata(
                 source_datasets={
-                    'ortho': test_ls8.EXPECTED_OUT
+                    'level1': test_ls8.EXPECTED_OUT
                 }
             )
         )

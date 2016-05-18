@@ -49,7 +49,7 @@ def test_package():
     # Run!
     args = [
         hardlink_arg(output_path, source_dataset),
-        'ortho',
+        'level1',
         '--newly-processed',
         '--parent', str(parent_dataset),
         '--add-file', str(work_order_path)
@@ -143,7 +143,7 @@ def test_package():
 
 EXPECTED_METADATA = {
     'id': None,
-    'product_type': 'ortho',
+    'product_type': 'level1',
     'ga_label': 'LS8_OLITIRS_OTH_P51_GALPGS01-002_112_079_20140126',
     'checksum_path': 'package.sha1',
     'size_bytes': 258695,

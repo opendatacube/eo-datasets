@@ -424,9 +424,9 @@ EXPECTED_METADATA = {
                 'uri': '/g/data/u39/public/data/modis/lpdaac-mosaics-cmar/v1-hdf4/aust/MCD43A1.005/2010.02.18/'
                        'MCD43A1.2010.049.aust.005.b10.500m_0545_0565nm_brdf_par_fiso.hdf.gz'}},
         'source_datasets': {
-            'ortho': {
+            'level1': {
                 'product_level': 'L1T',
-                'product_type': 'ortho',
+                'product_type': 'level1',
                 'id': '5cf41d98-eda9-11e4-8a8e-1040f381a756',
                 'usgs': {
                     'scene_id': 'LC81120792014026ASA00'

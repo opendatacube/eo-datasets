@@ -46,7 +46,7 @@ def test_package():
     # Run!
     args = [
         hardlink_arg(output_path, source_dataset),
-        'ortho',
+        'level1',
         '--newly-processed',
         '--parent', str(parent_dataset),
         '--add-file', str(work_order)
@@ -178,7 +178,7 @@ EXPECTED_METADATA = {
     'id': None,
     'creation_dt': datetime.datetime(2016, 2, 26, 1, 39, 4),
     'product_level': 'L1G',
-    'product_type': 'ortho',
+    'product_type': 'level1',
     'gqa': {
         "cep90": 0.41,
         "colors": {

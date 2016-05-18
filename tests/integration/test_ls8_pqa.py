@@ -232,7 +232,7 @@ EXPECTED_METADATA = {
                 'size_bytes': 0,
                 'lineage': {
                     'source_datasets': {
-                        'ortho': {
+                        'level1': {
                             'id': '7bff72fc-e96d-11e4-b15e-a0000100fe80',
                             'size_bytes': 1758484367,
                             'ga_label': 'LS8_OLITIRS_OTH_P51_GALPGS01-032_090_081_20140726',
@@ -241,7 +241,7 @@ EXPECTED_METADATA = {
                             'usgs': {
                                 'scene_id': 'LC80900812014207LGN00'
                             },
-                            'product_type': 'ortho',
+                            'product_type': 'level1',
                             'creation_dt': datetime.datetime(2015, 4, 7, 3, 25, 59),
                             'checksum_path': 'package.sha1',
                             'format': {'name': 'GeoTIFF'},

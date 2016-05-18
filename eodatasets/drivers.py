@@ -29,7 +29,7 @@ class DatasetDriver(object):
         """
         A short identifier for this type of dataset.
 
-        eg. 'ortho'
+        eg. 'nbar'
 
         :rtype: str
         """
@@ -397,7 +397,7 @@ class RawDriver(DatasetDriver):
 
 class OrthoDriver(DatasetDriver):
     def get_id(self):
-        return 'ortho'
+        return 'level1'
 
     def expected_source(self):
         return RawDriver()
@@ -449,7 +449,7 @@ class OrthoDriver(DatasetDriver):
         # Images end in a band number (eg '_B12.tif'). Extract it.
         position = name.rfind('_b')
         if position == -1:
-            raise ValueError('Unexpected tif image in ortho: %r' % path)
+            raise ValueError('Unexpected tif image in level1: %r' % path)
         band_number = name[position + 2:]
 
         return ptype.BandMetadata(path=path, number=band_number)
@@ -595,13 +595,13 @@ class NbarDriver(DatasetDriver):
             nbar_metadata = yaml.load(f, Loader=Loader)
 
         # Copy relevant fields from source ortho.
-        if 'ortho' in dataset.lineage.source_datasets:
-            source_ortho = dataset.lineage.source_datasets['ortho']
+        if 'level1' in dataset.lineage.source_datasets:
+            source_ortho = dataset.lineage.source_datasets['level1']
             borrow_single_sourced_fields(dataset, source_ortho)
 
             # TODO, it'd be better to grab this from the images, but they're generated after
             # this code is run. Copying from Source will do for now
-            dataset.grid_spatial = dataset.lineage.source_datasets['ortho'].grid_spatial
+            dataset.grid_spatial = dataset.lineage.source_datasets['level1'].grid_spatial
 
         if not dataset.lineage:
             dataset.lineage = ptype.LineageMetadata()
@@ -921,8 +921,10 @@ class PqaDriver(DatasetDriver):
 PACKAGE_DRIVERS = {
     'raw': RawDriver(),
     'pqa': PqaDriver(),
-    'ortho': OrthoDriver(),
+    'level1': OrthoDriver(),
     'nbar': NbarDriver('brdf'),
     'nbart': NbarDriver('terrain'),
-    'eods': EODSDriver()
+    'eods': EODSDriver(),
+    # Backwards compat.
+    'ortho': OrthoDriver(),
 }

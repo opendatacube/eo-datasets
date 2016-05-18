@@ -60,12 +60,12 @@ grid_spatial:
 lineage:
     machine: {}
     source_datasets:
-        ortho:
+        level1:
             id: 7bff72fc-e96d-11e4-b15e-a0000100fe80
             ga_label: LS8_OLITIRS_OTH_P51_GALPGS01-032_090_081_20140726
             usgs:
                 scene_id: LC80900812014207LGN00
-            product_type: ortho
+            product_type: level1
             product_level: L1T
             creation_dt: 2015-04-07 03:25:59
             size_bytes: 1758484367

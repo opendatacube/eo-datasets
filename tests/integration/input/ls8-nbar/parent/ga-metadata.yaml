@@ -2,7 +2,7 @@ id: 5cf41d98-eda9-11e4-8a8e-1040f381a756
 ga_label: LS8_OLITIRS_OTH_P51_GALPGS01-002_112_079_20140126
 usgs:
     scene_id: LC81120792014026ASA00
-product_type: ortho
+product_type: level1
 product_level: L1T
 creation_dt: 2015-04-07 00:58:08
 size_bytes: 1854924494

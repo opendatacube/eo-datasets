@@ -483,7 +483,7 @@ def _build_ls8_nbar():
             ),
             machine=ptype.MachineMetadata(),
             source_datasets={
-                'ortho': _build_ls8_ortho()
+                'level1': _build_ls8_ortho()
             },
             ancillary={}
         )
@@ -525,13 +525,13 @@ class PackageTypeTests(unittest.TestCase):
         self._compare_bands(ls8_nbar, serialised_d)
 
         self._compare_bands(
-            ls8_nbar.lineage.source_datasets['ortho'],
-            serialised_d.lineage.source_datasets['ortho']
+            ls8_nbar.lineage.source_datasets['level1'],
+            serialised_d.lineage.source_datasets['level1']
         )
 
         # Clear bands to compare remaining object:
-        ls8_nbar.image.bands, ls8_nbar.lineage.source_datasets['ortho'].image.bands = {}, {}
-        serialised_d.image.bands, serialised_d.lineage.source_datasets['ortho'].image.bands = {}, {}
+        ls8_nbar.image.bands, ls8_nbar.lineage.source_datasets['level1'].image.bands = {}, {}
+        serialised_d.image.bands, serialised_d.lineage.source_datasets['level1'].image.bands = {}, {}
 
         assert_same(ls8_nbar, serialised_d)
 
