@@ -635,6 +635,8 @@ class NbarDriver(DatasetDriver):
         # Add ancillary files
         ancil_files = {}
         for name, values in ancils.items():
+            if 'data_file' not in values:
+                continue
             ancil_files[name] = ptype.AncillaryMetadata(
                 type_=name,
                 name=values['data_file'].rpartition('/')[2],
