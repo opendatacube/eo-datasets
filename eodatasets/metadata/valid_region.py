@@ -1,9 +1,9 @@
 import rasterio
+from rasterio.errors import RasterioIOError
 import rasterio.features
 import shapely.affinity
 import shapely.geometry
 import shapely.ops
-from rasterio.errors import RasterioIOError
 
 
 def safe_valid_region(images, mask_value=None):
