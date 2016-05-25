@@ -1,6 +1,6 @@
 ENVI
 description = {
-nbar-in/reflectance_brdf_1.bin}
+example.bin}
 samples = 10
 lines   = 10
 bands   = 1
@@ -10,6 +10,6 @@ data type = 2
 interleave = bsq
 byte order = 0
 map info = {UTM, 1, 1, 644000, 6283000, 25, 25, 55, South}
-coordinate system string = {PROJCS["GDA94_MGA_zone_55",GEOGCS["GCS_GDA_1994",DATUM["D_GDA_1994",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",147],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["Meter",1]]}
+coordinate system string = {PROJCS["UTM_Zone_55_Southern_Hemisphere",GEOGCS["GCS_GRS 1980(IUGG, 1980)",DATUM["D_unknown",SPHEROID["GRS80",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",147],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["Meter",1]]}
 band names = {
 Band 1}

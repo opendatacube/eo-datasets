@@ -364,7 +364,8 @@ class ProjectionMetadata(SimpleObject):
                  orientation=None,
                  resampling_option=None,
                  zone=None,
-                 unit=None):
+                 unit=None,
+                 valid_data=None):
         """
 
         :param centre_point:
@@ -427,6 +428,10 @@ class ProjectionMetadata(SimpleObject):
         # Eg. 'metre'
         #: :type: str
         self.unit = unit
+
+        # Eg.
+        #: :type: GeoJsonGeometry
+        self.valid_data = valid_data
 
 
 class GridSpatialMetadata(SimpleObject):
@@ -878,6 +883,15 @@ class DatasetMetadata(SimpleObject):
         # Product flags, eg. which PQ tests were run
         self.product_flags = product_flags
 
+
+class GeoJsonGeometry(SimpleObject):
+    def __init__(self, type_=None, coordinates=None):
+        super(GeoJsonGeometry, self).__init__()
+
+        self.type_ = type_
+
+        #: :type:
+        self.coordinates = coordinates
 
 def rebase_path(from_root_path, to_root_path, path):
     """

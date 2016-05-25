@@ -5,9 +5,9 @@ Package an LS8 PQA dataset.
 from __future__ import absolute_import
 
 import datetime
+from pathlib import Path
 
 import yaml
-from pathlib import Path
 
 from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
 from tests.integration import load_checksum_filenames, hardlink_arg, directory_size, add_default_software_versions
@@ -143,7 +143,11 @@ EXPECTED_METADATA = {
             'resampling_option': 'CUBIC_CONVOLUTION',
             'ellipsoid': 'GRS80',
             'orientation': 'NORTH_UP',
-            'zone': -56
+            'zone': -56,
+            'valid_data': {'coordinates': (((319250.0, 6636775.0), (319225.0, 6636500.0),
+                                            (319500.0, 6636475.0), (319525.0, 6636750.0),
+                                            (319250.0, 6636775.0)),),
+                           'type': 'Polygon'}
         }
     },
     'browse': {

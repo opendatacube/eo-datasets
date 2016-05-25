@@ -12,9 +12,6 @@
     <MDI key="lines">10</MDI>
     <MDI key="samples">10</MDI>
   </Metadata>
-  <Metadata>
-    <MDI key="Band_1">Band 1</MDI>
-  </Metadata>
   <PAMRasterBand band="1">
     <NoDataValue>-9.99000000000000E+02</NoDataValue>
   </PAMRasterBand>

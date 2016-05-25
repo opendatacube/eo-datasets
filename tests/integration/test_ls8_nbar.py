@@ -5,9 +5,9 @@ Package an LS8 NBAR dataset.
 from __future__ import absolute_import
 
 import datetime
+from pathlib import Path
 
 import yaml
-from pathlib import Path
 
 from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
 from tests.integration import load_checksum_filenames, hardlink_arg, directory_size, add_default_software_versions
@@ -132,7 +132,11 @@ EXPECTED_METADATA = {
             },
             'orientation': 'NORTH_UP',
             'datum': 'GDA94',
-            'ellipsoid': 'GRS80'
+            'ellipsoid': 'GRS80',
+            'valid_data': {'type': 'Polygon',
+                           'coordinates': (((644100.0, 6282925.0), (644075.0, 6282800.0),
+                                            (644200.0, 6282775.0), (644225.0, 6282900.0),
+                                            (644100.0, 6282925.0)),)}
         }
     },
     'image': {

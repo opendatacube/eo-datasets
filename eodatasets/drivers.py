@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
 
+from copy import deepcopy
 import datetime
 import logging
 import re
@@ -19,7 +20,7 @@ from pathlib import Path
 from eodatasets import type as ptype, metadata
 from eodatasets.metadata import _GROUNDSTATION_LIST
 from eodatasets.metadata import mdf, ortho, adsfolder, rccfile, \
-    passinfo, pds, npphdf5, image as md_image, gqa
+    passinfo, pds, npphdf5, image as md_image, gqa, valid_region
 
 _LOG = logging.getLogger(__name__)
 
@@ -120,6 +121,15 @@ class DatasetDriver(object):
             raise ValueError('Unknown browse bands for satellite %s' % d.platform.code)
 
         return browse_bands
+
+    def calculate_valid_data_region(self, path, mask_value=None):
+        image_files = [filename
+                       for filename in path.rglob('*')
+                       if self.include_file(filename)]
+        try:
+            return valid_region.valid_region(image_files, mask_value)
+        except OSError:
+            return None
 
     def __eq__(self, other):
         if self.__class__ != other.__class__:
@@ -601,7 +611,9 @@ class NbarDriver(DatasetDriver):
 
             # TODO, it'd be better to grab this from the images, but they're generated after
             # this code is run. Copying from Source will do for now
-            dataset.grid_spatial = dataset.lineage.source_datasets['level1'].grid_spatial
+            dataset.grid_spatial = deepcopy(dataset.lineage.source_datasets['level1'].grid_spatial)
+
+            dataset.grid_spatial.projection.valid_data = self.calculate_valid_data_region(path)
 
         if not dataset.lineage:
             dataset.lineage = ptype.LineageMetadata()
@@ -846,7 +858,11 @@ class PqaDriver(DatasetDriver):
 
             # TODO, it'd be better to grab this from the images, but they're generated after
             # this code is run. Copying from Source will do for now
-            dataset.grid_spatial = dataset.lineage.source_datasets['nbar'].grid_spatial
+            dataset.grid_spatial = deepcopy(dataset.lineage.source_datasets['nbar'].grid_spatial)
+
+            contiguous_data_bit = 0b100000000
+
+            dataset.grid_spatial.projection.valid_data = self.calculate_valid_data_region(path, contiguous_data_bit)
 
         dataset.format_ = ptype.FormatMetadata('GeoTIFF')
 
