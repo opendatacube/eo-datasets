@@ -1,8 +1,16 @@
 import rasterio
 import rasterio.features
+import shapely.affinity
 import shapely.geometry
 import shapely.ops
-import shapely.affinity
+from rasterio.errors import RasterioIOError
+
+
+def safe_valid_region(images, mask_value=None):
+    try:
+        return valid_region(images, mask_value)
+    except (OSError, RasterioIOError):
+        return None
 
 
 def valid_region(images, mask_value=None):

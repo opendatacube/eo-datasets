@@ -126,10 +126,7 @@ class DatasetDriver(object):
         image_files = [filename
                        for filename in path.rglob('*')
                        if self.include_file(filename)]
-        try:
-            return valid_region.valid_region(image_files, mask_value)
-        except OSError:
-            return None
+        return valid_region.safe_valid_region(image_files, mask_value)
 
     def __eq__(self, other):
         if self.__class__ != other.__class__:
