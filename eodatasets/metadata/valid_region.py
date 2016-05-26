@@ -49,4 +49,17 @@ def valid_region(images, mask_value=None):
     # transform from pixel space into CRS space
     geom = shapely.affinity.affine_transform(geom, (transform.a, transform.b, transform.d,
                                                     transform.e, transform.xoff, transform.yoff))
-    return shapely.geometry.mapping(geom)
+
+    output = shapely.geometry.mapping(geom)
+    output['coordinates'] = _to_lists(output['coordinates'])
+    return output
+
+
+def _to_lists(x):
+    """
+    Returns lists of lists when given tuples of tuples
+    """
+    if isinstance(x, tuple):
+        return [_to_lists(el) for el in x]
+
+    return x

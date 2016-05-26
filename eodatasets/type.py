@@ -893,6 +893,7 @@ class GeoJsonGeometry(SimpleObject):
         #: :type:
         self.coordinates = coordinates
 
+
 def rebase_path(from_root_path, to_root_path, path):
     """
     Rebase the path to a new root path.

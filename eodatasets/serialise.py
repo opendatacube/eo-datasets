@@ -137,14 +137,14 @@ def _create_relative_dumper(folder):
     return RelativeDumper
 
 
-def write_yaml_metadata(d, metadata_path, target_directory=None):
+def write_yaml_metadata(dataset_metadata, metadata_path, target_directory=None):
     """
     Write the given dataset to yaml.
 
     All 'Path' values are converted to relative paths: relative to the given
     target directory.
 
-    :type d: DatasetMetadata
+    :type dataset_metadata: DatasetMetadata
     :type target_directory: str or Path
     :type metadata_path: str or Path
     """
@@ -153,10 +153,10 @@ def write_yaml_metadata(d, metadata_path, target_directory=None):
         target_directory = os.path.dirname(os.path.abspath(metadata_file))
 
     _LOG.info('Writing metadata file %r', metadata_file)
-    with open(str(metadata_file), 'w') as f:
+    with open(str(metadata_file), 'w') as output_file:
         yaml.dump(
-            d,
-            f,
+            dataset_metadata,
+            output_file,
             default_flow_style=False,
             indent=4,
             Dumper=_create_relative_dumper(str(target_directory)),
