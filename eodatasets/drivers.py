@@ -502,7 +502,7 @@ def borrow_single_sourced_fields(dataset, source_dataset):
 
 
 class NbarDriver(DatasetDriver):
-    METADATA_FILE = 'nbar-metadata.yml'
+    METADATA_FILE = 'nbar_metadata.yaml'
     product_ids = {'brdf': 'nbar',
                    'terrain': 'nbart'}
 
@@ -824,7 +824,7 @@ class EODSDriver(DatasetDriver):
 
 
 class PqaDriver(DatasetDriver):
-    METADATA_FILE = 'pq_metadata.yml'
+    METADATA_FILE = 'pq_metadata.yaml'
 
     def get_id(self):
         return 'pqa'
