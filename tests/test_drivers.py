@@ -382,7 +382,7 @@ class TestDrivers(TestCase):
             'reflectance_terrain_7.bin': '',
             'reflectance_terrain_7.bin.aux.xml': '',
             'reflectance_terrain_7.hdr': '',
-            'nbar-metadata.yml': dedent(
+            'nbar_metadata.yaml': dedent(
                 """
                     algorithm_information:
                         software_version: 1.0
@@ -420,7 +420,7 @@ class TestDrivers(TestCase):
     def test_pqa_fill(self):
         input_folder = write_files({
             'pqa.tif': '',
-            'pq_metadata.yml': dedent(
+            'pq_metadata.yaml': dedent(
                 """
                     algorithm_information:
                         software_version: 1.0

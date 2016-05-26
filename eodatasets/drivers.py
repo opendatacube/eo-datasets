@@ -619,8 +619,8 @@ class NbarDriver(DatasetDriver):
 
         if not dataset.lineage.machine:
             dataset.lineage.machine = ptype.MachineMetadata()
-        nbar_version = nbar_metadata['algorithm_information']['software_version']
 
+        nbar_version = nbar_metadata['algorithm_information']['software_version']
         dataset.lineage.machine.note_software_version('nbar', str(nbar_version))
 
         dataset.product_doi = nbar_metadata['algorithm_information']['arg25_doi']
