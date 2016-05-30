@@ -99,7 +99,6 @@ _EXPECTED_NBAR = ptype.DatasetMetadata(
     lineage=ptype.LineageMetadata(
         source_datasets={'level1': test_ls8.EXPECTED_OUT},
         algorithm=ptype.AlgorithmMetadata(name='terrain', version='1.0'),
-        machine=ptype.MachineMetadata(software_versions={'nbar': '1.0'}),
     ),
     grid_spatial=ptype.GridSpatialMetadata(
         projection=ptype.ProjectionMetadata(

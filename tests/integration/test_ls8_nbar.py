@@ -249,7 +249,6 @@ EXPECTED_METADATA = {
         },
         'machine': {
             'software_versions': {
-                'nbar': '4.0'
             }
         },
         'ancillary': {
