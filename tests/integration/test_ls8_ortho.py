@@ -42,6 +42,7 @@ def test_package():
         FakeAncilFile(ancil_path, 'cpf', 'L8CPF20140101_20140331.05'),
         FakeAncilFile(ancil_path, 'bpf_oli', 'LO8BPF20140127130115_20140127144056.01'),
         FakeAncilFile(ancil_path, 'bpf_tirs', 'LT8BPF20140116023714_20140116032836.02'),
+        FakeAncilFile(ancil_path, 'tirs_ssm_position', '20160529.l8_tirs_estimated_ssm_position.txt'),
         FakeAncilFile(ancil_path, 'rlut', 'L8RLUT20130211_20431231v09.h5', folder_offset=('2013',)),
     )
     work_order_path = prepare_work_order(ancil_files, work_order_template_path)
@@ -381,6 +382,9 @@ EXPECTED_METADATA = {
                 },
                 'rlut': {
                     'name': 'L8RLUT20130211_20431231v09.h5'
+                },
+                'tirs_ssm_position': {
+                    'name': '20160529.l8_tirs_estimated_ssm_position.txt'
                 }
             },
 

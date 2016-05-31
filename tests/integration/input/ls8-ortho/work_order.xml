@@ -56,6 +56,7 @@
                 useDownloader="false">{bpf_tirs_path}</BPFTirsFile>
         <BPFOliFile
                 useDownloader="false">{bpf_oli_path}</BPFOliFile>
+        <TirsSsmPositionFile useDownloader="false">{tirs_ssm_position_path}</TirsSsmPositionFile>
         <OutputPath additionalMetadata="false">/g/data/v10/agdc/jez/galpgs/test-out/tmp/scenes</OutputPath>
     </L1Processing>
 </LandsatProcessingRequest>

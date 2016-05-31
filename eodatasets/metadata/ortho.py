@@ -302,6 +302,11 @@ def _get_ancil_files(mtl_doc, work_order_doc):
             mtl_doc, work_order_doc,
             mtl_name_offset=None,
             order_dir_offset='./L1Processing/EphemerisFile'
+        ),
+        'tirs_ssm_position': _get_ancillary_metadata(
+            mtl_doc, work_order_doc,
+            mtl_name_offset=None,
+            order_dir_offset='./L1Processing/TirsSsmPositionFile'
         )
     })
     return ancil_files
