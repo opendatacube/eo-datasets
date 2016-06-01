@@ -210,7 +210,7 @@ def _remove_missing(dict_):
     return {k: v for k, v in dict_.items() if v is not None}
 
 
-def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset=None, order_dir_offset=None):
+def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset=None, order_dir_offset=None, properties_offsets=None):
     #: :type: Path
     specified_path = _get_node_text(order_dir_offset, wo_doc, Path) if order_dir_offset and wo_doc else None
     used_file_name = _get(mtl_doc, *mtl_name_offset) if mtl_name_offset and mtl_doc else None
@@ -227,8 +227,13 @@ def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset=None, order_dir_off
     else:
         file_path = _get_file(specified_path, used_file_name)
 
+    properties = {}
+    if mtl_doc and properties_offsets:
+        for property_name, offset in properties_offsets.items():
+            properties[property_name] = _get(mtl_doc, *offset)
+
     _LOG.info('Found ancillary path %s', file_path)
-    return ptype.AncillaryMetadata.from_file(file_path)
+    return ptype.AncillaryMetadata.from_file(file_path, properties=properties)
 
 
 def _get_node_text(offset, parsed_doc, type_):
@@ -310,7 +315,11 @@ def _get_ancil_files(mtl_doc, work_order_doc):
         'tirs_ssm_position': _get_ancillary_metadata(
             mtl_doc, work_order_doc,
             mtl_name_offset=None,
-            order_dir_offset='./L1Processing/TirsSsmPositionFile'
+            order_dir_offset='./L1Processing/TirsSsmPositionFile',
+            properties_offsets={
+                'model': ('IMAGE_ATTRIBUTES', 'tirs_ssm_model'),
+                'position_status': ('IMAGE_ATTRIBUTES', 'tirs_ssm_position_status')
+            }
         )
     })
     return ancil_files

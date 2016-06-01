@@ -384,7 +384,11 @@ EXPECTED_METADATA = {
                     'name': 'L8RLUT20130211_20431231v09.h5'
                 },
                 'tirs_ssm_position': {
-                    'name': '20160529.l8_tirs_estimated_ssm_position.txt'
+                    'name': '20160529.l8_tirs_estimated_ssm_position.txt',
+                    'properties': {
+                        'model': 'PRELIMINARY',
+                        'position_status': 'ESTIMATED'
+                    }
                 }
             },
 

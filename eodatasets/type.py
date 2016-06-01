@@ -632,7 +632,7 @@ class MachineMetadata(SimpleObject):
 class AncillaryMetadata(SimpleObject):
     def __init__(self, type_=None, name=None, uri=None, access_dt=None,
                  modification_dt=None, file_owner=None,
-                 checksum_sha1=None):
+                 checksum_sha1=None, properties=None):
         self.type_ = type_
         self.name = name
 
@@ -648,8 +648,12 @@ class AncillaryMetadata(SimpleObject):
         #: :type: str
         self.checksum_sha1 = checksum_sha1
 
+        # Properties specific to this ancillary type (eg. was predictive/definitive when used).
+        #: :type: dict[str, str]
+        self.properties = properties or None
+
     @classmethod
-    def from_file(cls, file_path):
+    def from_file(cls, file_path, properties=None):
         """
         :type file_path: pathlib.Path
         """
@@ -661,7 +665,8 @@ class AncillaryMetadata(SimpleObject):
             uri=str(file_path),
             modification_dt=datetime.datetime.fromtimestamp(file_path.stat().st_mtime),
             access_dt=datetime.datetime.fromtimestamp(file_path.stat().st_atime),
-            checksum_sha1=verify.calculate_file_sha1(file_path)
+            checksum_sha1=verify.calculate_file_sha1(file_path),
+            properties=properties
         )
 
 
