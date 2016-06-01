@@ -1,16 +1,19 @@
 # coding=utf-8
 from __future__ import absolute_import
+
+import datetime
 import unittest
 import uuid
-import datetime
 
+import pytest
 from pathlib import PosixPath, Path
-from tests import write_files
 from tests import assert_same
-from eodatasets.type import BandMetadata
+from tests import write_files
+
 import eodatasets.type as ptype
 from eodatasets import metadata
-
+from eodatasets.metadata import ortho
+from eodatasets.type import BandMetadata
 
 BASIC_LS8_BANDS = {
     '11': BandMetadata(
@@ -375,3 +378,34 @@ class TestBandExpansion(unittest.TestCase):
             metadata._expand_band_information('LANDSAT_5', 'TM', band_metadata)
 
         assert_same(BASIC_LS5_BANDS, EXPANDED_LS5_BANDS)
+
+
+def test_ortho_find_file():
+    path = write_files({
+        '11': {
+            'LO8BPF20141104220030_20141104224617.01': ''
+        }
+    })
+    matched = ortho._get_file(path, 'LO8BPF20141104220030_20141104224617.01')
+    assert matched is not None
+    assert matched == path.joinpath('11', 'LO8BPF20141104220030_20141104224617.01')
+
+    # Not found: mandatory
+    with pytest.raises(RuntimeError) as e:
+        ortho._get_file(path, 'LO8BPF20141104220030_20141104224617.03')
+    # Not found: not mandatory.
+    matched = ortho._get_file(path, 'LO8BPF20141104220030_20141104224617.03', mandatory=False)
+    assert matched is None
+
+    # Real-world error: ancillary folder inside ancillary folder leads to duplicates.
+    path = write_files({
+        '11': {
+            'LO8BPF20141104220030_20141104224617.01': '',
+            '11': {
+                'LO8BPF20141104220030_20141104224617.01': ''
+            }
+        }
+    })
+    matched = ortho._get_file(path, 'LO8BPF20141104220030_20141104224617.01')
+    assert matched is not None
+    assert matched.name == 'LO8BPF20141104220030_20141104224617.01'

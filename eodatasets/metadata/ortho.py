@@ -165,7 +165,11 @@ def _get_file(path, file_pattern, mandatory=True):
         return
 
     if len(found) > 1:
-        raise RuntimeError('%s results found for pattern %r in %s' % (len(found), file_pattern, path))
+        unique_names = set(p.name for p in found)
+        if len(unique_names) > 1:
+            raise RuntimeError('%s unique results found for pattern %r in %s' % (len(unique_names), file_pattern, path))
+
+        _LOG.warning('Duplicate ancillary %r in %s', unique_names.pop(), path)
 
     return found[0]
 
