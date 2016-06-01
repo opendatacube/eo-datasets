@@ -215,11 +215,20 @@ def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset=None, order_dir_off
     specified_path = _get_node_text(order_dir_offset, wo_doc, Path) if order_dir_offset and wo_doc else None
     used_file_name = _get(mtl_doc, *mtl_name_offset) if mtl_name_offset and mtl_doc else None
 
+    # Read any properties of the ancillary file form the MTL.
+    properties = {}
+    if mtl_doc and properties_offsets:
+        for property_name, offset in properties_offsets.items():
+            val = _get(mtl_doc, *offset)
+            if val:
+                properties[property_name] = val
+
     if not specified_path or not specified_path.exists():
         _LOG.warning('No path found to locate ancillary file %s', used_file_name)
-        if not used_file_name:
+        # If there's no information of the ancillary, don't bother.
+        if (not used_file_name) and (not properties):
             return None
-        return ptype.AncillaryMetadata(name=used_file_name)
+        return ptype.AncillaryMetadata(name=used_file_name, properties=properties)
 
     if specified_path.is_file():
         # They specified an exact file to Pinkmatter rather than a search directory.
@@ -227,10 +236,6 @@ def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset=None, order_dir_off
     else:
         file_path = _get_file(specified_path, used_file_name)
 
-    properties = {}
-    if mtl_doc and properties_offsets:
-        for property_name, offset in properties_offsets.items():
-            properties[property_name] = _get(mtl_doc, *offset)
 
     _LOG.info('Found ancillary path %s', file_path)
     return ptype.AncillaryMetadata.from_file(file_path, properties=properties)

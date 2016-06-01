@@ -107,7 +107,12 @@ EXPECTED_OUT = ptype.DatasetMetadata(
         ancillary={
             'cpf': ptype.AncillaryMetadata(
                 name='L5CPF20050401_20050630.12'
-            )}
+            ),
+            # We have the properties (quality) of the ancillary but not the file.
+            'ephemeris': ptype.AncillaryMetadata(
+                properties={'type': 'DEFINITIVE'}
+            )
+        }
     )
 )
 
