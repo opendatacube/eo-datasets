@@ -310,7 +310,10 @@ def _get_ancil_files(mtl_doc, work_order_doc):
         'ephemeris': _get_ancillary_metadata(
             mtl_doc, work_order_doc,
             mtl_name_offset=None,
-            order_dir_offset='./L1Processing/EphemerisFile'
+            order_dir_offset='./L1Processing/EphemerisFile',
+            properties_offsets={
+                'type': ('PRODUCT_METADATA', 'ephemeris_type')
+            }
         ),
         'tirs_ssm_position': _get_ancillary_metadata(
             mtl_doc, work_order_doc,

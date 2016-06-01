@@ -306,7 +306,10 @@ EXPECTED_METADATA = {
                 'name': 'L8CPF20140101_20140331.05',
             },
             'ephemeris': {
-                'name': 'L72013231ASADEF.S00'
+                'name': 'L72013231ASADEF.S00',
+                'properties': {
+                    'type': 'DEFINITIVE'
+                }
             }
         },
         'algorithm': {
