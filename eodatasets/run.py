@@ -45,7 +45,8 @@ def package_newly_processed_data_folder(driver, input_data_paths, destination_pa
     :type additional_files: list[Path]
     """
     return _package_folder(
-        driver, input_data_paths, destination_path, parent_dataset_paths,
+        driver, input_data_paths, destination_path,
+        _source_datasets_from_paths(driver, parent_dataset_paths),
         package.init_locally_processed_dataset,
         hard_link=hard_link,
         metadata_expand_fn=metadata_expand_fn,
@@ -80,7 +81,8 @@ def package_existing_data_folder(driver, input_data_paths, destination_path, par
     :return:
     """
     return _package_folder(
-        driver, input_data_paths, destination_path, parent_dataset_paths,
+        driver, input_data_paths, destination_path,
+        _source_datasets_from_paths(driver, parent_dataset_paths),
         package.init_existing_dataset,
         hard_link=hard_link,
         metadata_expand_fn=metadata_expand_fn,
@@ -88,7 +90,16 @@ def package_existing_data_folder(driver, input_data_paths, destination_path, par
     )
 
 
-def _package_folder(driver, input_data_paths, destination_path, parent_dataset_paths,
+def _source_datasets_from_paths(driver, parent_dataset_paths):
+    parent_datasets = {}
+    if parent_dataset_paths:
+        # TODO: Multiple parents?
+        source_id = driver.expected_source().get_id()
+        parent_datasets.update({source_id: serialise.read_dataset_metadata(parent_dataset_paths[0])})
+    return parent_datasets
+
+
+def _package_folder(driver, input_data_paths, destination_path, source_datasets,
                     init_dataset,
                     metadata_expand_fn=None,
                     hard_link=True,
@@ -101,29 +112,24 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
     :type driver: eodatasets.drivers.DatasetDriver
     :type input_data_paths: list[pathlib.Path]
     :type destination_path: pathlib.Path
-    :type parent_dataset_paths: list[pathlib.Path]
+    :type source_datasets: dict[str, eodatasets.type.DatasetMetadata]
     :type metadata_expand_fn: (eodatasets.type.DatasetMetadata) -> None
     :type init_dataset: callable
     :type hard_link: bool
 
     :param additional_files: Additional files to record in the package.
-    :type additional_files: list[Path]
+    :type additional_files: tuple[Path]
 
     :return: list of (created packages, already existing packages)
     """
-    parent_datasets = {}
     created_packages = []
     existing_packages = []
 
-    # TODO: Multiple parents?
-    if parent_dataset_paths:
-        source_id = driver.expected_source().get_id()
-        parent_datasets.update({source_id: serialise.read_dataset_metadata(parent_dataset_paths[0])})
-
     for dataset_folder in input_data_paths:
         dataset_folder = Path(dataset_folder)
+
         with temp_dir(prefix='.packagetmp.', base_dir=destination_path) as temp_output_dir:
-            dataset = init_dataset(dataset_folder, parent_datasets)
+            dataset = init_dataset(dataset_folder, source_datasets)
             if metadata_expand_fn is not None:
                 metadata_expand_fn(dataset)
 
@@ -135,6 +141,7 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
                 hard_link=hard_link,
                 additional_files=additional_files
             )
+
             # Output package permissions should match the parent dir.
             shutil.copymode(str(destination_path), str(temp_output_dir))
             packaged_path = destination_path / dataset_id
