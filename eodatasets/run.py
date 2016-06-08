@@ -109,10 +109,11 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
     :param additional_files: Additional files to record in the package.
     :type additional_files: list[Path]
 
-    :return: list of created packages
+    :return: list of (created packages, already existing packages)
     """
     parent_datasets = {}
     created_packages = []
+    existing_packages = []
 
     # TODO: Multiple parents?
     if parent_dataset_paths:
@@ -136,12 +137,18 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
             )
             # Output package permissions should match the parent dir.
             shutil.copymode(str(destination_path), str(temp_output_dir))
-            # Move finished folder into place.
             packaged_path = destination_path / dataset_id
-            temp_output_dir.rename(packaged_path)
 
-            created_packages.append(packaged_path)
-    return created_packages
+            if packaged_path.exists():
+                _LOG.warning('Package already exists: %r', packaged_path)
+                existing_packages.append(packaged_path)
+                shutil.rmtree(temp_output_dir, ignore_errors=True)
+            else:
+                # Move finished folder into place.
+                temp_output_dir.rename(packaged_path)
+                created_packages.append(packaged_path)
+
+    return created_packages, existing_packages
 
 
 @contextmanager
