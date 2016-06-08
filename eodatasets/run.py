@@ -4,6 +4,7 @@ Higher-level commands to package directories on the filesystem.
 """
 from __future__ import absolute_import
 
+import logging
 import shutil
 import tempfile
 from contextlib import contextmanager
@@ -11,6 +12,8 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from eodatasets import package, serialise
+
+_LOG = logging.getLogger(__name__)
 
 
 def package_newly_processed_data_folder(driver, input_data_paths, destination_path, parent_dataset_paths,
@@ -144,12 +147,12 @@ def _package_folder(driver, input_data_paths, destination_path, parent_dataset_p
 @contextmanager
 def temp_dir(prefix="", base_dir=None):
     temp_output_dir = Path(tempfile.mkdtemp(prefix=prefix, dir=str(base_dir)))
-
-    yield Path(temp_output_dir)  # Make new Path, caller can rename, but we will
-    #  only clean up the original pathname
-
-    with ignored(OSError):
-        temp_output_dir.rmdir()
+    try:
+        yield Path(temp_output_dir)
+    finally:
+        # Clean up if still exists
+        with ignored(OSError):
+            shutil.rmtree(str(temp_output_dir), ignore_errors=True)
 
 
 @contextmanager
