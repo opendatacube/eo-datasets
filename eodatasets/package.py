@@ -194,7 +194,7 @@ def write_additional_files(additional_files, checksums, target_path):
         target_path = additional_directory.joinpath(path.name)
         if not target_path.parent.exists():
             target_path.parent.mkdir(parents=True)
-        shutil.copy(str(path.absolute()), str(target_path))
+        shutil.copyfile(str(path.absolute()), str(target_path))
         checksums.add_file(target_path)
 
 
@@ -276,7 +276,7 @@ def _copy_file(source_path, destination_path, compress_imagery=True, hard_link=F
         )
     else:
         _LOG.info('Copying %r -> %r', source_file, destination_file)
-        shutil.copy(source_file, destination_file)
+        shutil.copyfile(source_file, destination_file)
 
     return destination_path.stat().st_size
 
