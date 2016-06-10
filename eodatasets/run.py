@@ -154,6 +154,7 @@ def _package_folder(driver, input_data_paths, destination_path, source_datasets,
                 # Move finished folder into place.
                 temp_output_dir.rename(packaged_path)
                 created_packages.append(packaged_path)
+                _LOG.info('Completed package %r', packaged_path)
 
     return created_packages, existing_packages
 
