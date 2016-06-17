@@ -234,8 +234,14 @@ def _get_ancillary_metadata(mtl_doc, wo_doc, mtl_name_offset=None, order_dir_off
         # They specified an exact file to Pinkmatter rather than a search directory.
         file_path = specified_path
     else:
-        file_path = _get_file(specified_path, used_file_name)
+        # Else is a directory.
+        # Find the file that was used inside it.
 
+        # No file was used by Pinkmatter (Eg. TIRS ancillary in an OLI dataset)
+        if not used_file_name:
+            return None
+
+        file_path = _get_file(specified_path, used_file_name)
 
     _LOG.info('Found ancillary path %s', file_path)
     return ptype.AncillaryMetadata.from_file(file_path, properties=properties)
