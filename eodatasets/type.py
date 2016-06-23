@@ -660,7 +660,7 @@ class AncillaryMetadata(SimpleObject):
         if not file_path.exists():
             raise ValueError('Ancil path given does not exist: {}'.format(file_path))
         if not file_path.is_file():
-            _LOG.warning('Ancil path is not a file: {}'.format(file_path))
+            _LOG.warning('Ancil path is not a file: %s', file_path)
 
         return AncillaryMetadata(
             name=file_path.name,
