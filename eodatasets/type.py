@@ -705,7 +705,6 @@ class GroundstationMetadata(SimpleObject):
 
     def __init__(self, code, label=None, eods_domain_code=None, antenna_coord=None):
         """
-
         :param code: The GSI of the groundstation ("ASA" etc)
         :type code: str
         :type antenna_coord: Coord
@@ -765,10 +764,8 @@ class UsgsMetadata(SimpleObject):
         #: :type: str
         self.scene_id = scene_id
 
-        # ####
         # A (dataset_name, entity_id) combination is used in the USGS API (and earth explorer) to
         # identify specific datasets:
-        #
 
         # "dataset_name" is the class of dataset in the USGS collection.
         # eg. 'LANDSAT_8_MISSION' (which is raw), 'LANDSAT_8' (which is processed) etc.
@@ -828,8 +825,7 @@ class DatasetMetadata(SimpleObject):
         #: :type: int
         self.size_bytes = size_bytes
 
-        # Formally known as 'dataset_id' within GA.
-        # Eg. 'LS7_ETM_SYS_P31_GALPGS01-002_114_73_20050107'
+        # Formally known as 'dataset_id' within GA. (Eg. 'LS7_ETM_SYS_P31_GALPGS01-002_114_73_20050107')
         #: :type: str
         self.ga_label = ga_label
 
@@ -898,7 +894,7 @@ class GeoJsonGeometry(SimpleObject):
 
         self.type_ = type_
 
-        #: :type:
+        #: :type: dict
         self.coordinates = coordinates
 
 
