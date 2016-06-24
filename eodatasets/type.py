@@ -686,6 +686,7 @@ class LineageMetadata(SimpleObject):
         #: :type: MachineMetadata
         self.machine = machine
 
+        # Deprecated: we record it per-ancillary file in self.ancillary
         # 'PREDICTIVE' or 'DEFINITIVE'
         # :type: str
         self.ancillary_quality = ancillary_quality
