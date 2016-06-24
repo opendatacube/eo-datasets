@@ -818,7 +818,7 @@ class DatasetMetadata(SimpleObject):
                  product_flags=None):
         super(DatasetMetadata, self).__init__()
 
-        self.id_ = id_ or uuid.uuid1()
+        self.id_ = id_ or uuid.uuid4()
 
         # When the dataset was created.
         #: :type: datetime.datetime
