@@ -421,7 +421,8 @@ def _populate_lineage(md, mtl_):
     # Example "LPGS_2.3.0"
     soft_v = _get(mtl_, 'METADATA_FILE_INFO', 'processing_software_version')
     md.lineage.algorithm.name, md.lineage.algorithm.version = soft_v.split('_')
-    md.lineage.algorithm.parameters = {}  # ? TODO
+    if not md.lineage.algorithm.parameters:
+        md.lineage.algorithm.parameters = {}
     if not md.lineage.ancillary:
         md.lineage.ancillary = {}
     md.lineage.ancillary_quality = _get(product_md, 'ephemeris_type')
