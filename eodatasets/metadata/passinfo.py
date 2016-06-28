@@ -4,8 +4,9 @@ Metadata extraction from passinfo files.
 """
 from __future__ import absolute_import
 
-import datetime
 import logging
+
+import dateutil.parser
 
 from eodatasets import type as ptype
 
@@ -118,6 +119,6 @@ def _parse_common_date(date_str):
     :rtype: struct_time or None
     """
     if date_str:
-        return datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S')
+        return dateutil.parser.parse(date_str)
     else:
         return None
