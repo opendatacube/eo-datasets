@@ -824,7 +824,7 @@ class PqaDriver(DatasetDriver):
         return 'pqa'
 
     def expected_source(self):
-        return NbarDriver('brdf')
+        return (OrthoDriver(), NbarDriver('brdf'))
 
     def get_ga_label(self, dataset):
         # Eg. 'LS8_OLI_TIRS_PQ_P55_GAPQ01-032_090_081_20140726'
