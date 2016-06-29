@@ -92,10 +92,10 @@ def package_existing_data_folder(driver, input_data_paths, destination_path, par
 
 def _source_datasets_from_paths(driver, parent_dataset_paths):
     parent_datasets = {}
-    if parent_dataset_paths:
-        # TODO: Multiple parents?
-        source_id = driver.expected_source().get_id()
-        parent_datasets.update({source_id: serialise.read_dataset_metadata(parent_dataset_paths[0])})
+    for parent in parent_dataset_paths:
+        metadata = serialise.read_dataset_metadata(parent)
+        source_id = metadata.product_type
+        parent_datasets.update({source_id: metadata})
     return parent_datasets
 
 
