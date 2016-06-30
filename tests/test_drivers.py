@@ -519,4 +519,7 @@ class TestDrivers(TestCase):
         self.assertEqual('pqa', drivers.PqaDriver().get_id())
 
         sources = (drivers.OrthoDriver(), drivers.NbarDriver('brdf'))
-        self.assertTrue(set(sources).issubset(drivers.PqaDriver().expected_source()))
+        expected = drivers.PqaDriver().expected_source()
+
+        # odd that set(sources).issubset(expected) returns False
+        self.assertTrue(all([i in expected for i in sources]))
