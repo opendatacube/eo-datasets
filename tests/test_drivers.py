@@ -152,7 +152,8 @@ _EXPECTED_PQA = ptype.DatasetMetadata(
     ),
     lineage=ptype.LineageMetadata(
         algorithm=ptype.AlgorithmMetadata(name='pqa', version='1.0'),
-        source_datasets={'nbar': _EXPECTED_NBAR}
+        source_datasets={'nbar': _EXPECTED_NBAR,
+                         'level1': test_ls8.EXPECTED_OUT}
     ),
     product_flags={},
     grid_spatial=ptype.GridSpatialMetadata(
@@ -433,7 +434,8 @@ class TestDrivers(TestCase):
             id_=_EXPECTED_PQA.id_,
             lineage=ptype.LineageMetadata(
                 source_datasets={
-                    'nbar': _EXPECTED_NBAR
+                    'nbar': _EXPECTED_NBAR,
+                    'level1': test_ls8.EXPECTED_OUT
                 }
             )
         )
@@ -515,4 +517,6 @@ class TestDrivers(TestCase):
         self.assertEqual(drivers.PqaDriver().browse_image_bands(_EXPECTED_PQA), ('pqa',))
 
         self.assertEqual('pqa', drivers.PqaDriver().get_id())
-        self.assertEqual(drivers.NbarDriver('brdf'), drivers.PqaDriver().expected_source())
+
+        sources = (drivers.OrthoDriver(), drivers.NbarDriver('brdf'))
+        self.assertTrue(set(sources).issubset(drivers.PqaDriver().expected_source()))
