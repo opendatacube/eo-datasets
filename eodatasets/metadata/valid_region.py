@@ -1,6 +1,7 @@
 import rasterio
 from rasterio.errors import RasterioIOError
 import rasterio.features
+from scipy import ndimage
 import shapely.affinity
 import shapely.geometry
 import shapely.ops
@@ -30,6 +31,10 @@ def valid_region(images, mask_value=None):
                 mask = new_mask
             else:
                 mask |= new_mask
+
+    # apply a fill holes filter; reduces run time of the union function
+    # when there are lots of holes in the data eg NBART, PQ, and Landsat 7
+    mask = ndimage.binary_fill_holes(mask)
 
     shapes = rasterio.features.shapes(mask.astype('uint8'), mask=mask)
     shape = shapely.ops.unary_union([shapely.geometry.shape(shape) for shape, val in shapes if val == 1])
