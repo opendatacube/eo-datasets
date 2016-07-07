@@ -26,7 +26,8 @@ setup(
         'pathlib',
         'pyyaml',
         'rasterio',
-        'shapely'
+        'shapely',
+        'scipy'
     ],
     entry_points='''
         [console_scripts]
