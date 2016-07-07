@@ -149,7 +149,7 @@ def _package_folder(driver, input_data_paths, destination_path, source_datasets,
             if packaged_path.exists():
                 _LOG.warning('Package already exists: %r', packaged_path)
                 existing_packages.append(packaged_path)
-                shutil.rmtree(temp_output_dir, ignore_errors=True)
+                shutil.rmtree(str(temp_output_dir), ignore_errors=True)
             else:
                 # Move finished folder into place.
                 temp_output_dir.rename(packaged_path)
