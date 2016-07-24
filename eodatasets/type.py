@@ -806,14 +806,14 @@ class DatasetMetadata(SimpleObject):
                  format_=None,
                  usgs=None,
                  rms_string=None,
+                 product_flags=None,
                  acquisition=None,
                  extent=None,
                  grid_spatial=None,
                  gqa=None,
                  browse=None,
                  image=None,
-                 lineage=None,
-                 product_flags=None):
+                 lineage=None):
         super(DatasetMetadata, self).__init__()
 
         self.id_ = id_ or uuid.uuid4()
