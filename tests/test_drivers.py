@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
 
+import copy
 import datetime
 from textwrap import dedent
 from uuid import UUID
@@ -253,6 +254,15 @@ class TestDrivers(TestCase):
         self.assertEqual(
             "LS7_ETM_SYS_P31_GALPGS01-002_114_073_20050107",
             drivers.OrthoDriver().get_ga_label(test_ls7_definitive.EXPECTED_OUT)
+        )
+
+    def test_ortho_ls7_predictive_label(self):
+        #: :type: eodatasets.type.DatasetMetadata
+        definition = copy.deepcopy(test_ls7_definitive.EXPECTED_OUT)
+        definition.lineage.ancillary_quality = 'PREDICTIVE'
+        self.assertEqual(
+            "LS7_ETM_SYS_P31-PREDICTIVE_GALPGS01-002_114_073_20050107",
+            drivers.OrthoDriver().get_ga_label(definition)
         )
 
     def test_ortho_ls5_label(self):

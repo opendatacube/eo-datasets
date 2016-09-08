@@ -1,12 +1,12 @@
 # coding=utf-8
 from __future__ import absolute_import
 
-from copy import deepcopy
 import datetime
 import logging
 import re
 import string
 import xml.etree.cElementTree as etree
+from copy import deepcopy
 
 import yaml
 
@@ -304,6 +304,10 @@ def _fill_dataset_label(dataset, format_str, **additionals):
 
         orbit = dataset.acquisition.platform_orbit
 
+    ancillary_quality = None
+    if dataset.lineage:
+        ancillary_quality = dataset.lineage.ancillary_quality
+
     formatted_params = {
         'satnumber': _get_short_satellite_code(dataset.platform.code),
         'sensor': _remove_chars(string.punctuation, dataset.instrument.name),
@@ -316,6 +320,7 @@ def _fill_dataset_label(dataset, format_str, **additionals):
         'orbit': orbit,
         'stationcode': station_code,
         'startdt': start,
+        'ancillary_quality': ancillary_quality,
         'enddt': end,
         'rmsstring': dataset.rms_string,
         'day': _format_day(dataset),
@@ -467,9 +472,15 @@ class OrthoDriver(DatasetDriver):
         # "LS7_ETM_SYS_P31_GALPGS01-002_114_73_20050107"
         #     "LS5_TM_OTH_P51_GALPGS01-002_113_063_20050601"
 
+        # Definitive is considered normal (unflagged), otherwise we flag the ancillary quality.
+        ancillary_flag = ''
+        if dataset.lineage and dataset.lineage.ancillary_quality and dataset.lineage.ancillary_quality != 'DEFINITIVE':
+            ancillary_flag = '-' + dataset.lineage.ancillary_quality
+
         return _fill_dataset_label(
             dataset,
-            '{satnumber}_{sensor}_{level}_{galevel}_GALPGS01-{stationcode}_{path}_{rows}_{day}'
+            '{satnumber}_{sensor}_{level}_{galevel}{ancillary_flag}_GALPGS01-{stationcode}_{path}_{rows}_{day}',
+            ancillary_flag=ancillary_flag,
         )
 
 
