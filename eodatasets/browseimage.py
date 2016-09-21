@@ -79,7 +79,7 @@ def _calculate_scale_offset(nodata, band):
 
 # This method comes from the old ULA codebase and should be cleaned up eventually.
 # pylint: disable=too-many-locals
-def _create_thumbnail(red_file, green_file, blue_file, thumb_image,
+def _create_thumbnail(red_file, green_file, blue_file, output_path,
                       x_constraint=None, nodata=-999, work_dir=None, overwrite=True):
     """
     Create JPEG thumbnail image using individual R, G, B images.
@@ -89,7 +89,7 @@ def _create_thumbnail(red_file, green_file, blue_file, thumb_image,
     :param red_file: red band data file
     :param green_file: green band data file
     :param blue_file: blue band data file
-    :param thumb_image: thumbnail file to write to.
+    :param output_path: thumbnail file to write to.
     :param x_constraint: thumbnail width (if not full resolution)
     :param nodata: null/fill data value
     :param work_dir: temp/work directory to use.
@@ -102,7 +102,7 @@ def _create_thumbnail(red_file, green_file, blue_file, thumb_image,
     nodata = int(nodata)
 
     # GDAL calls need absolute paths.
-    thumbnail_path = pathlib.Path(thumb_image).absolute()
+    thumbnail_path = pathlib.Path(output_path).absolute()
 
     if thumbnail_path.exists() and not overwrite:
         _LOG.warning('File already exists. Skipping creation of %s', thumbnail_path)
@@ -110,98 +110,99 @@ def _create_thumbnail(red_file, green_file, blue_file, thumb_image,
 
     # thumbnail_image = os.path.abspath(thumbnail_image)
 
-    work_dir = os.path.abspath(work_dir) if work_dir else tempfile.mkdtemp('-gaip-package')
+    out_directory = str(thumbnail_path.parent)
+    work_dir = os.path.abspath(work_dir) if work_dir else tempfile.mkdtemp(prefix='.thumb-tmp', dir=out_directory)
+    try:
+        # working files
+        file_to = os.path.join(work_dir, 'rgb.vrt')
+        warp_to_file = os.path.join(work_dir, 'rgb-warped.vrt')
+        outtif = os.path.join(work_dir, 'thumbnail.tif')
 
-    # working files
-    file_to = os.path.join(work_dir, 'rgb.vrt')
-    warp_to_file = os.path.join(work_dir, 'rgb-warped.vrt')
-    outtif = os.path.join(work_dir, 'thumbnail.tif')
-
-    # file_to = os.path.abspath(file_to)
-
-    # Build the RGB Virtual Raster at full resolution
-    run_command(
-        [
-            "gdalbuildvrt",
-            "-overwrite", "-separate",
-            file_to,
-            str(red_file), str(green_file), str(blue_file)
-        ],
-        work_dir
-    )
-    assert os.path.exists(file_to), "VRT must exist"
-
-    # Determine the pixel scaling to get the correct width thumbnail
-    vrt = gdal.Open(file_to)
-    intransform = vrt.GetGeoTransform()
-    inpixelx = intransform[1]
-    # inpixely = intransform[5]
-    inrows = vrt.RasterYSize
-    incols = vrt.RasterXSize
-
-    # If a specific resolution is asked for.
-    if x_constraint:
-        outresx = inpixelx * incols / x_constraint
-        _LOG.info('Input pixel res %r, output pixel res %r', inpixelx, outresx)
-
-        outrows = int(math.ceil((float(inrows) / float(incols)) * x_constraint))
-
-        run_command([
-            "gdalwarp",
-            "--config", "GDAL_CACHEMAX", str(GDAL_CACHE_MAX_MB),
-            "-of", "VRT",
-            "-tr", str(outresx), str(outresx),
-            "-r", "near",
-            "-overwrite", file_to,
-            warp_to_file
-        ], work_dir)
-    else:
-        # Otherwise use a full resolution browse image.
-        outrows = inrows
-        x_constraint = incols
-        warp_to_file = file_to
-        outresx = inpixelx
-
-    _LOG.debug('Current GDAL cache max %rMB. Setting to %rMB', gdal.GetCacheMax() / 1024 / 1024, GDAL_CACHE_MAX_MB)
-    gdal.SetCacheMax(GDAL_CACHE_MAX_MB * 1024 * 1024)
-
-    # Open VRT file to array
-    vrt = gdal.Open(warp_to_file)
-    driver = gdal.GetDriverByName("GTiff")
-    outdataset = driver.Create(outtif, x_constraint, outrows, 3, gdalconst.GDT_Byte)
-
-    # Loop through bands and apply Scale and Offset
-    for band_number in (1, 2, 3):
-        band = vrt.GetRasterBand(band_number)
-
-        scale, offset = _calculate_scale_offset(nodata, band)
-
-        # Apply gain and offset
-        outdataset.GetRasterBand(band_number).WriteArray(
-            (numpy.ma.masked_less_equal(band.ReadAsArray(), nodata) * scale) + offset
+        # Build the RGB Virtual Raster at full resolution
+        run_command(
+            [
+                "gdalbuildvrt",
+                "-overwrite", "-separate",
+                file_to,
+                str(red_file), str(green_file), str(blue_file)
+            ],
+            work_dir
         )
-        _LOG.debug('Scale %r, offset %r', scale, offset)
+        assert os.path.exists(file_to), "VRT must exist"
 
-    # Must close datasets to flush to disk.
-    # noinspection PyUnusedLocal
-    outdataset = None
-    # noinspection PyUnusedLocal
-    vrt = None
+        # Determine the pixel scaling to get the correct width thumbnail
+        vrt = gdal.Open(file_to)
+        intransform = vrt.GetGeoTransform()
+        inpixelx = intransform[1]
+        # inpixely = intransform[5]
+        inrows = vrt.RasterYSize
+        incols = vrt.RasterXSize
 
-    # GDAL Create doesn't support JPEG so we need to make a copy of the GeoTIFF
-    run_command(
-        [
-            "gdal_translate",
-            "--config", "GDAL_CACHEMAX", str(GDAL_CACHE_MAX_MB),
-            "-of", "JPEG",
-            outtif,
-            str(thumbnail_path)
-        ],
-        work_dir)
+        # If a specific resolution is asked for.
+        if x_constraint:
+            outresx = inpixelx * incols / x_constraint
+            _LOG.info('Input pixel res %r, output pixel res %r', inpixelx, outresx)
 
-    _LOG.debug('Cleaning work files')
-    # Clean up work files
-    shutil.rmtree(work_dir)
+            outrows = int(math.ceil((float(inrows) / float(incols)) * x_constraint))
+
+            run_command([
+                "gdalwarp",
+                "--config", "GDAL_CACHEMAX", str(GDAL_CACHE_MAX_MB),
+                "-of", "VRT",
+                "-tr", str(outresx), str(outresx),
+                "-r", "near",
+                "-overwrite", file_to,
+                warp_to_file
+            ], work_dir)
+        else:
+            # Otherwise use a full resolution browse image.
+            outrows = inrows
+            x_constraint = incols
+            warp_to_file = file_to
+            outresx = inpixelx
+
+        _LOG.debug('Current GDAL cache max %rMB. Setting to %rMB', gdal.GetCacheMax() / 1024 / 1024, GDAL_CACHE_MAX_MB)
+        gdal.SetCacheMax(GDAL_CACHE_MAX_MB * 1024 * 1024)
+
+        # Open VRT file to array
+        vrt = gdal.Open(warp_to_file)
+        driver = gdal.GetDriverByName("GTiff")
+        outdataset = driver.Create(outtif, x_constraint, outrows, 3, gdalconst.GDT_Byte)
+
+        # Loop through bands and apply Scale and Offset
+        for band_number in (1, 2, 3):
+            band = vrt.GetRasterBand(band_number)
+
+            scale, offset = _calculate_scale_offset(nodata, band)
+
+            # Apply gain and offset
+            outdataset.GetRasterBand(band_number).WriteArray(
+                (numpy.ma.masked_less_equal(band.ReadAsArray(), nodata) * scale) + offset
+            )
+            _LOG.debug('Scale %r, offset %r', scale, offset)
+
+        # Must close datasets to flush to disk.
+        # noinspection PyUnusedLocal
+        outdataset = None
+        # noinspection PyUnusedLocal
+        vrt = None
+
+        # GDAL Create doesn't support JPEG so we need to make a copy of the GeoTIFF
+        run_command(
+            [
+                "gdal_translate",
+                "--config", "GDAL_CACHEMAX", str(GDAL_CACHE_MAX_MB),
+                "-of", "JPEG",
+                outtif,
+                str(thumbnail_path)
+            ],
+            work_dir)
+
+        _LOG.debug('Cleaning work files')
+    finally:
+        # Clean up work files
+        if os.path.exists(work_dir):
+            shutil.rmtree(work_dir)
 
     # Newer versions of GDAL create aux files due to the histogram. Clean them up.
     for f in (red_file, blue_file, green_file):
