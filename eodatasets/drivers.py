@@ -515,7 +515,8 @@ def borrow_single_sourced_fields(dataset, source_dataset):
 class NbarDriver(DatasetDriver):
     METADATA_FILE = 'nbar_metadata.yaml'
     product_ids = {'brdf': 'nbar',
-                   'terrain': 'nbart'}
+                   'terrain': 'nbart',
+                   'lambertian': 'lambertian'}
 
     def __init__(self, subset_name):
         # Subset is typically "brdf" or "terrain" -- which NBAR portion to package.
@@ -944,6 +945,7 @@ PACKAGE_DRIVERS = {
     'level1': OrthoDriver(),
     'nbar': NbarDriver('brdf'),
     'nbart': NbarDriver('terrain'),
+    'lambertian': NbarDriver('lambertian'),
     'eods': EODSDriver(),
     # Backwards compat.
     'ortho': OrthoDriver(),
