@@ -542,9 +542,9 @@ class NbarDriver(DatasetDriver):
         """
         :type file_path: Path
         :return:
-        >>> NbarDriver('brdf')._read_band_number(Path('reflectance_brdf_2.bin'))
+        >>> NbarDriver('brdf')._read_band_number(Path('reflectance_brdf_2.tif'))
         '2'
-        >>> NbarDriver('terrain')._read_band_number(Path('reflectance_terrain_7.bin'))
+        >>> NbarDriver('terrain')._read_band_number(Path('reflectance_terrain_7.tif'))
         '7'
         >>> p = Path('/tmp/something/LS8_OLITIRS_NBAR_P54_GANBAR01-002_112_079_20140126_B4.tif')
         >>> NbarDriver('brdf')._read_band_number(p)
@@ -561,13 +561,13 @@ class NbarDriver(DatasetDriver):
         """
         :param file_path:
         :rtype: boolean
-        >>> NbarDriver('terrain').include_file(Path('Reflectance_output/reflectance_terrain_7.bin'))
+        >>> NbarDriver('terrain').include_file(Path('Reflectance_output/reflectance_terrain_7.tif'))
         True
-        >>> NbarDriver('brdf').include_file(Path('Reflectance_output/reflectance_terrain_7.bin'))
+        >>> NbarDriver('brdf').include_file(Path('Reflectance_output/reflectance_terrain_7.tif'))
         False
         """
         # Skip hidden files and envi headers. (envi files are converted to tif during copy)
-        return (file_path.suffix == '.bin' and
+        return (file_path.suffix == '.tif' and
                 file_path.name.startswith('reflectance_%s_' % self.subset_name))
 
     def translate_path(self, dataset, file_path):
@@ -576,7 +576,7 @@ class NbarDriver(DatasetDriver):
         :type file_path: Path
         :rtype: Path
         >>> from tests.metadata.mtl.test_ls8 import EXPECTED_OUT as ls8_dataset
-        >>> NbarDriver('terrain').translate_path(ls8_dataset, Path('Reflectance_output/reflectance_terrain_7.bin'))
+        >>> NbarDriver('terrain').translate_path(ls8_dataset, Path('Reflectance_output/reflectance_terrain_7.tif'))
         PosixPath('LS8_OLITIRS_NBART_P51_GANBART01-032_101_078_20141012_B7.tif')
         """
 
@@ -591,11 +591,11 @@ class NbarDriver(DatasetDriver):
         :type path: Path
         :rtype: ptype.BandMetadata
 
-        >>> p = Path('/tmp/something/reflectance_terrain_3.bin')
+        >>> p = Path('/tmp/something/reflectance_terrain_3.tif')
         >>> NbarDriver('terrain').to_band(None, p).number
         '3'
         >>> NbarDriver('terrain').to_band(None, p).path
-        PosixPath('/tmp/something/reflectance_terrain_3.bin')
+        PosixPath('/tmp/something/reflectance_terrain_3.tif')
         >>> p = Path('/tmp/something/LS8_OLITIRS_NBAR_P54_GANBART01-002_112_079_20140126_B4.tif')
         >>> NbarDriver('terrain').to_band(None, p).number
         '4'
@@ -686,9 +686,9 @@ def _read_band_number(file_path):
     """
     :type file_path: Path
     :return:
-    >>> _read_band_number(Path('reflectance_brdf_2.bin'))
+    >>> _read_band_number(Path('reflectance_brdf_2.tif'))
     '2'
-    >>> _read_band_number(Path('reflectance_terrain_7.bin'))
+    >>> _read_band_number(Path('reflectance_terrain_7.tif'))
     '7'
     >>> p = Path('/tmp/something/LS8_OLITIRS_NBAR_P54_GALPGS01-002_112_079_20140126_B4.tif')
     >>> _read_band_number(p)
