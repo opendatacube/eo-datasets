@@ -94,7 +94,10 @@ class PackageChecksum(object):
         _LOG.info('Checksumming %r', file_path)
         hash_ = calculate_file_hash(file_path)
         _LOG.debug('%r -> %r', file_path, hash_)
-        self._file_hashes[Path(file_path)] = hash_
+        self._append_hash(file_path, hash_)
+
+    def _append_hash(self, file_path, hash_):
+        self._file_hashes[Path(file_path).absolute()] = hash_
 
     def add_files(self, file_paths):
         for path in file_paths:
@@ -109,3 +112,25 @@ class PackageChecksum(object):
         with output_file.open('w') as f:
             f.writelines((u'{0}\t{1}\n'.format(str(hash_), str(filename.relative_to(output_file.parent)))
                           for filename, hash_ in sorted(self._file_hashes.items())))
+
+    def read(self, checksum_path):
+        """
+        Read checksum values from the given checksum file
+        :type checksum_path: Path or str
+        """
+        checksum_path = Path(checksum_path)
+        with checksum_path.open('r') as f:
+            for line in f.readlines():
+                hash_, path = str(line).strip().split('\t')
+                self._append_hash(checksum_path.parent.joinpath(*path.split('/')), hash_)
+
+    def items(self):
+        return self._file_hashes.items()
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            # pylint 1.6.4 isn't smart enough to know that this is protected access of the same class
+            # pylint: disable=protected-access
+            return self._file_hashes == other._file_hashes
+        else:
+            return False

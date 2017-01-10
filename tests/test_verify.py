@@ -53,3 +53,13 @@ class VerifyTests(unittest.TestCase):
 3ebfa301dc59196f18593c45e519287a23297589\tpackage/test3.txt
 a94a8fe5ccb19ba61c4c0873d391e987982fbbd3\ttest1.txt
 """, doc)
+
+        # After dumping to a file, read()'ing from the file should give us identical values.
+        c2 = verify.PackageChecksum()
+        c2.read(checksums_file)
+        original_items = set(c.items())
+        loaded_items = set(c2.items())
+        assert original_items == loaded_items
+        assert c == c2
+        # ... and a sanity check of our equals method:
+        assert c != verify.PackageChecksum()
