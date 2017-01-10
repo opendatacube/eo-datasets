@@ -6,6 +6,10 @@ import shapely.affinity
 import shapely.geometry
 import shapely.ops
 
+import logging
+
+_LOG = logging.getLogger(__name__)
+
 
 def safe_valid_region(images, mask_value=None):
     try:
@@ -16,6 +20,10 @@ def safe_valid_region(images, mask_value=None):
 
 def valid_region(images, mask_value=None):
     mask = None
+
+    if not images:
+        _LOG.warning("No images: empty region")
+        return None
 
     for fname in images:
         with rasterio.open(str(fname), 'r') as ds:
