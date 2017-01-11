@@ -132,10 +132,10 @@ def package_dataset(dataset_driver,
 
     file_paths = []
 
-    def save_target_checksums_and_paths(source_path, target_path):
-        _LOG.debug('%r -> %r', source_path, target_path)
-        checksums.add_file(target_path)
-        file_paths.append(target_path)
+    def save_target_checksums_and_paths(source_path, target_paths):
+        _LOG.debug('%r -> %r', source_path, target_paths)
+        checksums.add_files(target_paths)
+        file_paths.extend(target_paths)
 
     prepare_target_imagery(
         image_path,
@@ -230,9 +230,9 @@ def prepare_target_imagery(
 
         absolute_target_path = destination_directory / rel_target_path
 
-        _copy_file(source_file, absolute_target_path, compress_imagery, hard_link=hard_link)
+        output_paths = _copy_file(source_file, absolute_target_path, compress_imagery, hard_link=hard_link)
 
-        after_file_copy(source_file, absolute_target_path)
+        after_file_copy(source_file, output_paths)
 
 
 def _copy_file(source_path, destination_path, compress_imagery=True, hard_link=False):
@@ -256,6 +256,8 @@ def _copy_file(source_path, destination_path, compress_imagery=True, hard_link=F
     original_suffix = source_path.suffix.lower()
     suffix = destination_path.suffix.lower()
 
+    output_paths = [destination_path]
+
     if destination_path.exists():
         _LOG.info('Destination exists: %r', destination_file)
     elif (original_suffix == suffix) and hard_link:
@@ -274,11 +276,15 @@ def _copy_file(source_path, destination_path, compress_imagery=True, hard_link=F
                 source_file, destination_file
             ]
         )
+        # If gdal output an IMD file, include it in the outputs.
+        imd_file = destination_path.parent.joinpath('{}.IMD'.format(destination_path.stem))
+        if imd_file.exists():
+            output_paths.append(imd_file)
     else:
         _LOG.info('Copying %r -> %r', source_file, destination_file)
         shutil.copyfile(source_file, destination_file)
 
-    return destination_path.stat().st_size
+    return output_paths
 
 
 class IncompletePackage(Exception):

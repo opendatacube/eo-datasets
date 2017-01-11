@@ -5,6 +5,7 @@ Package an LS8 NBAR dataset.
 from __future__ import absolute_import
 
 import datetime
+import os
 
 import yaml
 from pathlib import Path
@@ -70,17 +71,30 @@ def test_package():
             'browse.jpg': '',
             'browse.fr.jpg': '',
             'product': {
-                'LC81120792014026ASA00_B1.TIF': '',
-                'LC81120792014026ASA00_B2.TIF': '',
-                'LC81120792014026ASA00_B3.TIF': '',
-                'LC81120792014026ASA00_B4.TIF': '',
-                'LC81120792014026ASA00_B5.TIF': '',
-                'LC81120792014026ASA00_B6.TIF': '',
-                'LC81120792014026ASA00_B7.TIF': '',
-                'LC81120792014026ASA00_B8.TIF': '',
-                'LC81120792014026ASA00_B9.TIF': '',
+                # Newer versions of GDAL create an IMD file with some of the embedded metadata.
+                'LC81120792014026ASA00_B10.IMD': 'optional',
                 'LC81120792014026ASA00_B10.TIF': '',
+                'LC81120792014026ASA00_B11.IMD': 'optional',
                 'LC81120792014026ASA00_B11.TIF': '',
+                'LC81120792014026ASA00_B1.IMD': 'optional',
+                'LC81120792014026ASA00_B1.TIF': '',
+                'LC81120792014026ASA00_B2.IMD': 'optional',
+                'LC81120792014026ASA00_B2.TIF': '',
+                'LC81120792014026ASA00_B3.IMD': 'optional',
+                'LC81120792014026ASA00_B3.TIF': '',
+                'LC81120792014026ASA00_B4.IMD': 'optional',
+                'LC81120792014026ASA00_B4.TIF': '',
+                'LC81120792014026ASA00_B5.IMD': 'optional',
+                'LC81120792014026ASA00_B5.TIF': '',
+                'LC81120792014026ASA00_B6.IMD': 'optional',
+                'LC81120792014026ASA00_B6.TIF': '',
+                'LC81120792014026ASA00_B7.IMD': 'optional',
+                'LC81120792014026ASA00_B7.TIF': '',
+                'LC81120792014026ASA00_B8.IMD': 'optional',
+                'LC81120792014026ASA00_B8.TIF': '',
+                'LC81120792014026ASA00_B9.IMD': 'optional',
+                'LC81120792014026ASA00_B9.TIF': '',
+                'LC81120792014026ASA00_BQA.IMD': 'optional',
                 'LC81120792014026ASA00_BQA.TIF': '',
                 'LC81120792014026ASA00_GCP.txt': '',
                 'LC81120792014026ASA00_MTL.txt': '',
@@ -115,31 +129,20 @@ def test_package():
     assert output_checksum_path.exists()
     checksummed_filenames = load_checksum_filenames(output_checksum_path)
 
-    expected_filenames = [
-        'additional/20141201_20010425_B6_gqa_results.yaml',
-        'additional/lpgs_out.xml',
-        'additional/work_order.xml',
-        'browse.fr.jpg',
-        'browse.jpg',
-        'ga-metadata.yaml',
-        'product/LC81120792014026ASA00_B1.TIF',
-        'product/LC81120792014026ASA00_B10.TIF',
-        'product/LC81120792014026ASA00_B11.TIF',
-        'product/LC81120792014026ASA00_B2.TIF',
-        'product/LC81120792014026ASA00_B3.TIF',
-        'product/LC81120792014026ASA00_B4.TIF',
-        'product/LC81120792014026ASA00_B5.TIF',
-        'product/LC81120792014026ASA00_B6.TIF',
-        'product/LC81120792014026ASA00_B7.TIF',
-        'product/LC81120792014026ASA00_B8.TIF',
-        'product/LC81120792014026ASA00_B9.TIF',
-        'product/LC81120792014026ASA00_BQA.TIF',
-        'product/LC81120792014026ASA00_GCP.txt',
-        'product/LC81120792014026ASA00_MTL.txt',
-        'product/LO8_20140126_112_079_L1T.xml'
-    ]
+    expected_filenames = sorted(f for f in as_file_list(output_dataset) if f != 'package.sha1')
     assert set(checksummed_filenames) == set(expected_filenames)
     assert checksummed_filenames == expected_filenames
+
+
+def as_file_list(path):
+    """
+    Build a flat list of filenames relative to the given folder
+    (similar to the contents of package.sha1 files)
+    """
+    output = []
+    for directory, _, files in os.walk(str(path)):
+        output.extend(str(Path(directory).relative_to(path).joinpath(file_)) for file_ in files)
+    return output
 
 
 EXPECTED_METADATA = {

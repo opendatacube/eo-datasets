@@ -76,13 +76,15 @@ def assert_file_structure(folder, expected_structure, root=''):
     :type expected_structure: dict[str,str|dict]
     """
 
-    expected_filenames = set(expected_structure.keys())
+    required_filenames = set(name for name, option in expected_structure.items() if option != 'optional')
+    optional_filenames = set(name for name, option in expected_structure.items() if option == 'optional')
+
     actual_filenames = {f.name for f in folder.iterdir()}
 
-    if expected_filenames != actual_filenames:
-        missing_files = expected_filenames - actual_filenames
+    if required_filenames != (actual_filenames - optional_filenames):
+        missing_files = required_filenames - actual_filenames
         missing_text = 'Missing: %r' % (sorted(list(missing_files)))
-        extra_files = actual_filenames - expected_filenames
+        extra_files = actual_filenames - required_filenames
         added_text = 'Extra  : %r' % (sorted(list(extra_files)))
         raise AssertionError('Folder mismatch of %r\n\t%s\n\t%s' % (root, missing_text, added_text))
 

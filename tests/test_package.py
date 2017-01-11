@@ -86,7 +86,7 @@ class TestPackage(TestCase):
         # *.swamp should not be returned, as it received None from our path translation.
         self.assertEqual(
             [
-                (source_path.joinpath('LC81010782014285LGN00_B6.img'), dest_file)
+                (source_path.joinpath('LC81010782014285LGN00_B6.img'), [dest_file])
             ], called_back
         )
 

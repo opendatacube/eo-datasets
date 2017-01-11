@@ -83,7 +83,7 @@ class PackageChecksum(object):
     """
 
     def __init__(self):
-        self.file_hashes = []
+        self._file_hashes = {}
 
     def add_file(self, file_path):
         """
@@ -94,7 +94,11 @@ class PackageChecksum(object):
         _LOG.info('Checksumming %r', file_path)
         hash_ = calculate_file_hash(file_path)
         _LOG.debug('%r -> %r', file_path, hash_)
-        self.file_hashes.append((Path(file_path), hash_))
+        self._file_hashes[Path(file_path)] = hash_
+
+    def add_files(self, file_paths):
+        for path in file_paths:
+            self.add_file(path)
 
     def write(self, output_file):
         """
@@ -104,4 +108,4 @@ class PackageChecksum(object):
         output_file = Path(output_file)
         with output_file.open('w') as f:
             f.writelines((u'{0}\t{1}\n'.format(str(hash_), str(filename.relative_to(output_file.parent)))
-                          for filename, hash_ in sorted(self.file_hashes)))
+                          for filename, hash_ in sorted(self._file_hashes.items())))
