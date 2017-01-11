@@ -91,8 +91,16 @@ def assert_file_structure(folder, expected_structure, root=''):
     for k, v in expected_structure.items():
         id_ = '%s/%s' % (root, k) if root else k
 
+        is_optional = v == 'optional'
+
         f = folder.joinpath(k)
-        if isinstance(v, dict):
+
+        if not f.exists():
+            if is_optional:
+                continue
+
+            assert False, "%s is missing" % (id_,)
+        elif isinstance(v, dict):
             assert f.is_dir(), "%s is not a dir" % (id_,)
             assert_file_structure(f, v, id_)
         elif isinstance(v, compat.string_types):
