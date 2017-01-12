@@ -13,6 +13,7 @@ pip-log.txt
 .tox
 nosetests.xml
 .hypothesis
+.cache
 
 # PyCharm / IntelliJ
 *.iml
