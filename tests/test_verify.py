@@ -63,3 +63,24 @@ a94a8fe5ccb19ba61c4c0873d391e987982fbbd3\ttest1.txt
         assert c == c2
         # ... and a sanity check of our equals method:
         assert c != verify.PackageChecksum()
+
+        # Verification should succeed:
+        verification_results = set(c2.iteratively_verify())
+        expected_verification = {
+            (d.joinpath('test1.txt').absolute(), True),
+            (d.joinpath('package', 'test3.txt').absolute(), True),
+            (d.joinpath('package', 'test2.txt').absolute(), True),
+        }
+        assert expected_verification == verification_results
+
+        # Corrupt a file, and expect it to fail verification.
+        with d.joinpath('package', 'test3.txt').open('w') as f:
+            f.write(u"Deliberate corruption!")
+
+        expected_verification = {
+            (d.joinpath('test1.txt').absolute(), True),
+            (d.joinpath('package', 'test3.txt').absolute(), False),
+            (d.joinpath('package', 'test2.txt').absolute(), True),
+        }
+        verification_results = set(c2.iteratively_verify())
+        assert expected_verification == verification_results

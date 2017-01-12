@@ -91,10 +91,14 @@ class PackageChecksum(object):
         :type file_path: Path
         :rtype: None
         """
+        hash_ = self._checksum(file_path)
+        self._append_hash(file_path, hash_)
+
+    def _checksum(self, file_path):
         _LOG.info('Checksumming %r', file_path)
         hash_ = calculate_file_hash(file_path)
         _LOG.debug('%r -> %r', file_path, hash_)
-        self._append_hash(file_path, hash_)
+        return hash_
 
     def _append_hash(self, file_path, hash_):
         self._file_hashes[Path(file_path).absolute()] = hash_
@@ -126,6 +130,19 @@ class PackageChecksum(object):
 
     def items(self):
         return self._file_hashes.items()
+
+    def __len__(self):
+        return len(self._file_hashes)
+
+    def iteratively_verify(self):
+        """
+        Lazily yield each file and whether it matches the known checksum.
+
+        :rtype: [(Path, bool)]
+        """
+        for path, hash_ in self.items():
+            calculated_hash = self._checksum(path)
+            yield path, calculated_hash == hash_
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
