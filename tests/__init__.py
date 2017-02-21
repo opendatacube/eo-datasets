@@ -11,6 +11,7 @@ import unittest
 import pathlib
 import pytest
 from click.testing import CliRunner
+from pathlib import Path
 
 import eodatasets.scripts.genpackage
 import eodatasets.type as ptype
@@ -223,3 +224,14 @@ def file_of_size(path, size_mb):
     with open(path, "wb") as f:
         f.seek(size_mb * 1024 * 1024 - 1)
         f.write("\0")
+
+
+def as_file_list(path):
+    """
+    Build a flat list of filenames relative to the given folder
+    (similar to the contents of package.sha1 files)
+    """
+    output = []
+    for directory, _, files in os.walk(str(path)):
+        output.extend(str(Path(directory).relative_to(path).joinpath(file_)) for file_ in files)
+    return output

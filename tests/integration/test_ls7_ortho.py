@@ -9,7 +9,7 @@ import datetime
 import yaml
 from pathlib import Path
 
-from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
+from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli, as_file_list
 from tests.integration import load_checksum_filenames, hardlink_arg, prepare_datasets_for_comparison, FakeAncilFile, \
     prepare_work_order
 
@@ -17,7 +17,7 @@ from tests.integration import load_checksum_filenames, hardlink_arg, prepare_dat
 source_folder = Path(__file__).parent.joinpath('input', 'ls7-ortho')
 assert source_folder.exists()
 
-source_dataset = source_folder.joinpath('data', 'LE7_20130818_088_075')
+source_dataset = source_folder.joinpath('data', 'LE7_20110214_092_082')
 assert source_dataset.exists()
 
 parent_dataset = source_folder.joinpath('parent')
@@ -38,7 +38,7 @@ def test_package():
     ancil_base = work_path.joinpath('ancil')
     # We have to override the ancillary directory lookup as they won't exist on test systems.
     ancil_files = (
-        FakeAncilFile(ancil_base, 'cpf', 'L8CPF20140101_20140331.05'),
+        FakeAncilFile(ancil_base, 'cpf', 'LE07CPF_20110101_20110331_01.02'),
         FakeAncilFile(ancil_base, 'ephemeris', 'L72013231ASADEF.S00'),
     )
     work_order = prepare_work_order(ancil_files, wo_template)
@@ -59,33 +59,36 @@ def test_package():
     ])
     run_packaging_cli(args)
 
-    output_dataset = output_path.joinpath('LS7_ETM_SYS_P31_GALPGS01-002_088_075_20130818')
+    output_dataset = output_path.joinpath('LS7_ETM_SYS_P31_GALPGS01-002_092_082_20110214')
 
     assert_file_structure(output_path, {
-        'LS7_ETM_SYS_P31_GALPGS01-002_088_075_20130818': {
+        'LS7_ETM_SYS_P31_GALPGS01-002_092_082_20110214': {
             'browse.jpg': '',
             'browse.fr.jpg': '',
             'product': {
-                'LE70880752013230ASA00_B1.IMD': '',
-                'LE70880752013230ASA00_B1.TIF': '',
-                'LE70880752013230ASA00_B2.IMD': '',
-                'LE70880752013230ASA00_B2.TIF': '',
-                'LE70880752013230ASA00_B3.IMD': '',
-                'LE70880752013230ASA00_B3.TIF': '',
-                'LE70880752013230ASA00_B4.IMD': '',
-                'LE70880752013230ASA00_B4.TIF': '',
-                'LE70880752013230ASA00_B5.IMD': '',
-                'LE70880752013230ASA00_B5.TIF': '',
-                'LE70880752013230ASA00_B6_VCID_1.IMD': '',
-                'LE70880752013230ASA00_B6_VCID_1.TIF': '',
-                'LE70880752013230ASA00_B6_VCID_2.IMD': '',
-                'LE70880752013230ASA00_B6_VCID_2.TIF': '',
-                'LE70880752013230ASA00_B7.IMD': '',
-                'LE70880752013230ASA00_B7.TIF': '',
-                'LE70880752013230ASA00_B8.IMD': '',
-                'LE70880752013230ASA00_B8.TIF': '',
-                'LE70880752013230ASA00_MTL.txt': '',
-                'LE7_20130818_088_075_L1G.xml': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_ANG.txt': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B1.TIF': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B2.TIF': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B3.TIF': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B4.TIF': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B5.TIF': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B6_VCID_1.TIF': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B6_VCID_2.TIF': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B7.TIF': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B8.TIF': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_BQA.TIF': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B1.IMD': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B2.IMD': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B3.IMD': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B4.IMD': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B5.IMD': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B6_VCID_1.IMD': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B6_VCID_2.IMD': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B7.IMD': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B8.IMD': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_BQA.IMD': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_MTL.txt': '',
+                'LE7_20110214_092_082_L1GS.xml': '',
             },
             'additional': {
                 'work_order.xml': '',
@@ -116,238 +119,208 @@ def test_package():
     assert output_checksum_path.exists()
     checksummed_filenames = load_checksum_filenames(output_checksum_path)
 
-    expected_filenames = [
-        'additional/20130818_20000119_B5_gqa_results.yaml',
-        'additional/lpgs_out.xml',
-        'additional/work_order.xml',
-        'browse.fr.jpg',
-        'browse.jpg',
-        'ga-metadata.yaml',
-        'product/LE70880752013230ASA00_B1.IMD',
-        'product/LE70880752013230ASA00_B1.TIF',
-        'product/LE70880752013230ASA00_B2.IMD',
-        'product/LE70880752013230ASA00_B2.TIF',
-        'product/LE70880752013230ASA00_B3.IMD',
-        'product/LE70880752013230ASA00_B3.TIF',
-        'product/LE70880752013230ASA00_B4.IMD',
-        'product/LE70880752013230ASA00_B4.TIF',
-        'product/LE70880752013230ASA00_B5.IMD',
-        'product/LE70880752013230ASA00_B5.TIF',
-        'product/LE70880752013230ASA00_B6_VCID_1.IMD',
-        'product/LE70880752013230ASA00_B6_VCID_1.TIF',
-        'product/LE70880752013230ASA00_B6_VCID_2.IMD',
-        'product/LE70880752013230ASA00_B6_VCID_2.TIF',
-        'product/LE70880752013230ASA00_B7.IMD',
-        'product/LE70880752013230ASA00_B7.TIF',
-        'product/LE70880752013230ASA00_B8.IMD',
-        'product/LE70880752013230ASA00_B8.TIF',
-        'product/LE70880752013230ASA00_MTL.txt',
-        'product/LE7_20130818_088_075_L1G.xml',
-    ]
+    expected_filenames = sorted(f for f in as_file_list(output_dataset) if f != 'package.sha1')
     assert set(checksummed_filenames) == set(expected_filenames)
     assert checksummed_filenames == expected_filenames
 
 
 EXPECTED_METADATA = {
-    'checksum_path': 'package.sha1',
-    'extent': {
-        'center_dt': datetime.datetime(2013, 8, 18, 23, 29, 40, 486803),
-        'from_dt': datetime.datetime(2013, 8, 18, 23, 29, 27, 0),
-        'to_dt': datetime.datetime(2013, 8, 18, 23, 29, 53, 0),
-        'coord': {
-            'ul': {
-                'lat': -20.701634, 'lon': 155.103565}, 'll': {
-                'lat': -22.576483, 'lon': 155.052864}, 'ur': {
-                'lat': -20.738476, 'lon': 157.415391}, 'lr': {
-                'lat': -22.617006, 'lon': 157.394718}}}, 'acquisition': {
+    'acquisition': {
         'groundstation': {
-            'code': 'ASA', 'label': 'Alice Springs', 'eods_domain_code': '002'
+            'code': 'ASA',
+            'eods_domain_code': '002',
+            'label': 'Alice Springs'
         }
-    }, 'platform': {'code': 'LANDSAT_7'},
-    'ga_label': 'LS7_ETM_SYS_P31_GALPGS01-002_088_075_20130818',
+    },
     'browse': {
+        'full': {
+            'blue_band': '1',
+            'cell_size': 6106.25,
+            'file_type': 'image/jpg',
+            'green_band': '4',
+            'path': 'browse.fr.jpg',
+            'red_band': '7',
+            'shape': {'x': 40, 'y': 35}},
         'medium': {
-            'shape': {
-                'y': 1024, 'x': 1024}, 'path': 'browse.jpg', 'green_band': '4', 'file_type': 'image/jpg',
-            'blue_band': '1', 'red_band': '7', 'cell_size': 235.3759765625}, 'full': {
-            'shape': {
-                'y': 20, 'x': 20}, 'path': 'browse.fr.jpg', 'green_band': '4', 'file_type': 'image/jpg',
-            'blue_band': '1', 'red_band': '7', 'cell_size': 12051.25
+            'blue_band': '1',
+            'cell_size': 238.525390625,
+            'file_type': 'image/jpg',
+            'green_band': '4',
+            'path': 'browse.jpg',
+            'red_band': '7',
+            'shape': {'x': 1024, 'y': 896}
+        }
+    },
+    'checksum_path': 'package.sha1',
+    'creation_dt': datetime.datetime(2017, 2, 21, 1, 58, 51),
+    'extent': {
+        'center_dt': datetime.datetime(2011, 2, 14, 23, 55, 17, 686537),
+        'coord': {
+            'll': {'lat': -32.698456, 'lon': 146.241866},
+            'lr': {'lat': -32.687146, 'lon': 148.847048},
+            'ul': {'lat': -30.77261, 'lon': 146.257392},
+            'ur': {'lat': -30.762116, 'lon': 148.809244}
+        },
+        'from_dt': datetime.datetime(2011, 2, 14, 23, 55, 4),
+        'to_dt': datetime.datetime(2011, 2, 14, 23, 55, 30)
+    },
+    'format': {'name': 'GeoTIFF'},
+    'ga_label': 'LS7_ETM_SYS_P31_GALPGS01-002_092_082_20110214',
+    'gqa': {
+        'cep90': 0.41,
+        'colors': {'blue': 600.0,
+                   'green': 30164.0,
+                   'red': 336.0,
+                   'teal': 1340.0,
+                   'yellow': 399.0},
+        'final_gcp_count': 32582,
+        'ref_date': datetime.date(2000, 9, 4),
+        'ref_source': 'GLS_v2',
+        'ref_source_path': '/g/data/v10/eoancillarydata/GCP/GQA_v2/wrs2/091/081/LE70910812000248ASA00_B5.TIF',
+        'residual': {
+            'abs': {'x': 0.2, 'y': 0.23},
+            'abs_iterative_mean': {'x': 0.15, 'y': 0.17},
+            'iterative_mean': {'x': 0.02, 'y': 0.0},
+            'iterative_stddev': {'x': 0.32, 'y': 0.52},
+            'mean': {'x': 0.01, 'y': -0.03},
+            'stddev': {'x': 1.27, 'y': 3.94}}},
+    'grid_spatial': {
+        'projection': {
+            'datum': 'GDA94',
+            'ellipsoid': 'GRS80',
+            'geo_ref_points': {
+                'll': {'x': 428937.5,
+                       'y': 6381887.5},
+                'lr': {'x': 673162.5,
+                       'y': 6381887.5},
+                'ul': {'x': 428937.5,
+                       'y': 6595362.5},
+                'ur': {'x': 673162.5,
+                       'y': 6595362.5}
+            },
+            'map_projection': 'UTM',
+            'orientation': 'NORTH_UP',
+            'resampling_option': 'CUBIC_CONVOLUTION',
+            'zone': -55
         }
     },
     'id': None,
-    'creation_dt': datetime.datetime(2016, 2, 26, 1, 39, 4),
-    'product_level': 'L1G',
-    'product_type': 'level1',
-    'gqa': {
-        "cep90": 0.41,
-        "colors": {
-            "blue": 600,
-            "green": 30164,
-            "red": 336,
-            "teal": 1340,
-            "yellow": 399
-        },
-        "final_gcp_count": 32582,
-        "ref_date": datetime.date(2000, 9, 4),
-        "ref_source": "GLS_v2",
-        "ref_source_path": "/g/data/v10/eoancillarydata/GCP/GQA_v2/wrs2/091/081/LE70910812000248ASA00_B5.TIF",
-        "residual": {
-            "abs": {
-                "x": 0.2,
-                "y": 0.23
-            },
-            "abs_iterative_mean": {
-                "x": 0.15,
-                "y": 0.17
-            },
-            "iterative_mean": {
-                "x": 0.02,
-                "y": 0
-            },
-            "iterative_stddev": {
-                "x": 0.32,
-                "y": 0.52
-            },
-            "mean": {
-                "x": 0.01,
-                "y": -0.03
-            },
-            "stddev": {
-                "x": 1.27,
-                "y": 3.94
-            }
-        }
-    },
-    'size_bytes': 21280,
-    'grid_spatial': {
-        'projection': {
-            'map_projection': 'UTM',
-            'geo_ref_points': {
-                'ul': {
-                    'y': 7705987.5, 'x': 94012.5}, 'll': {
-                    'y': 7497987.5, 'x': 94012.5}, 'ur': {
-                    'y': 7705987.5, 'x': 335012.5}, 'lr': {
-                    'y': 7497987.5, 'x': 335012.5}
-            },
-            'zone': -57,
-            'orientation': 'NORTH_UP',
-            'datum': 'GDA94',
-            'ellipsoid': 'GRS80',
-            'resampling_option': 'CUBIC_CONVOLUTION'
-        }
-    },
-    'instrument': {
-        'name': 'ETM', 'operation_mode': 'BUMPER'},
-    'usgs': {
-        'scene_id': 'LE70880752013230ASA00'
-    },
     'image': {
-        'sun_azimuth': 45.5704609, 'sun_elevation': 43.19768592,
         'bands': {
-            '7': {
-                'path': 'product/LE70880752013230ASA00_B7.TIF',
-                'label': 'Middle Infrared 2',
-                'number': '7',
-                'type': 'reflective', 'cell_size': 25.0},
-            '4': {
-                'path': 'product/LE70880752013230ASA00_B4.TIF',
-                'label': 'Near Infrared',
-                'number': '4',
-                'type': 'reflective', 'cell_size': 25.0},
-            '6_vcid_1': {
-                'path': 'product/LE70880752013230ASA00_B6_VCID_1.TIF',
-                'label': 'Thermal Infrared [Low Gain]',
-                'number': '6_vcid_1', 'type': 'thermal',
-                'cell_size': 50.0},
-            '1': {
-                'path': 'product/LE70880752013230ASA00_B1.TIF',
-                'label': 'Visible Blue',
-                'number': '1',
-                'type': 'reflective', 'cell_size': 25.0},
-            '2': {
-                'path': 'product/LE70880752013230ASA00_B2.TIF', 'label': 'Visible Green', 'number': '2',
-                'type': 'reflective', 'cell_size': 25.0},
-            '3': {
-                'path': 'product/LE70880752013230ASA00_B3.TIF', 'label': 'Visible Red', 'number': '3',
-                'type': 'reflective', 'cell_size': 25.0},
-            '8': {
-                'path': 'product/LE70880752013230ASA00_B8.TIF', 'label': 'Panchromatic', 'number': '8',
-                'type': 'panchromatic', 'cell_size': 12.5},
-            '6_vcid_2': {
-                'path': 'product/LE70880752013230ASA00_B6_VCID_2.TIF', 'label': 'Thermal Infrared [High Gain]',
-                'number': '6_vcid_2', 'type': 'thermal', 'cell_size': 50.0},
-            '5': {
-                'path': 'product/LE70880752013230ASA00_B5.TIF', 'label': 'Middle Infrared 1', 'number': '5',
-                'type': 'reflective', 'cell_size': 25.0
-            }
+            '1': {'cell_size': 25.0,
+                  'label': 'Visible Blue',
+                  'number': '1',
+                  'path': 'product/LE07_L1GS_092082_20110214_20170221_01_T2_B1.TIF',
+                  'type': 'reflective'},
+            '2': {'cell_size': 25.0,
+                  'label': 'Visible Green',
+                  'number': '2',
+                  'path': 'product/LE07_L1GS_092082_20110214_20170221_01_T2_B2.TIF',
+                  'type': 'reflective'},
+            '3': {'cell_size': 25.0,
+                  'label': 'Visible Red',
+                  'number': '3',
+                  'path': 'product/LE07_L1GS_092082_20110214_20170221_01_T2_B3.TIF',
+                  'type': 'reflective'},
+            '4': {'cell_size': 25.0,
+                  'label': 'Near Infrared',
+                  'number': '4',
+                  'path': 'product/LE07_L1GS_092082_20110214_20170221_01_T2_B4.TIF',
+                  'type': 'reflective'},
+            '5': {'cell_size': 25.0,
+                  'label': 'Middle Infrared 1',
+                  'number': '5',
+                  'path': 'product/LE07_L1GS_092082_20110214_20170221_01_T2_B5.TIF',
+                  'type': 'reflective'},
+            '6_vcid_1': {'cell_size': 50.0,
+                         'label': 'Thermal Infrared [Low Gain]',
+                         'number': '6_vcid_1',
+                         'path': 'product/LE07_L1GS_092082_20110214_20170221_01_T2_B6_VCID_1.TIF',
+                         'type': 'thermal'},
+            '6_vcid_2': {'cell_size': 50.0,
+                         'label': 'Thermal Infrared [High Gain]',
+                         'number': '6_vcid_2',
+                         'path': 'product/LE07_L1GS_092082_20110214_20170221_01_T2_B6_VCID_2.TIF',
+                         'type': 'thermal'},
+            '7': {'cell_size': 25.0,
+                  'label': 'Middle Infrared 2',
+                  'number': '7',
+                  'path': 'product/LE07_L1GS_092082_20110214_20170221_01_T2_B7.TIF',
+                  'type': 'reflective'},
+            '8': {'cell_size': 12.5,
+                  'label': 'Panchromatic',
+                  'number': '8',
+                  'path': 'product/LE07_L1GS_092082_20110214_20170221_01_T2_B8.TIF',
+                  'type': 'panchromatic'},
+            'qa': {'number': 'qa',
+                   'path': 'product/LE07_L1GS_092082_20110214_20170221_01_T2_BQA.TIF'}
         },
-        'sun_earth_distance': 1.012089,
-        'satellite_ref_point_start': {
-            'y': 75, 'x': 88},
-        'cloud_cover_percentage': 0.0},
-    'format': {
-        'name': 'GeoTIFF'
-    },
+        'cloud_cover_percentage': 100.0,
+        'satellite_ref_point_start': {'x': 92, 'y': 82},
+        'sun_azimuth': 69.58819406,
+        'sun_earth_distance': 0.9876111,
+        'sun_elevation': 51.05312766},
+    'instrument': {'name': 'ETM', 'operation_mode': 'BUMPER'},
     'lineage': {
-        'machine': {
-            'runtime_id': 'fa9f288a-dcf3-11e5-a095-0023dfa0db82',
-            'software_versions': {
-                'pinkmatter': '4.1.4009',
-                'gqa': {
-                    'repo_url': 'https://github.com/GeoscienceAustralia/gqa.git',
-                    'version': '0.4+20.gb0d00dc'
-                }
-            },
-            'hostname': 'witzo.local'
-        },
-        'ancillary': {
-            'cpf': {
-                'name': 'L8CPF20140101_20140331.05',
-            },
-            'ephemeris': {
-                'name': 'L72013231ASADEF.S00',
-                'properties': {
-                    'type': 'DEFINITIVE'
-                }
-            }
-        },
         'algorithm': {
             'name': 'LPGS',
             'parameters': {},
-            'version': '12.6.1'
+            'version': '12.8.2'
         },
-        'ancillary_quality': 'DEFINITIVE',
-        'source_datasets': {
-            'satellite_telemetry_data': {
-                'lineage': {
-                    'source_datasets': {},
-                    'machine': {}
-                },
-                'creation_dt': datetime.datetime(2015, 9, 18, 18, 18, 21, 878054),
-                'product_type': 'satellite_telemetry_data',
-                'checksum_path': 'package.sha1',
-                'acquisition': {
-                    'los': datetime.datetime(2013, 8, 18, 23, 34, 16),
-                    'aos': datetime.datetime(2013, 8, 18, 23, 29, 23),
-                    'groundstation': {
-                        'code': 'ASA', 'label': 'Alice Springs', 'eods_domain_code': '002'
-                    }
-                }, 'ga_level': 'P00',
-                'platform': {
-                    'code': 'LANDSAT_7'},
-                'ga_label': 'LS7_ETM_STD-RCC_P00_L7EB2013230232923ASA213_0_0_20130818T232923Z20130818T233416',
-                'instrument': {
-                    'name': 'ETM', 'operation_mode': 'BUMPER'},
-                'usgs': {
-                    'interval_id': 'L7EB2013230232923ASA213'},
-                'id': 'b2a8f768-5e31-11e5-b592-ac162d791418',
-                'image': {
-                    'bands': {
-                    }}, 'size_bytes': 5488246784, 'format': {
-                    'name': 'RCC', 'version': 0
-                }
+        'ancillary': {
+            'cpf': {
+                'name': 'LE07CPF_20110101_20110331_01.02',
+            },
+            'ephemeris': {
+                'name': 'L72013231ASADEF.S00',
+                'properties': {'type': 'DEFINITIVE'},
             }
         },
-    }
+        'ancillary_quality': 'DEFINITIVE',
+        'machine': {
+            'hostname': 'kveikur',
+            'runtime_id': '02e99ec4-f7f8-11e6-a434-185e0f80a5c0',
+            'software_versions': {
+                'eodatasets': {
+                    'repo_url': 'https://github.com/GeoscienceAustralia/eo-datasets.git',
+                    'version': '0.9+13.gd1b5206.dirty'},
+                'gqa': {
+                    'repo_url': 'https://github.com/GeoscienceAustralia/gqa.git',
+                    'version': '0.4+20.gb0d00dc'},
+                'pinkmatter': '4.1.4009'
+            },
+        },
+        'source_datasets': {
+            'satellite_telemetry_data': {
+                'acquisition': {
+                    'aos': datetime.datetime(2013, 8, 18, 23, 29, 23),
+                    'groundstation': {
+                        'code': 'ASA',
+                        'eods_domain_code': '002',
+                        'label': 'Alice '
+                                 'Springs'
+                    },
+                    'los': datetime.datetime(2013, 8, 18, 23, 34, 16)
+                },
+                'checksum_path': 'package.sha1',
+                'creation_dt': datetime.datetime(2015, 9, 18, 18, 18, 21, 878054),
+                'format': {'name': 'RCC',
+                           'version': 0},
+                'ga_label': 'LS7_ETM_STD-RCC_P00_L7EB2013230232923ASA213_0_0_20130818T232923Z20130818T233416',
+                'ga_level': 'P00',
+                'id': 'b2a8f768-5e31-11e5-b592-ac162d791418',
+                'image': {'bands': {}},
+                'instrument': {'name': 'ETM',
+                               'operation_mode': 'BUMPER'},
+                'lineage': {'machine': {},
+                            'source_datasets': {}},
+                'platform': {'code': 'LANDSAT_7'},
+                'product_type': 'satellite_telemetry_data',
+                'size_bytes': 5488246784,
+                'usgs': {'interval_id': 'L7EB2013230232923ASA213'}}}},
+    'platform': {'code': 'LANDSAT_7'},
+    'product_level': 'L1G',
+    'product_type': 'level1',
+    'size_bytes': 186404,
+    'usgs': {'scene_id': 'LE70920822011045ASA00'}
 }

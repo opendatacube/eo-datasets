@@ -9,7 +9,7 @@ import os
 
 import yaml
 from pathlib import Path
-from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli
+from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli, as_file_list
 
 from tests.integration import load_checksum_filenames, hardlink_arg, prepare_datasets_for_comparison, FakeAncilFile, \
     prepare_work_order
@@ -132,17 +132,6 @@ def test_package():
     expected_filenames = sorted(f for f in as_file_list(output_dataset) if f != 'package.sha1')
     assert set(checksummed_filenames) == set(expected_filenames)
     assert checksummed_filenames == expected_filenames
-
-
-def as_file_list(path):
-    """
-    Build a flat list of filenames relative to the given folder
-    (similar to the contents of package.sha1 files)
-    """
-    output = []
-    for directory, _, files in os.walk(str(path)):
-        output.extend(str(Path(directory).relative_to(path).joinpath(file_)) for file_ in files)
-    return output
 
 
 EXPECTED_METADATA = {
