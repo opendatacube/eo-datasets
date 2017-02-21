@@ -443,7 +443,7 @@ def _populate_from_mtl_dict(md, mtl_, folder):
     md.creation_dt = _get(mtl_, 'METADATA_FILE_INFO', 'file_date')
 
     # TODO: elsewhere we've used 'GAORTHO01' etc. Here it's 'L1T' etc.
-    md.product_level = _get(mtl_, 'PRODUCT_METADATA', 'data_type')
+    md.product_level = _translate_to_old_usgs_code(_get(mtl_, 'PRODUCT_METADATA', 'data_type'))
 
     # md.size_bytes=None,
     satellite_id = _get(mtl_, 'PRODUCT_METADATA', 'spacecraft_id')
@@ -474,3 +474,16 @@ def _populate_from_mtl_dict(md, mtl_, folder):
     _populate_lineage(md, mtl_)
 
     return md
+
+
+def _translate_to_old_usgs_code(level):
+    """
+    USGS has moved to newer codes for L1G and L1T datasets.
+
+    To maintain backwards compatibility we use the old codes in our old metadata fields.
+    """
+    if level == 'L1TP':
+        level = 'L1T'
+    elif level == 'L1GS':
+        level = 'L1G'
+    return level
