@@ -16,7 +16,7 @@ from .util import parse_type
 _LOG = logging.getLogger(__name__)
 
 
-def populate_ortho(md, base_folder, additional_files):
+def populate_level1(md, base_folder, additional_files):
     """
     Find any relevant Ortho metadata files for the given dataset and populate it.
 

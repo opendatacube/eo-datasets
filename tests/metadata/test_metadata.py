@@ -12,7 +12,7 @@ from tests import write_files
 
 import eodatasets.type as ptype
 from eodatasets import metadata
-from eodatasets.metadata import ortho
+from eodatasets.metadata import level1
 from eodatasets.type import BandMetadata
 
 BASIC_LS8_BANDS = {
@@ -386,15 +386,15 @@ def test_ortho_find_file():
             'LO8BPF20141104220030_20141104224617.01': ''
         }
     })
-    matched = ortho._get_file(path, 'LO8BPF20141104220030_20141104224617.01')
+    matched = level1._get_file(path, 'LO8BPF20141104220030_20141104224617.01')
     assert matched is not None
     assert matched == path.joinpath('11', 'LO8BPF20141104220030_20141104224617.01')
 
     # Not found: mandatory
     with pytest.raises(RuntimeError) as e:
-        ortho._get_file(path, 'LO8BPF20141104220030_20141104224617.03')
+        level1._get_file(path, 'LO8BPF20141104220030_20141104224617.03')
     # Not found: not mandatory.
-    matched = ortho._get_file(path, 'LO8BPF20141104220030_20141104224617.03', mandatory=False)
+    matched = level1._get_file(path, 'LO8BPF20141104220030_20141104224617.03', mandatory=False)
     assert matched is None
 
     # Real-world error: ancillary folder inside ancillary folder leads to duplicates.
@@ -406,6 +406,6 @@ def test_ortho_find_file():
             }
         }
     })
-    matched = ortho._get_file(path, 'LO8BPF20141104220030_20141104224617.01')
+    matched = level1._get_file(path, 'LO8BPF20141104220030_20141104224617.01')
     assert matched is not None
     assert matched.name == 'LO8BPF20141104220030_20141104224617.01'

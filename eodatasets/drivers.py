@@ -19,7 +19,7 @@ from pathlib import Path
 
 from eodatasets import type as ptype, metadata
 from eodatasets.metadata import _GROUNDSTATION_LIST
-from eodatasets.metadata import mdf, ortho, adsfolder, rccfile, \
+from eodatasets.metadata import mdf, level1, adsfolder, rccfile, \
     passinfo, pds, npphdf5, image as md_image, gqa, valid_region
 
 _LOG = logging.getLogger(__name__)
@@ -421,7 +421,7 @@ class OrthoDriver(DatasetDriver):
         :type path: Path
         :rtype: ptype.DatasetMetadata
         """
-        dataset = ortho.populate_ortho(dataset, path, additional_files)
+        dataset = level1.populate_level1(dataset, path, additional_files)
         dataset = gqa.choose_and_populate_gqa(dataset, additional_files)
         return dataset
 
