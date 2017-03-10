@@ -42,6 +42,12 @@ lr=Point(x=625025.0, y=7013975.0)\
     )
 
 
+def _to_three_decimal_places(o):
+    if isinstance(o, float):
+        return round(o, 3)
+    return o
+
+
 def reproject_coords(coords, source_spatial_ref):
     """
     Reproject a list of x,y coordinates.
@@ -59,12 +65,13 @@ def reproject_coords(coords, source_spatial_ref):
     ...             ll=ptype.Point(x=397000.0, y=7013975.0),
     ...             lr=ptype.Point(x=625025.0, y=7013975.0)
     ... )
-    >>> reproject_coords(c, _GDA_94)
+    >>> c = reproject_coords(c, _GDA_94)
+    >>> ptype.map_values(_to_three_decimal_places, c)
     CoordPolygon(\
-ul=Coord(lat=-24.9879409027833, lon=133.9794200916146), \
-ur=Coord(lat=-24.98628436689941, lon=136.23877887843614), \
-ll=Coord(lat=-26.992472356949904, lon=133.96195524174112), \
-lr=Coord(lat=-26.990662556011216, lon=136.25997551867962)\
+ul=Coord(lat=-24.988, lon=133.979), \
+ur=Coord(lat=-24.986, lon=136.239), \
+ll=Coord(lat=-26.992, lon=133.962), \
+lr=Coord(lat=-26.991, lon=136.26)\
 )
     """
     transform = osr.CoordinateTransformation(source_spatial_ref, source_spatial_ref.CloneGeogCS())
