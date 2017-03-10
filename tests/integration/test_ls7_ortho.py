@@ -5,9 +5,9 @@ Package an LS7 Ortho dataset.
 from __future__ import absolute_import
 
 import datetime
+from pathlib import Path
 
 import yaml
-from pathlib import Path
 
 from tests import temp_dir, assert_file_structure, assert_same, integration_test, run_packaging_cli, as_file_list
 from tests.integration import load_checksum_filenames, hardlink_arg, prepare_datasets_for_comparison, FakeAncilFile, \
@@ -77,16 +77,16 @@ def test_package():
                 'LE07_L1GS_092082_20110214_20170221_01_T2_B7.TIF': '',
                 'LE07_L1GS_092082_20110214_20170221_01_T2_B8.TIF': '',
                 'LE07_L1GS_092082_20110214_20170221_01_T2_BQA.TIF': '',
-                'LE07_L1GS_092082_20110214_20170221_01_T2_B1.IMD': '',
-                'LE07_L1GS_092082_20110214_20170221_01_T2_B2.IMD': '',
-                'LE07_L1GS_092082_20110214_20170221_01_T2_B3.IMD': '',
-                'LE07_L1GS_092082_20110214_20170221_01_T2_B4.IMD': '',
-                'LE07_L1GS_092082_20110214_20170221_01_T2_B5.IMD': '',
-                'LE07_L1GS_092082_20110214_20170221_01_T2_B6_VCID_1.IMD': '',
-                'LE07_L1GS_092082_20110214_20170221_01_T2_B6_VCID_2.IMD': '',
-                'LE07_L1GS_092082_20110214_20170221_01_T2_B7.IMD': '',
-                'LE07_L1GS_092082_20110214_20170221_01_T2_B8.IMD': '',
-                'LE07_L1GS_092082_20110214_20170221_01_T2_BQA.IMD': '',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B1.IMD': 'optional',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B2.IMD': 'optional',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B3.IMD': 'optional',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B4.IMD': 'optional',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B5.IMD': 'optional',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B6_VCID_1.IMD': 'optional',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B6_VCID_2.IMD': 'optional',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B7.IMD': 'optional',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_B8.IMD': 'optional',
+                'LE07_L1GS_092082_20110214_20170221_01_T2_BQA.IMD': 'optional',
                 'LE07_L1GS_092082_20110214_20170221_01_T2_MTL.txt': '',
                 'LE7_20110214_092_082_L1GS.xml': '',
             },
