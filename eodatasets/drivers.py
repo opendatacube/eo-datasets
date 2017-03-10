@@ -453,11 +453,19 @@ class OrthoDriver(DatasetDriver):
         >>> # No bands for non-tiff files.
         >>> OrthoDriver().to_band(None, Path('/tmp/out/LC81090852015088LGN00_MTL.txt'))
         >>> OrthoDriver().to_band(None, Path('/tmp/out/passinfo'))
+        >>> # A DEM image -- not included as a band.
+        >>> OrthoDriver().to_band(None, Path('LT05_L1TP_108078_20060703_20170309_01_T1_DEM.TIF'))
         """
         if path.suffix.lower() != '.tif':
             return None
 
         name = path.stem.lower()
+
+        # A DEM image -- the only tif without a 'B' prefix.
+        # We don't include it in the list of bands according to Lan-Wei, as it's not part of a typical USGS package.
+        if name.endswith('_dem'):
+            return None
+
         # Images end in a band number (eg '_B12.tif'). Extract it.
         position = name.rfind('_b')
         if position == -1:
