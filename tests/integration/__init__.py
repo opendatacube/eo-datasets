@@ -125,7 +125,8 @@ def prepare_datasets_for_comparison(expected_md, output_md, ancil_files, product
         assert ancil_name in output_md['lineage']['ancillary']
         # Ensure it has an access time
         output_ancil = output_md['lineage']['ancillary'][ancil_name]
-        assert 'access_dt' in output_ancil
+        assert 'access_dt' in output_ancil, "{} has no access time" \
+                                            ", was the original file found during packaging?".format(ancil_name)
         assert output_ancil['access_dt'] is not None
         # Clear the access time: we can't compare it accurately (short of mocking)
         del output_ancil['access_dt']

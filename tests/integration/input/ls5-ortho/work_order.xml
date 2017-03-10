@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+<LandsatProcessingRequest id="LS5-20060703" version="2">
+    <Input format="RCC" satellite="Landsat5" sensor="TM">
+    <WorkingFolder cleanAfter="yes"
+                   cleanBefore="yes">/g/data2/v10/projects/QA_ground/lpgs/LPGS_collection_testing/LS5/20170310-0917/tmp/417d833c-6deb-11e5-8e98-ac162d791418/lpgs-work/pm</WorkingFolder>
+    <InputPath linkInput="yes">/g/data2/v10/projects/QA_ground/lpgs/LPGS_collection_testing/LS5/input/LS5_TM_STD-RCC_P00_L5TB2006184012502ASA111_0_0_20060703T012502Z20060703T013455_1/product</InputPath>
+    <Segment></Segment>
+    </Input>
+
+    <Collection>
+        <Parameters number ="1"/>
+    </Collection>
+
+
+        <ProcessControl>
+            <MaxProcessingTime hours="4"
+                               minutes="0"
+                               seconds="0"/>
+        </ProcessControl>
+
+
+    <L0RaProcessing>
+        <CalibrationFile>
+            {cpf_path}
+        </CalibrationFile>
+    </L0RaProcessing>
+
+    <L0RpProcessing maxConcurrentScenes="10">
+        <CalibrationFile>
+            {cpf_path}
+        </CalibrationFile>
+    </L0RpProcessing>
+
+    <L1Processing maxConcurrentScenes="10">
+
+        <Parameters datum="GDA94"
+                    fallBackResampling="CC"
+                    hemisphere="S"
+                    orientationL1T="NUP"
+                    orientationL1GT="NUP"
+                    orientationL1G="NUP"
+                    outputFormat="GeoTIFF"
+                    panchromaticResolution="12.5"
+                    pixelOrigin="UL"
+                    productType="L1T"
+                    projection="UTM"
+                    radiometricCorrection="CPF"
+                    reflectiveResolution="25.0"
+                    resampling="CC"
+                    scanGapInterpolation="0"
+                    thermalResolution="25.0"
+                    fallBackToL1Gt="false"
+                    fallBackToL1G="true"
+                    fallBackToL1R="false"
+                    scenePadding="1"/>
+        <L1T>
+            <Parameters minimumRequiredGCPs="10"/>
+            <DEM format="srtm90">/g/data/v10/eoancillarydata/elevation/1secDSM-S_Jupp-Li</DEM>
+            <GCP format="chips_30">/g/data/v10/eoancillarydata/GCP/Phase2_GCP</GCP>
+        </L1T>
+        <EphemerisFile>{ephemeris_path}</EphemerisFile>
+        <OutputPath additionalMetadata="false">/g/data2/v10/projects/QA_ground/lpgs/LPGS_collection_testing/LS5/20170310-0917/tmp/417d833c-6deb-11e5-8e98-ac162d791418/scenes</OutputPath>
+    </L1Processing>
+</LandsatProcessingRequest>

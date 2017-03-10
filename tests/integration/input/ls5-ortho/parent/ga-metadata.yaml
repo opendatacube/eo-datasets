@@ -1,0 +1,29 @@
+id: 417d833c-6deb-11e5-8e98-ac162d791418
+ga_label: LS5_TM_STD-RCC_P00_L5TB2006184012502ASA111_0_0_20060703T012502Z20060703T013455
+ga_level: P00
+product_type: satellite_telemetry_data
+creation_dt: 2015-10-08 18:34:48.813884
+size_bytes: 6273995850
+checksum_path: package.sha1
+platform:
+    code: LANDSAT_5
+instrument:
+    name: TM
+    operation_mode: BUMPER
+format:
+    name: RCC
+usgs:
+    interval_id: L5TB2006184012502ASA111
+acquisition:
+    aos: 2006-07-03 01:25:02
+    los: 2006-07-03 01:34:55
+    groundstation:
+        code: ASA
+        label: Alice Springs
+        eods_domain_code: '002'
+    platform_orbit: 118806
+image:
+    bands: {}
+lineage:
+    machine: {}
+    source_datasets: {}
