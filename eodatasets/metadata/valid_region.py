@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import rasterio
 from rasterio.errors import RasterioIOError
 import rasterio.features

@@ -3,6 +3,7 @@
 Extract metadata from GQA 'results' csv files.
 """
 
+from __future__ import absolute_import
 import datetime
 import logging
 
