@@ -149,5 +149,5 @@ class PackageChecksum(object):
             # pylint 1.6.4 isn't smart enough to know that this is protected access of the same class
             # pylint: disable=protected-access
             return self._file_hashes == other._file_hashes
-        else:
-            return False
+
+        return False

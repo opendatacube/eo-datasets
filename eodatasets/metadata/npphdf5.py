@@ -116,7 +116,7 @@ def _split_sat_sen(fields_satsens_):
     sensor = None
     # TODO: Do we have a cleaner way to do this? A list of mappings?
     satsen = fields_satsens_.split('-')
-    if len(satsen) > 0:
+    if satsen:
         sat_sen_prefixed = satsen[-1].upper()
         sat_sen = sat_sen_prefixed[1:]
         try:

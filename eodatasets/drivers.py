@@ -192,8 +192,8 @@ def _format_path_row(start_point, end_point=None):
     def _format_val(val):
         if val:
             return '%03d' % val
-        else:
-            return '0'
+
+        return '0'
 
     path = _format_val(start_point.x)
     rows = _format_val(start_point.y)
@@ -562,8 +562,8 @@ class NbarDriver(DatasetDriver):
 
         if number.startswith('b'):
             return number[1:]
-        else:
-            return number
+
+        return number
 
     def include_file(self, file_path):
         """
@@ -706,8 +706,8 @@ def _read_band_number(file_path):
 
     if number.startswith('b'):
         return number[1:]
-    else:
-        return number
+
+    return number
 
 
 class EODSDriver(DatasetDriver):
@@ -928,8 +928,8 @@ class PqaDriver(DatasetDriver):
         if suffix == '.tif':
             ga_label = self.get_ga_label(dataset)
             return file_path.with_name(ga_label + suffix)
-        else:
-            return file_path
+
+        return file_path
 
     def to_band(self, dataset, path):
         """

@@ -120,5 +120,5 @@ def _parse_common_date(date_str):
     """
     if date_str:
         return dateutil.parser.parse(date_str)
-    else:
-        return None
+
+    return None
