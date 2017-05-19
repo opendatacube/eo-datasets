@@ -11,7 +11,7 @@ license details.
 
     python ./setup.py install
 
-Python 2.7+ and 3.4+ are supported. A [GDAL](http://www.gdal.org/) installation is required 
+Python 3.5+ is supported. A [GDAL](http://www.gdal.org/) installation is required 
 to use most packaging commands. Modis packaging requires [pdsinfo](https://github.com/GeoscienceAustralia/pds-tools)
 to be on the path.
 
