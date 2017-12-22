@@ -162,7 +162,7 @@ def _get_file(path, file_pattern, mandatory=True):
     if not found:
         if mandatory:
             raise RuntimeError('Not found: %r in %s' % (file_pattern, path))
-        return
+        return None
 
     if len(found) > 1:
         unique_names = set(p.name for p in found)

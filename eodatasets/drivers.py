@@ -816,8 +816,6 @@ class EODSDriver(DatasetDriver):
             return parse(els[0].text)
 
         doc = etree.parse(str(path.joinpath('metadata.xml')))
-        aos = els2date(doc.findall("./ACQUISITIONINFORMATION/EVENT/AOS"))
-        los = els2date(doc.findall("./ACQUISITIONINFORMATION/EVENT/LOS"))
         start_time = els2date(doc.findall("./EXEXTENT/TEMPORALEXTENTFROM"))
         end_time = els2date(doc.findall("./EXEXTENT/TEMPORALEXTENTTO"))
 
@@ -829,8 +827,8 @@ class EODSDriver(DatasetDriver):
         if abs(time_diff).days != 0:
             raise ValueError('EODS time information differs too much from source files: %s' % time_diff)
 
-        dataset.acquisition.aos = aos
-        dataset.acquisition.los = los
+        dataset.acquisition.aos = els2date(doc.findall("./ACQUISITIONINFORMATION/EVENT/AOS"))
+        dataset.acquisition.los = els2date(doc.findall("./ACQUISITIONINFORMATION/EVENT/LOS"))
         dataset.extent.center_dt = start_time + (end_time - start_time) / 2
         dataset.extent.from_dt = start_time
         dataset.extent.to_dt = end_time

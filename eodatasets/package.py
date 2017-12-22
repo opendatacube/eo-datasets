@@ -125,7 +125,7 @@ def package_dataset(dataset_driver,
     target_metadata_path = documents.find_metadata_path(target_path)
     if target_metadata_path is not None and target_metadata_path.exists():
         _LOG.info('Already packaged? Skipping %s', target_path)
-        return
+        return None
 
     _LOG.debug('Packaging %r -> %r', image_path, target_path)
     package_directory = target_path.joinpath('product')
