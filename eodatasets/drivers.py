@@ -945,9 +945,120 @@ class PqaDriver(DatasetDriver):
         return 'pqa',
 
 
+class LegacyPqaDriver(DatasetDriver):
+    METADATA_FILE = 'pq_metadata.yaml'
+
+    def get_id(self):
+        return 'legacy_pqa'
+
+    def expected_source(self):
+        return (OrthoDriver(), NbarDriver('brdf'))
+
+    def get_ga_label(self, dataset):
+        # Eg. 'LS8_OLI_TIRS_PQ_P55_GAPQ01-032_090_081_20140726'
+        return _fill_dataset_label(
+            dataset,
+            '{satnumber}_{sensor}_PQ_{galevel}_GAPQ01-{stationcode}_{path}_{rows}_{day}',
+        )
+
+    def fill_metadata(self, dataset, path, additional_files=()):
+        """
+        :type additional_files: tuple[Path]
+        :type dataset: ptype.DatasetMetadata
+        :type path: Path
+        :rtype: ptype.DatasetMetadata
+        """
+        dataset.ga_level = 'P55'
+
+        # Copy relevant fields from source nbar.
+        if 'nbar' in dataset.lineage.source_datasets:
+            source_ortho = dataset.lineage.source_datasets['nbar']
+            borrow_single_sourced_fields(dataset, source_ortho)
+
+            # TODO, it'd be better to grab this from the images, but they're generated after
+            # this code is run. Copying from Source will do for now
+            dataset.grid_spatial = deepcopy(dataset.lineage.source_datasets['nbar'].grid_spatial)
+
+            contiguous_data_bit = 0b100000000
+
+            dataset.grid_spatial.projection.valid_data = self.calculate_valid_data_region(path, contiguous_data_bit)
+
+        dataset.format_ = ptype.FormatMetadata('GeoTIFF')
+
+        with open(str(path.joinpath(self.METADATA_FILE))) as f:
+            pq_metadata = yaml.load(f, Loader=Loader)
+
+        if not dataset.lineage:
+            dataset.lineage = ptype.LineageMetadata()
+
+        dataset.lineage.algorithm = ptype.AlgorithmMetadata(
+            name='legacy_pqa',
+            version=str(pq_metadata['algorithm_information']['software_version']),
+            doi=pq_metadata['algorithm_information']['pq_doi'])
+
+        # Add ancillary files
+        ancils = pq_metadata['ancillary']
+        ancil_files = {}
+        for name, values in ancils.items():
+            ancil_files[name] = ptype.AncillaryMetadata(
+                type_=name,
+                name=values['data_source'],
+                uri=values['data_file'],
+                file_owner=values['user'],
+                # PyYAML parses these as datetimes already.
+                access_dt=values['accessed'],
+                modification_dt=values['modified']
+            )
+
+        if ancil_files:
+            dataset.lineage.ancillary = ancil_files
+
+        product_flags = {}
+        # Record which tests where run in 'product_flags'
+        for test_name, val in pq_metadata['tests_run'].items():
+            product_flags['tested_%s' % test_name] = val
+
+        dataset.product_flags = product_flags
+
+        return dataset
+
+    def include_file(self, file_path):
+        return file_path.suffix.lower() == '.tif'
+
+    def translate_path(self, dataset, file_path):
+        """
+        :type dataset: ptype.DatasetMetadata
+        :type file_path: pathlib.Path
+        :return:
+        """
+        # Rename to contain the ga_label.
+        suffix = file_path.suffix.lower()
+        if suffix == '.tif':
+            ga_label = self.get_ga_label(dataset)
+            return file_path.with_name(ga_label + suffix)
+
+        return file_path
+
+    def to_band(self, dataset, path):
+        """
+        :type dataset: ptype.DatasetMetadata
+        :type path: Path
+        :param path: The filename of the input file.
+        :rtype: ptype.BandMetadata
+        """
+        if path.suffix != '.tif':
+            return None
+
+        return ptype.BandMetadata(path=path, number='pqa')
+
+    def browse_image_bands(self, d):
+        return 'pqa',
+
+
 PACKAGE_DRIVERS = {
     'raw': RawDriver(),
     'pqa': PqaDriver(),
+    'legacypqa': LegacyPqaDriver(),
     'level1': OrthoDriver(),
     'nbar': NbarDriver('brdf'),
     'nbart': NbarDriver('terrain'),
