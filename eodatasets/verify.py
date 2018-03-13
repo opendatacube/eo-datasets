@@ -151,5 +151,5 @@ class PackageChecksum(object):
 
         return False
 
-    def __hash__(self) -> int:
+    def __hash__(self):
         return hash(self._file_hashes)
