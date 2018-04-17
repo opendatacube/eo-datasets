@@ -39,6 +39,7 @@ deploy:
    on:
      all_branches: true  # Let the condition below decide if the branch is to be deployed
      condition: $TRAVIS_BRANCH = "develop" || ! -z "${TRAVIS_TAG}"  # develop branch or tags
+     repo: GeoscienceAustralia/eo-datasets  # Don't attempt to deploy from forks
 
 notifications:
   slack:
