@@ -23,7 +23,7 @@ install:
 - export CPLUS_INCLUDE_PATH="/usr/include/gdal"
 - export C_INCLUDE_PATH="/usr/include/gdal"
   # The python gdal bindings version need to match the gdal version of the system
-- travis_retry pip install pylint pytest-cov pep8 coveralls GDAL==1.10.0
+- travis_retry pip install pylint pytest-cov pycodestyle coveralls GDAL==1.10.0
 - travis_retry pip install -r requirements.txt
 script:
 - ./check-code.sh --runslow
@@ -45,4 +45,5 @@ notifications:
   slack:
     on_success: change
     on_failure: always
-    secure: lsNEGmbGTX8Dcu4ruuEchsrUjqtNisrnbE5qq7hWm0xYseav5RdokfJhXw2k++qOiKJntwqM5BrE1DQLDdhEEuViiy1Q8dyqnjIfiV41WjIPCm3qtBRvg5J+pHi6aBn0rNHRd8scCZEIX3BecLpkX61LDcX0Q0HTIe4bAccpIg7TjZk2Viln2G2oEfKkaLlXnF2SY2dUdkUrEDql+rGc1j1JGFZHwSEEZEF+dBX73wQPPHQRAhF5yL76qF2A1Ceh9v2ZT/4DcX9MEcZzHxc83zwiDL9/0UKb7cKDQk4kqqtq4E2l99HkTwdZmsjPnFvhh1Rt0dXYuwdEBkx/s9A+1ndgat7a9strOhnKZt8Bf6zWLEHab6opEZfEAn4+y2hotx3UKHeQWGCZ0GeWFQg+BUjL1gq7wGnmCjc+990nL74hk2FCKS65RXR77oY/D3jlWDIRnkC1hy7YH21C1sJH66MyyqbA1aPCOtHfGxQ5/EoIp9bN7sZHwz/VPX7YrGnf8Ams+S3hZJTL0N+YCYR2QLYw8uVZAw48zOb7tmnevpsAxlBHHTKUoYTzv8SpRdK1AhNVgIHmdk3dTsVvbs2MpjUsDKqM8rKqlb77KzQhYYVOpQIQZwDlqUT42UMW4s+wiVFgpwBFUddbKgyyh99lF2eIpW6Oi0Llc+5yCnULs8A=
+    rooms:
+        secure: lsNEGmbGTX8Dcu4ruuEchsrUjqtNisrnbE5qq7hWm0xYseav5RdokfJhXw2k++qOiKJntwqM5BrE1DQLDdhEEuViiy1Q8dyqnjIfiV41WjIPCm3qtBRvg5J+pHi6aBn0rNHRd8scCZEIX3BecLpkX61LDcX0Q0HTIe4bAccpIg7TjZk2Viln2G2oEfKkaLlXnF2SY2dUdkUrEDql+rGc1j1JGFZHwSEEZEF+dBX73wQPPHQRAhF5yL76qF2A1Ceh9v2ZT/4DcX9MEcZzHxc83zwiDL9/0UKb7cKDQk4kqqtq4E2l99HkTwdZmsjPnFvhh1Rt0dXYuwdEBkx/s9A+1ndgat7a9strOhnKZt8Bf6zWLEHab6opEZfEAn4+y2hotx3UKHeQWGCZ0GeWFQg+BUjL1gq7wGnmCjc+990nL74hk2FCKS65RXR77oY/D3jlWDIRnkC1hy7YH21C1sJH66MyyqbA1aPCOtHfGxQ5/EoIp9bN7sZHwz/VPX7YrGnf8Ams+S3hZJTL0N+YCYR2QLYw8uVZAw48zOb7tmnevpsAxlBHHTKUoYTzv8SpRdK1AhNVgIHmdk3dTsVvbs2MpjUsDKqM8rKqlb77KzQhYYVOpQIQZwDlqUT42UMW4s+wiVFgpwBFUddbKgyyh99lF2eIpW6Oi0Llc+5yCnULs8A=

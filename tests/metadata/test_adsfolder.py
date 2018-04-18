@@ -49,6 +49,7 @@ class AdsFolderExtractionTest(unittest.TestCase):
         self.assertIsNotNone(md.acquisition)
         self.assertEqual(md.acquisition.groundstation, ptype.GroundstationMetadata(code='ASA'))
 
+
 if __name__ == '__main__':
     import doctest
 

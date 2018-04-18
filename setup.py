@@ -17,13 +17,12 @@ setup(
     packages=find_packages(exclude=('tests', 'tests.*')),
     package_data={
         '': ['*.json'],
-     },
+    },
     install_requires=[
         'click',
         'python-dateutil',
         'gdal',
         'numpy',
-        'pathlib',
         'pyyaml',
         'rasterio',
         'shapely',
