@@ -93,7 +93,6 @@ class SimpleObject(object):
     def items_ordered(self, skip_nones=True):
         """
         Generator of all property names and current values as (k, v) tuples.
-
         Properties are output in the same order as the constructor.
 
         (ordered output is primarily useful for readability: such as log output.)

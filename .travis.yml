@@ -6,13 +6,13 @@ sudo: true
 addons:
   apt:
     packages:
-    - libatlas-dev
+    - gdal-bin
+    - gfortran
     - libatlas-base-dev
+    - libatlas-dev
+    - libgdal1-dev
     - liblapack-dev
     - libproj-dev
-    - gfortran
-    - gdal-bin
-    - libgdal1-dev
 install:
 - mkdir pdstools
 - pushd pdstools
@@ -25,6 +25,7 @@ install:
   # The python gdal bindings version need to match the gdal version of the system
 - travis_retry pip install pylint pytest-cov pycodestyle coveralls GDAL==1.10.0
 - travis_retry pip install -r requirements.txt
+
 script:
 - ./check-code.sh --runslow
 cache: apt
