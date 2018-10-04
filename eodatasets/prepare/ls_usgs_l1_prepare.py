@@ -240,11 +240,6 @@ def prepare_dataset(path):
         },
         'mtl': mtl_doc,
         'lineage': {
-            'machine': {
-                'software_versions': {
-
-                },
-            },
             'source_datasets': {},
         },
     }
