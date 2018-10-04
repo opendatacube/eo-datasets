@@ -18,8 +18,4 @@ if not PY2:
     unicode_to_char = chr
     long_int = int
 else:
-    text_type = unicode
-    string_types = (str, unicode)
-    integer_types = (int, long)
-    unicode_to_char = unichr
-    long_int = long
+    raise RuntimeError("Python 2 is no longer supported")
