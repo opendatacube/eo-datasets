@@ -11,3 +11,4 @@
 *.hdr binary
 *.bin binary
 *.tif binary
+eodatasets/_version.py export-subst

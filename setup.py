@@ -1,19 +1,15 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-import os
-
 from setuptools import setup, find_packages
-from eodatasets import __version__ as version
 
-# Append TeamCity build number if it gives us one.
-if 'BUILD_NUMBER' in os.environ and version.endswith('b'):
-    version += '' + os.environ['BUILD_NUMBER']
+import versioneer
 
 setup(
     name="eodatasets",
     description="Packaging, metadata and provenance for GA EO datasets",
-    version=version,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     packages=find_packages(exclude=('tests', 'tests.*')),
     package_data={
         '': ['*.json'],
