@@ -21,13 +21,25 @@ setup(
     install_requires=[
         'click',
         'python-dateutil',
+        'checksumdir',
+        'ciso8601',
         'gdal',
         'numpy',
         'pyyaml',
         'rasterio',
         'shapely',
+
         'scipy'
     ],
+    extras_require=dict(
+        test=[
+            'pytest',
+            'pytest-flake8',
+            'deepdiff',
+            'flake8',
+            'pep8-naming',
+        ],
+    ),
     entry_points='''
         [console_scripts]
         eod-package=eodatasets.scripts.genpackage:run
