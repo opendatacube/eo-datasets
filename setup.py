@@ -28,7 +28,6 @@ setup(
         'pyyaml',
         'rasterio',
         'shapely',
-
         'scipy'
     ],
     extras_require=dict(
@@ -37,6 +36,8 @@ setup(
             'pytest-flake8',
             'deepdiff',
             'flake8',
+            'hypothesis',
+            'mock',
             'pep8-naming',
         ],
     ),

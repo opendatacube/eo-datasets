@@ -1,0 +1,8 @@
+
+[flake8]
+
+# Shorter is better, but would involve changing too much code.
+max_line_length = 120
+
+doctests = True
+
