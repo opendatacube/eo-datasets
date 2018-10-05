@@ -3,6 +3,9 @@ language: python
 python:
 - '3.6'
 sudo: true
+cache:
+    apt: true
+    pip: true
 addons:
   apt:
     packages:
@@ -28,7 +31,6 @@ install:
 
 script:
 - ./check-code.sh --runslow
-cache: apt
 after_success: coveralls
 
 before_deploy:
