@@ -10,7 +10,8 @@ import uuid
 from functools import partial
 from subprocess import check_call
 
-from pathlib import Path
+# flake8 doesn't recognise type hints as usage
+from pathlib import Path  # noqa: F401
 
 import eodatasets
 import eodatasets.type as ptype

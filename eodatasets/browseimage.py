@@ -30,51 +30,52 @@ def run_command(command, work_dir):
 # This method comes from the old ULA codebase and should be cleaned up eventually.
 # pylint: disable=too-many-locals,invalid-name
 def _calculate_scale_offset(nodata, band):
+
     """
     This method comes from the old ULA codebase.
     """
     nbits = gdal.GetDataTypeSize(band.DataType)
-    dfScaleDstMin, dfScaleDstMax = 0.0, 255.0
+    df_scale_dst_min, df_scale_dst_max = 0.0, 255.0
     if nbits == 16:
         count = 32767 + nodata
         histogram = band.GetHistogram(-32767, 32767, 65536)
     else:
         count = 0
         histogram = band.GetHistogram()
-    dfScaleSrcMin = count
+    df_scale_src_min = count
     total = 0
     cliplower = int(0.01 * (sum(histogram) - histogram[count]))
     clipupper = int(0.99 * (sum(histogram) - histogram[count]))
     while total < cliplower and count < len(histogram) - 1:
         count += 1
         total += int(histogram[count])
-        dfScaleSrcMin = count
+        df_scale_src_min = count
     if nbits == 16:
         count = 32767 + nodata
     else:
         count = 0
     total = 0
-    dfScaleSrcMax = count
+    df_scale_src_max = count
     while total < clipupper and count < len(histogram) - 1:
         count += 1
         total += int(histogram[count])
-        dfScaleSrcMax = count
+        df_scale_src_max = count
     if nbits == 16:
-        dfScaleSrcMin -= 32768
-        dfScaleSrcMax -= 32768
+        df_scale_src_min -= 32768
+        df_scale_src_max -= 32768
 
     # Determine gain and offset
-    diff_ = dfScaleSrcMax - dfScaleSrcMin
+    diff_ = df_scale_src_max - df_scale_src_min
 
     # From the old Jobmanager codebase: avoid divide by zero caused by some stats.
     if diff_ == 0:
         _LOG.warning("dfScaleSrc Min and Max are equal! Applying correction")
         diff_ = 1
 
-    dfScale = (dfScaleDstMax - dfScaleDstMin) / diff_
-    dfOffset = -1 * dfScaleSrcMin * dfScale + dfScaleDstMin
+    df_scale = (df_scale_dst_max - df_scale_dst_min) / diff_
+    df_offset = -1 * df_scale_src_min * df_scale + df_scale_dst_min
 
-    return dfScale, dfOffset
+    return df_scale, df_offset
 
 
 # This method comes from the old ULA codebase and should be cleaned up eventually.

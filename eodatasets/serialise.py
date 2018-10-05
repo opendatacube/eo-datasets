@@ -100,10 +100,6 @@ def init_yaml_handling():
     # TODO: This proabbly shouldn't be performed globally as it changes the output behaviour for a built-in type.
     # (although the default behaviour doesn't seem very widely useful: it outputs as a list.)
     yaml.add_multi_representer(collections.OrderedDict, ordereddict_representer)
-    if compat.PY2:
-        # 'unicode' is undefined in python 3
-        # pylint: disable=undefined-variable
-        yaml.add_representer(unicode, unicode_representer)
 
 
 def _create_relative_dumper(folder):

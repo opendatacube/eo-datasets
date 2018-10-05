@@ -65,6 +65,7 @@ def find_rcc_files(directory):
     for f in files:
         yield f
 
+
 # Landsat 5 & 7 modes.
 _INSTRUMENT_MODES = {
     'T': 'SAM',
