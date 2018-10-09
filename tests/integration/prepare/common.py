@@ -20,8 +20,7 @@ def check_prepare_outputs(input_dataset, expected_doc, output_path, expected_met
     assert expected_metadata_path.exists()
     generated_doc = yaml.safe_load(expected_metadata_path.open())
 
-    assert generated_doc['id'] is not None
-    doc_diffs = diff(generated_doc, expected_doc, exclude_paths={"root['id']"})
+    doc_diffs = diff(generated_doc, expected_doc)
     assert doc_diffs == {}, pformat(doc_diffs)
 
 
