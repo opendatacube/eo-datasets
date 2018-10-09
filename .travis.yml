@@ -26,7 +26,9 @@ install:
 - export CPLUS_INCLUDE_PATH="/usr/include/gdal"
 - export C_INCLUDE_PATH="/usr/include/gdal"
   # The python gdal bindings version need to match the gdal version of the system
-- travis_retry pip install --upgrade pytest pytest-cov pycodestyle flake8 coveralls GDAL==1.10.0 rasterio[s3]
+  # rasterio (1.0.7/1.0.8) was throwing errors with respect to partial AWS credentials
+  # Bug report: https://github.com/mapbox/rasterio/issues/1494
+- travis_retry pip install --upgrade pytest pytest-cov pycodestyle flake8 coveralls GDAL==1.10.0 rasterio[s3]<=1.0.6
 - travis_retry pip install -e .[test]
 
 script:
