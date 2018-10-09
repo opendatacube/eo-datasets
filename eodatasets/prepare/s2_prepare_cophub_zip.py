@@ -2,13 +2,8 @@
 """
 Preparation code for Sentinel-2 L1C SCIHUB ZIP
 Generates metadata documents for the Sentinel-2 Level-1C SAFE zip archive
-hosted by Australian Copernicus Data Hub - http://www.copernicus.gov.au/ 
+hosted by Australian Copernicus Data Hub - http://www.copernicus.gov.au/
 - for direct (zip) read indexing by datacube.
-
-example usage:
-    eod-prepare s2-cophub\
-    S2A_OPER_PRD_MSIL1C_PDMC_20161017T123606_R018_V20161016T034742_20161016T034739.zip\
- --output . --no-checksum
 """
 from __future__ import absolute_import
 
@@ -371,16 +366,7 @@ def archive_yaml(yaml_path, output):
     os.rename(yaml_path, (os.path.join(archive_path, os.path.basename(yaml_path))))
 
 
-@click.command(help=__doc__)
-@click.option('--output', help="Write datasets into this directory",
-              type=click.Path(exists=False, writable=True, dir_okay=True))
-@click.argument('datasets',
-                type=click.Path(exists=True, readable=True, writable=False),
-                nargs=-1)
-@click.option('--checksum/--no-checksum', help="Checksum the input dataset to confirm match", default=False)
-@click.option('--newer-than', 'date', type=serialise.ClickDatetime(), default=datetime.now(),
-              help="Enter file creation start date for data preparation")
-def main(output, datasets, checksum, date):
+def _process_datasets(output, datasets, checksum, date):
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
     for dataset in datasets:
@@ -425,5 +411,45 @@ def main(output, datasets, checksum, date):
                 logging.info("No datasets discovered. Bye!")
 
 
-if __name__ == "__main__":
-    main()
+@click.command(help=__doc__ + """\
+example usage:
+    eod-prepare s2-cophub\
+    S2A_OPER_PRD_MSIL1C_PDMC_20161017T123606_R018_V20161016T034742_20161016T034739.zip\
+ --output . --no-checksum
+""")
+@click.option('--output', help="Write datasets into this directory",
+              type=click.Path(exists=False, writable=True, dir_okay=True))
+@click.argument('datasets',
+                type=click.Path(exists=True, readable=True, writable=False),
+                nargs=-1)
+@click.option('--checksum/--no-checksum', help="Checksum the input dataset to confirm match", default=False)
+@click.option('--newer-than', 'date', type=serialise.ClickDatetime(), default=datetime.now(),
+              help="Enter file creation start date for data preparation")
+def from_args(output, datasets, checksum, date):
+    return _process_datasets(output, datasets, checksum, date)
+
+
+@click.command(help=__doc__ + """\
+example usage:
+    eod-prepare s2-cophub-list\
+    S2A_OPER_PRD_MSIL1C_PDMC_20161017T123606_R018_V20161016T034742_20161016T034739.zip\
+ --output . --no-checksum
+""")
+@click.option('--output', help="Write datasets into this directory",
+              type=click.Path(exists=False, writable=True, dir_okay=True))
+@click.argument('dataset-list',
+                type=click.Path(exists=True, readable=True, writable=False),
+                nargs=1)
+@click.option('--checksum/--no-checksum', help="Checksum the input dataset to confirm match", default=False)
+@click.option('--newer-than', 'date', type=serialise.ClickDatetime(), default=datetime.now(),
+              help="Enter file creation start date for data preparation")
+def from_list(output, dataset_list, checksum, date):
+    datasets = []
+    with open(dataset_list, 'r') as fd:
+        for loc in fd.read().splitlines():
+            if os.path.exists(loc):
+                datasets.append(loc)
+            else:
+                raise FileNotFoundError('No such file or directory: %s' % (os.path.abspath(loc), ))
+
+    return _process_datasets(output, datasets, checksum, date)
