@@ -1,13 +1,14 @@
 # coding=utf-8
 """
-Preparation code supporting Sentinel-2 Level 1 C SAFE format zip archives hosted by the
-Australian Copernicus Data Hub - http://www.copernicus.gov.au/ - for direct (zip) read access
-by datacube.
+Preparation code for Sentinel-2 L1C SCIHUB ZIP
+Generates metadata documents for the Sentinel-2 Level-1C SAFE zip archive
+hosted by Australian Copernicus Data Hub - http://www.copernicus.gov.au/ 
+- for direct (zip) read indexing by datacube.
 
 example usage:
-    s2prepare_cophub_zip.py
-    S2A_OPER_PRD_MSIL1C_PDMC_20161017T123606_R018_V20161016T034742_20161016T034739.zip
-    --output /s2_testing/ --no-checksum
+    eod-prepare s2-cophub\
+    S2A_OPER_PRD_MSIL1C_PDMC_20161017T123606_R018_V20161016T034742_20161016T034739.zip\
+ --output . --no-checksum
 """
 from __future__ import absolute_import
 
@@ -33,6 +34,8 @@ from rasterio.errors import RasterioIOError
 from . import serialise
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
+
+ESA_UUID_NAMESPACE = uuid.UUID('5138b9d8-ecd9-41f7-8602-3a295daeeee4')
 
 
 def safe_valid_region(images, mask_value=None):
@@ -127,7 +130,6 @@ def prepare_dataset(path):
     Returns yaml content based on content found at input file path
     """
     if path.suffix == '.zip':
-        zipfile.ZipFile(str(path))
         z = zipfile.ZipFile(str(path))
         # find the auxilliary metadata
         datastrip_auxilliary = [s for s in z.namelist() if "DATASTRIP" in s]
@@ -281,7 +283,7 @@ def prepare_dataset(path):
                 band_label = 'PVI'
             img_dict[band_label] = {'path': img_path, 'layer': 1}
         documents.append({
-            'id': str(uuid.uuid4()),
+            'id': str(uuid.uuid5(ESA_UUID_NAMESPACE, path.name)),
             'processing_level': level,
             'product_type': product_type,
             'processing_baseline': processing_baseline,
@@ -375,9 +377,9 @@ def archive_yaml(yaml_path, output):
 @click.argument('datasets',
                 type=click.Path(exists=True, readable=True, writable=False),
                 nargs=-1)
-@click.option('--newer-than', type=serialise.ClickDatetime(), default=datetime.now(),
-              help="Enter file creation start date for data preparation")
 @click.option('--checksum/--no-checksum', help="Checksum the input dataset to confirm match", default=False)
+@click.option('--newer-than', 'date', type=serialise.ClickDatetime(), default=datetime.now(),
+              help="Enter file creation start date for data preparation")
 def main(output, datasets, checksum, date):
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 

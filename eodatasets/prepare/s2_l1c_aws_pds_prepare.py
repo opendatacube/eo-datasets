@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """
-Preparation code supporting Sentinel-2 Level 1-C s2_aws_pds format read by datacube
+Preparation code for Sentinel-2 L1C AWS PDS
+Generates metadata documents for the Sentinel-2 Level-1C dataset available on aws:
+
+    http://sentinel-pds.s3-website.eu-central-1.amazonaws.com/
+
+in a format to be read by datacube.
+
+    https://www.opendatacube.org/
 
 example usage:
-    s2_l1c_aws_pds_generate_metadata.py
-    S2A_OPER_PRD_MSIL1C_PDMC_20161017T123606_R018_V20161016T034742_20161016T034739
-    --output /s2_testing/ --no-checksum
+
+    eod-prepare s2-awspds\
+ S2A_OPER_PRD_MSIL1C_PDMC_20161017T123606_R018_V20161016T034742_20161016T034739\
+ --output . --no-checksum
 """
 from __future__ import absolute_import
 

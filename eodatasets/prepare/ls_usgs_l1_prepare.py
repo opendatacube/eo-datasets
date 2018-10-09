@@ -24,6 +24,9 @@ try:
 except ImportError:
     pass
 
+# Static namespace to generate uuids for datacube indexing
+USGS_UUID_NAMESPACE = uuid.UUID('276af61d-99f8-4aa3-b2fb-d7df68c5e28f')
+
 LANDSAT_8_BANDS = [
     ('1', 'coastal_aerosol'),
     ('2', 'blue'),
@@ -213,8 +216,9 @@ def prepare_dataset(path):
         mtl_filename
     )
 
+    # Generate a deterministic UUID for the level 1 dataset
     return {
-        'id': str(uuid.uuid5(uuid.NAMESPACE_URL, path.as_posix())),
+        'id': str(uuid.uuid5(USGS_UUID_NAMESPACE, path.name)),
         'product_type': 'level1',
         'extent': {
             'center_dt': '{} {}'.format(
@@ -284,7 +288,8 @@ def find_gz_mtl(ds_path, output_folder):
         members = [m for m in tar_gz.getmembers() if mtl_pattern.search(m.name)]
         if not members:
             return None
-        tar_gz.extractall(output_folder, members)
+        # extractall requires the output location as a string
+        tar_gz.extractall(str(output_folder), members)
 
     return output_folder / members[0].name
 
