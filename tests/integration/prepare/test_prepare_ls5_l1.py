@@ -15,7 +15,7 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
         return 'tar:' + str(L1_TARBALL_PATH.absolute()) + '!' + offset
 
     expected_doc = {
-        'id': '<<Always Different>> This field is ignored below',
+        'id': 'b0d31709-dda4-5a67-9fdf-3ae026a99a72',
         'product_type': 'level1',
         'extent': {
             'center_dt': '1997-04-06 23:17:43.1020000Z',

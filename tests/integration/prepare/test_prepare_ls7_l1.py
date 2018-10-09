@@ -16,7 +16,7 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
         return 'tar:' + str(L71GT_TARBALL_PATH.absolute()) + '!' + offset
 
     expected_doc = {
-        'id': '<<Always Different>> This field is ignored below',
+        'id': '6b552588-d802-5b7a-a575-363f1e9fb908',
         'product_type': 'level1',
         'format': {'name': 'GeoTIFF'},
         'extent': {

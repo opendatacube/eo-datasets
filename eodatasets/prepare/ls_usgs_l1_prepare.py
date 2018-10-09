@@ -216,9 +216,11 @@ def prepare_dataset(path):
         mtl_filename
     )
 
+    product_id = mtl_doc['metadata_file_info']['landsat_product_id']
+
     # Generate a deterministic UUID for the level 1 dataset
     return {
-        'id': str(uuid.uuid5(USGS_UUID_NAMESPACE, path.name)),
+        'id': str(uuid.uuid5(USGS_UUID_NAMESPACE, product_id)),
         'product_type': 'level1',
         'extent': {
             'center_dt': '{} {}'.format(
