@@ -5,6 +5,18 @@ from setuptools import setup, find_packages
 
 import versioneer
 
+
+tests_require = [ 
+    'pytest',
+    'pytest-flake8',
+    'deepdiff',
+    'flake8',
+    'hypothesis',
+    'mock',
+    'pep8-naming',
+]
+
+
 setup(
     name="eodatasets",
     description="Packaging, metadata and provenance for GA EO datasets",
@@ -26,21 +38,15 @@ setup(
         'shapely',
         'scipy'
     ],
-    extras_require=dict(
-        test=[
-            'pytest',
-            'pytest-flake8',
-            'deepdiff',
-            'flake8',
-            'hypothesis',
-            'mock',
-            'pep8-naming',
-        ],
-    ),
+    tests_require=tests_require,
+    extras_require={
+        'test': tests_require
+    },
     entry_points='''
         [console_scripts]
         eod-package=eodatasets.scripts.genpackage:run
         eod-generate-metadata=eodatasets.scripts.genmetadata:run
         eod-generate-browse=eodatasets.scripts.genbrowse:run
+        eod-prepare=eodatasets.scripts.genprepare:run
     ''',
 )
