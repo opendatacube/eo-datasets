@@ -14,6 +14,7 @@ import uuid
 import zipfile
 from datetime import datetime
 from pathlib import Path
+from typing import Iterable
 from xml.etree import ElementTree
 
 import click
@@ -366,43 +367,42 @@ def archive_yaml(yaml_path, output):
     os.rename(yaml_path, (os.path.join(archive_path, os.path.basename(yaml_path))))
 
 
-def _process_datasets(output, datasets, checksum, date):
+def _process_datasets(output_dir: Path, datasets: Iterable[Path], do_checksum: bool, newer_than: datetime):
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
-    for dataset in datasets:
-        (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(dataset)
+    for dataset_path in datasets:
+        (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(str(dataset_path))
         create_date = datetime.utcfromtimestamp(ctime)
-        if create_date <= date:
-            logging.info("Dataset creation time %s is older than start date %s...SKIPPING", create_date, date)
+        if create_date <= newer_than:
+            logging.info("Dataset creation time %s is older than start date %s...SKIPPING", create_date, newer_than)
         else:
-            path = Path(dataset)
-            if path.is_dir():
-                path = Path(path.joinpath(path.stem.replace('PRD_MSIL1C', 'MTD_SAFL1C') + '.xml'))
-            if path.suffix not in ['.xml', '.zip']:
+            if dataset_path.is_dir():
+                dataset_path = dataset_path.joinpath(dataset_path.stem.replace('PRD_MSIL1C', 'MTD_SAFL1C') + '.xml')
+            if dataset_path.suffix not in ['.xml', '.zip']:
                 raise RuntimeError('want xml or zipped archive')
-            logging.info("Processing %s", path)
-            output_path = Path(output)
-            yaml_path = output_path.joinpath(path.name + '.yaml')
+            logging.info("Processing %s", dataset_path)
+            output_path = Path(output_dir)
+            yaml_path = output_path.joinpath(dataset_path.name + '.yaml')
             logging.info("Output %s", yaml_path)
             if os.path.exists(str(yaml_path)):
                 logging.info("Output already exists %s", yaml_path)
                 with open(str(yaml_path)) as f:
-                    if checksum:
+                    if do_checksum:
                         logging.info("Running checksum comparison")
                         datamap = yaml.load_all(f)
                         for data in datamap:
                             yaml_sha1 = data['checksum_sha1']
-                            checksum_sha1 = hashlib.sha1(open(path, 'rb').read()).hexdigest()
+                            checksum_sha1 = hashlib.sha1(dataset_path.open('rb').read()).hexdigest()
                         if checksum_sha1 == yaml_sha1:
                             logging.info("Dataset preparation already done...SKIPPING")
                             continue
                         else:
                             logging.info("Dataset has changed...ARCHIVING out of date yaml")
-                            archive_yaml(yaml_path, output)
+                            archive_yaml(yaml_path, output_dir)
                     else:
                         logging.info("Dataset preparation already done...SKIPPING")
                         continue
-            documents = prepare_dataset(path)
+            documents = prepare_dataset(dataset_path)
             if documents:
                 logging.info("Writing %s dataset(s) into %s", len(documents), yaml_path)
                 with open(str(yaml_path), 'w') as stream:
@@ -411,45 +411,38 @@ def _process_datasets(output, datasets, checksum, date):
                 logging.info("No datasets discovered. Bye!")
 
 
-@click.command(help=__doc__ + """\
+def _read_paths_from_file(listing: Path) -> Iterable[Path]:
+    with listing.open('r') as f:
+        for loc in f.readlines():
+            path = Path(loc)
+            if not path.exists():
+                raise FileNotFoundError('No such file or directory: %s' % (os.path.abspath(loc),))
+
+            yield Path(loc).absolute()
+
+
+@click.command(help=__doc__ + """
 example usage:
-    eod-prepare s2-cophub\
-    S2A_OPER_PRD_MSIL1C_PDMC_20161017T123606_R018_V20161016T034742_20161016T034739.zip\
+
+    eod-prepare s2-cophub S2A_OPER_PRD_MSIL1C_PDMC_20161017T123606_R018_V20161016T034742_20161016T034739.zip
  --output . --no-checksum
 """)
-@click.option('--output', help="Write datasets into this directory",
+@click.option('--output', 'output_dir', help="Write datasets into this directory",
               type=click.Path(exists=False, writable=True, dir_okay=True))
 @click.argument('datasets',
                 type=click.Path(exists=True, readable=True, writable=False),
                 nargs=-1)
+@click.option('-f', 'dataset_listing_files',
+              type=click.Path(exists=True, readable=True, writable=False),
+              help="file containing a list of input paths (one per line)", multiple=True)
 @click.option('--checksum/--no-checksum', help="Checksum the input dataset to confirm match", default=False)
 @click.option('--newer-than', 'date', type=serialise.ClickDatetime(), default=datetime.now(),
               help="Enter file creation start date for data preparation")
-def from_args(output, datasets, checksum, date):
-    return _process_datasets(output, datasets, checksum, date)
+def main(output_dir, datasets, checksum, date, dataset_listing_files):
+    # type: (str, Iterable[str], bool, datetime, Iterable[str]) -> None
 
+    datasets = [Path(p) for p in datasets]
+    for listing_file in dataset_listing_files:
+        datasets.extend(_read_paths_from_file(Path(listing_file)))
 
-@click.command(help=__doc__ + """\
-example usage:
-    eod-prepare s2-cophub-list\
-    S2A_OPER_PRD_MSIL1C_PDMC_20161017T123606_R018_V20161016T034742_20161016T034739.zip\
- --output . --no-checksum
-""")
-@click.option('--output', help="Write datasets into this directory",
-              type=click.Path(exists=False, writable=True, dir_okay=True))
-@click.argument('dataset-list',
-                type=click.Path(exists=True, readable=True, writable=False),
-                nargs=1)
-@click.option('--checksum/--no-checksum', help="Checksum the input dataset to confirm match", default=False)
-@click.option('--newer-than', 'date', type=serialise.ClickDatetime(), default=datetime.now(),
-              help="Enter file creation start date for data preparation")
-def from_list(output, dataset_list, checksum, date):
-    datasets = []
-    with open(dataset_list, 'r') as fd:
-        for loc in fd.read().splitlines():
-            if os.path.exists(loc):
-                datasets.append(loc)
-            else:
-                raise FileNotFoundError('No such file or directory: %s' % (os.path.abspath(loc), ))
-
-    return _process_datasets(output, datasets, checksum, date)
+    return _process_datasets(Path(output_dir), datasets, checksum, date)
