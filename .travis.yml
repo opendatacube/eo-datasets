@@ -29,7 +29,7 @@ install:
 - travis_retry pip install --upgrade pytest pytest-cov pycodestyle flake8 coveralls GDAL==1.10.0 rasterio[s3]
 - travis_retry pip install -e .[test]
   # Either both set or none. See: https://github.com/mapbox/rasterio/issues/1494
-- [ -z ${AWS_SECRET_ACCESS_KEY+x} ] && unset AWS_ACCESS_KEY_ID;
+- '[ -z ${AWS_SECRET_ACCESS_KEY+x} ] && unset AWS_ACCESS_KEY_ID;'
 
 script:
 - ./check-code.sh --runslow
