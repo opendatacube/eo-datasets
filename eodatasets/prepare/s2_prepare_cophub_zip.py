@@ -414,11 +414,11 @@ def _process_datasets(output_dir: Path, datasets: Iterable[Path], do_checksum: b
 def _read_paths_from_file(listing: Path) -> Iterable[Path]:
     with listing.open('r') as f:
         for loc in f.readlines():
-            path = Path(loc)
+            path = Path(loc.strip())
             if not path.exists():
                 raise FileNotFoundError('No such file or directory: %s' % (os.path.abspath(loc),))
 
-            yield Path(loc).absolute()
+            yield path.absolute()
 
 
 @click.command(help=__doc__ + """
