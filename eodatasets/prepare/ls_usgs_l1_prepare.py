@@ -169,16 +169,18 @@ def get_satellite_band_names(sat, instrument, file_name):
 def get_mtl_content(acquisition_path):
     # type: (Path) -> Tuple[Dict, str]
     """
-    Path is pointing to the folder , where the USGS Landsat scene list in MTL format is downloaded
-    from Earth Explorer or GloVis
+    Find MTL file; return it parsed as a dict with its filename.
     """
+    if not acquisition_path.exists():
+        raise RuntimeError("Missing path '{}'".format(acquisition_path))
+
     if acquisition_path.is_file() and tarfile.is_tarfile(str(acquisition_path)):
         with tarfile.open(str(acquisition_path), 'r') as tp:
             try:
                 internal_file = next(filter(lambda memb: 'MTL' in memb.name, tp.getmembers()))
                 filename = Path(internal_file.name).stem
                 with tp.extractfile(internal_file) as fp:
-                    mtl_tree = _parse_group(fp)['l1_metadata_file']
+                    return _parse_group(fp)['l1_metadata_file'], filename
             except StopIteration:
                 raise RuntimeError(
                     "MTL file not found in {}".format(str(acquisition_path))
@@ -190,14 +192,41 @@ def get_mtl_content(acquisition_path):
 
         filename = Path(path).stem
         with path.open('r') as fp:
-            mtl_tree = _parse_group(fp)['l1_metadata_file']
-
-    return mtl_tree, filename
+            return _parse_group(fp)['l1_metadata_file'], filename
 
 
-def prepare_dataset(path):
+def _file_size_bytes(path: Path) -> int:
+    """
+    Total file size for the given file/directory.
+
+    >>> import tempfile
+    >>> test_dir = Path(tempfile.mkdtemp())
+    >>> inner_dir = test_dir.joinpath('inner')
+    >>> inner_dir.mkdir()
+    >>> test_file = Path(inner_dir / 'test.txt')
+    >>> test_file.write_text('asdf\\n')
+    5
+    >>> Path(inner_dir / 'other.txt').write_text('secondary\\n')
+    10
+    >>> _file_size_bytes(test_file)
+    5
+    >>> _file_size_bytes(inner_dir)
+    15
+    >>> _file_size_bytes(test_dir)
+    15
+    """
+    if path.is_file():
+        return path.stat().st_size
+
+    return sum(
+        _file_size_bytes(p)
+        for p in path.iterdir()
+    )
+
+
+def prepare_dataset(base_path):
     # type: (Path) -> Optional[Dict]
-    mtl_doc, mtl_filename = get_mtl_content(path)
+    mtl_doc, mtl_filename = get_mtl_content(base_path)
 
     if not mtl_doc:
         return None
@@ -222,6 +251,8 @@ def prepare_dataset(path):
     return {
         'id': str(uuid.uuid5(USGS_UUID_NAMESPACE, product_id)),
         'product_type': 'level1',
+        'format': {'name': data_format},
+        'size_bytes': _file_size_bytes(base_path),
         'extent': {
             'center_dt': '{} {}'.format(
                 mtl_doc['product_metadata']['date_acquired'],
@@ -229,7 +260,6 @@ def prepare_dataset(path):
             ),
             'coord': get_coords(geo_ref_points, epsg_code),
         },
-        'format': {'name': data_format},
         'grid_spatial': {
             'projection': {
                 'geo_ref_points': geo_ref_points,
@@ -271,29 +301,6 @@ def resolve_doc_offset(dataset_path, offset):
         return str(dataset_path.parent.absolute() / offset)
     else:
         raise NotImplementedError("Unexpected dataset path structure {}".format(dataset_path))
-
-
-def find_gz_mtl(ds_path, output_folder):
-    # type: (Path, Path) -> Optional[Path]
-    """
-    Find the MTL metadata file for the archived dataset and extract the xml
-    file and store it temporally in output folder
-
-    :param Path ds_path: the dataset path
-    :param Path output_folder: the output folder
-
-    :returns: xml with full path
-
-    """
-    mtl_pattern = re.compile(r"_MTL\.txt$")
-    with tarfile.open(str(ds_path), 'r') as tar_gz:
-        members = [m for m in tar_gz.getmembers() if mtl_pattern.search(m.name)]
-        if not members:
-            return None
-        # extractall requires the output location as a string
-        tar_gz.extractall(str(output_folder), members)
-
-    return output_folder / members[0].name
 
 
 def yaml_checkums_correctly(output_yaml, data_path):
@@ -359,16 +366,6 @@ def main(output, datasets, check_checksum, force_absolute_paths, newer_than):
             )
             continue
 
-        if ds_path.suffix == '.txt':
-            mtl_path = ds_path
-        elif '.tar' in ds_path.suffixes:
-            mtl_path = find_gz_mtl(ds_path, output)
-            if not mtl_path:
-                raise RuntimeError('No MTL file within tarball %s' % ds_path)
-        else:
-            logging.warning("Unreadable dataset %s", ds_path)
-            continue
-
         logging.info("Processing %s", ds_path)
         output_yaml = output / '{}.yaml'.format(_dataset_name(ds_path))
 
@@ -379,7 +376,7 @@ def main(output, datasets, check_checksum, force_absolute_paths, newer_than):
                 logging.info("Dataset preparation already done...SKIPPING %s", ds_path.name)
                 continue
 
-        prepare_and_write(ds_path, mtl_path, output_yaml, use_absolute_paths=force_absolute_paths)
+        prepare_and_write(ds_path, output_yaml, use_absolute_paths=force_absolute_paths)
 
     # delete intermediate MTL files for archive datasets in output folder
     output_mtls = list(output.rglob('*MTL.txt'))
@@ -391,11 +388,10 @@ def main(output, datasets, check_checksum, force_absolute_paths, newer_than):
 
 
 def prepare_and_write(ds_path,
-                      mtl_path,
                       output_yaml_path,
                       use_absolute_paths=False):
-    # type: (Path, Path, Path, bool) -> None
-    doc = prepare_dataset(mtl_path)
+    # type: (Path, Path, bool) -> None
+    doc = prepare_dataset(ds_path)
 
     if use_absolute_paths:
         for band in doc['image']['bands'].values():
