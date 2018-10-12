@@ -19,6 +19,7 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
         'id': '6b552588-d802-5b7a-a575-363f1e9fb908',
         'product_type': 'level1',
         'format': {'name': 'GeoTIFF'},
+        'size_bytes': 34477,
         'extent': {
             'center_dt': '2013-12-09 01:10:46.6908469Z',
             'coord': {

@@ -17,6 +17,10 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
     expected_doc = {
         'id': 'b0d31709-dda4-5a67-9fdf-3ae026a99a72',
         'product_type': 'level1',
+        'format': {
+            'name': 'GeoTIFF'
+        },
+        'size_bytes': 430181,
         'extent': {
             'center_dt': '1997-04-06 23:17:43.1020000Z',
             'coord': {
@@ -36,9 +40,6 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
                     'lat': -35.02220984451927,
                     'lon': 150.68005778871884}
             },
-        },
-        'format': {
-            'name': 'GeoTIFF'
         },
         'grid_spatial': {
             'projection': {
