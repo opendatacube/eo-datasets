@@ -2,17 +2,17 @@ from pathlib import Path
 
 from .common import check_prepare_outputs
 
-L1_TARBALL_PATH: Path = Path(__file__).parent / 'data' / 'LC08_L1TP_090084_20160121_20170405_01_T1.tar.gz'
+L1_INPUT_PATH: Path = Path(__file__).parent / 'data' / 'LC08_L1TP_090084_20160121_20170405_01_T1'
 
 
 def test_prepare_l7_l1_usgs_tarball(tmpdir):
-    assert L1_TARBALL_PATH.exists(), "Test data missing(?)"
+    assert L1_INPUT_PATH.exists(), "Test data missing(?)"
 
     output_path = Path(tmpdir)
     expected_metadata_path = output_path / 'LC08_L1TP_090084_20160121_20170405_01_T1.yaml'
 
     def path_offset(offset: str):
-        return 'tar:' + str(L1_TARBALL_PATH.absolute()) + '!' + offset
+        return str(L1_INPUT_PATH.absolute().joinpath(offset))
 
     expected_doc = {
         'id': 'a780754e-a884-58a7-9ac0-df518a67f59d',
@@ -344,7 +344,7 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
     }
 
     check_prepare_outputs(
-        input_dataset=L1_TARBALL_PATH,
+        input_dataset=L1_INPUT_PATH,
         expected_doc=expected_doc,
         output_path=output_path,
         expected_metadata_path=expected_metadata_path

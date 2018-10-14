@@ -3,6 +3,7 @@ Ingest data from the command-line.
 """
 from __future__ import absolute_import
 
+import fnmatch
 import hashlib
 import logging
 import os
@@ -20,7 +21,7 @@ from . import serialise
 
 try:
     # flake8 doesn't recognise type hints as usage
-    from typing import List, Optional, Union, Iterable, Dict, Tuple  # noqa: F401
+    from typing import List, Optional, Union, Iterable, Dict, Tuple, Callable  # noqa: F401
 except ImportError:
     pass
 
@@ -101,7 +102,7 @@ def find_in(path, s, suffix='txt'):
 
 
 def _parse_group(lines, key_transform=lambda s: s.lower()):
-    # type: (Iterable[Union[str, bytes]]) -> dict
+    # type: (Iterable[Union[str, bytes]], Callable[[str], str]) -> dict
     tree = {}
 
     for line in lines:
@@ -281,21 +282,36 @@ def prepare_dataset(base_path):
     }
 
 
-def resolve_doc_offset(dataset_path, offset):
-    # type: (Path, str) -> str
+def resolve_absolute_offset(dataset_path, metadata_path, offset):
+    # type: (Path, Path, str) -> str
     """
     Expand a filename (offset) relative to the dataset.
 
-    >>> resolve_doc_offset(Path('/tmp/great_test_dataset/LS7_TESTO_MTL.txt'), 'band/my_great_band.jpg')
+    >>> external_metadata_loc = Path('/tmp/target-metadata.yaml')
+    >>> resolve_absolute_offset(
+    ...     Path('/tmp/great_test_dataset/LS7_TESTO_MTL.txt'),
+    ...     external_metadata_loc,
+    ...     'band/my_great_band.jpg',
+    ... )
     '/tmp/great_test_dataset/band/my_great_band.jpg'
-    >>> resolve_doc_offset(Path('/tmp/great_test_dataset.tar.gz'), 'band/my_great_band.jpg')
+    >>> resolve_absolute_offset(
+    ...     Path('/tmp/great_test_dataset.tar.gz'),
+    ...     external_metadata_loc,
+    ...     'band/my_great_band.jpg'
+    ... )
     'tar:/tmp/great_test_dataset.tar.gz!band/my_great_band.jpg'
-    >>> resolve_doc_offset(Path('/tmp/uh_oh'), 'band/my_great_band.jpg')
-    Traceback (most recent call last):
-    ...
-    NotImplementedError: Unexpected dataset path structure /tmp/uh_oh
+    >>> resolve_absolute_offset(
+    ...     Path('/tmp/MY_DATASET'),
+    ...     Path('/tmp/MY_DATASET/ga-metadata.yaml'),
+    ...     'band/my_great_band.jpg'
+    ... )
+    'band/my_great_band.jpg'
     """
-    if '.tar' in dataset_path.suffixes:
+    # If metadata is stored inside the dataset, keep paths relative.
+    if str(metadata_path.absolute()).startswith(str(dataset_path.absolute())):
+        return offset
+    # Bands are inside a tar file
+    elif '.tar' in dataset_path.suffixes:
         return 'tar:{}!{}'.format(dataset_path, offset)
     elif dataset_path.suffix == '.txt':
         return str(dataset_path.parent.absolute() / offset)
@@ -395,7 +411,7 @@ def prepare_and_write(ds_path,
 
     if use_absolute_paths:
         for band in doc['image']['bands'].values():
-            band['path'] = resolve_doc_offset(ds_path, band['path'])
+            band['path'] = resolve_absolute_offset(ds_path, output_yaml_path, band['path'])
 
     serialise.dump_yaml(output_yaml_path, doc)
 
@@ -407,11 +423,16 @@ def _dataset_name(ds_path):
     'LE07_L1GT_104078_20131209_20161119_01_T1'
     >>> _dataset_name(Path("example/LE07_L1GT_104078_20131209_20161119_01_T2/SOME_TEST_MTL.txt"))
     'LE07_L1GT_104078_20131209_20161119_01_T2'
+    >>> _dataset_name(Path("example/LE07_L1GT_104078_20131209_20161119_01_T2"))
+    'LE07_L1GT_104078_20131209_20161119_01_T2'
     """
     if '.tar' in ds_path.suffixes:
         return ds_path.name.split('.')[0]
     elif ds_path.name.lower().endswith('_mtl.txt'):
         return ds_path.parent.name
+    # Is there a nicer way to handle this?
+    elif fnmatch.fnmatch(ds_path.name, 'L*'):
+        return ds_path.name
     else:
         raise NotImplementedError("Unexpected path pattern {}".format(ds_path))
 
