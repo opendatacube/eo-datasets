@@ -440,6 +440,7 @@ def _normalise_dataset_path(input_path: Path) -> Path:
     ...
     ValueError: No MTL files within input path .... Not a dataset?
     """
+    input_path = normalise_nci_symlinks(input_path)
     if input_path.is_file():
         if '.tar' in input_path.suffixes:
             return input_path
@@ -451,6 +452,28 @@ def _normalise_dataset_path(input_path: Path) -> Path:
     if len(mtl_files) > 1:
         raise ValueError("Multiple MTL files in a single dataset (got path: {})".format(input_path))
     return input_path
+
+
+def normalise_nci_symlinks(input_path: Path) -> Path:
+    """
+    If it's an NCI lustre path, always use the symlink (`/g/data`) rather than specific drives (eg. `/g/data2`).
+
+    >>> normalise_nci_symlinks(Path('/g/data2/v10/some/dataset.tar')).as_posix()
+    '/g/data/v10/some/dataset.tar'
+    >>> normalise_nci_symlinks(Path('/g/data1a/v10/some/dataset.tar')).as_posix()
+    '/g/data/v10/some/dataset.tar'
+    >>> # Don't change other paths!
+    >>> normalise_nci_symlinks(Path('/g/data/v10/some/dataset.tar')).as_posix()
+    '/g/data/v10/some/dataset.tar'
+    >>> normalise_nci_symlinks(Path('/Users/testuser/unrelated-path.yaml')).as_posix()
+    '/Users/testuser/unrelated-path.yaml'
+    """
+    match = re.match(r'^/g/data[0-9a-z]+/(.*)', str(input_path))
+    if not match:
+        return input_path
+
+    [offset] = match.groups()
+    return Path('/g/data/' + offset)
 
 
 def _dataset_name(ds_path):
