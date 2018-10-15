@@ -3,12 +3,12 @@ Ingest data from the command-line.
 """
 from __future__ import absolute_import
 
-import fnmatch
 import hashlib
 import logging
 import os
 import re
 import tarfile
+import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -289,7 +289,7 @@ def resolve_absolute_offset(dataset_path, metadata_path, offset):
 
     >>> external_metadata_loc = Path('/tmp/target-metadata.yaml')
     >>> resolve_absolute_offset(
-    ...     Path('/tmp/great_test_dataset/LS7_TESTO_MTL.txt'),
+    ...     Path('/tmp/great_test_dataset'),
     ...     external_metadata_loc,
     ...     'band/my_great_band.jpg',
     ... )
@@ -313,10 +313,8 @@ def resolve_absolute_offset(dataset_path, metadata_path, offset):
     # Bands are inside a tar file
     elif '.tar' in dataset_path.suffixes:
         return 'tar:{}!{}'.format(dataset_path, offset)
-    elif dataset_path.suffix == '.txt':
-        return str(dataset_path.parent.absolute() / offset)
     else:
-        raise NotImplementedError("Unexpected dataset path structure {}".format(dataset_path))
+        return str(dataset_path.absolute() / offset)
 
 
 def yaml_checkums_correctly(output_yaml, data_path):
@@ -371,7 +369,7 @@ def main(output, datasets, check_checksum, force_absolute_paths, newer_than):
                         level=logging.INFO)
 
     for ds in datasets:
-        ds_path = Path(ds)
+        ds_path = _normalise_dataset_path(Path(ds))
         (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(ds)
         create_date = datetime.utcfromtimestamp(ctime)
         if newer_than and (create_date <= newer_than):
@@ -416,25 +414,57 @@ def prepare_and_write(ds_path,
     serialise.dump_yaml(output_yaml_path, doc)
 
 
+def _normalise_dataset_path(input_path: Path) -> Path:
+    """
+    Dataset path should be either the direct imagery folder (mtl+bands) or a tar path.
+
+    Translate other inputs (example: the MTL path) to one of the two.
+
+    >>> tmppath = Path(tempfile.mkdtemp())
+    >>> ds_path = tmppath.joinpath('LE07_L1GT_104078_20131209_20161119_01_T1')
+    >>> ds_path.mkdir()
+    >>> mtl_path = ds_path / 'LC08_L1TP_090084_20160121_20170405_01_T1_MTL.txt'
+    >>> mtl_path.write_text('<mtl content>')
+    13
+    >>> _normalise_dataset_path(ds_path).relative_to(tmppath).as_posix()
+    'LE07_L1GT_104078_20131209_20161119_01_T1'
+    >>> _normalise_dataset_path(mtl_path).relative_to(tmppath).as_posix()
+    'LE07_L1GT_104078_20131209_20161119_01_T1'
+    >>> tar_path = tmppath / 'LS_L1GT.tar.gz'
+    >>> tar_path.write_text('fake tar')
+    8
+    >>> _normalise_dataset_path(tar_path).relative_to(tmppath).as_posix()
+    'LS_L1GT.tar.gz'
+    >>> _normalise_dataset_path(Path(tempfile.mkdtemp()))
+    Traceback (most recent call last):
+    ...
+    ValueError: No MTL files within input path .... Not a dataset?
+    """
+    if input_path.is_file():
+        if '.tar' in input_path.suffixes:
+            return input_path
+        input_path = input_path.parent
+
+    mtl_files = list(input_path.rglob('*MTL*'))
+    if not mtl_files:
+        raise ValueError("No MTL files within input path '{}'. Not a dataset?".format(input_path))
+    if len(mtl_files) > 1:
+        raise ValueError("Multiple MTL files in a single dataset (got path: {})".format(input_path))
+    return input_path
+
+
 def _dataset_name(ds_path):
     # type: (Path) -> str
     """
     >>> _dataset_name(Path("example/LE07_L1GT_104078_20131209_20161119_01_T1.tar.gz"))
     'LE07_L1GT_104078_20131209_20161119_01_T1'
-    >>> _dataset_name(Path("example/LE07_L1GT_104078_20131209_20161119_01_T2/SOME_TEST_MTL.txt"))
-    'LE07_L1GT_104078_20131209_20161119_01_T2'
+    >>> _dataset_name(Path("example/LE07_L1GT_104078_20131209_20161119_01_T1.tar"))
+    'LE07_L1GT_104078_20131209_20161119_01_T1'
     >>> _dataset_name(Path("example/LE07_L1GT_104078_20131209_20161119_01_T2"))
     'LE07_L1GT_104078_20131209_20161119_01_T2'
     """
-    if '.tar' in ds_path.suffixes:
-        return ds_path.name.split('.')[0]
-    elif ds_path.name.lower().endswith('_mtl.txt'):
-        return ds_path.parent.name
-    # Is there a nicer way to handle this?
-    elif fnmatch.fnmatch(ds_path.name, 'L*'):
-        return ds_path.name
-    else:
-        raise NotImplementedError("Unexpected path pattern {}".format(ds_path))
+    # This is a little simpler than before :)
+    return ds_path.stem.split(".")[0]
 
 
 if __name__ == "__main__":
