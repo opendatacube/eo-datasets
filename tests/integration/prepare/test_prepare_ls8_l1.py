@@ -17,7 +17,7 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
     expected_doc = {
         'id': 'a780754e-a884-58a7-9ac0-df518a67f59d',
         'product_type': 'level1',
-        'size_bytes': 87879,
+        'size_bytes': 216745,
         'format': {
             'name': 'GeoTIFF'
         },
