@@ -20,7 +20,7 @@ def check_prepare_outputs(input_dataset, expected_doc, output_path, expected_met
     assert expected_metadata_path.exists()
     generated_doc = yaml.safe_load(expected_metadata_path.open())
 
-    doc_diffs = diff(generated_doc, expected_doc)
+    doc_diffs = diff(expected_doc, generated_doc)
     assert doc_diffs == {}, pformat(doc_diffs)
 
 
