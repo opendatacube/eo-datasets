@@ -26,6 +26,7 @@ install:
 - export CPLUS_INCLUDE_PATH="/usr/include/gdal"
 - export C_INCLUDE_PATH="/usr/include/gdal"
   # The python gdal bindings version need to match the gdal version of the system
+- travis_retry pip install --upgrade pip
 - travis_retry pip install --upgrade pytest pytest-cov pycodestyle flake8 coveralls GDAL==1.10.0 rasterio[s3]
 - travis_retry pip install -e .[test]
   # Either both set or none. See: https://github.com/mapbox/rasterio/issues/1494
@@ -37,15 +38,25 @@ after_success: coveralls
 
 before_deploy:
 - pip install s3pypi
+- python setup.py sdist
 
 deploy:
--  provider: script
-   script: s3pypi --bucket datacube-core-deployment
-   on:
-     all_branches: true  # Let the condition below decide if the branch is to be deployed
-     condition: $TRAVIS_BRANCH = "develop" || ! -z "${TRAVIS_TAG}"  # develop branch or tags
-     repo: GeoscienceAustralia/eo-datasets  # Don't attempt to deploy from forks
-
+- provider: script
+  script: s3pypi --bucket datacube-core-deployment
+  on:
+    all_branches: true  # Let the condition below decide if the branch is to be deployed
+    condition: $TRAVIS_BRANCH = "develop" || ! -z "${TRAVIS_TAG}"  # develop branch or tags
+    repo: GeoscienceAustralia/eo-datasets  # Don't attempt to deploy from forks
+- provider: releases
+  file_glob: true
+  file: dist/*
+  skip_cleanup: true
+  on:
+    tags: true
+    condition: "$TRAVIS_TAG =~ ^eodatasets-[0-9]+\\.[0-9]+"
+    repo: GeoscienceAustralia/eo-datasets
+  api-key:
+    secure: p9mx+tyqJ2lIRXnDj39L2tcm03/qSZiH6+VyS2CeOLmxBWBqbTZMhdft3mgiVHH9U2b8ZpwxuzfQ+kXXasNVFuqRo3lCWorvqvqZ7v3bJt6tIIswcYEkvNHbIWXSt558fNRp2DaJRQRo1jzOT5685qzHr+6wsTkTxYzcK9oaqKxv+MjlvkD/hednFgSmlkLXcnO8R+iRdHQe08itvTAZILK/pEeV2U6RbF5HqkuyCatVlwWJdtztaqnycT67Ze7xmH90NU3eBkH5o5oGP3ilTdVpt1ZFl6bGC7va3RkXeBXTLL8nz8S0Tzh/FqtKc88HwALoMDF6sDPp+4MDIazgH8KvBwaCA0fz+RUrbiYwgcJqraMiYl0Pr/qpLCfR5fCxPdFNx98R6aGUmljDH5obggRPE0Q2wl0hqZM1Aq6i/ERCL9SdirnB5zAkd+nYKgYAF9vWA8Yedh01Gv21C/qeKa0yNTCfUeGxUfjla1A+K9jrPmh+Q2Hku1jL1H+wFaV3c45UDN0rvC1q4LrlGlymREH90YTJTwtW7tPbdIoWnS9EUljXIIhHohF9Hr3+bN1XXY91NVTmmUTJ+ZArXhXJi/6d+Cl5TiAN7+H/rDkrJ83KQ4MnVYoNAuIrsG1sFVm5BhkzF77TJb8kh8qK1QkWGKGzQFHK+1n5EiyPc2gqlOs=
 notifications:
   slack:
     on_success: change
