@@ -22,6 +22,7 @@ def test_prepare_l5_l1_usgs_tarball(tmpdir):
         'format': {
             'name': 'GeoTIFF'
         },
+        'checksum_sha1': 'LT05_L1TP_090085_19970406_20161231_01_T1.tar.gz.sha1',
         'size_bytes': 430181,
         'extent': {
             'center_dt': '1997-04-06 23:17:43.1020000Z',

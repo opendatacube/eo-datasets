@@ -22,6 +22,7 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
         'product_type': 'level1',
         'format': {'name': 'GeoTIFF'},
         'size_bytes': 34477,
+        'checksum_sha1': 'LE07_L1GT_104078_20131209_20161119_01_T2.tar.gz.sha1',
         'extent': {
             'center_dt': '2013-12-09 01:10:46.6908469Z',
             'coord': {

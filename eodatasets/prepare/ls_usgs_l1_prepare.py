@@ -17,6 +17,7 @@ import click
 import yaml
 from osgeo import osr
 
+from eodatasets import verify
 from . import serialise
 
 try:
@@ -229,21 +230,36 @@ def _file_size_bytes(path: Path) -> int:
     )
 
 
-def prepare_dataset(base_path):
-    # type: (Path) -> Optional[Dict]
+def prepare_dataset(base_path, write_checksum=True):
+    # type: (Path, bool) -> Optional[Dict]
     mtl_doc, mtl_filename = get_mtl_content(base_path)
 
     if not mtl_doc:
         return None
 
+    additional = {}
+    if write_checksum:
+        checksum_path = _checksum_path(base_path)
+        if checksum_path.exists():
+            logging.warning("Checksum path exists. Not touching it. %r", checksum_path)
+        else:
+            checksum = verify.PackageChecksum()
+            checksum.add_file(base_path)
+            checksum.write(checksum_path)
+        additional['checksum_sha1'] = str(relative_path(base_path, checksum_path))
+
     return prepare_dataset_from_mtl(
         _file_size_bytes(base_path),
         mtl_doc,
-        mtl_filename
+        mtl_filename,
+        additional_props=additional
     )
 
 
-def prepare_dataset_from_mtl(total_size: int, mtl_doc: dict, mtl_filename: str) -> dict:
+def prepare_dataset_from_mtl(total_size: int,
+                             mtl_doc: dict,
+                             mtl_filename: str,
+                             additional_props=None) -> dict:
     data_format = mtl_doc['product_metadata']['output_format']
     if data_format.upper() == 'GEOTIFF':
         data_format = 'GeoTIFF'
@@ -255,10 +271,12 @@ def prepare_dataset_from_mtl(total_size: int, mtl_doc: dict, mtl_filename: str) 
     band_mappings = get_satellite_band_names(
         mtl_doc['product_metadata']['spacecraft_id'],
         mtl_doc['product_metadata']['sensor_id'],
-        mtl_filename
+        mtl_filename,
     )
 
     product_id = mtl_doc['metadata_file_info']['landsat_product_id']
+
+    additional = additional_props or {}
 
     # Generate a deterministic UUID for the level 1 dataset
     return {
@@ -266,6 +284,7 @@ def prepare_dataset_from_mtl(total_size: int, mtl_doc: dict, mtl_filename: str) 
         'product_type': 'level1',
         'format': {'name': data_format},
         'size_bytes': total_size,
+        **additional,
         'extent': {
             'center_dt': '{} {}'.format(
                 mtl_doc['product_metadata']['date_acquired'],
@@ -292,6 +311,33 @@ def prepare_dataset_from_mtl(total_size: int, mtl_doc: dict, mtl_filename: str) 
             'source_datasets': {},
         },
     }
+
+
+def _checksum_path(base_path):
+    # type: (Path) -> Path
+    """
+    Get the checksum file path for the given dataset.
+
+    If it's a file, we add a sibling file with '.sha1' extension
+
+    If it's a directory, we add a 'package.sha1' file inside (existing
+    dataset management scripts like dea-sync expect this)
+    """
+    if base_path.is_file():
+        return base_path.parent / f'{base_path.name}.sha1'
+    else:
+        return base_path / 'package.sha1'
+
+
+def relative_path(basepath, offset):
+    # type: (Path, Path) -> Path
+    """
+    Get relative path (similar to web browser conventions)
+    """
+    # pathlib doesn't like relative-to-a-file.
+    if basepath.is_file():
+        basepath = basepath.parent
+    return offset.relative_to(basepath)
 
 
 def resolve_absolute_offset(dataset_path, metadata_path, offset):
@@ -415,9 +461,11 @@ def main(output, datasets, check_checksum, force_absolute_paths, newer_than):
 
 def prepare_and_write(ds_path,
                       output_yaml_path,
-                      use_absolute_paths=False):
-    # type: (Path, Path, bool) -> None
-    doc = prepare_dataset(ds_path)
+                      use_absolute_paths=False,
+                      write_checksum=True):
+    # type: (Path, Path, bool, bool) -> None
+
+    doc = prepare_dataset(ds_path, write_checksum=write_checksum)
 
     if use_absolute_paths:
         for band in doc['image']['bands'].values():

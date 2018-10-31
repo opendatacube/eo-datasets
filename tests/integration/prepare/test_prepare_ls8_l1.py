@@ -1,4 +1,5 @@
 from pathlib import Path
+from textwrap import dedent
 
 from .common import check_prepare_outputs
 from eodatasets.prepare import ls_usgs_l1_prepare
@@ -19,10 +20,11 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
     expected_doc = {
         'id': 'a780754e-a884-58a7-9ac0-df518a67f59d',
         'product_type': 'level1',
-        'size_bytes': 216745,
+        'size_bytes': 217996,
         'format': {
             'name': 'GeoTIFF'
         },
+        'checksum_sha1': 'package.sha1',
         'extent': {
             'center_dt': '2016-01-21 23:50:23.0544350Z',
             'coord': {
@@ -344,6 +346,24 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
             }
         }
     }
+
+    checksum_file = L1_INPUT_PATH / expected_doc['checksum_sha1']
+    assert checksum_file.read_text() == dedent("""\
+        921a20d85696d0267533d2810ba0d9d39a7cbd56	LC08_L1TP_090084_20160121_20170405_01_T1_ANG.txt
+        eae60de697ddefd83171d2ecf7e9d7a87d782b05	LC08_L1TP_090084_20160121_20170405_01_T1_B1.TIF
+        e86c475d6d8aa0224fc5239b1264533377b71140	LC08_L1TP_090084_20160121_20170405_01_T1_B10.TIF
+        8c2ba78c8ba2a0c37638d01148a49e47fd890f66	LC08_L1TP_090084_20160121_20170405_01_T1_B11.TIF
+        ca0247b270ee166bdd88e40f3c611c192d52b14b	LC08_L1TP_090084_20160121_20170405_01_T1_B2.TIF
+        00e2cb5f0ba666758c9710cb794f5123456ab1f6	LC08_L1TP_090084_20160121_20170405_01_T1_B3.TIF
+        7ba3952d33272d78ff21d6db4b964e954f21741b	LC08_L1TP_090084_20160121_20170405_01_T1_B4.TIF
+        790e58ca6198342a6da695ad1bb04343ab5de745	LC08_L1TP_090084_20160121_20170405_01_T1_B5.TIF
+        b1305bb8c03dd0865e7b8fced505e47144a07319	LC08_L1TP_090084_20160121_20170405_01_T1_B6.TIF
+        9858a25a8ce343a8b8c39076048311ca101aeb85	LC08_L1TP_090084_20160121_20170405_01_T1_B7.TIF
+        91a953ab1aec86d2676da973628948fd4843bad0	LC08_L1TP_090084_20160121_20170405_01_T1_B8.TIF
+        fa56fdd77be655cc4e4e7b4db5333c2260c1c922	LC08_L1TP_090084_20160121_20170405_01_T1_B9.TIF
+        2bd7a30e6cd0e17870ef05d128379296d8babf7e	LC08_L1TP_090084_20160121_20170405_01_T1_BQA.TIF
+        2d1878ba89840d1942bc3ff273fb09bbf4917af3	LC08_L1TP_090084_20160121_20170405_01_T1_MTL.txt
+    """)
 
     check_prepare_outputs(
         invoke_script=ls_usgs_l1_prepare.main,
