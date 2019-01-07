@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-
+import tarfile
+import tempfile
 from os.path import join as pjoin
 from pathlib import Path
-import tempfile
-import tarfile
-import zipfile
+from typing import List
+
 import click
 import rasterio
 
@@ -15,7 +15,7 @@ PREFIX = 'tar:{}!'
 CHUNKS = (512, 512)
 
 
-def conversion(fname, out_fname, aggression=9):
+def _do_conversion(tar_path: Path, output_tar_path: Path, aggression=9):
     """
     Convert a USGS Collection-1 *.tar.gz to a .tar
     The supplied data comes stream compressed, meaning a file
@@ -32,7 +32,7 @@ def conversion(fname, out_fname, aggression=9):
         * Aggression 9
         * Chunks (256, 256)
     """
-    options = {
+    write_options = {
         'compress': 'deflate',
         'zlevel': aggression,
         'blockxsize': CHUNKS[1],
@@ -40,56 +40,68 @@ def conversion(fname, out_fname, aggression=9):
         'tiled': 'yes'
     }
 
-    outdir = out_fname.parent
+    outdir = output_tar_path.parent
     if not outdir.exists():
         outdir.mkdir(parents=True)
 
     with tempfile.TemporaryDirectory(prefix='extract-', dir=str(outdir)) as tmpdir:
-        with tarfile.open(str(fname), 'r') as targz:
-            with tarfile.open(str(out_fname), 'w') as out_tar:
-                # with tarfile.open(str(out_fname), 'w:gz', compresslevel=0) as out_tar:
-                # with zipfile.ZipFile(str(out_fname), 'w') as out_zip:
-                for member in targz.getmembers():
-                    tmp_fname = pjoin(tmpdir, member.name)
+        with tarfile.open(str(tar_path), 'r') as targz:
+            with tarfile.open(str(output_tar_path), 'w') as out_tar:
+                members: List[tarfile.TarInfo] = targz.getmembers()
+                with click.progressbar(label=tar_path.name,
+                                       length=sum(member.size for member in members)) as progress:
+                    for member in members:
+                        tmp_fname = pjoin(tmpdir, member.name)
 
-                    if member.name.endswith('.TIF'):
-                        # process imagery
-                        with rasterio.open(pjoin(PREFIX.format(fname), member.name)) as ds:
-                            geobox = GriddedGeoBox.from_dataset(ds)
-                            write_img(ds.read(1), tmp_fname, geobox=geobox,
-                                      options=options)
-                    else:
-                        # process the text files
-                        targz.extract(member, tmpdir)
+                        # Recompress any TIFs, copy other files verbatum.
+                        if member.name.upper().endswith('.TIF'):
+                            with rasterio.open(pjoin(PREFIX.format(tar_path), member.name)) as ds:
+                                geobox = GriddedGeoBox.from_dataset(ds)
+                                write_img(
+                                    ds.read(1),
+                                    tmp_fname,
+                                    geobox=geobox,
+                                    options=write_options,
+                                )
+                        else:
+                            # process the text files
+                            targz.extract(member, tmpdir)
 
-                    # add the file to the new tar
-                    out_tar.add(tmp_fname, member.name)
-                    # out_zip.write(tmp_fname, member.name)
+                        # add the file to the new tar
+                        out_tar.add(tmp_fname, member.name)
+                        progress.update(member.size)
 
 
 @click.command()
-@click.option("--filename", type=click.Path(exists=True, readable=True),
-              help="The input file to convert.")
 @click.option("--outdir", type=click.Path(file_okay=False, writable=True),
-              help="The base output directory.")
+              help="The base output directory.", required=True)
 @click.option("--aggression", type=click.IntRange(0, 9), default=9,
               help="Deflate aggression value.")
-def main(filename, outdir, aggression):
+@click.argument("files", nargs=-1, type=click.Path(exists=True, readable=True))
+def main(files: List[str], outdir: str, aggression: int):
     """
     Main level.
     """
-    filename = Path(filename)
-    outdir = Path(outdir)
-    parts = filename.parts
-    idx = parts.index('USGS') + 1
-    # tar fname
-    out_fname = outdir.joinpath(*parts[idx:-1], filename.stem)
-    # tar.gz fname
-    # out_fname = outdir.joinpath(*parts[idx:-1], filename.name)
-    # zip fname
-    # out_fname = outdir.joinpath(*parts[idx:-1],
-    #                             Path(Path(filename.stem).stem).with_suffix('.zip'))
-    conversion(filename, out_fname, aggression)
+    output_path = Path(outdir)
+    for tar_file in files:
+        tar_path = Path(tar_file)
+        output_tar_path = _calculate_out_path(output_path, tar_path)
+        _do_conversion(tar_path, output_tar_path, aggression)
+
+
+def _calculate_out_path(out_path: Path, path: Path) -> Path:
+    """
+    >>> i = Path('/test/in/l1-data/USGS/L1/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz')
+    >>> o = Path('/test/dir/out')
+    >>> _calculate_out_path(o, i).as_posix()
+    Path('/test/dir/out/L1/Landsat/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar')
+    """
+    if 'USGS' not in path.parts:
+        raise ValueError(
+            "Expected AODH input path structure, "
+            "eg: /AODH/USGS/L1/Landsat/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz"
+        )
+    return out_path.joinpath(*path.parts[path.parts.index('USGS') + 1:-1], path.stem)
 
 
 if __name__ == '__main__':
