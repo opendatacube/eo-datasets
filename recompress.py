@@ -39,13 +39,15 @@ def _do_conversion(tar_path: Path, output_tar_path: Path, aggression=9):
         'tiled': 'yes'
     }
 
-    outdir = output_tar_path.parent
+    outdir: Path = output_tar_path.parent
     if not outdir.exists():
         outdir.mkdir(parents=True)
 
-    with tempfile.TemporaryDirectory(prefix='extract-', dir=str(outdir)) as tmpdir:
+    with tempfile.TemporaryDirectory(prefix='.extract-', dir=str(outdir)) as tmpdir:
+        tmp_out_tar = Path(tmpdir).joinpath(output_tar_path.name)
+
         with tarfile.open(str(tar_path), 'r') as targz:
-            with tarfile.open(str(output_tar_path), 'w') as out_tar:
+            with tarfile.open(tmp_out_tar, 'w') as out_tar:
                 members: List[tarfile.TarInfo] = targz.getmembers()
                 with click.progressbar(label=tar_path.name,
                                        length=sum(member.size for member in members)) as progress:
@@ -73,6 +75,10 @@ def _do_conversion(tar_path: Path, output_tar_path: Path, aggression=9):
                         # add the file to the new tar
                         out_tar.add(tmp_fname, member.name)
                         progress.update(member.size)
+            # Match the lower r/w permission bits to the output folder. Temp directories default to 700 otherwise.
+            tmp_out_tar.chmod(outdir.stat().st_mode & 0o777)
+            # Our output tar is complete. Move it into place.
+            tmp_out_tar.rename(output_tar_path)
 
 
 @click.command()
