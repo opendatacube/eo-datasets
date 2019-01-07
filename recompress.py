@@ -11,7 +11,6 @@ import rasterio
 from wagl.data import write_img
 from wagl.geobox import GriddedGeoBox
 
-PREFIX = 'tar:{}!'
 CHUNKS = (512, 512)
 
 
@@ -55,7 +54,7 @@ def _do_conversion(tar_path: Path, output_tar_path: Path, aggression=9):
 
                         # Recompress any TIFs, copy other files verbatum.
                         if member.name.upper().endswith('.TIF'):
-                            with rasterio.open(pjoin(PREFIX.format(tar_path), member.name)) as ds:
+                            with rasterio.open(targz.extractfile(member)) as ds:
                                 geobox = GriddedGeoBox.from_dataset(ds)
                                 write_img(
                                     ds.read(1),
