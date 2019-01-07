@@ -49,7 +49,11 @@ def _do_conversion(tar_path: Path, output_tar_path: Path, aggression=9):
                 members: List[tarfile.TarInfo] = targz.getmembers()
                 with click.progressbar(label=tar_path.name,
                                        length=sum(member.size for member in members)) as progress:
+                    fileno = 0
                     for member in members:
+                        fileno += 1
+                        progress.label = f"{tar_path.name} ({fileno:2d}/{len(members)})"
+
                         tmp_fname = pjoin(tmpdir, member.name)
 
                         # Recompress any TIFs, copy other files verbatum.
