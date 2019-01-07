@@ -11,31 +11,26 @@ import rasterio
 from wagl.data import write_img
 from wagl.geobox import GriddedGeoBox
 
-CHUNKS = (512, 512)
 
-
-def _do_conversion(tar_path: Path, output_tar_path: Path, aggression=9):
+def repackage_tar(tar_path: Path,
+                  output_tar_path: Path,
+                  zlevel=9,
+                  block_size=(512, 512)):
     """
-    Convert a USGS Collection-1 *.tar.gz to a .tar
-    The supplied data comes stream compressed, meaning a file
-    member within a tar needs to be fully decompressed in order
-    to then access the data.
-    The proposal here is to compress the imagery internally using
-    GDAL, thus allowing better compression ratios and read speed.
-    The imagery will also be tiled (compressed in blocks).
-    Sample tests indicated that (256, 256) compressed better than
-    (512, 512) or (1024, 1024).
+    Repackage a USGS Collection-1 tar for faster read access.
 
-    Compression settings:
-        * Deflate
-        * Aggression 9
-        * Chunks (256, 256)
+    It comes as a *.tar.gz with uncompressed tifs, which Josh's tests have found to be too slow to read.
+    We compress the inner tifs and store as an uncompressed tar.
+
+    The imagery will also be tiled (compressed in blocks), at size 512x512: a size agreed to
+    between Kirill and Josh.
     """
+    blocksize_y, blocksize_x = block_size
     write_options = {
         'compress': 'deflate',
-        'zlevel': aggression,
-        'blockxsize': CHUNKS[1],
-        'blockysize': CHUNKS[0],
+        'zlevel': zlevel,
+        'blockxsize': blocksize_x,
+        'blockysize': blocksize_y,
         'tiled': 'yes'
     }
 
@@ -58,8 +53,8 @@ def _do_conversion(tar_path: Path, output_tar_path: Path, aggression=9):
 
                         tmp_fname = pjoin(tmpdir, member.name)
 
-                        # Recompress any TIFs, copy other files verbatum.
-                        if member.name.upper().endswith('.TIF'):
+                        # Recompress any TIFs, copy other files verbatim.
+                        if member.name.lower().endswith('.tif'):
                             with rasterio.open(targz.extractfile(member)) as ds:
                                 geobox = GriddedGeoBox.from_dataset(ds)
                                 write_img(
@@ -69,33 +64,34 @@ def _do_conversion(tar_path: Path, output_tar_path: Path, aggression=9):
                                     options=write_options,
                                 )
                         else:
-                            # process the text files
+                            # Copy unchanged into target (typically the text/metadata files).
                             targz.extract(member, tmpdir)
 
                         # add the file to the new tar
                         out_tar.add(tmp_fname, member.name)
                         progress.update(member.size)
-            # Match the lower r/w permission bits to the output folder. Temp directories default to 700 otherwise.
+            # Match the lower r/w permission bits to the output folder.
+            # (Temp directories default to 700 otherwise.)
             tmp_out_tar.chmod(outdir.stat().st_mode & 0o777)
             # Our output tar is complete. Move it into place.
             tmp_out_tar.rename(output_tar_path)
 
 
 @click.command()
-@click.option("--outdir", type=click.Path(file_okay=False, writable=True),
+@click.option("--outbase", type=click.Path(file_okay=False, writable=True),
               help="The base output directory.", required=True)
-@click.option("--aggression", type=click.IntRange(0, 9), default=9,
-              help="Deflate aggression value.")
+@click.option("--zlevel", type=click.IntRange(0, 9), default=9,
+              help="Deflate compression level.")
 @click.argument("files", nargs=-1, type=click.Path(exists=True, readable=True))
-def main(files: List[str], outdir: str, aggression: int):
+def main(files: List[str], outbase: str, zlevel: int):
     """
-    Main level.
+    Repackage USGS L1 tar files for faster read access.
     """
-    output_path = Path(outdir)
+    base_output = Path(outbase)
     for tar_file in files:
         tar_path = Path(tar_file)
-        output_tar_path = _calculate_out_path(output_path, tar_path)
-        _do_conversion(tar_path, output_tar_path, aggression)
+        output_tar_path = _calculate_out_path(base_output, tar_path)
+        repackage_tar(tar_path, output_tar_path, zlevel=zlevel)
 
 
 def _calculate_out_path(out_path: Path, path: Path) -> Path:
