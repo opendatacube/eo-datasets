@@ -2,6 +2,7 @@
 import tarfile
 import tempfile
 from pathlib import Path
+from pprint import pprint
 from typing import List
 import numpy
 
@@ -24,8 +25,8 @@ _PREDICTOR_TABLE = {
 
 def repackage_tar(tar_path: Path,
                   output_tar_path: Path,
-                  zlevel=9,
-                  block_size=(512, 512)):
+                  **compress_args,
+                  ):
     """
     Repackage a USGS Collection-1 tar for faster read access.
 
@@ -35,18 +36,9 @@ def repackage_tar(tar_path: Path,
     The imagery will also be tiled (compressed in blocks), at size 512x512: a size agreed to
     between Kirill and Josh.
     """
-    blocksize_y, blocksize_x = block_size
-    write_options = {
-        'compress': 'deflate',
-        'zlevel': zlevel,
-        'blockxsize': blocksize_x,
-        'blockysize': blocksize_y,
-        'tiled': 'yes'
-    }
 
     outdir: Path = output_tar_path.parent
-    if not outdir.exists():
-        outdir.mkdir(parents=True)
+    outdir.mkdir(parents=True, exist_ok=True)
 
     with tempfile.TemporaryDirectory(prefix='.extract-', dir=str(outdir)) as tmpdir:
         tmp_out_tar = Path(tmpdir).joinpath(output_tar_path.name)
@@ -66,11 +58,7 @@ def repackage_tar(tar_path: Path,
                         # Recompress any TIFs, copy other files verbatim.
                         if member.name.lower().endswith('.tif'):
                             with rasterio.open(targz.extractfile(member)) as ds:
-                                write_img(
-                                    ds,
-                                    tmp_fname,
-                                    options=write_options,
-                                )
+                                write_img(ds, tmp_fname, **compress_args)
                         else:
                             # Copy unchanged into target (typically the text/metadata files).
                             targz.extract(member, tmpdir)
@@ -88,67 +76,34 @@ def repackage_tar(tar_path: Path,
 
 def write_img(ds: rasterio.DatasetReader,
               path: Path,
-              options=None,
+              zlevel=9,
+              block_size=(512, 512),
               ):
     """
     Writes a 2D/3D image to disk using rasterio.
     """
-    array = ds.read(1)
-    # Get the datatype of the array
-    dtype = array.dtype.name
+    blocksize_y, blocksize_x = block_size
 
-    # Check for excluded datatypes
-    if dtype in ('int64', 'int8', 'uint64'):
-        msg = "Datatype not supported: {dt}".format(dt=dtype)
-        raise TypeError(msg)
+    if len(ds.indexes) != 1:
+        raise ValueError(f"Expecting one-band-per-tif input (USGS packages). "
+                         f"Input has multiple layers {repr(ds.indexes)}")
+    print(repr(ds.indexes))
+    array: numpy.ndarray = ds.read(1)
 
-    # convert any bools to uin8
-    if dtype == 'bool':
-        array = numpy.uint8(array)
-        dtype = 'uint8'
+    profile = ds.profile
+    pprint(profile)
+    profile.update(
+        driver='GTiff',
+        predictor=_PREDICTOR_TABLE[array.dtype.name],
+        compress='deflate',
+        zlevel=zlevel,
+        blockxsize=blocksize_x,
+        blockysize=blocksize_y,
+        tiled='yes',
+    )
 
-    ndims = array.ndim
-    dims = array.shape
-
-    # Get the (z, y, x) dimensions (assuming BSQ interleave)
-    if ndims == 2:
-        samples = dims[1]
-        lines = dims[0]
-        bands = 1
-    elif ndims == 3:
-        samples = dims[2]
-        lines = dims[1]
-        bands = dims[0]
-    else:
-        raise RuntimeError(f'Input array is {ndims} dimensions (2 or 3 is supported)')
-
-    # If we have a geobox, then retrieve the geotransform and projection
-    transform = ds.transform
-    projection = ds.crs
-
-    # compression predictor choices
-    kwargs = {
-        'count': bands,
-        'width': samples,
-        'height': lines,
-        'crs': projection,
-        'transform': transform,
-        'dtype': dtype,
-        'driver': 'GTiff',
-        'predictor': _PREDICTOR_TABLE[dtype]
-    }
-
-    # the user can override any derived blocksizes by supplying `options`
-    if options is not None:
-        for key in options:
-            kwargs[key] = options[key]
-
-    with rasterio.open(path, 'w', **kwargs) as outds:
-        if bands == 1:
-            outds.write(array, 1)
-        else:
-            for i in range(bands):
-                outds.write(array[i], i + 1)
+    with rasterio.open(path, 'w', **profile) as outds:
+        outds.write(array, 1)
 
 
 @click.command()
