@@ -1,15 +1,25 @@
 #!/usr/bin/env python
 import tarfile
 import tempfile
-from os.path import join as pjoin
 from pathlib import Path
 from typing import List
+import numpy
 
 import click
 import rasterio
 
-from wagl.data import write_img
-from wagl.geobox import GriddedGeoBox
+_PREDICTOR_TABLE = {
+    'int8': 2,
+    'uint8': 2,
+    'int16': 2,
+    'uint16': 2,
+    'int32': 2,
+    'uint32': 2,
+    'int64': 2,
+    'uint64': 2,
+    'float32': 3,
+    'float64': 3
+}
 
 
 def repackage_tar(tar_path: Path,
@@ -51,16 +61,14 @@ def repackage_tar(tar_path: Path,
                         fileno += 1
                         progress.label = f"{tar_path.name} ({fileno:2d}/{len(members)})"
 
-                        tmp_fname = pjoin(tmpdir, member.name)
+                        tmp_fname = Path(tmpdir) / member.name
 
                         # Recompress any TIFs, copy other files verbatim.
                         if member.name.lower().endswith('.tif'):
                             with rasterio.open(targz.extractfile(member)) as ds:
-                                geobox = GriddedGeoBox.from_dataset(ds)
                                 write_img(
-                                    ds.read(1),
+                                    ds,
                                     tmp_fname,
-                                    geobox=geobox,
                                     options=write_options,
                                 )
                         else:
@@ -69,12 +77,78 @@ def repackage_tar(tar_path: Path,
 
                         # add the file to the new tar
                         out_tar.add(tmp_fname, member.name)
+                        tmp_fname.unlink()
                         progress.update(member.size)
             # Match the lower r/w permission bits to the output folder.
             # (Temp directories default to 700 otherwise.)
             tmp_out_tar.chmod(outdir.stat().st_mode & 0o777)
             # Our output tar is complete. Move it into place.
             tmp_out_tar.rename(output_tar_path)
+
+
+def write_img(ds: rasterio.DatasetReader,
+              path: Path,
+              options=None,
+              ):
+    """
+    Writes a 2D/3D image to disk using rasterio.
+    """
+    array = ds.read(1)
+    # Get the datatype of the array
+    dtype = array.dtype.name
+
+    # Check for excluded datatypes
+    if dtype in ('int64', 'int8', 'uint64'):
+        msg = "Datatype not supported: {dt}".format(dt=dtype)
+        raise TypeError(msg)
+
+    # convert any bools to uin8
+    if dtype == 'bool':
+        array = numpy.uint8(array)
+        dtype = 'uint8'
+
+    ndims = array.ndim
+    dims = array.shape
+
+    # Get the (z, y, x) dimensions (assuming BSQ interleave)
+    if ndims == 2:
+        samples = dims[1]
+        lines = dims[0]
+        bands = 1
+    elif ndims == 3:
+        samples = dims[2]
+        lines = dims[1]
+        bands = dims[0]
+    else:
+        raise RuntimeError(f'Input array is {ndims} dimensions (2 or 3 is supported)')
+
+    # If we have a geobox, then retrieve the geotransform and projection
+    transform = ds.transform
+    projection = ds.crs
+
+    # compression predictor choices
+    kwargs = {
+        'count': bands,
+        'width': samples,
+        'height': lines,
+        'crs': projection,
+        'transform': transform,
+        'dtype': dtype,
+        'driver': 'GTiff',
+        'predictor': _PREDICTOR_TABLE[dtype]
+    }
+
+    # the user can override any derived blocksizes by supplying `options`
+    if options is not None:
+        for key in options:
+            kwargs[key] = options[key]
+
+    with rasterio.open(path, 'w', **kwargs) as outds:
+        if bands == 1:
+            outds.write(array, 1)
+        else:
+            for i in range(bands):
+                outds.write(array[i], i + 1)
 
 
 @click.command()
