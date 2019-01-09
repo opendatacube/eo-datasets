@@ -130,7 +130,7 @@ def _recompress_image(
 @click.command()
 @click.option("--outbase", type=click.Path(file_okay=False, writable=True),
               help="The base output directory.", required=True)
-@click.option("--zlevel", type=click.IntRange(0, 9), default=9,
+@click.option("--zlevel", type=click.IntRange(0, 9), default=5,
               help="Deflate compression level.")
 @click.option("--block-size", type=int, default=512,
               help="Compression block size (both x and y)")
