@@ -43,6 +43,9 @@ def repackage_tar(
 
         with tarfile.open(str(tar_path), 'r') as in_tar, tarfile.open(tmp_out_tar, 'w') as out_tar:
             members: List[tarfile.TarInfo] = in_tar.getmembers()
+
+            _reorder_tar_members(members, tar_path.name)
+
             with click.progressbar(label=tar_path.name,
                                    length=sum(member.size for member in members)) as progress:
                 fileno = 0
@@ -68,6 +71,24 @@ def repackage_tar(
             tmp_out_tar.chmod(outdir.stat().st_mode & 0o777)
             # Our output tar is complete. Move it into place.
             tmp_out_tar.rename(output_tar_path)
+
+
+def _reorder_tar_members(members: List[tarfile.TarInfo], identifier:str):
+    """
+    Put the (tiny) MTL file at the beginning of the tar so that it's quick to access.
+    """
+    # Find MTL
+    for i, member in enumerate(members):
+        if '_MTL' in member.path:
+            mtl_index = i
+            break
+    else:
+        formatted_members = '\n\t'.join(m.name for m in members)
+        raise ValueError(f"No MTL file found in package {identifier}. Have:\n\t{formatted_members}")
+
+    # Move to front
+    mtl_item = members.pop(mtl_index)
+    members.insert(0, mtl_item)
 
 
 def _recompress_image(
