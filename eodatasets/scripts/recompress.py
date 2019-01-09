@@ -45,6 +45,8 @@ def repackage_tar(
         with tarfile.open(str(tar_path), 'r') as in_tar, tarfile.open(tmp_out_tar, 'w') as out_tar:
             members: List[tarfile.TarInfo] = in_tar.getmembers()
 
+            # Add the MTL file to the beginning of the output tar, so it can be accessed faster.
+            # This slows down this repackage a little, as we're seeking/decompressing the input stream an extra time.
             _reorder_tar_members(members, tar_path.name)
 
             with click.progressbar(label=tar_path.name,
