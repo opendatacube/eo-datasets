@@ -103,6 +103,9 @@ def write_img(
 
         with rasterio.open(path, 'w', **profile) as outds:
             outds.write(array, 1)
+            # Copy gdal metadata
+            outds.update_tags(**ds.tags())
+            outds.update_tags(1, **ds.tags(1))
 
 
 @click.command()
