@@ -73,7 +73,7 @@ def repackage_tar(
             tmp_out_tar.rename(output_tar_path)
 
 
-def _reorder_tar_members(members: List[tarfile.TarInfo], identifier:str):
+def _reorder_tar_members(members: List[tarfile.TarInfo], identifier: str):
     """
     Put the (tiny) MTL file at the beginning of the tar so that it's quick to access.
     """
@@ -156,7 +156,7 @@ def _calculate_out_path(out_path: Path, path: Path) -> Path:
     >>> i = Path('/test/in/l1-data/USGS/L1/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz')
     >>> o = Path('/test/dir/out')
     >>> _calculate_out_path(o, i).as_posix()
-    Path('/test/dir/out/L1/Landsat/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar')
+    '/test/dir/out/L1/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar'
     """
     if 'USGS' not in path.parts:
         raise ValueError(
