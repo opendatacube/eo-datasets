@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import copy
 import tarfile
 import tempfile
 from pathlib import Path
@@ -53,18 +54,17 @@ def repackage_tar(
                     fileno += 1
                     progress.label = f"{tar_path.name} ({fileno:2d}/{len(members)})"
 
-                    tmp_fname = Path(tmpdir) / member.name
-
                     # Recompress any TIFs, copy other files verbatim.
                     if member.name.lower().endswith('.tif'):
-                        _recompress_image(in_tar.extractfile(member), tmp_fname, **compress_args)
+                        with rasterio.MemoryFile(filename=member.name) as memfile:
+                            _recompress_image(in_tar.extractfile(member), memfile, **compress_args)
+                            newmember = copy.copy(member)
+                            newmember.size = memfile.getbuffer().nbytes
+                            out_tar.addfile(newmember, memfile)
                     else:
                         # Copy unchanged into target (typically the text/metadata files).
-                        in_tar.extract(member, tmpdir)
-
+                        out_tar.addfile(member, in_tar.extractfile(member))
                     # add the file to the new tar
-                    out_tar.add(tmp_fname, member.name)
-                    tmp_fname.unlink()
                     progress.update(member.size)
             # Match the lower r/w permission bits to the output folder.
             # (Temp directories default to 700 otherwise.)
@@ -92,15 +92,15 @@ def _reorder_tar_members(members: List[tarfile.TarInfo], identifier: str):
 
 
 def _recompress_image(
-        fp,
-        output_path: Path,
+        input_image_fp,
+        output_fp: rasterio.MemoryFile,
         zlevel=9,
         block_size=(512, 512),
 ):
     """
     Read an image from given file pointer, and write as compressed GTIFF.
     """
-    with rasterio.open(fp) as ds:
+    with rasterio.open(input_image_fp) as ds:
         ds: rasterio.DatasetReader
         blocksize_y, blocksize_x = block_size
 
@@ -117,10 +117,10 @@ def _recompress_image(
             zlevel=zlevel,
             blockxsize=blocksize_x,
             blockysize=blocksize_y,
-            tiled='yes',
+            tiled=True,
         )
 
-        with rasterio.open(output_path, 'w', **profile) as outds:
+        with output_fp.open(**profile) as outds:
             outds.write(array, 1)
             # Copy gdal metadata
             outds.update_tags(**ds.tags())
@@ -134,21 +134,22 @@ def _recompress_image(
               help="Deflate compression level.")
 @click.option("--block-size", type=int, default=512,
               help="Compression block size (both x and y)")
-@click.argument("files", nargs=-1, type=click.Path(exists=True, readable=True))
-def main(files: List[str], outbase: str, zlevel: int, block_size: int):
+@click.argument("tar-files", nargs=-1, type=click.Path(exists=True, readable=True))
+def main(tar_files: List[str], outbase: str, zlevel: int, block_size: int):
     """
     Repackage USGS L1 tar files for faster read access.
     """
     base_output = Path(outbase)
-    for tar_file in files:
-        tar_path = Path(tar_file)
-        output_tar_path = _calculate_out_path(base_output, tar_path)
-        repackage_tar(
-            tar_path,
-            output_tar_path,
-            zlevel=zlevel,
-            block_size=(block_size, block_size),
-        )
+    with rasterio.Env():
+        for tar_file in tar_files:
+            tar_path = Path(tar_file)
+            output_tar_path = _calculate_out_path(base_output, tar_path)
+            repackage_tar(
+                tar_path,
+                output_tar_path,
+                zlevel=zlevel,
+                block_size=(block_size, block_size),
+            )
 
 
 def _calculate_out_path(out_path: Path, path: Path) -> Path:
