@@ -43,30 +43,28 @@ def repackage_tar(tar_path: Path,
     with tempfile.TemporaryDirectory(prefix='.extract-', dir=str(outdir)) as tmpdir:
         tmp_out_tar = Path(tmpdir).joinpath(output_tar_path.name)
 
-        with tarfile.open(str(tar_path), 'r') as targz:
-            with tarfile.open(tmp_out_tar, 'w') as out_tar:
-                members: List[tarfile.TarInfo] = targz.getmembers()
-                with click.progressbar(label=tar_path.name,
-                                       length=sum(member.size for member in members)) as progress:
-                    fileno = 0
-                    for member in members:
-                        fileno += 1
-                        progress.label = f"{tar_path.name} ({fileno:2d}/{len(members)})"
+        with tarfile.open(str(tar_path), 'r') as in_tar, tarfile.open(tmp_out_tar, 'w') as out_tar:
+            members: List[tarfile.TarInfo] = in_tar.getmembers()
+            with click.progressbar(label=tar_path.name,
+                                   length=sum(member.size for member in members)) as progress:
+                fileno = 0
+                for member in members:
+                    fileno += 1
+                    progress.label = f"{tar_path.name} ({fileno:2d}/{len(members)})"
 
-                        tmp_fname = Path(tmpdir) / member.name
+                    tmp_fname = Path(tmpdir) / member.name
 
-                        # Recompress any TIFs, copy other files verbatim.
-                        if member.name.lower().endswith('.tif'):
-                            with rasterio.open(targz.extractfile(member)) as ds:
-                                write_img(ds, tmp_fname, **compress_args)
-                        else:
-                            # Copy unchanged into target (typically the text/metadata files).
-                            targz.extract(member, tmpdir)
+                    # Recompress any TIFs, copy other files verbatim.
+                    if member.name.lower().endswith('.tif'):
+                        write_img(in_tar.extractfile(member), tmp_fname, **compress_args)
+                    else:
+                        # Copy unchanged into target (typically the text/metadata files).
+                        in_tar.extract(member, tmpdir)
 
-                        # add the file to the new tar
-                        out_tar.add(tmp_fname, member.name)
-                        tmp_fname.unlink()
-                        progress.update(member.size)
+                    # add the file to the new tar
+                    out_tar.add(tmp_fname, member.name)
+                    tmp_fname.unlink()
+                    progress.update(member.size)
             # Match the lower r/w permission bits to the output folder.
             # (Temp directories default to 700 otherwise.)
             tmp_out_tar.chmod(outdir.stat().st_mode & 0o777)
@@ -74,36 +72,37 @@ def repackage_tar(tar_path: Path,
             tmp_out_tar.rename(output_tar_path)
 
 
-def write_img(ds: rasterio.DatasetReader,
-              path: Path,
-              zlevel=9,
-              block_size=(512, 512),
-              ):
+def write_img(
+        fp,
+        path: Path,
+        zlevel=9,
+        block_size=(512, 512),
+):
     """
     Writes a 2D/3D image to disk using rasterio.
     """
-    blocksize_y, blocksize_x = block_size
+    with rasterio.open(fp) as ds:
+        ds: rasterio.DatasetReader
+        blocksize_y, blocksize_x = block_size
 
-    if len(ds.indexes) != 1:
-        raise ValueError(f"Expecting one-band-per-tif input (USGS packages). "
-                         f"Input has multiple layers {repr(ds.indexes)}")
-    print(repr(ds.indexes))
-    array: numpy.ndarray = ds.read(1)
+        if len(ds.indexes) != 1:
+            raise ValueError(f"Expecting one-band-per-tif input (USGS packages). "
+                             f"Input has multiple layers {repr(ds.indexes)}")
+        array: numpy.ndarray = ds.read(1)
 
-    profile = ds.profile
-    pprint(profile)
-    profile.update(
-        driver='GTiff',
-        predictor=_PREDICTOR_TABLE[array.dtype.name],
-        compress='deflate',
-        zlevel=zlevel,
-        blockxsize=blocksize_x,
-        blockysize=blocksize_y,
-        tiled='yes',
-    )
+        profile = ds.profile
+        profile.update(
+            driver='GTiff',
+            predictor=_PREDICTOR_TABLE[array.dtype.name],
+            compress='deflate',
+            zlevel=zlevel,
+            blockxsize=blocksize_x,
+            blockysize=blocksize_y,
+            tiled='yes',
+        )
 
-    with rasterio.open(path, 'w', **profile) as outds:
-        outds.write(array, 1)
+        with rasterio.open(path, 'w', **profile) as outds:
+            outds.write(array, 1)
 
 
 @click.command()
