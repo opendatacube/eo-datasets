@@ -2,11 +2,10 @@
 import tarfile
 import tempfile
 from pathlib import Path
-from pprint import pprint
 from typing import List
-import numpy
 
 import click
+import numpy
 import rasterio
 
 _PREDICTOR_TABLE = {
@@ -23,18 +22,17 @@ _PREDICTOR_TABLE = {
 }
 
 
-def repackage_tar(tar_path: Path,
-                  output_tar_path: Path,
-                  **compress_args,
-                  ):
+def repackage_tar(
+        tar_path: Path,
+        output_tar_path: Path,
+        **compress_args,
+):
     """
     Repackage a USGS Collection-1 tar for faster read access.
 
     It comes as a *.tar.gz with uncompressed tifs, which Josh's tests have found to be too slow to read.
     We compress the inner tifs and store as an uncompressed tar.
 
-    The imagery will also be tiled (compressed in blocks), at size 512x512: a size agreed to
-    between Kirill and Josh.
     """
 
     outdir: Path = output_tar_path.parent
@@ -56,7 +54,7 @@ def repackage_tar(tar_path: Path,
 
                     # Recompress any TIFs, copy other files verbatim.
                     if member.name.lower().endswith('.tif'):
-                        write_img(in_tar.extractfile(member), tmp_fname, **compress_args)
+                        _recompress_image(in_tar.extractfile(member), tmp_fname, **compress_args)
                     else:
                         # Copy unchanged into target (typically the text/metadata files).
                         in_tar.extract(member, tmpdir)
@@ -72,14 +70,14 @@ def repackage_tar(tar_path: Path,
             tmp_out_tar.rename(output_tar_path)
 
 
-def write_img(
+def _recompress_image(
         fp,
-        path: Path,
+        output_path: Path,
         zlevel=9,
         block_size=(512, 512),
 ):
     """
-    Writes a 2D/3D image to disk using rasterio.
+    Read an image from given file pointer, and write as compressed GTIFF.
     """
     with rasterio.open(fp) as ds:
         ds: rasterio.DatasetReader
@@ -101,7 +99,7 @@ def write_img(
             tiled='yes',
         )
 
-        with rasterio.open(path, 'w', **profile) as outds:
+        with rasterio.open(output_path, 'w', **profile) as outds:
             outds.write(array, 1)
             # Copy gdal metadata
             outds.update_tags(**ds.tags())
@@ -113,8 +111,10 @@ def write_img(
               help="The base output directory.", required=True)
 @click.option("--zlevel", type=click.IntRange(0, 9), default=9,
               help="Deflate compression level.")
+@click.option("--block-size", type=int, default=512,
+              help="Compression block size (both x and y)")
 @click.argument("files", nargs=-1, type=click.Path(exists=True, readable=True))
-def main(files: List[str], outbase: str, zlevel: int):
+def main(files: List[str], outbase: str, zlevel: int, block_size: int):
     """
     Repackage USGS L1 tar files for faster read access.
     """
@@ -122,7 +122,12 @@ def main(files: List[str], outbase: str, zlevel: int):
     for tar_file in files:
         tar_path = Path(tar_file)
         output_tar_path = _calculate_out_path(base_output, tar_path)
-        repackage_tar(tar_path, output_tar_path, zlevel=zlevel)
+        repackage_tar(
+            tar_path,
+            output_tar_path,
+            zlevel=zlevel,
+            block_size=(block_size, block_size),
+        )
 
 
 def _calculate_out_path(out_path: Path, path: Path) -> Path:
