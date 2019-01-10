@@ -28,14 +28,18 @@ def dump_yaml(output_yaml, doc):
         raise ValueError("YAML filename doesn't end in *.yaml (?). Received {!r}".format(output_yaml))
 
     with output_yaml.open('w') as stream:
-        yaml.dump(
-            # In CPython 3.5+ dicts are already ordered, but yaml.dump() does not maintain that order unless we do this.
-            collections.OrderedDict(doc),
-            stream,
-            Dumper=OrderPreservingDumper,
-            default_flow_style=False,
-            indent=4,
-        )
+        dump_yaml_to_stream(stream, doc)
+
+
+def dump_yaml_to_stream(stream, doc):
+    yaml.dump(
+        # In CPython 3.5+ dicts are already ordered, but yaml.dump() does not maintain that order unless we do this.
+        collections.OrderedDict(doc),
+        stream,
+        Dumper=OrderPreservingDumper,
+        default_flow_style=False,
+        indent=4,
+    )
 
 
 class ClickDatetime(click.ParamType):

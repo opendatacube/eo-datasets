@@ -181,7 +181,7 @@ def get_mtl_content(acquisition_path):
                 internal_file = next(filter(lambda memb: 'MTL' in memb.name, tp.getmembers()))
                 filename = Path(internal_file.name).stem
                 with tp.extractfile(internal_file) as fp:
-                    return _parse_group(fp)['l1_metadata_file'], filename
+                    return read_mtl(fp), filename
             except StopIteration:
                 raise RuntimeError(
                     "MTL file not found in {}".format(str(acquisition_path))
@@ -193,7 +193,11 @@ def get_mtl_content(acquisition_path):
 
         filename = Path(path).stem
         with path.open('r') as fp:
-            return _parse_group(fp)['l1_metadata_file'], filename
+            return read_mtl(fp), filename
+
+
+def read_mtl(fp):
+    return _parse_group(fp)['l1_metadata_file']
 
 
 def _file_size_bytes(path: Path) -> int:
@@ -232,6 +236,14 @@ def prepare_dataset(base_path):
     if not mtl_doc:
         return None
 
+    return prepare_dataset_from_mtl(
+        _file_size_bytes(base_path),
+        mtl_doc,
+        mtl_filename
+    )
+
+
+def prepare_dataset_from_mtl(total_size: int, mtl_doc: dict, mtl_filename: str):
     data_format = mtl_doc['product_metadata']['output_format']
     if data_format.upper() == 'GEOTIFF':
         data_format = 'GeoTIFF'
@@ -253,7 +265,7 @@ def prepare_dataset(base_path):
         'id': str(uuid.uuid5(USGS_UUID_NAMESPACE, product_id)),
         'product_type': 'level1',
         'format': {'name': data_format},
-        'size_bytes': _file_size_bytes(base_path),
+        'size_bytes': total_size,
         'extent': {
             'center_dt': '{} {}'.format(
                 mtl_doc['product_metadata']['date_acquired'],
