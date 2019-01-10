@@ -82,8 +82,10 @@ def repackage_tar(
                     # add the file to the new tar
                     progress.update(member.size)
 
+            # Append sha1 checksum file
             checksum_path = tmpdir / 'package.sha1'
             verify.write(checksum_path)
+            checksum_path.chmod(0o664)
             out_tar.add(checksum_path, checksum_path.name)
 
             # Match the lower r/w permission bits to the output folder.
