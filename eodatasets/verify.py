@@ -6,6 +6,7 @@ import hashlib
 import logging
 # PyLint doesn't recognise many distutils functions when in virtualenv. Not worth the effort.
 # pylint: disable=no-name-in-module
+import typing
 from distutils import spawn
 from pathlib import Path
 
@@ -43,13 +44,18 @@ def calculate_file_hash(filename, hash_fn=hashlib.sha1, block_size=4096):
     :return: String of hex characters.
     :rtype: str
     """
-    m = hash_fn()
     with Path(filename).open('rb') as f:
-        while True:
-            d = f.read(block_size)
-            if not d:
-                break
-            m.update(d)
+        return calculate_hash(f, hash_fn, block_size)
+
+
+def calculate_hash(f, hash_fn=hashlib.sha1, block_size=4096):
+    m = hash_fn()
+
+    while True:
+        d = f.read(block_size)
+        if not d:
+            break
+        m.update(d)
 
     return binascii.hexlify(m.digest()).decode('ascii')
 
@@ -93,6 +99,19 @@ class PackageChecksum(object):
         hash_ = self._checksum(file_path)
         self._append_hash(file_path, hash_)
 
+    def add(self, fd: typing.IO, name=None):
+        """
+        Add a checksum, reading the data from an open file descriptor.
+        """
+        name = name or fd.name
+        if not name:
+            raise ValueError("No usable name for checksummed file descriptor")
+
+        _LOG.info('Checksumming %r', name)
+        hash_ = calculate_hash(fd)
+        _LOG.debug('%r -> %r', name, hash_)
+        self._append_hash(name, hash_)
+
     def _checksum(self, file_path):
         _LOG.info('Checksumming %r', file_path)
         hash_ = calculate_file_hash(file_path)
@@ -106,15 +125,22 @@ class PackageChecksum(object):
         for path in file_paths:
             self.add_file(path)
 
-    def write(self, output_file):
+    def write(self, output_file: typing.Union[Path, str]):
         """
         Write checksums to the given file.
         :type output_file: Path or str
         """
         output_file = Path(output_file)
-        with output_file.open('w') as f:
-            f.writelines((u'{0}\t{1}\n'.format(str(hash_), str(filename.relative_to(output_file.parent)))
-                          for filename, hash_ in sorted(self._file_hashes.items())))
+        with output_file.open('wb') as f:
+            f.writelines(
+                (
+                    u'{0}\t{1}\n'.format(
+                        str(hash_),
+                        str(filename.relative_to(output_file.parent))
+                    ).encode('utf-8')
+                    for filename, hash_ in sorted(self._file_hashes.items())
+                )
+            )
 
     def read(self, checksum_path):
         """
