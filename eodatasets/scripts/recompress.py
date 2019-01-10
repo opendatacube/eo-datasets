@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import copy
+import io
 import tarfile
 import tempfile
 from pathlib import Path
@@ -8,6 +9,8 @@ from typing import List
 import click
 import numpy
 import rasterio
+
+from eodatasets.verify import PackageChecksum
 
 _PREDICTOR_TABLE = {
     'int8': 2,
@@ -39,8 +42,11 @@ def repackage_tar(
     outdir: Path = output_tar_path.parent
     outdir.mkdir(parents=True, exist_ok=True)
 
+    verify = PackageChecksum()
+
     with tempfile.TemporaryDirectory(prefix='.extract-', dir=str(outdir)) as tmpdir:
-        tmp_out_tar = Path(tmpdir).joinpath(output_tar_path.name)
+        tmpdir = Path(tmpdir).absolute()
+        tmp_out_tar = tmpdir.joinpath(output_tar_path.name)
 
         with tarfile.open(str(tar_path), 'r') as in_tar, tarfile.open(tmp_out_tar, 'w') as out_tar:
             members: List[tarfile.TarInfo] = in_tar.getmembers()
@@ -63,11 +69,23 @@ def repackage_tar(
                             newmember = copy.copy(member)
                             newmember.size = memfile.getbuffer().nbytes
                             out_tar.addfile(newmember, memfile)
+
+                            # Image has been written. Seek to beginning to take a checksum.
+                            memfile.seek(0)
+                            verify.add(memfile, tmpdir / newmember.name)
                     else:
                         # Copy unchanged into target (typically the text/metadata files).
-                        out_tar.addfile(member, in_tar.extractfile(member))
+                        file_contents = in_tar.extractfile(member).read()
+                        out_tar.addfile(member, io.BytesIO(file_contents))
+                        verify.add(io.BytesIO(file_contents), tmpdir / member.name)
+                        del file_contents
                     # add the file to the new tar
                     progress.update(member.size)
+
+            checksum_path = tmpdir / 'package.sha1'
+            verify.write(checksum_path)
+            out_tar.add(checksum_path, checksum_path.name)
+
             # Match the lower r/w permission bits to the output folder.
             # (Temp directories default to 700 otherwise.)
             tmp_out_tar.chmod(outdir.stat().st_mode & 0o777)
