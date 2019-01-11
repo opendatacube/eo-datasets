@@ -178,7 +178,7 @@ def get_mtl_content(acquisition_path):
     if acquisition_path.is_file() and tarfile.is_tarfile(str(acquisition_path)):
         with tarfile.open(str(acquisition_path), 'r') as tp:
             try:
-                internal_file = next(filter(lambda memb: 'MTL' in memb.name, tp.getmembers()))
+                internal_file = next(filter(lambda memb: '_MTL' in memb.name, tp.getmembers()))
                 filename = Path(internal_file.name).stem
                 with tp.extractfile(internal_file) as fp:
                     return read_mtl(fp), filename
@@ -243,7 +243,7 @@ def prepare_dataset(base_path):
     )
 
 
-def prepare_dataset_from_mtl(total_size: int, mtl_doc: dict, mtl_filename: str):
+def prepare_dataset_from_mtl(total_size: int, mtl_doc: dict, mtl_filename: str) -> dict:
     data_format = mtl_doc['product_metadata']['output_format']
     if data_format.upper() == 'GEOTIFF':
         data_format = 'GeoTIFF'
@@ -458,7 +458,7 @@ def _normalise_dataset_path(input_path: Path) -> Path:
             return input_path
         input_path = input_path.parent
 
-    mtl_files = list(input_path.rglob('*MTL*'))
+    mtl_files = list(input_path.rglob('*_MTL*'))
     if not mtl_files:
         raise ValueError("No MTL files within input path '{}'. Not a dataset?".format(input_path))
     if len(mtl_files) > 1:
