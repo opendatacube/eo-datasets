@@ -68,17 +68,12 @@ class SimpleObject(object):
         (ordered output is primarily useful for readability: such as repr() or log output.)
         :rtype: [(str, obj)]
         """
-        # inspect.signature() is not available in Python 2.7, so we use the py3-deprecated getargspec().
-        # pylint: disable=deprecated-method
-        constructor_spec = inspect.getargspec(cls.__init__)
-        constructor_args = constructor_spec.args[1:]
-
-        defaults = constructor_spec.defaults
         # Record the default value for each property (from constructor)
-        defaultless_count = len(constructor_args) - len(defaults or [])
-        value_defaults = ([None] * defaultless_count) + list(defaults or [])
-
-        return zip(constructor_args, value_defaults)
+        s = inspect.signature(cls.__init__)
+        return [
+            (p, None if (v.default is v.empty) else v.default)
+            for p, v in s.parameters.items()
+        ][1:]
 
     def steal_fields_from(self, other):
         """
