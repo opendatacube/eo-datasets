@@ -34,10 +34,10 @@ class TestPassinfo(unittest.TestCase):
         ]
         md = extraction._parse_passinfo_md(pm, lines)
 
-        self.assertEquals(md.acquisition.groundstation.code, "ASA")
-        self.assertEquals(md.acquisition.platform_orbit, 110912)
-        self.assertEquals(md.platform.code, "LANDSAT_5")
-        self.assertEquals(md.instrument.name, "TM")
+        self.assertEqual(md.acquisition.groundstation.code, "ASA")
+        self.assertEqual(md.acquisition.platform_orbit, 110912)
+        self.assertEqual(md.platform.code, "LANDSAT_5")
+        self.assertEqual(md.instrument.name, "TM")
         self.assertEqual(md.acquisition.aos, datetime.datetime(2005, 1, 6, 23, 32, 14))
         self.assertEqual(md.acquisition.los, datetime.datetime(2005, 1, 6, 23, 39, 12))
 
@@ -68,10 +68,10 @@ class TestPassinfo(unittest.TestCase):
         # It should find a passinfo file one directory up.
         md = extraction.extract_md(ptype.DatasetMetadata(), d.joinpath('subdirectory'))
 
-        self.assertEquals(md.acquisition.groundstation.code, "ASA")
-        self.assertEquals(md.acquisition.platform_orbit, 110912)
-        self.assertEquals(md.platform.code, "LANDSAT_5")
-        self.assertEquals(md.instrument.name, "TM")
+        self.assertEqual(md.acquisition.groundstation.code, "ASA")
+        self.assertEqual(md.acquisition.platform_orbit, 110912)
+        self.assertEqual(md.platform.code, "LANDSAT_5")
+        self.assertEqual(md.instrument.name, "TM")
         self.assertEqual(md.acquisition.aos, datetime.datetime(2005, 1, 6, 23, 32, 14))
         self.assertEqual(md.acquisition.los, datetime.datetime(2005, 1, 6, 23, 39, 12))
 
@@ -97,10 +97,10 @@ class TestPassinfo(unittest.TestCase):
         ]})
         md = extraction.extract_md(ptype.DatasetMetadata(), d)
 
-        self.assertEquals(md.acquisition.groundstation.code, "ASA")
-        self.assertEquals(md.acquisition.platform_orbit, 30486)
-        self.assertEquals(md.platform.code, "LANDSAT_7")
-        self.assertEquals(md.instrument.name, "ETM")
+        self.assertEqual(md.acquisition.groundstation.code, "ASA")
+        self.assertEqual(md.acquisition.platform_orbit, 30486)
+        self.assertEqual(md.platform.code, "LANDSAT_7")
+        self.assertEqual(md.instrument.name, "ETM")
         self.assertEqual(md.acquisition.aos, datetime.datetime(2005, 1, 7, 2, 0, 28))
         self.assertEqual(md.acquisition.los, datetime.datetime(2005, 1, 7, 2, 7, 19))
 
@@ -129,10 +129,10 @@ class TestPassinfo(unittest.TestCase):
         md = extraction.extract_md(ptype.DatasetMetadata(), d)
 
         # Station "TERSS" is hobart.
-        self.assertEquals(md.acquisition.groundstation.code, "HOA")
-        self.assertEquals(md.acquisition.platform_orbit, 110912)
-        self.assertEquals(md.platform.code, "LANDSAT_5")
-        self.assertEquals(md.instrument.name, "TM")
+        self.assertEqual(md.acquisition.groundstation.code, "HOA")
+        self.assertEqual(md.acquisition.platform_orbit, 110912)
+        self.assertEqual(md.platform.code, "LANDSAT_5")
+        self.assertEqual(md.instrument.name, "TM")
         self.assertEqual(md.acquisition.aos, datetime.datetime(2005, 1, 6, 23, 32, 14))
         self.assertEqual(md.acquisition.los, datetime.datetime(2005, 1, 6, 23, 39, 12))
 
