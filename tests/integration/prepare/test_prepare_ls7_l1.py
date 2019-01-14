@@ -2,6 +2,8 @@ from datetime import datetime
 from pathlib import Path
 
 from .common import run_prepare_cli, check_prepare_outputs
+from eodatasets.prepare import ls_usgs_l1_prepare
+from eodatasets.prepare.ls_usgs_l1_prepare import normalise_nci_symlinks
 
 L71GT_TARBALL_PATH: Path = Path(__file__).parent / 'data' / 'LE07_L1GT_104078_20131209_20161119_01_T2.tar.gz'
 
@@ -13,7 +15,7 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
     expected_metadata_path = output_path / 'LE07_L1GT_104078_20131209_20161119_01_T2.yaml'
 
     def path_offset(offset: str):
-        return 'tar:' + str(L71GT_TARBALL_PATH.absolute()) + '!' + offset
+        return 'tar:' + str(normalise_nci_symlinks(L71GT_TARBALL_PATH.absolute())) + '!' + offset
 
     expected_doc = {
         'id': '6b552588-d802-5b7a-a575-363f1e9fb908',
@@ -334,10 +336,14 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
         }
     }
 
+    print(expected_doc)
     check_prepare_outputs(
-        input_dataset=L71GT_TARBALL_PATH,
+        invoke_script=ls_usgs_l1_prepare.main,
+        run_args=[
+            '--absolute-paths', '--output',
+            str(output_path), str(L71GT_TARBALL_PATH)
+        ],
         expected_doc=expected_doc,
-        output_path=output_path,
         expected_metadata_path=expected_metadata_path
     )
 
@@ -349,6 +355,7 @@ def test_skips_old_datasets(tmpdir):
     expected_metadata_path = output_path / 'LE07_L1GT_104078_20131209_20161119_01_T2.yaml'
 
     run_prepare_cli(
+        ls_usgs_l1_prepare.main,
         '--output', str(output_path),
         # Can't be newer than right now.
         '--newer-than', datetime.now().isoformat(),
@@ -358,6 +365,7 @@ def test_skips_old_datasets(tmpdir):
 
     # It should work with an old date.
     run_prepare_cli(
+        ls_usgs_l1_prepare.main,
         '--output', str(output_path),
         # Some old date, from before the test data was created.
         '--newer-than', "2014-05-04",
