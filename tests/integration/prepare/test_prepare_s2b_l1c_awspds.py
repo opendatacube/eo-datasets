@@ -4,7 +4,10 @@ from pathlib import Path
 from .common import check_prepare_outputs
 from eodatasets.prepare import s2_l1c_aws_pds_prepare
 
-L1_ZIPFILE_PATH: Path = Path(__file__).parent / 'data' / 'S2B_OPER_MSI_L1C_TL_EPAE_20180617T013729_A006677_T55JGF_N02.06.AWSPDS.zip'
+L1_ZIPFILE_PATH: Path = (
+    Path(__file__).parent / 'data' /
+    'S2B_OPER_MSI_L1C_TL_EPAE_20180617T013729_A006677_T55JGF_N02.06.AWSPDS.zip'
+)
 
 
 def test_prepare_s2a_l1c_safe(tmpdir):
@@ -32,7 +35,11 @@ def test_prepare_s2a_l1c_safe(tmpdir):
         "creation_dt": "2018-06-17T01:27:55Z",
         "checksum_sha1": "bfac5eea3ec0c6c70816ddb97592dfd4d8a389e2",
         "datastrip_id": "S2B_OPER_MSI_L1C_DS_EPAE_20180617T013729_S20180617T001107_N02.06",
-        "datastrip_metadata": "http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#products/2018/6/17/S2B_MSIL1C_20180617T001109_N0206_R073_T55JGF_20180617T013729/datastrip/0",
+        "datastrip_metadata": (
+            "http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com"
+            "/#products/2018/6/17/S2B_MSIL1C_20180617T001109_N0206_R073_"
+            "T55JGF_20180617T013729/datastrip/0"
+        ),
         "datatake_id": {
             "datatakeIdentifier": "GS2B_20180617T001109_006677_N02.06",
             "metadataLevel": "Brief"

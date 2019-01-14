@@ -3,7 +3,10 @@ from pathlib import Path
 from .common import check_prepare_outputs
 from eodatasets.prepare import s2_prepare_cophub_zip
 
-L1_ZIPFILE_PATH: Path = Path(__file__).parent / 'data' / 'S2A_MSIL1C_20180629T000241_N0206_R030_T56JMM_20180629T012042.zip'
+L1_ZIPFILE_PATH: Path = (
+    Path(__file__).parent / 'data' /
+    'S2A_MSIL1C_20180629T000241_N0206_R030_T56JMM_20180629T012042.zip'
+)
 
 
 def test_prepare_s2a_l1c_safe(tmpdir):
@@ -11,7 +14,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
 
     output_path = Path(tmpdir)
     expected_metadata_path = output_path / 'S2A_MSIL1C_20180629T000241_N0206_R030_T56JMM_20180629T012042.zip.yaml'
-    granule_path='/S2A_MSIL1C_20180629T000241_N0206_R030_T56JMM_20180629T012042.SAFE/GRANULE/L1C_T56JMM_A015757_20180629T000241/'
+    granule_path = (
+        '/S2A_MSIL1C_20180629T000241_N0206_R030_T56JMM_20180629T012042.SAFE'
+        '/GRANULE/L1C_T56JMM_A015757_20180629T000241/'
+    )
 
     def path_offset(offset: str, granule_path=granule_path):
         return 'zip://' + str(L1_ZIPFILE_PATH.absolute()) + '!' + granule_path + offset
@@ -22,7 +28,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
         'checksum_sha1': '908571e2cdd54174fb051272be34fe73f6efb9a5',
         'creation_dt': '2018-06-29T01:20:42.000000Z',
         'datastrip_id': 'S2A_OPER_MSI_L1C_DS_EPAE_20180629T012042_S20180629T000241_N02.06',
-        'datastrip_metadata': 'S2A_MSIL1C_20180629T000241_N0206_R030_T56JMM_20180629T012042.SAFE/DATASTRIP/DS_EPAE_20180629T012042_S20180629T000241/MTD_DS.xml',
+        'datastrip_metadata': (
+            'S2A_MSIL1C_20180629T000241_N0206_R030_T56JMM_20180629T012042.SAFE'
+            '/DATASTRIP/DS_EPAE_20180629T012042_S20180629T000241/MTD_DS.xml'
+        ),
         'datatake_id': {'datatakeIdentifier': 'GS2A_20180629T000241_015757_N02.06'},
         'datatake_sensing_start': '2018-06-29T00:02:41.024Z',
         'datatake_type': 'INS-NOBS',
@@ -47,8 +56,8 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     'lon': 153.10102341983713
                 }
             },
-           'from_dt': '2018-06-29T00:02:41.024Z',
-           'to_dt': '2018-06-29T00:02:41.024Z'
+            'from_dt': '2018-06-29T00:02:41.024Z',
+            'to_dt': '2018-06-29T00:02:41.024Z'
         },
         'format': {'name': 'JPEG2000'},
         'grid_spatial': {
@@ -206,79 +215,105 @@ def test_prepare_s2a_l1c_safe(tmpdir):
             'viewing_angles': [
                 {
                     'bandId': '0',
-                    'measurement': {'azimith': {'value': '287.743300570742'},
-                                    'zenith': {'value': '8.90682426360539'}},
+                    'measurement': {
+                        'azimith': {'value': '287.743300570742'},
+                        'zenith': {'value': '8.90682426360539'}
+                    },
                     'unit': 'degree'},
                 {
                     'bandId': '9',
-                    'measurement': {'azimith': {'value': '287.913358161721'},
-                                    'zenith': {'value': '8.93763578589198'}},
+                    'measurement': {
+                        'azimith': {'value': '287.913358161721'},
+                        'zenith': {'value': '8.93763578589198'}
+                    },
                     'unit': 'degree'
                 },
                 {
                     'bandId': '10',
-                    'measurement': {'azimith': {'value': '286.62269660653'},
-                                    'zenith': {'value': '8.77437299338626'}},
+                    'measurement': {
+                        'azimith': {'value': '286.62269660653'},
+                        'zenith': {'value': '8.77437299338626'}
+                    },
                     'unit': 'degree'
                 },
                 {
                     'bandId': '1',
-                     'measurement': {'azimith': {'value': '286.085976995274'},
-                                     'zenith': {'value': '8.70023786261715'}},
-                     'unit': 'degree'
+                    'measurement': {
+                        'azimith': {'value': '286.085976995274'},
+                        'zenith': {'value': '8.70023786261715'}
+                    },
+                    'unit': 'degree'
                 },
                 {
                     'bandId': '2',
-                    'measurement': {'azimith': {'value': '286.471239179063'},
-                                    'zenith': {'value': '8.72476018739389'}},
+                    'measurement': {
+                        'azimith': {'value': '286.471239179063'},
+                        'zenith': {'value': '8.72476018739389'}
+                    },
                     'unit': 'degree'
                 },
                 {
                     'bandId': '3',
-                    'measurement': {'azimith': {'value': '286.832768592131'},
-                                    'zenith': {'value': '8.75574267151839'}},
+                    'measurement': {
+                        'azimith': {'value': '286.832768592131'},
+                        'zenith': {'value': '8.75574267151839'}
+                    },
                     'unit': 'degree'
                 },
                 {
                     'bandId': '4',
-                    'measurement': {'azimith': {'value': '287.013584765891'},
-                                    'zenith': {'value': '8.77685536841587'}},
+                    'measurement': {
+                        'azimith': {'value': '287.013584765891'},
+                        'zenith': {'value': '8.77685536841587'}
+                    },
                     'unit': 'degree'
                 },
                 {
                     'bandId': '5',
-                    'measurement': {'azimith': {'value': '287.207324001684'},
-                                    'zenith': {'value': '8.80050900146543'}},
+                    'measurement': {
+                        'azimith': {'value': '287.207324001684'},
+                        'zenith': {'value': '8.80050900146543'}
+                    },
                     'unit': 'degree'
                 },
                 {
                     'bandId': '6',
-                    'measurement': {'azimith': {'value': '287.400419388821'},
-                                    'zenith': {'value': '8.8344918122903'}},
+                    'measurement': {
+                        'azimith': {'value': '287.400419388821'},
+                        'zenith': {'value': '8.8344918122903'}
+                    },
                     'unit': 'degree'
                 },
                 {
                     'bandId': '7',
-                    'measurement': {'azimith': {'value': '286.272771889735'},
-                                    'zenith': {'value': '8.71220887022109'}},
+                    'measurement': {
+                        'azimith': {'value': '286.272771889735'},
+                        'zenith': {'value': '8.71220887022109'}
+                    },
                     'unit': 'degree'
                 },
                 {
                     'bandId': '8',
-                    'measurement': {'azimith': {'value': '287.592709087249'},
-                                 'zenith': {'value': '8.86277189674952'}},
+                    'measurement': {
+                        'azimith': {'value': '287.592709087249'},
+                        'zenith': {'value': '8.86277189674952'}
+                    },
                     'unit': 'degree'
                 },
                 {
                     'bandId': '11',
-                    'measurement': {'azimith': {'value': '287.100489102096'},
-                                    'zenith': {'value': '8.84204098088515'}},
+                    'measurement': {
+                        'azimith': {'value': '287.100489102096'},
+                        'zenith': {'value': '8.84204098088515'}
+                    },
                     'unit': 'degree'
                 },
                 {
                     'bandId': '12',
-                    'measurement': {'azimith': {'value': '287.498739900102'},
-                                    'zenith': {'value': '8.90079212851159'}},
+                    'measurement': {
+                        'azimith': {'value': '287.498739900102'},
+                        'zenith': {'value': '8.90079212851159'}
+                    },
                     'unit': 'degree'
                 }
             ]
