@@ -15,10 +15,10 @@ class TestNPPMetadataExtraction(TestCase):
             ptype.DatasetMetadata(),
             'RNSCA-RVIRS_npp_d20130422_t0357358_e0410333_b07686_c20130422041225898000_nfts_drl.h5'
         )
-        self.assertEquals(metadata.platform.code, 'NPP')
-        self.assertEquals(metadata.instrument.name, 'VIIRS')
+        self.assertEqual(metadata.platform.code, 'NPP')
+        self.assertEqual(metadata.instrument.name, 'VIIRS')
 
-        self.assertEquals(metadata.acquisition.platform_orbit, 7686)
+        self.assertEqual(metadata.acquisition.platform_orbit, 7686)
 
         self.assertEqual(metadata.acquisition.aos,
                          datetime.datetime(2013, 4, 22, 3, 57, 35))
@@ -32,18 +32,18 @@ class TestNPPMetadataExtraction(TestCase):
         })
         metadata = extraction.extract_md(ptype.DatasetMetadata(), d)
 
-        self.assertEquals(metadata.platform.code, 'NPP')
-        self.assertEquals(metadata.instrument.name, 'VIIRS')
-        self.assertEquals(metadata.ga_level, 'P00')
-        self.assertEquals(metadata.product_level, None)
-        self.assertEquals(metadata.format_.name, 'HDF5')
+        self.assertEqual(metadata.platform.code, 'NPP')
+        self.assertEqual(metadata.instrument.name, 'VIIRS')
+        self.assertEqual(metadata.ga_level, 'P00')
+        self.assertEqual(metadata.product_level, None)
+        self.assertEqual(metadata.format_.name, 'HDF5')
 
         self.assertEqual(metadata.acquisition.aos,
                          datetime.datetime(2013, 4, 22, 3, 57, 35))
         self.assertEqual(metadata.acquisition.los,
                          datetime.datetime(2013, 4, 22, 4, 12, 25))
 
-        self.assertEquals(metadata.acquisition.platform_orbit, 7686)
+        self.assertEqual(metadata.acquisition.platform_orbit, 7686)
 
     def test_parse_from_driver(self):
         d = write_files({
@@ -58,13 +58,13 @@ class TestNPPMetadataExtraction(TestCase):
             d.joinpath('NPP.VIIRS.11361.ALICE')
         )
 
-        self.assertEquals(metadata.platform.code, 'NPP')
-        self.assertEquals(metadata.instrument.name, 'VIIRS')
-        self.assertEquals(metadata.ga_level, 'P00')
-        self.assertEquals(metadata.format_.name, 'HDF5')
+        self.assertEqual(metadata.platform.code, 'NPP')
+        self.assertEqual(metadata.instrument.name, 'VIIRS')
+        self.assertEqual(metadata.ga_level, 'P00')
+        self.assertEqual(metadata.format_.name, 'HDF5')
 
         # Groundstation should be found from surrounding adsfolder.
-        self.assertEquals(
+        self.assertEqual(
             metadata.acquisition.groundstation,
             ptype.GroundstationMetadata(code='ASA')
         )
@@ -74,7 +74,7 @@ class TestNPPMetadataExtraction(TestCase):
         self.assertEqual(metadata.acquisition.los,
                          datetime.datetime(2014, 1, 6, 4, 59, 41))
 
-        self.assertEquals(metadata.acquisition.platform_orbit, 11361)
+        self.assertEqual(metadata.acquisition.platform_orbit, 11361)
 
 
 if __name__ == '__main__':
