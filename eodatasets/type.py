@@ -22,7 +22,10 @@ class SimpleObject(object):
     Implements repr and eq methods, and allows easy (de)serialisation between
     json/yaml/dicts.
 
-    Beware of cyclic object dependencies in properties
+    Beware of cyclic object dependencies in properties.
+
+    (this code predates Data Classes, the attrs module, and exclusively supporting python3.
+     it should be retired eventually, but is currently heavily used across eodatasets.)
     """
 
     # Constructors for specific properties.
