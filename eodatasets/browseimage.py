@@ -8,10 +8,9 @@ import shutil
 import tempfile
 from subprocess import check_call
 
-import gdal
-import gdalconst
 import numpy
 import pathlib
+from osgeo import gdal, gdalconst
 
 import eodatasets.type as ptype
 from eodatasets import serialise, drivers
