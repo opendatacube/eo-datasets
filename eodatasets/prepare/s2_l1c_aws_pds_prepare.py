@@ -96,6 +96,7 @@ def valid_region(images, mask_value=None):
 
 
 def _to_lists(x):
+    # type (Tuple) -> List
     """
     Returns lists of lists when given tuples of tuples
     """
@@ -137,6 +138,7 @@ def get_coords(geo_ref_points, spatial_ref):
 
 
 def get_datastrip_info(path):
+    # type (Path) -> (Dict, str)
     """get_datastrip_info returns information parsed from productInfo.json
 
     :param path: path to root of tile collection
@@ -154,10 +156,11 @@ def get_datastrip_info(path):
             uuid.NAMESPACE_URL,
             datastrip_metadata + "#" + product_info['id']
         )
-    return datastrip_metadata, persisted_uuid
+    return (datastrip_metadata, persisted_uuid)
 
 
 def get_tile_info(path):
+    # type Path -> str
     """get_tile_info: returns information parsed from the tileInfo.json
 
     :param path: path to the root of the tile collection
@@ -165,16 +168,23 @@ def get_tile_info(path):
     """
     with (path / 'tileInfo.json').open() as fd:
         tile_info = json.load(fd)
-        tile_path = tile_info.get('path')
-    return tile_path
+        return tile_info.get('path')
 
 
-def prepare_dataset(path):
+def prepare_dataset(path, datastrip_path=None):
+    # type (Path, Optional(Path)) -> Dict
     """
+    :param path: Path to the root of the granule/tile data
+    :param datastrip_path: Path to the root of the datastrip metadata
+
     Returns yaml content based on content found at input file path
     """
     root = ElementTree.parse(path / "metadata.xml").getroot()
-    root_datastrip = ElementTree.parse(path / 'datastrip' / 'metadata.xml').getroot()
+    # Set the path to the datastrip metadata to be rooted at the granule
+    # for backwards compatibility
+    if not datastrip_path:
+        datastrip_path = path / 'datastrip'
+    root_datastrip = ElementTree.parse(datastrip_path / 'metadata.xml').getroot()
     size_bytes = sum(os.path.getsize(p) for p in os.scandir(path))
     checksum_sha1 = dirhash(path.parent, 'sha1')
 
@@ -356,6 +366,7 @@ def prepare_dataset(path):
 
 
 def absolutify_paths(doc, path):
+    # type (Dict, str) -> Dict
     """
     Return absolute paths from input doc and path
     """
