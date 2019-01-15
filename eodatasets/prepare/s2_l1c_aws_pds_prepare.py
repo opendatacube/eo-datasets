@@ -80,7 +80,7 @@ def valid_region(images, mask_value=None):
                 mask |= new_mask
     shapes = rasterio.features.shapes(mask.astype('uint8'), mask=mask)
     shape = shapely.ops.unary_union([shapely.geometry.shape(shape) for shape, val in shapes if val == 1])
-    type(shapes)
+
     # convex hull
     geom = shape.convex_hull
     # buffer by 1 pixel
@@ -96,7 +96,7 @@ def valid_region(images, mask_value=None):
 
 
 def _to_lists(x):
-    # type (Tuple) -> List
+    # type: (Tuple) -> List
     """
     Returns lists of lists when given tuples of tuples
     """
@@ -138,7 +138,7 @@ def get_coords(geo_ref_points, spatial_ref):
 
 
 def get_datastrip_info(path):
-    # type (Path) -> (Dict, str)
+    # type: (Path) -> Tuple[Dict, str]
     """get_datastrip_info returns information parsed from productInfo.json
 
     :param path: path to root of tile collection
@@ -160,7 +160,7 @@ def get_datastrip_info(path):
 
 
 def get_tile_info(path):
-    # type Path -> str
+    # type: (Path) -> str
     """get_tile_info: returns information parsed from the tileInfo.json
 
     :param path: path to the root of the tile collection
@@ -172,12 +172,17 @@ def get_tile_info(path):
 
 
 def prepare_dataset(path, datastrip_path=None):
-    # type (Path, Optional(Path)) -> Dict
+    # type: (Path, Optional[Path]) -> List[Dict]
     """
     :param path: Path to the root of the granule/tile data
     :param datastrip_path: Path to the root of the datastrip metadata
 
     Returns yaml content based on content found at input file path
+
+    :param path: Path to the root of the granule
+    :param datastrip_path: Path to the root of the datastrip metadata
+
+    returns a list of dictionaries containing the metadata for a granule
     """
     root = ElementTree.parse(path / "metadata.xml").getroot()
     # Set the path to the datastrip metadata to be rooted at the granule
@@ -215,9 +220,9 @@ def prepare_dataset(path, datastrip_path=None):
         band_irradiance = irradiance.attrib
         band_irradiance['value'] = irradiance.text
         solar_irradiance.append(band_irradiance)
-    cloud_coverage = root.findall('.//*/CLOUDY_PIXEL_PERCENTAGE')[0].text
-    degraded_anc_data_percentage = root_datastrip.findall('.//*/DEGRADED_ANC_DATA_PERCENTAGE')[0].text
-    degraded_msi_data_percentage = root.findall('.//*/DEGRADED_MSI_DATA_PERCENTAGE')[0].text
+    cloud_coverage = float(root.findall('.//*/CLOUDY_PIXEL_PERCENTAGE')[0].text)
+    degraded_anc_data_percentage = float(root_datastrip.findall('.//*/DEGRADED_ANC_DATA_PERCENTAGE')[0].text)
+    degraded_msi_data_percentage = float(root.findall('.//*/DEGRADED_MSI_DATA_PERCENTAGE')[0].text)
 
     sensor_quality_flag = (
         ElementTree.parse(path / 'qi' / 'SENSOR_QUALITY.xml').getroot()
@@ -278,13 +283,13 @@ def prepare_dataset(path, datastrip_path=None):
     sensing_time = root.findall('./*/SENSING_TIME')[0].text
     station = root.findall('./*/Archiving_Info/ARCHIVING_CENTRE')[0].text
     archiving_time = root.findall('./*/Archiving_Info/ARCHIVING_TIME')[0].text
-    sun_zenith_angle = root.findall('./*/Tile_Angles/Mean_Sun_Angle/ZENITH_ANGLE')[0].text
-    sun_azimuth_angle = root.findall('./*/Tile_Angles/Mean_Sun_Angle/AZIMUTH_ANGLE')[0].text
+    sun_zenith_angle = float(root.findall('./*/Tile_Angles/Mean_Sun_Angle/ZENITH_ANGLE')[0].text)
+    sun_azimuth_angle = float(root.findall('./*/Tile_Angles/Mean_Sun_Angle/AZIMUTH_ANGLE')[0].text)
     viewing_zenith_azimuth_angle = []
     for viewing_incidence in root.iter('Mean_Viewing_Incidence_Angle'):
         view_incidence = viewing_incidence.attrib
-        zenith_value = viewing_incidence.find('ZENITH_ANGLE').text
-        azimuth_value = viewing_incidence.find('AZIMUTH_ANGLE').text
+        zenith_value = float(viewing_incidence.find('ZENITH_ANGLE').text)
+        azimuth_value = float(viewing_incidence.find('AZIMUTH_ANGLE').text)
         view_incidence.update({'unit': 'degree', 'measurement': {'zenith': {'value': zenith_value},
                                                                  'azimith': {'value': azimuth_value}}})
         viewing_zenith_azimuth_angle.append(view_incidence)
@@ -366,7 +371,7 @@ def prepare_dataset(path, datastrip_path=None):
 
 
 def absolutify_paths(doc, path):
-    # type (Dict, str) -> Dict
+    # type: (Dict, str) -> Dict
     """
     Return absolute paths from input doc and path
     """

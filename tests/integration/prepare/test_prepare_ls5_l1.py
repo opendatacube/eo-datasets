@@ -7,7 +7,7 @@ from eodatasets.prepare.ls_usgs_l1_prepare import normalise_nci_symlinks
 L1_TARBALL_PATH: Path = Path(__file__).parent / 'data' / 'LT05_L1TP_090085_19970406_20161231_01_T1.tar.gz'
 
 
-def test_prepare_l7_l1_usgs_tarball(tmpdir):
+def test_prepare_l5_l1_usgs_tarball(tmpdir):
     assert L1_TARBALL_PATH.exists(), "Test data missing(?)"
 
     output_path = Path(tmpdir)

@@ -185,9 +185,9 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     "path": path_offset("B8A.jp2")
                 }
             },
-            "cloud_cover_percentage": "41.1953",
-            "degraded_anc_data_percentage": "0",
-            "degraded_msi_data_percentage": "0",
+            "cloud_cover_percentage": 41.1953,
+            "degraded_anc_data_percentage": 0.0,
+            "degraded_msi_data_percentage": 0.0,
             "format_quality_flag": "PASSED",
             "general_quality_flag": "PASSED",
             "geometric_quality_flag": "PASSED",
@@ -195,18 +195,18 @@ def test_prepare_s2a_l1c_safe(tmpdir):
             "reflectance_conversion": "0.969545500936321",
             "sensor_quality_flag": "PASSED",
             "solar_irradiance": [],
-            "sun_azimuth": "28.329529500752",
-            "sun_elevation": "60.25415978281",
+            "sun_azimuth": 28.329529500752,
+            "sun_elevation": 60.25415978281,
             "tile_reference": "N02.06",
             "viewing_angles": [
                 {
                     "bandId": "0",
                     "measurement": {
                         "azimith": {
-                            "value": "285.033757307864"
+                            "value": 285.033757307864
                         },
                         "zenith": {
-                            "value": "8.48756458553399"
+                            "value": 8.48756458553399
                         }
                     },
                     "unit": "degree"
@@ -215,10 +215,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     "bandId": "9",
                     "measurement": {
                         "azimith": {
-                            "value": "285.075607281345"
+                            "value": 285.075607281345
                         },
                         "zenith": {
-                            "value": "8.52241368394389"
+                            "value": 8.52241368394389
                         }
                     },
                     "unit": "degree"
@@ -227,10 +227,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     "bandId": "10",
                     "measurement": {
                         "azimith": {
-                            "value": "284.793804242023"
+                            "value": 284.793804242023
                         },
                         "zenith": {
-                            "value": "8.34345092249542"
+                            "value": 8.34345092249542
                         }
                     },
                     "unit": "degree"
@@ -239,10 +239,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     "bandId": "1",
                     "measurement": {
                         "azimith": {
-                            "value": "284.793733737481"
+                            "value": 284.793733737481
                         },
                         "zenith": {
-                            "value": "8.29509641932038"
+                            "value": 8.29509641932038
                         }
                     },
                     "unit": "degree"
@@ -251,10 +251,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     "bandId": "2",
                     "measurement": {
                         "azimith": {
-                            "value": "284.851677995258"
+                            "value": 284.851677995258
                         },
                         "zenith": {
-                            "value": "8.32126064250559"
+                            "value": 8.32126064250559
                         }
                     },
                     "unit": "degree"
@@ -263,10 +263,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     "bandId": "3",
                     "measurement": {
                         "azimith": {
-                            "value": "284.909295311577"
+                            "value": 284.909295311577
                         },
                         "zenith": {
-                            "value": "8.3544279324201"
+                            "value": 8.3544279324201
                         }
                     },
                     "unit": "degree"
@@ -275,10 +275,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     "bandId": "4",
                     "measurement": {
                         "azimith": {
-                            "value": "284.933467772596"
+                            "value": 284.933467772596
                         },
                         "zenith": {
-                            "value": "8.37600138776781"
+                            "value": 8.37600138776781
                         }
                     },
                     "unit": "degree"
@@ -287,10 +287,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     "bandId": "5",
                     "measurement": {
                         "azimith": {
-                            "value": "284.973394067973"
+                            "value": 284.973394067973
                         },
                         "zenith": {
-                            "value": "8.40018017679447"
+                            "value": 8.40018017679447
                         }
                     },
                     "unit": "degree"
@@ -299,10 +299,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     "bandId": "6",
                     "measurement": {
                         "azimith": {
-                            "value": "285.002316322296"
+                            "value": 285.002316322296
                         },
                         "zenith": {
-                            "value": "8.42684047592471"
+                            "value": 8.42684047592471
                         }
                     },
                     "unit": "degree"
@@ -311,10 +311,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     "bandId": "7",
                     "measurement": {
                         "azimith": {
-                            "value": "284.82134822338"
+                            "value": 284.82134822338
                         },
                         "zenith": {
-                            "value": "8.30688902336585"
+                            "value": 8.30688902336585
                         }
                     },
                     "unit": "degree"
@@ -323,10 +323,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     "bandId": "8",
                     "measurement": {
                         "azimith": {
-                            "value": "285.068419119347"
+                            "value": 285.068419119347
                         },
                         "zenith": {
-                            "value": "8.45522377449714"
+                            "value": 8.45522377449714
                         }
                     },
                     "unit": "degree"
@@ -335,10 +335,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     "bandId": "11",
                     "measurement": {
                         "azimith": {
-                            "value": "284.889987613982"
+                            "value": 284.889987613982
                         },
                         "zenith": {
-                            "value": "8.39599518380445"
+                            "value": 8.39599518380445
                         }
                     },
                     "unit": "degree"
@@ -347,10 +347,10 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                     "bandId": "12",
                     "measurement": {
                         "azimith": {
-                            "value": "284.999750610317"
+                            "value": 284.999750610317
                         },
                         "zenith": {
-                            "value": "8.46178406516545"
+                            "value": 8.46178406516545
                         }
                     },
                     "unit": "degree"
