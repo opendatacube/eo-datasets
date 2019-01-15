@@ -176,8 +176,12 @@ def prepare_dataset(path):
         band_irradiance['value'] = irradiance.text
         solar_irradiance.append(band_irradiance)
     cloud_coverage = float(root.findall('./*/Cloud_Coverage_Assessment')[0].text)
-    degraded_anc_data_percentage = float(root.findall('./*/Technical_Quality_Assessment/DEGRADED_ANC_DATA_PERCENTAGE')[0].text)
-    degraded_msi_data_percentage = float(root.findall('./*/Technical_Quality_Assessment/DEGRADED_MSI_DATA_PERCENTAGE')[0].text)
+    degraded_anc_data_percentage = float(
+        root.findall('./*/Technical_Quality_Assessment/DEGRADED_ANC_DATA_PERCENTAGE')[0].text
+    )
+    degraded_msi_data_percentage = float(
+        root.findall('./*/Technical_Quality_Assessment/DEGRADED_MSI_DATA_PERCENTAGE')[0].text
+    )
     try:
         qa_inspections_offset = './*/Quality_Control_Checks/Quality_Inspections'
         sensor_quality_flag = root.findall(qa_inspections_offset + '/SENSOR_QUALITY_FLAG')[0].text
