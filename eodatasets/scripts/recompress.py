@@ -72,6 +72,7 @@ def _create_tarinfo(path: Path, name=None) -> tarfile.TarInfo:
 
 
 def _tar_members(tar_path: Path) -> Iterable[ReadableMember]:
+    """Get readable files (members) from a tar"""
     with tarfile.open(str(tar_path), 'r') as in_tar:
         members: List[tarfile.TarInfo] = in_tar.getmembers()
 
@@ -81,6 +82,9 @@ def _tar_members(tar_path: Path) -> Iterable[ReadableMember]:
 
 
 def _folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMember]:
+    """
+    Get readable files (presented as tar members) from a directory.
+    """
     if not base_path:
         base_path = path
 
@@ -168,7 +172,7 @@ def repackage_tar(
 
 def _reorder_tar_members(members: List[ReadableMember], identifier: str):
     """
-    Put the (tiny) MTL file at the beginning of the tar so that it's quick to access.
+    Put the (tiny) MTL file at the beginning of the tar so that it's quick to read.
     """
     # Find MTL
     for i, (member, _) in enumerate(members):
@@ -185,7 +189,7 @@ def _reorder_tar_members(members: List[ReadableMember], identifier: str):
 
 
 def _recompress_image(
-        input_image_fp,
+        input_image_fp: IO,
         output_fp: rasterio.MemoryFile,
         zlevel=9,
         block_size=(512, 512),
@@ -248,13 +252,10 @@ def main(paths: List[str], output_base: str, zlevel: int, block_size: int):
                     block_size=(block_size, block_size),
                 )
             elif path.is_dir():
-
-                out_tar_path = _output_tar_path_from_directory(base_output_path, path)
-
                 repackage_tar(
                     path.name,
                     _folder_members(path),
-                    out_tar_path,
+                    _output_tar_path_from_directory(base_output_path, path),
                     zlevel=zlevel,
                     block_size=(block_size, block_size),
                 )
