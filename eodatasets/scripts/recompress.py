@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 import copy
 import io
+import stat
 import tarfile
 import tempfile
+import typing
 from pathlib import Path
-from typing import List
+from typing import List, Iterable, Tuple, Callable
 
 import click
 import numpy
 import rasterio
+from click import secho
 
 from eodatasets.verify import PackageChecksum
 
@@ -26,8 +29,78 @@ _PREDICTOR_TABLE = {
 }
 
 
+def folder_members(path: Path, base_path: Path = None) -> Iterable[Tuple[tarfile.TarInfo, Callable[[], typing.IO]]]:
+    if not base_path:
+        base_path = path
+
+    for item in path.iterdir():
+        member = _create_tarinfo(
+            item,
+            name=str(path.relative_to(base_path))
+        )
+        if member.type == tarfile.DIRTYPE:
+            yield from folder_members(item, base_path=path)
+        else:
+            # We return a lambda/callable so that the file isn't opened until it's needed.
+            yield member, lambda: item.open('r')
+
+
+def _create_tarinfo(path: Path, name=None) -> tarfile.TarInfo:
+    """
+    Create a TarInfo for the given path.
+
+    This is based on TarFile.gettarinfo(), but doesn't need an existing tar file.
+    """
+    # We're avoiding convenience methods like `path.is_file()`, to minimise repeated `stat()` calls on lustre.
+    s = path.stat()
+    info = tarfile.TarInfo(name or path.name)
+
+    if stat.S_ISREG(s.st_mode):
+        info.size = s.st_size
+        info.type = tarfile.REGTYPE
+    elif stat.S_ISDIR(s.st_mode):
+        info.type = tarfile.DIRTYPE
+        info.size = 0
+    else:
+        raise NotImplementedError(
+            f"Only regular files and directories are supported for extracted datasets. "
+            f"({path.name} in {path.absolute().parent})"
+        )
+
+    info.mode = s.st_mode
+    info.uid = s.st_uid
+    info.gid = s.st_gid
+    info.mtime = s.st_mtime
+
+    if tarfile.pwd:
+        try:
+            info.uname = tarfile.pwd.getpwuid(info.uid)[0]
+        except KeyError:
+            pass
+    if tarfile.grp:
+        try:
+            info.gname = tarfile.grp.getgrgid(info.gid)[0]
+        except KeyError:
+            pass
+    return info
+
+
+def tar_members(tar_path: Path) -> Iterable[Tuple[tarfile.TarInfo, Callable[[], typing.IO]]]:
+    with tarfile.open(str(tar_path), 'r') as in_tar:
+        members: List[tarfile.TarInfo] = in_tar.getmembers()
+
+        # Add the MTL file to the beginning of the output tar, so it can be accessed faster.
+        # This slows down this repackage a little, as we're seeking/decompressing the input stream an extra time.
+        _reorder_tar_members(members, tar_path.name)
+
+        for member in members:
+            # We return a lambda/callable so that the file isn't opened until it's needed.
+            yield member, lambda: in_tar.extractfile(member)
+
+
 def repackage_tar(
-        tar_path: Path,
+        label: str,
+        input_files: Iterable[Tuple[tarfile.TarInfo, Callable[[], typing.IO]]],
         output_tar_path: Path,
         **compress_args,
 ):
@@ -48,24 +121,20 @@ def repackage_tar(
         tmpdir = Path(tmpdir).absolute()
         tmp_out_tar = tmpdir.joinpath(output_tar_path.name)
 
-        with tarfile.open(str(tar_path), 'r') as in_tar, tarfile.open(tmp_out_tar, 'w') as out_tar:
-            members: List[tarfile.TarInfo] = in_tar.getmembers()
+        with tarfile.open(tmp_out_tar, 'w') as out_tar:
+            members = list(input_files)
 
-            # Add the MTL file to the beginning of the output tar, so it can be accessed faster.
-            # This slows down this repackage a little, as we're seeking/decompressing the input stream an extra time.
-            _reorder_tar_members(members, tar_path.name)
-
-            with click.progressbar(label=tar_path.name,
-                                   length=sum(member.size for member in members)) as progress:
+            with click.progressbar(label=label,
+                                   length=sum(member.size for member, _ in members)) as progress:
                 fileno = 0
-                for member in members:
+                for member, open_member in members:
                     fileno += 1
-                    progress.label = f"{tar_path.name} ({fileno:2d}/{len(members)})"
+                    progress.label = f"{label} ({fileno:2d}/{len(members)})"
 
                     # Recompress any TIFs, copy other files verbatim.
                     if member.name.lower().endswith('.tif'):
                         with rasterio.MemoryFile(filename=member.name) as memfile:
-                            _recompress_image(in_tar.extractfile(member), memfile, **compress_args)
+                            _recompress_image(open_member(), memfile, **compress_args)
                             newmember = copy.copy(member)
                             newmember.size = memfile.getbuffer().nbytes
                             out_tar.addfile(newmember, memfile)
@@ -75,11 +144,11 @@ def repackage_tar(
                             verify.add(memfile, tmpdir / newmember.name)
                     else:
                         # Copy unchanged into target (typically the text/metadata files).
-                        file_contents = in_tar.extractfile(member).read()
+                        file_contents = open_member().read()
                         out_tar.addfile(member, io.BytesIO(file_contents))
                         verify.add(io.BytesIO(file_contents), tmpdir / member.name)
                         del file_contents
-                    # add the file to the new tar
+
                     progress.update(member.size)
 
             # Append sha1 checksum file
@@ -156,37 +225,95 @@ def _recompress_image(
               help="Deflate compression level.")
 @click.option("--block-size", type=int, default=512,
               help="Compression block size (both x and y)")
-@click.argument("tar-files", nargs=-1, type=click.Path(exists=True, readable=True))
-def main(tar_files: List[str], outbase: str, zlevel: int, block_size: int):
+@click.argument("paths", nargs=-1, type=click.Path(exists=True, readable=True))
+def main(paths: List[str], outbase: str, zlevel: int, block_size: int):
     """
     Repackage USGS L1 tar files for faster read access.
     """
     base_output = Path(outbase)
     with rasterio.Env():
-        for tar_file in tar_files:
-            tar_path = Path(tar_file)
-            output_tar_path = _calculate_out_path(base_output, tar_path)
-            repackage_tar(
-                tar_path,
-                output_tar_path,
-                zlevel=zlevel,
-                block_size=(block_size, block_size),
-            )
+        for path in paths:
+            path = Path(path)
+
+            # Input is either a tar.gz file, or a directory containing an MTL (already extracted)
+            if path.suffix.lower() == '.gz':
+                repackage_tar(
+                    path.name,
+                    tar_members(path),
+                    _output_tar_path(base_output, path),
+                    zlevel=zlevel,
+                    block_size=(block_size, block_size),
+                )
+            elif path.is_dir():
+
+                out_tar_path = _output_tar_path_from_directory(base_output, path)
+
+                repackage_tar(
+                    path.name,
+                    folder_members(path),
+                    out_tar_path,
+                    zlevel=zlevel,
+                    block_size=(block_size, block_size),
+                )
+            else:
+                raise ValueError(f"Expected either tar.gz or a dataset folder. Got: {path}")
 
 
-def _calculate_out_path(out_path: Path, path: Path) -> Path:
-    """
-    >>> i = Path('/test/in/l1-data/USGS/L1/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz')
-    >>> o = Path('/test/dir/out')
-    >>> _calculate_out_path(o, i).as_posix()
-    '/test/dir/out/L1/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar'
-    """
+def _output_tar_path(base_output, input_path):
+    out_path = _calculate_out_base_path(base_output, input_path)
+    return out_path.with_name(out_path.stem)
+
+
+def _output_tar_path_from_directory(base_output, input_path):
+    mtl_files = list(input_path.glob('*_MTL.txt'))
+    if not mtl_files:
+        raise ValueError(f"Dataset has no mtl: {input_path}")
+    if len(mtl_files) > 1:
+        secho(f"WARNING: multiple MTL files in {input_path}", bold=True, color='red', err=True)
+    mtl_file = mtl_files[0]
+    dataset_name = mtl_file.name.replace('_MTL.txt', '')
+    out_tar_path = _calculate_out_base_path(base_output, input_path) / f'{dataset_name}.tar'
+    return out_tar_path
+
+
+def _calculate_out_base_path(out_base: Path, path: Path) -> Path:
     if 'USGS' not in path.parts:
         raise ValueError(
             "Expected AODH input path structure, "
             "eg: /AODH/USGS/L1/Landsat/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz"
         )
-    return out_path.joinpath(*path.parts[path.parts.index('USGS') + 1:-1], path.stem)
+    # The directory structure after the "USGS" folder is recreated onto the output base folder.
+    return out_base.joinpath(*path.parts[path.parts.index('USGS') + 1:-1], path.name)
+
+
+def test_calculate_out_path(tmp_path: Path):
+    out_base = tmp_path / 'out'
+
+    # When input is a tar file, use the same name on output.
+    path = Path('/test/in/l1-data/USGS/L1/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz')
+    assert_path_eq(
+        out_base.joinpath('L1/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar'),
+        _output_tar_path(out_base, path),
+    )
+
+    # When input is a directory, use the MTL file's name for the output.
+    path = tmp_path / 'USGS/L1/092_091/LT50920911991126'
+    path.mkdir(parents=True)
+    mtl = path / 'LT05_L1GS_092091_19910506_20170126_01_T2_MTL.txt'
+    mtl.write_text('fake mtl')
+    assert_path_eq(
+        out_base.joinpath('L1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar'),
+        _output_tar_path_from_directory(out_base, path),
+    )
+
+
+def assert_path_eq(p1: Path, p2: Path):
+    """Assert two pathlib paths are equal, with reasonable error output."""
+    __tracebackhide__ = True
+    # Pytest's error messages are far better for strings than Paths. It shows you the difference between them.
+    s1, s2 = str(p1), str(p2)
+    # And we use extra s1/s2 variables so that pytest doesn't print the expression "str()" as part of its output.
+    assert s1 == s2
 
 
 if __name__ == '__main__':
