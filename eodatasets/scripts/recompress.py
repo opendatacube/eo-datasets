@@ -31,22 +31,6 @@ _PREDICTOR_TABLE = {
 ReadableMember = Tuple[tarfile.TarInfo, Callable[[], IO]]
 
 
-def folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMember]:
-    if not base_path:
-        base_path = path
-
-    for item in path.iterdir():
-        member = _create_tarinfo(
-            item,
-            name=str(path.relative_to(base_path))
-        )
-        if member.type == tarfile.DIRTYPE:
-            yield from folder_members(item, base_path=path)
-        else:
-            # We return a lambda/callable so that the file isn't opened until it's needed.
-            yield member, lambda: item.open('r')
-
-
 def _create_tarinfo(path: Path, name=None) -> tarfile.TarInfo:
     """
     Create a TarInfo for the given path.
@@ -87,17 +71,29 @@ def _create_tarinfo(path: Path, name=None) -> tarfile.TarInfo:
     return info
 
 
-def tar_members(tar_path: Path) -> Iterable[ReadableMember]:
+def _tar_members(tar_path: Path) -> Iterable[ReadableMember]:
     with tarfile.open(str(tar_path), 'r') as in_tar:
         members: List[tarfile.TarInfo] = in_tar.getmembers()
-
-        # Add the MTL file to the beginning of the output tar, so it can be accessed faster.
-        # This slows down this repackage a little, as we're seeking/decompressing the input stream an extra time.
-        _reorder_tar_members(members, tar_path.name)
 
         for member in members:
             # We return a lambda/callable so that the file isn't opened until it's needed.
             yield member, lambda: in_tar.extractfile(member)
+
+
+def _folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMember]:
+    if not base_path:
+        base_path = path
+
+    for item in path.iterdir():
+        member = _create_tarinfo(
+            item,
+            name=str(path.relative_to(base_path))
+        )
+        if member.type == tarfile.DIRTYPE:
+            yield from _folder_members(item, base_path=path)
+        else:
+            # We return a lambda/callable so that the file isn't opened until it's needed.
+            yield member, lambda: item.open('r')
 
 
 def repackage_tar(
@@ -125,6 +121,10 @@ def repackage_tar(
 
         with tarfile.open(tmp_out_tar, 'w') as out_tar:
             members = list(input_files)
+
+            # Add the MTL file to the beginning of the output tar, so it can be accessed faster.
+            # This slows down this repackage a little, as we're seeking/decompressing the input stream an extra time.
+            _reorder_tar_members(members, label)
 
             with click.progressbar(label=label,
                                    length=sum(member.size for member, _ in members)) as progress:
@@ -166,17 +166,17 @@ def repackage_tar(
             tmp_out_tar.rename(output_tar_path)
 
 
-def _reorder_tar_members(members: List[tarfile.TarInfo], identifier: str):
+def _reorder_tar_members(members: List[ReadableMember], identifier: str):
     """
     Put the (tiny) MTL file at the beginning of the tar so that it's quick to access.
     """
     # Find MTL
-    for i, member in enumerate(members):
+    for i, (member, _) in enumerate(members):
         if '_MTL' in member.path:
             mtl_index = i
             break
     else:
-        formatted_members = '\n\t'.join(m.name for m in members)
+        formatted_members = '\n\t'.join(m.name for m, _ in members)
         raise ValueError(f"No MTL file found in package {identifier}. Have:\n\t{formatted_members}")
 
     # Move to front
@@ -242,7 +242,7 @@ def main(paths: List[str], output_base: str, zlevel: int, block_size: int):
             if path.suffix.lower() == '.gz':
                 repackage_tar(
                     path.name,
-                    tar_members(path),
+                    _tar_members(path),
                     _output_tar_path(base_output_path, path),
                     zlevel=zlevel,
                     block_size=(block_size, block_size),
@@ -253,7 +253,7 @@ def main(paths: List[str], output_base: str, zlevel: int, block_size: int):
 
                 repackage_tar(
                     path.name,
-                    folder_members(path),
+                    _folder_members(path),
                     out_tar_path,
                     zlevel=zlevel,
                     block_size=(block_size, block_size),
