@@ -4,9 +4,8 @@ import io
 import stat
 import tarfile
 import tempfile
-import typing
 from pathlib import Path
-from typing import List, Iterable, Tuple, Callable
+from typing import List, Iterable, Tuple, Callable, IO
 
 import click
 import numpy
@@ -28,8 +27,11 @@ _PREDICTOR_TABLE = {
     'float64': 3
 }
 
+# The info of a file, and a method to open the file for reading.
+ReadableMember = Tuple[tarfile.TarInfo, Callable[[], IO]]
 
-def folder_members(path: Path, base_path: Path = None) -> Iterable[Tuple[tarfile.TarInfo, Callable[[], typing.IO]]]:
+
+def folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMember]:
     if not base_path:
         base_path = path
 
@@ -85,7 +87,7 @@ def _create_tarinfo(path: Path, name=None) -> tarfile.TarInfo:
     return info
 
 
-def tar_members(tar_path: Path) -> Iterable[Tuple[tarfile.TarInfo, Callable[[], typing.IO]]]:
+def tar_members(tar_path: Path) -> Iterable[ReadableMember]:
     with tarfile.open(str(tar_path), 'r') as in_tar:
         members: List[tarfile.TarInfo] = in_tar.getmembers()
 
@@ -100,24 +102,24 @@ def tar_members(tar_path: Path) -> Iterable[Tuple[tarfile.TarInfo, Callable[[], 
 
 def repackage_tar(
         label: str,
-        input_files: Iterable[Tuple[tarfile.TarInfo, Callable[[], typing.IO]]],
+        input_files: Iterable[ReadableMember],
         output_tar_path: Path,
         **compress_args,
 ):
     """
     Repackage a USGS Collection-1 tar for faster read access.
 
-    It comes as a *.tar.gz with uncompressed tifs, which Josh's tests have found to be too slow to read.
-    We compress the inner tifs and store as an uncompressed tar.
+    It comes as a *.tar.gz with uncompressed tiffs, which Josh's tests have found to be too slow to read.
+    We compress the inner tiffs and store as an uncompressed tar.
 
     """
 
-    outdir: Path = output_tar_path.parent
-    outdir.mkdir(parents=True, exist_ok=True)
+    out_dir: Path = output_tar_path.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     verify = PackageChecksum()
 
-    with tempfile.TemporaryDirectory(prefix='.extract-', dir=str(outdir)) as tmpdir:
+    with tempfile.TemporaryDirectory(prefix='.extract-', dir=str(out_dir)) as tmpdir:
         tmpdir = Path(tmpdir).absolute()
         tmp_out_tar = tmpdir.joinpath(output_tar_path.name)
 
@@ -126,22 +128,22 @@ def repackage_tar(
 
             with click.progressbar(label=label,
                                    length=sum(member.size for member, _ in members)) as progress:
-                fileno = 0
+                file_number = 0
                 for member, open_member in members:
-                    fileno += 1
-                    progress.label = f"{label} ({fileno:2d}/{len(members)})"
+                    file_number += 1
+                    progress.label = f"{label} ({file_number:2d}/{len(members)})"
 
                     # Recompress any TIFs, copy other files verbatim.
                     if member.name.lower().endswith('.tif'):
-                        with rasterio.MemoryFile(filename=member.name) as memfile:
-                            _recompress_image(open_member(), memfile, **compress_args)
-                            newmember = copy.copy(member)
-                            newmember.size = memfile.getbuffer().nbytes
-                            out_tar.addfile(newmember, memfile)
+                        with rasterio.MemoryFile(filename=member.name) as memory_file:
+                            _recompress_image(open_member(), memory_file, **compress_args)
+                            new_member = copy.copy(member)
+                            new_member.size = memory_file.getbuffer().nbytes
+                            out_tar.addfile(new_member, memory_file)
 
                             # Image has been written. Seek to beginning to take a checksum.
-                            memfile.seek(0)
-                            verify.add(memfile, tmpdir / newmember.name)
+                            memory_file.seek(0)
+                            verify.add(memory_file, tmpdir / new_member.name)
                     else:
                         # Copy unchanged into target (typically the text/metadata files).
                         file_contents = open_member().read()
@@ -159,7 +161,7 @@ def repackage_tar(
 
             # Match the lower r/w permission bits to the output folder.
             # (Temp directories default to 700 otherwise.)
-            tmp_out_tar.chmod(outdir.stat().st_mode & 0o777)
+            tmp_out_tar.chmod(out_dir.stat().st_mode & 0o777)
             # Our output tar is complete. Move it into place.
             tmp_out_tar.rename(output_tar_path)
 
@@ -189,11 +191,12 @@ def _recompress_image(
         block_size=(512, 512),
 ):
     """
-    Read an image from given file pointer, and write as compressed GTIFF.
+    Read an image from given file pointer, and write as compressed GeoTIFF.
     """
+    # noinspection PyUnusedLocal
     with rasterio.open(input_image_fp) as ds:
         ds: rasterio.DatasetReader
-        blocksize_y, blocksize_x = block_size
+        block_size_y, block_size_x = block_size
 
         if len(ds.indexes) != 1:
             raise ValueError(f"Expecting one-band-per-tif input (USGS packages). "
@@ -206,31 +209,31 @@ def _recompress_image(
             predictor=_PREDICTOR_TABLE[array.dtype.name],
             compress='deflate',
             zlevel=zlevel,
-            blockxsize=blocksize_x,
-            blockysize=blocksize_y,
+            blockxsize=block_size_x,
+            blockysize=block_size_y,
             tiled=True,
         )
 
-        with output_fp.open(**profile) as outds:
-            outds.write(array, 1)
+        with output_fp.open(**profile) as output_dataset:
+            output_dataset.write(array, 1)
             # Copy gdal metadata
-            outds.update_tags(**ds.tags())
-            outds.update_tags(1, **ds.tags(1))
+            output_dataset.update_tags(**ds.tags())
+            output_dataset.update_tags(1, **ds.tags(1))
 
 
 @click.command()
-@click.option("--outbase", type=click.Path(file_okay=False, writable=True),
+@click.option("--output-base", type=click.Path(file_okay=False, writable=True),
               help="The base output directory.", required=True)
 @click.option("--zlevel", type=click.IntRange(0, 9), default=5,
               help="Deflate compression level.")
 @click.option("--block-size", type=int, default=512,
               help="Compression block size (both x and y)")
 @click.argument("paths", nargs=-1, type=click.Path(exists=True, readable=True))
-def main(paths: List[str], outbase: str, zlevel: int, block_size: int):
+def main(paths: List[str], output_base: str, zlevel: int, block_size: int):
     """
     Repackage USGS L1 tar files for faster read access.
     """
-    base_output = Path(outbase)
+    base_output_path = Path(output_base)
     with rasterio.Env():
         for path in paths:
             path = Path(path)
@@ -240,13 +243,13 @@ def main(paths: List[str], outbase: str, zlevel: int, block_size: int):
                 repackage_tar(
                     path.name,
                     tar_members(path),
-                    _output_tar_path(base_output, path),
+                    _output_tar_path(base_output_path, path),
                     zlevel=zlevel,
                     block_size=(block_size, block_size),
                 )
             elif path.is_dir():
 
-                out_tar_path = _output_tar_path_from_directory(base_output, path)
+                out_tar_path = _output_tar_path_from_directory(base_output_path, path)
 
                 repackage_tar(
                     path.name,
