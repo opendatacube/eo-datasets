@@ -5,18 +5,13 @@ import yaml
 from click.testing import CliRunner, Result
 from deepdiff import DeepDiff
 
-from eodatasets.prepare import ls_usgs_l1_prepare
-
 diff = partial(DeepDiff, significant_digits=6)
 
 
-def check_prepare_outputs(input_dataset, expected_doc, output_path, expected_metadata_path):
+def check_prepare_outputs(invoke_script, run_args, expected_doc, expected_metadata_path):
     __tracebackhide__ = True
-    run_prepare_cli(
-        '--absolute-paths',
-        '--output', str(output_path),
-        str(input_dataset),
-    )
+    run_prepare_cli(invoke_script, *run_args)
+
     assert expected_metadata_path.exists()
     generated_doc = yaml.safe_load(expected_metadata_path.open())
 
@@ -24,12 +19,12 @@ def check_prepare_outputs(input_dataset, expected_doc, output_path, expected_met
     assert doc_diffs == {}, pformat(doc_diffs)
 
 
-def run_prepare_cli(*args, expect_success=True) -> Result:
+def run_prepare_cli(invoke_script, *args, expect_success=True) -> Result:
     """Run the prepare script as a command-line command"""
     __tracebackhide__ = True
 
     res: Result = CliRunner().invoke(
-        ls_usgs_l1_prepare.main,
+        invoke_script,
         args,
         catch_exceptions=False
     )
