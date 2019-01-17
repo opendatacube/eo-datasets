@@ -4,6 +4,7 @@ import io
 import stat
 import tarfile
 import tempfile
+from functools import partial
 from pathlib import Path
 from typing import List, Iterable, Tuple, Callable, IO
 
@@ -71,14 +72,13 @@ def _create_tarinfo(path: Path, name=None) -> tarfile.TarInfo:
     return info
 
 
-def _tar_members(tar_path: Path) -> Iterable[ReadableMember]:
+def _tar_members(in_tar: tarfile.TarFile) -> Iterable[ReadableMember]:
     """Get readable files (members) from a tar"""
-    with tarfile.open(str(tar_path), 'r') as in_tar:
-        members: List[tarfile.TarInfo] = in_tar.getmembers()
+    members: List[tarfile.TarInfo] = in_tar.getmembers()
 
-        for member in members:
-            # We return a lambda/callable so that the file isn't opened until it's needed.
-            yield member, lambda: in_tar.extractfile(member)
+    for member in members:
+        # We return a lambda/callable so that the file isn't opened until it's needed.
+        yield member, partial(in_tar.extractfile, member)
 
 
 def _folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMember]:
@@ -97,7 +97,7 @@ def _folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMemb
             yield from _folder_members(item, base_path=path)
         else:
             # We return a lambda/callable so that the file isn't opened until it's needed.
-            yield member, lambda: item.open('r')
+            yield member, partial(item.open, 'r')
 
 
 def repackage_tar(
@@ -244,13 +244,14 @@ def main(paths: List[str], output_base: str, zlevel: int, block_size: int):
 
             # Input is either a tar.gz file, or a directory containing an MTL (already extracted)
             if path.suffix.lower() == '.gz':
-                repackage_tar(
-                    path.name,
-                    _tar_members(path),
-                    _output_tar_path(base_output_path, path),
-                    zlevel=zlevel,
-                    block_size=(block_size, block_size),
-                )
+                with tarfile.open(str(path), 'r') as in_tar:
+                    repackage_tar(
+                        path.name,
+                        _tar_members(in_tar),
+                        _output_tar_path(base_output_path, path),
+                        zlevel=zlevel,
+                        block_size=(block_size, block_size),
+                    )
             elif path.is_dir():
                 repackage_tar(
                     path.name,
