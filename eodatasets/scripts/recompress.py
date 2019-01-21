@@ -134,6 +134,10 @@ def repackage_tar(
                                    length=sum(member.size for member, _ in members)) as progress:
                 file_number = 0
                 for member, open_member in members:
+                    new_member = copy.copy(member)
+                    # We'll copy them all as 664: matching USGS tars.
+                    new_member.mode = 0o664
+
                     file_number += 1
                     progress.label = f"{label} ({file_number:2d}/{len(members)})"
 
@@ -141,7 +145,6 @@ def repackage_tar(
                     if member.name.lower().endswith('.tif'):
                         with rasterio.MemoryFile(filename=member.name) as memory_file:
                             _recompress_image(open_member(), memory_file, **compress_args)
-                            new_member = copy.copy(member)
                             new_member.size = memory_file.getbuffer().nbytes
                             out_tar.addfile(new_member, memory_file)
 
@@ -151,8 +154,8 @@ def repackage_tar(
                     else:
                         # Copy unchanged into target (typically the text/metadata files).
                         file_contents = open_member().read()
-                        out_tar.addfile(member, io.BytesIO(file_contents))
-                        verify.add(io.BytesIO(file_contents), tmpdir / member.name)
+                        out_tar.addfile(new_member, io.BytesIO(file_contents))
+                        verify.add(io.BytesIO(file_contents), tmpdir / new_member.name)
                         del file_contents
 
                     progress.update(member.size)

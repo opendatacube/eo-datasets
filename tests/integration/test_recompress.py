@@ -97,3 +97,6 @@ def test_recompress_dataset(input_path: Path, tmp_path: Path):
     assert member_sizes['README.GTF'] == 8686
     assert member_sizes['LT05_L1GS_092091_19910506_20170126_01_T2_ANG.txt'] == 34884
 
+    # All permissions are 664, as with USGS packages.
+    member_modes = {m.mode for m in members}
+    assert member_modes == {0o664}
