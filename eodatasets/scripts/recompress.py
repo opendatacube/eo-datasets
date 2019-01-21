@@ -91,13 +91,13 @@ def _folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMemb
     for item in path.iterdir():
         member = _create_tarinfo(
             item,
-            name=str(path.relative_to(base_path))
+            name=str(item.relative_to(base_path)),
         )
         if member.type == tarfile.DIRTYPE:
             yield from _folder_members(item, base_path=path)
         else:
             # We return a lambda/callable so that the file isn't opened until it's needed.
-            yield member, partial(item.open, 'r')
+            yield member, partial(item.open, 'rb')
 
 
 def repackage_tar(
