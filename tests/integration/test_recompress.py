@@ -1,13 +1,11 @@
 import tarfile
-from functools import partial
+from pathlib import Path
 from typing import List
 
 import pytest
 from click.testing import CliRunner, Result
-from deepdiff import DeepDiff
 
 from eodatasets.scripts import recompress
-from pathlib import Path
 
 this_folder = Path(__file__).parent
 packaged_path = this_folder.joinpath(
@@ -51,9 +49,7 @@ def test_recompress_dataset(input_path: Path, tmp_path: Path):
     # Pytest has better error messages for strings than Paths.
     all_output_files = [str(p) for p in output_base.rglob('*') if p.is_file()]
 
-    print('\n\t'.join(all_output_files))
-
-    assert len(all_output_files) == 1, f"Expected one output tar file. Got"
+    assert len(all_output_files) == 1, f"Expected one output tar file. Got: \n\t" + '\n\t'.join(all_output_files)
     assert all_output_files == [str(expected_output)]
 
     assert expected_output.exists(), f"No output produced in expected location {expected_output}."
@@ -70,6 +66,7 @@ def test_recompress_dataset(input_path: Path, tmp_path: Path):
     member_names = [m.name for m in members]
 
     # Note that MTL is first. We do this deliberately so it's quick to access.
+    # The others are alphabetical, as with USGS tars. (Not that it matters, but reprocessing stability is nice.)
     assert member_names == [
         'LT05_L1GS_092091_19910506_20170126_01_T2_MTL.txt',
         'LT05_L1GS_092091_19910506_20170126_01_T2_ANG.txt',
@@ -90,9 +87,10 @@ def test_recompress_dataset(input_path: Path, tmp_path: Path):
     # Text files should be unchanged.
     assert member_sizes['LT05_L1GS_092091_19910506_20170126_01_T2_MTL.txt'] == 6693
     mtl_lines = [l for l in checksum_lines if b'_MTL.txt' in l]
-    assert len(mtl_lines) == 1
+    assert len(mtl_lines) == 1, "A file should be listed exactly once in the checksums."
     assert b'beb4d546dc5e2850b2f33384bfbc6cf15b724197\tLT05_L1GS_092091_19910506_20170126_01_T2_MTL.txt\n' in mtl_lines
 
+    # Are they the expected number of bytes?
     assert member_sizes['package.sha1'] == 945
     assert member_sizes['README.GTF'] == 8686
     assert member_sizes['LT05_L1GS_092091_19910506_20170126_01_T2_ANG.txt'] == 34884
