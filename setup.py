@@ -48,5 +48,6 @@ setup(
         eod-generate-metadata=eodatasets.scripts.genmetadata:run
         eod-generate-browse=eodatasets.scripts.genbrowse:run
         eod-prepare=eodatasets.scripts.genprepare:run
+        eod-recompress-tar=eodatasets.scripts.recompress:main
     ''',
 )
