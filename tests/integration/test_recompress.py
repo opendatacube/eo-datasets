@@ -100,3 +100,33 @@ def test_recompress_dataset(input_path: Path, tmp_path: Path):
     # All permissions are 664, as with USGS packages.
     member_modes = {m.mode for m in members}
     assert member_modes == {0o664}
+
+
+def test_calculate_out_path(tmp_path: Path):
+    out_base = tmp_path / 'out'
+
+    # When input is a tar file, use the same name on output.
+    path = Path('/test/in/l1-data/USGS/L1/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz')
+    assert_path_eq(
+        out_base.joinpath('L1/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar'),
+        recompress._output_tar_path(out_base, path),
+    )
+
+    # When input is a directory, use the MTL file's name for the output.
+    path = tmp_path / 'USGS/L1/092_091/LT50920911991126'
+    path.mkdir(parents=True)
+    mtl = path / 'LT05_L1GS_092091_19910506_20170126_01_T2_MTL.txt'
+    mtl.write_text('fake mtl')
+    assert_path_eq(
+        out_base.joinpath('L1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar'),
+        recompress._output_tar_path_from_directory(out_base, path),
+    )
+
+
+def assert_path_eq(p1: Path, p2: Path):
+    """Assert two pathlib paths are equal, with reasonable error output."""
+    __tracebackhide__ = True
+    # Pytest's error messages are far better for strings than Paths. It shows you the difference between them.
+    s1, s2 = str(p1), str(p2)
+    # And we use extra s1/s2 variables so that pytest doesn't print the expression "str()" as part of its output.
+    assert s1 == s2
