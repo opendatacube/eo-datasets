@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+"""
+Repackage a USGS Collection-1 tar for faster read access.
+
+They arrive as a *.tar.gz with inner uncompressed tiffs, which Josh's tests have found to be too slow to read.
+
+We compress the inner tiffs and store them in an uncompressed tar. This allows random reads within the files.
+We also append a checksum file at the end of the tar.
+"""
 import copy
 import io
 import stat
@@ -34,9 +42,11 @@ ReadableMember = Tuple[tarfile.TarInfo, Callable[[], IO]]
 
 def _create_tarinfo(path: Path, name=None) -> tarfile.TarInfo:
     """
-    Create a TarInfo for the given path.
+    Create a TarInfo ("tar member") based on the given filesystem path.
 
-    This is based on TarFile.gettarinfo(), but doesn't need an existing tar file.
+    (these contain the information of a file, such as permissions, when writing to a tar file)
+
+    This code is based on TarFile.gettarinfo(), but doesn't need an existing tar file.
     """
     # We're avoiding convenience methods like `path.is_file()`, to minimise repeated `stat()` calls on lustre.
     s = path.stat()
@@ -104,25 +114,23 @@ def _folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMemb
             yield member, partial(item.open, 'rb')
 
 
-def repackage_tar(
-        label: str,
+def _create_tar_with_files(
+        job_label: str,
         input_files: Iterable[ReadableMember],
         output_tar_path: Path,
         **compress_args,
 ):
     """
-    Repackage a USGS Collection-1 tar for faster read access.
+    Package and compress the given input files to a new tar path.
 
-    It comes as a *.tar.gz with uncompressed tiffs, which Josh's tests have found to be too slow to read.
-    We compress the inner tiffs and store as an uncompressed tar.
-
+    The output tar path is written atomically, so on failure it will only exist if complete.
     """
-
     out_dir: Path = output_tar_path.parent
     out_dir.mkdir(parents=True, exist_ok=True)
 
     verify = PackageChecksum()
 
+    # Use a temporary file so that we can move to the output path atomically.
     with tempfile.TemporaryDirectory(prefix='.extract-', dir=str(out_dir)) as tmpdir:
         tmpdir = Path(tmpdir).absolute()
         tmp_out_tar = tmpdir.joinpath(output_tar_path.name)
@@ -132,9 +140,9 @@ def repackage_tar(
 
             # Add the MTL file to the beginning of the output tar, so it can be accessed faster.
             # This slows down this repackage a little, as we're seeking/decompressing the input stream an extra time.
-            _reorder_tar_members(members, label)
+            _reorder_tar_members(members, job_label)
 
-            with click.progressbar(label=label,
+            with click.progressbar(label=job_label,
                                    length=sum(member.size for member, _ in members)) as progress:
                 file_number = 0
                 for member, open_member in members:
@@ -143,7 +151,7 @@ def repackage_tar(
                     new_member.mode = 0o664
 
                     file_number += 1
-                    progress.label = f"{label} ({file_number:2d}/{len(members)})"
+                    progress.label = f"{job_label} ({file_number:2d}/{len(members)})"
 
                     # Recompress any TIFs, copy other files verbatim.
                     if member.name.lower().endswith('.tif'):
@@ -179,7 +187,7 @@ def repackage_tar(
 
 def _reorder_tar_members(members: List[ReadableMember], identifier: str):
     """
-    Put the (tiny) MTL file at the beginning of the tar so that it's quick to read.
+    Put the (tiny) MTL file at the beginning of the tar so that it's always quick to read.
     """
     # Find MTL
     for i, (member, _) in enumerate(members):
@@ -202,7 +210,7 @@ def _recompress_image(
         block_size=(512, 512),
 ):
     """
-    Read an image from given file pointer, and write as compressed GeoTIFF.
+    Read an image from given file pointer, and write as a compressed GeoTIFF.
     """
     # noinspection PyUnusedLocal
     with rasterio.open(input_image_fp) as ds:
@@ -232,7 +240,7 @@ def _recompress_image(
             output_dataset.update_tags(1, **ds.tags(1))
 
 
-@click.command()
+@click.command(help=__doc__)
 @click.option("--output-base", type=click.Path(file_okay=False, writable=True),
               help="The base output directory.", required=True)
 @click.option("--zlevel", type=click.IntRange(0, 9), default=5,
@@ -241,9 +249,6 @@ def _recompress_image(
               help="Compression block size (both x and y)")
 @click.argument("paths", nargs=-1, type=click.Path(exists=True, readable=True))
 def main(paths: List[str], output_base: str, zlevel: int, block_size: int):
-    """
-    Repackage USGS L1 tar files for faster read access.
-    """
     base_output_path = Path(output_base)
     with rasterio.Env():
         for path in paths:
@@ -252,7 +257,7 @@ def main(paths: List[str], output_base: str, zlevel: int, block_size: int):
             # Input is either a tar.gz file, or a directory containing an MTL (already extracted)
             if path.suffix.lower() == '.gz':
                 with tarfile.open(str(path), 'r') as in_tar:
-                    repackage_tar(
+                    _create_tar_with_files(
                         path.name,
                         _tar_members(in_tar),
                         _output_tar_path(base_output_path, path),
@@ -260,7 +265,7 @@ def main(paths: List[str], output_base: str, zlevel: int, block_size: int):
                         block_size=(block_size, block_size),
                     )
             elif path.is_dir():
-                repackage_tar(
+                _create_tar_with_files(
                     path.name,
                     _folder_members(path),
                     _output_tar_path_from_directory(base_output_path, path),
