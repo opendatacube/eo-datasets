@@ -88,7 +88,11 @@ def _folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMemb
     if not base_path:
         base_path = path
 
-    for item in path.iterdir():
+    # Note that the members in input USGS tars are sorted alphabetically.
+    # We'll sort our own inputs to match.
+    # (The primary practical benefit is predictable outputs in tests)
+
+    for item in sorted(path.iterdir()):
         member = _create_tarinfo(
             item,
             name=str(item.relative_to(base_path)),
