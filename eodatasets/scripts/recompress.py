@@ -9,6 +9,7 @@ We also append a checksum file at the end of the tar.
 """
 import copy
 import io
+import json
 import stat
 import tarfile
 import tempfile
@@ -115,7 +116,7 @@ def _folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMemb
 
 
 def _create_tar_with_files(
-        job_label: str,
+        input_path: Path,
         input_files: Iterable[ReadableMember],
         output_tar_path: Path,
         **compress_args,
@@ -140,9 +141,9 @@ def _create_tar_with_files(
 
             # Add the MTL file to the beginning of the output tar, so it can be accessed faster.
             # This slows down this repackage a little, as we're seeking/decompressing the input stream an extra time.
-            _reorder_tar_members(members, job_label)
+            _reorder_tar_members(members, input_path.name)
 
-            with click.progressbar(label=job_label,
+            with click.progressbar(label=input_path.name,
                                    length=sum(member.size for member, _ in members)) as progress:
                 file_number = 0
                 for member, open_member in members:
@@ -151,12 +152,16 @@ def _create_tar_with_files(
                     new_member.mode = 0o664
 
                     file_number += 1
-                    progress.label = f"{job_label} ({file_number:2d}/{len(members)})"
+                    progress.label = f"{input_path.name} ({file_number:2d}/{len(members)})"
 
                     # Recompress any TIFs, copy other files verbatim.
                     if member.name.lower().endswith('.tif'):
                         with rasterio.MemoryFile(filename=member.name) as memory_file:
-                            _recompress_image(open_member(), memory_file, **compress_args)
+                            try:
+                                _recompress_image(open_member(), memory_file, **compress_args)
+                            except Exception:
+                                secho(f"Error during {member.name}", bold=True)
+                                raise
                             new_member.size = memory_file.getbuffer().nbytes
                             out_tar.addfile(new_member, memory_file)
 
@@ -183,6 +188,26 @@ def _create_tar_with_files(
             tmp_out_tar.chmod(out_dir.stat().st_mode & 0o777)
             # Our output tar is complete. Move it into place.
             tmp_out_tar.rename(output_tar_path)
+
+            _log_completion(members, input_path, output_tar_path)
+
+
+def _log_completion(input_files: List[ReadableMember], input_path: Path, output_tar: Path):
+    users = {(member.uname, member.gname) for member, _ in input_files}
+    secho(
+        json.dumps(
+            dict(
+                name=str(input_path.name),
+                in_size=sum(m.size for m, _ in input_files),
+                in_count=len(input_files),
+                # The user/group give us a hint as to whether this was repackaged outside of USGS.
+                in_users=list(users),
+                out_size=output_tar.stat().st_size,
+                out_path=str(output_tar.absolute()),
+                in_path=str(input_path.absolute()),
+            )
+        )
+    )
 
 
 def _reorder_tar_members(members: List[ReadableMember], identifier: str):
@@ -254,26 +279,30 @@ def main(paths: List[str], output_base: str, zlevel: int, block_size: int):
         for path in paths:
             path = Path(path)
 
-            # Input is either a tar.gz file, or a directory containing an MTL (already extracted)
-            if path.suffix.lower() == '.gz':
-                with tarfile.open(str(path), 'r') as in_tar:
+            try:
+                # Input is either a tar.gz file, or a directory containing an MTL (already extracted)
+                if path.suffix.lower() == '.gz':
+                    with tarfile.open(str(path), 'r') as in_tar:
+                        _create_tar_with_files(
+                            path,
+                            _tar_members(in_tar),
+                            _output_tar_path(base_output_path, path),
+                            zlevel=zlevel,
+                            block_size=(block_size, block_size),
+                        )
+                elif path.is_dir():
                     _create_tar_with_files(
-                        path.name,
-                        _tar_members(in_tar),
-                        _output_tar_path(base_output_path, path),
+                        path,
+                        _folder_members(path),
+                        _output_tar_path_from_directory(base_output_path, path),
                         zlevel=zlevel,
                         block_size=(block_size, block_size),
                     )
-            elif path.is_dir():
-                _create_tar_with_files(
-                    path.name,
-                    _folder_members(path),
-                    _output_tar_path_from_directory(base_output_path, path),
-                    zlevel=zlevel,
-                    block_size=(block_size, block_size),
-                )
-            else:
-                raise ValueError(f"Expected either tar.gz or a dataset folder. Got: {path}")
+                else:
+                    raise ValueError(f"Expected either tar.gz or a dataset folder. Got: {path}")
+            except Exception:
+                secho(f"Error during {path}", color='red', bold=True)
+                raise
 
 
 def _output_tar_path(base_output, input_path):
