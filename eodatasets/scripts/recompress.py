@@ -11,8 +11,10 @@ import copy
 import io
 import json
 import stat
+import sys
 import tarfile
 import tempfile
+import traceback
 from functools import partial
 from pathlib import Path
 from typing import List, Iterable, Tuple, Callable, IO
@@ -20,7 +22,7 @@ from typing import List, Iterable, Tuple, Callable, IO
 import click
 import numpy
 import rasterio
-from click import secho
+from click import secho, echo
 
 from eodatasets.verify import PackageChecksum
 
@@ -116,20 +118,48 @@ def _folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMemb
             yield member, partial(item.open, 'rb')
 
 
-def _create_tar_with_files(
+def repackage_tar(
         input_path: Path,
         input_files: Iterable[ReadableMember],
         output_tar_path: Path,
         **compress_args,
-):
+) -> bool:
+    if output_tar_path.exists():
+        _log_skip(input_path, output_tar_path, 'exists')
+        return True
+
+    try:
+        members = list(input_files)
+
+        # Add the MTL file to the beginning of the output tar, so it can be accessed faster.
+        # This slows down this repackage a little, as we're seeking/decompressing the input stream an extra time.
+        _reorder_tar_members(members, input_path.name)
+
+        _create_tar_with_files(input_path, members, output_tar_path, **compress_args)
+
+        _log_completion(members, input_path, output_tar_path)
+    except Exception as e:
+        _log_skip(
+            input_path,
+            output_tar_path,
+            'error',
+            extra=dict(traceback=_format_exception(e))
+        )
+        return False
+    return True
+
+
+def _create_tar_with_files(
+        input_path: Path,
+        members: List[ReadableMember],
+        output_tar_path: Path,
+        **compress_args,
+) -> None:
     """
     Package and compress the given input files to a new tar path.
 
     The output tar path is written atomically, so on failure it will only exist if complete.
     """
-    if output_tar_path.exists():
-        _log_skip(input_path, output_tar_path)
-        return
 
     out_dir: Path = output_tar_path.parent
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -142,12 +172,6 @@ def _create_tar_with_files(
         tmp_out_tar = tmpdir.joinpath(output_tar_path.name)
 
         with tarfile.open(tmp_out_tar, 'w') as out_tar:
-            members = list(input_files)
-
-            # Add the MTL file to the beginning of the output tar, so it can be accessed faster.
-            # This slows down this repackage a little, as we're seeking/decompressing the input stream an extra time.
-            _reorder_tar_members(members, input_path.name)
-
             with click.progressbar(label=input_path.name,
                                    length=sum(member.size for member, _ in members)) as progress:
                 file_number = 0
@@ -197,10 +221,8 @@ def _create_tar_with_files(
             # Our output tar is complete. Move it into place.
             tmp_out_tar.rename(output_tar_path)
 
-            _log_completion(members, input_path, output_tar_path)
 
-
-def _log_skip(input_path: Path, output_tar: Path, reason='exists'):
+def _log_skip(input_path: Path, output_tar: Path, reason: str, extra: dict = None):
     secho(
         json.dumps(
             dict(
@@ -208,6 +230,7 @@ def _log_skip(input_path: Path, output_tar: Path, reason='exists'):
                 status=f'skip.{reason}',
                 out_path=str(output_tar.absolute()),
                 in_path=str(input_path.absolute()),
+                **(extra or {})
             )
         )
     )
@@ -298,33 +321,52 @@ def _recompress_image(
 def main(paths: List[str], output_base: str, zlevel: int, block_size: int):
     base_output_path = Path(output_base)
     with rasterio.Env():
+
+        total = failures = 0
         for path in paths:
+            total += 1
             path = Path(path)
 
-            try:
-                # Input is either a tar.gz file, or a directory containing an MTL (already extracted)
-                if path.suffix.lower() == '.gz':
-                    with tarfile.open(str(path), 'r') as in_tar:
-                        _create_tar_with_files(
-                            path,
-                            _tar_members(in_tar),
-                            _output_tar_path(base_output_path, path),
-                            zlevel=zlevel,
-                            block_size=(block_size, block_size),
-                        )
-                elif path.is_dir():
-                    _create_tar_with_files(
+            # Input is either a tar.gz file, or a directory containing an MTL (already extracted)
+            if path.suffix.lower() == '.gz':
+                with tarfile.open(str(path), 'r') as in_tar:
+                    success = repackage_tar(
                         path,
-                        _folder_members(path),
-                        _output_tar_path_from_directory(base_output_path, path),
+                        _tar_members(in_tar),
+                        _output_tar_path(base_output_path, path),
                         zlevel=zlevel,
                         block_size=(block_size, block_size),
                     )
-                else:
-                    raise ValueError(f"Expected either tar.gz or a dataset folder. Got: {path}")
-            except Exception:
-                secho(f"Error during {path}", color='red', bold=True)
-                raise
+
+            elif path.is_dir():
+                success = repackage_tar(
+                    path,
+                    _folder_members(path),
+                    _output_tar_path_from_directory(base_output_path, path),
+                    zlevel=zlevel,
+                    block_size=(block_size, block_size),
+                )
+            else:
+                raise ValueError(f"Expected either tar.gz or a dataset folder. Got: {path}")
+
+            if not success:
+                failures += 1
+
+    echo(f"Completed {total-failures} datasets. {failures} failures.")
+    sys.exit(failures)
+
+
+def _format_exception(e: BaseException):
+    """
+    Shamelessly stolen from stdlib's logging module.
+    """
+    sio = io.StringIO()
+    traceback.print_exception(e.__class__, e, e.__traceback__, None, sio)
+    s = sio.getvalue()
+    sio.close()
+    if s[-1:] == "\n":
+        s = s[:-1]
+    return s
 
 
 def _output_tar_path(base_output, input_path):
