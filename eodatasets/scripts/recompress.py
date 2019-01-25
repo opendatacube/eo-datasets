@@ -109,6 +109,7 @@ def _folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMemb
             name=str(item.relative_to(base_path)),
         )
         if member.type == tarfile.DIRTYPE:
+            yield member, None
             yield from _folder_members(item, base_path=path)
         else:
             # We return a lambda/callable so that the file isn't opened until it's needed.
@@ -172,6 +173,9 @@ def _create_tar_with_files(
                             # Image has been written. Seek to beginning to take a checksum.
                             memory_file.seek(0)
                             verify.add(memory_file, tmpdir / new_member.name)
+                    elif member.size == 0:
+                        # Typically a directory entry.
+                        out_tar.addfile(new_member)
                     else:
                         # Copy unchanged into target (typically the text/metadata files).
                         file_contents = open_member().read()
