@@ -126,6 +126,10 @@ def _create_tar_with_files(
 
     The output tar path is written atomically, so on failure it will only exist if complete.
     """
+    if output_tar_path.exists():
+        _log_skip(input_path, output_tar_path)
+        return
+
     out_dir: Path = output_tar_path.parent
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -192,12 +196,26 @@ def _create_tar_with_files(
             _log_completion(members, input_path, output_tar_path)
 
 
+def _log_skip(input_path: Path, output_tar: Path, reason='exists'):
+    secho(
+        json.dumps(
+            dict(
+                name=str(input_path.name),
+                status=f'skip.{reason}',
+                out_path=str(output_tar.absolute()),
+                in_path=str(input_path.absolute()),
+            )
+        )
+    )
+
+
 def _log_completion(input_files: List[ReadableMember], input_path: Path, output_tar: Path):
     users = {(member.uname, member.gname) for member, _ in input_files}
     secho(
         json.dumps(
             dict(
                 name=str(input_path.name),
+                status='complete',
                 in_size=sum(m.size for m, _ in input_files),
                 in_count=len(input_files),
                 # The user/group give us a hint as to whether this was repackaged outside of USGS.
