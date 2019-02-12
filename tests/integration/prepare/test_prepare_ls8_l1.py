@@ -347,6 +347,16 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
         }
     }
 
+    check_prepare_outputs(
+        invoke_script=ls_usgs_l1_prepare.main,
+        run_args=[
+            '--absolute-paths', '--output',
+            str(output_path), str(L1_INPUT_PATH)
+        ],
+        expected_doc=expected_doc,
+        expected_metadata_path=expected_metadata_path
+    )
+
     checksum_file = L1_INPUT_PATH / expected_doc['checksum_sha1']
     assert checksum_file.read_text() == dedent("""\
         921a20d85696d0267533d2810ba0d9d39a7cbd56	LC08_L1TP_090084_20160121_20170405_01_T1_ANG.txt
@@ -364,13 +374,3 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
         2bd7a30e6cd0e17870ef05d128379296d8babf7e	LC08_L1TP_090084_20160121_20170405_01_T1_BQA.TIF
         2d1878ba89840d1942bc3ff273fb09bbf4917af3	LC08_L1TP_090084_20160121_20170405_01_T1_MTL.txt
     """)
-
-    check_prepare_outputs(
-        invoke_script=ls_usgs_l1_prepare.main,
-        run_args=[
-            '--absolute-paths', '--output',
-            str(output_path), str(L1_INPUT_PATH)
-        ],
-        expected_doc=expected_doc,
-        expected_metadata_path=expected_metadata_path
-    )
