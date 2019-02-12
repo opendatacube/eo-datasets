@@ -387,7 +387,7 @@ def main(output, datasets, checksum):
             with open(yaml_path) as f:
                 if checksum:
                     logging.info("Running checksum comparison")
-                    datamap = yaml.load_all(f)
+                    datamap = yaml.safe_load_all(f)
                     for data in datamap:
                         yaml_sha1 = data['checksum_sha1']
                         checksum_sha1 = hashlib.sha1(open(path, 'rb').read()).hexdigest()
@@ -402,7 +402,7 @@ def main(output, datasets, checksum):
         if documents:
             logging.info("Writing %s dataset(s) into %s", len(documents), yaml_path)
             with open(yaml_path, 'w') as stream:
-                yaml.dump_all(documents, stream)
+                yaml.safe_dump_all(documents, stream)
         else:
             logging.info("No datasets discovered. Bye!")
 
