@@ -5,7 +5,7 @@ import datetime
 import fnmatch
 import logging
 import re
-import xml.etree.cElementTree as etree
+import xml.etree.cElementTree as ElementTree
 
 import dateutil.parser
 from pathlib import Path
@@ -293,7 +293,7 @@ def _populate_ortho_from_files(base_folder, md, mtl_path, work_order_path,
 
 
 def _load_xml(path):
-    return etree.parse(str(path))
+    return ElementTree.parse(str(path))
 
 
 def _get_ancil_files(mtl_doc, work_order_doc):

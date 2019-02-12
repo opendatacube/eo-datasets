@@ -5,7 +5,7 @@ import datetime
 import logging
 import re
 import string
-import xml.etree.cElementTree as etree
+import xml.etree.cElementTree as ElementTree
 from copy import deepcopy
 
 import yaml
@@ -815,7 +815,7 @@ class EODSDriver(DatasetDriver):
                 return None
             return parse(els[0].text)
 
-        doc = etree.parse(str(path.joinpath('metadata.xml')))
+        doc = ElementTree.parse(str(path.joinpath('metadata.xml')))
         start_time = els2date(doc.findall("./EXEXTENT/TEMPORALEXTENTFROM"))
         end_time = els2date(doc.findall("./EXEXTENT/TEMPORALEXTENTTO"))
 

@@ -24,6 +24,7 @@ import logging
 import os
 import uuid
 from pathlib import Path
+from typing import Tuple, List, Dict, Optional
 from xml.etree import ElementTree
 
 import click
@@ -95,16 +96,6 @@ def valid_region(images, mask_value=None):
     return geom
 
 
-def _to_lists(x):
-    # type: (Tuple) -> List
-    """
-    Returns lists of lists when given tuples of tuples
-    """
-    if isinstance(x, tuple):
-        return [_to_lists(el) for el in x]
-    return x
-
-
 def get_geo_ref_points(root):
     """
     Returns dictionary of bounding coordinates from given xml
@@ -138,7 +129,7 @@ def get_coords(geo_ref_points, spatial_ref):
 
 
 def get_datastrip_info(path):
-    # type: (Path) -> Tuple[Dict, str]
+    # type: (Path) -> Tuple[str, uuid.UUID]
     """get_datastrip_info returns information parsed from productInfo.json
 
     :param path: path to root of tile collection
@@ -338,13 +329,13 @@ def prepare_dataset(path, datastrip_path=None):
                 'geo_ref_points': geo_ref_points,
                 'spatial_reference': cs_code,
                 'valid_data': {
-                    'coordinates': _to_lists(
+                    'coordinates':
                         shapely.geometry.mapping(
                             shapely.ops.unary_union([
                                 safe_valid_region(images_sixty_list)
 
                             ])
-                        )['coordinates']),
+                        )['coordinates'],
                     'type': "Polygon"}
             }
         },
@@ -368,16 +359,6 @@ def prepare_dataset(path, datastrip_path=None):
         'lineage': {'source_datasets': {}},
     })
     return documents
-
-
-def absolutify_paths(doc, path):
-    # type: (Dict, str) -> Dict
-    """
-    Return absolute paths from input doc and path
-    """
-    for band in doc['image']['bands'].values():
-        band['path'] = str(path / band['path'])
-    return doc
 
 
 @click.command(help=__doc__)
