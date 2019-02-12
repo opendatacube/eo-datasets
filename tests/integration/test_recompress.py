@@ -1,6 +1,6 @@
 import tarfile
 from pathlib import Path
-from typing import List
+from typing import List, Dict, Tuple
 
 import pytest
 from click.testing import CliRunner, Result
@@ -55,13 +55,7 @@ def test_recompress_dataset(input_path: Path, tmp_path: Path):
     assert expected_output.exists(), f"No output produced in expected location {expected_output}."
 
     # It should contain all of our files
-    with tarfile.open(expected_output, 'r') as tar:
-        members: List[tarfile.TarInfo] = tar.getmembers()
-
-        # Checksum is last (can be calculated while streaming)
-        checksum_member = members[-1]
-        assert checksum_member.name == 'package.sha1'
-        checksum_lines = tar.extractfile(checksum_member).readlines()
+    checksums, members = _get_checksums_members(expected_output)
 
     member_names = [m.name for m in members]
 
@@ -86,9 +80,11 @@ def test_recompress_dataset(input_path: Path, tmp_path: Path):
 
     # Text files should be unchanged.
     assert member_sizes['LT05_L1GS_092091_19910506_20170126_01_T2_MTL.txt'] == 6693
-    mtl_lines = [l for l in checksum_lines if b'_MTL.txt' in l]
-    assert len(mtl_lines) == 1, "A file should be listed exactly once in the checksums."
-    assert b'beb4d546dc5e2850b2f33384bfbc6cf15b724197\tLT05_L1GS_092091_19910506_20170126_01_T2_MTL.txt\n' in mtl_lines
+
+    assert 'LT05_L1GS_092091_19910506_20170126_01_T2_MTL.txt' in checksums, "No MTL?"
+    assert checksums[
+               'LT05_L1GS_092091_19910506_20170126_01_T2_MTL.txt'
+           ] == 'beb4d546dc5e2850b2f33384bfbc6cf15b724197'
 
     # Are they the expected number of bytes?
     assert member_sizes['package.sha1'] == 945
@@ -137,8 +133,7 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
     assert expected_output.exists(), f"No output produced in expected location {expected_output}."
 
     # It should contain all of our files
-    with tarfile.open(expected_output, 'r') as tar:
-        members: List[tarfile.TarInfo] = tar.getmembers()
+    checksums, members = _get_checksums_members(expected_output)
 
     member_names = [m.name for m in members]
 
@@ -171,6 +166,100 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
         'gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B8.TIF',
         'package.sha1',
     ]
+
+
+def test_recompress_dirty_dataset(tmp_path: Path):
+    # We found some datasets that have been "expanded" and later retarred.
+    # They have extra tifs and jpegs created from the bands.
+    # The TIFs have compression and multiple bands, unlike USGS tifs.
+    # We expect such tifs to be unmodified by this repackager.
+
+    input_path = this_folder.joinpath(
+        'recompress_packed/USGS/L1/Landsat/C1/091_075/LC80910752016348',
+        'LC08_L1TP_091075_20161213_20170316_01_T2.tar.gz'
+    )
+    assert input_path.exists()
+
+    output_base = tmp_path / 'out'
+
+    res: Result = CliRunner().invoke(
+        recompress.main,
+        (
+            '--output-base',
+            str(output_base),
+            # Out test data is smaller than the default block size.
+            '--block-size', '32',
+            str(input_path),
+        ),
+        catch_exceptions=False
+    )
+    assert res.exit_code == 0, res.output
+
+    expected_output = (
+            output_base /
+            'L1/Landsat/C1/091_075/LC80910752016348' /
+            'LC08_L1TP_091075_20161213_20170316_01_T2.tar'
+    )
+
+    # Pytest has better error messages for strings than Paths.
+    all_output_files = [str(p) for p in output_base.rglob('*') if p.is_file()]
+
+    assert len(all_output_files) == 1, f"Expected one output tar file. Got: \n\t" + '\n\t'.join(all_output_files)
+    assert all_output_files == [str(expected_output)]
+
+    assert expected_output.exists(), f"No output produced in expected location {expected_output}."
+
+    checksums, members = _get_checksums_members(expected_output)
+
+    assert checksums[
+               'LC08_L1TP_091075_20161213_20170316_01_T2.tif'
+           ] == '', "compressed tif should be unmodified -- checksum changed"
+
+    member_names = [m.name for m in members]
+    # Note that MTL is first. We do this deliberately so it's quick to access.
+    # The others are alphabetical, as with USGS tars. (Not that it matters, but reprocessing stability is nice.)
+    print('\n'.join(member_names))
+    assert member_names == [
+        'LC08_L1TP_091075_20161213_20170316_01_T2_MTL.txt',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_ANG.txt',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_B10.TIF',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_B11.TIF',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_B1.TIF',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_B2.TIF',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_B3.TIF',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_B4.TIF',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_B5.TIF',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_B6.TIF',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_B7.TIF',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_B8.TIF',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_B9.TIF',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_BQA.TIF',
+        'LC08_L1TP_091075_20161213_20170316_01_T2.IMD',
+        'LC08_L1TP_091075_20161213_20170316_01_T2.jpeg',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_QB.jpeg',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_QB.tif',
+        'LC08_L1TP_091075_20161213_20170316_01_T2.tif',
+        'LC08_L1TP_091075_20161213_20170316_01_T2.tif.msk',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_TIR.jpeg',
+        'LC08_L1TP_091075_20161213_20170316_01_T2_TIR.tif',
+        'package.sha1',
+    ]
+
+
+def _get_checksums_members(out_tar: Path) -> Tuple[Dict, List[tarfile.TarInfo]]:
+    with tarfile.open(out_tar, 'r') as tar:
+        members: List[tarfile.TarInfo] = tar.getmembers()
+
+        # Checksum is last (can be calculated while streaming)
+        checksum_member = members[-1]
+        assert checksum_member.name == 'package.sha1'
+        checksums = {}
+        for line in tar.extractfile(checksum_member).readlines():
+            chksum, path = line.split('\t')
+            path = path.strip()
+            assert path not in checksums, f"Path is repeated in checksum file: {path}"
+            checksums[path] = chksum
+    return checksums, members
 
 
 def test_calculate_out_path(tmp_path: Path):

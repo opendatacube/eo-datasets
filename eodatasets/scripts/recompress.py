@@ -17,7 +17,7 @@ import tempfile
 import traceback
 from functools import partial
 from pathlib import Path
-from typing import List, Iterable, Tuple, Callable, IO
+from typing import List, Iterable, Tuple, Callable, IO, Dict
 
 import click
 import numpy
@@ -175,38 +175,19 @@ def _create_tar_with_files(
             with click.progressbar(label=input_path.name,
                                    length=sum(member.size for member, _ in members)) as progress:
                 file_number = 0
-                for member, open_member in members:
-                    new_member = copy.copy(member)
-                    # We'll copy them all as 664: matching USGS tars.
-                    new_member.mode = 0o664
-
+                for readable_member in members:
                     file_number += 1
                     progress.label = f"{input_path.name} ({file_number:2d}/{len(members)})"
 
-                    # Recompress any TIFs, copy other files verbatim.
-                    if member.name.lower().endswith('.tif'):
-                        with rasterio.MemoryFile(filename=member.name) as memory_file:
-                            try:
-                                _recompress_image(open_member(), memory_file, **compress_args)
-                            except Exception:
-                                secho(f"Error during {member.name}", bold=True)
-                                raise
-                            new_member.size = memory_file.getbuffer().nbytes
-                            out_tar.addfile(new_member, memory_file)
+                    _recompress_tar_member(
+                        readable_member,
+                        out_tar,
+                        compress_args,
+                        verify,
+                        tmpdir
+                    )
 
-                            # Image has been written. Seek to beginning to take a checksum.
-                            memory_file.seek(0)
-                            verify.add(memory_file, tmpdir / new_member.name)
-                    elif member.size == 0:
-                        # Typically a directory entry.
-                        out_tar.addfile(new_member)
-                    else:
-                        # Copy unchanged into target (typically the text/metadata files).
-                        file_contents = open_member().read()
-                        out_tar.addfile(new_member, io.BytesIO(file_contents))
-                        verify.add(io.BytesIO(file_contents), tmpdir / new_member.name)
-                        del file_contents
-
+                    member, _ = readable_member
                     progress.update(member.size)
 
             # Append sha1 checksum file
@@ -220,6 +201,51 @@ def _create_tar_with_files(
             tmp_out_tar.chmod(out_dir.stat().st_mode & 0o777)
             # Our output tar is complete. Move it into place.
             tmp_out_tar.rename(output_tar_path)
+
+
+def _recompress_tar_member(
+        readable_member: ReadableMember,
+        out_tar: tarfile.TarFile,
+        compress_args: Dict,
+        verify: PackageChecksum,
+        tmpdir: Path
+):
+    member, open_member = readable_member
+
+    new_member = copy.copy(member)
+    # We'll copy them all as 664: matching USGS tars.
+    new_member.mode = 0o664
+
+    # If it's a tif, check whether it's compressed.
+    if member.name.lower().endswith('.tif'):
+        input_fp = open_member()
+        with rasterio.open(input_fp) as ds:
+            if not ds.profile.get('compress'):
+                # No compression: let's compress it
+                with rasterio.MemoryFile(filename=member.name) as memory_file:
+                    try:
+                        _recompress_image(ds, memory_file, **compress_args)
+                    except Exception:
+                        secho(f"Error during {member.name}", bold=True)
+                        raise
+                    new_member.size = memory_file.getbuffer().nbytes
+                    out_tar.addfile(new_member, memory_file)
+
+                    # Image has been written. Seek to beginning to take a checksum.
+                    memory_file.seek(0)
+                    verify.add(memory_file, tmpdir / new_member.name)
+                    return
+
+    if member.size == 0:
+        # Typically a directory entry.
+        out_tar.addfile(new_member)
+        return
+
+    # Copy unchanged into target (typically text/metadata files).
+    file_contents = open_member().read()
+    out_tar.addfile(new_member, io.BytesIO(file_contents))
+    verify.add(io.BytesIO(file_contents), tmpdir / new_member.name)
+    del file_contents
 
 
 def _log_skip(input_path: Path, output_tar: Path, reason: str, extra: dict = None):
@@ -274,7 +300,7 @@ def _reorder_tar_members(members: List[ReadableMember], identifier: str):
 
 
 def _recompress_image(
-        input_image_fp: IO,
+        input_image: rasterio.DatasetReader,
         output_fp: rasterio.MemoryFile,
         zlevel=9,
         block_size=(512, 512),
@@ -283,31 +309,30 @@ def _recompress_image(
     Read an image from given file pointer, and write as a compressed GeoTIFF.
     """
     # noinspection PyUnusedLocal
-    with rasterio.open(input_image_fp) as ds:
-        ds: rasterio.DatasetReader
-        block_size_y, block_size_x = block_size
 
-        if len(ds.indexes) != 1:
-            raise ValueError(f"Expecting one-band-per-tif input (USGS packages). "
-                             f"Input has multiple layers {repr(ds.indexes)}")
-        array: numpy.ndarray = ds.read(1)
+    block_size_y, block_size_x = block_size
 
-        profile = ds.profile
-        profile.update(
-            driver='GTiff',
-            predictor=_PREDICTOR_TABLE[array.dtype.name],
-            compress='deflate',
-            zlevel=zlevel,
-            blockxsize=block_size_x,
-            blockysize=block_size_y,
-            tiled=True,
-        )
+    if len(input_image.indexes) != 1:
+        raise ValueError(f"Expecting one-band-per-tif input (USGS packages). "
+                         f"Input has multiple layers {repr(input_image.indexes)}")
 
-        with output_fp.open(**profile) as output_dataset:
-            output_dataset.write(array, 1)
-            # Copy gdal metadata
-            output_dataset.update_tags(**ds.tags())
-            output_dataset.update_tags(1, **ds.tags(1))
+    array: numpy.ndarray = input_image.read(1)
+    profile = input_image.profile
+    profile.update(
+        driver='GTiff',
+        predictor=_PREDICTOR_TABLE[array.dtype.name],
+        compress='deflate',
+        zlevel=zlevel,
+        blockxsize=block_size_x,
+        blockysize=block_size_y,
+        tiled=True,
+    )
+
+    with output_fp.open(**profile) as output_dataset:
+        output_dataset.write(array, 1)
+        # Copy gdal metadata
+        output_dataset.update_tags(**input_image.tags())
+        output_dataset.update_tags(1, **input_image.tags(1))
 
 
 @click.command(help=__doc__)
