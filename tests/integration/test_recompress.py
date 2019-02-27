@@ -135,36 +135,36 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
     # It should contain all of our files
     checksums, members = _get_checksums_members(expected_output)
 
-    member_names = [m.name for m in members]
+    member_names = [(m.name, f'{m.mode:o}') for m in members]
 
     # Note that MTL is first. We do this deliberately so it's quick to access.
-    # The others are alphabetical, as with USGS tars. (Not that it matters, but reprocessing stability is nice.)
-    print('\n'.join(member_names))
+    # The others are alphabetical, as with USGS tars.
+    # (Not that it matters, but reprocessing stability is nice.)
     assert member_names == [
-        'LE07_L1GT_091080_20080114_20161231_01_T2_MTL.txt',
-        'LE07_L1GT_091080_20080114_20161231_01_T2_ANG.txt',
-        'LE07_L1GT_091080_20080114_20161231_01_T2_B1.TIF',
-        'LE07_L1GT_091080_20080114_20161231_01_T2_B2.TIF',
-        'LE07_L1GT_091080_20080114_20161231_01_T2_B3.TIF',
-        'LE07_L1GT_091080_20080114_20161231_01_T2_B4.TIF',
-        'LE07_L1GT_091080_20080114_20161231_01_T2_B5.TIF',
-        'LE07_L1GT_091080_20080114_20161231_01_T2_B6_VCID_1.TIF',
-        'LE07_L1GT_091080_20080114_20161231_01_T2_B6_VCID_2.TIF',
-        'LE07_L1GT_091080_20080114_20161231_01_T2_B7.TIF',
-        'LE07_L1GT_091080_20080114_20161231_01_T2_B8.TIF',
-        'LE07_L1GT_091080_20080114_20161231_01_T2_BQA.TIF',
-        'README.GTF',
-        'gap_mask',
-        'gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B1.TIF',
-        'gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B2.TIF',
-        'gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B3.TIF',
-        'gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B4.TIF',
-        'gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B5.TIF',
-        'gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B6_VCID_1.TIF',
-        'gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B6_VCID_2.TIF',
-        'gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B7.TIF',
-        'gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B8.TIF',
-        'package.sha1',
+        ('LE07_L1GT_091080_20080114_20161231_01_T2_MTL.txt', '664'),
+        ('LE07_L1GT_091080_20080114_20161231_01_T2_ANG.txt', '664'),
+        ('LE07_L1GT_091080_20080114_20161231_01_T2_B1.TIF', '664'),
+        ('LE07_L1GT_091080_20080114_20161231_01_T2_B2.TIF', '664'),
+        ('LE07_L1GT_091080_20080114_20161231_01_T2_B3.TIF', '664'),
+        ('LE07_L1GT_091080_20080114_20161231_01_T2_B4.TIF', '664'),
+        ('LE07_L1GT_091080_20080114_20161231_01_T2_B5.TIF', '664'),
+        ('LE07_L1GT_091080_20080114_20161231_01_T2_B6_VCID_1.TIF', '664'),
+        ('LE07_L1GT_091080_20080114_20161231_01_T2_B6_VCID_2.TIF', '664'),
+        ('LE07_L1GT_091080_20080114_20161231_01_T2_B7.TIF', '664'),
+        ('LE07_L1GT_091080_20080114_20161231_01_T2_B8.TIF', '664'),
+        ('LE07_L1GT_091080_20080114_20161231_01_T2_BQA.TIF', '664'),
+        ('README.GTF', '664'),
+        ('gap_mask', '775'),
+        ('gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B1.TIF', '664'),
+        ('gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B2.TIF', '664'),
+        ('gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B3.TIF', '664'),
+        ('gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B4.TIF', '664'),
+        ('gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B5.TIF', '664'),
+        ('gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B6_VCID_1.TIF', '664'),
+        ('gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B6_VCID_2.TIF', '664'),
+        ('gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B7.TIF', '664'),
+        ('gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B8.TIF', '664'),
+        ('package.sha1', '664'),
     ]
 
 
