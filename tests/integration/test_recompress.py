@@ -213,7 +213,8 @@ def test_recompress_dirty_dataset(tmp_path: Path):
 
     assert checksums[
                'LC08_L1TP_091075_20161213_20170316_01_T2.tif'
-           ] == '', "compressed tif should be unmodified -- checksum changed"
+           ] == '57cafe38c2f4f94cd15a05cfd918911889b8b03f', \
+        "compressed tif has changed. It should be unmodified."
 
     member_names = [m.name for m in members]
     # Note that MTL is first. We do this deliberately so it's quick to access.
