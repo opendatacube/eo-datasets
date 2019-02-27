@@ -213,8 +213,9 @@ def _recompress_tar_member(
     member, open_member = readable_member
 
     new_member = copy.copy(member)
-    # We'll copy them all as 664: matching USGS tars.
-    new_member.mode = 0o664
+    # Copy with a minimum 664 permission, which is used by USGS tars.
+    # (some of our repacked datasets have only user read permission.)
+    new_member.mode = new_member.mode | 0o664
 
     # If it's a tif, check whether it's compressed.
     if member.name.lower().endswith('.tif'):
