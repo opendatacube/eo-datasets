@@ -255,7 +255,7 @@ def _get_checksums_members(out_tar: Path) -> Tuple[Dict, List[tarfile.TarInfo]]:
         assert checksum_member.name == 'package.sha1'
         checksums = {}
         for line in tar.extractfile(checksum_member).readlines():
-            chksum, path = line.split('\t')
+            chksum, path = line.decode('utf-8').split('\t')
             path = path.strip()
             assert path not in checksums, f"Path is repeated in checksum file: {path}"
             checksums[path] = chksum
