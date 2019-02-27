@@ -236,6 +236,9 @@ def _recompress_tar_member(
                     memory_file.seek(0)
                     verify.add(memory_file, tmpdir / new_member.name)
                     return
+            else:
+                # It's already compressed, we'll fall through and copy it verbatim.
+                input_fp.close()
 
     if member.size == 0:
         # Typically a directory entry.
