@@ -5,6 +5,7 @@ from typing import List, Dict, Tuple
 import pytest
 from click.testing import CliRunner, Result
 
+from eodatasets import verify
 from eodatasets.scripts import recompress
 
 this_folder = Path(__file__).parent
@@ -105,18 +106,21 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
 
     output_base = tmp_path / 'out'
 
-    res: Result = CliRunner().invoke(
-        recompress.main,
-        (
-            '--output-base',
-            str(output_base),
-            # Out test data is smaller than the default block size.
-            '--block-size', '32',
-            str(input_path),
-        ),
-        catch_exceptions=False
-    )
-    assert res.exit_code == 0, res.output
+    def run():
+        res: Result = CliRunner().invoke(
+            recompress.main,
+            (
+                '--output-base',
+                str(output_base),
+                # Out test data is smaller than the default block size.
+                '--block-size', '32',
+                str(input_path),
+            ),
+            catch_exceptions=False
+        )
+        assert res.exit_code == 0, res.output
+
+    run()
 
     expected_output = (
             output_base /
@@ -166,6 +170,19 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
         ('gap_mask/LE07_L1GT_091080_20080114_20161231_01_T2_GM_B8.TIF', '664'),
         ('package.sha1', '664'),
     ]
+
+    ####
+    # If packaging is rerun, the output should not be touched!
+    # ie. skip if output exists.
+    original_crc32 = verify.calculate_file_crc32(expected_output)
+    original_inode = expected_output.stat().st_ino
+
+    run()
+
+    new_crc32 = verify.calculate_file_crc32(expected_output)
+    new_inode = expected_output.stat().st_ino
+    assert original_crc32 == new_crc32, "Output file was modified on rerun of compress"
+    assert original_inode == new_inode, "Output file was replaced on rerun of compress"
 
 
 def test_recompress_dirty_dataset(tmp_path: Path):
