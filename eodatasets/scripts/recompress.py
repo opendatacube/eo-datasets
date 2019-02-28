@@ -389,13 +389,9 @@ def _format_exception(e: BaseException):
     """
     Shamelessly stolen from stdlib's logging module.
     """
-    sio = io.StringIO()
-    traceback.print_exception(e.__class__, e, e.__traceback__, None, sio)
-    s = sio.getvalue()
-    sio.close()
-    if s[-1:] == "\n":
-        s = s[:-1]
-    return s
+    with io.StringIO() as sio:
+        traceback.print_exception(e.__class__, e, e.__traceback__, None, sio)
+        return sio.getvalue().strip()
 
 
 def _output_tar_path(base_output, input_path):

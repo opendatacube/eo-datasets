@@ -9,11 +9,11 @@ from eodatasets import verify
 from eodatasets.scripts import recompress
 
 this_folder = Path(__file__).parent
-packaged_path = this_folder.joinpath(
+packaged_path: Path = this_folder.joinpath(
     'recompress_packed/USGS/L1/Landsat/C1/092_091/LT50920911991126',
     'LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz'
 )
-unpackaged_path = this_folder.joinpath(
+unpackaged_path: Path = this_folder.joinpath(
     'recompress_unpackaged/USGS/L1/Landsat/C1/092_091/LT50920911991126'
 )
 
@@ -28,18 +28,7 @@ def test_recompress_dataset(input_path: Path, tmp_path: Path):
 
     output_base = tmp_path / 'out'
 
-    res: Result = CliRunner().invoke(
-        recompress.main,
-        (
-            '--output-base',
-            str(output_base),
-            # Out test data is smaller than the default block size.
-            '--block-size', '32',
-            str(input_path),
-        ),
-        catch_exceptions=False
-    )
-    assert res.exit_code == 0, res.output
+    _run_recompress(input_path, output_base)
 
     expected_output = (
             output_base /
@@ -50,10 +39,12 @@ def test_recompress_dataset(input_path: Path, tmp_path: Path):
     # Pytest has better error messages for strings than Paths.
     all_output_files = [str(p) for p in output_base.rglob('*') if p.is_file()]
 
-    assert len(all_output_files) == 1, f"Expected one output tar file. Got: \n\t" + '\n\t'.join(all_output_files)
+    assert len(all_output_files) == 1, \
+        f"Expected one output tar file. Got: \n\t" + '\n\t'.join(all_output_files)
     assert all_output_files == [str(expected_output)]
 
-    assert expected_output.exists(), f"No output produced in expected location {expected_output}."
+    assert expected_output.exists(), \
+        f"No output produced in expected location {expected_output}."
 
     # It should contain all of our files
     checksums, members = _get_checksums_members(expected_output)
@@ -61,7 +52,8 @@ def test_recompress_dataset(input_path: Path, tmp_path: Path):
     member_names = [m.name for m in members]
 
     # Note that MTL is first. We do this deliberately so it's quick to access.
-    # The others are alphabetical, as with USGS tars. (Not that it matters, but reprocessing stability is nice.)
+    # The others are alphabetical, as with USGS tars.
+    # (Not that it matters, but reprocessing stability is nice.)
     assert member_names == [
         'LT05_L1GS_092091_19910506_20170126_01_T2_MTL.txt',
         'LT05_L1GS_092091_19910506_20170126_01_T2_ANG.txt',
@@ -106,21 +98,7 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
 
     output_base = tmp_path / 'out'
 
-    def run():
-        res: Result = CliRunner().invoke(
-            recompress.main,
-            (
-                '--output-base',
-                str(output_base),
-                # Out test data is smaller than the default block size.
-                '--block-size', '32',
-                str(input_path),
-            ),
-            catch_exceptions=False
-        )
-        assert res.exit_code == 0, res.output
-
-    run()
+    _run_recompress(input_path, output_base)
 
     expected_output = (
             output_base /
@@ -131,10 +109,12 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
     # Pytest has better error messages for strings than Paths.
     all_output_files = [str(p) for p in output_base.rglob('*') if p.is_file()]
 
-    assert len(all_output_files) == 1, f"Expected one output tar file. Got: \n\t" + '\n\t'.join(all_output_files)
+    assert len(all_output_files) == 1, \
+        f"Expected one output tar file. Got: \n\t" + '\n\t'.join(all_output_files)
     assert all_output_files == [str(expected_output)]
 
-    assert expected_output.exists(), f"No output produced in expected location {expected_output}."
+    assert expected_output.exists(), \
+        f"No output produced in expected location {expected_output}."
 
     # It should contain all of our files
     checksums, members = _get_checksums_members(expected_output)
@@ -177,7 +157,7 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
     original_crc32 = verify.calculate_file_crc32(expected_output)
     original_inode = expected_output.stat().st_ino
 
-    run()
+    _run_recompress(input_path, output_base)
 
     new_crc32 = verify.calculate_file_crc32(expected_output)
     new_inode = expected_output.stat().st_ino
@@ -199,18 +179,7 @@ def test_recompress_dirty_dataset(tmp_path: Path):
 
     output_base = tmp_path / 'out'
 
-    res: Result = CliRunner().invoke(
-        recompress.main,
-        (
-            '--output-base',
-            str(output_base),
-            # Out test data is smaller than the default block size.
-            '--block-size', '32',
-            str(input_path),
-        ),
-        catch_exceptions=False
-    )
-    assert res.exit_code == 0, res.output
+    _run_recompress(input_path, output_base)
 
     expected_output = (
             output_base /
@@ -221,10 +190,12 @@ def test_recompress_dirty_dataset(tmp_path: Path):
     # Pytest has better error messages for strings than Paths.
     all_output_files = [str(p) for p in output_base.rglob('*') if p.is_file()]
 
-    assert len(all_output_files) == 1, f"Expected one output tar file. Got: \n\t" + '\n\t'.join(all_output_files)
+    assert len(all_output_files) == 1, \
+        f"Expected one output tar file. Got: \n\t" + '\n\t'.join(all_output_files)
     assert all_output_files == [str(expected_output)]
 
-    assert expected_output.exists(), f"No output produced in expected location {expected_output}."
+    assert expected_output.exists(), \
+        f"No output produced in expected location {expected_output}."
 
     checksums, members = _get_checksums_members(expected_output)
 
@@ -235,7 +206,8 @@ def test_recompress_dirty_dataset(tmp_path: Path):
 
     member_names = [m.name for m in members]
     # Note that MTL is first. We do this deliberately so it's quick to access.
-    # The others are alphabetical, as with USGS tars. (Not that it matters, but reprocessing stability is nice.)
+    # The others are alphabetical, as with USGS tars.
+    # (Not that it matters, but reprocessing stability is nice.)
     print('\n'.join(member_names))
     assert member_names == [
         'LC08_L1TP_091075_20161213_20170316_01_T2_MTL.txt',
@@ -264,6 +236,40 @@ def test_recompress_dirty_dataset(tmp_path: Path):
     ]
 
 
+def test_run_with_corrupt_data(tmp_path: Path):
+    output_path = tmp_path / 'out'
+    output_path.mkdir()
+
+    # Recompress expects the dataset in a "USGS" folder structure.
+    # Should bail otherwise rather than write data to unexpected locations!
+    # (we may expand this in the future, but being safe for now)
+    non_usgs_path = tmp_path / packaged_path.name
+    non_usgs_path.symlink_to(packaged_path)
+
+    with pytest.raises(ValueError, match="Expected AODH input path structure"):
+        _run_recompress(
+            non_usgs_path,
+            output_path,
+        )
+
+
+def _run_recompress(input_path, output_base, expected_return=0):
+    res: Result = CliRunner().invoke(
+        recompress.main,
+        (
+            '--output-base',
+            str(output_base),
+            # Out test data is smaller than the default block size.
+            '--block-size', '32',
+            str(input_path),
+        ),
+        catch_exceptions=False,
+    )
+    if expected_return is not None:
+        assert res.exit_code == expected_return, res.output
+    return res
+
+
 def _get_checksums_members(out_tar: Path) -> Tuple[Dict, List[tarfile.TarInfo]]:
     with tarfile.open(out_tar, 'r') as tar:
         members: List[tarfile.TarInfo] = tar.getmembers()
@@ -284,9 +290,13 @@ def test_calculate_out_path(tmp_path: Path):
     out_base = tmp_path / 'out'
 
     # When input is a tar file, use the same name on output.
-    path = Path('/test/in/l1-data/USGS/L1/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz')
+    path = Path('/test/in/l1-data/USGS/L1/C1/092_091/LT50920911991126/'
+                'LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz')
     assert_path_eq(
-        out_base.joinpath('L1/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar'),
+        out_base.joinpath(
+            'L1/C1/092_091/LT50920911991126/'
+            'LT05_L1GS_092091_19910506_20170126_01_T2.tar'
+        ),
         recompress._output_tar_path(out_base, path),
     )
 
@@ -296,7 +306,10 @@ def test_calculate_out_path(tmp_path: Path):
     mtl = path / 'LT05_L1GS_092091_19910506_20170126_01_T2_MTL.txt'
     mtl.write_text('fake mtl')
     assert_path_eq(
-        out_base.joinpath('L1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar'),
+        out_base.joinpath(
+            'L1/092_091/LT50920911991126/'
+            'LT05_L1GS_092091_19910506_20170126_01_T2.tar'
+        ),
         recompress._output_tar_path_from_directory(out_base, path),
     )
 
@@ -304,7 +317,9 @@ def test_calculate_out_path(tmp_path: Path):
 def assert_path_eq(p1: Path, p2: Path):
     """Assert two pathlib paths are equal, with reasonable error output."""
     __tracebackhide__ = True
-    # Pytest's error messages are far better for strings than Paths. It shows you the difference between them.
+    # Pytest's error messages are far better for strings than Paths.
+    # It shows you the difference between them.
     s1, s2 = str(p1), str(p2)
-    # And we use extra s1/s2 variables so that pytest doesn't print the expression "str()" as part of its output.
+    # And we use extra s1/s2 variables so that pytest doesn't print the
+    # expression "str()" as part of its output.
     assert s1 == s2
