@@ -66,6 +66,8 @@ def test_recompress_dataset(input_path: Path, tmp_path: Path):
         'LT05_L1GS_092091_19910506_20170126_01_T2_B7.TIF',
         'LT05_L1GS_092091_19910506_20170126_01_T2_BQA.TIF',
         'README.GTF',
+        'extras',
+        'extras/example-file.txt',
         'package.sha1',
     ]
 
@@ -80,13 +82,9 @@ def test_recompress_dataset(input_path: Path, tmp_path: Path):
            ] == 'beb4d546dc5e2850b2f33384bfbc6cf15b724197'
 
     # Are they the expected number of bytes?
-    assert member_sizes['package.sha1'] == 945
+    assert member_sizes['package.sha1'] == 1010
     assert member_sizes['README.GTF'] == 8686
     assert member_sizes['LT05_L1GS_092091_19910506_20170126_01_T2_ANG.txt'] == 34884
-
-    # All permissions are 664, as with USGS packages.
-    member_modes = {m.mode for m in members}
-    assert member_modes == {0o664}
 
 
 def test_recompress_gap_mask_dataset(tmp_path: Path):
