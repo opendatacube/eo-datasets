@@ -9,12 +9,14 @@ We also append a checksum file at the end of the tar.
 """
 import copy
 import io
-import json
+
+import socket
 import stat
 import sys
 import tarfile
 import tempfile
 import traceback
+from datetime import datetime
 from functools import partial
 from pathlib import Path
 from typing import List, Iterable, Tuple, Callable, IO, Dict
@@ -25,6 +27,11 @@ import rasterio
 from click import secho, echo
 
 from eodatasets.verify import PackageChecksum
+
+try:
+    import rapidjson as json
+except ImportError:
+    import json
 
 _PREDICTOR_TABLE = {
     'int8': 2,
@@ -256,6 +263,7 @@ def _log_skip(input_path: Path, output_tar: Path, reason: str, extra: dict = Non
     secho(
         json.dumps(
             dict(
+                time=datetime.now().isoformat(),
                 name=str(input_path.name),
                 status=f'skip.{reason}',
                 out_path=str(output_tar.absolute()),
@@ -271,6 +279,7 @@ def _log_completion(input_files: List[ReadableMember], input_path: Path, output_
     secho(
         json.dumps(
             dict(
+                time=datetime.now().isoformat(),
                 name=str(input_path.name),
                 status='complete',
                 in_size=sum(m.size for m, _ in input_files),
@@ -380,8 +389,14 @@ def main(paths: List[str], output_base: str, zlevel: int, block_size: int):
 
             if not success:
                 failures += 1
-
-    echo(f"Completed {total-failures} datasets. {failures} failures.")
+    if total > 1:
+        echo(json.dumps(dict(
+            time=datetime.now().isoformat(),
+            status="node.finish",
+            host=socket.getfqdn(),
+            total_count=total,
+            failure_count=failures,
+        )))
     sys.exit(failures)
 
 
