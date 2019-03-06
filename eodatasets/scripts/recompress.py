@@ -7,24 +7,24 @@ They arrive as a *.tar.gz with inner uncompressed tiffs, which Josh's tests have
 We compress the inner tiffs and store them in an uncompressed tar. This allows random reads within the files.
 We also append a checksum file at the end of the tar.
 """
+import sys
+from itertools import chain
+
+import click
 import copy
 import io
-
+import numpy
+import rasterio
 import socket
 import stat
-import sys
 import tarfile
 import tempfile
 import traceback
+from click import secho, echo
 from datetime import datetime
 from functools import partial
 from pathlib import Path
 from typing import List, Iterable, Tuple, Callable, IO, Dict
-
-import click
-import numpy
-import rasterio
-from click import secho, echo
 
 from eodatasets.verify import PackageChecksum
 
@@ -355,15 +355,19 @@ def _recompress_image(
               help="Deflate compression level.")
 @click.option("--block-size", type=int, default=512,
               help="Compression block size (both x and y)")
+@click.option('-f', 'input_file', help='Read paths from file', type=click.File('r'))
 @click.argument("paths", nargs=-1, type=click.Path(exists=True, readable=True))
-def main(paths: List[str], output_base: str, zlevel: int, block_size: int):
+def main(paths: List[str], input_file, output_base: str, zlevel: int, block_size: int):
     base_output_path = Path(output_base)
-    with rasterio.Env():
 
+    if input_file:
+        paths = chain(input_file, paths)
+
+    with rasterio.Env():
         total = failures = 0
         for path in paths:
             total += 1
-            path = Path(path)
+            path = Path(path.strip())
 
             # Input is either a tar.gz file, or a directory containing an MTL (already extracted)
             if path.suffix.lower() == '.gz':
@@ -385,7 +389,8 @@ def main(paths: List[str], output_base: str, zlevel: int, block_size: int):
                     block_size=(block_size, block_size),
                 )
             else:
-                raise ValueError(f"Expected either tar.gz or a dataset folder. Got: {path}")
+                raise ValueError(f"Expected either tar.gz or a dataset folder. "
+                                 f"Got: {repr(path)}")
 
             if not success:
                 failures += 1
