@@ -344,28 +344,43 @@ def test_calculate_out_path(tmp_path: Path):
     )
 
 
-@contextmanager
-def expect_path_unchanged(path: Path, msg=''):
+class expect_path_unchanged:
     """
     Ensure a file/directory was not modified within a block of code.
     """
-    original_hashes = _hash_all_files(path)
-    yield
-    new_hashes = _hash_all_files(path)
 
-    # Convert to sets as pytest output is better
-    original_file_list = set(original_hashes.keys())
-    new_file_list = set(new_hashes.keys())
+    def __init__(self, path: Path, msg='') -> None:
+        self.path = path
+        self.msg = msg
+        assert path.exists(), "'unchanging' path doesn't exist originally"
 
-    # Are the same set of files in the path?
-    assert original_file_list == new_file_list
+    def __enter__(self):
+        __tracebackhide__ = True
+        self.original_hashes = _hash_all_files(self.path)
 
-    # Do they all have the same contents?
-    for path_offset, (original_crc32, original_inode) in original_hashes.items():
-        new_crc32, new_inode = new_hashes[path_offset]
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        __tracebackhide__ = True
+        self._check(self.path, self.msg, self.original_hashes)
 
-        assert original_crc32 == new_crc32, f"{msg} (modified: {path_offset})"
-        assert original_inode == new_inode, f"{msg} (replaced: {path_offset})"
+    @staticmethod
+    def _check(path, msg, original_hashes):
+        __tracebackhide__ = True
+        assert path.exists(), f"{msg} (deleted! {path})"
+        new_hashes = _hash_all_files(path)
+
+        # Convert to sets as pytest output is better
+        original_file_list = set(original_hashes.keys())
+        new_file_list = set(new_hashes.keys())
+
+        # Are the same set of files in the path?
+        assert original_file_list == new_file_list
+
+        # Do they all have the same contents?
+        for path_offset, (original_crc32, original_inode) in original_hashes.items():
+            new_crc32, new_inode = new_hashes[path_offset]
+
+            assert original_crc32 == new_crc32, f"{msg} (modified: {path_offset})"
+            assert original_inode == new_inode, f"{msg} (replaced: {path_offset})"
 
 
 def _hash_all_files(path: Path) -> Dict[Path, Tuple[str, int]]:
