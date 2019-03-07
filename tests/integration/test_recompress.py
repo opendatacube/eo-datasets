@@ -1,4 +1,6 @@
+import shutil
 import tarfile
+from contextlib import contextmanager
 from pathlib import Path
 from typing import List, Dict, Tuple
 
@@ -9,26 +11,49 @@ from eodatasets import verify
 from eodatasets.scripts import recompress
 
 this_folder = Path(__file__).parent
-packaged_path: Path = this_folder.joinpath(
-    'recompress_packed/USGS/L1/Landsat/C1/092_091/LT50920911991126',
-    'LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz'
-)
-unpackaged_path: Path = this_folder.joinpath(
-    'recompress_unpackaged/USGS/L1/Landsat/C1/092_091/LT50920911991126'
-)
+packaged_base: Path = this_folder.joinpath('recompress_packed')
+packaged_offset = 'USGS/L1/Landsat/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz'
+packaged_path = packaged_base / packaged_offset
+unpackaged_base: Path = this_folder.joinpath('recompress_unpackaged')
+unpackaged_offset = 'USGS/L1/Landsat/C1/092_091/LT50920911991126'
+unpackaged_path = unpackaged_base / unpackaged_offset
+
+
+def please_copy(src: Path, dst: Path):
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if src.is_dir():
+        shutil.copytree(str(src), str(dst))
+    else:
+        shutil.copy(str(src), str(dst))
 
 
 @pytest.mark.parametrize(
-    "input_path",
-    [packaged_path, unpackaged_path],
+    "base_in_path,in_offset",
+    [
+        (packaged_base, packaged_offset),
+        (unpackaged_base, unpackaged_offset)
+    ],
     ids=('packaged', 'unpackaged')
 )
-def test_recompress_dataset(input_path: Path, tmp_path: Path):
+def test_recompress_dataset(base_in_path: Path, in_offset: str, tmp_path: Path):
+    test_dataset = base_in_path / in_offset
+    assert test_dataset.exists()
+
+    # Copy our input into the temp directory, as we'll change it.
+    input_path: Path = tmp_path / in_offset
+
+    please_copy(test_dataset, input_path)
+
     assert input_path.exists()
 
-    output_base = tmp_path / 'out'
+    # Same folder as the input!
+    output_base = tmp_path / 'USGS'
 
-    _run_recompress(input_path, output_base)
+    _run_recompress(input_path, output_base, '--clean-inputs')
+
+    # If input was a file, it should no longer exist.
+    # (a directory will still exist it contains the output [which is checked below])
+    assert not input_path.is_file(), "Input file was not cleaned up"
 
     expected_output = (
             output_base /
@@ -37,11 +62,16 @@ def test_recompress_dataset(input_path: Path, tmp_path: Path):
     )
 
     # Pytest has better error messages for strings than Paths.
-    all_output_files = [str(p) for p in output_base.rglob('*') if p.is_file()]
+    all_output_files = set(
+        str(p.relative_to(output_base))
+        for p in output_base.rglob('*') if p.is_file()
+    )
 
-    assert len(all_output_files) == 1, \
-        f"Expected one output tar file. Got: \n\t" + '\n\t'.join(all_output_files)
-    assert all_output_files == [str(expected_output)]
+    assert len(all_output_files) == 1, (
+            f"Expected one output tar file. Got: {len(all_output_files)}"
+            f"\n\t" + '\n\t'.join(all_output_files)
+    )
+    assert all_output_files == {str(expected_output.relative_to(output_base))}
 
     assert expected_output.exists(), \
         f"No output produced in expected location {expected_output}."
@@ -96,7 +126,8 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
 
     output_base = tmp_path / 'out'
 
-    _run_recompress(input_path, output_base)
+    with expect_path_unchanged(input_path):
+        _run_recompress(input_path, output_base)
 
     expected_output = (
             output_base /
@@ -152,15 +183,9 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
     ####
     # If packaging is rerun, the output should not be touched!
     # ie. skip if output exists.
-    original_crc32 = verify.calculate_file_crc32(expected_output)
-    original_inode = expected_output.stat().st_ino
-
-    _run_recompress(input_path, output_base)
-
-    new_crc32 = verify.calculate_file_crc32(expected_output)
-    new_inode = expected_output.stat().st_ino
-    assert original_crc32 == new_crc32, "Output file was modified on rerun of compress"
-    assert original_inode == new_inode, "Output file was replaced on rerun of compress"
+    with expect_path_unchanged(expected_output,
+                               "Output file shouldn't be touched on rerun of compress"):
+        _run_recompress(input_path, output_base)
 
 
 def test_recompress_dirty_dataset(tmp_path: Path):
@@ -177,7 +202,8 @@ def test_recompress_dirty_dataset(tmp_path: Path):
 
     output_base = tmp_path / 'out'
 
-    _run_recompress(input_path, output_base)
+    with expect_path_unchanged(input_path):
+        _run_recompress(input_path, output_base)
 
     expected_output = (
             output_base /
@@ -251,7 +277,12 @@ def test_run_with_corrupt_data(tmp_path: Path):
         )
 
 
-def _run_recompress(input_path, output_base, expected_return=0):
+def _run_recompress(
+        input_path: Path,
+        output_base: Path,
+        *args,
+        expected_return=0,
+):
     res: Result = CliRunner().invoke(
         recompress.main,
         (
@@ -259,6 +290,7 @@ def _run_recompress(input_path, output_base, expected_return=0):
             str(output_base),
             # Out test data is smaller than the default block size.
             '--block-size', '32',
+            *args,
             str(input_path),
         ),
         catch_exceptions=False,
@@ -310,6 +342,44 @@ def test_calculate_out_path(tmp_path: Path):
         ),
         recompress._output_tar_path_from_directory(out_base, path),
     )
+
+
+@contextmanager
+def expect_path_unchanged(path: Path, msg=''):
+    """
+    Ensure a file/directory was not modified within a block of code.
+    """
+    original_hashes = _hash_all_files(path)
+    yield
+    new_hashes = _hash_all_files(path)
+
+    # Convert to sets as pytest output is better
+    original_file_list = set(original_hashes.keys())
+    new_file_list = set(new_hashes.keys())
+
+    # Are the same set of files in the path?
+    assert original_file_list == new_file_list
+
+    # Do they all have the same contents?
+    for path_offset, (original_crc32, original_inode) in original_hashes.items():
+        new_crc32, new_inode = new_hashes[path_offset]
+
+        assert original_crc32 == new_crc32, f"{msg} (modified: {path_offset})"
+        assert original_inode == new_inode, f"{msg} (replaced: {path_offset})"
+
+
+def _hash_all_files(path: Path) -> Dict[Path, Tuple[str, int]]:
+    if path.is_dir():
+        files = [p for p in path.rglob('*') if p.is_file()]
+    else:
+        files = [path]
+
+    hashes = {}
+    for f in files:
+        original_crc32 = verify.calculate_file_crc32(f)
+        original_inode = f.stat().st_ino
+        hashes[f.relative_to(path)] = (original_crc32, original_inode)
+    return hashes
 
 
 def assert_path_eq(p1: Path, p2: Path):

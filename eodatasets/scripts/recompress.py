@@ -21,9 +21,11 @@ import tarfile
 import tempfile
 import traceback
 from click import secho, echo
+from contextlib import suppress
 from datetime import datetime
 from functools import partial
 from pathlib import Path
+from subprocess import call
 from typing import List, Iterable, Tuple, Callable, IO, Dict
 
 from eodatasets.verify import PackageChecksum
@@ -355,9 +357,16 @@ def _recompress_image(
               help="Deflate compression level.")
 @click.option("--block-size", type=int, default=512,
               help="Compression block size (both x and y)")
+@click.option("--clean-inputs/--no-clean-inputs", default=False,
+              help="Delete originals after repackaging")
 @click.option('-f', 'input_file', help='Read paths from file', type=click.File('r'))
 @click.argument("paths", nargs=-1, type=click.Path(exists=True, readable=True))
-def main(paths: List[str], input_file, output_base: str, zlevel: int, block_size: int):
+def main(paths: List[str],
+         input_file,
+         output_base: str,
+         zlevel: int,
+         clean_inputs: bool,
+         block_size: int):
     base_output_path = Path(output_base)
 
     if input_file:
@@ -372,19 +381,21 @@ def main(paths: List[str], input_file, output_base: str, zlevel: int, block_size
             # Input is either a tar.gz file, or a directory containing an MTL (already extracted)
             if path.suffix.lower() == '.gz':
                 with tarfile.open(str(path), 'r') as in_tar:
+                    result_path = _output_tar_path(base_output_path, path)
                     success = repackage_tar(
                         path,
                         _tar_members(in_tar),
-                        _output_tar_path(base_output_path, path),
+                        result_path,
                         zlevel=zlevel,
                         block_size=(block_size, block_size),
                     )
 
             elif path.is_dir():
+                result_path = _output_tar_path_from_directory(base_output_path, path)
                 success = repackage_tar(
                     path,
                     _folder_members(path),
-                    _output_tar_path_from_directory(base_output_path, path),
+                    result_path,
                     zlevel=zlevel,
                     block_size=(block_size, block_size),
                 )
@@ -392,8 +403,30 @@ def main(paths: List[str], input_file, output_base: str, zlevel: int, block_size
                 raise ValueError(f"Expected either tar.gz or a dataset folder. "
                                  f"Got: {repr(path)}")
 
-            if not success:
+            result_exists = result_path.exists()
+            if success:
+                if not result_exists:
+                    # This should never happen, so it's an exception.
+                    raise RuntimeError(
+                        f"No output after a success? Expected {result_path}"
+                    )
+
+                if clean_inputs:
+                    # Be extra sure the new file was flushed to disk before we clean the original.
+                    call('sync')
+
+                    echo(json.dumps(dict(
+                        time=datetime.now().isoformat(),
+                        status="input.cleanup",
+                        input_path=str(path),
+                        result_path=str(result_path),
+                    )))
+                    please_remove(path, excluding=result_path)
+            else:
                 failures += 1
+                if result_exists:
+                    # This should never happen, so it's an exception.
+                    raise RuntimeError(f"Failed job left an output! {result_path}")
     if total > 1:
         echo(json.dumps(dict(
             time=datetime.now().isoformat(),
@@ -403,6 +436,22 @@ def main(paths: List[str], input_file, output_base: str, zlevel: int, block_size
             failure_count=failures,
         )))
     sys.exit(failures)
+
+
+def please_remove(path: Path, excluding: Path):
+    """
+    Delete all of path, excluding the given path.
+    """
+    if path.absolute() == excluding.absolute():
+        return
+
+    if path.is_dir():
+        for p in path.iterdir():
+            please_remove(p, excluding)
+        with suppress(OSError):
+            path.rmdir()
+    else:
+        path.unlink()
 
 
 def _format_exception(e: BaseException):
