@@ -183,9 +183,13 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
     ####
     # If packaging is rerun, the output should not be touched!
     # ie. skip if output exists.
-    with expect_path_unchanged(expected_output,
-                               "Output file shouldn't be touched on rerun of compress"):
-        _run_recompress(input_path, output_base)
+    with (
+            expect_path_unchanged(expected_output,
+                                  "Output file shouldn't be touched on rerun of compress"),
+            expect_path_unchanged(input_path,
+                                  "Input path shouldn't be cleaned when output is skipped")
+    ):
+        _run_recompress(input_path, output_base, '--clean-inputs')
 
 
 def test_recompress_dirty_dataset(tmp_path: Path):
