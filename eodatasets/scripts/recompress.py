@@ -131,6 +131,7 @@ def repackage_tar(
         input_path: Path,
         input_files: Iterable[ReadableMember],
         output_tar_path: Path,
+        clean_inputs: bool,
         **compress_args,
 ) -> bool:
     if output_tar_path.exists():
@@ -147,6 +148,24 @@ def repackage_tar(
         _create_tar_with_files(input_path, members, output_tar_path, **compress_args)
 
         _log_completion(members, input_path, output_tar_path)
+
+        result_exists = output_tar_path.exists()
+        if not result_exists:
+            # This should never happen, so it's an exception.
+            raise RuntimeError(
+                f"No output after a success? Expected {output_tar_path}"
+            )
+
+        if clean_inputs:
+            # Be extra sure the new file was flushed to disk before we clean the original.
+            call('sync')
+            echo(json.dumps(dict(
+                time=datetime.now().isoformat(),
+                status="input.cleanup",
+                input_path=str(input_path),
+                output_tar_path=str(output_tar_path),
+            )))
+            please_remove(input_path, excluding=output_tar_path)
     except Exception as e:
         _log_skip(
             input_path,
@@ -381,21 +400,21 @@ def main(paths: List[str],
             # Input is either a tar.gz file, or a directory containing an MTL (already extracted)
             if path.suffix.lower() == '.gz':
                 with tarfile.open(str(path), 'r') as in_tar:
-                    result_path = _output_tar_path(base_output_path, path)
                     success = repackage_tar(
                         path,
                         _tar_members(in_tar),
-                        result_path,
+                        _output_tar_path(base_output_path, path),
+                        clean_inputs=clean_inputs,
                         zlevel=zlevel,
                         block_size=(block_size, block_size),
                     )
 
             elif path.is_dir():
-                result_path = _output_tar_path_from_directory(base_output_path, path)
                 success = repackage_tar(
                     path,
                     _folder_members(path),
-                    result_path,
+                    _output_tar_path_from_directory(base_output_path, path),
+                    clean_inputs=clean_inputs,
                     zlevel=zlevel,
                     block_size=(block_size, block_size),
                 )
@@ -403,30 +422,8 @@ def main(paths: List[str],
                 raise ValueError(f"Expected either tar.gz or a dataset folder. "
                                  f"Got: {repr(path)}")
 
-            result_exists = result_path.exists()
-            if success:
-                if not result_exists:
-                    # This should never happen, so it's an exception.
-                    raise RuntimeError(
-                        f"No output after a success? Expected {result_path}"
-                    )
-
-                if clean_inputs:
-                    # Be extra sure the new file was flushed to disk before we clean the original.
-                    call('sync')
-
-                    echo(json.dumps(dict(
-                        time=datetime.now().isoformat(),
-                        status="input.cleanup",
-                        input_path=str(path),
-                        result_path=str(result_path),
-                    )))
-                    please_remove(path, excluding=result_path)
-            else:
+            if not success:
                 failures += 1
-                if result_exists:
-                    # This should never happen, so it's an exception.
-                    raise RuntimeError(f"Failed job left an output! {result_path}")
     if total > 1:
         echo(json.dumps(dict(
             time=datetime.now().isoformat(),
