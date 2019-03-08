@@ -49,7 +49,7 @@ def test_recompress_dataset(base_in_path: Path, in_offset: str, tmp_path: Path):
     # Same folder as the input!
     output_base = tmp_path / 'USGS'
 
-    _run_recompress(input_path, output_base, '--clean-inputs')
+    _run_recompress(input_path, '--clean-inputs')
 
     # If input was a file, it should no longer exist.
     # (a directory will still exist it contains the output [which is checked below])
@@ -127,7 +127,7 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
     output_base = tmp_path / 'out'
 
     with expect_path_unchanged(input_path):
-        _run_recompress(input_path, output_base)
+        _run_recompress(input_path, '--output-base', str(output_base))
 
     expected_output = (
             output_base /
@@ -183,13 +183,12 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
     ####
     # If packaging is rerun, the output should not be touched!
     # ie. skip if output exists.
-    with (
-            expect_path_unchanged(expected_output,
-                                  "Output file shouldn't be touched on rerun of compress"),
-            expect_path_unchanged(input_path,
-                                  "Input path shouldn't be cleaned when output is skipped")
-    ):
-        _run_recompress(input_path, output_base, '--clean-inputs')
+    with expect_path_unchanged(expected_output,
+                               "Output file shouldn't be touched on rerun of compress"
+                               ), \
+         expect_path_unchanged(input_path,
+                               "Input path shouldn't be cleaned when output is skipped"):
+        _run_recompress(input_path, '--clean-inputs', '--output-base', str(output_base))
 
 
 def test_recompress_dirty_dataset(tmp_path: Path):
@@ -207,7 +206,7 @@ def test_recompress_dirty_dataset(tmp_path: Path):
     output_base = tmp_path / 'out'
 
     with expect_path_unchanged(input_path):
-        _run_recompress(input_path, output_base)
+        _run_recompress(input_path, '--output-base', str(output_base))
 
     expected_output = (
             output_base /
@@ -277,21 +276,21 @@ def test_run_with_corrupt_data(tmp_path: Path):
     with pytest.raises(ValueError, match="Expected AODH input path structure"):
         _run_recompress(
             non_usgs_path,
-            output_path,
+            '--output-base', str(output_path)
         )
 
 
 def _run_recompress(
         input_path: Path,
-        output_base: Path,
         *args,
         expected_return=0,
 ):
+    if isinstance(args, str):
+        args = [args]
+
     res: Result = CliRunner().invoke(
         recompress.main,
         (
-            '--output-base',
-            str(output_base),
             # Out test data is smaller than the default block size.
             '--block-size', '32',
             *args,
@@ -334,6 +333,15 @@ def test_calculate_out_path(tmp_path: Path):
         recompress._output_tar_path(out_base, path),
     )
 
+    # When no output directory, put it in same folder.
+    path = Path('/test/in/l1-data/USGS/L1/C1/092_091/LT50920911991126/'
+                'LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz')
+    assert_path_eq(
+        Path('/test/in/l1-data/USGS/L1/C1/092_091/LT50920911991126/'
+             'LT05_L1GS_092091_19910506_20170126_01_T2.tar'),
+        recompress._output_tar_path(None, path),
+    )
+
     # When input is a directory, use the MTL file's name for the output.
     path = tmp_path / 'USGS/L1/092_091/LT50920911991126'
     path.mkdir(parents=True)
@@ -345,6 +353,11 @@ def test_calculate_out_path(tmp_path: Path):
             'LT05_L1GS_092091_19910506_20170126_01_T2.tar'
         ),
         recompress._output_tar_path_from_directory(out_base, path),
+    )
+    # No output path, it goes inside the folder.
+    assert_path_eq(
+        path.joinpath('LT05_L1GS_092091_19910506_20170126_01_T2.tar'),
+        recompress._output_tar_path_from_directory(None, path),
     )
 
 

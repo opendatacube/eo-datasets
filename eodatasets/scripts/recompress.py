@@ -369,9 +369,17 @@ def _recompress_image(
         output_dataset.update_tags(1, **input_image.tags(1))
 
 
+class PathPath(click.Path):
+    """A Click path argument that returns a pathlib Path, not a string"""
+    def convert(self, value, param, ctx):
+        result = super().convert(value, param, ctx)
+        return Path(result) if result else None
+
+
 @click.command(help=__doc__)
-@click.option("--output-base", type=click.Path(file_okay=False, writable=True),
-              help="The base output directory.", required=True)
+@click.option("--output-base", type=PathPath(file_okay=False, writable=True),
+              help="The base output directory "
+                   "(default to same dir as input if --clean-inputs).")
 @click.option("--zlevel", type=click.IntRange(0, 9), default=5,
               help="Deflate compression level.")
 @click.option("--block-size", type=int, default=512,
@@ -379,23 +387,28 @@ def _recompress_image(
 @click.option("--clean-inputs/--no-clean-inputs", default=False,
               help="Delete originals after repackaging")
 @click.option('-f', 'input_file', help='Read paths from file', type=click.File('r'))
-@click.argument("paths", nargs=-1, type=click.Path(exists=True, readable=True))
-def main(paths: List[str],
+@click.argument("paths", nargs=-1, type=PathPath(exists=True, readable=True))
+def main(paths: List[Path],
          input_file,
-         output_base: str,
+         output_base: Path,
          zlevel: int,
          clean_inputs: bool,
          block_size: int):
-    base_output_path = Path(output_base)
+    if (not output_base) and (not clean_inputs):
+        raise click.UsageError(
+            "Need to specify either a different output directory (--output-base) "
+            "or to clean inputs (--clean-inputs)")
 
     if input_file:
-        paths = chain(input_file, paths)
+        paths = chain(
+            (Path(p.strip()) for p in input_file),
+            paths
+        )
 
     with rasterio.Env():
         total = failures = 0
         for path in paths:
             total += 1
-            path = Path(path.strip())
 
             # Input is either a tar.gz file, or a directory containing an MTL (already extracted)
             if path.suffix.lower() == '.gz':
@@ -403,7 +416,7 @@ def main(paths: List[str],
                     success = repackage_tar(
                         path,
                         _tar_members(in_tar),
-                        _output_tar_path(base_output_path, path),
+                        _output_tar_path(output_base, path),
                         clean_inputs=clean_inputs,
                         zlevel=zlevel,
                         block_size=(block_size, block_size),
@@ -413,7 +426,7 @@ def main(paths: List[str],
                 success = repackage_tar(
                     path,
                     _folder_members(path),
-                    _output_tar_path_from_directory(base_output_path, path),
+                    _output_tar_path_from_directory(output_base, path),
                     clean_inputs=clean_inputs,
                     zlevel=zlevel,
                     block_size=(block_size, block_size),
@@ -461,8 +474,16 @@ def _format_exception(e: BaseException):
 
 
 def _output_tar_path(base_output, input_path):
-    out_path = _calculate_out_base_path(base_output, input_path)
-    return out_path.with_name(out_path.stem)
+    if base_output:
+        out_path = _calculate_out_base_path(base_output, input_path)
+    else:
+        out_path = input_path
+
+    # Remove .gz suffix
+    name = out_path.stem
+    if not name.endswith('.tar'):
+        raise RuntimeError(f"Expected path to end in .tar.gz, got: {out_path}")
+    return out_path.with_name(name)
 
 
 def _output_tar_path_from_directory(base_output, input_path):
@@ -473,8 +494,11 @@ def _output_tar_path_from_directory(base_output, input_path):
         secho(f"WARNING: multiple MTL files in {input_path}", bold=True, color='red', err=True)
     mtl_file = mtl_files[0]
     dataset_name = mtl_file.name.replace('_MTL.txt', '')
-    out_tar_path = _calculate_out_base_path(base_output, input_path) / f'{dataset_name}.tar'
-    return out_tar_path
+
+    if base_output:
+        return _calculate_out_base_path(base_output, input_path) / f'{dataset_name}.tar'
+    else:
+        return input_path / f'{dataset_name}.tar'
 
 
 def _calculate_out_base_path(out_base: Path, path: Path) -> Path:
