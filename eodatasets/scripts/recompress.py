@@ -247,8 +247,8 @@ def _recompress_tar_member(
 
     # If it's a tif, check whether it's compressed.
     if member.name.lower().endswith('.tif'):
-        input_fp = open_member()
-        with rasterio.open(input_fp) as ds:
+        with open_member() as input_fp, \
+                rasterio.open(input_fp) as ds:
             if not ds.profile.get('compress'):
                 # No compression: let's compress it
                 with rasterio.MemoryFile(filename=member.name) as memory_file:
@@ -266,7 +266,7 @@ def _recompress_tar_member(
                     return
             else:
                 # It's already compressed, we'll fall through and copy it verbatim.
-                input_fp.close()
+                pass
 
     if member.size == 0:
         # Typically a directory entry.
@@ -274,7 +274,8 @@ def _recompress_tar_member(
         return
 
     # Copy unchanged into target (typically text/metadata files).
-    file_contents = open_member().read()
+    with open_member() as member:
+        file_contents = member.read()
     out_tar.addfile(new_member, io.BytesIO(file_contents))
     verify.add(io.BytesIO(file_contents), tmpdir / new_member.name)
     del file_contents

@@ -1,11 +1,9 @@
+import pytest
 import shutil
 import tarfile
-from contextlib import contextmanager
+from click.testing import CliRunner, Result
 from pathlib import Path
 from typing import List, Dict, Tuple
-
-import pytest
-from click.testing import CliRunner, Result
 
 from eodatasets import verify
 from eodatasets.scripts import recompress
@@ -183,12 +181,20 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
     ####
     # If packaging is rerun, the output should not be touched!
     # ie. skip if output exists.
-    with expect_path_unchanged(expected_output,
-                               "Output file shouldn't be touched on rerun of compress"
-                               ), \
-         expect_path_unchanged(input_path,
-                               "Input path shouldn't be cleaned when output is skipped"):
-        _run_recompress(input_path, '--clean-inputs', '--output-base', str(output_base))
+    unchanged_output = expect_path_unchanged(
+        expected_output,
+        "Output file shouldn't be touched on rerun of compress"
+    )
+    unchanged_input = expect_path_unchanged(
+        input_path,
+        "Input path shouldn't be cleaned when output is skipped"
+    )
+    with unchanged_input, unchanged_output:
+        _run_recompress(
+            input_path,
+            '--clean-inputs',
+            '--output-base', str(output_base)
+        )
 
 
 def test_recompress_dirty_dataset(tmp_path: Path):
@@ -288,16 +294,24 @@ def _run_recompress(
     if isinstance(args, str):
         args = [args]
 
-    res: Result = CliRunner().invoke(
-        recompress.main,
-        (
-            # Out test data is smaller than the default block size.
-            '--block-size', '32',
-            *args,
-            str(input_path),
-        ),
-        catch_exceptions=False,
-    )
+    with pytest.warns(None) as warning_record:
+        res: Result = CliRunner().invoke(
+            recompress.main,
+            (
+                # Out test data is smaller than the default block size.
+                '--block-size', '32',
+                *args,
+                str(input_path),
+            ),
+            catch_exceptions=False,
+        )
+
+    # We could tighten this to specific warnings if it proves too noisy, but it's
+    # useful for catching things like unclosed files.
+    if warning_record:
+        messages = "\n".join(f"- {w.message}\n" for w in warning_record)
+        raise AssertionError(f"Warnings were produced during recompress:\n {messages}")
+
     if expected_return is not None:
         assert res.exit_code == expected_return, res.output
     return res
