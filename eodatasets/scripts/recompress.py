@@ -373,8 +373,7 @@ def _recompress_image(
 class PathPath(click.Path):
     """A Click path argument that returns a pathlib Path, not a string"""
     def convert(self, value, param, ctx):
-        result = super().convert(value, param, ctx)
-        return Path(result) if result else None
+        return Path(super().convert(value, param, ctx))
 
 
 @click.command(help=__doc__)
