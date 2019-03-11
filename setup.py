@@ -36,7 +36,8 @@ setup(
         'pyyaml',
         'rasterio',
         'shapely',
-        'scipy'
+        'scipy',
+        'structlog',
     ],
     tests_require=tests_require,
     extras_require={

@@ -17,23 +17,19 @@ import numpy
 import rasterio
 import socket
 import stat
+import structlog
 import tarfile
 import tempfile
 import traceback
-from click import secho, echo
 from contextlib import suppress
-from datetime import datetime
 from functools import partial
 from pathlib import Path
+from structlog.processors import (StackInfoRenderer, TimeStamper, format_exc_info,
+                                  JSONRenderer)
 from subprocess import call
 from typing import List, Iterable, Tuple, Callable, IO, Dict
 
 from eodatasets.verify import PackageChecksum
-
-try:
-    import rapidjson as json
-except ImportError:
-    import json
 
 _PREDICTOR_TABLE = {
     'int8': 2,
@@ -50,6 +46,12 @@ _PREDICTOR_TABLE = {
 
 # The info of a file, and a method to open the file for reading.
 ReadableMember = Tuple[tarfile.TarInfo, Callable[[], IO]]
+
+_LOG = structlog.get_logger()
+
+
+class RecompressFailure(Exception):
+    pass
 
 
 def _create_tarinfo(path: Path, name=None) -> tarfile.TarInfo:
@@ -134,8 +136,14 @@ def repackage_tar(
         clean_inputs: bool,
         **compress_args,
 ) -> bool:
+    log = _LOG.bind(
+        name=output_tar_path.stem,
+        in_path=str(input_path.absolute()),
+        out_path=str(output_tar_path.absolute()),
+    )
+
     if output_tar_path.exists():
-        _log_skip(input_path, output_tar_path, 'exists')
+        log.info('skip.exists')
         return True
 
     try:
@@ -147,7 +155,14 @@ def repackage_tar(
 
         _create_tar_with_files(input_path, members, output_tar_path, **compress_args)
 
-        _log_completion(members, input_path, output_tar_path)
+        log.info(
+            'complete',
+            in_size=sum(m.size for m, _ in members),
+            in_count=len(members),
+            # The user/group give us a hint as to whether this was repackaged outside of USGS.
+            in_users=list({(member.uname, member.gname) for member, _ in members}),
+            out_size=output_tar_path.stat().st_size,
+        )
 
         result_exists = output_tar_path.exists()
         if not result_exists:
@@ -159,20 +174,10 @@ def repackage_tar(
         if clean_inputs:
             # Be extra sure the new file was flushed to disk before we clean the original.
             call('sync')
-            echo(json.dumps(dict(
-                time=datetime.now().isoformat(),
-                status="input.cleanup",
-                input_path=str(input_path),
-                output_tar_path=str(output_tar_path),
-            )))
+            log.info("input.cleanup")
             please_remove(input_path, excluding=output_tar_path)
-    except Exception as e:
-        _log_skip(
-            input_path,
-            output_tar_path,
-            'error',
-            extra=dict(traceback=_format_exception(e))
-        )
+    except Exception:
+        log.exception('error', exc_info=True)
         return False
     return True
 
@@ -201,7 +206,8 @@ def _create_tar_with_files(
 
         with tarfile.open(tmp_out_tar, 'w') as out_tar:
             with click.progressbar(label=input_path.name,
-                                   length=sum(member.size for member, _ in members)) as progress:
+                                   length=sum(member.size for member, _ in members),
+                                   file=sys.stderr) as progress:
                 file_number = 0
                 for readable_member in members:
                     file_number += 1
@@ -254,9 +260,8 @@ def _recompress_tar_member(
                 with rasterio.MemoryFile(filename=member.name) as memory_file:
                     try:
                         _recompress_image(ds, memory_file, **compress_args)
-                    except Exception:
-                        secho(f"Error during {member.name}", bold=True)
-                        raise
+                    except Exception as e:
+                        raise RecompressFailure(f"Error during {member.name}") from e
                     new_member.size = memory_file.getbuffer().nbytes
                     out_tar.addfile(new_member, memory_file)
 
@@ -279,41 +284,6 @@ def _recompress_tar_member(
     out_tar.addfile(new_member, io.BytesIO(file_contents))
     verify.add(io.BytesIO(file_contents), tmpdir / new_member.name)
     del file_contents
-
-
-def _log_skip(input_path: Path, output_tar: Path, reason: str, extra: dict = None):
-    secho(
-        json.dumps(
-            dict(
-                time=datetime.now().isoformat(),
-                name=str(input_path.name),
-                status=f'skip.{reason}',
-                out_path=str(output_tar.absolute()),
-                in_path=str(input_path.absolute()),
-                **(extra or {})
-            )
-        )
-    )
-
-
-def _log_completion(input_files: List[ReadableMember], input_path: Path, output_tar: Path):
-    users = {(member.uname, member.gname) for member, _ in input_files}
-    secho(
-        json.dumps(
-            dict(
-                time=datetime.now().isoformat(),
-                name=str(input_path.name),
-                status='complete',
-                in_size=sum(m.size for m, _ in input_files),
-                in_count=len(input_files),
-                # The user/group give us a hint as to whether this was repackaged outside of USGS.
-                in_users=list(users),
-                out_size=output_tar.stat().st_size,
-                out_path=str(output_tar.absolute()),
-                in_path=str(input_path.absolute()),
-            )
-        )
-    )
 
 
 def _reorder_tar_members(members: List[ReadableMember], identifier: str):
@@ -394,6 +364,14 @@ def main(paths: List[Path],
          zlevel: int,
          clean_inputs: bool,
          block_size: int):
+    # Structured (json) logging goes to stdout
+    structlog.configure(processors=[
+        StackInfoRenderer(),
+        format_exc_info,
+        TimeStamper(utc=False, fmt='iso'),
+        JSONRenderer(),
+    ])
+
     if (not output_base) and (not clean_inputs):
         raise click.UsageError(
             "Need to specify either a different output directory (--output-base) "
@@ -438,13 +416,12 @@ def main(paths: List[Path],
             if not success:
                 failures += 1
     if total > 1:
-        echo(json.dumps(dict(
-            time=datetime.now().isoformat(),
-            status="node.finish",
+        _LOG.info(
+            "node.finish",
             host=socket.getfqdn(),
             total_count=total,
             failure_count=failures,
-        )))
+        )
     sys.exit(failures)
 
 
@@ -491,7 +468,7 @@ def _output_tar_path_from_directory(base_output, input_path):
     if not mtl_files:
         raise ValueError(f"Dataset has no mtl: {input_path}")
     if len(mtl_files) > 1:
-        secho(f"WARNING: multiple MTL files in {input_path}", bold=True, color='red', err=True)
+        _LOG.warn('multiple.mtl.files', in_path=input_path)
     mtl_file = mtl_files[0]
     dataset_name = mtl_file.name.replace('_MTL.txt', '')
 
