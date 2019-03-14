@@ -182,7 +182,7 @@ def prepare_dataset(path, datastrip_path=None):
         datastrip_path = path / 'datastrip'
     root_datastrip = ElementTree.parse(datastrip_path / 'metadata.xml').getroot()
     size_bytes = sum(os.path.getsize(p) for p in os.scandir(path))
-    checksum_sha1 = dirhash(path.parent, 'sha1')
+    checksum_sha1 = dirhash(path, 'sha1')
 
     # Get the datastrip metadata url and generated a deterministic src uuid
     datastrip_metadata, persisted_uuid = get_datastrip_info(path)

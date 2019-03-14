@@ -274,7 +274,11 @@ def prepare_dataset_from_mtl(total_size: int,
         mtl_filename,
     )
 
-    product_id = mtl_doc['metadata_file_info']['landsat_product_id']
+
+    product_id = mtl_doc['metadata_file_info'].get('landsat_product_id')
+    if not product_id:
+        # Check both types of keys
+        product_id = mtl_doc['metadata_file_info']['landsat_scene_id']
 
     additional = additional_props or {}
 
