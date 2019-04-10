@@ -202,7 +202,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     "bandId": "0",
                     "measurement": {
-                        "azimith": {
+                        "azimuth": {
                             "value": 285.033757307864
                         },
                         "zenith": {
@@ -214,7 +214,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     "bandId": "9",
                     "measurement": {
-                        "azimith": {
+                        "azimuth": {
                             "value": 285.075607281345
                         },
                         "zenith": {
@@ -226,7 +226,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     "bandId": "10",
                     "measurement": {
-                        "azimith": {
+                        "azimuth": {
                             "value": 284.793804242023
                         },
                         "zenith": {
@@ -238,7 +238,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     "bandId": "1",
                     "measurement": {
-                        "azimith": {
+                        "azimuth": {
                             "value": 284.793733737481
                         },
                         "zenith": {
@@ -250,7 +250,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     "bandId": "2",
                     "measurement": {
-                        "azimith": {
+                        "azimuth": {
                             "value": 284.851677995258
                         },
                         "zenith": {
@@ -262,7 +262,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     "bandId": "3",
                     "measurement": {
-                        "azimith": {
+                        "azimuth": {
                             "value": 284.909295311577
                         },
                         "zenith": {
@@ -274,7 +274,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     "bandId": "4",
                     "measurement": {
-                        "azimith": {
+                        "azimuth": {
                             "value": 284.933467772596
                         },
                         "zenith": {
@@ -286,7 +286,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     "bandId": "5",
                     "measurement": {
-                        "azimith": {
+                        "azimuth": {
                             "value": 284.973394067973
                         },
                         "zenith": {
@@ -298,7 +298,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     "bandId": "6",
                     "measurement": {
-                        "azimith": {
+                        "azimuth": {
                             "value": 285.002316322296
                         },
                         "zenith": {
@@ -310,7 +310,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     "bandId": "7",
                     "measurement": {
-                        "azimith": {
+                        "azimuth": {
                             "value": 284.82134822338
                         },
                         "zenith": {
@@ -322,7 +322,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     "bandId": "8",
                     "measurement": {
-                        "azimith": {
+                        "azimuth": {
                             "value": 285.068419119347
                         },
                         "zenith": {
@@ -334,7 +334,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     "bandId": "11",
                     "measurement": {
-                        "azimith": {
+                        "azimuth": {
                             "value": 284.889987613982
                         },
                         "zenith": {
@@ -346,7 +346,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     "bandId": "12",
                     "measurement": {
-                        "azimith": {
+                        "azimuth": {
                             "value": 284.999750610317
                         },
                         "zenith": {
