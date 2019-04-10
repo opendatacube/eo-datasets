@@ -216,14 +216,14 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     'bandId': '0',
                     'measurement': {
-                        'azimith': {'value': 287.743300570742},
+                        'azimuth': {'value': 287.743300570742},
                         'zenith': {'value': 8.90682426360539}
                     },
                     'unit': 'degree'},
                 {
                     'bandId': '9',
                     'measurement': {
-                        'azimith': {'value': 287.913358161721},
+                        'azimuth': {'value': 287.913358161721},
                         'zenith': {'value': 8.93763578589198}
                     },
                     'unit': 'degree'
@@ -231,7 +231,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     'bandId': '10',
                     'measurement': {
-                        'azimith': {'value': 286.62269660653},
+                        'azimuth': {'value': 286.62269660653},
                         'zenith': {'value': 8.77437299338626}
                     },
                     'unit': 'degree'
@@ -239,7 +239,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     'bandId': '1',
                     'measurement': {
-                        'azimith': {'value': 286.085976995274},
+                        'azimuth': {'value': 286.085976995274},
                         'zenith': {'value': 8.70023786261715}
                     },
                     'unit': 'degree'
@@ -247,7 +247,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     'bandId': '2',
                     'measurement': {
-                        'azimith': {'value': 286.471239179063},
+                        'azimuth': {'value': 286.471239179063},
                         'zenith': {'value': 8.72476018739389}
                     },
                     'unit': 'degree'
@@ -255,7 +255,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     'bandId': '3',
                     'measurement': {
-                        'azimith': {'value': 286.832768592131},
+                        'azimuth': {'value': 286.832768592131},
                         'zenith': {'value': 8.75574267151839}
                     },
                     'unit': 'degree'
@@ -263,7 +263,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     'bandId': '4',
                     'measurement': {
-                        'azimith': {'value': 287.013584765891},
+                        'azimuth': {'value': 287.013584765891},
                         'zenith': {'value': 8.77685536841587}
                     },
                     'unit': 'degree'
@@ -271,7 +271,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     'bandId': '5',
                     'measurement': {
-                        'azimith': {'value': 287.207324001684},
+                        'azimuth': {'value': 287.207324001684},
                         'zenith': {'value': 8.80050900146543}
                     },
                     'unit': 'degree'
@@ -279,7 +279,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     'bandId': '6',
                     'measurement': {
-                        'azimith': {'value': 287.400419388821},
+                        'azimuth': {'value': 287.400419388821},
                         'zenith': {'value': 8.8344918122903}
                     },
                     'unit': 'degree'
@@ -287,7 +287,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     'bandId': '7',
                     'measurement': {
-                        'azimith': {'value': 286.272771889735},
+                        'azimuth': {'value': 286.272771889735},
                         'zenith': {'value': 8.71220887022109}
                     },
                     'unit': 'degree'
@@ -295,7 +295,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     'bandId': '8',
                     'measurement': {
-                        'azimith': {'value': 287.592709087249},
+                        'azimuth': {'value': 287.592709087249},
                         'zenith': {'value': 8.86277189674952}
                     },
                     'unit': 'degree'
@@ -303,7 +303,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     'bandId': '11',
                     'measurement': {
-                        'azimith': {'value': 287.100489102096},
+                        'azimuth': {'value': 287.100489102096},
                         'zenith': {'value': 8.84204098088515}
                     },
                     'unit': 'degree'
@@ -311,7 +311,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
                 {
                     'bandId': '12',
                     'measurement': {
-                        'azimith': {'value': 287.498739900102},
+                        'azimuth': {'value': 287.498739900102},
                         'zenith': {'value': 8.90079212851159}
                     },
                     'unit': 'degree'

@@ -265,7 +265,7 @@ def prepare_dataset(path):
             zenith_value = float(viewing_incidence.find('ZENITH_ANGLE').text)
             azimuth_value = float(viewing_incidence.find('AZIMUTH_ANGLE').text)
             view_incidence.update({'unit': 'degree', 'measurement': {'zenith': {'value': zenith_value},
-                                                                     'azimith': {'value': azimuth_value}}})
+                                                                     'azimuth': {'value': azimuth_value}}})
             viewing_zenith_azimuth_angle.append(view_incidence)
         cs_code = root.findall('./*/Tile_Geocoding/HORIZONTAL_CS_CODE')[0].text
         spatial_ref = osr.SpatialReference()
