@@ -149,8 +149,40 @@ def write_yaml_metadata(dataset_metadata, metadata_path, target_directory=None):
         target_directory = os.path.dirname(os.path.abspath(metadata_file))
 
     _LOG.info('Writing metadata file %r', metadata_file)
-    with open(str(metadata_file), 'w') as output_file:
+    with open(metadata_file, 'w') as output_file:
         yaml.dump(
+            dataset_metadata,
+            output_file,
+            default_flow_style=False,
+            indent=4,
+            Dumper=_create_relative_dumper(str(target_directory)),
+            allow_unicode=True
+        )
+
+
+def write_yaml_from_dict(dataset_metadata, metadata_path, target_directory=None):
+    """
+    Write a dataset or list of datasets to yaml
+
+    All 'Path' values are converted to relative paths: relative to the given
+    target directory.
+
+    :type dataset_metadata: Dict or List[Dict]
+    :type target_directory: str or Path
+    :type metadata_path: str or Path
+    """
+    metadata_file = str(metadata_path)
+    if not target_directory:
+        target_directory = os.path.dirname(os.path.abspath(metadata_file))
+
+    _LOG.info('Writing metadata file %r', metadata_file)
+    if isinstance(dataset_metadata, list):
+        _serialiser = yaml.dump_all
+    else:
+        _serialiser = yaml.dump
+
+    with open(metadata_file, 'w') as output_file:
+        _serialiser(
             dataset_metadata,
             output_file,
             default_flow_style=False,
