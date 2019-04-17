@@ -18,7 +18,10 @@ import yaml
 from osgeo import osr
 
 from eodatasets import verify
+
 from .utils import ClickDatetime
+from eodatasets.prepare.model import Dataset, Product, FileFormat, Measurement, \
+    valid_region
 from . import serialise
 
 try:
@@ -260,58 +263,68 @@ def prepare_dataset(base_path, write_checksum=True):
 def prepare_dataset_from_mtl(total_size: int,
                              mtl_doc: dict,
                              mtl_filename: str,
+                             base_path: Optional[Path] = None,
                              additional_props=None) -> dict:
     data_format = mtl_doc['product_metadata']['output_format']
-    if data_format.upper() == 'GEOTIFF':
-        data_format = 'GeoTIFF'
+    if data_format.upper() != 'GEOTIFF':
+        raise NotImplementedError(f"Only GTiff currently supported, got {data_format}")
+    file_format = FileFormat.GeoTIFF
 
     epsg_code = 32600 + mtl_doc['projection_parameters']['utm_zone']
 
-    geo_ref_points = get_geo_ref_points(mtl_doc['product_metadata'])
-
+    platform_id = mtl_doc['product_metadata']['spacecraft_id']
     band_mappings = get_satellite_band_names(
-        mtl_doc['product_metadata']['spacecraft_id'],
+        platform_id,
         mtl_doc['product_metadata']['sensor_id'],
         mtl_filename,
     )
 
     product_id = mtl_doc['metadata_file_info']['landsat_product_id']
 
-    additional = additional_props or {}
+    bands = [
+        Measurement(
+            mtl_doc['product_metadata']['file_name_band_' + band_fname.lower()],
+            band_name,
+            layer='1'
+        )
+        for band_fname, band_name in band_mappings
+    ]
 
-    # Generate a deterministic UUID for the level 1 dataset
-    return {
-        'id': str(uuid.uuid5(USGS_UUID_NAMESPACE, product_id)),
-        'product_type': 'level1',
-        'format': {'name': data_format},
-        'size_bytes': total_size,
-        **additional,
-        'extent': {
-            'center_dt': '{} {}'.format(
-                mtl_doc['product_metadata']['date_acquired'],
-                mtl_doc['product_metadata']['scene_center_time']
-            ),
-            'coord': get_coords(geo_ref_points, epsg_code),
-        },
-        'grid_spatial': {
-            'projection': {
-                'geo_ref_points': geo_ref_points,
-                'spatial_reference': 'EPSG:%s' % epsg_code,
-            }
-        },
-        'image': {
-            'bands': {
-                band_name: {
-                    'path': mtl_doc['product_metadata']['file_name_band_' + band_fname.lower()],
-                    'layer': 1,
-                } for band_fname, band_name in band_mappings
-            }
-        },
-        'mtl': mtl_doc,
-        'lineage': {
-            'source_datasets': {},
-        },
+    if base_path:
+        # Mask value?
+        geometry, grids = valid_region(str(base_path), bands, mask_value=None)
+    else:
+        geometry = get_geo_ref_points(mtl_doc['product_metadata'])
+        grids = None
+
+    def get_all(section: str, keys):
+        return {k: mtl_doc[section][k] for k in keys}
+
+    user_data = {
+        **get_all('metadata_file_info', (
+        'landsat_scene_id', 'landsat_product_id', 'collection_number', 'station_id', 'processing_software_version')),
+        **get_all('product_metadtaa', ('data_type', 'ephemeris_type'))
     }
+    # Generate a deterministic UUID for the level 1 dataset
+    d = Dataset(
+        id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
+        product=Product('XXX_level1'),
+        datetime=datetime.fromisoformat('{}T{}'.format(
+            mtl_doc['product_metadata']['date_acquired'],
+            mtl_doc['product_metadata']['scene_center_time']
+        )),
+        file_format=file_format,
+        crs='EPSG:%s' % epsg_code,
+        geometry=geometry,
+        grids=grids,
+        measurements={band.band: band for band in bands},
+        lineage={},
+        properties={
+            'eo:platform': platform_id,
+        },
+        user_data=user_data
+    )
+    return d.to_doc()
 
 
 def _checksum_path(base_path):

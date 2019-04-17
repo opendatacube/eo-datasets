@@ -1106,3 +1106,11 @@ def package(
 
         # finally the checksum
         create_checksum(out_path)
+
+
+if __name__ == '__main__':
+    package(
+l1_path='/home/jez/dea/eo-datasets/LT05_L1TP_091084_19930707_20170118_01_T1.tar',
+        antecedents={},
+
+    )
