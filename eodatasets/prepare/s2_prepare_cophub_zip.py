@@ -27,7 +27,7 @@ import yaml
 from osgeo import osr
 from rasterio.errors import RasterioIOError
 
-from . import serialise
+from .utils import read_paths_from_file, ClickDatetime
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
@@ -415,16 +415,6 @@ def _process_datasets(output_dir: Path, datasets: Iterable[Path], do_checksum: b
                 logging.info("No datasets discovered. Bye!")
 
 
-def _read_paths_from_file(listing: Path) -> Iterable[Path]:
-    with listing.open('r') as f:
-        for loc in f.readlines():
-            path = Path(loc.strip())
-            if not path.exists():
-                raise FileNotFoundError('No such file or directory: %s' % (os.path.abspath(loc),))
-
-            yield path.absolute()
-
-
 @click.command(help=__doc__ + """
 example usage:
 
@@ -440,13 +430,13 @@ example usage:
               type=click.Path(exists=True, readable=True, writable=False),
               help="file containing a list of input paths (one per line)", multiple=True)
 @click.option('--checksum/--no-checksum', help="Checksum the input dataset to confirm match", default=False)
-@click.option('--newer-than', 'date', type=serialise.ClickDatetime(), default=datetime.now(),
+@click.option('--newer-than', 'date', type=ClickDatetime(), default=datetime.now(),
               help="Enter file creation start date for data preparation")
 def main(output_dir, datasets, checksum, date, dataset_listing_files):
     # type: (str, Iterable[str], bool, datetime, Iterable[str]) -> None
 
     datasets = [Path(p) for p in datasets]
     for listing_file in dataset_listing_files:
-        datasets.extend(_read_paths_from_file(Path(listing_file)))
+        datasets.extend(read_paths_from_file(Path(listing_file)))
 
     return _process_datasets(Path(output_dir), datasets, checksum, date)

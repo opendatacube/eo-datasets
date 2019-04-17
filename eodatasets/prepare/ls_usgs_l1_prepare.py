@@ -18,6 +18,7 @@ import yaml
 from osgeo import osr
 
 from eodatasets import verify
+from .utils import ClickDatetime
 from . import serialise
 
 try:
@@ -404,7 +405,7 @@ def yaml_checkums_correctly(output_yaml, data_path):
                 nargs=-1)
 @click.option(
     '--newer-than',
-    type=serialise.ClickDatetime(),
+    type=ClickDatetime(),
     default=None,
     help="Only prepare files newer than this date"
 )
