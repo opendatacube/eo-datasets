@@ -13,9 +13,13 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
+import ciso8601
 import click
+from datacube.utils.uris import register_scheme
+
 import yaml
 from osgeo import osr
+from shapely.geometry import Polygon
 
 from eodatasets import verify
 
@@ -126,14 +130,7 @@ def _parse_group(lines, key_transform=lambda s: s.lower()):
     return tree
 
 
-def get_geo_ref_points(info):
-    # type: (Dict) -> Dict
-    return {
-        'ul': {'x': info['corner_ul_projection_x_product'], 'y': info['corner_ul_projection_y_product']},
-        'ur': {'x': info['corner_ur_projection_x_product'], 'y': info['corner_ur_projection_y_product']},
-        'll': {'x': info['corner_ll_projection_x_product'], 'y': info['corner_ll_projection_y_product']},
-        'lr': {'x': info['corner_lr_projection_x_product'], 'y': info['corner_lr_projection_y_product']},
-    }
+
 
 
 def get_coords(geo_ref_points, epsg_code):
@@ -256,73 +253,105 @@ def prepare_dataset(base_path, write_checksum=True):
         _file_size_bytes(base_path),
         mtl_doc,
         mtl_filename,
+        base_path=base_path,
         additional_props=additional
     )
 
 
-def prepare_dataset_from_mtl(total_size: int,
-                             mtl_doc: dict,
-                             mtl_filename: str,
-                             base_path: Optional[Path] = None,
-                             additional_props=None) -> dict:
-    data_format = mtl_doc['product_metadata']['output_format']
-    if data_format.upper() != 'GEOTIFF':
+def prepare_dataset_from_mtl(
+        total_size: int,
+        mtl_doc: dict,
+        mtl_filename: str,
+        base_path: Optional[Path] = None,
+        additional_props=None,
+) -> dict:
+    data_format = mtl_doc["product_metadata"]["output_format"]
+    if data_format.upper() != "GEOTIFF":
         raise NotImplementedError(f"Only GTiff currently supported, got {data_format}")
     file_format = FileFormat.GeoTIFF
 
-    epsg_code = 32600 + mtl_doc['projection_parameters']['utm_zone']
+    epsg_code = 32600 + mtl_doc["projection_parameters"]["utm_zone"]
 
-    platform_id = mtl_doc['product_metadata']['spacecraft_id']
+    platform_id = mtl_doc["product_metadata"]["spacecraft_id"]
+    sensor_id = mtl_doc["product_metadata"]["sensor_id"]
     band_mappings = get_satellite_band_names(
-        platform_id,
-        mtl_doc['product_metadata']['sensor_id'],
-        mtl_filename,
+        platform_id, sensor_id, mtl_filename
     )
 
-    product_id = mtl_doc['metadata_file_info']['landsat_product_id']
+    product_id = mtl_doc["metadata_file_info"]["landsat_product_id"]
 
     bands = [
         Measurement(
-            mtl_doc['product_metadata']['file_name_band_' + band_fname.lower()],
+            mtl_doc["product_metadata"]["file_name_band_" + band_fname.lower()],
             band_name,
-            layer='1'
+            layer="1",
         )
         for band_fname, band_name in band_mappings
     ]
 
+    # If we have a filesystem path, we can store the actual
     if base_path:
         # Mask value?
-        geometry, grids = valid_region(str(base_path), bands, mask_value=None)
+        geometry, grids = valid_region(base_path, bands, mask_value=None)
     else:
-        geometry = get_geo_ref_points(mtl_doc['product_metadata'])
+        info = mtl_doc["product_metadata"]
+        geometry = Polygon(
+            (
+                (info['corner_ul_projection_x_product'], info['corner_ul_projection_y_product']),
+                (info['corner_ur_projection_x_product'], info['corner_ur_projection_y_product']),
+                (info['corner_lr_projection_x_product'], info['corner_lr_projection_y_product']),
+                (info['corner_ll_projection_x_product'], info['corner_ll_projection_y_product']),
+            )
+        )
         grids = None
 
     def get_all(section: str, keys):
         return {k: mtl_doc[section][k] for k in keys}
 
     user_data = {
-        **get_all('metadata_file_info', (
-        'landsat_scene_id', 'landsat_product_id', 'collection_number', 'station_id', 'processing_software_version')),
-        **get_all('product_metadtaa', ('data_type', 'ephemeris_type'))
+        **get_all(
+            "metadata_file_info",
+            (
+                "landsat_scene_id",
+                "landsat_product_id",
+                "collection_number",
+                "station_id",
+                "processing_software_version",
+            ),
+        ),
+        **get_all("product_metadata", ("data_type", "ephemeris_type")),
     }
+
+    # Assumed below.
+    if mtl_doc["projection_parameters"]["grid_cell_size_reflective"] != mtl_doc["projection_parameters"][
+        "grid_cell_size_thermal"]:
+        raise NotImplementedError("reflective and thermal have different cell sizes")
+
     # Generate a deterministic UUID for the level 1 dataset
     d = Dataset(
         id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
-        product=Product('XXX_level1'),
-        datetime=datetime.fromisoformat('{}T{}'.format(
-            mtl_doc['product_metadata']['date_acquired'],
-            mtl_doc['product_metadata']['scene_center_time']
-        )),
+        product=Product("XXX_level1"),
+        datetime=ciso8601.parse_datetime(
+            "{}T{}".format(
+                mtl_doc["product_metadata"]["date_acquired"],
+                mtl_doc["product_metadata"]["scene_center_time"],
+            )
+        ),
         file_format=file_format,
-        crs='EPSG:%s' % epsg_code,
+        crs="epsg:%s" % epsg_code,
         geometry=geometry,
         grids=grids,
         measurements={band.band: band for band in bands},
         lineage={},
         properties={
-            'eo:platform': platform_id,
+            "eo:platform": platform_id.lower().replace('_', '-'),
+            "eo:instrument": sensor_id,
+            "eo:gsd": mtl_doc["projection_parameters"]["grid_cell_size_reflective"],
+            "eo:cloud_cover": mtl_doc["image_attributes"]["cloud_cover"],
+            "eo:sun_azimuth": mtl_doc["image_attributes"]["sun_azimuth"],
+            "eo:sun_elevation": mtl_doc["image_attributes"]["sun_elevation"],
         },
-        user_data=user_data
+        user_data=user_data,
     )
     return d.to_doc()
 
@@ -383,6 +412,7 @@ def resolve_absolute_offset(dataset_path, metadata_path, offset):
     if str(metadata_path.absolute()).startswith(str(dataset_path.absolute())):
         return offset
     # Bands are inside a tar file
+
     elif '.tar' in dataset_path.suffixes:
         return 'tar:{}!{}'.format(dataset_path, offset)
     else:
@@ -563,6 +593,8 @@ def _dataset_name(ds_path):
     # This is a little simpler than before :)
     return ds_path.stem.split(".")[0]
 
+
+register_scheme('tar')
 
 if __name__ == "__main__":
     main()

@@ -46,7 +46,7 @@ def write_dataset_metadata(dataset_path, dataset_metadata):
     return metadata_path
 
 
-def init_yaml_handling():
+def init_yaml_handling(dumper=yaml):
     """
     Allow load/dump of our custom classes in YAML.
     """
@@ -86,20 +86,11 @@ def init_yaml_handling():
         """
         return dumper.represent_scalar(u'tag:yaml.org,2002:str', '%s' % data)
 
-    def unicode_representer(dumper, data):
-        """
-        It's strange that PyYaml doesn't use unicode internally. We're doing everything in UTF-8 so we translate.
-        :type dumper: yaml.representer.BaseRepresenter
-        :type data: unicode
-        :rtype: yaml.nodes.Node
-        """
-        return dumper.represent_scalar(u'tag:yaml.org,2002:str', data.encode('utf-8'))
-
-    yaml.add_multi_representer(ptype.SimpleObject, simpleobject_representer)
-    yaml.add_multi_representer(uuid.UUID, uuid_representer)
+    dumper.add_multi_representer(ptype.SimpleObject, simpleobject_representer)
+    dumper.add_multi_representer(uuid.UUID, uuid_representer)
     # TODO: This proabbly shouldn't be performed globally as it changes the output behaviour for a built-in type.
     # (although the default behaviour doesn't seem very widely useful: it outputs as a list.)
-    yaml.add_multi_representer(collections.OrderedDict, ordereddict_representer)
+    dumper.add_multi_representer(collections.OrderedDict, ordereddict_representer)
 
 
 def _create_relative_dumper(folder):

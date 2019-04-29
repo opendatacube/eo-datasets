@@ -6,6 +6,9 @@ from typing import Dict  # noqa: F401
 
 import yaml
 
+from eodatasets import serialise as eodserial
+from eodatasets.prepare.model import FileFormat
+
 
 # pylint: disable=too-many-ancestors
 class OrderPreservingDumper(yaml.SafeDumper):
@@ -16,7 +19,14 @@ def _dict_representer(dumper, data):
     return dumper.represent_mapping(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, data.items())
 
 
+def _format_representer(dumper, data:FileFormat):
+    return dumper.represent_scalar(u'tag:yaml.org,2002:str', '%s' % data.name)
+
+
 OrderPreservingDumper.add_representer(collections.OrderedDict, _dict_representer)
+eodserial.init_yaml_handling(OrderPreservingDumper)
+
+OrderPreservingDumper.add_representer(FileFormat, _format_representer)
 
 
 def dump_yaml(output_yaml, doc):
