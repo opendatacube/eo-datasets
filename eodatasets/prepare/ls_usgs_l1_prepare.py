@@ -25,7 +25,7 @@ from eodatasets import verify
 
 from .utils import ClickDatetime
 from eodatasets.prepare.model import Dataset, Product, FileFormat, Measurement, \
-    valid_region
+    valid_region, resolve_absolute_offset
 from . import serialise
 
 try:
@@ -130,9 +130,6 @@ def _parse_group(lines, key_transform=lambda s: s.lower()):
     return tree
 
 
-
-
-
 def get_coords(geo_ref_points, epsg_code):
     # type: (Dict, int) -> Dict
 
@@ -231,14 +228,12 @@ def _file_size_bytes(path: Path) -> int:
     )
 
 
-def prepare_dataset(base_path, write_checksum=True):
-    # type: (Path, bool) -> Optional[Dict]
+def prepare_dataset(base_path:Path, write_checksum:bool=True) -> Optional[Dict]:
     mtl_doc, mtl_filename = get_mtl_content(base_path)
 
     if not mtl_doc:
         return None
 
-    additional = {}
     if write_checksum:
         checksum_path = _checksum_path(base_path)
         if checksum_path.exists():
@@ -247,14 +242,12 @@ def prepare_dataset(base_path, write_checksum=True):
             checksum = verify.PackageChecksum()
             checksum.add_file(base_path)
             checksum.write(checksum_path)
-        additional['checksum_sha1'] = str(relative_path(base_path, checksum_path))
 
     return prepare_dataset_from_mtl(
         _file_size_bytes(base_path),
         mtl_doc,
         mtl_filename,
         base_path=base_path,
-        additional_props=additional
     )
 
 
@@ -263,8 +256,15 @@ def prepare_dataset_from_mtl(
         mtl_doc: dict,
         mtl_filename: str,
         base_path: Optional[Path] = None,
-        additional_props=None,
 ) -> dict:
+    return _prepare(mtl_doc, mtl_filename, base_path).to_doc()
+
+
+def _prepare(
+        mtl_doc: dict,
+        mtl_filename: str,
+        base_path: Optional[Path] = None,
+) -> Dataset:
     data_format = mtl_doc["product_metadata"]["output_format"]
     if data_format.upper() != "GEOTIFF":
         raise NotImplementedError(f"Only GTiff currently supported, got {data_format}")
@@ -353,7 +353,7 @@ def prepare_dataset_from_mtl(
         },
         user_data=user_data,
     )
-    return d.to_doc()
+    return d
 
 
 def _checksum_path(base_path):
@@ -382,41 +382,6 @@ def relative_path(basepath, offset):
         basepath = basepath.parent
     return offset.relative_to(basepath)
 
-
-def resolve_absolute_offset(dataset_path, metadata_path, offset):
-    # type: (Path, Path, str) -> str
-    """
-    Expand a filename (offset) relative to the dataset.
-
-    >>> external_metadata_loc = Path('/tmp/target-metadata.yaml')
-    >>> resolve_absolute_offset(
-    ...     Path('/tmp/great_test_dataset'),
-    ...     external_metadata_loc,
-    ...     'band/my_great_band.jpg',
-    ... )
-    '/tmp/great_test_dataset/band/my_great_band.jpg'
-    >>> resolve_absolute_offset(
-    ...     Path('/tmp/great_test_dataset.tar.gz'),
-    ...     external_metadata_loc,
-    ...     'band/my_great_band.jpg'
-    ... )
-    'tar:/tmp/great_test_dataset.tar.gz!band/my_great_band.jpg'
-    >>> resolve_absolute_offset(
-    ...     Path('/tmp/MY_DATASET'),
-    ...     Path('/tmp/MY_DATASET/ga-metadata.yaml'),
-    ...     'band/my_great_band.jpg'
-    ... )
-    'band/my_great_band.jpg'
-    """
-    # If metadata is stored inside the dataset, keep paths relative.
-    if str(metadata_path.absolute()).startswith(str(dataset_path.absolute())):
-        return offset
-    # Bands are inside a tar file
-
-    elif '.tar' in dataset_path.suffixes:
-        return 'tar:{}!{}'.format(dataset_path, offset)
-    else:
-        return str(dataset_path.absolute() / offset)
 
 
 def yaml_checkums_correctly(output_yaml, data_path):
@@ -512,8 +477,8 @@ def prepare_and_write(ds_path,
     doc = prepare_dataset(ds_path, write_checksum=write_checksum)
 
     if use_absolute_paths:
-        for band in doc['image']['bands'].values():
-            band['path'] = resolve_absolute_offset(ds_path, output_yaml_path, band['path'])
+        for band in doc['measurements'].values():
+            band['path'] = resolve_absolute_offset(ds_path, band['path'], target_path=output_yaml_path)
 
     serialise.dump_yaml(output_yaml_path, doc)
 

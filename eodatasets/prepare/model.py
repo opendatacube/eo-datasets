@@ -72,6 +72,50 @@ class Dataset:
         return d
 
 
+def resolve_absolute_offset(dataset_path, offset, target_path=None):
+    # type: (Path, str, Optional[Path]) -> str
+    """
+    Expand a filename (offset) relative to the dataset.
+
+    >>> external_metadata_loc = Path('/tmp/target-metadata.yaml')
+    >>> resolve_absolute_offset(
+    ...     Path('/tmp/great_test_dataset'),
+    ...     'band/my_great_band.jpg',
+    ...     external_metadata_loc,
+    ... )
+    '/tmp/great_test_dataset/band/my_great_band.jpg'
+    >>> resolve_absolute_offset(
+    ...     Path('/tmp/great_test_dataset.tar.gz'),
+    ...     'band/my_great_band.jpg',
+    ...     external_metadata_loc,
+    ... )
+    'tar:/tmp/great_test_dataset.tar.gz!band/my_great_band.jpg'
+        >>> resolve_absolute_offset(
+    ...     Path('/tmp/great_test_dataset.tar'),
+    ...     'band/my_great_band.jpg',
+    ... )
+    'tar:/tmp/great_test_dataset.tar.gz!band/my_great_band.jpg'
+    >>> resolve_absolute_offset(
+    ...     Path('/tmp/MY_DATASET'),
+    ...     'band/my_great_band.jpg'
+    ...     Path('/tmp/MY_DATASET/ga-metadata.yaml'),
+    ... )
+    'band/my_great_band.jpg'
+    """
+    dataset_path = dataset_path.absolute()
+
+    if target_path:
+        # If metadata is stored inside the dataset, keep paths relative.
+        if str(target_path.absolute()).startswith(str(dataset_path)):
+            return offset
+    # Bands are inside a tar file
+
+    elif ".tar" in dataset_path.suffixes:
+        return "tar:{}!{}".format(dataset_path, offset)
+    else:
+        return str(dataset_path / offset)
+
+
 def valid_region(
     path: Path, measurements: Iterable[Measurement], mask_value=None
 ) -> Tuple[BaseGeometry, Dict[str, Grid]]:
@@ -84,10 +128,7 @@ def valid_region(
 
     for measurement in measurements:
         print(f"path: {path}")
-        if path.suffix.lower().endswith(".tar"):
-            measurement_path = f"tar://{path.absolute().as_posix()}!{measurement.path}"
-        else:
-            measurement_path = path / measurement.path
+        measurement_path = resolve_absolute_offset(path, measurement.path)
         print(measurement_path)
         with rasterio.open(str(measurement_path), "r") as ds:
             transform: affine.Affine = ds.transform
