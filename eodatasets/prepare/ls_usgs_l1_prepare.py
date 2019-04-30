@@ -306,7 +306,7 @@ def _prepare(
         grids = None
 
     def get_all(section: str, keys):
-        return {k: mtl_doc[section][k] for k in keys}
+        return {k: mtl_doc[section][k] for k in keys if k in mtl_doc[section]}
 
     user_data = {
         **get_all(
