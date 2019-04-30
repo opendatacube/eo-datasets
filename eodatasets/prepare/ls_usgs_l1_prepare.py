@@ -330,7 +330,7 @@ def _prepare(
     # Generate a deterministic UUID for the level 1 dataset
     d = Dataset(
         id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
-        product=Product("XXX_level1"),
+        product=Product("usgs_ls{}-{}_level1_3".format(platform_id[-1].lower(), sensor_id[0].lower())),
         datetime=ciso8601.parse_datetime(
             "{}T{}".format(
                 mtl_doc["product_metadata"]["date_acquired"],
