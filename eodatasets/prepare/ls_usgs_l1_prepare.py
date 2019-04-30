@@ -383,7 +383,6 @@ def relative_path(basepath, offset):
     return offset.relative_to(basepath)
 
 
-
 def yaml_checkums_correctly(output_yaml, data_path):
     with output_yaml.open() as yaml_f:
         logging.info("Running checksum comparison")

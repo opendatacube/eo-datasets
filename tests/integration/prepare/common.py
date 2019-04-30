@@ -1,5 +1,5 @@
 from functools import partial
-from pprint import pformat
+from pprint import pformat, pprint
 
 import yaml
 from click.testing import CliRunner, Result

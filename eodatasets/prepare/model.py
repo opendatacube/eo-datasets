@@ -61,7 +61,7 @@ class Dataset:
 
     properties: Dict[str, Union[str, int, float]]
 
-    io_driver_data: Dict = None
+    # io_driver_data: Dict = None
     user_data: Dict = None
 
     # replaces: Optional[UUID] = None
@@ -72,8 +72,7 @@ class Dataset:
         return d
 
 
-def resolve_absolute_offset(dataset_path, offset, target_path=None):
-    # type: (Path, str, Optional[Path]) -> str
+def resolve_absolute_offset(dataset_path: Path, offset: str, target_path: Optional[Path] = None) -> str:
     """
     Expand a filename (offset) relative to the dataset.
 
@@ -110,7 +109,7 @@ def resolve_absolute_offset(dataset_path, offset, target_path=None):
             return offset
     # Bands are inside a tar file
 
-    elif ".tar" in dataset_path.suffixes:
+    if ".tar" in dataset_path.suffixes:
         return "tar:{}!{}".format(dataset_path, offset)
     else:
         return str(dataset_path / offset)
