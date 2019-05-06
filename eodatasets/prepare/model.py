@@ -89,14 +89,14 @@ def resolve_absolute_offset(dataset_path: Path, offset: str, target_path: Option
     ...     external_metadata_loc,
     ... )
     'tar:/tmp/great_test_dataset.tar.gz!band/my_great_band.jpg'
-        >>> resolve_absolute_offset(
+    >>> resolve_absolute_offset(
     ...     Path('/tmp/great_test_dataset.tar'),
     ...     'band/my_great_band.jpg',
     ... )
-    'tar:/tmp/great_test_dataset.tar.gz!band/my_great_band.jpg'
+    'tar:/tmp/great_test_dataset.tar!band/my_great_band.jpg'
     >>> resolve_absolute_offset(
     ...     Path('/tmp/MY_DATASET'),
-    ...     'band/my_great_band.jpg'
+    ...     'band/my_great_band.jpg',
     ...     Path('/tmp/MY_DATASET/ga-metadata.yaml'),
     ... )
     'band/my_great_band.jpg'
