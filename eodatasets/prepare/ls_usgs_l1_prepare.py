@@ -22,50 +22,62 @@ from osgeo import osr
 from shapely.geometry import Polygon
 
 from eodatasets import verify
-
-from .utils import ClickDatetime
-from eodatasets.prepare.model import Dataset, Product, FileFormat, Measurement, \
-    valid_region, resolve_absolute_offset
+from eodatasets.prepare.model import (
+    Dataset,
+    Product,
+    FileFormat,
+    Measurement,
+    valid_region,
+    resolve_absolute_offset,
+)
 from . import serialise
 
 try:
     # flake8 doesn't recognise type hints as usage
-    from typing import List, Optional, Union, Iterable, Dict, Tuple, Callable  # noqa: F401
+    from typing import (
+        List,
+        Optional,
+        Union,
+        Iterable,
+        Dict,
+        Tuple,
+        Callable,
+    )  # noqa: F401
 except ImportError:
     pass
 
 # Static namespace to generate uuids for datacube indexing
-USGS_UUID_NAMESPACE = uuid.UUID('276af61d-99f8-4aa3-b2fb-d7df68c5e28f')
+USGS_UUID_NAMESPACE = uuid.UUID("276af61d-99f8-4aa3-b2fb-d7df68c5e28f")
 
 LANDSAT_8_BANDS = [
-    ('1', 'coastal_aerosol'),
-    ('2', 'blue'),
-    ('3', 'green'),
-    ('4', 'red'),
-    ('5', 'nir'),
-    ('6', 'swir1'),
-    ('7', 'swir2'),
-    ('8', 'panchromatic'),
-    ('9', 'cirrus'),
-    ('10', 'lwir1'),
-    ('11', 'lwir2'),
-    ('QUALITY', 'quality'),
+    ("1", "coastal_aerosol"),
+    ("2", "blue"),
+    ("3", "green"),
+    ("4", "red"),
+    ("5", "nir"),
+    ("6", "swir1"),
+    ("7", "swir2"),
+    ("8", "panchromatic"),
+    ("9", "cirrus"),
+    ("10", "lwir1"),
+    ("11", "lwir2"),
+    ("QUALITY", "quality"),
 ]
 
 TIRS_ONLY = LANDSAT_8_BANDS[9:12]
 OLI_ONLY = [*LANDSAT_8_BANDS[0:9], LANDSAT_8_BANDS[11]]
 
 LANDSAT_BANDS = [
-    ('1', 'blue'),
-    ('2', 'green'),
-    ('3', 'red'),
-    ('4', 'nir'),
-    ('5', 'swir1'),
-    ('7', 'swir2'),
-    ('QUALITY', 'quality'),
+    ("1", "blue"),
+    ("2", "green"),
+    ("3", "red"),
+    ("4", "nir"),
+    ("5", "swir1"),
+    ("7", "swir2"),
+    ("QUALITY", "quality"),
 ]
 
-MTL_PAIRS_RE = re.compile(r'(\w+)\s=\s(.*)')
+MTL_PAIRS_RE = re.compile(r"(\w+)\s=\s(.*)")
 
 
 def _parse_value(s):
@@ -87,7 +99,7 @@ def _parse_value(s):
     return s
 
 
-def find_in(path, s, suffix='txt'):
+def find_in(path, s, suffix="txt"):
     # type: (Path, str, str) -> Optional[Path]
     """Recursively find any file with a certain string in its name
 
@@ -117,13 +129,13 @@ def _parse_group(lines, key_transform=lambda s: s.lower()):
     for line in lines:
         # If line is bytes-like convert to str
         if isinstance(line, bytes):
-            line = line.decode('utf-8')
+            line = line.decode("utf-8")
         match = MTL_PAIRS_RE.findall(line)
         if match:
             key, value = match[0]
-            if key == 'GROUP':
+            if key == "GROUP":
                 tree[key_transform(value)] = _parse_group(lines)
-            elif key == 'END_GROUP':
+            elif key == "END_GROUP":
                 break
             else:
                 tree[key_transform(key)] = _parse_value(value)
@@ -138,8 +150,8 @@ def get_coords(geo_ref_points, epsg_code):
     t = osr.CoordinateTransformation(spatial_ref, spatial_ref.CloneGeogCS())
 
     def transform(p):
-        lon, lat, z = t.TransformPoint(p['x'], p['y'])
-        return {'lon': lon, 'lat': lat}
+        lon, lat, z = t.TransformPoint(p["x"], p["y"])
+        return {"lon": lon, "lat": lat}
 
     return {key: transform(p) for key, p in geo_ref_points.items()}
 
@@ -151,11 +163,11 @@ def get_satellite_band_names(sat, instrument, file_name):
     Landsat7 and Landsat5 have same band names
     """
 
-    name_len = file_name.split('_')
-    if sat == 'LANDSAT_8':
-        if instrument == 'TIRS':
+    name_len = file_name.split("_")
+    if sat == "LANDSAT_8":
+        if instrument == "TIRS":
             sat_img = TIRS_ONLY
-        elif instrument == 'OLI':
+        elif instrument == "OLI":
             sat_img = OLI_ONLY
         else:
             sat_img = LANDSAT_8_BANDS
@@ -175,9 +187,11 @@ def get_mtl_content(acquisition_path):
         raise RuntimeError("Missing path '{}'".format(acquisition_path))
 
     if acquisition_path.is_file() and tarfile.is_tarfile(str(acquisition_path)):
-        with tarfile.open(str(acquisition_path), 'r') as tp:
+        with tarfile.open(str(acquisition_path), "r") as tp:
             try:
-                internal_file = next(filter(lambda memb: '_MTL' in memb.name, tp.getmembers()))
+                internal_file = next(
+                    filter(lambda memb: "_MTL" in memb.name, tp.getmembers())
+                )
                 filename = Path(internal_file.name).stem
                 with tp.extractfile(internal_file) as fp:
                     return read_mtl(fp), filename
@@ -186,17 +200,17 @@ def get_mtl_content(acquisition_path):
                     "MTL file not found in {}".format(str(acquisition_path))
                 )
     else:
-        path = find_in(acquisition_path, 'MTL')
+        path = find_in(acquisition_path, "MTL")
         if not path:
             raise RuntimeError("No MTL file")
 
         filename = Path(path).stem
-        with path.open('r') as fp:
+        with path.open("r") as fp:
             return read_mtl(fp), filename
 
 
 def read_mtl(fp):
-    return _parse_group(fp)['l1_metadata_file']
+    return _parse_group(fp)["l1_metadata_file"]
 
 
 def _file_size_bytes(path: Path) -> int:
@@ -222,13 +236,10 @@ def _file_size_bytes(path: Path) -> int:
     if path.is_file():
         return path.stat().st_size
 
-    return sum(
-        _file_size_bytes(p)
-        for p in path.iterdir()
-    )
+    return sum(_file_size_bytes(p) for p in path.iterdir())
 
 
-def prepare_dataset(base_path:Path, write_checksum:bool=True) -> Optional[Dict]:
+def prepare_dataset(base_path: Path, write_checksum: bool = True) -> Optional[Dict]:
     mtl_doc, mtl_filename = get_mtl_content(base_path)
 
     if not mtl_doc:
@@ -244,26 +255,18 @@ def prepare_dataset(base_path:Path, write_checksum:bool=True) -> Optional[Dict]:
             checksum.write(checksum_path)
 
     return prepare_dataset_from_mtl(
-        _file_size_bytes(base_path),
-        mtl_doc,
-        mtl_filename,
-        base_path=base_path,
+        _file_size_bytes(base_path), mtl_doc, mtl_filename, base_path=base_path
     )
 
 
 def prepare_dataset_from_mtl(
-        total_size: int,
-        mtl_doc: dict,
-        mtl_filename: str,
-        base_path: Optional[Path] = None,
+    total_size: int, mtl_doc: dict, mtl_filename: str, base_path: Optional[Path] = None
 ) -> dict:
     return _prepare(mtl_doc, mtl_filename, base_path).to_doc()
 
 
 def _prepare(
-        mtl_doc: dict,
-        mtl_filename: str,
-        base_path: Optional[Path] = None,
+    mtl_doc: dict, mtl_filename: str, base_path: Optional[Path] = None
 ) -> Dataset:
     data_format = mtl_doc["product_metadata"]["output_format"]
     if data_format.upper() != "GEOTIFF":
@@ -274,9 +277,7 @@ def _prepare(
 
     platform_id = mtl_doc["product_metadata"]["spacecraft_id"]
     sensor_id = mtl_doc["product_metadata"]["sensor_id"]
-    band_mappings = get_satellite_band_names(
-        platform_id, sensor_id, mtl_filename
-    )
+    band_mappings = get_satellite_band_names(platform_id, sensor_id, mtl_filename)
 
     product_id = mtl_doc["metadata_file_info"]["landsat_product_id"]
 
@@ -297,10 +298,22 @@ def _prepare(
         info = mtl_doc["product_metadata"]
         geometry = Polygon(
             (
-                (info['corner_ul_projection_x_product'], info['corner_ul_projection_y_product']),
-                (info['corner_ur_projection_x_product'], info['corner_ur_projection_y_product']),
-                (info['corner_lr_projection_x_product'], info['corner_lr_projection_y_product']),
-                (info['corner_ll_projection_x_product'], info['corner_ll_projection_y_product']),
+                (
+                    info["corner_ul_projection_x_product"],
+                    info["corner_ul_projection_y_product"],
+                ),
+                (
+                    info["corner_ur_projection_x_product"],
+                    info["corner_ur_projection_y_product"],
+                ),
+                (
+                    info["corner_lr_projection_x_product"],
+                    info["corner_lr_projection_y_product"],
+                ),
+                (
+                    info["corner_ll_projection_x_product"],
+                    info["corner_ll_projection_y_product"],
+                ),
             )
         )
         grids = None
@@ -323,14 +336,20 @@ def _prepare(
     }
 
     # Assumed below.
-    if mtl_doc["projection_parameters"]["grid_cell_size_reflective"] != mtl_doc["projection_parameters"][
-        "grid_cell_size_thermal"]:
+    if (
+        mtl_doc["projection_parameters"]["grid_cell_size_reflective"]
+        != mtl_doc["projection_parameters"]["grid_cell_size_thermal"]
+    ):
         raise NotImplementedError("reflective and thermal have different cell sizes")
 
     # Generate a deterministic UUID for the level 1 dataset
     d = Dataset(
         id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
-        product=Product("usgs_ls{}-{}_level1_3".format(platform_id[-1].lower(), sensor_id[0].lower())),
+        product=Product(
+            "usgs_ls{}-{}_level1_3".format(
+                platform_id[-1].lower(), sensor_id[0].lower()
+            )
+        ),
         datetime=ciso8601.parse_datetime(
             "{}T{}".format(
                 mtl_doc["product_metadata"]["date_acquired"],
@@ -344,7 +363,7 @@ def _prepare(
         measurements={band.band: band for band in bands},
         lineage={},
         properties={
-            "eo:platform": platform_id.lower().replace('_', '-'),
+            "eo:platform": platform_id.lower().replace("_", "-"),
             "eo:instrument": sensor_id,
             "eo:gsd": mtl_doc["projection_parameters"]["grid_cell_size_reflective"],
             "eo:cloud_cover": mtl_doc["image_attributes"]["cloud_cover"],
@@ -367,9 +386,9 @@ def _checksum_path(base_path):
     dataset management scripts like dea-sync expect this)
     """
     if base_path.is_file():
-        return base_path.parent / f'{base_path.name}.sha1'
+        return base_path.parent / f"{base_path.name}.sha1"
     else:
-        return base_path / 'package.sha1'
+        return base_path / "package.sha1"
 
 
 def relative_path(basepath, offset):
@@ -388,51 +407,59 @@ def yaml_checkums_correctly(output_yaml, data_path):
         logging.info("Running checksum comparison")
         # It can match any dataset in the yaml.
         for doc in yaml.safe_load_all(yaml_f):
-            yaml_sha1 = doc['checksum_sha1']
-            checksum_sha1 = hashlib.sha1(data_path.open('rb').read()).hexdigest()
+            yaml_sha1 = doc["checksum_sha1"]
+            checksum_sha1 = hashlib.sha1(data_path.open("rb").read()).hexdigest()
             if checksum_sha1 == yaml_sha1:
                 return True
 
     return False
 
 
-@click.command(help="""\b
+@click.command(
+    help="""\b
                     Prepare USGS Landsat Collection 1 data for ingestion into the Data Cube.
                     This prepare script supports only for MTL.txt metadata file
                     To Set the Path for referring the datasets -
                     Download the  Landsat scene data from Earth Explorer or GloVis into
                     'some_space_available_folder' and unpack the file.
                     For example: yourscript.py --output [Yaml- which writes datasets into this file for indexing]
-                    [Path for dataset as : /home/some_space_available_folder/]""")
-@click.option('--output', help="Write output into this directory",
-              required=True,
-              type=click.Path(exists=True, writable=True, dir_okay=True, file_okay=False))
-@click.argument('datasets',
-                type=click.Path(exists=True, readable=True, writable=False),
-                nargs=-1)
+                    [Path for dataset as : /home/some_space_available_folder/]"""
+)
 @click.option(
-    '--newer-than',
-    type=ClickDatetime(),
+    "--output",
+    help="Write output into this directory",
+    required=True,
+    type=click.Path(exists=True, writable=True, dir_okay=True, file_okay=False),
+)
+@click.argument(
+    "datasets", type=click.Path(exists=True, readable=True, writable=False), nargs=-1
+)
+@click.option(
+    "--newer-than",
+    type=serialise.ClickDatetime(),
     default=None,
-    help="Only prepare files newer than this date"
+    help="Only prepare files newer than this date",
 )
 @click.option(
-    '--checksum/--no-checksum', 'check_checksum',
+    "--checksum/--no-checksum",
+    "check_checksum",
     help="Checksum the input dataset to confirm match",
-    default=False
+    default=False,
 )
 @click.option(
-    '--absolute-paths/--relative-paths', 'force_absolute_paths',
+    "--absolute-paths/--relative-paths",
+    "force_absolute_paths",
     help="Embed absolute paths in the metadata document (not recommended)",
-    default=False
+    default=False,
 )
 def main(output, datasets, check_checksum, force_absolute_paths, newer_than):
     # type: (str, List[str], bool, bool, datetime) -> None
 
     output = Path(output)
 
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
-                        level=logging.INFO)
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
+    )
 
     for ds in datasets:
         ds_path = _normalise_dataset_path(Path(ds))
@@ -447,19 +474,21 @@ def main(output, datasets, check_checksum, force_absolute_paths, newer_than):
             continue
 
         logging.info("Processing %s", ds_path)
-        output_yaml = output / '{}.yaml'.format(_dataset_name(ds_path))
+        output_yaml = output / "{}.yaml".format(_dataset_name(ds_path))
 
         logging.info("Output %s", output_yaml)
         if output_yaml.exists():
             logging.info("Output already exists %s", output_yaml)
             if check_checksum and yaml_checkums_correctly(output_yaml, ds_path):
-                logging.info("Dataset preparation already done...SKIPPING %s", ds_path.name)
+                logging.info(
+                    "Dataset preparation already done...SKIPPING %s", ds_path.name
+                )
                 continue
 
         prepare_and_write(ds_path, output_yaml, use_absolute_paths=force_absolute_paths)
 
     # delete intermediate MTL files for archive datasets in output folder
-    output_mtls = list(output.rglob('*MTL.txt'))
+    output_mtls = list(output.rglob("*MTL.txt"))
     for mtl_path in output_mtls:
         try:
             mtl_path.unlink()
@@ -467,17 +496,18 @@ def main(output, datasets, check_checksum, force_absolute_paths, newer_than):
             pass
 
 
-def prepare_and_write(ds_path,
-                      output_yaml_path,
-                      use_absolute_paths=False,
-                      write_checksum=True):
+def prepare_and_write(
+    ds_path, output_yaml_path, use_absolute_paths=False, write_checksum=True
+):
     # type: (Path, Path, bool, bool) -> None
 
     doc = prepare_dataset(ds_path, write_checksum=write_checksum)
 
     if use_absolute_paths:
-        for band in doc['measurements'].values():
-            band['path'] = resolve_absolute_offset(ds_path, band['path'], target_path=output_yaml_path)
+        for band in doc["measurements"].values():
+            band["path"] = resolve_absolute_offset(
+                ds_path, band["path"], target_path=output_yaml_path
+            )
 
     serialise.dump_yaml(output_yaml_path, doc)
 
@@ -510,15 +540,19 @@ def _normalise_dataset_path(input_path: Path) -> Path:
     """
     input_path = normalise_nci_symlinks(input_path)
     if input_path.is_file():
-        if '.tar' in input_path.suffixes:
+        if ".tar" in input_path.suffixes:
             return input_path
         input_path = input_path.parent
 
-    mtl_files = list(input_path.rglob('*_MTL*'))
+    mtl_files = list(input_path.rglob("*_MTL*"))
     if not mtl_files:
-        raise ValueError("No MTL files within input path '{}'. Not a dataset?".format(input_path))
+        raise ValueError(
+            "No MTL files within input path '{}'. Not a dataset?".format(input_path)
+        )
     if len(mtl_files) > 1:
-        raise ValueError("Multiple MTL files in a single dataset (got path: {})".format(input_path))
+        raise ValueError(
+            "Multiple MTL files in a single dataset (got path: {})".format(input_path)
+        )
     return input_path
 
 
@@ -536,12 +570,12 @@ def normalise_nci_symlinks(input_path: Path) -> Path:
     >>> normalise_nci_symlinks(Path('/Users/testuser/unrelated-path.yaml')).as_posix()
     '/Users/testuser/unrelated-path.yaml'
     """
-    match = re.match(r'^/g/data[0-9a-z]+/(.*)', str(input_path))
+    match = re.match(r"^/g/data[0-9a-z]+/(.*)", str(input_path))
     if not match:
         return input_path
 
     [offset] = match.groups()
-    return Path('/g/data/' + offset)
+    return Path("/g/data/" + offset)
 
 
 def _dataset_name(ds_path):
@@ -558,7 +592,7 @@ def _dataset_name(ds_path):
     return ds_path.stem.split(".")[0]
 
 
-register_scheme('tar')
+register_scheme("tar")
 
 if __name__ == "__main__":
     main()

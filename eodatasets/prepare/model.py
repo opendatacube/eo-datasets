@@ -12,7 +12,7 @@ import rasterio.features
 import shapely
 import shapely.affinity
 import shapely.ops
-from shapely.geometry import shape
+
 from shapely.geometry.base import BaseGeometry
 
 
