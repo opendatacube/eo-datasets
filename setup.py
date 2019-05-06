@@ -39,6 +39,7 @@ setup(
         'shapely',
         'scipy',
         'structlog',
+        'h5py',
     ],
     tests_require=tests_require,
     extras_require={
