@@ -361,17 +361,29 @@ def _prepare(
         grids=grids,
         measurements={band.band: band for band in bands},
         lineage={},
-        properties={
+        properties=_remove_nones({
             "eo:platform": platform_id.lower().replace("_", "-"),
             "eo:instrument": sensor_id,
             "eo:gsd": mtl_doc["projection_parameters"]["grid_cell_size_reflective"],
             "eo:cloud_cover": mtl_doc["image_attributes"]["cloud_cover"],
             "eo:sun_azimuth": mtl_doc["image_attributes"]["sun_azimuth"],
             "eo:sun_elevation": mtl_doc["image_attributes"]["sun_elevation"],
-        },
+            'landsat:wrs_path': mtl_doc['product_metadata']['wrs_path'],
+            'landsat:wrs_row': mtl_doc['product_metadata']['wrs_row'],
+            "landsat:ground_control_points_model": mtl_doc["image_attributes"].get("ground_control_points_model"),
+            "landsat:ground_control_points_version": mtl_doc["image_attributes"].get("ground_control_points_version"),
+            "landsat:ground_control_points_verify": mtl_doc["image_attributes"].get("ground_control_points_verify"),
+            "landsat:geometric_rmse_model_x": mtl_doc["image_attributes"].get("geometric_rmse_model_x"),
+            "landsat:geometric_rmse_model_y": mtl_doc["image_attributes"].get("geometric_rmse_model_y"),
+            "landsat:geometric_rmse_verify": mtl_doc["image_attributes"].get("geometric_rmse_verify"),
+        }),
         user_data=user_data,
     )
     return d
+
+
+def _remove_nones(d: Dict) -> Dict:
+    return {k: v for (k, v) in d.items() if v is not None}
 
 
 def _checksum_path(base_path):
