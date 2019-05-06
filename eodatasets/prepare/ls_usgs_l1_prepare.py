@@ -15,12 +15,11 @@ from pathlib import Path
 
 import ciso8601
 import click
-from datacube.utils.uris import register_scheme
 
 import yaml
 from osgeo import osr
 from shapely.geometry import Polygon
-
+import urllib.parse
 from eodatasets import verify
 from eodatasets.prepare.model import (
     Dataset,
@@ -592,7 +591,17 @@ def _dataset_name(ds_path):
     return ds_path.stem.split(".")[0]
 
 
-register_scheme("tar")
+def register_scheme(*schemes):
+    """
+    Register additional uri schemes as supporting relative offsets (etc), so that band/measurement paths can be
+    calculated relative to the base uri.
+    """
+    urllib.parse.uses_netloc.extend(schemes)
+    urllib.parse.uses_relative.extend(schemes)
+    urllib.parse.uses_params.extend(schemes)
+
+
+register_scheme('tar')
 
 if __name__ == "__main__":
     main()
