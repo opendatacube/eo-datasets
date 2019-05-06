@@ -47,6 +47,9 @@ class Dataset:
 
     datetime: datetime
 
+    # When the dataset was processed/created.
+    creation_datetime: datetime
+
     file_format: FileFormat
 
     crs: str

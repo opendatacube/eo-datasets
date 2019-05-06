@@ -355,6 +355,7 @@ def _prepare(
                 mtl_doc["product_metadata"]["scene_center_time"],
             )
         ),
+        creation_datetime=ciso8601.parse_datetime(mtl_doc['metadata_file_info']['file_date']),
         file_format=file_format,
         crs="epsg:%s" % epsg_code,
         geometry=geometry,

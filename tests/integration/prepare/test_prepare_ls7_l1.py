@@ -30,6 +30,7 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
         "id": "f23c5fa2-3321-5be9-9872-2be73fee12a6",
         "crs": "epsg:32652",
         "datetime": datetime(2013, 4, 29, 1, 10, 20, 336104),
+        'creation_datetime': datetime(2016, 11, 24, 8, 26, 33),
         "file_format": "GeoTIFF",
         "product": {"name": "usgs_ls7-e_level1_3"},
         "properties": {

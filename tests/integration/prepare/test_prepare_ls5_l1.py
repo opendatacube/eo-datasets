@@ -31,6 +31,7 @@ def test_prepare_l5_l1_usgs_tarball(tmpdir):
         "product": {"name": "usgs_ls5-t_level1_3"},
         "crs": "epsg:32655",
         "datetime": datetime(1997, 4, 6, 23, 17, 43, 102000),
+        'creation_datetime': datetime(2016, 12, 31, 15, 54, 58),
         "file_format": "GeoTIFF",
         "properties": {
             "eo:cloud_cover": 27.0,
