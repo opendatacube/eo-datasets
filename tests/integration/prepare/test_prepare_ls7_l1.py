@@ -41,6 +41,7 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
             "eo:sun_azimuth": 40.56298198,
             "eo:sun_elevation": 39.37440872,
             'landsat:collection_category': 'T1',
+            'landsat:collection_number': 1,
             'landsat:geometric_rmse_model_x': 2.752,
             'landsat:geometric_rmse_model_y': 3.115,
             'landsat:ground_control_points_model': 179,
@@ -49,7 +50,6 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
             'landsat:wrs_row': 78,
         },
         "user_data": {
-            "collection_number": 1,
             "data_type": "L1TP",
             "ephemeris_type": "DEFINITIVE",
             "landsat_product_id": "LE07_L1TP_104078_20130429_20161124_01_T1",

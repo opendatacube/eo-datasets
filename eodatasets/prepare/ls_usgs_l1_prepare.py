@@ -326,7 +326,6 @@ def _prepare(
             (
                 "landsat_scene_id",
                 "landsat_product_id",
-                "collection_number",
                 "station_id",
                 "processing_software_version",
             ),
@@ -374,6 +373,9 @@ def _prepare(
                 "eo:sun_elevation": mtl_doc["image_attributes"]["sun_elevation"],
                 "landsat:wrs_path": mtl_doc["product_metadata"]["wrs_path"],
                 "landsat:wrs_row": mtl_doc["product_metadata"]["wrs_row"],
+                "landsat:collection_number": mtl_doc["metadata_file_info"][
+                    "collection_number"
+                ],
                 "landsat:collection_category": mtl_doc["product_metadata"][
                     "collection_category"
                 ],
