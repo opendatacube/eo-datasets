@@ -344,8 +344,10 @@ def _prepare(
     d = Dataset(
         id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
         product=Product(
-            "usgs_ls{}-{}_level1_3".format(
-                platform_id[-1].lower(), sensor_id[0].lower()
+            "usgs_ls{}-{}_level1_{}".format(
+                platform_id[-1].lower(),
+                sensor_id[0].lower(),
+                int(mtl_doc["metadata_file_info"]["collection_number"]),
             )
         ),
         datetime=ciso8601.parse_datetime(
