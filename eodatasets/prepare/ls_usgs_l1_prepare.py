@@ -355,29 +355,48 @@ def _prepare(
                 mtl_doc["product_metadata"]["scene_center_time"],
             )
         ),
-        creation_datetime=ciso8601.parse_datetime(mtl_doc['metadata_file_info']['file_date']),
+        creation_datetime=ciso8601.parse_datetime(
+            mtl_doc["metadata_file_info"]["file_date"]
+        ),
         file_format=file_format,
         crs="epsg:%s" % epsg_code,
         geometry=geometry,
         grids=grids,
         measurements={band.band: band for band in bands},
         lineage={},
-        properties=_remove_nones({
-            "eo:platform": platform_id.lower().replace("_", "-"),
-            "eo:instrument": sensor_id,
-            "eo:gsd": mtl_doc["projection_parameters"]["grid_cell_size_reflective"],
-            "eo:cloud_cover": mtl_doc["image_attributes"]["cloud_cover"],
-            "eo:sun_azimuth": mtl_doc["image_attributes"]["sun_azimuth"],
-            "eo:sun_elevation": mtl_doc["image_attributes"]["sun_elevation"],
-            'landsat:wrs_path': mtl_doc['product_metadata']['wrs_path'],
-            'landsat:wrs_row': mtl_doc['product_metadata']['wrs_row'],
-            "landsat:ground_control_points_model": mtl_doc["image_attributes"].get("ground_control_points_model"),
-            "landsat:ground_control_points_version": mtl_doc["image_attributes"].get("ground_control_points_version"),
-            "landsat:ground_control_points_verify": mtl_doc["image_attributes"].get("ground_control_points_verify"),
-            "landsat:geometric_rmse_model_x": mtl_doc["image_attributes"].get("geometric_rmse_model_x"),
-            "landsat:geometric_rmse_model_y": mtl_doc["image_attributes"].get("geometric_rmse_model_y"),
-            "landsat:geometric_rmse_verify": mtl_doc["image_attributes"].get("geometric_rmse_verify"),
-        }),
+        properties=_remove_nones(
+            {
+                "eo:platform": platform_id.lower().replace("_", "-"),
+                "eo:instrument": sensor_id,
+                "eo:gsd": mtl_doc["projection_parameters"]["grid_cell_size_reflective"],
+                "eo:cloud_cover": mtl_doc["image_attributes"]["cloud_cover"],
+                "eo:sun_azimuth": mtl_doc["image_attributes"]["sun_azimuth"],
+                "eo:sun_elevation": mtl_doc["image_attributes"]["sun_elevation"],
+                "landsat:wrs_path": mtl_doc["product_metadata"]["wrs_path"],
+                "landsat:wrs_row": mtl_doc["product_metadata"]["wrs_row"],
+                "landsat:collection_category": mtl_doc["product_metadata"][
+                    "collection_category"
+                ],
+                "landsat:ground_control_points_model": mtl_doc["image_attributes"].get(
+                    "ground_control_points_model"
+                ),
+                "landsat:ground_control_points_version": mtl_doc[
+                    "image_attributes"
+                ].get("ground_control_points_version"),
+                "landsat:ground_control_points_verify": mtl_doc["image_attributes"].get(
+                    "ground_control_points_verify"
+                ),
+                "landsat:geometric_rmse_model_x": mtl_doc["image_attributes"].get(
+                    "geometric_rmse_model_x"
+                ),
+                "landsat:geometric_rmse_model_y": mtl_doc["image_attributes"].get(
+                    "geometric_rmse_model_y"
+                ),
+                "landsat:geometric_rmse_verify": mtl_doc["image_attributes"].get(
+                    "geometric_rmse_verify"
+                ),
+            }
+        ),
         user_data=user_data,
     )
     return d
@@ -614,7 +633,7 @@ def register_scheme(*schemes):
     urllib.parse.uses_params.extend(schemes)
 
 
-register_scheme('tar')
+register_scheme("tar")
 
 if __name__ == "__main__":
     main()

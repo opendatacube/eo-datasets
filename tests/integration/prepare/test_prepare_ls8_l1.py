@@ -35,6 +35,7 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
             "eo:platform": "landsat-8",
             "eo:sun_azimuth": 74.0074438,
             "eo:sun_elevation": 55.486483,
+            'landsat:collection_category': 'T1',
             'landsat:geometric_rmse_model_x': 4.593,
             'landsat:geometric_rmse_model_y': 5.817,
             'landsat:ground_control_points_model': 66,
