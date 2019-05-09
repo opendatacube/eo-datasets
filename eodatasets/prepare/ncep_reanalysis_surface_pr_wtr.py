@@ -10,13 +10,13 @@ from pathlib import Path
 import click
 import rasterio
 import rasterio.crs
+from rasterio.io import DatasetReader
 
 from eodatasets.serialise import write_yaml_from_dict
 from .utils import read_paths_from_file
 
 
 NOAA_WATER_VAPOUR_NS = uuid.UUID(hex='857bd048-8c86-4670-a2b4-5dbea26d7692')
-NOAA_DESCRIPTION = ''
 
 
 def get_coords(collection, xkey='lon', ykey='lat'):
@@ -45,7 +45,7 @@ def get_coords(collection, xkey='lon', ykey='lat'):
     }
 
 
-def get_uuid(collection, idx):
+def get_uuid(collection: DatasetReader, idx:int):
     """
     Returns a deterministic uuid based on band index and gdal checksum
     """
@@ -55,7 +55,8 @@ def get_uuid(collection, idx):
         NOAA_WATER_VAPOUR_NS,
         '{}?{}'.format(origin, urllib.parse.urlencode({
             'checksum': collection.checksum(idx),
-            'band_index': idx
+            'band_index': idx,
+            'filename': Path(collection.name).stem
         }))
     )
 
@@ -84,10 +85,6 @@ def process_datasets(dataset: Path):
                 'hours since %Y-%m-%d %H:%M:%S.%f'
             )
         )
-        creation_dt = (
-            datetime.datetime.utcnow()
-            .replace(tzinfo=datetime.timezone.utc)
-        )
 
         for _idx in collection.indexes:
             time_in_hours = int(collection.tags(_idx)['NETCDF_DIM_time'])
@@ -99,7 +96,6 @@ def process_datasets(dataset: Path):
             md = {}
             md['id'] = get_uuid(collection, _idx).hex
             md['creation_dt'] = creation_dt.isoformat()
-            md['description'] = NOAA_DESCRIPTION
             md['extent'] = {
                 'center_dt': ds_dt.isoformat(),
                 'coord': get_coords(collection)
@@ -107,10 +103,10 @@ def process_datasets(dataset: Path):
             md['grid_spatial'] = {
                 'projection': {
                     'geo_ref_points': get_coords(collection, xkey='x', ykey='y'),
-                    'spatial_reference': rasterio.crs.CRS(init='EPSG:4236').wkt
+                    'spatial_reference': 'epsg:4236'
                 }
             }
-            md['format'] = {'name': 'netCDF'}
+            md['format'] = {'name': 'NetCDF'}
             md['image'] = {
                 'bands': {
                     'water_vapour': {
@@ -135,7 +131,7 @@ def _process_datasets(output_dir, datasets):
     """
     for dataset in datasets:
         docs = process_datasets(dataset)
-        outfile = output_dir / (dataset.stem + '-metadata.yaml')
+        outfile = output_dir / (dataset.stem + '.ga-md.yaml')
         write_yaml_from_dict(docs, outfile)
 
 

@@ -9,11 +9,10 @@ from shapely.geometry.polygon import Polygon
 from xml.etree import ElementTree
 
 from eodatasets.serialise import write_yaml_from_dict
-from .utils import read_paths_from_file
+from eodatasets.prepare.utils import read_paths_from_file
 
 
 MCD43A1_NS = uuid.UUID(hex='80dc431b-fc6c-4e6f-bf08-585eba1d8dc9')
-MCD43A1_DESCRIPTION = ''
 
 
 def parse_xml(filepath: Path):
@@ -78,13 +77,13 @@ def get_band_info(imagery_file: Path):
         for ds in collection.subdatasets:
             raster_params = re.match('(?P<fmt>HDF4_EOS:EOS_GRID):(?P<path>[^:]+):(?P<layer>.*)$', ds)
             if '_Quality_' in raster_params['layer']:
-                name = raster_params['layer'].split(':')[1]
+                name = raster_params['layer'].split(':')[-1]
                 band_info['bands'][name] = {
                     'path': Path(raster_params['path']).name,
                     'layer': raster_params['layer']
                 }
             else:
-                name = raster_params['layer'].split(':')[1]
+                name = raster_params['layer'].split(':')[-1]
                 # BRDF parameter bands are isotropic, volumetric and geometric
                 for idx, band_name in enumerate(['iso', 'vol', 'geo'], 1):
                     band_info['bands'][name + '_' + band_name] = {
@@ -150,7 +149,7 @@ def _spatial_projection(shape, transform, spatial_reference):
     }
 
 
-def process_dataset(input_path: Path, xml_file: Path):
+def process_datasets(input_path: Path, xml_file: Path):
     """
     Generates a metadata document for each tile provided,
     requires a path to the input tile (hdf) and the
@@ -160,10 +159,9 @@ def process_dataset(input_path: Path, xml_file: Path):
     xml_md = parse_xml(xml_file)
 
     md = {}
-    md['id'] = uuid.uuid5(MCD43A1_NS, xml_md.get('granule_id', input_path.name))
+    md['id'] = uuid.uuid5(MCD43A1_NS, xml_md['granule_id'])
     md['label'] = xml_md.get('granule_id', input_path.name)
     md['creation_dt'] = xml_md['creation_dt'].isoformat()
-    md['description'] = MCD43A1_DESCRIPTION
     md['extent'] = {
         'from_dt': xml_md['from_dt'].isoformat(),
         'to_dt': xml_md['to_dt'].isoformat(),
@@ -194,8 +192,8 @@ def _process_datasets(output_dir, datasets, checksum):
     Wrapper function for processing multiple datasets
     """
     for dataset in datasets:
-        doc = process_dataset(dataset, Path(str(dataset) + '.xml'))
-        outfile = output_dir / (dataset.stem + '-metadata.yaml')
+        doc = process_datasets(dataset, Path(str(dataset) + '.xml'))
+        outfile = output_dir / (dataset.stem + '.ga-md.yaml')
         write_yaml_from_dict(doc, outfile)
 
 
