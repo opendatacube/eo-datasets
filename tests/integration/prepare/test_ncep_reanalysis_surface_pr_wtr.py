@@ -20,7 +20,6 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
     expected_doc = [
         {
             "creation_dt": "2019-04-17T01:14:42.954377+00:00",
-            "description": "",
             "extent": {
                 "center_dt": "2018-01-01T00:00:00+00:00",
                 "coord": {
@@ -84,7 +83,6 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
         },
         {
             "creation_dt": "2019-04-17T01:14:42.954377+00:00",
-            "description": "",
             "extent": {
                 "center_dt": "2018-01-01T06:00:00+00:00",
                 "coord": {
@@ -148,7 +146,6 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
         },
         {
             "creation_dt": "2019-04-17T01:14:42.954377+00:00",
-            "description": "",
             "extent": {
                 "center_dt": "2018-01-01T12:00:00+00:00",
                 "coord": {
@@ -212,7 +209,6 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
         },
         {
             "creation_dt": "2019-04-17T01:14:42.954377+00:00",
-            "description": "",
             "extent": {
                 "center_dt": "2018-01-01T18:00:00+00:00",
                 "coord": {
@@ -276,7 +272,6 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
         },
         {
             "creation_dt": "2019-04-17T01:14:42.954377+00:00",
-            "description": "",
             "extent": {
                 "center_dt": "2018-01-02T00:00:00+00:00",
                 "coord": {
@@ -340,7 +335,6 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
         },
         {
             "creation_dt": "2019-04-17T01:14:42.954377+00:00",
-            "description": "",
             "extent": {
                 "center_dt": "2018-01-02T06:00:00+00:00",
                 "coord": {
@@ -404,7 +398,6 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
         },
         {
             "creation_dt": "2019-04-17T01:14:42.954377+00:00",
-            "description": "",
             "extent": {
                 "center_dt": "2018-01-02T12:00:00+00:00",
                 "coord": {
@@ -468,7 +461,6 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
         },
         {
             "creation_dt": "2019-04-17T01:14:42.954377+00:00",
-            "description": "",
             "extent": {
                 "center_dt": "2018-01-02T18:00:00+00:00",
                 "coord": {
@@ -532,7 +524,6 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
         },
         {
             "creation_dt": "2019-04-17T01:14:42.954377+00:00",
-            "description": "",
             "extent": {
                 "center_dt": "2018-01-03T00:00:00+00:00",
                 "coord": {
