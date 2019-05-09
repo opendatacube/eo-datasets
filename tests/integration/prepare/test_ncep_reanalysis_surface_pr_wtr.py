@@ -15,7 +15,7 @@ _diff = partial(DeepDiff, significant_digits=6)
 
 def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
     output_path = Path(tmpdir)
-    expected_metadata_path = output_path / 'pr_wtr.eatm.2018.test-metadata.yaml'
+    expected_metadata_path = output_path / 'pr_wtr.eatm.2018.test.ga-md.yaml'
 
     expected_doc = [
         {
@@ -43,7 +43,7 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                 }
             },
             "format": {
-                "name": "netCDF"
+                "name": "NetCDF"
             },
             "grid_spatial": {
                 "projection": {
@@ -65,16 +65,10 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                             "y": 91.25
                         }
                     },
-                    "spatial_reference": (
-                        'GEOGCS["Hu Tzu Shan 1950",DATUM["Hu_Tzu_Shan_1950",SPHEROID'
-                        '["International 1924",6378388,297,AUTHORITY["EPSG","7022"]]'
-                        ',TOWGS84[-637,-549,-203,0,0,0,0],AUTHORITY["EPSG","6236"]],'
-                        'PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree"'
-                        ',0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4236"]]'
-                    )
+                    "spatial_reference": "epsg:4236"
                 }
             },
-            "id": "d194b0f7b9885bcda7bd9f2ef0c838d5",
+            "id": "fb3afcb0430157c5845535a64e3b0c53",
             "image": {
                 "bands": {
                     "water_vapour": {
@@ -113,7 +107,7 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                 }
             },
             "format": {
-                "name": "netCDF"
+                "name": "NetCDF"
             },
             "grid_spatial": {
                 "projection": {
@@ -135,16 +129,10 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                             "y": 91.25
                         }
                     },
-                    "spatial_reference": (
-                        'GEOGCS["Hu Tzu Shan 1950",DATUM["Hu_Tzu_Shan_1950",SPHEROID'
-                        '["International 1924",6378388,297,AUTHORITY["EPSG","7022"]]'
-                        ',TOWGS84[-637,-549,-203,0,0,0,0],AUTHORITY["EPSG","6236"]],'
-                        'PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree"'
-                        ',0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4236"]]'
-                    )
+                    "spatial_reference": "epsg:4236"
                 }
             },
-            "id": "a3bf7157fd85573bb1cb193e145ef5e9",
+            "id": "47d52e5bb6aa5cb6888d06c8e4bfa756",
             "image": {
                 "bands": {
                     "water_vapour": {
@@ -183,7 +171,7 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                 }
             },
             "format": {
-                "name": "netCDF"
+                "name": "NetCDF"
             },
             "grid_spatial": {
                 "projection": {
@@ -205,16 +193,10 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                             "y": 91.25
                         }
                     },
-                    "spatial_reference": (
-                        'GEOGCS["Hu Tzu Shan 1950",DATUM["Hu_Tzu_Shan_1950",SPHEROID'
-                        '["International 1924",6378388,297,AUTHORITY["EPSG","7022"]]'
-                        ',TOWGS84[-637,-549,-203,0,0,0,0],AUTHORITY["EPSG","6236"]],'
-                        'PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree"'
-                        ',0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4236"]]'
-                    )
+                    "spatial_reference": "epsg:4236"
                 }
             },
-            "id": "45eaab4272275972b185bb6ab2e18057",
+            "id": "534362923d46579ea58466ab1d374e3a",
             "image": {
                 "bands": {
                     "water_vapour": {
@@ -253,7 +235,7 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                 }
             },
             "format": {
-                "name": "netCDF"
+                "name": "NetCDF"
             },
             "grid_spatial": {
                 "projection": {
@@ -275,16 +257,10 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                             "y": 91.25
                         }
                     },
-                    "spatial_reference": (
-                        'GEOGCS["Hu Tzu Shan 1950",DATUM["Hu_Tzu_Shan_1950",SPHEROID'
-                        '["International 1924",6378388,297,AUTHORITY["EPSG","7022"]]'
-                        ',TOWGS84[-637,-549,-203,0,0,0,0],AUTHORITY["EPSG","6236"]],'
-                        'PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree"'
-                        ',0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4236"]]'
-                    )
+                    "spatial_reference": "epsg:4236"
                 }
             },
-            "id": "1d2b45cd6d00514dbfe54fd35aa16de2",
+            "id": "a6000c88eeba5c3997e6985add9cb30d",
             "image": {
                 "bands": {
                     "water_vapour": {
@@ -323,7 +299,7 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                 }
             },
             "format": {
-                "name": "netCDF"
+                "name": "NetCDF"
             },
             "grid_spatial": {
                 "projection": {
@@ -345,16 +321,10 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                             "y": 91.25
                         }
                     },
-                    "spatial_reference": (
-                        'GEOGCS["Hu Tzu Shan 1950",DATUM["Hu_Tzu_Shan_1950",SPHEROID'
-                        '["International 1924",6378388,297,AUTHORITY["EPSG","7022"]]'
-                        ',TOWGS84[-637,-549,-203,0,0,0,0],AUTHORITY["EPSG","6236"]],'
-                        'PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree"'
-                        ',0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4236"]]'
-                    )
+                    "spatial_reference": "epsg:4236"
                 }
             },
-            "id": "9ab0d685c1545e338909297038ded5d3",
+            "id": "227d9e888e195db895a082df117d9ad7",
             "image": {
                 "bands": {
                     "water_vapour": {
@@ -393,7 +363,7 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                 }
             },
             "format": {
-                "name": "netCDF"
+                "name": "NetCDF"
             },
             "grid_spatial": {
                 "projection": {
@@ -415,16 +385,10 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                             "y": 91.25
                         }
                     },
-                    "spatial_reference": (
-                        'GEOGCS["Hu Tzu Shan 1950",DATUM["Hu_Tzu_Shan_1950",SPHEROID'
-                        '["International 1924",6378388,297,AUTHORITY["EPSG","7022"]]'
-                        ',TOWGS84[-637,-549,-203,0,0,0,0],AUTHORITY["EPSG","6236"]],'
-                        'PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree"'
-                        ',0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4236"]]'
-                    )
+                    "spatial_reference": "epsg:4236"
                 }
             },
-            "id": "b8f1264cafe55f92866464e7151ff3f0",
+            "id": "b843d85e2b9556b0855c1b8c750ce07e",
             "image": {
                 "bands": {
                     "water_vapour": {
@@ -463,7 +427,7 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                 }
             },
             "format": {
-                "name": "netCDF"
+                "name": "NetCDF"
             },
             "grid_spatial": {
                 "projection": {
@@ -485,16 +449,10 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                             "y": 91.25
                         }
                     },
-                    "spatial_reference": (
-                        'GEOGCS["Hu Tzu Shan 1950",DATUM["Hu_Tzu_Shan_1950",SPHEROID'
-                        '["International 1924",6378388,297,AUTHORITY["EPSG","7022"]]'
-                        ',TOWGS84[-637,-549,-203,0,0,0,0],AUTHORITY["EPSG","6236"]],'
-                        'PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree"'
-                        ',0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4236"]]'
-                    )
+                    "spatial_reference": "epsg:4236"
                 }
             },
-            "id": "4d1a74a1d48f5985bf891a828a381074",
+            "id": "0a0fd994712253f0b7125be34d8afe0c",
             "image": {
                 "bands": {
                     "water_vapour": {
@@ -533,7 +491,7 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                 }
             },
             "format": {
-                "name": "netCDF"
+                "name": "NetCDF"
             },
             "grid_spatial": {
                 "projection": {
@@ -555,16 +513,10 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                             "y": 91.25
                         }
                     },
-                    "spatial_reference": (
-                        'GEOGCS["Hu Tzu Shan 1950",DATUM["Hu_Tzu_Shan_1950",SPHEROID'
-                        '["International 1924",6378388,297,AUTHORITY["EPSG","7022"]]'
-                        ',TOWGS84[-637,-549,-203,0,0,0,0],AUTHORITY["EPSG","6236"]],'
-                        'PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree"'
-                        ',0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4236"]]'
-                    )
+                    "spatial_reference": "epsg:4236"
                 }
             },
-            "id": "2aa736fe24b25a3ab62d1ab4971dec0e",
+            "id": "7d98f5c1e0765d8d8890f4e8791fc10d",
             "image": {
                 "bands": {
                     "water_vapour": {
@@ -603,7 +555,7 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                 }
             },
             "format": {
-                "name": "netCDF"
+                "name": "NetCDF"
             },
             "grid_spatial": {
                 "projection": {
@@ -625,16 +577,10 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                             "y": 91.25
                         }
                     },
-                    "spatial_reference": (
-                        'GEOGCS["Hu Tzu Shan 1950",DATUM["Hu_Tzu_Shan_1950",SPHEROID'
-                        '["International 1924",6378388,297,AUTHORITY["EPSG","7022"]]'
-                        ',TOWGS84[-637,-549,-203,0,0,0,0],AUTHORITY["EPSG","6236"]],'
-                        'PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree"'
-                        ',0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4236"]]'
-                    )
+                    "spatial_reference": "epsg:4236"
                 }
             },
-            "id": "e22bea968eb55e7fa770cba574c66dda",
+            "id": "b65f15d8e74f57cf92f5779dd33e803e",
             "image": {
                 "bands": {
                     "water_vapour": {
