@@ -32,7 +32,7 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
         "datetime": datetime(2013, 4, 29, 1, 10, 20, 336104),
         'creation_datetime': datetime(2016, 11, 24, 8, 26, 33),
         "file_format": "GeoTIFF",
-        "product": {"name": "usgs_ls7-e_level1_1"},
+        "product": {"href": "https://dea.ga.gov.au/usgs_ls7e_level1_1"},
         "properties": {
             "eo:cloud_cover": 0.0,
             "eo:gsd": 30.0,

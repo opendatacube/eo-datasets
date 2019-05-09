@@ -27,7 +27,7 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
         "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
         'creation_datetime': datetime(2017, 4, 5, 11, 17, 36),
         "file_format": "GeoTIFF",
-        "product": {"name": "usgs_ls8-o_level1_1"},
+        "product": {"href": "https://dea.ga.gov.au/usgs_ls8o_level1_1"},
         "properties": {
             "eo:cloud_cover": 93.22,
             "eo:gsd": 30.0,

@@ -1,3 +1,4 @@
+import itertools
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum
@@ -7,6 +8,7 @@ from uuid import UUID
 
 import affine
 import attr
+import numpy
 import rasterio
 import rasterio.features
 import shapely
@@ -23,7 +25,8 @@ class FileFormat(Enum):
 
 @attr.s(auto_attribs=True, slots=True)
 class Product:
-    name: str
+    href: str
+    # name: str = None
 
 
 @attr.s(auto_attribs=True, slots=True, hash=True, frozen=True)
@@ -127,6 +130,7 @@ def valid_region(
         raise ValueError("No measurements: cannot calculate valid region")
 
     measurements_by_grid: Dict[Grid, List[Measurement]] = defaultdict(list)
+    mask_by_grid: Dict[Grid, numpy.ndarray] = {}
 
     for measurement in measurements:
         print(f"path: {path}")
@@ -135,16 +139,20 @@ def valid_region(
         with rasterio.open(str(measurement_path), "r") as ds:
             transform: affine.Affine = ds.transform
             img = ds.read(1)
-            measurements_by_grid[Grid(ds.shape, transform)].append(measurement)
+            grid = Grid(ds.shape, transform)
+            measurements_by_grid[grid].append(measurement)
 
             if mask_value is not None:
                 new_mask = img & mask_value == mask_value
             else:
                 new_mask = img != ds.nodata
+
+            mask = mask_by_grid.get(grid)
             if mask is None:
                 mask = new_mask
             else:
                 mask |= new_mask
+            mask_by_grid[grid] = mask
 
     grids_by_frequency: List[Tuple[Grid, List[Measurement]]] = sorted(
         measurements_by_grid.items(), key=lambda k: len(k[1])
@@ -165,9 +173,13 @@ def valid_region(
         ]
     )
 
-    shapes = rasterio.features.shapes(mask.astype("uint8"), mask=mask)
+    shapes = itertools.chain(
+        *[rasterio.features.shapes(mask.astype("uint8"), mask=mask) for mask in mask_by_grid.values()]
+    )
     shape = shapely.ops.unary_union(
-        [shapely.geometry.shape(shape) for shape, val in shapes if val == 1]
+        [
+            shapely.geometry.shape(shape) for shape, val in shapes if val == 1
+        ]
     )
 
     # convex hull

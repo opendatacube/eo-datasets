@@ -267,6 +267,13 @@ def prepare_dataset_from_mtl(
 def _prepare(
     mtl_doc: dict, mtl_filename: str, base_path: Optional[Path] = None
 ) -> Dataset:
+    collection_number = mtl_doc["metadata_file_info"].get("collection_number")
+
+    if collection_number is None:
+        raise NotImplementedError(
+            "Dataset has no collection number: pre-collection data is not supported."
+        )
+
     data_format = mtl_doc["product_metadata"]["output_format"]
     if data_format.upper() != "GEOTIFF":
         raise NotImplementedError(f"Only GTiff currently supported, got {data_format}")
@@ -341,14 +348,14 @@ def _prepare(
         raise NotImplementedError("reflective and thermal have different cell sizes")
 
     # Generate a deterministic UUID for the level 1 dataset
+    product_name = "usgs_ls{}{}_level1_{}".format(
+        platform_id[-1].lower(), sensor_id[0].lower(), int(collection_number)
+    )
     d = Dataset(
         id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
         product=Product(
-            "usgs_ls{}-{}_level1_{}".format(
-                platform_id[-1].lower(),
-                sensor_id[0].lower(),
-                int(mtl_doc["metadata_file_info"]["collection_number"]),
-            )
+            # TODO: Decide product identification
+            href=f"https://dea.ga.gov.au/{product_name}", # name=product_name
         ),
         datetime=ciso8601.parse_datetime(
             "{}T{}".format(
@@ -375,9 +382,7 @@ def _prepare(
                 "eo:sun_elevation": mtl_doc["image_attributes"]["sun_elevation"],
                 "landsat:wrs_path": mtl_doc["product_metadata"]["wrs_path"],
                 "landsat:wrs_row": mtl_doc["product_metadata"]["wrs_row"],
-                "landsat:collection_number": mtl_doc["metadata_file_info"][
-                    "collection_number"
-                ],
+                "landsat:collection_number": collection_number,
                 "landsat:collection_category": mtl_doc["product_metadata"][
                     "collection_category"
                 ],
