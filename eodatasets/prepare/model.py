@@ -14,6 +14,7 @@ import rasterio.features
 import shapely
 import shapely.affinity
 import shapely.ops
+from ruamel.yaml.comments import CommentedMap
 
 from shapely.geometry.base import BaseGeometry
 
@@ -25,8 +26,8 @@ class FileFormat(Enum):
 
 @attr.s(auto_attribs=True, slots=True)
 class Product:
-    href: str
-    # name: str = None
+    local_name: str = None
+    href: str = None
 
 
 @attr.s(auto_attribs=True, slots=True, hash=True, frozen=True)
@@ -37,48 +38,60 @@ class Grid:
 
 @attr.s(auto_attribs=True, slots=True)
 class Measurement:
+    name: str = attr.ib(metadata=dict(doc_exclude=True))
     path: str
-    band: Optional[str] = None
+    band: Optional[int] = 1
     layer: Optional[str] = None
-    grid: Optional[str] = "default"
+    grid: str = 'default'
 
 
 @attr.s(auto_attribs=True, slots=True)
 class Dataset:
-    id: UUID
-    product: Product
+    id: UUID = None
+    product: Product = None
 
-    datetime: datetime
+    datetime: datetime = None
+
+    locations: List[str] = None
 
     # When the dataset was processed/created.
-    creation_datetime: datetime
+    creation_datetime: datetime = None
 
-    file_format: FileFormat
+    file_format: FileFormat = None
 
-    crs: str
+    crs: str = None
 
-    geometry: BaseGeometry
+    geometry: BaseGeometry = None
 
-    grids: Dict[str, Grid]
+    grids: Dict[str, Grid] = None
 
-    measurements: Dict[str, Measurement]
+    measurements: Dict[str, Measurement] = None
 
-    lineage: Dict[str, Tuple[UUID]]
+    lineage: Dict[str, Tuple[UUID]] = attr.ib(factory=CommentedMap)
 
-    properties: Dict[str, Union[str, int, float]]
+    properties: Dict[str, Union[str, int, float]] = attr.ib(factory=CommentedMap)
 
     # io_driver_data: Dict = None
-    user_data: Dict = None
+    user_data: Dict = attr.ib(factory=CommentedMap)
 
     # replaces: Optional[UUID] = None
 
     def to_doc(self):
-        d = attr.asdict(self)
+        d = attr.asdict(
+            self,
+            recurse=True,
+            dict_factory=CommentedMap,
+            # Exclude fields that are the default.
+            filter=lambda attr, value: 'doc_exclude' not in attr.metadata and value != attr.default,
+            retain_collection_types=False,
+        )
         d["geometry"] = shapely.geometry.mapping(self.geometry)
         return d
 
 
-def resolve_absolute_offset(dataset_path: Path, offset: str, target_path: Optional[Path] = None) -> str:
+def resolve_absolute_offset(
+        dataset_path: Path, offset: str, target_path: Optional[Path] = None
+) -> str:
     """
     Expand a filename (offset) relative to the dataset.
 
@@ -139,7 +152,7 @@ def valid_region(
         with rasterio.open(str(measurement_path), "r") as ds:
             transform: affine.Affine = ds.transform
             img = ds.read(1)
-            grid = Grid(ds.shape, transform)
+            grid = Grid(shape=ds.shape, transform=transform)
             measurements_by_grid[grid].append(measurement)
 
             if mask_value is not None:
@@ -159,7 +172,7 @@ def valid_region(
     )
 
     def name_grid(grid, measurements: List[Measurement], name=None):
-        name = name or "_".join(m.band for m in measurements)
+        name = name or "_".join(m.name for m in measurements)
         for m in measurements:
             m.grid = name
 
@@ -174,12 +187,13 @@ def valid_region(
     )
 
     shapes = itertools.chain(
-        *[rasterio.features.shapes(mask.astype("uint8"), mask=mask) for mask in mask_by_grid.values()]
+        *[
+            rasterio.features.shapes(mask.astype("uint8"), mask=mask)
+            for mask in mask_by_grid.values()
+        ]
     )
     shape = shapely.ops.unary_union(
-        [
-            shapely.geometry.shape(shape) for shape, val in shapes if val == 1
-        ]
+        [shapely.geometry.shape(shape) for shape, val in shapes if val == 1]
     )
 
     # convex hull

@@ -18,6 +18,7 @@ import click
 
 import yaml
 from osgeo import osr
+from ruamel.yaml import YAML
 from shapely.geometry import Polygon
 import urllib.parse
 from eodatasets import verify
@@ -289,9 +290,9 @@ def _prepare(
 
     bands = [
         Measurement(
-            mtl_doc["product_metadata"]["file_name_band_" + band_fname.lower()],
-            band_name,
-            layer="1",
+            name=band_name,
+            path=mtl_doc["product_metadata"]["file_name_band_" + band_fname.lower()],
+            band=None,
         )
         for band_fname, band_name in band_mappings
     ]
@@ -339,7 +340,6 @@ def _prepare(
         ),
         **get_all("product_metadata", ("data_type", "ephemeris_type")),
     }
-
     # Assumed below.
     if (
         mtl_doc["projection_parameters"]["grid_cell_size_reflective"]
@@ -351,11 +351,12 @@ def _prepare(
     product_name = "usgs_ls{}{}_level1_{}".format(
         platform_id[-1].lower(), sensor_id[0].lower(), int(collection_number)
     )
+
     d = Dataset(
         id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
         product=Product(
             # TODO: Decide product identification
-            href=f"https://dea.ga.gov.au/{product_name}", # name=product_name
+            href=f"https://collections.dea.ga.gov.au/{product_name}"
         ),
         datetime=ciso8601.parse_datetime(
             "{}T{}".format(
@@ -370,7 +371,7 @@ def _prepare(
         crs="epsg:%s" % epsg_code,
         geometry=geometry,
         grids=grids,
-        measurements={band.band: band for band in bands},
+        measurements={band.name: band for band in bands},
         lineage={},
         properties=_remove_nones(
             {
@@ -549,7 +550,8 @@ def prepare_and_write(
                 ds_path, band["path"], target_path=output_yaml_path
             )
 
-    serialise.dump_yaml(output_yaml_path, doc)
+    yaml = YAML()
+    yaml.dump(doc, output_yaml_path)
 
 
 def _normalise_dataset_path(input_path: Path) -> Path:

@@ -5,34 +5,36 @@ from datetime import datetime
 # flake8 doesn't recognise type hints as usage
 from pathlib import Path  # noqa: F401
 from typing import Dict  # noqa: F401
+from uuid import UUID
 
 import ciso8601
 import click
 import yaml
+import ruamel.yaml
+from ruamel.yaml import YAML
 
 from eodatasets import serialise as eodserial
 from eodatasets.prepare.model import FileFormat
 
 
 # pylint: disable=too-many-ancestors
-class OrderPreservingDumper(yaml.SafeDumper):
-    pass
-
-
-def _dict_representer(dumper, data):
-    return dumper.represent_mapping(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, data.items()
-    )
 
 
 def _format_representer(dumper, data: FileFormat):
     return dumper.represent_scalar(u"tag:yaml.org,2002:str", "%s" % data.name)
 
 
-OrderPreservingDumper.add_representer(collections.OrderedDict, _dict_representer)
-eodserial.init_yaml_handling(OrderPreservingDumper)
+def uuid_representer(dumper, data):
+    """
+    :type dumper: yaml.representer.BaseRepresenter
+    :type data: uuid.UUID
+    :rtype: yaml.nodes.Node
+    """
+    return dumper.represent_scalar(u'tag:yaml.org,2002:str', '%s' % data)
 
-OrderPreservingDumper.add_representer(FileFormat, _format_representer)
+
+ruamel.yaml.add_representer(FileFormat, _format_representer)
+ruamel.yaml.add_multi_representer(UUID, uuid_representer)
 
 
 def dump_yaml(output_yaml, doc):
@@ -47,12 +49,10 @@ def dump_yaml(output_yaml, doc):
 
 
 def dump_yaml_to_stream(stream, doc):
+    yaml = YAML()
     yaml.dump(
-        # In CPython 3.5+ dicts are already ordered, but yaml.dump() does not maintain that order unless we do this.
-        collections.OrderedDict(doc),
+        doc,
         stream,
-        Dumper=OrderPreservingDumper,
-        default_flow_style=False,
         indent=4,
     )
 
