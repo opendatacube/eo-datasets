@@ -36,6 +36,7 @@ setup(
         'PyYAML!=5.1',
         'netCDF4',
         'rasterio',
+        'ruamel.yaml',
         'shapely',
         'scipy',
         'structlog',
