@@ -1,7 +1,4 @@
-import collections
-
 from datetime import datetime
-
 # flake8 doesn't recognise type hints as usage
 from pathlib import Path  # noqa: F401
 from typing import Dict  # noqa: F401
@@ -9,11 +6,8 @@ from uuid import UUID
 
 import ciso8601
 import click
-import yaml
-import ruamel.yaml
 from ruamel.yaml import YAML
 
-from eodatasets import serialise as eodserial
 from eodatasets.prepare.model import FileFormat
 
 
@@ -24,7 +18,7 @@ def _format_representer(dumper, data: FileFormat):
     return dumper.represent_scalar(u"tag:yaml.org,2002:str", "%s" % data.name)
 
 
-def uuid_representer(dumper, data):
+def _uuid_representer(dumper, data):
     """
     :type dumper: yaml.representer.BaseRepresenter
     :type data: uuid.UUID
@@ -33,8 +27,9 @@ def uuid_representer(dumper, data):
     return dumper.represent_scalar(u'tag:yaml.org,2002:str', '%s' % data)
 
 
-ruamel.yaml.add_representer(FileFormat, _format_representer)
-ruamel.yaml.add_multi_representer(UUID, uuid_representer)
+def init_yaml(yaml: YAML):
+    yaml.representer.add_representer(FileFormat, _format_representer)
+    yaml.representer.add_multi_representer(UUID, _uuid_representer)
 
 
 def dump_yaml(output_yaml, doc):
@@ -50,10 +45,10 @@ def dump_yaml(output_yaml, doc):
 
 def dump_yaml_to_stream(stream, doc):
     yaml = YAML()
+    init_yaml(yaml)
     yaml.dump(
         doc,
-        stream,
-        indent=4,
+        stream
     )
 
 

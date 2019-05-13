@@ -15,7 +15,6 @@ import shapely
 import shapely.affinity
 import shapely.ops
 from ruamel.yaml.comments import CommentedMap
-
 from shapely.geometry.base import BaseGeometry
 
 

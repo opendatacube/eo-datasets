@@ -1,7 +1,6 @@
 """
 Ingest data from the command-line.
 """
-from __future__ import absolute_import
 
 import hashlib
 import logging
@@ -9,18 +8,17 @@ import os
 import re
 import tarfile
 import tempfile
+import urllib.parse
 import uuid
 from datetime import datetime
 from pathlib import Path
 
 import ciso8601
 import click
-
-import yaml
+import ruamel.yaml
 from osgeo import osr
-from ruamel.yaml import YAML
 from shapely.geometry import Polygon
-import urllib.parse
+
 from eodatasets import verify
 from eodatasets.prepare.model import (
     Dataset,
@@ -292,7 +290,6 @@ def _prepare(
         Measurement(
             name=band_name,
             path=mtl_doc["product_metadata"]["file_name_band_" + band_fname.lower()],
-            band=None,
         )
         for band_fname, band_name in band_mappings
     ]
@@ -447,7 +444,7 @@ def yaml_checkums_correctly(output_yaml, data_path):
     with output_yaml.open() as yaml_f:
         logging.info("Running checksum comparison")
         # It can match any dataset in the yaml.
-        for doc in yaml.safe_load_all(yaml_f):
+        for doc in ruamel.yaml.safe_load_all(yaml_f):
             yaml_sha1 = doc["checksum_sha1"]
             checksum_sha1 = hashlib.sha1(data_path.open("rb").read()).hexdigest()
             if checksum_sha1 == yaml_sha1:
@@ -550,8 +547,7 @@ def prepare_and_write(
                 ds_path, band["path"], target_path=output_yaml_path
             )
 
-    yaml = YAML()
-    yaml.dump(doc, output_yaml_path)
+    serialise.dump_yaml(output_yaml_path, doc)
 
 
 def _normalise_dataset_path(input_path: Path) -> Path:
