@@ -27,7 +27,7 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
         "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
         'creation_datetime': datetime(2017, 4, 5, 11, 17, 36),
         "file_format": "GeoTIFF",
-        "product": {"href": "https://dea.ga.gov.au/usgs_ls8o_level1_1"},
+        "product": {"href": "https://collections.dea.ga.gov.au/usgs_ls8o_level1_1"},
         "properties": {
             "eo:cloud_cover": 93.22,
             "eo:gsd": 30.0,
@@ -96,75 +96,52 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
         },
         "measurements": {
             "blue": {
-                "band": "blue",
-                "grid": "default",
-                "layer": "1",
                 "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B2.TIF"),
             },
             "cirrus": {
-                "band": "cirrus",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B9.TIF"),
             },
             "coastal_aerosol": {
-                "band": "coastal_aerosol",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B1.TIF"),
             },
             "green": {
-                "band": "green",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B3.TIF"),
             },
             "lwir1": {
-                "band": "lwir1",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B10.TIF"),
             },
             "lwir2": {
-                "band": "lwir2",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B11.TIF"),
             },
             "nir": {
-                "band": "nir",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B5.TIF"),
             },
             "panchromatic": {
-                "band": "panchromatic",
+
                 "grid": "panchromatic",
-                "layer": "1",
+
                 "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B8.TIF"),
             },
             "quality": {
-                "band": "quality",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_BQA.TIF"),
             },
             "red": {
-                "band": "red",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B4.TIF"),
             },
             "swir1": {
-                "band": "swir1",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B6.TIF"),
             },
             "swir2": {
-                "band": "swir2",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B7.TIF"),
             },
         },

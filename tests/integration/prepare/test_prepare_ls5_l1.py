@@ -28,7 +28,7 @@ def test_prepare_l5_l1_usgs_tarball(tmpdir):
 
     expected_doc = {
         "id": "b0d31709-dda4-5a67-9fdf-3ae026a99a72",
-        "product": {"href": "https://dea.ga.gov.au/usgs_ls5t_level1_1"},
+        "product": {"href": "https://collections.dea.ga.gov.au/usgs_ls5t_level1_1"},
         "crs": "epsg:32655",
         "datetime": datetime(1997, 4, 6, 23, 17, 43, 102000),
         'creation_datetime': datetime(2016, 12, 31, 15, 54, 58),
@@ -89,47 +89,27 @@ def test_prepare_l5_l1_usgs_tarball(tmpdir):
         },
         "measurements": {
             "blue": {
-                "band": "blue",
-                "grid": "default",
-                "layer": "1",
                 "path": path_offset("LT05_L1TP_090085_19970406_20161231_01_T1_B1.TIF"),
             },
             "green": {
-                "band": "green",
-                "grid": "default",
-                "layer": "1",
                 "path": path_offset("LT05_L1TP_090085_19970406_20161231_01_T1_B2.TIF"),
             },
-            "nir": {
-                "band": "nir",
-                "grid": "default",
-                "layer": "1",
-                "path": path_offset("LT05_L1TP_090085_19970406_20161231_01_T1_B4.TIF"),
-            },
-            "quality": {
-                "band": "quality",
-                "grid": "default",
-                "layer": "1",
-                "path": path_offset("LT05_L1TP_090085_19970406_20161231_01_T1_BQA.TIF"),
-            },
             "red": {
-                "band": "red",
-                "grid": "default",
-                "layer": "1",
                 "path": path_offset("LT05_L1TP_090085_19970406_20161231_01_T1_B3.TIF"),
             },
+            "nir": {
+                "path": path_offset("LT05_L1TP_090085_19970406_20161231_01_T1_B4.TIF"),
+            },
             "swir1": {
-                "band": "swir1",
-                "grid": "default",
-                "layer": "1",
                 "path": path_offset("LT05_L1TP_090085_19970406_20161231_01_T1_B5.TIF"),
             },
             "swir2": {
-                "band": "swir2",
-                "grid": "default",
-                "layer": "1",
                 "path": path_offset("LT05_L1TP_090085_19970406_20161231_01_T1_B7.TIF"),
             },
+            "quality": {
+                "path": path_offset("LT05_L1TP_090085_19970406_20161231_01_T1_BQA.TIF"),
+            },
+
         },
         "lineage": {},
     }

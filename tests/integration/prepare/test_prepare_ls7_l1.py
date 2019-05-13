@@ -32,7 +32,7 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
         "datetime": datetime(2013, 4, 29, 1, 10, 20, 336104),
         'creation_datetime': datetime(2016, 11, 24, 8, 26, 33),
         "file_format": "GeoTIFF",
-        "product": {"href": "https://dea.ga.gov.au/usgs_ls7e_level1_1"},
+        "product": {"href": "https://collections.dea.ga.gov.au/usgs_ls7e_level1_1"},
         "properties": {
             "eo:cloud_cover": 0.0,
             "eo:gsd": 30.0,
@@ -87,45 +87,31 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
         },
         "measurements": {
             "blue": {
-                "band": "blue",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B1.TIF"),
             },
             "green": {
-                "band": "green",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B2.TIF"),
             },
             "nir": {
-                "band": "nir",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B4.TIF"),
             },
             "quality": {
-                "band": "quality",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_BQA.TIF"),
             },
             "red": {
-                "band": "red",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B3.TIF"),
             },
             "swir1": {
-                "band": "swir1",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B5.TIF"),
             },
             "swir2": {
-                "band": "swir2",
-                "grid": "default",
-                "layer": "1",
+
                 "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B7.TIF"),
             },
         },
