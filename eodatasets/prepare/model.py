@@ -1,6 +1,6 @@
 import itertools
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime as dt
 from enum import Enum
 from pathlib import Path
 from typing import Tuple, Dict, Optional, Union, Iterable, List
@@ -49,12 +49,12 @@ class Dataset:
     id: UUID = None
     product: Product = None
 
-    datetime: datetime = None
+    datetime: dt = None
 
     locations: List[str] = None
 
     # When the dataset was processed/created.
-    creation_datetime: datetime = None
+    creation_datetime: dt = None
 
     file_format: FileFormat = None
 
