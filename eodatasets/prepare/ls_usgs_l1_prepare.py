@@ -11,13 +11,16 @@ import tempfile
 import urllib.parse
 import uuid
 from datetime import datetime
+from functools import partial
 from pathlib import Path
-
+from shapely.ops import transform
 import ciso8601
 import click
+import pyproj
 import ruamel.yaml
 from osgeo import osr
 from shapely.geometry import Polygon
+from shapely.geometry.base import BaseGeometry
 
 from eodatasets import verify
 from eodatasets.prepare.model import (
@@ -322,11 +325,28 @@ def _prepare(
         )
         grids = None
 
-    def get_all(section: str, keys):
-        return {k: mtl_doc[section][k] for k in keys if k in mtl_doc[section]}
+    properties = {
+        "datetime": ciso8601.parse_datetime(
+            "{}T{}".format(
+                mtl_doc["product_metadata"]["date_acquired"],
+                mtl_doc["product_metadata"]["scene_center_time"],
+            )
+        ),
+        "odc:creation_datetime": ciso8601.parse_datetime(
+            mtl_doc["metadata_file_info"]["file_date"]
+        ),
+        "odc:file_format": file_format,
+        "eo:platform": platform_id.lower().replace("_", "-"),
+        "eo:instrument": sensor_id,
+        "eo:gsd": mtl_doc["projection_parameters"]["grid_cell_size_reflective"],
+        "eo:cloud_cover": mtl_doc["image_attributes"]["cloud_cover"],
+        "eo:sun_azimuth": mtl_doc["image_attributes"]["sun_azimuth"],
+        "eo:sun_elevation": mtl_doc["image_attributes"]["sun_elevation"],
+        "landsat:collection_number": collection_number,
+    }
 
-    user_data = {
-        **get_all(
+    landsat_fields = [
+        (
             "metadata_file_info",
             (
                 "landsat_scene_id",
@@ -335,8 +355,38 @@ def _prepare(
                 "processing_software_version",
             ),
         ),
-        **get_all("product_metadata", ("data_type", "ephemeris_type")),
-    }
+        (
+            "product_metadata",
+            (
+                "data_type",
+                "ephemeris_type",
+                "wrs_path",
+                "wrs_row",
+                "collection_category",
+            ),
+        ),
+        (
+            "image_attributes",
+            (
+                "ground_control_points_version",
+                "ground_control_points_model",
+                "geometric_rmse_model_x",
+                "geometric_rmse_model_y",
+                "ground_control_points_verify",
+                "geometric_rmse_verify",
+            ),
+        ),
+    ]
+
+    for section, fields in landsat_fields:
+        s = mtl_doc[section]
+        for field in fields:
+            if field in properties:
+                raise ValueError(
+                    f"Duplicate field {section}.{field} in {mtl_filename!r}"
+                )
+            properties[f"landsat:{field}"] = s.get(field)
+
     # Assumed below.
     if (
         mtl_doc["projection_parameters"]["grid_cell_size_reflective"]
@@ -349,64 +399,29 @@ def _prepare(
         platform_id[-1].lower(), sensor_id[0].lower(), int(collection_number)
     )
 
+    crs = f"epsg:{epsg_code}"
     d = Dataset(
         id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
         product=Product(
             # TODO: Decide product identification
             href=f"https://collections.dea.ga.gov.au/{product_name}"
         ),
-        datetime=ciso8601.parse_datetime(
-            "{}T{}".format(
-                mtl_doc["product_metadata"]["date_acquired"],
-                mtl_doc["product_metadata"]["scene_center_time"],
-            )
-        ),
-        creation_datetime=ciso8601.parse_datetime(
-            mtl_doc["metadata_file_info"]["file_date"]
-        ),
-        file_format=file_format,
-        crs="epsg:%s" % epsg_code,
+        bbox=bbox(geometry, crs),
+        crs=crs,
         geometry=geometry,
         grids=grids,
         measurements={band.name: band for band in bands},
         lineage={},
-        properties=_remove_nones(
-            {
-                "eo:platform": platform_id.lower().replace("_", "-"),
-                "eo:instrument": sensor_id,
-                "eo:gsd": mtl_doc["projection_parameters"]["grid_cell_size_reflective"],
-                "eo:cloud_cover": mtl_doc["image_attributes"]["cloud_cover"],
-                "eo:sun_azimuth": mtl_doc["image_attributes"]["sun_azimuth"],
-                "eo:sun_elevation": mtl_doc["image_attributes"]["sun_elevation"],
-                "landsat:wrs_path": mtl_doc["product_metadata"]["wrs_path"],
-                "landsat:wrs_row": mtl_doc["product_metadata"]["wrs_row"],
-                "landsat:collection_number": collection_number,
-                "landsat:collection_category": mtl_doc["product_metadata"][
-                    "collection_category"
-                ],
-                "landsat:ground_control_points_model": mtl_doc["image_attributes"].get(
-                    "ground_control_points_model"
-                ),
-                "landsat:ground_control_points_version": mtl_doc[
-                    "image_attributes"
-                ].get("ground_control_points_version"),
-                "landsat:ground_control_points_verify": mtl_doc["image_attributes"].get(
-                    "ground_control_points_verify"
-                ),
-                "landsat:geometric_rmse_model_x": mtl_doc["image_attributes"].get(
-                    "geometric_rmse_model_x"
-                ),
-                "landsat:geometric_rmse_model_y": mtl_doc["image_attributes"].get(
-                    "geometric_rmse_model_y"
-                ),
-                "landsat:geometric_rmse_verify": mtl_doc["image_attributes"].get(
-                    "geometric_rmse_verify"
-                ),
-            }
-        ),
-        user_data=user_data,
+        properties=_remove_nones(properties),
     )
     return d
+
+
+def bbox(shape: BaseGeometry, crs: str):
+    tranform_wrs84 = partial(
+        pyproj.transform, pyproj.Proj(init=crs), pyproj.Proj(init="epsg:4326")
+    )
+    return transform(tranform_wrs84, shape).buffer(0).bounds
 
 
 def _remove_nones(d: Dict) -> Dict:

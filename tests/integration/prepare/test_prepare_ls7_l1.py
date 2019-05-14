@@ -28,34 +28,38 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
 
     expected_doc = {
         "id": "f23c5fa2-3321-5be9-9872-2be73fee12a6",
-        "crs": "epsg:32652",
-        "datetime": datetime(2013, 4, 29, 1, 10, 20, 336104),
-        'creation_datetime': datetime(2016, 11, 24, 8, 26, 33),
-        "file_format": "GeoTIFF",
         "product": {"href": "https://collections.dea.ga.gov.au/usgs_ls7e_level1_1"},
+        "bbox": [
+            129.25064360521907,
+            -26.957152638835396,
+            131.72025445274613,
+            -25.012358753716335,
+        ],
+        "crs": "epsg:32652",
         "properties": {
+            "datetime": datetime(2013, 4, 29, 1, 10, 20, 336104),
+            "odc:creation_datetime": datetime(2016, 11, 24, 8, 26, 33),
+            "odc:file_format": "GeoTIFF",
             "eo:cloud_cover": 0.0,
             "eo:gsd": 30.0,
             "eo:instrument": "ETM",
             "eo:platform": "landsat-7",
             "eo:sun_azimuth": 40.56298198,
             "eo:sun_elevation": 39.37440872,
-            'landsat:collection_category': 'T1',
-            'landsat:collection_number': 1,
-            'landsat:geometric_rmse_model_x': 2.752,
-            'landsat:geometric_rmse_model_y': 3.115,
-            'landsat:ground_control_points_model': 179,
-            'landsat:ground_control_points_version': 4,
-            'landsat:wrs_path': 104,
-            'landsat:wrs_row': 78,
-        },
-        "user_data": {
-            "data_type": "L1TP",
-            "ephemeris_type": "DEFINITIVE",
-            "landsat_product_id": "LE07_L1TP_104078_20130429_20161124_01_T1",
-            "landsat_scene_id": "LE71040782013119ASA00",
-            "processing_software_version": "LPGS_12.8.2",
-            "station_id": "ASA",
+            "landsat:collection_category": "T1",
+            "landsat:collection_number": 1,
+            "landsat:geometric_rmse_model_x": 2.752,
+            "landsat:geometric_rmse_model_y": 3.115,
+            "landsat:ground_control_points_model": 179,
+            "landsat:ground_control_points_version": 4,
+            "landsat:wrs_path": 104,
+            "landsat:wrs_row": 78,
+            "landsat:data_type": "L1TP",
+            "landsat:ephemeris_type": "DEFINITIVE",
+            "landsat:landsat_product_id": "LE07_L1TP_104078_20130429_20161124_01_T1",
+            "landsat:landsat_scene_id": "LE71040782013119ASA00",
+            "landsat:processing_software_version": "LPGS_12.8.2",
+            "landsat:station_id": "ASA",
         },
         "geometry": {
             "coordinates": [
@@ -87,32 +91,25 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
         },
         "measurements": {
             "blue": {
-
-                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B1.TIF"),
+                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B1.TIF")
             },
             "green": {
-
-                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B2.TIF"),
+                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B2.TIF")
             },
             "nir": {
-
-                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B4.TIF"),
+                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B4.TIF")
             },
             "quality": {
-
-                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_BQA.TIF"),
+                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_BQA.TIF")
             },
             "red": {
-
-                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B3.TIF"),
+                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B3.TIF")
             },
             "swir1": {
-
-                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B5.TIF"),
+                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B5.TIF")
             },
             "swir2": {
-
-                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B7.TIF"),
+                "path": path_offset("LE07_L1TP_104078_20130429_20161124_01_T1_B7.TIF")
             },
         },
         "lineage": {},

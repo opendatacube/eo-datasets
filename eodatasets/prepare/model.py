@@ -14,6 +14,7 @@ import rasterio.features
 import shapely
 import shapely.affinity
 import shapely.ops
+from rasterio import DatasetReader
 from ruamel.yaml.comments import CommentedMap
 from shapely.geometry.base import BaseGeometry
 
@@ -54,10 +55,10 @@ class Dataset:
     locations: List[str] = None
 
     # When the dataset was processed/created.
-    creation_datetime: dt = None
+    # creation_datetime: dt = None
 
-    file_format: FileFormat = None
-
+    # file_format: FileFormat = None
+    bbox: Tuple = None
     crs: str = None
 
     geometry: BaseGeometry = None
@@ -71,8 +72,7 @@ class Dataset:
     properties: Dict[str, Union[str, int, float]] = attr.ib(factory=CommentedMap)
 
     # io_driver_data: Dict = None
-    user_data: Dict = attr.ib(factory=CommentedMap)
-
+    # user_data: Dict = attr.ib(factory=CommentedMap)
     # replaces: Optional[UUID] = None
 
     def to_doc(self):
@@ -145,11 +145,13 @@ def valid_region(
     mask_by_grid: Dict[Grid, numpy.ndarray] = {}
 
     for measurement in measurements:
-        print(f"path: {path}")
         measurement_path = resolve_absolute_offset(path, measurement.path)
-        print(measurement_path)
         with rasterio.open(str(measurement_path), "r") as ds:
+            ds: DatasetReader
             transform: affine.Affine = ds.transform
+
+            if not len(ds.indexes) == 1:
+                raise NotImplementedError(f"Only single-band tifs currently supported. File {measurement_path!r}")
             img = ds.read(1)
             grid = Grid(shape=ds.shape, transform=transform)
             measurements_by_grid[grid].append(measurement)

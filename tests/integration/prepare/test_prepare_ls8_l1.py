@@ -24,34 +24,39 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
 
     expected_doc = {
         "id": "a780754e-a884-58a7-9ac0-df518a67f59d",
-        "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
-        'creation_datetime': datetime(2017, 4, 5, 11, 17, 36),
-        "file_format": "GeoTIFF",
         "product": {"href": "https://collections.dea.ga.gov.au/usgs_ls8o_level1_1"},
         "properties": {
+            "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
+            "odc:file_format": "GeoTIFF",
+            "odc:creation_datetime": datetime(2017, 4, 5, 11, 17, 36),
+            # TODO: discuss? 'odc:region_code': '90_84',
             "eo:cloud_cover": 93.22,
             "eo:gsd": 30.0,
             "eo:instrument": "OLI_TIRS",
             "eo:platform": "landsat-8",
             "eo:sun_azimuth": 74.0074438,
             "eo:sun_elevation": 55.486483,
-            'landsat:collection_category': 'T1',
-            'landsat:collection_number': 1,
-            'landsat:geometric_rmse_model_x': 4.593,
-            'landsat:geometric_rmse_model_y': 5.817,
-            'landsat:ground_control_points_model': 66,
-            'landsat:ground_control_points_version': 4,
-            'landsat:wrs_path': 90,
-            'landsat:wrs_row': 84,
-        },
-        "user_data": {
-            "data_type": "L1TP",
-            "landsat_product_id": "LC08_L1TP_090084_20160121_20170405_01_T1",
-            "landsat_scene_id": "LC80900842016021LGN02",
-            "processing_software_version": "LPGS_2.7.0",
-            "station_id": "LGN",
+            "landsat:collection_category": "T1",
+            "landsat:collection_number": 1,
+            "landsat:geometric_rmse_model_x": 4.593,
+            "landsat:geometric_rmse_model_y": 5.817,
+            "landsat:ground_control_points_model": 66,
+            "landsat:ground_control_points_version": 4,
+            "landsat:data_type": "L1TP",
+            "landsat:landsat_product_id": "LC08_L1TP_090084_20160121_20170405_01_T1",
+            "landsat:landsat_scene_id": "LC80900842016021LGN02",
+            "landsat:processing_software_version": "LPGS_2.7.0",
+            "landsat:station_id": "LGN",
+            "landsat:wrs_path": 90,
+            "landsat:wrs_row": 84,
         },
         "crs": "epsg:32655",
+        "bbox": [
+            148.5296157491566,
+            -35.71176378355581,
+            151.188951463142,
+            -33.50359658400193,
+        ],
         "geometry": {
             "coordinates": [
                 [
@@ -95,54 +100,42 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
             },
         },
         "measurements": {
-            "blue": {
-                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B2.TIF"),
-            },
-            "cirrus": {
-
-                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B9.TIF"),
-            },
             "coastal_aerosol": {
-
-                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B1.TIF"),
+                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B1.TIF")
+            },
+            "blue": {
+                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B2.TIF")
             },
             "green": {
-
-                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B3.TIF"),
-            },
-            "lwir1": {
-
-                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B10.TIF"),
-            },
-            "lwir2": {
-
-                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B11.TIF"),
-            },
-            "nir": {
-
-                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B5.TIF"),
-            },
-            "panchromatic": {
-
-                "grid": "panchromatic",
-
-                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B8.TIF"),
-            },
-            "quality": {
-
-                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_BQA.TIF"),
+                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B3.TIF")
             },
             "red": {
-
-                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B4.TIF"),
+                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B4.TIF")
+            },
+            "nir": {
+                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B5.TIF")
             },
             "swir1": {
-
-                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B6.TIF"),
+                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B6.TIF")
             },
             "swir2": {
-
-                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B7.TIF"),
+                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B7.TIF")
+            },
+            "panchromatic": {
+                "grid": "panchromatic",
+                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B8.TIF"),
+            },
+            "cirrus": {
+                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B9.TIF")
+            },
+            "lwir1": {
+                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B10.TIF")
+            },
+            "lwir2": {
+                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_B11.TIF")
+            },
+            "quality": {
+                "path": path_offset("LC08_L1TP_090084_20160121_20170405_01_T1_BQA.TIF")
             },
         },
         "lineage": {},
