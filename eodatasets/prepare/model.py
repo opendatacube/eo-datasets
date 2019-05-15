@@ -15,7 +15,7 @@ import shapely
 import shapely.affinity
 import shapely.ops
 from rasterio import DatasetReader
-from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry.base import BaseGeometry
 
 
@@ -42,7 +42,7 @@ class Measurement:
     path: str
     band: Optional[int] = 1
     layer: Optional[str] = None
-    grid: str = 'default'
+    grid: str = "default"
 
 
 @attr.s(auto_attribs=True, slots=True)
@@ -81,15 +81,29 @@ class Dataset:
             recurse=True,
             dict_factory=CommentedMap,
             # Exclude fields that are the default.
-            filter=lambda attr, value: 'doc_exclude' not in attr.metadata and value != attr.default,
+            filter=lambda attr, value: "doc_exclude" not in attr.metadata
+            and value != attr.default,
             retain_collection_types=False,
         )
         d["geometry"] = shapely.geometry.mapping(self.geometry)
+
+        # Set some numeric fields to be compact yaml format.
+        _compact_sequence(d["geometry"], "coordinates")
+        _compact_sequence(d, "bbox")
+        for grid in d["grids"].values():
+            _compact_sequence(grid, "shape")
+            _compact_sequence(grid, "transform")
         return d
 
 
+def _compact_sequence(d: dict, prop_name, nl=False):
+    """Change the given sequence to compact YAML form"""
+    d[prop_name] = CommentedSeq(d[prop_name])
+    d[prop_name].fa.set_flow_style()
+
+
 def resolve_absolute_offset(
-        dataset_path: Path, offset: str, target_path: Optional[Path] = None
+    dataset_path: Path, offset: str, target_path: Optional[Path] = None
 ) -> str:
     """
     Expand a filename (offset) relative to the dataset.
@@ -151,7 +165,9 @@ def valid_region(
             transform: affine.Affine = ds.transform
 
             if not len(ds.indexes) == 1:
-                raise NotImplementedError(f"Only single-band tifs currently supported. File {measurement_path!r}")
+                raise NotImplementedError(
+                    f"Only single-band tifs currently supported. File {measurement_path!r}"
+                )
             img = ds.read(1)
             grid = Grid(shape=ds.shape, transform=transform)
             measurements_by_grid[grid].append(measurement)
