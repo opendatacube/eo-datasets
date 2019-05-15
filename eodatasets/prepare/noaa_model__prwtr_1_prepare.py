@@ -13,39 +13,14 @@ import rasterio.crs
 from rasterio.io import DatasetReader
 
 from eodatasets.serialise import write_yaml_from_dict
+from eodatasets.metadata.valid_region import valid_region
 from .utils import read_paths_from_file
 
 
 NOAA_WATER_VAPOUR_NS = uuid.UUID(hex='857bd048-8c86-4670-a2b4-5dbea26d7692')
 
 
-def get_coords(collection, xkey='lon', ykey='lat'):
-    """
-    transforms the bounds of a collection into an
-    encompassing bounding box. Keys for x and y are
-    customisable
-    """
-    return {
-        'll': {
-            ykey: collection.bounds.bottom,
-            xkey: collection.bounds.left
-        },
-        'lr': {
-            ykey: collection.bounds.bottom,
-            xkey: collection.bounds.right
-        },
-        'ul': {
-            ykey: collection.bounds.top,
-            xkey: collection.bounds.left
-        },
-        'ur': {
-            ykey: collection.bounds.top,
-            xkey: collection.bounds.right
-        }
-    }
-
-
-def get_uuid(collection: DatasetReader, idx:int):
+def get_uuid(collection: DatasetReader, idx: int):
     """
     Returns a deterministic uuid based on band index and gdal checksum
     """
@@ -77,6 +52,7 @@ def process_datasets(dataset: Path):
         datetime.datetime.utcnow()
         .replace(tzinfo=datetime.timezone.utc)
     )
+    geometry = valid_region([str(dataset)])
 
     with rasterio.open(str(dataset), 'r') as collection:
         collection_start_date = (
@@ -94,31 +70,35 @@ def process_datasets(dataset: Path):
             ).replace(tzinfo=datetime.timezone.utc)
 
             md = {}
-            md['id'] = get_uuid(collection, _idx).hex
-            md['creation_dt'] = creation_dt.isoformat()
-            md['extent'] = {
-                'center_dt': ds_dt.isoformat(),
-                'coord': get_coords(collection)
+            md['id'] = str(get_uuid(collection, _idx))
+            md['product'] = {
+                'href': 'https://collections.dea.ga.gov.au/noaa_model__prwtr_1'
             }
-            md['grid_spatial'] = {
-                'projection': {
-                    'geo_ref_points': get_coords(collection, xkey='x', ykey='y'),
-                    'spatial_reference': 'epsg:4236'
+            md['crs'] = 'epsg:4236'
+            md['datetime'] = ds_dt.isoformat()
+            md['geometry'] = geometry
+            md['grids'] = {'default': {}}
+            md['grids']['default']['shape'] = list(collection.shape)
+            md['grids']['default']['transform'] = list(collection.transform)
+            md['lineage'] = {}
+            md['measurements'] = {
+                'water_vapour': {
+                    'band': _idx,
+                    'layer': 'pr_wtr',
+                    'path': dataset.name
                 }
             }
-            md['format'] = {'name': 'NetCDF'}
-            md['image'] = {
-                'bands': {
-                    'water_vapour': {
-                        'path': dataset.name,
-                        'layer': 'pr_wtr',
-                        'band': _idx
+            md['properties'] = {
+                'item:providers': [
+                    {
+                        'name': 'NOAA/OAR/ESRL PSD',
+                        'roles': ['producer'],
+                        'url': 'https://www.esrl.noaa.gov/psd/data/gridded/data.ncep.reanalysis.derived.surface.html',
                     }
-                }
+                ],
+                'odc:creation_datetime': creation_dt.isoformat(),
+                'odc:file_format': 'NetCDF'
             }
-            md['product_type'] = 'auxiliary'
-            md['product_name'] = 'ncep_reanalysis_surface_pr_wtr'
-            md['sources'] = {}
 
             datasets.append(md)
 

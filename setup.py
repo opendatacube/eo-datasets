@@ -33,7 +33,7 @@ setup(
         'ciso8601',
         'gdal',
         'numpy',
-        'pyyaml',
+        'PyYAML!=5.1',
         'rasterio',
         'shapely',
         'scipy',

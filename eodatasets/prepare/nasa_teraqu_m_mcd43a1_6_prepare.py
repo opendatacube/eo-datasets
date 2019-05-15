@@ -10,6 +10,7 @@ from xml.etree import ElementTree
 
 from eodatasets.serialise import write_yaml_from_dict
 from eodatasets.prepare.utils import read_paths_from_file
+from eodatasets.metadata.valid_region import valid_region
 
 
 MCD43A1_NS = uuid.UUID(hex='80dc431b-fc6c-4e6f-bf08-585eba1d8dc9')
@@ -20,23 +21,19 @@ def parse_xml(filepath: Path):
     Extracts metadata attributes from the xml document distributed
     alongside the MCD43A1 tiles.
     """
-    polygon = []
-
     root = ElementTree.parse(str(filepath)).getroot()
-
-    for point in root.findall('*//SpatialDomainContainer/HorizontalSpatialDomainContainer/GPolygon/Boundary/'):
-        polygon.append((
-            float(point.find('PointLongitude').text),
-            float(point.find('PointLatitude').text)
-        ))
 
     granule_id = root.find('*//ECSDataGranule/LocalGranuleID').text
     instrument = root.find('*//Platform/Instrument/InstrumentShortName').text
-    platform = root.find('*//Platform/PlatformShortName').text
+    platform = "+".join(sorted((ele.text for ele in root.findall('*//Platform/PlatformShortName')), reverse=True))
     start_date = root.find('*//RangeDateTime/RangeBeginningDate').text
     start_time = root.find('*//RangeDateTime/RangeBeginningTime').text
     end_date = root.find('*//RangeDateTime/RangeEndingDate').text
     end_time = root.find('*//RangeDateTime/RangeEndingTime').text
+    v_tile = [ele for ele in root.findall('*//PSA')
+              if ele.find('PSAName').text == 'VERTICALTILENUMBER'][0].find('PSAValue').text
+    h_tile = [ele for ele in root.findall('*//PSA')
+              if ele.find('PSAName').text == 'HORIZONTALTILENUMBER'][0].find('PSAValue').text
 
     creation_dt = root.find('*//InsertTime').text
 
@@ -44,6 +41,8 @@ def parse_xml(filepath: Path):
         'granule_id': granule_id,
         'instrument': instrument,
         'platform': platform,
+        'vertical_tile': int(v_tile),
+        'horizontal_tile': int(h_tile),
         'from_dt': (
             datetime.datetime
             .strptime(start_date + ' ' + start_time, '%Y-%m-%d %H:%M:%S.%f')
@@ -59,7 +58,6 @@ def parse_xml(filepath: Path):
             .strptime(creation_dt, '%Y-%m-%d %H:%M:%S.%f')
             .replace(tzinfo=datetime.timezone.utc)
         ),
-        'polygon': Polygon(polygon)
     }
 
 
@@ -70,15 +68,14 @@ def get_band_info(imagery_file: Path):
         volumetric (vol), isometric (iso) and geometric (geo)
 
     """
-    band_info = {
-        'bands': {},
-    }
+    band_info = {}
     with rasterio.open(imagery_file, 'r') as collection:
-        for ds in collection.subdatasets:
+        datasets = collection.subdatasets
+        for ds in datasets:
             raster_params = re.match('(?P<fmt>HDF4_EOS:EOS_GRID):(?P<path>[^:]+):(?P<layer>.*)$', ds)
             if '_Quality_' in raster_params['layer']:
                 name = raster_params['layer'].split(':')[-1]
-                band_info['bands'][name] = {
+                band_info[name] = {
                     'path': Path(raster_params['path']).name,
                     'layer': raster_params['layer']
                 }
@@ -86,67 +83,30 @@ def get_band_info(imagery_file: Path):
                 name = raster_params['layer'].split(':')[-1]
                 # BRDF parameter bands are isotropic, volumetric and geometric
                 for idx, band_name in enumerate(['iso', 'vol', 'geo'], 1):
-                    band_info['bands'][name + '_' + band_name] = {
+                    band_info[name + '_' + band_name] = {
                         'path': Path(raster_params['path']).name,
                         'layer': raster_params['layer'],
                         'band': idx
                     }
-    return band_info
+    return band_info, datasets
 
 
-def get_bounds(polygon):
+def _get_dataset_properties(rasterio_path: str):
     """
-    Returns the bounds of the polygon
+    returns dataset properties based on a sample dataset
     """
-    min_lon, min_lat, max_lon, max_lat = \
-        polygon.bounds
-
-    return {
-        'll': {
-            'lat': min_lat,
-            'lon': min_lon,
-        },
-        'lr': {
-            'lat': min_lat,
-            'lon': max_lon,
-        },
-        'ur': {
-            'lat': max_lat,
-            'lon': max_lon,
-        },
-        'ul': {
-            'lat': max_lat,
-            'lon': min_lon,
+    props = {}
+    with rasterio.open(rasterio_path, 'r') as ds:
+        props['eo:gsd'] = float(ds.tags()['CHARACTERISTICBINSIZE'])
+        props['grids'] = {
+            'default': {
+                'shape': list(ds.shape),
+                'transform': list(ds.transform)
+            }
         }
-    }
+        props['crs'] = ds.crs.wkt
 
-
-def rio_spatial_projection(src_dataset: str):
-    """
-    Returns the spatial projection from a rasterio readable dataset
-    """
-    with rasterio.open(src_dataset, 'r') as fd:
-        return _spatial_projection(fd.shape, fd.transform, fd.crs.wkt)
-
-
-def _spatial_projection(shape, transform, spatial_reference):
-    """
-    Returns spatial bounds in the provided spatial reference
-    """
-
-    def _get_point(x, y):
-        x, y = (x, y) * transform
-        return {'x': x, 'y': y}
-
-    return {
-        'geo_ref_points': {
-            'ul': _get_point(0, 0),
-            'll': _get_point(0, shape[0]),
-            'ur': _get_point(shape[1], 0),
-            'lr': _get_point(shape[1], shape[0])
-        },
-        'spatial_reference': spatial_reference
-    }
+    return props
 
 
 def process_datasets(input_path: Path, xml_file: Path):
@@ -155,33 +115,37 @@ def process_datasets(input_path: Path, xml_file: Path):
     requires a path to the input tile (hdf) and the
     corresponding xml document describing the dataset.
     """
-    band_info = get_band_info(input_path)
+    band_info, datasets = get_band_info(input_path)
     xml_md = parse_xml(xml_file)
+    ds_props = _get_dataset_properties(datasets[0])
 
     md = {}
-    md['id'] = uuid.uuid5(MCD43A1_NS, xml_md['granule_id'])
-    md['label'] = xml_md.get('granule_id', input_path.name)
-    md['creation_dt'] = xml_md['creation_dt'].isoformat()
-    md['extent'] = {
-        'from_dt': xml_md['from_dt'].isoformat(),
-        'to_dt': xml_md['to_dt'].isoformat(),
-        'coord': get_bounds(xml_md['polygon'])
+    md['id'] = str(uuid.uuid5(MCD43A1_NS, xml_md['granule_id']))
+    md['product'] = {
+        'href': 'https://collections.dea.ga.gov.au/nasa_teraqu_m_mcd34a1_6'
     }
-    md['format'] = {'name': 'HDF4_EOS:EOS_GRID'}
-    md['grid_spatial'] = {
-        'projection': rio_spatial_projection(
-            'HDF4_EOS:EOS_GRID:{}:MOD_Grid_BRDF:BRDF_Albedo_Parameters_Band1'.format(input_path)
-        )
-    }
-    md['image'] = band_info
-    md['product_name'] = 'mcd43a1'
-    md['product_type'] = 'auxiliary'
-    md['sources'] = {}
-    md['instrument'] = {
-        'name': xml_md['instrument']
-    }
-    md['platform'] = {
-        'code': xml_md['platform']
+    md['crs'] = ds_props.pop('crs')
+    md['geometry'] = valid_region(datasets)
+    md['grids'] = ds_props.pop('grids')
+    md['lineage'] = {}
+    md['measurements'] = band_info
+    md['properties'] = {
+        'dtr:start_datetime': xml_md['from_dt'].isoformat(),
+        'dtr:end_datetime': xml_md['to_dt'].isoformat(),
+        'eo:instrument': xml_md['instrument'],
+        'eo:platform': xml_md['platform'],
+        'eo:gsd': ds_props.pop('eo:gsd'),
+        'eo:epsg': None,
+        'item:providers': [
+            {
+                'name': 'United States Geological Society',
+                'roles': ['processor'],
+                'url': 'https://lpdaac.usgs.gov/products/mcd43a1v006/'
+            }
+        ],
+        'odc:creation_datetime': xml_md['creation_dt'].isoformat(),
+        'odc:file_format': 'HDF4_EOS:EOS_GRID',
+        'odc:region_code': 'h{}v{}'.format(xml_md['horizontal_tile'], xml_md['vertical_tile']),
     }
 
     return [md]
