@@ -17,7 +17,7 @@ def _get_dimension_size(dim):
     return dim.size
 
 
-def create_test_file(infile, outfile, time_subset=9, netcdf_fmt='NETCDF4_CLASSIC'):
+def create_test_file(infile, outfile, time_subset=2, netcdf_fmt='NETCDF4_CLASSIC'):
     """
     Creates a subset of the water vapour dataset
     """
