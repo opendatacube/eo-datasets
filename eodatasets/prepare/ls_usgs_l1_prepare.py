@@ -30,6 +30,7 @@ from eodatasets.prepare.model import (
     Measurement,
     valid_region,
     resolve_absolute_offset,
+    DEA_URI_PREFIX,
 )
 from . import serialise
 
@@ -404,7 +405,7 @@ def _prepare(
         id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
         product=Product(
             # TODO: Decide product identification
-            href=f"https://collections.dea.ga.gov.au/{product_name}"
+            href=f"{DEA_URI_PREFIX}/product/{product_name}"
         ),
         bbox=bbox(geometry, crs),
         crs=crs,

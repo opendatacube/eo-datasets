@@ -18,6 +18,9 @@ from rasterio import DatasetReader
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry.base import BaseGeometry
 
+# TODO: these need discussion.
+DEA_URI_PREFIX = "https://collections.dea.ga.gov.au"
+
 
 class FileFormat(Enum):
     GeoTIFF = 1
@@ -76,14 +79,19 @@ class Dataset:
     # replaces: Optional[UUID] = None
 
     def to_doc(self):
-        d = attr.asdict(
-            self,
-            recurse=True,
-            dict_factory=CommentedMap,
-            # Exclude fields that are the default.
-            filter=lambda attr, value: "doc_exclude" not in attr.metadata
-            and value != attr.default,
-            retain_collection_types=False,
+        d = {}
+        d["$id"] = f"{DEA_URI_PREFIX}/dataset/{self.id}"
+        d["$schema"] = f"{DEA_URI_PREFIX}/schema"
+        d.update(
+            attr.asdict(
+                self,
+                recurse=True,
+                dict_factory=CommentedMap,
+                # Exclude fields that are the default.
+                filter=lambda attr, value: "doc_exclude" not in attr.metadata
+                and value != attr.default,
+                retain_collection_types=False,
+            )
         )
         d["geometry"] = shapely.geometry.mapping(self.geometry)
 
