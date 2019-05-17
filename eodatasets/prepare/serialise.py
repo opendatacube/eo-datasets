@@ -28,9 +28,25 @@ def _uuid_representer(dumper, data):
     return dumper.represent_scalar(u"tag:yaml.org,2002:str", "%s" % data)
 
 
+def represent_datetime(self, data: datetime):
+    """
+    The default Ruamel representer strips 'Z' suffixes for UTC.
+
+    But we like to be explicit.
+    """
+    # If there's a non-utc timezone, use it.
+    if data.tzinfo is not None and (data.utcoffset().total_seconds() > 0):
+        value = data.isoformat(" ")
+    else:
+        # Otherwise it's UTC (including when tz==null).
+        value = data.replace(tzinfo=None).isoformat(" ") + "Z"
+    return self.represent_scalar("tag:yaml.org,2002:timestamp", value)
+
+
 def init_yaml(yaml: YAML):
     yaml.representer.add_representer(FileFormat, _format_representer)
     yaml.representer.add_multi_representer(UUID, _uuid_representer)
+    yaml.representer.add_representer(datetime, represent_datetime)
     yaml.explicit_start = True
 
 

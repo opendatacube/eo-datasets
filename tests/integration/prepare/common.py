@@ -14,7 +14,7 @@ def check_prepare_outputs(invoke_script, run_args, expected_doc, expected_metada
 
     assert expected_metadata_path.exists()
     generated_doc = yaml.safe_load(expected_metadata_path.open())
-
+    pprint(generated_doc)
     doc_diffs = diff(expected_doc, generated_doc)
     assert doc_diffs == {}, pformat(doc_diffs)
 
