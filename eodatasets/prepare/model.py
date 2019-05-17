@@ -29,7 +29,7 @@ class FileFormat(Enum):
 
 @attr.s(auto_attribs=True, slots=True)
 class Product:
-    local_name: str = None
+    name: str = None
     href: str = None
 
 
@@ -52,36 +52,24 @@ class Measurement:
 class Dataset:
     id: UUID = None
     product: Product = None
-
-    datetime: dt = None
-
     locations: List[str] = None
 
-    # When the dataset was processed/created.
-    # creation_datetime: dt = None
-
-    # file_format: FileFormat = None
-    bbox: Tuple = None
     crs: str = None
-
     geometry: BaseGeometry = None
-
     grids: Dict[str, Grid] = None
+    # bbox: Tuple = None
+
+    properties: Dict[str, Union[str, int, float]] = attr.ib(factory=CommentedMap)
 
     measurements: Dict[str, Measurement] = None
 
     lineage: Dict[str, Tuple[UUID]] = attr.ib(factory=CommentedMap)
 
-    properties: Dict[str, Union[str, int, float]] = attr.ib(factory=CommentedMap)
-
-    # io_driver_data: Dict = None
-    # user_data: Dict = attr.ib(factory=CommentedMap)
-    # replaces: Optional[UUID] = None
-
     def to_doc(self):
-        d = {}
-        d["$id"] = f"{DEA_URI_PREFIX}/dataset/{self.id}"
-        d["$schema"] = f"{DEA_URI_PREFIX}/schema"
+        d = CommentedMap()
+        d.yaml_set_comment_before_after_key("$schema", before="Dataset")
+        d["$schema"] = f"https://schemas.opendatacube.org/dataset"
+
         d.update(
             attr.asdict(
                 self,
@@ -96,18 +84,31 @@ class Dataset:
         d["geometry"] = shapely.geometry.mapping(self.geometry)
 
         # Set some numeric fields to be compact yaml format.
-        _compact_sequence(d["geometry"], "coordinates")
-        _compact_sequence(d, "bbox")
+        _use_compact_format(d["geometry"], "coordinates")
+        # _use_compact_format(d, "bbox")
         for grid in d["grids"].values():
-            _compact_sequence(grid, "shape")
-            _compact_sequence(grid, "transform")
+            _use_compact_format(grid, "shape", "transform")
+
+        _add_space_before(d, "id", "crs", "measurements", "properties", "lineage")
+
+        p: CommentedMap = d["properties"]
+        p.yaml_add_eol_comment(
+            "# When the dataset was processed/created", "odc:creation_datetime"
+        )
         return d
 
 
-def _compact_sequence(d: dict, prop_name, nl=False):
+def _use_compact_format(d: dict, *keys):
     """Change the given sequence to compact YAML form"""
-    d[prop_name] = CommentedSeq(d[prop_name])
-    d[prop_name].fa.set_flow_style()
+    for key in keys:
+        d[key] = CommentedSeq(d[key])
+        d[key].fa.set_flow_style()
+
+
+def _add_space_before(d: CommentedMap, *keys):
+    """Add an empty line to the document before a section (key)"""
+    for key in keys:
+        d.yaml_set_comment_before_after_key(key, before="\n")
 
 
 def resolve_absolute_offset(

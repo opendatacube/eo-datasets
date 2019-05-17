@@ -23,8 +23,12 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
         return str(normalise_nci_symlinks(L1_INPUT_PATH.absolute().joinpath(offset)))
 
     expected_doc = {
+        "$schema": "https://schemas.opendatacube.org/dataset",
         "id": "a780754e-a884-58a7-9ac0-df518a67f59d",
-        "product": {"href": "https://collections.dea.ga.gov.au/usgs_ls8o_level1_1"},
+        "product": {
+            "name": "usgs_ls8o_level1_1",
+            "href": "https://collections.dea.ga.gov.au/product/usgs_ls8o_level1_1",
+        },
         "properties": {
             "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
             "odc:file_format": "GeoTIFF",
@@ -51,12 +55,6 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
             "landsat:wrs_row": 84,
         },
         "crs": "epsg:32655",
-        "bbox": [
-            148.5296157491566,
-            -35.71176378355581,
-            151.188951463142,
-            -33.50359658400193,
-        ],
         "geometry": {
             "coordinates": [
                 [

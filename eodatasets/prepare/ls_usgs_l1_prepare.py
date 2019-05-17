@@ -404,10 +404,9 @@ def _prepare(
     d = Dataset(
         id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
         product=Product(
-            # TODO: Decide product identification
-            href=f"{DEA_URI_PREFIX}/product/{product_name}"
+            name=product_name, href=f"{DEA_URI_PREFIX}/product/{product_name}"
         ),
-        bbox=bbox(geometry, crs),
+        # bbox=bbox(geometry, crs),
         crs=crs,
         geometry=geometry,
         grids=grids,

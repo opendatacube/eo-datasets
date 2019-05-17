@@ -1,4 +1,5 @@
 from datetime import datetime
+
 # flake8 doesn't recognise type hints as usage
 from pathlib import Path  # noqa: F401
 from typing import Dict  # noqa: F401
@@ -24,12 +25,13 @@ def _uuid_representer(dumper, data):
     :type data: uuid.UUID
     :rtype: yaml.nodes.Node
     """
-    return dumper.represent_scalar(u'tag:yaml.org,2002:str', '%s' % data)
+    return dumper.represent_scalar(u"tag:yaml.org,2002:str", "%s" % data)
 
 
 def init_yaml(yaml: YAML):
     yaml.representer.add_representer(FileFormat, _format_representer)
     yaml.representer.add_multi_representer(UUID, _uuid_representer)
+    yaml.explicit_start = True
 
 
 def dump_yaml(output_yaml, doc):
@@ -46,10 +48,7 @@ def dump_yaml(output_yaml, doc):
 def dump_yaml_to_stream(stream, doc):
     yaml = YAML()
     init_yaml(yaml)
-    yaml.dump(
-        doc,
-        stream
-    )
+    yaml.dump(doc, stream)
 
 
 class ClickDatetime(click.ParamType):

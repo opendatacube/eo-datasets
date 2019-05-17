@@ -27,18 +27,12 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
         )
 
     expected_doc = {
-        "$schema": "https://collections.dea.ga.gov.au/schema",
-        "$id": "https://collections.dea.ga.gov.au/dataset/f23c5fa2-3321-5be9-9872-2be73fee12a6",
+        "$schema": "https://schemas.opendatacube.org/dataset",
         "id": "f23c5fa2-3321-5be9-9872-2be73fee12a6",
         "product": {
-            "href": "https://collections.dea.ga.gov.au/product/usgs_ls7e_level1_1"
+            "name": "usgs_ls7e_level1_1",
+            "href": "https://collections.dea.ga.gov.au/product/usgs_ls7e_level1_1",
         },
-        "bbox": [
-            129.25064360521907,
-            -26.957152638835396,
-            131.72025445274613,
-            -25.012358753716335,
-        ],
         "crs": "epsg:32652",
         "properties": {
             "datetime": datetime(2013, 4, 29, 1, 10, 20, 336104),
