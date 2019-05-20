@@ -32,7 +32,7 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
         "properties": {
             "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
             "odc:file_format": "GeoTIFF",
-            "odc:creation_datetime": datetime(2017, 4, 5, 11, 17, 36),
+            "odc:processing_datetime": datetime(2017, 4, 5, 11, 17, 36),
             # TODO: discuss? 'odc:region_code': '90_84',
             "eo:cloud_cover": 93.22,
             "eo:gsd": 30.0,

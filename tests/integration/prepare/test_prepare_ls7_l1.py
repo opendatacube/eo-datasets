@@ -36,7 +36,7 @@ def test_prepare_l7_l1_usgs_tarball(tmpdir):
         "crs": "epsg:32652",
         "properties": {
             "datetime": datetime(2013, 4, 29, 1, 10, 20, 336104),
-            "odc:creation_datetime": datetime(2016, 11, 24, 8, 26, 33),
+            "odc:processing_datetime": datetime(2016, 11, 24, 8, 26, 33),
             "odc:file_format": "GeoTIFF",
             "eo:cloud_cover": 0.0,
             "eo:gsd": 30.0,

@@ -92,7 +92,7 @@ class Dataset:
 
         p: CommentedMap = d["properties"]
         p.yaml_add_eol_comment(
-            "# When the dataset was processed/created", "odc:creation_datetime"
+            "# When the dataset was processed/created", "odc:processing_datetime"
         )
         return d
 

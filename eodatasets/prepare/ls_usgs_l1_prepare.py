@@ -333,7 +333,7 @@ def _prepare(
                 mtl_doc["product_metadata"]["scene_center_time"],
             )
         ),
-        "odc:creation_datetime": ciso8601.parse_datetime(
+        "odc:processing_datetime": ciso8601.parse_datetime(
             mtl_doc["metadata_file_info"]["file_date"]
         ),
         "odc:file_format": file_format,
