@@ -2,7 +2,7 @@ import itertools
 from collections import defaultdict
 from enum import Enum
 from pathlib import Path
-from typing import Tuple, Dict, Optional, Union, Iterable, List
+from typing import Tuple, Dict, Optional, Iterable, List, Any
 from uuid import UUID
 
 import affine
@@ -14,7 +14,7 @@ import shapely
 import shapely.affinity
 import shapely.ops
 from rasterio import DatasetReader
-from ruamel.yaml.comments import CommentedMap, CommentedSeq
+from ruamel.yaml.comments import CommentedMap
 from shapely.geometry.base import BaseGeometry
 
 # TODO: these need discussion.
@@ -40,11 +40,12 @@ class Grid:
 
 @attr.s(auto_attribs=True, slots=True)
 class Measurement:
-    name: str = attr.ib(metadata=dict(doc_exclude=True))
     path: str
     band: Optional[int] = 1
     layer: Optional[str] = None
     grid: str = "default"
+
+    name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
 
 
 @attr.s(auto_attribs=True, slots=True)
@@ -58,56 +59,11 @@ class Dataset:
     grids: Dict[str, Grid] = None
     # bbox: Tuple = None
 
-    properties: Dict[str, Union[str, int, float]] = attr.ib(factory=CommentedMap)
+    properties: Dict[str, Any] = attr.ib(factory=CommentedMap)
 
     measurements: Dict[str, Measurement] = None
 
     lineage: Dict[str, Tuple[UUID]] = attr.ib(factory=CommentedMap)
-
-    def to_doc(self):
-        d = CommentedMap()
-        d.yaml_set_comment_before_after_key("$schema", before="Dataset")
-        d["$schema"] = f"https://schemas.opendatacube.org/dataset"
-
-        d.update(
-            attr.asdict(
-                self,
-                recurse=True,
-                dict_factory=CommentedMap,
-                # Exclude fields that are the default.
-                filter=lambda attr, value: "doc_exclude" not in attr.metadata
-                and value != attr.default,
-                retain_collection_types=False,
-            )
-        )
-        d["geometry"] = shapely.geometry.mapping(self.geometry)
-
-        # Set some numeric fields to be compact yaml format.
-        _use_compact_format(d["geometry"], "coordinates")
-        # _use_compact_format(d, "bbox")
-        for grid in d["grids"].values():
-            _use_compact_format(grid, "shape", "transform")
-
-        _add_space_before(d, "id", "crs", "measurements", "properties", "lineage")
-
-        p: CommentedMap = d["properties"]
-        p.yaml_add_eol_comment(
-            "# When the dataset was processed/created", "odc:processing_datetime"
-        )
-        return d
-
-
-def _use_compact_format(d: dict, *keys):
-    """Change the given sequence to compact YAML form"""
-    for key in keys:
-        d[key] = CommentedSeq(d[key])
-        d[key].fa.set_flow_style()
-
-
-def _add_space_before(d: CommentedMap, *keys):
-    """Add an empty line to the document before a section (key)"""
-    for key in keys:
-        d.yaml_set_comment_before_after_key(key, before="\n")
 
 
 def resolve_absolute_offset(

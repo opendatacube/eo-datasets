@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from uuid import UUID
 
 from .common import check_prepare_outputs
 from eodatasets.prepare import ls_usgs_l1_prepare
@@ -62,21 +63,21 @@ def test_prepare_l5_l1_usgs_tarball(tmpdir):
             "landsat:station_id": "ASA",
         },
         "geometry": {
-            "coordinates": [
-                [
-                    [835815.0, -3881685.0],
-                    [593385.0, -3881685.0],
-                    [593385.0, -4101015.0],
-                    [835815.0, -4101015.0],
-                    [835815.0, -3881685.0],
-                ]
-            ],
+            "coordinates": (
+                (
+                    (835815.0, -3881685.0),
+                    (593385.0, -3881685.0),
+                    (593385.0, -4101015.0),
+                    (835815.0, -4101015.0),
+                    (835815.0, -3881685.0),
+                ),
+            ),
             "type": "Polygon",
         },
         "grids": {
             "default": {
-                "shape": [60, 60],
-                "transform": [
+                "shape": (60, 60),
+                "transform": (
                     4040.5,
                     0.0,
                     593385.0,
@@ -86,7 +87,7 @@ def test_prepare_l5_l1_usgs_tarball(tmpdir):
                     0.0,
                     0.0,
                     1.0,
-                ],
+                ),
             }
         },
         "measurements": {

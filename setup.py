@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 import versioneer
 
 
-tests_require = [ 
+tests_require = [
     'pytest',
     'pytest-flake8',
     'deepdiff',
@@ -27,11 +27,14 @@ setup(
         '': ['*.json'],
     },
     install_requires=[
+        'attrs',
+        'cattrs',
         'click',
         'python-dateutil',
         'checksumdir',
         'ciso8601',
         'gdal',
+        'jsonschema',
         'numpy',
         'PyYAML!=5.1',
         'netCDF4',

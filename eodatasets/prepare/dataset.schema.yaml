@@ -1,0 +1,111 @@
+---
+$schema: "http://json-schema.org/schema#"
+"$id": https://schemas.opendatacube.org/dataset
+title: Dataset
+type: object
+
+properties:
+  '$schema':
+    type: string
+    const: "https://schemas.opendatacube.org/dataset"
+  id:
+    type: string
+    format: uuid
+
+  product:
+    title: Product
+    type: object
+    properties:
+      name:
+        type: string
+        pattern: "^[a-z_][a-z0-9_]*$"
+      href:
+        type: string
+        format: url
+    required:
+      - name
+      - href
+
+  locations:
+    type: array
+    items:
+      type: string
+
+  crs:
+    type: string
+
+  # TODO
+  geometry:
+    type: object
+
+  grids:
+    type: object
+    additionalProperties:
+      title: Grid
+      type: object
+      properties:
+        shape:
+          type: array
+          items:
+            type: integer
+        transform:
+          type: array
+          items:
+            type: number
+          minItems: 9
+          maxItems: 9
+      required:
+        - shape
+        - transform
+
+  properties:
+    type: object
+    propertyNames:
+      pattern: "^[a-z_][a-z0-9_:]*$"
+
+    properties:
+      datetime:
+        # TODO: "string" type is problematic as they're currently parsed directly into datetime objects...
+        # type: string
+        format: date-time
+
+      odc:processing_datetime:
+        # TODO: "string" type is problematic as they're currently parsed directly into datetime objects...
+        # type: string
+        format: date-time
+    required:
+      - odc:processing_datetime
+
+  measurements:
+    type: object
+    propertyNames:
+      pattern: "^[a-z_][a-z0-9_]*$"
+    additionalProperties:
+      title: Measurement
+      type: object
+      properties:
+        path:
+          type: string
+        band:
+          anyOf:
+            - type: integer
+            - type: 'null'
+        layer:
+          anyOf:
+            - type: string
+            - type: 'null'
+        grid:
+          type: string
+      required:
+        - path
+      additionalProperties: false
+
+  lineage:
+    type: object
+
+required:
+  - '$schema'
+  - id
+  - product
+  - properties
+additionalProperties: false

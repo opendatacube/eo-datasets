@@ -264,7 +264,7 @@ def prepare_dataset(base_path: Path, write_checksum: bool = True) -> Optional[Di
 def prepare_dataset_from_mtl(
     total_size: int, mtl_doc: dict, mtl_filename: str, base_path: Optional[Path] = None
 ) -> dict:
-    return _prepare(mtl_doc, mtl_filename, base_path).to_doc()
+    return serialise.to_formatted_doc(_prepare(mtl_doc, mtl_filename, base_path))
 
 
 def _prepare(

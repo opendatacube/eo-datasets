@@ -1,18 +1,27 @@
+import uuid
 from datetime import datetime
-
-# flake8 doesn't recognise type hints as usage
-from pathlib import Path  # noqa: F401
-from typing import Dict  # noqa: F401
+from pathlib import Path
+from typing import Dict
 from uuid import UUID
 
+import attr
+import cattr
 import ciso8601
 import click
-from ruamel.yaml import YAML
+import jsonschema
+import shapely
+import shapely.affinity
+import shapely.ops
+from ruamel.yaml import YAML, ruamel
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
+from shapely.geometry import shape
+from shapely.geometry.base import BaseGeometry
 
-from eodatasets.prepare.model import FileFormat
+from eodatasets.prepare.model import FileFormat, Dataset
 
 
-# pylint: disable=too-many-ancestors
+with (Path(__file__).parent / 'dataset.schema.yaml').open() as f:
+    _DATASET_SCHEMA = ruamel.yaml.safe_load(f)
 
 
 def _format_representer(dumper, data: FileFormat):
@@ -43,7 +52,7 @@ def represent_datetime(self, data: datetime):
     return self.represent_scalar("tag:yaml.org,2002:timestamp", value)
 
 
-def init_yaml(yaml: YAML):
+def _init_yaml(yaml: YAML):
     yaml.representer.add_representer(FileFormat, _format_representer)
     yaml.representer.add_multi_representer(UUID, _uuid_representer)
     yaml.representer.add_representer(datetime, represent_datetime)
@@ -63,8 +72,77 @@ def dump_yaml(output_yaml, doc):
 
 def dump_yaml_to_stream(stream, doc):
     yaml = YAML()
-    init_yaml(yaml)
+    _init_yaml(yaml)
     yaml.dump(doc, stream)
+
+
+def from_doc(doc: Dict):
+    jsonschema.validate(doc, _DATASET_SCHEMA, types=dict(array=(list, tuple)))
+
+    c = cattr.Converter()
+    c.register_structure_hook(uuid.UUID, lambda d, t: uuid.UUID(d))
+    c.register_structure_hook(BaseGeometry, lambda d, t: shape(d))
+    return c.structure(doc, Dataset)
+
+
+def to_doc(d: Dataset) -> Dict:
+    return _to_doc(d, with_formatting=False)
+
+
+def to_formatted_doc(d: Dataset) -> CommentedMap:
+    return _to_doc(d, with_formatting=True)
+
+
+def _to_doc(d: Dataset, with_formatting: bool):
+    if with_formatting:
+        doc = CommentedMap()
+        doc.yaml_set_comment_before_after_key("$schema", before="Dataset")
+    else:
+        doc = {}
+
+    doc["$schema"] = f"https://schemas.opendatacube.org/dataset"
+    doc.update(
+        attr.asdict(
+            d,
+            recurse=True,
+            dict_factory=CommentedMap if with_formatting else dict,
+            # Exclude fields that are the default.
+            filter=lambda attr, value: "doc_exclude" not in attr.metadata
+                                       and value != attr.default,
+            retain_collection_types=False,
+        )
+    )
+    doc["geometry"] = shapely.geometry.mapping(d.geometry)
+    doc["id"] = str(d.id)
+
+    if with_formatting:
+        # Set some numeric fields to be compact yaml format.
+        _use_compact_format(doc["geometry"], "coordinates")
+        # _use_compact_format(d, "bbox")
+        for grid in doc["grids"].values():
+            _use_compact_format(grid, "shape", "transform")
+
+        _add_space_before(doc, "id", "crs", "measurements", "properties", "lineage")
+
+        p: CommentedMap = doc["properties"]
+        p.yaml_add_eol_comment(
+            "# When the dataset was processed/created", "odc:processing_datetime"
+        )
+
+    return doc
+
+
+def _use_compact_format(d: dict, *keys):
+    """Change the given sequence to compact YAML form"""
+    for key in keys:
+        d[key] = CommentedSeq(d[key])
+        d[key].fa.set_flow_style()
+
+
+def _add_space_before(d: CommentedMap, *keys):
+    """Add an empty line to the document before a section (key)"""
+    for key in keys:
+        d.yaml_set_comment_before_after_key(key, before="\n")
 
 
 class ClickDatetime(click.ParamType):

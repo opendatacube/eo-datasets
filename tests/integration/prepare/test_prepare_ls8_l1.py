@@ -56,21 +56,21 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
         },
         "crs": "epsg:32655",
         "geometry": {
-            "coordinates": [
-                [
-                    [879315.0, -3714585.0],
-                    [641985.0, -3714585.0],
-                    [641985.0, -3953115.0],
-                    [879315.0, -3953115.0],
-                    [879315.0, -3714585.0],
-                ]
-            ],
+            "coordinates": (
+                (
+                    (879315.0, -3714585.0),
+                    (641985.0, -3714585.0),
+                    (641985.0, -3953115.0),
+                    (879315.0, -3953115.0),
+                    (879315.0, -3714585.0),
+                ),
+            ),
             "type": "Polygon",
         },
         "grids": {
             "default": {
-                "shape": [60, 60],
-                "transform": [
+                "shape": (60, 60),
+                "transform": (
                     3955.5,
                     0.0,
                     641985.0,
@@ -80,11 +80,11 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
                     0.0,
                     0.0,
                     1.0,
-                ],
+                ),
             },
             "panchromatic": {
-                "shape": [60, 60],
-                "transform": [
+                "shape": (60, 60),
+                "transform": (
                     3955.25,
                     0.0,
                     641992.5,
@@ -94,7 +94,7 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir):
                     0.0,
                     0.0,
                     1.0,
-                ],
+                ),
             },
         },
         "measurements": {
