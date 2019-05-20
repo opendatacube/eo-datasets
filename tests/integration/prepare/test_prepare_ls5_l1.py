@@ -31,7 +31,7 @@ def test_prepare_l5_l1_usgs_tarball(tmpdir):
         "id": "b0d31709-dda4-5a67-9fdf-3ae026a99a72",
         "product": {
             "name": "usgs_ls5t_level1_1",
-            "href": "https://collections.dea.ga.gov.au/usgs_ls5t_level1_1",
+            "href": "https://collections.dea.ga.gov.au/product/usgs_ls5t_level1_1",
         },
         "crs": "epsg:32655",
         "properties": {
