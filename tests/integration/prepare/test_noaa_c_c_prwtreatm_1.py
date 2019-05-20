@@ -6,9 +6,9 @@ from deepdiff import DeepDiff
 from pathlib import Path
 
 from .common import run_prepare_cli
-from eodatasets.prepare import noaa_model__prwtr_1_prepare
+from eodatasets.prepare import noaa_c_c_prwtreatm_1_prepare
 
-NCEP_PR_WTR_FILE: Path = Path(__file__).parent / 'data' / 'ncep-pr-wtr/pr_wtr.eatm.2018.test.nc'
+NCEP_PR_WTR_FILE: Path = Path(__file__).parent / 'data' / 'noaa_c_c_prwtreatm_1/pr_wtr.eatm.2018.test.nc'
 
 _diff = partial(DeepDiff, significant_digits=6)
 
@@ -40,7 +40,7 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                     'path': 'pr_wtr.eatm.2018.test.nc'
                 }
             },
-            'product': {'href': 'https://collections.dea.ga.gov.au/noaa_model__prwtr_1'},
+            'product': {'href': 'https://collections.dea.ga.gov.au/noaa_c_c_prwtreatm_1'},
             'properties': {
                 'item:providers': [
                     {
@@ -63,7 +63,7 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
             'grids': {
                 'default': {
                     'shape': [73, 144],
-                    'transform': [   2.5, 0.0, -1.25, 0.0, -2.5, 91.25, 0.0, 0.0, 1.0]
+                    'transform': [2.5, 0.0, -1.25, 0.0, -2.5, 91.25, 0.0, 0.0, 1.0]
                 }
             },
             'id': '47d52e5b-b6aa-5cb6-888d-06c8e4bfa756',
@@ -75,7 +75,7 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
                     'path': 'pr_wtr.eatm.2018.test.nc'
                 }
             },
-            'product': {'href': 'https://collections.dea.ga.gov.au/noaa_model__prwtr_1'},
+            'product': {'href': 'https://collections.dea.ga.gov.au/noaa_c_c_prwtreatm_1'},
             'properties': {
                 'item:providers': [
                     {
@@ -91,7 +91,7 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
     ]
 
     result = run_prepare_cli(
-        noaa_model__prwtr_1_prepare.main,
+        noaa_c_c_prwtreatm_1_prepare.main,
         '--output', str(output_path), str(NCEP_PR_WTR_FILE)
     )
 
