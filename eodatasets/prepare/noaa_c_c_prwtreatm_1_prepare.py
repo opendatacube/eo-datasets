@@ -72,7 +72,7 @@ def process_datasets(dataset: Path):
             md = {}
             md['id'] = str(get_uuid(collection, _idx))
             md['product'] = {
-                'href': 'https://collections.dea.ga.gov.au/noaa_model__prwtr_1'
+                'href': 'https://collections.dea.ga.gov.au/noaa_c_c_prwtreatm_1'
             }
             md['crs'] = 'epsg:4236'
             md['datetime'] = ds_dt.isoformat()

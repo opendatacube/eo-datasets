@@ -5,7 +5,6 @@ import uuid
 
 import click
 import rasterio
-from shapely.geometry.polygon import Polygon
 from xml.etree import ElementTree
 
 from eodatasets.serialise import write_yaml_from_dict
@@ -122,7 +121,7 @@ def process_datasets(input_path: Path, xml_file: Path):
     md = {}
     md['id'] = str(uuid.uuid5(MCD43A1_NS, xml_md['granule_id']))
     md['product'] = {
-        'href': 'https://collections.dea.ga.gov.au/nasa_teraqu_m_mcd34a1_6'
+        'href': 'https://collections.dea.ga.gov.au/nasa_c_m_mcd43a1_6'
     }
     md['crs'] = ds_props.pop('crs')
     md['geometry'] = valid_region(datasets)
@@ -137,6 +136,11 @@ def process_datasets(input_path: Path, xml_file: Path):
         'eo:gsd': ds_props.pop('eo:gsd'),
         'eo:epsg': None,
         'item:providers': [
+            {
+                'name': 'National Aeronautics and Space Administration',
+                'roles': ['producer', 'processer'],
+                'url': 'https://modis.gsfc.nasa.gov/data/dataprod/mod43.php'
+            },
             {
                 'name': 'United States Geological Society',
                 'roles': ['processor'],
