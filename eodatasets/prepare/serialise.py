@@ -52,31 +52,44 @@ def represent_datetime(self, data: datetime):
     return self.represent_scalar("tag:yaml.org,2002:timestamp", value)
 
 
-def _init_yaml(yaml: YAML):
+def _init_yaml() -> YAML:
+    yaml = YAML()
     yaml.representer.add_representer(FileFormat, _format_representer)
     yaml.representer.add_multi_representer(UUID, _uuid_representer)
     yaml.representer.add_representer(datetime, represent_datetime)
     yaml.explicit_start = True
+    return yaml
 
 
-def dump_yaml(output_yaml, doc):
-    # type: (Path, Dict) -> None
+def dump_yaml(output_yaml: Path, doc: Dict) -> None:
     if not output_yaml.name.lower().endswith(".yaml"):
         raise ValueError(
             "YAML filename doesn't end in *.yaml (?). Received {!r}".format(output_yaml)
         )
 
+    yaml = _init_yaml()
     with output_yaml.open("w") as stream:
-        dump_yaml_to_stream(stream, doc)
+        yaml.dump(doc, stream)
 
 
-def dump_yaml_to_stream(stream, doc):
-    yaml = YAML()
-    _init_yaml(yaml)
-    yaml.dump(doc, stream)
+def from_path(path: Path) -> Dataset:
+    if path.suffix.lower() not in ('.yaml', '.yml'):
+        raise ValueError(f"Unexpected file type {path.suffix}. Expected yaml")
+
+    yaml = _init_yaml()
+    with path.open() as f:
+        doc = yaml.load(f)
+        return from_doc(doc)
 
 
-def from_doc(doc: Dict):
+class InvalidDataset(Exception):
+    def __init__(self, path: Path, error_code: str, reason: str) -> None:
+        self.path = path
+        self.error_code = error_code
+        self.reason = reason
+
+
+def from_doc(doc: Dict) -> Dataset:
     jsonschema.validate(doc, _DATASET_SCHEMA, types=dict(array=(list, tuple)))
 
     c = cattr.Converter()

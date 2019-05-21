@@ -29,6 +29,7 @@ from structlog.processors import (StackInfoRenderer, TimeStamper, format_exc_inf
 from subprocess import call
 from typing import List, Iterable, Tuple, Callable, IO, Dict
 
+from eodatasets.ui import PathPath
 from eodatasets.verify import PackageChecksum
 
 _PREDICTOR_TABLE = {
@@ -338,12 +339,6 @@ def _recompress_image(
         # Copy gdal metadata
         output_dataset.update_tags(**input_image.tags())
         output_dataset.update_tags(1, **input_image.tags(1))
-
-
-class PathPath(click.Path):
-    """A Click path argument that returns a pathlib Path, not a string"""
-    def convert(self, value, param, ctx):
-        return Path(super().convert(value, param, ctx))
 
 
 @click.command(help=__doc__)
