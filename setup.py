@@ -28,6 +28,7 @@ setup(
     },
     install_requires=[
         'attrs',
+        'boltons',
         'cattrs',
         'click',
         'python-dateutil',
@@ -52,6 +53,7 @@ setup(
     entry_points='''
         [console_scripts]
         eod-package=eodatasets.scripts.genpackage:run
+        eod-validate=eodatasets.prepare.validate:run
         eod-generate-metadata=eodatasets.scripts.genmetadata:run
         eod-generate-browse=eodatasets.scripts.genbrowse:run
         eod-prepare=eodatasets.scripts.genprepare:run
