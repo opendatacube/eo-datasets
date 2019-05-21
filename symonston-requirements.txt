@@ -1,5 +1,0 @@
-
--f http://rhe-neo-dev03.dev.lan/pip/ --no-index
-
--e .
-
