@@ -20,12 +20,8 @@ from shapely.geometry.base import BaseGeometry
 from eodatasets.prepare.model import FileFormat, Dataset
 
 
-with (Path(__file__).parent / 'dataset.schema.yaml').open() as f:
-    _DATASET_SCHEMA = ruamel.yaml.safe_load(f)
-
-
 def _format_representer(dumper, data: FileFormat):
-    return dumper.represent_scalar(u"tag:yaml.org,2002:str", "%s" % data.name)
+    return dumper.represent_scalar("tag:yaml.org,2002:str", "%s" % data.name)
 
 
 def _uuid_representer(dumper, data):
@@ -34,7 +30,7 @@ def _uuid_representer(dumper, data):
     :type data: uuid.UUID
     :rtype: yaml.nodes.Node
     """
-    return dumper.represent_scalar(u"tag:yaml.org,2002:str", "%s" % data)
+    return dumper.represent_scalar("tag:yaml.org,2002:str", "%s" % data)
 
 
 def represent_datetime(self, data: datetime):
@@ -72,14 +68,17 @@ def dump_yaml(output_yaml: Path, doc: Dict) -> None:
         yaml.dump(doc, stream)
 
 
+def load_yaml(p: Path) -> Dict:
+    yaml = _init_yaml()
+    with p.open() as f:
+        return yaml.load(f)
+
+
 def from_path(path: Path) -> Dataset:
-    if path.suffix.lower() not in ('.yaml', '.yml'):
+    if path.suffix.lower() not in (".yaml", ".yml"):
         raise ValueError(f"Unexpected file type {path.suffix}. Expected yaml")
 
-    yaml = _init_yaml()
-    with path.open() as f:
-        doc = yaml.load(f)
-        return from_doc(doc)
+    return from_doc(load_yaml(path))
 
 
 class InvalidDataset(Exception):
@@ -89,8 +88,27 @@ class InvalidDataset(Exception):
         self.reason = reason
 
 
-def from_doc(doc: Dict) -> Dataset:
-    jsonschema.validate(doc, _DATASET_SCHEMA, types=dict(array=(list, tuple)))
+def _get_schema_validator(p: Path) -> jsonschema.Draft6Validator:
+    with p.open() as f:
+        schema = ruamel.yaml.safe_load(f)
+    klass = jsonschema.validators.validator_for(schema)
+    klass.check_schema(schema)
+    return klass(schema, types=dict(array=(list, tuple)))
+
+
+DATASET_SCHEMA = _get_schema_validator(Path(__file__).parent / "dataset.schema.yaml")
+
+
+def from_doc(doc: Dict, skip_validation=False) -> Dataset:
+    """
+    Convert a document to a dataset.
+
+    By default it will validate it against the schema, which will result in far more
+    useful error messages if fields are missing.
+    """
+
+    if not skip_validation:
+        DATASET_SCHEMA.validate(doc)
 
     c = cattr.Converter()
     c.register_structure_hook(uuid.UUID, lambda d, t: uuid.UUID(d))
@@ -121,7 +139,7 @@ def _to_doc(d: Dataset, with_formatting: bool):
             dict_factory=CommentedMap if with_formatting else dict,
             # Exclude fields that are the default.
             filter=lambda attr, value: "doc_exclude" not in attr.metadata
-                                       and value != attr.default,
+            and value != attr.default,
             retain_collection_types=False,
         )
     )
