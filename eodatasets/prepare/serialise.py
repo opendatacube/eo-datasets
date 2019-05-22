@@ -17,7 +17,7 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets.prepare.model import FileFormat, Dataset
+from eodatasets.prepare.model import FileFormat, Dataset, ODC_DATASET_SCHEMA_URL
 
 
 def _format_representer(dumper, data: FileFormat):
@@ -131,7 +131,7 @@ def _to_doc(d: Dataset, with_formatting: bool):
     else:
         doc = {}
 
-    doc["$schema"] = f"https://schemas.opendatacube.org/dataset"
+    doc["$schema"] = ODC_DATASET_SCHEMA_URL
     doc.update(
         attr.asdict(
             d,

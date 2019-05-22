@@ -19,6 +19,7 @@ from shapely.geometry.base import BaseGeometry
 
 # TODO: these need discussion.
 DEA_URI_PREFIX = "https://collections.dea.ga.gov.au"
+ODC_DATASET_SCHEMA_URL = "https://schemas.opendatacube.org/dataset"
 
 
 class FileFormat(Enum):
