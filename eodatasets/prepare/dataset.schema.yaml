@@ -75,6 +75,7 @@ properties:
         format: date-time
     required:
       - odc:processing_datetime
+      - datetime
 
   measurements:
     type: object
