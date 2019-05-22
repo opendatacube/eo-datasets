@@ -6,7 +6,9 @@ from typing import List, Counter
 
 import attr
 import click
-from click import style, echo
+from click import style, echo, secho
+from rasterio.crs import CRS
+from rasterio.errors import CRSError
 from shapely.validation import explain_validity
 
 from eodatasets.prepare import serialise
@@ -51,8 +53,8 @@ def validate(path: Path, thorough: bool = False):
             yield _error(path, "invalid_grid_ref", f"Measurement {name!r} refers to unknown grid {grid_name!r}")
 
         full_measurement_path = uri_resolve(str(path.absolute()), measurement.path)
-        if not full_measurement_path.startswith(str(path.absolute())):
-            yield _warning(path, "absolute_path", f"measurement {name} has an absolute path: {path!r}")
+        if not full_measurement_path.startswith(str(path.absolute().parent)):
+            yield _warning(path, "absolute_path", f"measurement {name!r} has an absolute path: {measurement.path!r}")
 
         if thorough:
             # Load file, check dimensions etc are correct.
@@ -66,20 +68,39 @@ def _validate_geo(dataset: Dataset, path: Path):
         return
 
     if dataset.geometry is None:
-        yield _error(path, "incomplete_geo", "Dataset has crs/grids but no geometry")
+        yield _error(path, "incomplete_geo", "Dataset has some geo fields but no geometry")
     elif not dataset.geometry.is_valid:
         yield _error(path, 'invalid_geometry',
                      f'Geometry is not a valid shape: {explain_validity(dataset.geometry)!r}')
 
-    if not dataset.crs:
-        yield _error(path, "incomplete_crs", "Dataset has geometry/grids but no crs")
-
+    # TODO: maybe we'll allow no grids: backwards compat with old metadata.
     if not dataset.grids:
-        yield _error(path, "incomplete_grids", "Dataset has geometry/crs but no grids")
+        yield _error(path, "incomplete_grids", "Dataset has some geo fields but no grids")
 
-    for name, grid in dataset.grids.items():
-        # jsonschema already enforces shape/transform exists.
-        pass
+    if not dataset.crs:
+        yield _error(path, "incomplete_crs", "Dataset has some geo fields but no crs")
+    else:
+        # We only officially support epsg code (recommended) or wkt.
+        if dataset.crs.lower().startswith('epsg:'):
+            try:
+                CRS.from_string(dataset.crs)
+            except CRSError as e:
+                yield _error(path, "invalid_crs_epsg", e.args[0])
+
+            if dataset.crs.lower() != dataset.crs:
+                yield _warning(path, "mixed_crs_case", "Recommend lowercase 'epsg:' prefix")
+        else:
+            wkt_crs = None
+            try:
+                wkt_crs = CRS.from_wkt(dataset.crs)
+            except CRSError as e:
+                yield _error(path, "invalid_crs", f"Expect either an epsg code or a WKT string: {e.args[0]}")
+
+            if wkt_crs and wkt_crs.is_epsg_code:
+                yield _warning(
+                    path, "non_epsg",
+                    f"EPSG is preferred to a WKT CRS when possible. (Can change CRS to 'epsg:{wkt_crs.to_epsg()}')",
+                )
 
 
 @click.command()
@@ -95,19 +116,25 @@ def run(paths: List[Path], strict_warnings, verbose):
         Level.error: dict(fg='red'),
     }
     for path in paths:
+        if verbose:
+            echo(f"\n{path.stem}:")
         for message in validate(path):
+            validation_counts[message.level] +=1
             if message.level == Level.info and not verbose:
                 continue
 
-            displayable_code = style(message.code, **s[message.level])
+            displayable_code = style(f"{message.level.name[0].upper()}\t{message.code}", **s[message.level])
             echo(f"{displayable_code}: {message.reason}")
+
+    if verbose:
+        secho(f"\nDone: ", nl=False)
+        if validation_counts:
+            echo(", ".join(f"{v} {k.name}" for k, v in validation_counts.items()))
+        else:
+            secho("All good", fg='green')
 
     error_count = validation_counts.get(Level.error)
     if strict_warnings:
         error_count += validation_counts.get(Level.warning)
-
-    if verbose:
-        echo(f"\nDONE {len(paths)}: ", nl=False)
-        echo(", ".join(f"{v} {k}" for k, v in validation_counts.items()))
 
     sys.exit(error_count)
