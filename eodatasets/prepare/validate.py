@@ -9,14 +9,13 @@ import click
 from click import style, echo, secho
 from rasterio.crs import CRS
 
-from urllib.parse import urlparse
 
 from rasterio.errors import CRSError
 from shapely.validation import explain_validity
 
 from eodatasets.prepare import serialise, model
 from eodatasets.prepare.model import Dataset
-from eodatasets.ui import PathPath, uri_resolve
+from eodatasets.ui import PathPath, is_absolute
 
 
 class Level(enum.Enum):
@@ -42,21 +41,6 @@ def _warning(code: str, reason: str):
 
 def _error(code: str, reason: str):
     return ValidationMessage(Level.error, code, reason)
-
-
-def _is_absolute(url):
-    """
-    >>> _is_absolute('LC08_L1TP_108078_20151203_20170401_01_T1.TIF')
-    False
-    >>> _is_absolute('data/LC08_L1TP_108078_20151203_20170401_01_T1.TIF')
-    False
-    >>> _is_absolute('file:///g/data/v10/somewhere/LC08_L1TP_108078_20151203_20170401_01_T1.TIF')
-    True
-    >>> _is_absolute('tar:///g/data/v10/somewhere/dataset.tar#LC08_L1TP_108078_20151203_20170401_01_T1.TIF')
-    True
-    """
-    return bool(urlparse(url).netloc)
-
 
 def validate(doc: Dict, thorough: bool = False):
     schema = doc.get("$schema")
@@ -96,7 +80,7 @@ def validate(doc: Dict, thorough: bool = False):
                 f"Measurement {name!r} refers to unknown grid {grid_name!r}",
             )
 
-        if _is_absolute(measurement.path):
+        if is_absolute(measurement.path):
             yield _warning(
                 "absolute_path",
                 f"measurement {name!r} has an absolute path: {measurement.path!r}",

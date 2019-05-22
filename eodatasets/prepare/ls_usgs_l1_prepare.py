@@ -8,7 +8,7 @@ import os
 import re
 import tarfile
 import tempfile
-import urllib.parse
+
 import uuid
 from datetime import datetime
 from functools import partial
@@ -643,19 +643,6 @@ def _dataset_name(ds_path):
     """
     # This is a little simpler than before :)
     return ds_path.stem.split(".")[0]
-
-
-def register_scheme(*schemes):
-    """
-    Register additional uri schemes as supporting relative offsets (etc), so that band/measurement paths can be
-    calculated relative to the base uri.
-    """
-    urllib.parse.uses_netloc.extend(schemes)
-    urllib.parse.uses_relative.extend(schemes)
-    urllib.parse.uses_params.extend(schemes)
-
-
-register_scheme("tar")
 
 if __name__ == "__main__":
     main()
