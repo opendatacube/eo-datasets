@@ -644,5 +644,6 @@ def _dataset_name(ds_path):
     # This is a little simpler than before :)
     return ds_path.stem.split(".")[0]
 
+
 if __name__ == "__main__":
     main()

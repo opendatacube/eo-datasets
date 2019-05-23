@@ -42,6 +42,7 @@ def _warning(code: str, reason: str):
 def _error(code: str, reason: str):
     return ValidationMessage(Level.error, code, reason)
 
+
 def validate(doc: Dict, thorough: bool = False):
     schema = doc.get("$schema")
     if schema is None:
