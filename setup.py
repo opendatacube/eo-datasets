@@ -34,6 +34,7 @@ setup(
         'gdal',
         'numpy',
         'PyYAML!=5.1',
+        'netCDF4',
         'rasterio',
         'shapely',
         'scipy',
