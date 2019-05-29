@@ -19,23 +19,18 @@ def check_prepare_outputs(
     run_prepare_cli(invoke_script, *run_args)
 
     assert expected_metadata_path.exists()
-    generated_doc = _lists_to_tuples(yaml.safe_load(expected_metadata_path.open()))
+    generated_doc = lists_to_tuples(yaml.safe_load(expected_metadata_path.open()))
 
-    pprint(generated_doc)
+    assert_same(expected_doc, generated_doc)
+
+
+def assert_same(expected_doc, generated_doc):
+    __tracebackhide__ = True
     doc_diffs = diff(expected_doc, generated_doc)
     assert doc_diffs == {}, pformat(doc_diffs)
 
-    # Do a serialisation roundtrip and check that it's still identical.
-    reserialised_doc = _lists_to_tuples(
-        serialise.to_doc(serialise.from_doc(generated_doc))
-    )
-    serialisation_diffs = diff(generated_doc, reserialised_doc)
-    assert serialisation_diffs == {}, pformat(serialisation_diffs)
 
-    assert serialise.from_doc(expected_doc) == serialise.from_doc(generated_doc)
-
-
-def _lists_to_tuples(doc):
+def lists_to_tuples(doc):
     """Recursively change any embedded lists into tuples"""
     return remap(doc, visit=lambda p, k, v: (k, tuple(v) if type(v) == list else v))
 

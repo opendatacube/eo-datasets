@@ -62,6 +62,23 @@ def l1_ls8_folder_md_expected_absolute(l1_ls8_folder) -> Dict:
     return expected_l1_ls8_folder(l1_ls8_folder, path_offset)
 
 
+@pytest.fixture(params=("ls5", "ls7", "ls8"))
+def example_metadata(
+        request,
+        l1_ls5_tarball_md_expected: Dict,
+        l1_ls7_tarball_md_expected: Dict,
+        l1_ls8_folder_md_expected: Dict,
+):
+    which = request.param
+    if which == "ls5":
+        return l1_ls5_tarball_md_expected
+    elif which == "ls7":
+        return l1_ls7_tarball_md_expected
+    elif which == "ls8":
+        return l1_ls8_folder_md_expected
+    assert False
+
+
 def expected_l1_ls8_folder(l1_ls8_folder: Path, offset: Callable[[Path, str], str]):
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",

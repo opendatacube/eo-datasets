@@ -9,23 +9,6 @@ from eodatasets.prepare import ls_usgs_l1_prepare, validate, serialise
 from .common import check_prepare_outputs
 
 
-@pytest.fixture(params=("ls5", "ls7", "ls8"))
-def example_metadata(
-    request,
-    l1_ls5_tarball_md_expected: Dict,
-    l1_ls7_tarball_md_expected: Dict,
-    l1_ls8_folder_md_expected: Dict,
-):
-    which = request.param
-    if which == "ls5":
-        return l1_ls5_tarball_md_expected
-    elif which == "ls7":
-        return l1_ls7_tarball_md_expected
-    elif which == "ls8":
-        return l1_ls8_folder_md_expected
-    assert False
-
-
 def test_valid_document_works(tmp_path: Path, example_metadata: Dict):
     _assert_valid(example_metadata, tmp_path)
 
