@@ -1,10 +1,14 @@
+from copy import deepcopy
 from pathlib import Path
 
 from datetime import datetime
+from typing import Dict
 
 import pytest
 
+from eodatasets.prepare import serialise
 from eodatasets.prepare.ls_usgs_l1_prepare import normalise_nci_symlinks
+from eodatasets.prepare.model import Dataset
 
 L71GT_TARBALL_PATH: Path = Path(
     __file__
@@ -27,34 +31,39 @@ def tar_offset(tar: Path, offset: str):
     return "tar:" + str(normalise_nci_symlinks(tar.absolute())) + "!" + offset
 
 
-@pytest.fixture()
-def l1_ls8_folder():
+@pytest.fixture
+def l1_ls8_folder() -> Path:
     return L8_INPUT_PATH
 
 
-@pytest.fixture()
-def l1_ls8_folder_md_expected(l1_ls8_folder):
-    return EXPECTED_LS8_DOC
+@pytest.fixture
+def l1_ls8_folder_md_expected(l1_ls8_folder) -> Dict:
+    return deepcopy(EXPECTED_LS8_DOC)
 
 
-@pytest.fixture()
-def l1_ls7_tarball():
+@pytest.fixture
+def l1_ls7_tarball() -> Path:
     return L71GT_TARBALL_PATH
 
 
-@pytest.fixture()
-def l1_ls7_tarball_md_expected(l1_ls7_tarball):
-    return EXPECTED_LS7_DOC
+@pytest.fixture
+def l1_ls7_tarball_md_expected(l1_ls7_tarball) -> Dict:
+    return deepcopy(EXPECTED_LS7_DOC)
 
 
-@pytest.fixture()
-def l1_ls5_tarball():
+@pytest.fixture
+def l1_ls5_tarball() -> Path:
     return L5_TARBALL_PATH
 
 
-@pytest.fixture()
-def l1_ls5_tarball_md_expected(l1_ls5_tarball):
-    return EXPECTED_LS5_DOC
+@pytest.fixture
+def l1_ls5_tarball_md_expected(l1_ls5_tarball) -> Dict:
+    return deepcopy(EXPECTED_LS5_DOC)
+
+
+@pytest.fixture
+def l1_ls8_dataset(l1_ls8_folder_md_expected: Dict) -> Dataset:
+    return serialise.from_doc(l1_ls8_folder_md_expected)
 
 
 EXPECTED_LS8_DOC = {

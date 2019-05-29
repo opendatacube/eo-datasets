@@ -64,7 +64,7 @@ def validate(doc: Dict, thorough: bool = False):
         has_doc_errors = True
         displayable_path = ".".join(error.absolute_path)
         context = f"({displayable_path}) " if displayable_path else ""
-        yield _error("doc_error", f"{context}{error.message} ")
+        yield _error("structure", f"{context}{error.message} ")
 
     if has_doc_errors:
         return
@@ -166,7 +166,7 @@ def run(paths: List[Path], strict_warnings, quiet):
             displayable_code = style(
                 f"{message.level.name[0].upper()}\t{message.code}", **s[message.level]
             )
-            echo(f"{displayable_code}: {message.reason}")
+            echo(f"{displayable_code}\t{message.reason}")
 
     error_count = validation_counts.get(Level.error) or 0
     if strict_warnings:
