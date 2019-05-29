@@ -18,11 +18,7 @@ def test_prepare_l5_l1_usgs_tarball(tmpdir, l1_ls5_tarball_md_expected, l1_ls5_t
 
     check_prepare_outputs(
         invoke_script=ls_usgs_l1_prepare.main,
-        run_args=[
-            "--output",
-            str(output_path),
-            str(l1_ls5_tarball),
-        ],
+        run_args=["--output", str(output_path), str(l1_ls5_tarball)],
         expected_doc=l1_ls5_tarball_md_expected,
         expected_metadata_path=expected_metadata_path,
     )

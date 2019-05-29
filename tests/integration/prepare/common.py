@@ -13,13 +13,15 @@ diff = partial(DeepDiff, significant_digits=6)
 
 
 def check_prepare_outputs(
-    invoke_script, run_args, expected_doc, expected_metadata_path
+    invoke_script, run_args, expected_doc, expected_metadata_path, normalise_tuples=True
 ):
     __tracebackhide__ = True
     run_prepare_cli(invoke_script, *run_args)
 
     assert expected_metadata_path.exists()
-    generated_doc = lists_to_tuples(yaml.safe_load(expected_metadata_path.open()))
+    generated_doc = yaml.safe_load(expected_metadata_path.open())
+    if normalise_tuples:
+        generated_doc = lists_to_tuples(generated_doc)
 
     assert_same(expected_doc, generated_doc)
 

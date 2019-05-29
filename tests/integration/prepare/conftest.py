@@ -64,10 +64,10 @@ def l1_ls8_folder_md_expected_absolute(l1_ls8_folder) -> Dict:
 
 @pytest.fixture(params=("ls5", "ls7", "ls8"))
 def example_metadata(
-        request,
-        l1_ls5_tarball_md_expected: Dict,
-        l1_ls7_tarball_md_expected: Dict,
-        l1_ls8_folder_md_expected: Dict,
+    request,
+    l1_ls5_tarball_md_expected: Dict,
+    l1_ls7_tarball_md_expected: Dict,
+    l1_ls8_folder_md_expected: Dict,
 ):
     which = request.param
     if which == "ls5":
