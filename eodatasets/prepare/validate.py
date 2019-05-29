@@ -75,11 +75,12 @@ def validate(doc: Dict, thorough: bool = False):
 
     for name, measurement in dataset.measurements.items():
         grid_name = measurement.grid
-        if grid_name not in dataset.grids:
-            yield _error(
-                "invalid_grid_ref",
-                f"Measurement {name!r} refers to unknown grid {grid_name!r}",
-            )
+        if grid_name != "default" or dataset.grids:
+            if grid_name not in dataset.grids:
+                yield _error(
+                    "invalid_grid_ref",
+                    f"Measurement {name!r} refers to unknown grid {grid_name!r}",
+                )
 
         if is_absolute(measurement.path):
             yield _warning(
@@ -153,20 +154,19 @@ def run(paths: List[Path], strict_warnings, quiet):
     validation_counts: Counter[Level] = collections.Counter()
 
     s = {Level.info: {}, Level.warning: dict(bold=True), Level.error: dict(fg="red")}
+    show_document_name = len(paths) > 1
     for path in paths:
-        if not quiet:
-            echo(f"\n{path.stem}")
-
         doc = serialise.load_yaml(path)
         for message in validate(doc):
             validation_counts[message.level] += 1
             if message.level == Level.info and quiet:
                 continue
 
-            displayable_code = style(
-                f"{message.level.name[0].upper()}\t{message.code}", **s[message.level]
+            displayable_code = style(f"{message.code}", **s[message.level])
+            context = f"{path.stem}\t" if show_document_name else ""
+            echo(
+                f"{context}{message.level.name[0].upper()}\t{displayable_code}\t{message.reason}"
             )
-            echo(f"{displayable_code}\t{message.reason}")
 
     error_count = validation_counts.get(Level.error) or 0
     if strict_warnings:

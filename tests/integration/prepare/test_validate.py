@@ -1,3 +1,4 @@
+import operator
 from pathlib import Path
 from typing import Dict, Union, Sequence
 
@@ -25,26 +26,30 @@ def example_metadata(
     assert False
 
 
-def test_valid_ls8(tmp_path: Path, example_metadata: Dict):
+def test_valid_document_works(tmp_path: Path, example_metadata: Dict):
     _assert_valid(example_metadata, tmp_path)
 
 
 def test_missing_field(tmp_path: Path, example_metadata: Dict):
     del example_metadata["id"]
-    _assert_invalid(
-        dict(structure="'id' is a required property"), example_metadata, tmp_path
-    )
+    messages = _assert_invalid(example_metadata, tmp_path)
+    assert list(messages.keys()) == ["structure"]
+    assert "'id' is a required property" in messages["structure"]
 
 
 def test_invalid_ls8_schema(tmp_path: Path, example_metadata: Dict):
     del example_metadata["$schema"]
-    _assert_invalid(["no_schema"], example_metadata, tmp_path)
+    _assert_invalid_codes(example_metadata, tmp_path, "no_schema")
 
 
 def test_allow_optional_geo(tmp_path: Path, example_metadata: Dict):
     # A doc can omit all geo fields and be valid.
     del example_metadata["crs"]
     del example_metadata["geometry"]
+
+    for m in example_metadata["measurements"].values():
+        if "grid" in m:
+            del m["grid"]
 
     example_metadata["grids"] = {}
     _assert_valid(example_metadata, tmp_path)
@@ -55,45 +60,52 @@ def test_allow_optional_geo(tmp_path: Path, example_metadata: Dict):
 
 def test_missing_geo_fields(tmp_path: Path, example_metadata: Dict):
     del example_metadata["crs"]
-    _assert_invalid(["incomplete_crs"], example_metadata, tmp_path)
+    _assert_invalid_codes(example_metadata, tmp_path, "incomplete_crs")
 
 
-def _assert_valid(example_metadata, tmp_path):
+def _assert_valid(example_metadata, tmp_path, expect_no_warnings=True):
+    __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
     md_path = tmp_path / "test_dataset.yaml"
     serialise.dump_yaml(md_path, example_metadata)
-    run_validate(md_path, expect_success=True)
+    res = run_validate("-q", md_path, expect_success=True)
+    messages = _read_messages(res)
+    if expect_no_warnings:
+        assert messages == {}
+    return messages
 
 
-def _assert_invalid(
-    expect_messages: Union[Sequence[str], Dict[str, str]], doc: Dict, tmp_path: Path
-):
+def _assert_invalid_codes(doc: Dict, tmp_path: Path, *expected_error_codes):
+    messages = _assert_invalid(doc, tmp_path)
+    assert sorted(expected_error_codes) == sorted(messages.keys())
+
+
+def _assert_invalid(doc: Dict, tmp_path: Path):
+    __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
     md_path = tmp_path / "test_dataset.yaml"
     serialise.dump_yaml(md_path, doc)
     res = run_validate("-q", md_path, expect_success=False)
+    # One failed document
     assert res.exit_code == 1
+
+    return _read_messages(res)
+
+
+def _read_messages(res) -> Dict[str, str]:
+    """Read the messages/warnings for validation tool stdout.
+
+    Returned as a dict of error_code -> human_message
+    """
 
     def _read_message(line: str):
         severity, code, *message = line.split("\t")
         return code, "\t".join(message)
 
-    got_messages = dict(_read_message(line) for line in res.stdout.split("\n") if line)
-
-    if isinstance(expect_messages, dict):
-        # Did we output the expected set of error codes?
-        assert sorted(got_messages.keys()) == sorted(expect_messages.keys())
-
-        for code, expected_message in expect_messages.items():
-            assert expected_message in got_messages[code], (
-                f"Expected {code!r} to say {expected_message!r}\n"
-                f"\t got {got_messages[code]}"
-            )
-    else:
-        assert sorted(got_messages.keys()) == sorted(expect_messages)
+    return dict(_read_message(line) for line in res.stdout.split("\n") if line)
 
 
 def run_validate(*args: Union[str, Path], expect_success=True) -> Result:
     """eod-validate as a command-line command"""
-    __tracebackhide__ = True
+    __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
 
     res: Result = CliRunner(mix_stderr=False).invoke(
         validate.run, [str(a) for a in args], catch_exceptions=False

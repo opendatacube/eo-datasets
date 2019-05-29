@@ -19,7 +19,6 @@ def test_prepare_l5_l1_usgs_tarball(tmpdir, l1_ls5_tarball_md_expected, l1_ls5_t
     check_prepare_outputs(
         invoke_script=ls_usgs_l1_prepare.main,
         run_args=[
-            "--absolute-paths",
             "--output",
             str(output_path),
             str(l1_ls5_tarball),
@@ -39,7 +38,7 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir, l1_ls8_folder, l1_ls8_folder_md_expe
 
     check_prepare_outputs(
         invoke_script=ls_usgs_l1_prepare.main,
-        run_args=["--absolute-paths", "--output", str(output_path), str(l1_ls8_folder)],
+        run_args=["--output", str(output_path), str(l1_ls8_folder)],
         expected_doc=l1_ls8_folder_md_expected,
         expected_metadata_path=expected_metadata_path,
     )
@@ -65,6 +64,25 @@ def test_prepare_l8_l1_usgs_tarball(tmpdir, l1_ls8_folder, l1_ls8_folder_md_expe
     )
 
 
+def test_prepare_l8_l1_usgs_tarball_absolute(
+    tmpdir, l1_ls8_folder, l1_ls8_folder_md_expected_absolute
+):
+    """Run prepare script with absolute paths for bands."""
+    assert l1_ls8_folder.exists(), "Test data missing(?)"
+
+    output_path = Path(tmpdir)
+    expected_metadata_path = (
+        output_path / "LC08_L1TP_090084_20160121_20170405_01_T1.yaml"
+    )
+
+    check_prepare_outputs(
+        invoke_script=ls_usgs_l1_prepare.main,
+        run_args=["--absolute-paths", "--output", str(output_path), str(l1_ls8_folder)],
+        expected_doc=l1_ls8_folder_md_expected_absolute,
+        expected_metadata_path=expected_metadata_path,
+    )
+
+
 def test_prepare_l7_l1_usgs_tarball(
     tmpdir, l1_ls7_tarball: Path, l1_ls7_tarball_md_expected: Dict
 ):
@@ -77,12 +95,7 @@ def test_prepare_l7_l1_usgs_tarball(
 
     check_prepare_outputs(
         invoke_script=ls_usgs_l1_prepare.main,
-        run_args=[
-            "--absolute-paths",
-            "--output",
-            str(output_path),
-            str(l1_ls7_tarball),
-        ],
+        run_args=["--output", str(output_path), str(l1_ls7_tarball)],
         expected_doc=l1_ls7_tarball_md_expected,
         expected_metadata_path=expected_metadata_path,
     )
