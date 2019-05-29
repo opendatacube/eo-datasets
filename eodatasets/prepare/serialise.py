@@ -110,6 +110,10 @@ def from_doc(doc: Dict, skip_validation=False) -> Dataset:
     if not skip_validation:
         DATASET_SCHEMA.validate(doc)
 
+    # TODO: stable cattrs (<1.0) balks at the $schema variable.
+    doc = doc.copy()
+    del doc['$schema']
+
     c = cattr.Converter()
     c.register_structure_hook(uuid.UUID, lambda d, t: uuid.UUID(d))
     c.register_structure_hook(BaseGeometry, lambda d, t: shape(d))
