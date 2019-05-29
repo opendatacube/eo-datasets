@@ -31,6 +31,10 @@ def tar_offset(tar: Path, offset: str):
     return "tar:" + str(normalise_nci_symlinks(tar.absolute())) + "!" + offset
 
 
+def relative_offset(base, offset):
+    return offset
+
+
 @pytest.fixture
 def l1_ls8_folder() -> Path:
     return L8_INPUT_PATH
@@ -53,8 +57,7 @@ def l1_ls8_dataset(l1_ls8_folder_md_expected: Dict) -> Dataset:
 
 @pytest.fixture
 def l1_ls8_folder_md_expected(l1_ls8_folder) -> Dict:
-    offset = lambda base, offset: offset
-    return expected_l1_ls8_folder(l1_ls8_folder, offset)
+    return expected_l1_ls8_folder(l1_ls8_folder, relative_offset)
 
 
 @pytest.fixture
@@ -79,7 +82,9 @@ def example_metadata(
     assert False
 
 
-def expected_l1_ls8_folder(l1_ls8_folder: Path, offset: Callable[[Path, str], str]):
+def expected_l1_ls8_folder(
+    l1_ls8_folder: Path, offset: Callable[[Path, str], str] = relative_offset
+):
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
         "id": "a780754e-a884-58a7-9ac0-df518a67f59d",
@@ -223,8 +228,9 @@ def expected_l1_ls8_folder(l1_ls8_folder: Path, offset: Callable[[Path, str], st
 
 
 @pytest.fixture
-def l1_ls7_tarball_md_expected(l1_ls7_tarball) -> Dict:
-    offset = lambda base, offset: offset
+def l1_ls7_tarball_md_expected(
+    l1_ls7_tarball, offset: Callable[[Path, str], str] = relative_offset
+) -> Dict:
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
         "id": "f23c5fa2-3321-5be9-9872-2be73fee12a6",
@@ -328,8 +334,9 @@ def l1_ls7_tarball_md_expected(l1_ls7_tarball) -> Dict:
 
 
 @pytest.fixture
-def l1_ls5_tarball_md_expected(l1_ls5_tarball) -> Dict:
-    offset = lambda base, offset: offset
+def l1_ls5_tarball_md_expected(
+    l1_ls5_tarball, offset: Callable[[Path, str], str] = relative_offset
+) -> Dict:
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
         "id": "b0d31709-dda4-5a67-9fdf-3ae026a99a72",
