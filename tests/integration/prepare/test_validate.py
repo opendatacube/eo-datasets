@@ -1,12 +1,11 @@
 import operator
 from pathlib import Path
-from typing import Dict, Union, Sequence
+from textwrap import dedent
+from typing import Dict, Union
 
-import pytest
 from click.testing import CliRunner, Result
 
-from eodatasets.prepare import ls_usgs_l1_prepare, validate, serialise
-from .common import check_prepare_outputs
+from eodatasets.prepare import validate, serialise
 
 
 def test_valid_document_works(tmp_path: Path, example_metadata: Dict):
@@ -42,8 +41,75 @@ def test_allow_optional_geo(tmp_path: Path, example_metadata: Dict):
 
 
 def test_missing_geo_fields(tmp_path: Path, example_metadata: Dict):
+    """ If you have one gis field, you should have all of them"""
     del example_metadata["crs"]
     _assert_invalid_codes(example_metadata, tmp_path, "incomplete_crs")
+
+
+def test_missing_grid_def(tmp_path: Path, example_metadata: Dict):
+    """A Measurement refers to a grid that doesn't exist"""
+    a_measurement, *_ = list(example_metadata["measurements"])
+    example_metadata["measurements"][a_measurement]["grid"] = "unknown_grid"
+    _assert_invalid_codes(example_metadata, tmp_path, "invalid_grid_ref")
+
+
+def test_invalid_shape(tmp_path: Path, example_metadata: Dict):
+    """the geometry must be a valid shape"""
+
+    # Points are in an invalid order.
+    example_metadata["geometry"] = {
+        "coordinates": (
+            (
+                (770115.0, -2768985.0),
+                (525285.0, -2981715.0),
+                (770115.0, -2981715.0),
+                (525285.0, -2768985.0),
+                (770115.0, -2768985.0),
+            ),
+        ),
+        "type": "Polygon",
+    }
+
+    messages = _assert_invalid_codes(example_metadata, tmp_path, "invalid_geometry")
+    assert "not a valid shape" in messages["invalid_geometry"]
+
+
+def test_crs_as_wkt(tmp_path: Path, example_metadata: Dict):
+    """A CRS should be in epsg form if an EPSG exists, not WKT"""
+    example_metadata["crs"] = dedent(
+        """PROJCS["WGS 84 / UTM zone 55N",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.01745329251994328,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",147],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    AUTHORITY["EPSG","32655"],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]
+    """
+    )
+
+    # It's valid, but a warning is produced.
+    warnings = _assert_valid(example_metadata, tmp_path, expect_no_warnings=False)
+    assert "non_epsg" in warnings
+    # Suggests an alternative
+    assert "change CRS to 'epsg:32655'" in warnings["non_epsg"]
+
+    # .. and it should fail when warnings are treated as errors.
+    _assert_invalid(example_metadata, tmp_path, warnings_are_errors=True)
 
 
 def _assert_valid(example_metadata, tmp_path, expect_no_warnings=True):
@@ -60,15 +126,21 @@ def _assert_valid(example_metadata, tmp_path, expect_no_warnings=True):
 def _assert_invalid_codes(doc: Dict, tmp_path: Path, *expected_error_codes):
     messages = _assert_invalid(doc, tmp_path)
     assert sorted(expected_error_codes) == sorted(messages.keys())
+    return messages
 
 
-def _assert_invalid(doc: Dict, tmp_path: Path):
+def _assert_invalid(doc: Dict, tmp_path: Path, warnings_are_errors=False):
     __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
     md_path = tmp_path / "test_dataset.yaml"
     serialise.dump_yaml(md_path, doc)
-    res = run_validate("-q", md_path, expect_success=False)
-    # One failed document
-    assert res.exit_code == 1
+
+    args = ("-q",)
+    if warnings_are_errors:
+        args += ("-W",)
+
+    res = run_validate(*args, md_path, expect_success=False)
+    assert res.exit_code != 0, "Expected validation to fail"
+    assert res.exit_code == 1, "Expected error code to be 1 for 1 document failure"
 
     return _read_messages(res)
 
