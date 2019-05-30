@@ -6,17 +6,56 @@ from typing import List, Counter, Dict
 
 import attr
 import click
-from attr.validators import instance_of
 from click import style, echo, secho
 from rasterio.crs import CRS
-
-
 from rasterio.errors import CRSError
 from shapely.validation import explain_validity
 
 from eodatasets.prepare import serialise, model
 from eodatasets.prepare.model import DatasetDoc
 from eodatasets.ui import PathPath, is_absolute
+
+# Every property we've seen or dealt with so far. Feel free to expand with abandon...
+# This is to minimise minor typos, case differences, etc, which plagued previous systems.
+# Keep sorted.
+_KNOWN_STAC_PROPERTIES = {
+    "datetime",
+    "dtr:end_datetime",
+    "dtr:start_datetime",
+    "eo:azimuth",
+    "eo:cloud_cover",
+    "eo:epsg",
+    "eo:gsd",
+    "eo:instrument",
+    "eo:off_nadir",
+    "eo:platform",
+    "eo:sun_azimuth",
+    "eo:sun_elevation",
+    "landsat:collection_category",
+    "landsat:collection_number",
+    "landsat:data_type",
+    "landsat:earth_sun_distance",
+    "landsat:ephemeris_type",
+    "landsat:geometric_rmse_model",
+    "landsat:geometric_rmse_model_x",
+    "landsat:geometric_rmse_model_y",
+    "landsat:geometric_rmse_verify",
+    "landsat:ground_control_points_model",
+    "landsat:ground_control_points_verify",
+    "landsat:ground_control_points_version",
+    "landsat:image_quality_oli",
+    "landsat:image_quality_tirs",
+    "landsat:landsat_product_id",
+    "landsat:landsat_scene_id",
+    "landsat:processing_software_version",
+    "landsat:station_id",
+    "landsat:wrs_path",
+    "landsat:wrs_row",
+    "odc:dataset_version",
+    "odc:file_format",
+    "odc:processing_datetime",
+    "odc:producer",
+}
 
 
 class Level(enum.Enum):
@@ -92,6 +131,25 @@ def validate(doc: Dict, thorough: bool = False):
         if thorough:
             # Load file, check dimensions etc are correct.
             pass
+
+    yield from _validate_stac_properties(dataset)
+
+
+def _validate_stac_properties(dataset: DatasetDoc):
+    for name, value in dataset.properties.items():
+        if name not in _KNOWN_STAC_PROPERTIES:
+            yield _warning("unknown_property", f"Unknown stac property {name!r}")
+
+    # TODO: type/other validation
+
+    if "odc:producer" in dataset.properties:
+        producer = dataset.properties["odc:producer"]
+        # We use domain name to avoid arguing about naming conventions ('ga' vs 'geoscience-australia' vs ...)
+        if "." not in producer:
+            yield _warning(
+                "producer_domain",
+                "Property 'odc:producer' should be the organisation's domain name. Eg. 'ga.gov.au'",
+            )
 
 
 def _validate_geo(dataset: DatasetDoc):
