@@ -7,6 +7,7 @@ from uuid import UUID
 
 import affine
 import attr
+import ciso8601
 import numpy
 import rasterio
 import rasterio.features
@@ -78,6 +79,13 @@ class DatasetDoc:
     @producer.setter
     def producer(self, domain):
         self.properties["odc:producer"] = domain
+
+    @property
+    def datetime(self):
+        dt = self.properties.get("datetime")
+        if not dt:
+            return None
+        return ciso8601.parse_datetime(dt)
 
 
 def resolve_absolute_offset(
