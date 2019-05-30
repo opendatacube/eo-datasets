@@ -17,7 +17,7 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets.prepare.model import FileFormat, Dataset, ODC_DATASET_SCHEMA_URL
+from eodatasets.prepare.model import FileFormat, DatasetDoc, ODC_DATASET_SCHEMA_URL
 
 
 def _format_representer(dumper, data: FileFormat):
@@ -74,7 +74,7 @@ def load_yaml(p: Path) -> Dict:
         return yaml.load(f)
 
 
-def from_path(path: Path) -> Dataset:
+def from_path(path: Path) -> DatasetDoc:
     if path.suffix.lower() not in (".yaml", ".yml"):
         raise ValueError(f"Unexpected file type {path.suffix}. Expected yaml")
 
@@ -99,7 +99,7 @@ def _get_schema_validator(p: Path) -> jsonschema.Draft6Validator:
 DATASET_SCHEMA = _get_schema_validator(Path(__file__).parent / "dataset.schema.yaml")
 
 
-def from_doc(doc: Dict, skip_validation=False) -> Dataset:
+def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:
     """
     Convert a document to a dataset.
 
@@ -117,18 +117,18 @@ def from_doc(doc: Dict, skip_validation=False) -> Dataset:
     c = cattr.Converter()
     c.register_structure_hook(uuid.UUID, lambda d, t: uuid.UUID(d))
     c.register_structure_hook(BaseGeometry, lambda d, t: shape(d))
-    return c.structure(doc, Dataset)
+    return c.structure(doc, DatasetDoc)
 
 
-def to_doc(d: Dataset) -> Dict:
+def to_doc(d: DatasetDoc) -> Dict:
     return _to_doc(d, with_formatting=False)
 
 
-def to_formatted_doc(d: Dataset) -> CommentedMap:
+def to_formatted_doc(d: DatasetDoc) -> CommentedMap:
     return _to_doc(d, with_formatting=True)
 
 
-def _to_doc(d: Dataset, with_formatting: bool):
+def _to_doc(d: DatasetDoc, with_formatting: bool):
     if with_formatting:
         doc = CommentedMap()
         doc.yaml_set_comment_before_after_key("$schema", before="Dataset")

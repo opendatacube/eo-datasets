@@ -24,10 +24,10 @@ from shapely.geometry.base import BaseGeometry
 
 from eodatasets import verify
 from eodatasets.prepare.model import (
-    Dataset,
-    Product,
+    DatasetDoc,
+    ProductDoc,
     FileFormat,
-    Measurement,
+    MeasurementDoc,
     valid_region,
     resolve_absolute_offset,
     DEA_URI_PREFIX,
@@ -269,7 +269,7 @@ def prepare_dataset_from_mtl(
 
 def _prepare(
     mtl_doc: dict, mtl_filename: str, base_path: Optional[Path] = None
-) -> Dataset:
+) -> DatasetDoc:
     collection_number = mtl_doc["metadata_file_info"].get("collection_number")
 
     if collection_number is None:
@@ -291,7 +291,7 @@ def _prepare(
     product_id = mtl_doc["metadata_file_info"]["landsat_product_id"]
 
     bands = [
-        Measurement(
+        MeasurementDoc(
             name=band_name,
             path=mtl_doc["product_metadata"]["file_name_band_" + band_fname.lower()],
         )
@@ -401,9 +401,9 @@ def _prepare(
     )
 
     crs = f"epsg:{epsg_code}"
-    d = Dataset(
+    d = DatasetDoc(
         id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
-        product=Product(
+        product=ProductDoc(
             name=product_name, href=f"{DEA_URI_PREFIX}/product/{product_name}"
         ),
         # bbox=bbox(geometry, crs),

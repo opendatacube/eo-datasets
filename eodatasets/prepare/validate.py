@@ -6,6 +6,7 @@ from typing import List, Counter, Dict
 
 import attr
 import click
+from attr.validators import instance_of
 from click import style, echo, secho
 from rasterio.crs import CRS
 
@@ -14,7 +15,7 @@ from rasterio.errors import CRSError
 from shapely.validation import explain_validity
 
 from eodatasets.prepare import serialise, model
-from eodatasets.prepare.model import Dataset
+from eodatasets.prepare.model import DatasetDoc
 from eodatasets.ui import PathPath, is_absolute
 
 
@@ -93,7 +94,7 @@ def validate(doc: Dict, thorough: bool = False):
             pass
 
 
-def _validate_geo(dataset: Dataset):
+def _validate_geo(dataset: DatasetDoc):
     has_some_geo = dataset.geometry is not None or dataset.grids or dataset.crs
     if not has_some_geo:
         yield _info("non_geo", "No geo information in dataset")

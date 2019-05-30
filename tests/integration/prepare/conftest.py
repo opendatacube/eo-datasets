@@ -8,7 +8,7 @@ import pytest
 
 from eodatasets.prepare import serialise
 from eodatasets.prepare.ls_usgs_l1_prepare import normalise_nci_symlinks
-from eodatasets.prepare.model import Dataset
+from eodatasets.prepare.model import DatasetDoc
 
 L71GT_TARBALL_PATH: Path = Path(
     __file__
@@ -51,7 +51,7 @@ def l1_ls5_tarball() -> Path:
 
 
 @pytest.fixture
-def l1_ls8_dataset(l1_ls8_folder_md_expected: Dict) -> Dataset:
+def l1_ls8_dataset(l1_ls8_folder_md_expected: Dict) -> DatasetDoc:
     return serialise.from_doc(l1_ls8_folder_md_expected)
 
 

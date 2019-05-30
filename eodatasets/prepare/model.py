@@ -28,19 +28,19 @@ class FileFormat(Enum):
 
 
 @attr.s(auto_attribs=True, slots=True)
-class Product:
+class ProductDoc:
     name: str = None
     href: str = None
 
 
 @attr.s(auto_attribs=True, slots=True, hash=True, frozen=True)
-class Grid:
+class GridDoc:
     shape: Tuple[int, int]
     transform: Tuple[float, float, float, float, float, float, float, float, float]
 
 
 @attr.s(auto_attribs=True, slots=True)
-class Measurement:
+class MeasurementDoc:
     path: str
     band: Optional[int] = 1
     layer: Optional[str] = None
@@ -50,21 +50,34 @@ class Measurement:
 
 
 @attr.s(auto_attribs=True, slots=True)
-class Dataset:
+class DatasetDoc:
     id: UUID = None
-    product: Product = None
+    product: ProductDoc = None
     locations: List[str] = None
 
     crs: str = None
     geometry: BaseGeometry = None
-    grids: Dict[str, Grid] = None
+    grids: Dict[str, GridDoc] = None
     # bbox: Tuple = None
 
     properties: Dict[str, Any] = attr.ib(factory=CommentedMap)
 
-    measurements: Dict[str, Measurement] = None
+    measurements: Dict[str, MeasurementDoc] = None
 
     lineage: Dict[str, Tuple[UUID]] = attr.ib(factory=CommentedMap)
+
+    @property
+    def producer(self):
+        """
+        Organisation that produced the data.
+
+        eg. usgs.gov or ga.gov.au
+        """
+        return self.properties.get("odc:producer")
+
+    @producer.setter
+    def producer(self, domain):
+        self.properties["odc:producer"] = domain
 
 
 def resolve_absolute_offset(
@@ -113,15 +126,15 @@ def resolve_absolute_offset(
 
 
 def valid_region(
-    path: Path, measurements: Iterable[Measurement], mask_value=None
-) -> Tuple[BaseGeometry, Dict[str, Grid]]:
+    path: Path, measurements: Iterable[MeasurementDoc], mask_value=None
+) -> Tuple[BaseGeometry, Dict[str, GridDoc]]:
     mask = None
 
     if not measurements:
         raise ValueError("No measurements: cannot calculate valid region")
 
-    measurements_by_grid: Dict[Grid, List[Measurement]] = defaultdict(list)
-    mask_by_grid: Dict[Grid, numpy.ndarray] = {}
+    measurements_by_grid: Dict[GridDoc, List[MeasurementDoc]] = defaultdict(list)
+    mask_by_grid: Dict[GridDoc, numpy.ndarray] = {}
 
     for measurement in measurements:
         measurement_path = resolve_absolute_offset(path, measurement.path)
@@ -134,7 +147,7 @@ def valid_region(
                     f"Only single-band tifs currently supported. File {measurement_path!r}"
                 )
             img = ds.read(1)
-            grid = Grid(shape=ds.shape, transform=transform)
+            grid = GridDoc(shape=ds.shape, transform=transform)
             measurements_by_grid[grid].append(measurement)
 
             if mask_value is not None:
@@ -149,11 +162,11 @@ def valid_region(
                 mask |= new_mask
             mask_by_grid[grid] = mask
 
-    grids_by_frequency: List[Tuple[Grid, List[Measurement]]] = sorted(
+    grids_by_frequency: List[Tuple[GridDoc, List[MeasurementDoc]]] = sorted(
         measurements_by_grid.items(), key=lambda k: len(k[1])
     )
 
-    def name_grid(grid, measurements: List[Measurement], name=None):
+    def name_grid(grid, measurements: List[MeasurementDoc], name=None):
         name = name or "_".join(m.name for m in measurements)
         for m in measurements:
             m.grid = name
