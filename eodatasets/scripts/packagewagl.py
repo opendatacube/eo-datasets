@@ -996,11 +996,10 @@ def _versions(gverify_executable):
     return base_info
 
 
-def get_img_dataset_info(dataset: h5py.Dataset, path: Path, layer=1):
+def get_img_dataset_info(geobox: GeoBox, path: Path, layer=1):
     """
     Returns metadata for raster datasets
     """
-    geobox = GeoBox.from_h5(dataset)
     return {
         "path": path,
         "layer": layer,
@@ -1052,7 +1051,7 @@ def unpack_products(product_list, level1: DatasetDoc, h5group, outdir):
             alias = _clean(ALIAS_FMT[product].format(dataset.attrs["alias"]))
 
             # Band Metadata
-            rel_paths[alias] = get_img_dataset_info(dataset, rel_path)
+            rel_paths[alias] = get_img_dataset_info(GeoBox.from_h5(dataset), rel_path)
 
     # retrieve metadata
     scalar_paths = find(h5group, "SCALAR")
@@ -1088,7 +1087,7 @@ def unpack_supplementary(granule, h5group: h5py.Group, outdir, cogtif_args):
             out_fname = pjoin(outdir, rel_path)
             dset = h5_group[dname]
             alias = _clean(dset.attrs["alias"])
-            paths[alias] = get_img_dataset_info(dset, rel_path)
+            paths[alias] = get_img_dataset_info(GeoBox.from_h5(dset), rel_path)
             write_tif_from_dataset(dset, out_fname, **cogtif_args)
 
         return paths
@@ -1215,7 +1214,7 @@ def create_contiguity(product_list, level1: DatasetDoc, granule, outdir, cogtif_
             del contiguity_data
 
             with rasterio.open(out_fname) as ds:
-                rel_paths[alias] = get_img_dataset_info(ds, rel_path)
+                rel_paths[alias] = get_img_dataset_info(GeoBox.from_rio(ds), rel_path)
 
     return rel_paths, nbar_contiguity
 
@@ -1329,7 +1328,7 @@ def package(
             antecedent_metadata["fmask"] = {"fmask_version": "TODO"}
 
             with rasterio.open(fmask_cogtif_out) as ds:
-                img_paths["fmask"] = get_img_dataset_info(ds, rel_path)
+                img_paths["fmask"] = get_img_dataset_info(GeoBox.from_rio(dset), rel_path)
 
         # create_quicklook(products, container, out_path)
         # create_readme(out_path)
