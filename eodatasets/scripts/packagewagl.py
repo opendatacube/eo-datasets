@@ -285,15 +285,6 @@ def merge_metadata(
     platform: str = level1_tags.properties["eo:platform"]
     instrument: str = level1_tags.properties["eo:instrument"]
 
-    # TODO have properly defined product types for the ARD product
-    ptype = {
-        "LANDSAT-5": "L5ARD",
-        "LANDSAT-7": "L7ARD",
-        "LANDSAT-8": "L8ARD",
-        "SENTINEL-2A": "S2MSIARD",
-        "SENTINEL-2B": "S2MSIARD",
-    }
-
     # TODO: resolve common software version for fmask and gqa
     software_versions = wagl_tags["software_versions"]
 
@@ -340,7 +331,7 @@ def merge_metadata(
         "system_information": wagl_tags["system_information"],
         "id": str(uuid.uuid4()),
         "processing_level": "Level-2",
-        "product_type": ptype[platform],
+        "product_type": 'ard',
         "platform": {"code": platform},
         "instrument": {"name": instrument},
         "format": {"name": "GeoTIFF"},
@@ -1022,14 +1013,11 @@ def unpack_products(product_list, level1: DatasetDoc, h5group, outdir):
     rel_paths = {}
 
     # TODO pass products through from the scheduler rather than hard code
-    print(" ".join(level1.measurements.keys()))
     for product in product_list:
         secho(f"\n\nStarting {product}", fg="blue")
         for pathname in [p for p in img_paths if "/{}/".format(product) in p]:
             secho(f"\n\nPath {pathname}", fg="blue")
             dataset = h5group[pathname]
-            for k in dataset.attrs:
-                print(f"\t{k}: {dataset.attrs.get(k)}")
 
             band_name = dataset.attrs["alias"].lower().replace("-", "")
             base_fname = basename(level1.measurements[band_name].path)
@@ -1219,13 +1207,13 @@ def create_contiguity(product_list, level1: DatasetDoc, granule, outdir, cogtif_
     return rel_paths, nbar_contiguity
 
 
-def create_checksum(outdir):
+def create_checksum(outdir:Path):
     """
     Create the checksum file.
     """
-    out_fname = pjoin(outdir, "checksum.sha1")
+    out_fname = outdir/"checksum.sha1"
     c = PackageChecksum()
-    c.add(outdir)
+    c.add_file(outdir)
     c.write(out_fname)
     return out_fname
 
@@ -1312,8 +1300,8 @@ def package(
             wagl_tags["timedelta_max"] = numpy.ma.max(valid_timedelta_data)
 
         # add in qa paths
-        # for key in qa_paths:
-        #     img_paths[key] = qa_paths[key]
+        for key in qa_paths:
+            img_paths[key] = qa_paths[key]
 
         # fmask cogtif conversion
         if "fmask" in antecedents:
@@ -1328,7 +1316,7 @@ def package(
             antecedent_metadata["fmask"] = {"fmask_version": "TODO"}
 
             with rasterio.open(fmask_cogtif_out) as ds:
-                img_paths["fmask"] = get_img_dataset_info(GeoBox.from_rio(dset), rel_path)
+                img_paths["fmask"] = get_img_dataset_info(GeoBox.from_rio(ds), rel_path)
 
         # create_quicklook(products, container, out_path)
         # create_readme(out_path)
@@ -1336,7 +1324,7 @@ def package(
         # merge all the yaml documents
         if "gqa" in antecedents:
             with antecedents["gqa"].open() as fl:
-                antecedent_metadata["gqa"] = yaml.load(fl)
+                antecedent_metadata["gqa"] = yaml.safe_load(fl)
         else:
             antecedent_metadata["gqa"] = {
                 "error_message": "GQA has not been configured for this product"
@@ -1350,7 +1338,7 @@ def package(
             yaml.dump(tags, src, default_flow_style=False, indent=4)
 
         # finally the checksum
-        create_checksum(out_path)
+        create_checksum(Path(out_path))
 
 
 def run():
