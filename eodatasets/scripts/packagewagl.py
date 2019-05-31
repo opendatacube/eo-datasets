@@ -6,9 +6,8 @@ import subprocess
 import tempfile
 import uuid
 from copy import deepcopy
-from enum import Enum
 from functools import partial
-from os.path import join as pjoin, basename
+from os.path import basename
 from pathlib import Path
 from posixpath import join as ppjoin
 from subprocess import check_call
@@ -96,124 +95,6 @@ class GeoBox:
                 "geotransform": list(self.transform.to_gdal()),
             },
         }
-
-
-class DatasetName(Enum):
-    """
-    Defines the dataset names or format descriptors, that are used
-    for creating and accessing throughout the code base.
-    """
-
-    # wagl.ancillary
-    COORDINATOR = "COORDINATOR"
-    DEWPOINT_TEMPERATURE = "DEWPOINT-TEMPERATURE"
-    TEMPERATURE_2M = "TEMPERATURE-2METRE"
-    SURFACE_PRESSURE = "SURFACE-PRESSURE"
-    SURFACE_GEOPOTENTIAL = "SURFACE-GEOPOTENTIAL-HEIGHT"
-    SURFACE_RELATIVE_HUMIDITY = "SURFACE-RELATIVE-HUMIDITY"
-    GEOPOTENTIAL = "GEO-POTENTIAL"
-    TEMPERATURE = "TEMPERATURE"
-    RELATIVE_HUMIDITY = "RELATIVE-HUMIDITY"
-    ATMOSPHERIC_PROFILE = "ATMOSPHERIC-PROFILE"
-    AEROSOL = "AEROSOL"
-    WATER_VAPOUR = "WATER-VAPOUR"
-    OZONE = "OZONE"
-    ELEVATION = "ELEVATION"
-    BRDF_FMT = "BRDF-{parameter}-{band_name}"
-    ECMWF_PATH_FMT = pjoin("{product}", "{year}", "tif", "{product}_*.tif")
-
-    # wagl.longitude_latitude_arrays
-    LON = "LONGITUDE"
-    LAT = "LATITUDE"
-
-    # wagl.satellite_solar_angles
-    SATELLITE_VIEW = "SATELLITE-VIEW"
-    SATELLITE_AZIMUTH = "SATELLITE-AZIMUTH"
-    SOLAR_ZENITH = "SOLAR-ZENITH"
-    SOLAR_ZENITH_CHANNEL = "SOLAR-ZENITH-CHANNEL"
-    SOLAR_AZIMUTH = "SOLAR-AZIMUTH"
-    RELATIVE_AZIMUTH = "RELATIVE-AZIMUTH"
-    TIME = "TIMEDELTA"
-    CENTRELINE = "CENTRELINE"
-    BOXLINE = "BOXLINE"
-    SPHEROID = "SPHEROID"
-    ORBITAL_ELEMENTS = "ORBITAL-ELEMENTS"
-    SATELLITE_MODEL = "SATELLITE-MODEL"
-    SATELLITE_TRACK = "SATELLITE-TRACK"
-    GENERIC = "GENERIC"
-
-    # wagl.incident_exiting_angles
-    INCIDENT = "INCIDENT"
-    AZIMUTHAL_INCIDENT = "AZIMUTHAL-INCIDENT"
-    EXITING = "EXITING"
-    AZIMUTHAL_EXITING = "AZIMUTHAL-EXITING"
-    RELATIVE_SLOPE = "RELATIVE-SLOPE"
-
-    # wagl.reflectance
-    REFLECTANCE_FMT = "REFLECTANCE/{product}/{band_name}"
-
-    # wagl.temperature
-    TEMPERATURE_FMT = "THERMAL/{product}/{band_name}"
-
-    # wagl.terrain_shadow_masks
-    SELF_SHADOW = "SELF-SHADOW"
-    CAST_SHADOW_FMT = "CAST-SHADOW-{source}"
-    COMBINED_SHADOW = "COMBINED-TERRAIN-SHADOW"
-
-    # wagl.slope_aspect
-    SLOPE = "SLOPE"
-    ASPECT = "ASPECT"
-
-    # wagl.dsm
-    DSM = "DSM"
-    DSM_SMOOTHED = "DSM-SMOOTHED"
-
-    # wagl.interpolation
-    INTERPOLATION_FMT = "{coefficient}/{band_name}"
-
-    # wagl.modtran
-    MODTRAN_INPUT = "MODTRAN-INPUT-DATA"
-    FLUX = "FLUX"
-    ALTITUDES = "ALTITUDES"
-    SOLAR_IRRADIANCE = "SOLAR-IRRADIANCE"
-    UPWARD_RADIATION_CHANNEL = "UPWARD-RADIATION-CHANNEL"
-    DOWNWARD_RADIATION_CHANNEL = "DOWNWARD-RADIATION-CHANNEL"
-    CHANNEL = "CHANNEL"
-    NBAR_COEFFICIENTS = "NBAR-COEFFICIENTS"
-    SBT_COEFFICIENTS = "SBT-COEFFICIENTS"
-
-    # wagl.pq
-    PQ_FMT = "PIXEL-QUALITY/{produt}/PIXEL-QUALITY"
-
-    # metadata
-    METADATA = "METADATA"
-    CURRENT_METADATA = "CURRENT"
-    NBAR_YAML = "METADATA/NBAR-METADATA"
-    PQ_YAML = "METADATA/PQ-METADATA"
-    SBT_YAML = "METADATA/SBT-METADATA"
-
-
-class GroupName(Enum):
-    """
-    Defines the group names or format descriptors, that are used
-    for creating and accessing throughout the code base.
-    """
-
-    LON_LAT_GROUP = "LONGITUDE-LATITUDE"
-    SAT_SOL_GROUP = "SATELLITE-SOLAR"
-    ANCILLARY_GROUP = "ANCILLARY"
-    ANCILLARY_AVG_GROUP = "AVERAGED-ANCILLARY"
-    ATMOSPHERIC_INPUTS_GRP = "ATMOSPHERIC-INPUTS"
-    ATMOSPHERIC_RESULTS_GRP = "ATMOSPHERIC-RESULTS"
-    COEFFICIENTS_GROUP = "ATMOSPHERIC-COEFFICIENTS"
-    INTERP_GROUP = "INTERPOLATED-ATMOSPHERIC-COEFFICIENTS"
-    ELEVATION_GROUP = "ELEVATION"
-    SLP_ASP_GROUP = "SLOPE-ASPECT"
-    INCIDENT_GROUP = "INCIDENT-ANGLES"
-    EXITING_GROUP = "EXITING-ANGLES"
-    REL_SLP_GROUP = "RELATIVE-SLOPE"
-    SHADOW_GROUP = "SHADOW-MASKS"
-    STANDARD_GROUP = "STANDARDISED-PRODUCTS"
 
 
 def find(h5_obj: h5py.Group, dataset_class="") -> List[str]:
@@ -885,8 +766,6 @@ def unpack_products(
     """
     # listing of all datasets of IMAGE CLASS type
     img_paths = find(h5group, "IMAGE")
-    for p in img_paths:
-        print(p)
 
     # relative paths of each dataset for ODC metadata doc
     measurements = {}
@@ -895,7 +774,7 @@ def unpack_products(
     for product in product_list:
         secho(f"\n\nStarting {product}", fg="blue")
         for pathname in [p for p in img_paths if "/{}/".format(product) in p]:
-            secho(f"\n\nPath {pathname}", fg="blue")
+            secho(f"Path {pathname}", fg="blue")
             dataset = h5group[pathname]
 
             band_name = _clean_alias(dataset)
@@ -915,20 +794,18 @@ def unpack_products(
                 )
             )
 
-            _cogtif_args = get_cogtif_options(dataset.shape, overviews=True)
-            write_tif_from_dataset(dataset, out_fname, **_cogtif_args)
-
-            # alias name for ODC metadata doc
-            alias = f"{product.lower()}_{band_name}"
-
-            # Band Metadata
-            measurements[alias] = GeoBox.from_h5(dataset).get_img_dataset_info(
-                out_fname
+            write_tif_from_dataset(
+                dataset,
+                out_fname,
+                **(get_cogtif_options(dataset.shape, overviews=True)),
             )
+            # Band Metadata
+            measurements[f"{product.lower()}_{band_name}"] = GeoBox.from_h5(
+                dataset
+            ).get_img_dataset_info(out_fname)
 
     # retrieve metadata
-    scalar_paths = find(h5group, "SCALAR")
-    pathnames = [pth for pth in scalar_paths if "NBAR-METADATA" in pth]
+    pathnames = [pth for pth in (find(h5group, "SCALAR")) if "NBAR-METADATA" in pth]
 
     tags = yaml.load(h5group[pathnames[0]][()])
     for path in pathnames[1:]:
@@ -955,8 +832,6 @@ def unpack_supplementary(
         h5_group: h5py.Group,
         granule_id: str,
         basedir: str,
-        cogtif=False,
-        cogtif_args=None,
     ):
         """
         An internal util for serialising the supplementary
@@ -970,9 +845,10 @@ def unpack_supplementary(
                 / "{}_{}.TIF".format(granule_id, dname.replace("-", "_"))
             )
             dset = h5_group[dname]
-            alias = _clean_alias(dset)
-            paths[alias] = GeoBox.from_h5(dset).get_img_dataset_info(out_fname)
             write_tif_from_dataset(dset, out_fname, **cogtif_args)
+            paths[_clean_alias(dset)] = GeoBox.from_h5(dset).get_img_dataset_info(
+                out_fname
+            )
 
         return paths
 
@@ -987,50 +863,66 @@ def unpack_supplementary(
     rel_paths = {}
 
     # satellite and solar angles
-    grp = h5group[ppjoin(res_grp, GroupName.SAT_SOL_GROUP.value)]
-    dnames = [
-        DatasetName.SATELLITE_VIEW.value,
-        DatasetName.SATELLITE_AZIMUTH.value,
-        DatasetName.SOLAR_ZENITH.value,
-        DatasetName.SOLAR_AZIMUTH.value,
-        DatasetName.RELATIVE_AZIMUTH.value,
-        DatasetName.TIME.value,
-    ]
-    paths = _write(dnames, grp, grn_id, SUPPS, cogtif=False, cogtif_args=cogtif_args)
-    for key in paths:
-        rel_paths[key] = paths[key]
+    grp = h5group[ppjoin(res_grp, "SATELLITE-SOLAR")]
+    rel_paths.update(
+        _write(
+            [
+                "SATELLITE-VIEW",
+                "SATELLITE-AZIMUTH",
+                "SOLAR-ZENITH",
+                "SOLAR-AZIMUTH",
+                "RELATIVE-AZIMUTH",
+                "TIMEDELTA",
+            ],
+            grp,
+            grn_id,
+            SUPPS,
+        )
+    )
 
     # timedelta data
-    timedelta_data = grp[DatasetName.TIME.value]
+    timedelta_data = grp["TIMEDELTA"]
 
     # incident angles
-    grp = h5group[ppjoin(res_grp, GroupName.INCIDENT_GROUP.value)]
-    dnames = [DatasetName.INCIDENT.value, DatasetName.AZIMUTHAL_INCIDENT.value]
-    paths = _write(dnames, grp, grn_id, SUPPS, cogtif=False, cogtif_args=cogtif_args)
-    for key in paths:
-        rel_paths[key] = paths[key]
+    rel_paths.update(
+        _write(
+            ["INCIDENT", "AZIMUTHAL-INCIDENT"],
+            h5group[ppjoin(res_grp, "INCIDENT-ANGLES")],
+            grn_id,
+            SUPPS,
+        )
+    )
 
     # exiting angles
-    grp = h5group[ppjoin(res_grp, GroupName.EXITING_GROUP.value)]
-    dnames = [DatasetName.EXITING.value, DatasetName.AZIMUTHAL_EXITING.value]
-    paths = _write(dnames, grp, grn_id, SUPPS, cogtif=False, cogtif_args=cogtif_args)
-    for key in paths:
-        rel_paths[key] = paths[key]
+    rel_paths.update(
+        _write(
+            ["EXITING", "AZIMUTHAL-EXITING"],
+            h5group[ppjoin(res_grp, "EXITING-ANGLES")],
+            grn_id,
+            SUPPS,
+        )
+    )
 
     # relative slope
-    grp = h5group[ppjoin(res_grp, GroupName.REL_SLP_GROUP.value)]
-    dnames = [DatasetName.RELATIVE_SLOPE.value]
-    paths = _write(dnames, grp, grn_id, SUPPS, cogtif=False, cogtif_args=cogtif_args)
-    for key in paths:
-        rel_paths[key] = paths[key]
+    rel_paths.update(
+        _write(
+            ["RELATIVE-SLOPE"],
+            h5group[ppjoin(res_grp, "RELATIVE-SLOPE")],
+            grn_id,
+            SUPPS,
+        )
+    )
 
     # terrain shadow
-    grp = h5group[ppjoin(res_grp, GroupName.SHADOW_GROUP.value)]
-    dnames = [DatasetName.COMBINED_SHADOW.value]
-    paths = _write(dnames, grp, grn_id, QA, cogtif=True, cogtif_args=cogtif_args)
-    for key in paths:
-        rel_paths[key] = paths[key]
-
+    # TODO: this one had cogtif=True? (but was unused in `_write()`)
+    rel_paths.update(
+        _write(
+            ["COMBINED-TERRAIN-SHADOW"],
+            h5group[ppjoin(res_grp, "SHADOW-MASKS")],
+            grn_id,
+            QA,
+        )
+    )
     # TODO do we also include slope and aspect?
 
     return rel_paths, timedelta_data
