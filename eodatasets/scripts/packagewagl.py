@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # pylint: disable=too-many-locals
 
-import copy
 import os
 import re
 import subprocess
@@ -9,39 +8,30 @@ import tempfile
 import uuid
 from enum import Enum
 from functools import partial
-from os.path import join as pjoin, basename, dirname, splitext, exists
+from os.path import join as pjoin, basename, dirname, exists
 from pathlib import Path
 from posixpath import join as ppjoin
 from subprocess import check_call
 from typing import Dict, Any, Tuple, Sequence, Union
 
-import h5py
-import numpy as np
-import yaml
 import attr
-from pkg_resources import resource_stream
+import h5py
+import numpy
+import numpy as np
+import rasterio
+import yaml
+from affine import Affine
+from click import secho
 from rasterio.enums import Resampling
+from skimage.exposure import rescale_intensity
 from yaml.representer import Representer
 
 from eodatasets.prepare import serialise
-from eodatasets.prepare.ls_usgs_l1_prepare import prepare_dataset as landsat_prepare
 from eodatasets.prepare.model import DatasetDoc
-from eodatasets.prepare.s2_l1c_aws_pds_prepare import (
-    prepare_dataset as sentinel_2_aws_pds_prepare,
-)
-from eodatasets.prepare.s2_prepare_cophub_zip import (
-    prepare_dataset as sentinel_2_zip_prepare,
-)
+from eodatasets.verify import PackageChecksum
 
 # from wagl.acquisition import acquisitions, AcquisitionsContainer
 
-
-import numpy
-import rasterio
-from skimage.exposure import rescale_intensity
-
-from eodatasets.type import DatasetMetadata
-from eodatasets.verify import PackageChecksum
 # from wagl.acquisition import Acquisition
 
 EUGL_VERSION = "DO_SOMETHING_HERE"
@@ -57,11 +47,10 @@ os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
 @attr.s(auto_attribs=True, frozen=True)
 class GeoBox:
-    bbshape: Tuple = None
-    origin: Tuple[int, int] = None
+    shape: Tuple = None
+    origin: Tuple[float, float] = None
     pixelsize: Tuple[int, int] = None
     crs_wkt: str = None
-    transform: Tuple = None
 
     @classmethod
     def from_dataset(cls, dataset):
@@ -70,25 +59,37 @@ class GeoBox:
     @classmethod
     def from_rio(cls, dataset):
         return cls(
-            bbshape=dataset.shape,
-            # TODO: I assume it's the same transform?
-            # or else: = Affine(self.pixelsize[0], 0, self.origin[0], 0, -self.pixelsize[1], self.origin[1])
-            transform=dataset.transform,
+            shape=dataset.shape,
             origin=(dataset.transform[2], dataset.transform[5]),
-            pixelsize=dataset.res,
+            pixelsize=(dataset.res),
             crs_wkt=dataset.crs.wkt,
         )
 
     @classmethod
     def from_h5(cls, dataset):
-        transform = dataset.attrs["geotransform"]
+        transform = tuple(dataset.attrs["geotransform"])
         return cls(
-            bbshape=dataset.shape,
-            transform=transform,
+            shape=dataset.shape,
             origin=(transform[0], transform[3]),
             crs_wkt=dataset.attrs["crs_wkt"],
             pixelsize=(abs(transform[1]), abs(transform[5])),
         )
+
+    @property
+    def transform(self):
+        return Affine(
+            self.pixelsize[0], 0, self.origin[0], 0, -self.pixelsize[1], self.origin[1]
+        )
+
+    @property
+    def x_size(self):
+        """The x-axis size."""
+        return self.shape[1]
+
+    @property
+    def y_size(self):
+        """The y-axis size."""
+        return self.shape[0]
 
 
 class DatasetName(Enum):
@@ -509,10 +510,14 @@ FILENAME_TIF_BAND = re.compile(
     r"(?P<prefix>(?:.*_)?)(?P<band_name>B[0-9][A0-9]|B[0-9]*|B[0-9a-zA-z]*)"
     r"(?P<extension>\....)"
 )
-PATTERN2 = re.compile("(L1[GTPCS]{1,2})")
+PRODUCT_SUITE_FROM_GRANULE = re.compile("(L1[GTPCS]{1,2})")
 ARD = "ARD"
 QA = "QA"
 SUPPS = "SUPPLEMENTARY"
+
+
+def _l1_to_ard(granule):
+    return re.sub(PRODUCT_SUITE_FROM_GRANULE, ARD, granule)
 
 
 def run_command(command: Sequence[Union[str, Path]], work_dir: Path):
@@ -530,10 +535,10 @@ def _clean(alias):
     return alias.lower()
 
 
-def get_cogtif_options(dataset, overviews=True, blockxsize=None, blockysize=None):
+def get_cogtif_options(
+    shape: Tuple[float, float], overviews=True, blockxsize=None, blockysize=None
+):
     """ Returns write_img options according to the source imagery provided
-    :param dataset:
-        Numpy array or hdf5 dataset representing raster values of the tif
     :param overviews:
         (boolean) sets overview flags in gdal config options
     :param blockxsize:
@@ -549,21 +554,14 @@ def get_cogtif_options(dataset, overviews=True, blockxsize=None, blockysize=None
     options = {"compress": "deflate", "zlevel": 4}
     config_options = {}
 
-    # If blocksize and datasets has chunks configured set to chunk size
-    # otherwise default to 512
-    if blockxsize is None or blockysize is None:
-        if hasattr(dataset, "chunks"):
-            blockysize = blockysize or dataset.chunks[0]
-            blockxsize = blockxsize or dataset.chunks[1]
-        else:
-            # Fallback to hardcoded 512 value
-            blockysize = blockysize or 512
-            blockxsize = blockxsize or 512
+    # Fallback to 512 value
+    blockysize = blockysize or 512
+    blockxsize = blockxsize or 512
 
-    if dataset.shape[0] <= 512 and dataset.shape[1] <= 512:
+    if shape[0] <= 512 and shape[1] <= 512:
         # Do not set block sizes for small imagery
         pass
-    elif dataset.shape[1] <= 512:
+    elif shape[1] <= 512:
         options["blockysize"] = min(blockysize, 512)
         # Set blockxsize to power of 2 rounded down
         options["blockxsize"] = int(2 ** (blockxsize.bit_length() - 1))
@@ -571,7 +569,7 @@ def get_cogtif_options(dataset, overviews=True, blockxsize=None, blockysize=None
         if options["blockxsize"] == blockxsize:
             options["blockxsize"] = int(options["blockxsize"] / 2)
     else:
-        if dataset.shape[1] == blockxsize:
+        if shape[1] == blockxsize:
             # dataset does not have an internal tiling layout
             # set the layout to a 512 block size
             blockxsize = 512
@@ -870,7 +868,7 @@ def write_img(
 
 
 def write_tif_from_dataset(
-    dataset:h5py.Dataset,
+    dataset: h5py.Dataset,
     out_fname,
     options,
     config_options,
@@ -998,17 +996,17 @@ def _versions(gverify_executable):
     return base_info
 
 
-def get_img_dataset_info(dataset, path, layer=1):
+def get_img_dataset_info(dataset: h5py.Dataset, path: Path, layer=1):
     """
     Returns metadata for raster datasets
     """
-    geobox = GeoBox.from_dataset(dataset)
+    geobox = GeoBox.from_h5(dataset)
     return {
         "path": path,
         "layer": layer,
         "info": {
-            "width": geobox.x_size(),
-            "height": geobox.y_size(),
+            "width": geobox.x_size,
+            "height": geobox.y_size,
             "geotransform": list(geobox.transform.to_gdal()),
         },
     }
@@ -1025,16 +1023,18 @@ def unpack_products(product_list, level1: DatasetDoc, h5group, outdir):
     rel_paths = {}
 
     # TODO pass products through from the scheduler rather than hard code
-    print(' '.join(level1.measurements.keys()))
+    print(" ".join(level1.measurements.keys()))
     for product in product_list:
+        secho(f"\n\nStarting {product}", fg="blue")
         for pathname in [p for p in img_paths if "/{}/".format(product) in p]:
+            secho(f"\n\nPath {pathname}", fg="blue")
             dataset = h5group[pathname]
             for k in dataset.attrs:
-                print(f'{k}: {dataset.attrs[k]}')
+                print(f"\t{k}: {dataset.attrs.get(k)}")
 
-            band_name = dataset.attrs["alias"].lower()
-
+            band_name = dataset.attrs["alias"].lower().replace("-", "")
             base_fname = basename(level1.measurements[band_name].path)
+
             match_dict = FILENAME_TIF_BAND.match(base_fname).groupdict()
             fname = "{}{}_{}{}".format(
                 match_dict.get("prefix"),
@@ -1042,10 +1042,10 @@ def unpack_products(product_list, level1: DatasetDoc, h5group, outdir):
                 match_dict.get("band_name"),
                 match_dict.get("extension"),
             )
-            rel_path = pjoin(product, re.sub(PATTERN2, ARD, fname))
+            rel_path = pjoin(product, _l1_to_ard(fname))
             out_fname = pjoin(outdir, rel_path)
 
-            _cogtif_args = get_cogtif_options(dataset, overviews=True)
+            _cogtif_args = get_cogtif_options(dataset.shape, overviews=True)
             write_tif_from_dataset(dataset, out_fname, **_cogtif_args)
 
             # alias name for ODC metadata doc
@@ -1068,7 +1068,7 @@ def unpack_products(product_list, level1: DatasetDoc, h5group, outdir):
     return tags(), rel_paths
 
 
-def unpack_supplementary(container, granule, h5group, outdir):
+def unpack_supplementary(granule, h5group: h5py.Group, outdir, cogtif_args):
     """
     Unpack the angles + other supplementary datasets produced by wagl.
     Currently only the mode resolution group gets extracted.
@@ -1089,18 +1089,16 @@ def unpack_supplementary(container, granule, h5group, outdir):
             dset = h5_group[dname]
             alias = _clean(dset.attrs["alias"])
             paths[alias] = get_img_dataset_info(dset, rel_path)
-            write_tif_from_dataset(dset, out_fname, **_cogtif_args)
+            write_tif_from_dataset(dset, out_fname, **cogtif_args)
 
         return paths
 
-    acqs, res_grp = container.get_mode_resolution(granule)
-    grn_id = re.sub(PATTERN2, ARD, granule)
-    # Get tiling layout from mode resolution image, without overviews
-    tileysize, tilexsize = acqs[0].tile_size
-    _cogtif_args = get_cogtif_options(
-        acqs[0].data(), overviews=False, blockxsize=tilexsize, blockysize=tileysize
-    )
-    del acqs
+    res_grps = [g for g in h5group.keys() if g.startswith("RES-GROUP-")]
+    if len(res_grps) != 1:
+        raise NotImplementedError(f"expected one res group, got {res_grps!r}")
+    [res_grp] = res_grps
+
+    grn_id = _l1_to_ard(granule)
 
     # relative paths of each dataset for ODC metadata doc
     rel_paths = {}
@@ -1115,7 +1113,7 @@ def unpack_supplementary(container, granule, h5group, outdir):
         DatasetName.RELATIVE_AZIMUTH.value,
         DatasetName.TIME.value,
     ]
-    paths = _write(dnames, grp, grn_id, SUPPS, cogtif=False, cogtif_args=_cogtif_args)
+    paths = _write(dnames, grp, grn_id, SUPPS, cogtif=False, cogtif_args=cogtif_args)
     for key in paths:
         rel_paths[key] = paths[key]
 
@@ -1125,28 +1123,28 @@ def unpack_supplementary(container, granule, h5group, outdir):
     # incident angles
     grp = h5group[ppjoin(res_grp, GroupName.INCIDENT_GROUP.value)]
     dnames = [DatasetName.INCIDENT.value, DatasetName.AZIMUTHAL_INCIDENT.value]
-    paths = _write(dnames, grp, grn_id, SUPPS, cogtif=False, cogtif_args=_cogtif_args)
+    paths = _write(dnames, grp, grn_id, SUPPS, cogtif=False, cogtif_args=cogtif_args)
     for key in paths:
         rel_paths[key] = paths[key]
 
     # exiting angles
     grp = h5group[ppjoin(res_grp, GroupName.EXITING_GROUP.value)]
     dnames = [DatasetName.EXITING.value, DatasetName.AZIMUTHAL_EXITING.value]
-    paths = _write(dnames, grp, grn_id, SUPPS, cogtif=False, cogtif_args=_cogtif_args)
+    paths = _write(dnames, grp, grn_id, SUPPS, cogtif=False, cogtif_args=cogtif_args)
     for key in paths:
         rel_paths[key] = paths[key]
 
     # relative slope
     grp = h5group[ppjoin(res_grp, GroupName.REL_SLP_GROUP.value)]
     dnames = [DatasetName.RELATIVE_SLOPE.value]
-    paths = _write(dnames, grp, grn_id, SUPPS, cogtif=False, cogtif_args=_cogtif_args)
+    paths = _write(dnames, grp, grn_id, SUPPS, cogtif=False, cogtif_args=cogtif_args)
     for key in paths:
         rel_paths[key] = paths[key]
 
     # terrain shadow
     grp = h5group[ppjoin(res_grp, GroupName.SHADOW_GROUP.value)]
     dnames = [DatasetName.COMBINED_SHADOW.value]
-    paths = _write(dnames, grp, grn_id, QA, cogtif=True, cogtif_args=_cogtif_args)
+    paths = _write(dnames, grp, grn_id, QA, cogtif=True, cogtif_args=cogtif_args)
     for key in paths:
         rel_paths[key] = paths[key]
 
@@ -1155,22 +1153,14 @@ def unpack_supplementary(container, granule, h5group, outdir):
     return rel_paths, timedelta_data
 
 
-def create_contiguity(product_list, container, granule, outdir):
+def create_contiguity(product_list, level1: DatasetDoc, granule, outdir, cogtif_args):
     """
     Create the contiguity (all pixels valid) dataset.
     """
-    # quick decision to use the mode resolution to form contiguity
-    # this rule is expected to change once more people get involved
-    # in the decision making process
-    acqs, _ = container.get_mode_resolution(granule)
-    tileysize, tilexsize = acqs[0].tile_size
-    _cogtif_args = get_cogtif_options(
-        acqs[0].data(), blockxsize=tilexsize, blockysize=tileysize
-    )
-    _res = acqs[0].resolution
-    del acqs
+    # TODO: Actual res?
+    res = level1.properties["eo:gsd"]
 
-    grn_id = re.sub(PATTERN2, ARD, granule)
+    grn_id = _l1_to_ard(granule)
 
     nbar_contiguity = None
     # relative paths of each dataset for ODC metadata doc
@@ -1206,8 +1196,8 @@ def create_contiguity(product_list, container, granule, outdir):
                 "-resolution",
                 "user",
                 "-tr",
-                str(_res[1]),
-                str(_res[0]),
+                str(res),
+                str(res),
                 "-separate",
                 tmp_fname,
             ]
@@ -1217,7 +1207,7 @@ def create_contiguity(product_list, container, granule, outdir):
             # contiguity mask for nbar product
             contiguity_data, geobox = contiguity(tmp_fname)
             write_tif_from_dataset(
-                contiguity_data, out_fname, geobox=geobox, **_cogtif_args
+                contiguity_data, out_fname, geobox=geobox, **cogtif_args
             )
 
             if base_fname.endswith("NBAR_CONTIGUITY.TIF"):
@@ -1228,126 +1218,6 @@ def create_contiguity(product_list, container, granule, outdir):
                 rel_paths[alias] = get_img_dataset_info(ds, rel_path)
 
     return rel_paths, nbar_contiguity
-
-
-def create_quicklook(
-    product_list, uri: str, tile_size_yx: Tuple[float, float], platform_id: str, outdir
-):
-    """
-    Create the quicklook and thumbnail images.
-    """
-    tileysize, tilexsize = tile_size_yx
-
-    with rasterio.open(uri) as ds:
-        gdal_settings = get_cogtif_options(
-            ds.read(1), overviews=True, blockxsize=tilexsize, blockysize=tileysize
-        )
-
-    # are quicklooks still needed?
-    # this wildcard mechanism needs to change if quicklooks are to
-    # persist
-    band_wcards = {
-        "LANDSAT_5": ["L*_B{}.TIF".format(i) for i in [3, 2, 1]],
-        "LANDSAT_7": ["L*_B{}.TIF".format(i) for i in [3, 2, 1]],
-        "LANDSAT_8": ["L*_B{}.TIF".format(i) for i in [4, 3, 2]],
-        "SENTINEL_2A": ["*_B0{}.TIF".format(i) for i in [4, 3, 2]],
-        "SENTINEL_2B": ["*_B0{}.TIF".format(i) for i in [4, 3, 2]],
-    }
-
-    # appropriate wildcards
-    wcards = band_wcards[platform_id]
-
-    def _process_quicklook(product, fnames, out_path, tmpdir):
-        """
-        Wrapper function to encapsulate gdal commands used to
-        generate a quicklook for each product
-        """
-        # output filenames
-        match = FILENAME_TIF_BAND.match(fnames[0]).groupdict()
-        out_fname1 = "{}{}{}".format(
-            match.get("prefix"), "QUICKLOOK", match.get("extension")
-        )
-        out_fname2 = "{}{}{}".format(match.get("prefix"), "THUMBNAIL", ".JPG")
-
-        # initial vrt of required rgb bands
-        tmp_fname1 = pjoin(tmpdir, "{}.vrt".format(product))
-        cmd = ["gdalbuildvrt", "-separate", "-overwrite", tmp_fname1]
-        cmd.extend(fnames)
-        run_command(cmd, tmpdir)
-
-        # quicklook with contrast scaling
-        tmp_fname2 = pjoin(tmpdir, "{}_{}.tif".format(product, "qlook"))
-        quicklook(tmp_fname1, out_fname=tmp_fname2, src_min=1, src_max=3500, out_min=1)
-
-        # warp to Lon/Lat WGS84
-        tmp_fname3 = pjoin(tmpdir, "{}_{}.tif".format(product, "warp"))
-        cmd = [
-            "gdalwarp",
-            "-t_srs",
-            '"EPSG:4326"',
-            "-co",
-            "COMPRESS=JPEG",
-            "-co",
-            "PHOTOMETRIC=YCBCR",
-            "-co",
-            "TILED=YES",
-            tmp_fname2,
-            tmp_fname3,
-        ]
-        run_command(cmd, tmpdir)
-
-        # build overviews/pyramids
-        cmd = ["gdaladdo", "-r", "average", tmp_fname3]
-        # Add levels
-        cmd.extend([str(l) for l in LEVELS])
-        run_command(cmd, tmpdir)
-
-        # create the cogtif
-        cmd = ["gdal_translate"]
-        options_whitelist = ["blockxsize", "blockysize", "tiled", "copy_src_overviews"]
-        for key, value in gdal_settings["options"].items():
-            if key in options_whitelist:
-                cmd.extend(["-co", "{}={}".format(key, value)])
-
-        config_options_whitelist = ["GDAL_TIFF_OVR_BLOCKSIZE"]
-        for key, value in gdal_settings["config_options"].items():
-            if key in config_options_whitelist:
-                cmd.extend(["--config", str(key), str(value)])
-
-        cmd.extend(["-co", "COMPRESS=JPEG", "-co", "PHOTOMETRIC=YCBCR"])
-        cmd.extend([tmp_fname3, out_fname1])
-
-        run_command(cmd, tmpdir)
-
-        # create the thumbnail
-        cmd = [
-            "gdal_translate",
-            "-of",
-            "JPEG",
-            "-outsize",
-            "10%",
-            "10%",
-            out_fname1,
-            out_fname2,
-        ]
-
-        run_command(cmd, tmpdir)
-
-    with tempfile.TemporaryDirectory(dir=outdir, prefix="quicklook-") as tmpdir:
-        for product in product_list:
-            if product == "SBT":
-                # no sbt quicklook for the time being
-                continue
-
-            out_path = Path(pjoin(outdir, product))
-            fnames = []
-            for wcard in wcards:
-                fnames.extend([str(f) for f in out_path.glob(wcard)])
-
-            # quick work around for products that aren't being packaged
-            if not fnames:
-                continue
-            _process_quicklook(product, fnames, out_path, tmpdir)
 
 
 def create_checksum(outdir):
@@ -1401,11 +1271,16 @@ def package(
     level1 = serialise.from_path(l1_path)
 
     with h5py.File(antecedents["wagl"], "r") as fid:
-        grn_id = re.sub(PATTERN2, ARD, granule)
+        grn_id = _l1_to_ard(granule)
         out_path = pjoin(outdir, grn_id)
 
         if not exists(out_path):
             os.makedirs(out_path)
+
+        # TODO: pan band?
+        cogtif_args = get_cogtif_options(
+            level1.grids[level1.measurements["blue"].grid].shape
+        )
 
         for i in fid.items():
             print(repr(i))
@@ -1415,27 +1290,27 @@ def package(
         )
 
         # unpack supplementary datasets produced by wagl
-        # supp_paths, timedelta_data = unpack_supplementary(
-        #     container, granule, fid[granule], out_path
-        # )
+        supp_paths, timedelta_data = unpack_supplementary(
+            granule, fid[granule], out_path, cogtif_args
+        )
 
         # add in supplementary paths
-        # for key in supp_paths:
-        #     img_paths[key] = supp_paths[key]
+        for key in supp_paths:
+            img_paths[key] = supp_paths[key]
 
         # file based globbing, so can't have any other tifs on disk
-        # qa_paths, contiguity_ones_mask = create_contiguity(
-        #     products, container, granule, out_path
-        # )
+        qa_paths, contiguity_ones_mask = create_contiguity(
+            products, level1, granule, out_path, cogtif_args
+        )
 
         # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
         # footprint for Landsat sensor. For Sentinel sensor, it inherits from level 1 yaml file
-        # if platform == "LANDSAT":
-        #     valid_timedelta_data = numpy.ma.masked_where(
-        #         contiguity_ones_mask == 0, timedelta_data
-        #     )
-        #     wagl_tags["timedelta_min"] = numpy.ma.min(valid_timedelta_data)
-        #     wagl_tags["timedelta_max"] = numpy.ma.max(valid_timedelta_data)
+        if level1.properties["eo:platform"].startswith("landsat"):
+            valid_timedelta_data = numpy.ma.masked_where(
+                contiguity_ones_mask == 0, timedelta_data
+            )
+            wagl_tags["timedelta_min"] = numpy.ma.min(valid_timedelta_data)
+            wagl_tags["timedelta_max"] = numpy.ma.max(valid_timedelta_data)
 
         # add in qa paths
         # for key in qa_paths:
@@ -1447,17 +1322,9 @@ def package(
             fmask_cogtif_out = pjoin(out_path, rel_path)
 
             # Get cogtif args with overviews
-            acq: Acquisition = None
-            tileysize, tilexsize = acq.tile_size
-            fmask_cogtif_args = get_cogtif_options(
-                acq.data(), blockxsize=tilexsize, blockysize=tileysize
-            )
 
-            # Set the predictor level
-            fmask_cogtif_args["options"]["predictor"] = 2
-            write_tif_from_file(
-                antecedents["fmask"], fmask_cogtif_out, **fmask_cogtif_args
-            )
+            cogtif_args["options"]["predictor"] = 2
+            write_tif_from_file(antecedents["fmask"], fmask_cogtif_out, **cogtif_args)
 
             antecedent_metadata["fmask"] = {"fmask_version": "TODO"}
 
