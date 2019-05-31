@@ -91,6 +91,17 @@ class GeoBox:
         """The y-axis size."""
         return self.shape[0]
 
+    def get_img_dataset_info(self, path: Path, layer=1):
+        return {
+            "path": path,
+            "layer": layer,
+            "info": {
+                "width": self.x_size,
+                "height": self.y_size,
+                "geotransform": list(self.transform.to_gdal()),
+            },
+        }
+
 
 class DatasetName(Enum):
     """
@@ -331,7 +342,7 @@ def merge_metadata(
         "system_information": wagl_tags["system_information"],
         "id": str(uuid.uuid4()),
         "processing_level": "Level-2",
-        "product_type": 'ard',
+        "product_type": "ard",
         "platform": {"code": platform},
         "instrument": {"name": instrument},
         "format": {"name": "GeoTIFF"},
@@ -490,12 +501,6 @@ yaml.add_representer(numpy.float32, Representer.represent_float)
 yaml.add_representer(numpy.float64, Representer.represent_float)
 yaml.add_representer(numpy.ndarray, Representer.represent_list)
 
-ALIAS_FMT = {
-    "LAMBERTIAN": "lambertian_{}",
-    "NBAR": "nbar_{}",
-    "NBART": "nbart_{}",
-    "SBT": "sbt_{}",
-}
 LEVELS = [8, 16, 32]
 FILENAME_TIF_BAND = re.compile(
     r"(?P<prefix>(?:.*_)?)(?P<band_name>B[0-9][A0-9]|B[0-9]*|B[0-9a-zA-z]*)"
@@ -513,17 +518,6 @@ def _l1_to_ard(granule):
 
 def run_command(command: Sequence[Union[str, Path]], work_dir: Path):
     check_call([str(s) for s in command], cwd=str(work_dir))
-
-
-def _clean(alias):
-    """
-    A quick fix for cleaning json unfriendly alias strings.
-    """
-    replace = {"-": "_", "[": "", "]": ""}
-    for k, v in replace.items():
-        alias = alias.replace(k, v)
-
-    return alias.lower()
 
 
 def get_cogtif_options(
@@ -600,26 +594,17 @@ def generate_tiles(samples, lines, xtile=None, ytile=None):
         Each tuple in the generator contains
         ((ystart,yend),(xstart,xend)).
 
-    Example:
-
-        >>> from wagl.tiling import generate_tiles
-        >>> tiles = generate_tiles(8624, 7567, xtile=1000, ytile=400)
-        >>> for tile in tiles:
-        >>>     ystart = int(tile[0][0])
-        >>>     yend = int(tile[0][1])
-        >>>     xstart = int(tile[1][0])
-        >>>     xend = int(tile[1][1])
-        >>>     xsize = int(xend - xstart)
-        >>>     ysize = int(yend - ystart)
-        >>>     # When used to read data from disk
-        >>>     subset = gdal_indataset.ReadAsArray(xstart, ystart, xsize, ysize)
-        >>>     # The same method can be used to write to disk.
-        >>>     gdal_outdataset.WriteArray(array, xstart, ystart)
-        >>>     # A rasterio dataset
-        >>>     subset = rio_ds.read([4, 3, 2], window=tile)
-        >>>     # Or simply move the tile window across an array
-        >>>     subset = array[ystart:yend,xstart:xend] # 2D
-        >>>     subset = array[:,ystart:yend,xstart:xend] # 3D
+    >>> import pprint
+    >>> tiles = generate_tiles(1624, 1567, xtile=1000, ytile=400)
+    >>> pprint.pprint(list(tiles))
+    [((0, 400), (0, 1000)),
+     ((0, 400), (1000, 1624)),
+     ((400, 800), (0, 1000)),
+     ((400, 800), (1000, 1624)),
+     ((800, 1200), (0, 1000)),
+     ((800, 1200), (1000, 1624)),
+     ((1200, 1567), (0, 1000)),
+     ((1200, 1567), (1000, 1624))]
     """
 
     def create_tiles(samples, lines, xstart, ystart):
@@ -859,13 +844,7 @@ def write_img(
 
 
 def write_tif_from_dataset(
-    dataset: h5py.Dataset,
-    out_fname,
-    options,
-    config_options,
-    overviews=True,
-    nodata=None,
-    geobox=None,
+    dataset: h5py.Dataset, out_fname, options, config_options, nodata=None, geobox=None
 ):
     """
     Method to write a h5 dataset or numpy array to a tif file
@@ -881,10 +860,6 @@ def write_tif_from_dataset(
 
     :param config_options:
         dictionary of configurations provided to gdal
-
-    :param overviews:
-        boolean flag to create overviews
-        default (True)
 
     returns the out_fname param
     """
@@ -987,30 +962,17 @@ def _versions(gverify_executable):
     return base_info
 
 
-def get_img_dataset_info(geobox: GeoBox, path: Path, layer=1):
-    """
-    Returns metadata for raster datasets
-    """
-    return {
-        "path": path,
-        "layer": layer,
-        "info": {
-            "width": geobox.x_size,
-            "height": geobox.y_size,
-            "geotransform": list(geobox.transform.to_gdal()),
-        },
-    }
-
-
-def unpack_products(product_list, level1: DatasetDoc, h5group, outdir):
+def unpack_products(product_list, level1: DatasetDoc, h5group:h5py.Group, outdir:Path) -> Tuple[Dict, Dict]:
     """
     Unpack and package the NBAR and NBART products.
     """
     # listing of all datasets of IMAGE CLASS type
     img_paths = find(h5group, "IMAGE")
+    for p in img_paths:
+        print(p)
 
     # relative paths of each dataset for ODC metadata doc
-    rel_paths = {}
+    measurements = {}
 
     # TODO pass products through from the scheduler rather than hard code
     for product in product_list:
@@ -1019,7 +981,7 @@ def unpack_products(product_list, level1: DatasetDoc, h5group, outdir):
             secho(f"\n\nPath {pathname}", fg="blue")
             dataset = h5group[pathname]
 
-            band_name = dataset.attrs["alias"].lower().replace("-", "")
+            band_name = _clean_alias(dataset)
             base_fname = basename(level1.measurements[band_name].path)
 
             match_dict = FILENAME_TIF_BAND.match(base_fname).groupdict()
@@ -1030,29 +992,31 @@ def unpack_products(product_list, level1: DatasetDoc, h5group, outdir):
                 match_dict.get("extension"),
             )
             rel_path = pjoin(product, _l1_to_ard(fname))
-            out_fname = pjoin(outdir, rel_path)
+            out_fname = outdir/ rel_path
 
             _cogtif_args = get_cogtif_options(dataset.shape, overviews=True)
             write_tif_from_dataset(dataset, out_fname, **_cogtif_args)
 
             # alias name for ODC metadata doc
-            alias = _clean(ALIAS_FMT[product].format(dataset.attrs["alias"]))
+            alias = f'{product.lower()}_{band_name}'
 
             # Band Metadata
-            rel_paths[alias] = get_img_dataset_info(GeoBox.from_h5(dataset), rel_path)
+            measurements[alias] = GeoBox.from_h5(dataset).get_img_dataset_info(rel_path)
 
     # retrieve metadata
     scalar_paths = find(h5group, "SCALAR")
     pathnames = [pth for pth in scalar_paths if "NBAR-METADATA" in pth]
 
-    def tags():
-        result = yaml.load(h5group[pathnames[0]][()])
-        for path in pathnames[1:]:
-            other = yaml.load(h5group[path][()])
-            result["ancillary"].update(other["ancillary"])
-        return result
+    tags = yaml.load(h5group[pathnames[0]][()])
+    for path in pathnames[1:]:
+        other = yaml.load(h5group[path][()])
+        tags["ancillary"].update(other["ancillary"])
 
-    return tags(), rel_paths
+    return tags, measurements
+
+
+def _clean_alias(dataset):
+    return dataset.attrs["alias"].lower().replace("-", "")
 
 
 def unpack_supplementary(granule, h5group: h5py.Group, outdir, cogtif_args):
@@ -1074,8 +1038,8 @@ def unpack_supplementary(granule, h5group: h5py.Group, outdir, cogtif_args):
             rel_path = pjoin(basedir, fmt.format(granule_id, dname.replace("-", "_")))
             out_fname = pjoin(outdir, rel_path)
             dset = h5_group[dname]
-            alias = _clean(dset.attrs["alias"])
-            paths[alias] = get_img_dataset_info(GeoBox.from_h5(dset), rel_path)
+            alias = _clean_alias(dset)
+            paths[alias] = GeoBox.from_h5(dset).get_img_dataset_info(rel_path)
             write_tif_from_dataset(dset, out_fname, **cogtif_args)
 
         return paths
@@ -1174,7 +1138,7 @@ def create_contiguity(product_list, level1: DatasetDoc, granule, outdir, cogtif_
             if not exists(dirname(out_fname)):
                 os.makedirs(dirname(out_fname))
 
-            alias = ALIAS_FMT[product].format("contiguity")
+            alias = f'{product.lower()}_contiguity'
 
             # temp vrt
             tmp_fname = pjoin(tmpdir, "{}.vrt".format(product))
@@ -1202,20 +1166,9 @@ def create_contiguity(product_list, level1: DatasetDoc, granule, outdir, cogtif_
             del contiguity_data
 
             with rasterio.open(out_fname) as ds:
-                rel_paths[alias] = get_img_dataset_info(GeoBox.from_rio(ds), rel_path)
+                rel_paths[alias] = GeoBox.from_rio(ds).get_img_dataset_info(rel_path)
 
     return rel_paths, nbar_contiguity
-
-
-def create_checksum(outdir:Path):
-    """
-    Create the checksum file.
-    """
-    out_fname = outdir/"checksum.sha1"
-    c = PackageChecksum()
-    c.add_file(outdir)
-    c.write(out_fname)
-    return out_fname
 
 
 def package(
@@ -1269,11 +1222,9 @@ def package(
             level1.grids[level1.measurements["blue"].grid].shape
         )
 
-        for i in fid.items():
-            print(repr(i))
         # unpack the standardised products produced by wagl
         wagl_tags, img_paths = unpack_products(
-            products, level1, h5group=fid[granule], outdir=out_path
+            products, level1, h5group=fid[granule], outdir=Path(out_path)
         )
 
         # unpack supplementary datasets produced by wagl
@@ -1316,7 +1267,7 @@ def package(
             antecedent_metadata["fmask"] = {"fmask_version": "TODO"}
 
             with rasterio.open(fmask_cogtif_out) as ds:
-                img_paths["fmask"] = get_img_dataset_info(GeoBox.from_rio(ds), rel_path)
+                img_paths["fmask"] = GeoBox.from_rio(ds).get_img_dataset_info(rel_path)
 
         # create_quicklook(products, container, out_path)
         # create_readme(out_path)
@@ -1337,8 +1288,9 @@ def package(
         with open(pjoin(out_path, "ARD-METADATA.yaml"), "w") as src:
             yaml.dump(tags, src, default_flow_style=False, indent=4)
 
-        # finally the checksum
-        create_checksum(Path(out_path))
+        c = PackageChecksum()
+        c.add_file(Path(out_path))
+        c.write(Path(out_path) / "checksum.sha1")
 
 
 def run():
