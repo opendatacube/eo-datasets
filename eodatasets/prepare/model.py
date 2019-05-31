@@ -1,5 +1,6 @@
 import itertools
 from collections import defaultdict
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Tuple, Dict, Optional, Iterable, List, Any
@@ -81,11 +82,8 @@ class DatasetDoc:
         self.properties["odc:producer"] = domain
 
     @property
-    def datetime(self):
-        dt = self.properties.get("datetime")
-        if not dt:
-            return None
-        return ciso8601.parse_datetime(dt)
+    def datetime(self) -> datetime:
+        return self.properties.get("datetime")
 
 
 def resolve_absolute_offset(
