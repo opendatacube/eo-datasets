@@ -8,7 +8,6 @@ from uuid import UUID
 
 import affine
 import attr
-import ciso8601
 import numpy
 import rasterio
 import rasterio.features
