@@ -3,11 +3,12 @@ from collections import defaultdict
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Tuple, Dict, Optional, Iterable, List, Any
+from typing import Tuple, Dict, Optional, Iterable, List, Any, Union
 from uuid import UUID
 
 import affine
 import attr
+import h5py
 import numpy
 import rasterio
 import rasterio.features
@@ -15,6 +16,7 @@ import shapely
 import shapely.affinity
 import shapely.ops
 from rasterio import DatasetReader
+from rasterio.crs import CRS
 from ruamel.yaml.comments import CommentedMap
 from shapely.geometry.base import BaseGeometry
 
@@ -33,8 +35,14 @@ class ProductDoc:
     name: str = None
     href: str = None
 
+    @classmethod
+    def dea_name(cls, name:str):
+        return ProductDoc(
+            name=name, href=f"{DEA_URI_PREFIX}/product/{name}"
+        )
 
-@attr.s(auto_attribs=True, slots=True, hash=True, frozen=True)
+
+@attr.s(auto_attribs=True, slots=True, hash=True)
 class GridDoc:
     shape: Tuple[int, int]
     transform: Tuple[float, float, float, float, float, float, float, float, float]
@@ -59,7 +67,6 @@ class DatasetDoc:
     crs: str = None
     geometry: BaseGeometry = None
     grids: Dict[str, GridDoc] = None
-    # bbox: Tuple = None
 
     properties: Dict[str, Any] = attr.ib(factory=CommentedMap)
 
@@ -128,6 +135,12 @@ def resolve_absolute_offset(
         return "tar:{}!{}".format(dataset_path, offset)
     else:
         return str(dataset_path / offset)
+
+
+class Intern(dict):
+    def __missing__(self, key):
+        self[key] = key
+        return key
 
 
 def valid_region(

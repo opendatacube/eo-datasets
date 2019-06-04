@@ -403,9 +403,7 @@ def _prepare(
     crs = f"epsg:{epsg_code}"
     d = DatasetDoc(
         id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
-        product=ProductDoc(
-            name=product_name, href=f"{DEA_URI_PREFIX}/product/{product_name}"
-        ),
+        product=ProductDoc.dea_name(product_name),
         # bbox=bbox(geometry, crs),
         crs=crs,
         geometry=geometry,

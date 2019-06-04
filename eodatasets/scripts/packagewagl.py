@@ -4,8 +4,6 @@ import os
 import re
 import subprocess
 import tempfile
-import uuid
-from copy import deepcopy
 from functools import partial
 from os.path import basename
 from pathlib import Path
@@ -13,88 +11,39 @@ from posixpath import join as ppjoin
 from subprocess import check_call
 from typing import Dict, Any, Tuple, Sequence, Union, List, Generator
 
-import attr
 import h5py
 import numpy
 import numpy as np
 import rasterio
 import yaml
-from affine import Affine
 from click import secho
 from rasterio.enums import Resampling
 from yaml.representer import Representer
 
+import eodatasets
+from eodatasets.prepare.assemble import DatasetAssembler, GridSpec
 from eodatasets.prepare import serialise
-from eodatasets.prepare.model import DatasetDoc
-from eodatasets.verify import PackageChecksum
+from eodatasets.prepare.model import DatasetDoc, GridDoc
 
 EUGL_VERSION = "DO_SOMETHING_HERE"
 
 FMASK_VERSION = "DO_SOMETHING_HERE2"
 FMASK_REPO_URL = "https://bitbucket.org/chchrsc/python-fmask"
 
-TESP_VERSION = "DO_SOMETHING_HERE"
-TESP_REPO_URL = "https://github.com/OpenDataCubePipelines/tesp"
+TESP_VERSION = eodatasets.__version__
+TESP_REPO_URL = "https://github.com/GeoscienceAustralia/eo-datasets"
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
-
-@attr.s(auto_attribs=True, frozen=True)
-class GeoBox:
-    shape: Tuple = None
-    origin: Tuple[float, float] = None
-    pixelsize: Tuple[int, int] = None
-    crs_wkt: str = None
-
-    @classmethod
-    def from_dataset(cls, dataset):
-        raise NotImplementedError(f"We want {type(dataset)}")
-
-    @classmethod
-    def from_rio(cls, dataset):
-        return cls(
-            shape=dataset.shape,
-            origin=(dataset.transform[2], dataset.transform[5]),
-            pixelsize=(dataset.res),
-            crs_wkt=dataset.crs.wkt,
-        )
-
-    @classmethod
-    def from_h5(cls, dataset):
-        transform = tuple(dataset.attrs["geotransform"])
-        return cls(
-            shape=dataset.shape,
-            origin=(transform[0], transform[3]),
-            crs_wkt=dataset.attrs["crs_wkt"],
-            pixelsize=(abs(transform[1]), abs(transform[5])),
-        )
-
-    @property
-    def transform(self):
-        return Affine(
-            self.pixelsize[0], 0, self.origin[0], 0, -self.pixelsize[1], self.origin[1]
-        )
-
-    @property
-    def x_size(self):
-        """The x-axis size."""
-        return self.shape[1]
-
-    @property
-    def y_size(self):
-        """The y-axis size."""
-        return self.shape[0]
-
-    def get_img_dataset_info(self, path: Path, layer=1):
-        return {
-            "path": path.absolute(),
-            "layer": layer,
-            "info": {
-                "width": self.x_size,
-                "height": self.y_size,
-                "geotransform": list(self.transform.to_gdal()),
-            },
-        }
+LEVELS = [8, 16, 32]
+FILENAME_TIF_BAND = re.compile(
+    r"(?P<prefix>(?:.*_)?)(?P<band_name>B[0-9][A0-9]|B[0-9]*|B[0-9a-zA-z]*)"
+    r"(?P<extension>\....)"
+)
+PRODUCT_SUITE_FROM_GRANULE = re.compile("(L1[GTPCS]{1,2})")
+ARD = "ARD"
+QA = "QA"
+SUPPS = "SUPPLEMENTARY"
 
 
 def find(h5_obj: h5py.Group, dataset_class="") -> List[str]:
@@ -130,6 +79,7 @@ def find(h5_obj: h5py.Group, dataset_class="") -> List[str]:
         """
         if obj.attrs.get("CLASS") == dataset_class:
             items.append(name)
+            print(repr(type(obj)))
 
     items = []
     h5_obj.visititems(partial(_find, items, dataset_class))
@@ -137,7 +87,7 @@ def find(h5_obj: h5py.Group, dataset_class="") -> List[str]:
     return items
 
 
-def provider_reference_info(granule: str, wagl_tags: Dict) -> Dict:
+def provider_reference_info(p: DatasetAssembler, granule: str):
     """
     Extracts provider reference metadata
     Supported platforms are:
@@ -149,125 +99,16 @@ def provider_reference_info(granule: str, wagl_tags: Dict) -> Dict:
     :return:
         Dictionary; contains satellite reference if identified
     """
-    provider_info = {}
     matches = None
-    if "LANDSAT" in wagl_tags["source_datasets"]["platform_id"]:
+    if p.platform.startwith("landsat"):
         matches = re.match(r"L\w\d(?P<reference_code>\d{6}).*", granule)
-    elif "SENTINEL_2" in wagl_tags["source_datasets"]["platform_id"]:
+    elif p.platform.startwith("sentinel-2"):
         matches = re.match(r".*_T(?P<reference_code>\d{1,2}[A-Z]{3})_.*", granule)
 
     if matches:
-        provider_info.update(**matches.groupdict())
-    return provider_info
-
-
-def merge_metadata(
-    level1_tags: DatasetDoc,
-    wagl_tags: Dict,
-    granule: str,
-    measurements: Dict,
-    **antecedent_tags,
-) -> Dict:
-    """
-    Combine the metadata from input sources and output
-    into a single ARD metadata yaml.
-    """
-
-    platform: str = level1_tags.properties["eo:platform"]
-    instrument: str = level1_tags.properties["eo:instrument"]
-
-    # TODO: resolve common software version for fmask and gqa
-    software_versions = wagl_tags["software_versions"]
-
-    software_versions["eodatasets"] = {
-        "repo_url": TESP_REPO_URL,
-        "version": TESP_VERSION,
-    }
-
-    # for Landsat, from_dt and to_dt in ARD-METADATA is populated from max and min timedelta values
-    if platform.startswith("landsat"):
-
-        # pylint: disable=too-many-function-args
-        def interpret_landsat_temporal_extent():
-            """
-            Landsat imagery only provides a center datetime; a time range can be derived
-            from the timedelta dataset
-            """
-
-            center_dt = np.datetime64(level1_tags.datetime)
-            from_dt = center_dt + np.timedelta64(
-                int(float(wagl_tags.pop("timedelta_min")) * 1000000), "us"
-            )
-            to_dt = center_dt + np.timedelta64(
-                int(float(wagl_tags.pop("timedelta_max")) * 1000000), "us"
-            )
-
-            level2_extent = {
-                "center_dt": "{}Z".format(center_dt),
-                "geometry": level1_tags.geometry.__geo_interface__,
-                "from_dt": "{}Z".format(from_dt),
-                "to_dt": "{}Z".format(to_dt),
-            }
-
-            return level2_extent
-
-        level2_extent = interpret_landsat_temporal_extent()
-    else:
-        level2_extent = level1_tags.geometry.__geo_interface__
-        level2_extent["center_dt"] = level1_tags.datetime
-
-    # TODO: extend yaml document to include fmask and gqa yamls
-    merged_yaml = {
-        "algorithm_information": wagl_tags["algorithm_information"],
-        "system_information": wagl_tags["system_information"],
-        "id": str(uuid.uuid4()),
-        "processing_level": "Level-2",
-        "product_type": "ard",
-        "platform": {"code": platform},
-        "instrument": {"name": instrument},
-        "format": {"name": "GeoTIFF"},
-        "tile_id": granule,
-        "extent": level2_extent,
-        "grid_spatial": level1_tags.geometry.__geo_interface__,
-        "image": {"bands": measurements},
-        "lineage": {
-            "ancillary": wagl_tags["ancillary"],
-            "source_datasets": {"level1": [level1_tags.id]},
-        },
-    }
-
-    # Configured to handle gqa and fmask antecedent tasks
-    for task_name, task_md in antecedent_tags.items():
-        if "software_versions" in task_md:
-            for key, value in task_md.pop("software_versions").items():
-                software_versions[key] = value  # This fails on key conflicts
-
-        # Check for valid metadata after merging the software versions
-        if task_md:
-            merged_yaml[task_name] = task_md
-
-    provider_info = provider_reference_info(granule, wagl_tags)
-    if provider_info:
-        merged_yaml["provider"] = provider_info
-
-    merged_yaml["software_versions"] = software_versions
-
-    return merged_yaml
-
-
-def contiguity(fname: Path) -> Tuple[numpy.ndarray, GeoBox]:
-    """
-    Write a contiguity mask file based on the intersection of valid data pixels across all
-    bands from the input file and returns with the geobox of the source dataset
-    """
-    with rasterio.open(fname) as ds:
-        geobox = GeoBox.from_rio(ds)
-        yblock, xblock = ds.block_shapes[0]
-        ones = np.ones((ds.height, ds.width), dtype="uint8")
-        for band in ds.indexes:
-            ones &= ds.read(band) > 0
-
-    return ones, geobox
+        [reference_code] = matches.groups()
+        # TODO name properly
+        p["odc:reference_code"] = reference_code
 
 
 def _gls_version(ref_fname: str) -> str:
@@ -293,16 +134,6 @@ yaml.add_representer(numpy.float, Representer.represent_float)
 yaml.add_representer(numpy.float32, Representer.represent_float)
 yaml.add_representer(numpy.float64, Representer.represent_float)
 yaml.add_representer(numpy.ndarray, Representer.represent_list)
-
-LEVELS = [8, 16, 32]
-FILENAME_TIF_BAND = re.compile(
-    r"(?P<prefix>(?:.*_)?)(?P<band_name>B[0-9][A0-9]|B[0-9]*|B[0-9a-zA-z]*)"
-    r"(?P<extension>\....)"
-)
-PRODUCT_SUITE_FROM_GRANULE = re.compile("(L1[GTPCS]{1,2})")
-ARD = "ARD"
-QA = "QA"
-SUPPS = "SUPPLEMENTARY"
 
 
 def _l1_to_ard(granule: str) -> str:
@@ -439,7 +270,7 @@ def write_img(
     array: numpy.ndarray,
     filename: Path,
     driver="GTiff",
-    geobox: GeoBox = None,
+    geobox: GridDoc = None,
     nodata: int = None,
     tags: Dict = None,
     options: Dict = None,
@@ -525,7 +356,7 @@ def write_img(
     # If we have a geobox, then retrieve the geotransform and projection
     if geobox is not None:
         transform = geobox.transform
-        projection = geobox.crs_wkt
+        projection = None
     else:
         transform = None
         projection = None
@@ -647,8 +478,8 @@ def write_tif_from_dataset(
     options: Dict,
     config_options: Dict,
     nodata: int = None,
-    geobox: GeoBox = None,
-) -> Path:
+    geobox: GridDoc = None,
+):
     """
     Method to write a h5 dataset or numpy array to a tif file
     :param dataset:
@@ -671,7 +502,7 @@ def write_tif_from_dataset(
     if nodata is None and hasattr(dataset, "attrs"):
         nodata = dataset.attrs.get("no_data_value")
     if geobox is None:
-        geobox = GeoBox.from_h5(dataset)
+        geobox = GridSpec.from_h5(dataset)
 
     out_fname.parent.mkdir(exist_ok=True)
 
@@ -686,7 +517,7 @@ def write_tif_from_dataset(
         config_options=config_options,
     )
 
-    return out_fname
+    # return MeasurementDoc(path=out_fname, grid=geobox)
 
 
 def write_tif_from_file(
@@ -718,14 +549,14 @@ def write_tif_from_file(
     """
 
     with tempfile.TemporaryDirectory(dir=out_fname.parent, prefix="cogtif-") as tmpdir:
-        command = ["gdaladdo", "-clean", input_image]
-        run_command(command, tmpdir)
+        run_command(["gdaladdo", "-clean", input_image], tmpdir)
         if overviews:
-            command = ["gdaladdo", "-r", "mode", input_image]
-            command.extend([str(l) for l in LEVELS])
-            run_command(command, tmpdir)
-        command = ["gdal_translate", "-of", "GTiff"]
+            run_command(
+                ["gdaladdo", "-r", "mode", input_image, *[str(l) for l in LEVELS]],
+                tmpdir,
+            )
 
+        command = ["gdal_translate", "-of", "GTiff"]
         for key, value in options.items():
             command.extend(["-co", "{}={}".format(key, value)])
 
@@ -734,41 +565,23 @@ def write_tif_from_file(
                 command.extend(["--config", "{}".format(key), "{}".format(value)])
 
         command.extend([input_image, out_fname])
-
         run_command(command, input_image.parent)
 
     return out_fname
 
 
-def _versions(gverify_executable: str):
-    gverify_version = gverify_executable.split("_")[-1]
-    base_info = {
-        "software_versions": {
-            "eugl": {
-                "version": EUGL_VERSION,
-                "repo_url": "git@github.com:OpenDataCubePipelines/eugl.git",
-            }
-        }
-    }
-    base_info["software_versions"]["fmask"] = {
-        "version": FMASK_VERSION,
-        "repo_url": FMASK_REPO_URL,
-    }
-    base_info["software_versions"]["gverify"] = {"version": gverify_version}
-    return base_info
-
-
 def unpack_products(
-    product_list: Sequence[str], level1: DatasetDoc, h5group: h5py.Group, outdir: Path
-) -> Tuple[Dict, Dict]:
+    p: DatasetAssembler,
+    product_list: Sequence[str],
+    level1: DatasetDoc,
+    h5group: h5py.Group,
+    outdir: Path,
+) -> None:
     """
     Unpack and package the NBAR and NBART products.
     """
     # listing of all datasets of IMAGE CLASS type
     img_paths = find(h5group, "IMAGE")
-
-    # relative paths of each dataset for ODC metadata doc
-    measurements = {}
 
     # TODO pass products through from the scheduler rather than hard code
     for product in product_list:
@@ -793,18 +606,8 @@ def unpack_products(
                     )
                 )
             )
+            p.write_measurement_h5(band_name, dataset)
 
-            write_tif_from_dataset(
-                dataset,
-                out_fname,
-                **(get_cogtif_options(dataset.shape, overviews=True)),
-            )
-            # Band Metadata
-            measurements[f"{product.lower()}_{band_name}"] = GeoBox.from_h5(
-                dataset
-            ).get_img_dataset_info(out_fname)
-
-    # retrieve metadata
     pathnames = [pth for pth in (find(h5group, "SCALAR")) if "NBAR-METADATA" in pth]
 
     tags = yaml.load(h5group[pathnames[0]][()])
@@ -812,128 +615,90 @@ def unpack_products(
         other = yaml.load(h5group[path][()])
         tags["ancillary"].update(other["ancillary"])
 
-    return tags, measurements
+    p.extend_user_metadata("wagl", tags)
 
 
 def _clean_alias(dataset: h5py.Dataset):
     return dataset.attrs["alias"].lower().replace("-", "_")
 
 
-def unpack_supplementary(
-    granule: str, h5group: h5py.Group, outdir: Path, cogtif_args: Dict
-):
+def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
     """
     Unpack the angles + other supplementary datasets produced by wagl.
     Currently only the mode resolution group gets extracted.
     """
 
-    def _write(
-        dataset_names: Sequence[str],
-        h5_group: h5py.Group,
-        granule_id: str,
-        basedir: str,
-    ):
+    def _write(dataset_names: Sequence[str], h5_group: h5py.Group, basedir: str):
         """
         An internal util for serialising the supplementary
         H5Datasets to tif.
         """
-        paths = {}
         for dname in dataset_names:
-            out_fname = (
-                outdir
-                / basedir
-                / "{}_{}.TIF".format(granule_id, dname.replace("-", "_"))
-            )
-            dset = h5_group[dname]
-            write_tif_from_dataset(dset, out_fname, **cogtif_args)
-            paths[_clean_alias(dset)] = GeoBox.from_h5(dset).get_img_dataset_info(
-                out_fname
-            )
-
-        return paths
+            p.write_measurement_h5(f"{basedir}/{dname}", h5_group[dname])
 
     res_grps = [g for g in h5group.keys() if g.startswith("RES-GROUP-")]
     if len(res_grps) != 1:
         raise NotImplementedError(f"expected one res group, got {res_grps!r}")
     [res_grp] = res_grps
 
-    grn_id = _l1_to_ard(granule)
-
-    # relative paths of each dataset for ODC metadata doc
-    rel_paths = {}
+    grn_id = ""
 
     # satellite and solar angles
     grp = h5group[ppjoin(res_grp, "SATELLITE-SOLAR")]
-    rel_paths.update(
-        _write(
-            [
-                "SATELLITE-VIEW",
-                "SATELLITE-AZIMUTH",
-                "SOLAR-ZENITH",
-                "SOLAR-AZIMUTH",
-                "RELATIVE-AZIMUTH",
-                "TIMEDELTA",
-            ],
-            grp,
-            grn_id,
-            SUPPS,
-        )
+
+    _write(
+        [
+            "SATELLITE-VIEW",
+            "SATELLITE-AZIMUTH",
+            "SOLAR-ZENITH",
+            "SOLAR-AZIMUTH",
+            "RELATIVE-AZIMUTH",
+            "TIMEDELTA",
+        ],
+        grp,
+        SUPPS,
     )
 
     # timedelta data
     timedelta_data = grp["TIMEDELTA"]
 
     # incident angles
-    rel_paths.update(
-        _write(
-            ["INCIDENT", "AZIMUTHAL-INCIDENT"],
-            h5group[ppjoin(res_grp, "INCIDENT-ANGLES")],
-            grn_id,
-            SUPPS,
-        )
+
+    _write(
+        ["INCIDENT", "AZIMUTHAL-INCIDENT"],
+        h5group[ppjoin(res_grp, "INCIDENT-ANGLES")],
+        SUPPS,
     )
 
     # exiting angles
-    rel_paths.update(
-        _write(
-            ["EXITING", "AZIMUTHAL-EXITING"],
-            h5group[ppjoin(res_grp, "EXITING-ANGLES")],
-            grn_id,
-            SUPPS,
-        )
+
+    _write(
+        ["EXITING", "AZIMUTHAL-EXITING"],
+        h5group[ppjoin(res_grp, "EXITING-ANGLES")],
+        SUPPS,
     )
 
     # relative slope
-    rel_paths.update(
-        _write(
-            ["RELATIVE-SLOPE"],
-            h5group[ppjoin(res_grp, "RELATIVE-SLOPE")],
-            grn_id,
-            SUPPS,
-        )
-    )
+
+    _write(["RELATIVE-SLOPE"], h5group[ppjoin(res_grp, "RELATIVE-SLOPE")], SUPPS)
 
     # terrain shadow
     # TODO: this one had cogtif=True? (but was unused in `_write()`)
-    rel_paths.update(
-        _write(
-            ["COMBINED-TERRAIN-SHADOW"],
-            h5group[ppjoin(res_grp, "SHADOW-MASKS")],
-            grn_id,
-            QA,
-        )
-    )
+
+    _write(["COMBINED-TERRAIN-SHADOW"], h5group[ppjoin(res_grp, "SHADOW-MASKS")], QA)
+
     # TODO do we also include slope and aspect?
 
-    return rel_paths, timedelta_data
+    return timedelta_data
 
 
 def create_contiguity(
+    p: DatasetAssembler,
     product_list: Sequence[str],
     level1: DatasetDoc,
     granule: str,
     outdir: Path,
-    cogtif_args: Dict,
+    timedelta_data,
 ):
     """
     Create the contiguity (all pixels valid) dataset.
@@ -942,10 +707,6 @@ def create_contiguity(
     res = level1.properties["eo:gsd"]
 
     grn_id = _l1_to_ard(granule)
-
-    nbar_contiguity = None
-    # relative paths of each dataset for ODC metadata doc
-    rel_paths = {}
 
     with tempfile.TemporaryDirectory(dir=outdir, prefix="contiguity-") as tmpdir:
         for product in product_list:
@@ -960,8 +721,6 @@ def create_contiguity(
 
             out_fname = outdir / QA / "{}_{}_CONTIGUITY.TIF".format(grn_id, product)
             out_fname.parent.mkdir(exist_ok=True)
-
-            alias = f"{product.lower()}_contiguity"
 
             # temp vrt
             tmp_fname = Path(tmpdir) / f"{product}.vrt"
@@ -981,19 +740,34 @@ def create_contiguity(
             )
 
             # contiguity mask for nbar product
-            contiguity_data, geobox = contiguity(tmp_fname)
-            write_tif_from_dataset(
-                contiguity_data, out_fname, geobox=geobox, **cogtif_args
-            )
+            # contiguity(p, tmp_fname, update_timerange=product.lower() == "nbar")
 
-            if product.lower() == "nbar":
-                nbar_contiguity = contiguity_data
-            del contiguity_data
+            # def contiguity(p: DatasetAssembler, product_name: str, fname: Path):
+            """
+            Write a contiguity mask file based on the intersection of valid data pixels across all
+            bands from the input file and returns with the geobox of the source dataset
+            """
+            with rasterio.open(tmp_fname) as ds:
+                geobox = GridSpec.from_rio(ds)
+                ones = np.ones((ds.height, ds.width), dtype="uint8")
+                for band in ds.indexes:
+                    ones &= ds.read(band) > 0
 
-            with rasterio.open(out_fname) as ds:
-                rel_paths[alias] = GeoBox.from_rio(ds).get_img_dataset_info(out_fname)
+                p.write_measurement_numpy(f"{product.lower()}_contiguity", ones, geobox)
 
-    return rel_paths, nbar_contiguity
+            # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
+            # footprint for Landsat sensor. For Sentinel sensor, it inherits from level 1 yaml file
+            if level1.properties["eo:platform"].startswith("landsat"):
+                valid_timedelta_data = numpy.ma.masked_where(ones == 0, timedelta_data)
+
+                center_dt = np.datetime64(level1.datetime)
+                from_dt = center_dt + np.timedelta64(
+                    int(float(numpy.ma.min(valid_timedelta_data)) * 1000000), "us"
+                )
+                to_dt = center_dt + np.timedelta64(
+                    int(float(numpy.ma.max(valid_timedelta_data)) * 1000000), "us"
+                )
+                p.datetime_range = (from_dt, to_dt)
 
 
 def package(
@@ -1030,90 +804,55 @@ def package(
         None; The packages will be written to disk directly.
     """
 
-    antecedent_metadata = {}
-    # get sensor platform
-
     level1 = serialise.from_path(l1_path)
 
     with h5py.File(antecedents["wagl"], "r") as fid:
-        grn_id = _l1_to_ard(granule)
-        out_path = outdir / grn_id
+        out_path = outdir / _l1_to_ard(granule)
         out_path.mkdir(parents=True, exist_ok=True)
+        with DatasetAssembler(out_path) as p:
+            p.add_source_dataset(level1, auto_inherit_properties=True)
 
-        # TODO: pan band?
-        cogtif_args = get_cogtif_options(
-            level1.grids[level1.measurements["blue"].grid].shape
-        )
+            # TODO: pan band?
+            # cogtif_args = get_cogtif_options(
+            #     level1.grids[level1.measurements["blue"].grid].shape
+            # )
 
-        # unpack the standardised products produced by wagl
-        wagl_tags, img_paths = unpack_products(
-            products, level1, h5group=fid[granule], outdir=out_path
-        )
+            # unpack the standardised products produced by wagl
+            unpack_products(p, products, level1, h5group=fid[granule], outdir=out_path)
 
-        # unpack supplementary datasets produced by wagl
-        supp_paths, timedelta_data = unpack_supplementary(
-            granule, fid[granule], out_path, cogtif_args
-        )
+            # unpack supplementary datasets produced by wagl
+            timedelta_data = unpack_supplementary(p, fid[granule])
 
-        # add in supplementary paths
-        for key in supp_paths:
-            img_paths[key] = supp_paths[key]
+            # file based globbing, so can't have any other tifs on disk
+            create_contiguity(p, products, level1, granule, out_path, timedelta_data)
 
-        # file based globbing, so can't have any other tifs on disk
-        qa_paths, contiguity_ones_mask = create_contiguity(
-            products, level1, granule, out_path, cogtif_args
-        )
+            # fmask cogtif conversion
+            if "fmask" in antecedents:
 
-        # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
-        # footprint for Landsat sensor. For Sentinel sensor, it inherits from level 1 yaml file
-        if level1.properties["eo:platform"].startswith("landsat"):
-            valid_timedelta_data = numpy.ma.masked_where(
-                contiguity_ones_mask == 0, timedelta_data
-            )
-            wagl_tags["timedelta_min"] = numpy.ma.min(valid_timedelta_data)
-            wagl_tags["timedelta_max"] = numpy.ma.max(valid_timedelta_data)
+                # TODO: this one has different predictor settings?
+                fmask_cogtif_args_predictor = 2
 
-        # add in qa paths
-        for key in qa_paths:
-            img_paths[key] = qa_paths[key]
+                p.write_measurement("qa/fmask", antecedents["fmask"])
 
-        # fmask cogtif conversion
-        if "fmask" in antecedents:
-            fmask_cogtif_out = out_path / QA / f"{grn_id}_FMASK.TIF"
+                # The processing version should be supplied somewhere in their metadata.
+                p.note_software_version("fmask_repo", "TODO")
 
-            # Get cogtif args with overviews
-            fmask_cogtif_args = deepcopy(cogtif_args)
-            fmask_cogtif_args["options"]["predictor"] = 2
-            write_tif_from_file(
-                antecedents["fmask"], fmask_cogtif_out, **fmask_cogtif_args
-            )
+            # merge all the yaml documents
+            if "gqa" in antecedents:
+                with antecedents["gqa"].open() as fl:
+                    p.extend_user_metadata("gqa", yaml.safe_load(fl))
 
-            antecedent_metadata["fmask"] = {"fmask_version": "TODO"}
+            # TODO better identifiers
+            p.note_software_version("eugl", EUGL_VERSION)
+            p.note_software_version(FMASK_REPO_URL, FMASK_VERSION)
+            # p.note_software_version('gverify', gverify_version)
+            p.note_software_version(TESP_REPO_URL, TESP_VERSION)
 
-            with rasterio.open(fmask_cogtif_out) as ds:
-                img_paths["fmask"] = GeoBox.from_rio(ds).get_img_dataset_info(
-                    fmask_cogtif_out
-                )
+            # TODO there's probably a real one.
+            p["dea:processing_level"] = "Level-2"
+            provider_reference_info(p, granule)
 
-        # merge all the yaml documents
-        if "gqa" in antecedents:
-            with antecedents["gqa"].open() as fl:
-                antecedent_metadata["gqa"] = yaml.safe_load(fl)
-        else:
-            antecedent_metadata["gqa"] = {
-                "error_message": "GQA has not been configured for this product"
-            }
-
-        tags = merge_metadata(
-            level1, wagl_tags, granule, img_paths, **antecedent_metadata
-        )
-
-        with (out_path / "ARD-METADATA.yaml").open("w") as src:
-            yaml.dump(tags, src, default_flow_style=False, indent=4)
-
-        c = PackageChecksum()
-        c.add_file(Path(out_path))
-        c.write(Path(out_path) / "checksum.sha1")
+            p.finish()
 
 
 def run():
