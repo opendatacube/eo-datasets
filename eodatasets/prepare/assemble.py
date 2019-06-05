@@ -6,39 +6,58 @@ from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, List, Any
 
 import h5py
 import numpy
 import rasterio
-import attr
-from rasterio.crs import CRS
+from rasterio.enums import Resampling
 
-from eodatasets.prepare.model import GridDoc, DatasetDoc, ProductDoc
+from eodatasets.prepare import images, serialise
+from eodatasets.prepare.images import GridSpec, FileWrite
+from eodatasets.prepare.model import DatasetDoc, GridDoc, MeasurementDoc, ProductDoc
 from eodatasets.verify import PackageChecksum
 
+_INHERITABLE_PROPERTIES = {
+    "datetime",
+    "eo:platform",
+    "eo:instrument",
+    "eo:gsd",
+    "eo:cloud_cover",
+    "eo:sun_azimuth",
+    "eo:sun_elevation",
+    "landsat:collection_number",
+    "landsat:landsat_scene_id",
+    "landsat:landsat_product_id",
+    "landsat:wrs_path",
+    "landsat:wrs_row",
+    "landsat:collection_category",
+}
 
-@attr.s(auto_attribs=True, slots=True, hash=True)
-class GridSpec:
-    shape: Tuple[int, int]
-    transform: Tuple[float, float, float, float, float, float, float, float, float]
 
-    crs: CRS = attr.ib(
-        metadata=dict(doc_exclude=True), default=None, hash=False, cmp=False
-    )
+def nest_properties(d: Dict[str, Any], separator=":") -> Dict[str, Any]:
+    """
+    Split keys with embedded colons into sub dictionaries.
 
-    @classmethod
-    def from_rio(cls, dataset: rasterio.DatasetReader) -> "GridSpec":
-        return cls(shape=dataset.shape, transform=dataset.transform, crs=dataset.crs)
+    Intended for stac-like properties
 
-    @classmethod
-    def from_h5(cls, dataset: h5py.Dataset) -> "GridSpec":
-        return cls(
-            shape=dataset.shape,
-            # TODO: length?
-            transform=tuple(dataset.attrs["geotransform"]),
-            crs=CRS.from_wkt(dataset.attrs["crs_wkt"]),
-        )
+    >>> nest_properties({'landsat:path':1, 'landsat:row':2, 'clouds':3})
+    {'landsat': {'path': 1, 'row': 2}, 'clouds': 3}
+    """
+    out = defaultdict(dict)
+    for key, val in d.items():
+        section, *remainder = key.split(separator, 1)
+        if remainder:
+            [sub_key] = remainder
+            out[section][sub_key] = val
+        else:
+            out[section] = val
+
+    for key, val in out.items():
+        if isinstance(val, dict):
+            out[key] = nest_properties(val, separator=separator)
+
+    return dict(out)
 
 
 class DatasetAssembler:
@@ -48,14 +67,6 @@ class DatasetAssembler:
     Either write a metadata document referencing existing files (pass in just a metadata_path)
     or specify an output folder.
     """
-
-    @classmethod
-    def for_product(self, name:str,
-                    output_folder: Optional[Path] = None,
-                    metadata_path: Optional[Path] = None,):
-        # TODO: lookup? this is dea specific
-        p =DatasetAssembler(output_folder=output_folder, metadata_path=metadata_path)
-        p._d.product = ProductDoc.dea_name(name)
 
     def __init__(
         self,
@@ -74,9 +85,13 @@ class DatasetAssembler:
 
         self._checksum = PackageChecksum()
 
-        self._work_path = Path(tempfile.mkdtemp(prefix='.odcdataset-', dir=str(output_folder)))
+        self._work_path = Path(
+            tempfile.mkdtemp(prefix=".odcdataset-", dir=str(output_folder))
+        )
 
-        self._measurements_per_grid = defaultdict(list)
+        # The measurements grouped by their grid.
+        # (value is band_name->Path)
+        self._measurements_per_grid: Dict[GridSpec, Dict[str, Path]] = defaultdict(dict)
 
         self._allow_absolute_paths = allow_absolute_paths
 
@@ -85,9 +100,12 @@ class DatasetAssembler:
 
         self._user_metadata = dict()
 
-        self._d = DatasetDoc(
-            id=uuid.uuid4()
-        )
+        self._lineage: Dict[str, List[uuid.UUID]] = defaultdict(list)
+
+        self.properties = {}
+
+        # TODO generate?
+        self.product_name = None
 
     def __enter__(self):
         return self
@@ -97,49 +115,111 @@ class DatasetAssembler:
         # Clean up.
         self.close()
 
-    def finish(self):
-        """Write the dataset to the destination"""
-        # write metadata fields:
-        self._d.measurements
-        self._d.grids
-        self._d.crs
-        self._d.geometry
-
-        checksum_path = self._work_path / 'package.sha1'
-        self._checksum.write(checksum_path)
-        checksum_path.chmod(0o664)
-
-        # Match the lower r/w permission bits to the output folder.
-        # (Temp directories default to 700 otherwise.)
-        self._work_path.chmod(self._destination_folder.stat().st_mode & 0o777)
-
-        self._work_path.rename(self._destination_folder)
-        raise NotImplementedError
+    @property
+    def _my_label(self):
+        # TODO: Generate dataset label
+        return f"dataset-label-todo"
 
     def close(self):
         """Cleanup any temporary files, even if dataset has not been written"""
         # TODO: add implicit cleanup like tempfile.TemporaryDirectory?
         shutil.rmtree(self._work_path, ignore_errors=True)
 
-    def add_source_path(self, path: Path, auto_inherit_properties: bool = False):
-        """Add source dataset. Copy any relevant properties"""
-        raise NotImplementedError
+    def add_source_path(
+        self, path: Path, classifier: str = None, auto_inherit_properties: bool = False
+    ):
+        """Add source dataset using its metadata file path.
 
-    def add_source_dataset(self, dataset: DatasetDoc, auto_inherit_properties: bool = False):
-        """Add source dataset. Copy any relevant properties"""
-        raise NotImplementedError
+        Optionally copy any relevant properties (platform, instrument etc)
+        """
 
-    def write_measurement_h5(self, name: str, g: h5py.Group):
-        raise NotImplementedError
+        # TODO: if they gave a dataset directory, check the metadata inside?
+        self.add_source_dataset(
+            serialise.from_path(path),
+            classifier=classifier,
+            auto_inherit_properties=auto_inherit_properties,
+        )
+
+    def add_source_dataset(
+        self,
+        dataset: DatasetDoc,
+        classifier: str = None,
+        auto_inherit_properties: bool = False,
+    ):
+        """Add source dataset.
+
+        Optionally copy any relevant properties (platform, instrument etc)
+        """
+
+        if not classifier:
+            classifier = dataset.properties["odc:product_family"]
+        if not classifier:
+            # TODO: This rule is a little obscure to force people to know.
+            #       We could somehow figure out the product family from the product?
+            raise ValueError(
+                "Source dataset doesn't have a 'odc:product_family' property (eg. 'level1', 'fc'), "
+                "you must specify a more specific classifier parameter."
+            )
+
+        self._lineage[classifier].append(dataset.id)
+        if auto_inherit_properties:
+            self._inherit_properties_from(dataset)
+
+    def _inherit_properties_from(self, dataset: DatasetDoc):
+        for name in _INHERITABLE_PROPERTIES:
+            new_val = dataset.properties[name]
+
+            existing_val = self.properties.get(name)
+            if existing_val is None:
+                self.properties[name] = new_val
+            else:
+                # Already set. Do nothing.
+                if new_val != existing_val:
+                    warnings.warn(
+                        f"Inheritable property {name!r} is different from current value: "
+                        f"{existing_val!r} != {new_val!r}"
+                    )
+
+    def write_measurement_h5(self, name: str, g: h5py.Dataset):
+        grid = images.GridSpec.from_h5(g)
+        out_path = self._measurement_file_path(name)
+
+        FileWrite.from_existing(g.shape).write_tif_from_h5(g, out_path, geobox=grid)
+        self._record_image(name, grid, out_path)
+
+    def _measurement_file_path(self, band_name):
+        return self._work_path / self.format_name(
+            r"{product_name}-0-0_{odc[reference_code]}.tif", dict(name=band_name)
+        )
+
+    def _record_image(self, name: str, grid: GridSpec, path: Path):
+        # We checksum immediately as the file has *just* been written so it may still
+        # be in os/filesystem cache.
+        self._checksum.add_file(path)
+
+        for measurements in self._measurements_per_grid.values():
+            if name in measurements:
+                raise ValueError(
+                    f"Duplicate addition of band called {name!r}. "
+                    f"Original at {measurements[name]} and now {path}"
+                )
+
+        self._measurements_per_grid[grid][name] = path
+
+    def format_name(self, s: str, custom_fields) -> str:
+        properties = nest_properties(self.properties)
+        return s.format_map(
+            {**properties, "product_name": self.product_name, **custom_fields}
+        )
 
     def write_measurement(self, name: str, p: Path):
-        # TODO: note the path?
-        with rasterio.open(p) as ds:
-            self.write_measurement_rio(name, ds)
+        with rasterio.open(p) as f:
+            grid = images.GridSpec.from_rio(f)
 
-    def write_measurement_rio(self, name: str, d: rasterio.DatasetReader):
-        raise NotImplementedError
-        # Add to checksum
+        out_path = self._measurement_file_path(name)
+
+        FileWrite.from_existing(grid.shape).write_from_file(p, out_path)
+        self._record_image(name, grid, out_path)
 
     def extend_user_metadata(self, section, d: Dict):
         if section in self._user_metadata:
@@ -148,12 +228,28 @@ class DatasetAssembler:
         self._user_metadata[section] = deepcopy(d)
 
     def write_measurement_numpy(
-        self, name: str, array: numpy.ndarray, grid_spec: GridSpec
+        self,
+        name: str,
+        array: numpy.ndarray,
+        grid_spec: GridSpec,
+        nodata=None,
+        overview_resampling=Resampling.nearest,
     ):
-        raise NotImplementedError
+        out_path = self._measurement_file_path(name)
+
+        FileWrite.from_existing(array.shape).write_from_ndarray(
+            array,
+            out_path,
+            geobox=grid_spec,
+            nodata=nodata,
+            overview_resampling=overview_resampling,
+        )
+        self._record_image(name, grid_spec, out_path)
 
     def note_software_version(self, repository_url, version):
-        existing_version = self._user_metadata["software_versions"].get(repository_url)
+        existing_version = self._user_metadata.setdefault("software_versions", {}).get(
+            repository_url
+        )
         if existing_version and existing_version != version:
             raise ValueError(
                 f"duplicate setting of software {repository_url!r} with different value "
@@ -161,28 +257,111 @@ class DatasetAssembler:
             )
         self._user_metadata["software_versions"][repository_url] = version
 
+    def __setitem__(self, key, value):
+        if key in self.properties:
+            warnings.warn(f"overridding property {key!r}")
+        self.properties[key] = value
+
     @property
-    def platform(self):
-        return self._d.properties.get("eo:platform")
+    def platform(self) -> str:
+        return self.properties["eo:platform"]
+
+    @property
+    def instrument(self) -> str:
+        return self.properties["eo:instrument"]
+
+    @property
+    def platform_abbreviated(self) -> str:
+        """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
+        p = self.platform
+        if not p.startswith("landsat"):
+            raise NotImplementedError(
+                f"TODO: implement non-landsat platform abbreviation " f"(got {p!r})"
+            )
+
+        return f"ls{p[-1]}"
 
     @property
     def datetime_range(self):
         return (
-            self._d.properties.get("dtr:start_datetime"),
-            self._d.properties.get("dtr:end_datetime"),
+            self.properties.get("dtr:start_datetime"),
+            self.properties.get("dtr:end_datetime"),
         )
-
-    def __setitem__(self, key, value):
-        if key in self._d.properties:
-            warnings.warn(f"overridding property {key!r}")
-        self._d.properties[key] = value
 
     @datetime_range.setter
     def datetime_range(self, val: Tuple[datetime, datetime]):
         # TODO: string type conversion, better validation/errors
         start, end = val
-        self._d.properties["dtr:start_datetime"] = start
-        self._d.properties["dtr:end_datetime"] = end
+        self.properties["dtr:start_datetime"] = start
+        self.properties["dtr:end_datetime"] = end
+
+    def finish(self):
+        """Write the dataset to the destination"""
+        # write metadata fields:
+
+        # Order from most to fewest measurements.
+        grids_by_frequency: List[Tuple[GridSpec, Dict[str, Path]]] = sorted(
+            self._measurements_per_grid.items(), key=lambda k: len(k[1])
+        )
+
+        dataset = DatasetDoc(
+            id=uuid.uuid4(),
+            # TODO: configurable/non-dea naming?
+            product=ProductDoc.dea_name(self.product_name),
+            properties=self.properties,
+            lineage=self._lineage,
+        )
+
+        crs = grids_by_frequency[0][0].crs
+
+        for i, grid, measurements in enumerate(grids_by_frequency):
+            # TODO: CRS equality is tricky. This may not work.
+            #       We're assuming a group of measurements specify their CRS
+            #       the same way if they are the same.
+            if grid.crs != crs:
+                raise ValueError(
+                    f"Measurements have different CRSes in the same dataset:\n"
+                    f"\t{crs.to_string()!r}\n"
+                    f"\t{grid.crs.to_string()!r}\n"
+                )
+
+            # The grid with the most measurements.
+            if i == 0:
+                grid_name = "default"
+            else:
+                grid_name = "_".join(measurements.keys())
+
+            dataset.grids[grid_name] = GridDoc(grid.shape, grid.transform)
+
+            for measurement_name, measurement_path in measurements:
+                dataset.measurements[measurement_name] = MeasurementDoc(
+                    path=measurement_path,
+                    grid=grid_name if grid_name != "default" else None,
+                )
+
+        dataset.crs = crs.to_epsg() if crs.is_epsg_code else crs.to_wkt()
+
+        # TODO: Take geometry on addition to package
+        # dataset.geometry =
+
+        if dataset.product is None:
+            # TODO: Move into customisable naming conventions.
+            raise NotImplementedError("product name isn't yet auto-generated ")
+
+        doc = serialise.to_formatted_doc(dataset)
+        metadata_path = self._work_path / f"{self._my_label}.odc-dataset.yaml"
+        serialise.dump_yaml(metadata_path, doc)
+        self._checksum.add_file(metadata_path)
+
+        checksum_path = self._work_path / f"{self._my_label}.sha1"
+        self._checksum.write(checksum_path)
+        checksum_path.chmod(0o664)
+
+        # Match the lower r/w permission bits to the output folder.
+        # (Temp directories default to 700 otherwise.)
+        self._work_path.chmod(self._destination_folder.stat().st_mode & 0o777)
+
+        self._work_path.rename(self._destination_folder)
 
 
 def example():
@@ -202,7 +381,6 @@ def example():
         p.add_measurement("blue", "")
 
         # Copy data to a local cogtif using default naming conventions
-        p.write_measurement("blue", h5py.Group)
         p.write_measurement("blue", Path("tif"))
 
         #

@@ -36,10 +36,8 @@ class ProductDoc:
     href: str = None
 
     @classmethod
-    def dea_name(cls, name:str):
-        return ProductDoc(
-            name=name, href=f"{DEA_URI_PREFIX}/product/{name}"
-        )
+    def dea_name(cls, name: str):
+        return ProductDoc(name=name, href=f"{DEA_URI_PREFIX}/product/{name}")
 
 
 @attr.s(auto_attribs=True, slots=True, hash=True)

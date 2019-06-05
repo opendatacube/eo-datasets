@@ -2,14 +2,11 @@
 
 import os
 import re
-import subprocess
 import tempfile
-from functools import partial
 from os.path import basename
 from pathlib import Path
 from posixpath import join as ppjoin
-from subprocess import check_call
-from typing import Dict, Any, Tuple, Sequence, Union, List, Generator
+from typing import Dict, Sequence, List
 
 import h5py
 import numpy
@@ -17,13 +14,13 @@ import numpy as np
 import rasterio
 import yaml
 from click import secho
-from rasterio.enums import Resampling
 from yaml.representer import Representer
 
 import eodatasets
-from eodatasets.prepare.assemble import DatasetAssembler, GridSpec
-from eodatasets.prepare import serialise
-from eodatasets.prepare.model import DatasetDoc, GridDoc
+from eodatasets.prepare import serialise, images
+from eodatasets.prepare.assemble import DatasetAssembler
+from eodatasets.prepare.images import GridSpec
+from eodatasets.prepare.model import DatasetDoc
 
 EUGL_VERSION = "DO_SOMETHING_HERE"
 
@@ -35,7 +32,7 @@ TESP_REPO_URL = "https://github.com/GeoscienceAustralia/eo-datasets"
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
-LEVELS = [8, 16, 32]
+
 FILENAME_TIF_BAND = re.compile(
     r"(?P<prefix>(?:.*_)?)(?P<band_name>B[0-9][A0-9]|B[0-9]*|B[0-9a-zA-z]*)"
     r"(?P<extension>\....)"
@@ -46,7 +43,7 @@ QA = "QA"
 SUPPS = "SUPPLEMENTARY"
 
 
-def find(h5_obj: h5py.Group, dataset_class="") -> List[str]:
+def find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> List[str]:
     """
     Given an h5py `Group`, `File` (opened file id; fid),
     recursively list all objects or optionally only list
@@ -73,17 +70,16 @@ def find(h5_obj: h5py.Group, dataset_class="") -> List[str]:
         A `list` containing the pathname to all matching objects.
     """
 
-    def _find(items, dataset_class, name, obj):
+    items = []
+
+    def _find(name, obj):
         """
         An internal utility to find objects matching `dataset_class`.
         """
         if obj.attrs.get("CLASS") == dataset_class:
             items.append(name)
-            print(repr(type(obj)))
 
-    items = []
-    h5_obj.visititems(partial(_find, items, dataset_class))
-
+    h5_obj.visititems(_find)
     return items
 
 
@@ -100,9 +96,9 @@ def provider_reference_info(p: DatasetAssembler, granule: str):
         Dictionary; contains satellite reference if identified
     """
     matches = None
-    if p.platform.startwith("landsat"):
+    if p.platform.startswith("landsat"):
         matches = re.match(r"L\w\d(?P<reference_code>\d{6}).*", granule)
-    elif p.platform.startwith("sentinel-2"):
+    elif p.platform.startswith("sentinel-2"):
         matches = re.match(r".*_T(?P<reference_code>\d{1,2}[A-Z]{3})_.*", granule)
 
     if matches:
@@ -140,436 +136,6 @@ def _l1_to_ard(granule: str) -> str:
     return re.sub(PRODUCT_SUITE_FROM_GRANULE, ARD, granule)
 
 
-def run_command(command: Sequence[Union[str, Path]], work_dir: Path) -> None:
-    check_call([str(s) for s in command], cwd=str(work_dir))
-
-
-def get_cogtif_options(
-    shape: Tuple[float, float],
-    overviews: bool = True,
-    blockxsize: int = None,
-    blockysize: int = None,
-) -> Dict:
-    """ Returns write_img options according to the source imagery provided
-    :param overviews:
-        (boolean) sets overview flags in gdal config options
-    :param blockxsize:
-        (int) override the derived base blockxsize in cogtif conversion
-    :param blockysize:
-        (int) override the derived base blockysize in cogtif conversion
-
-    returns a dict {'options': {}, 'config_options': {}}
-    """
-
-    # TODO Standardizing the Sentinel-2's overview tile size with external inputs
-
-    options = {"compress": "deflate", "zlevel": 4}
-    config_options = {}
-
-    # Fallback to 512 value
-    blockysize = blockysize or 512
-    blockxsize = blockxsize or 512
-
-    if shape[0] <= 512 and shape[1] <= 512:
-        # Do not set block sizes for small imagery
-        pass
-    elif shape[1] <= 512:
-        options["blockysize"] = min(blockysize, 512)
-        # Set blockxsize to power of 2 rounded down
-        options["blockxsize"] = int(2 ** (blockxsize.bit_length() - 1))
-        # gdal does not like a x blocksize the same as the whole dataset
-        if options["blockxsize"] == blockxsize:
-            options["blockxsize"] = int(options["blockxsize"] / 2)
-    else:
-        if shape[1] == blockxsize:
-            # dataset does not have an internal tiling layout
-            # set the layout to a 512 block size
-            blockxsize = 512
-            blockysize = 512
-            if overviews:
-                config_options["GDAL_TIFF_OVR_BLOCKSIZE"] = blockxsize
-
-        options["blockxsize"] = blockxsize
-        options["blockysize"] = blockysize
-        options["tiled"] = "yes"
-
-    if overviews:
-        options["copy_src_overviews"] = "yes"
-
-    return {"options": options, "config_options": config_options}
-
-
-def generate_tiles(
-    samples: int, lines: int, xtile: int = None, ytile: int = None
-) -> Generator[Tuple[Tuple[int, int], Tuple[int, int]], None, None]:
-    """
-    Generates a list of tile indices for a 2D array.
-
-    :param samples:
-        An integer expressing the total number of samples in an array.
-
-    :param lines:
-        An integer expressing the total number of lines in an array.
-
-    :param xtile:
-        (Optional) The desired size of the tile in the x-direction.
-        Default is all samples
-
-    :param ytile:
-        (Optional) The desired size of the tile in the y-direction.
-        Default is min(100, lines) lines.
-
-    :return:
-        Each tuple in the generator contains
-        ((ystart,yend),(xstart,xend)).
-
-    >>> import pprint
-    >>> tiles = generate_tiles(1624, 1567, xtile=1000, ytile=400)
-    >>> pprint.pprint(list(tiles))
-    [((0, 400), (0, 1000)),
-     ((0, 400), (1000, 1624)),
-     ((400, 800), (0, 1000)),
-     ((400, 800), (1000, 1624)),
-     ((800, 1200), (0, 1000)),
-     ((800, 1200), (1000, 1624)),
-     ((1200, 1567), (0, 1000)),
-     ((1200, 1567), (1000, 1624))]
-    """
-
-    def create_tiles(samples, lines, xstart, ystart):
-        """
-        Creates a generator object for the tiles.
-        """
-        for ystep in ystart:
-            if ystep + ytile < lines:
-                yend = ystep + ytile
-            else:
-                yend = lines
-            for xstep in xstart:
-                if xstep + xtile < samples:
-                    xend = xstep + xtile
-                else:
-                    xend = samples
-                yield ((ystep, yend), (xstep, xend))
-
-    # check for default or out of bounds
-    if xtile is None or xtile < 0:
-        xtile = samples
-    if ytile is None or ytile < 0:
-        ytile = min(100, lines)
-
-    xstart = numpy.arange(0, samples, xtile)
-    ystart = numpy.arange(0, lines, ytile)
-
-    tiles = create_tiles(samples, lines, xstart, ystart)
-
-    return tiles
-
-
-def write_img(
-    array: numpy.ndarray,
-    filename: Path,
-    driver="GTiff",
-    geobox: GridDoc = None,
-    nodata: int = None,
-    tags: Dict = None,
-    options: Dict = None,
-    levels: Sequence[int] = None,
-    resampling=Resampling.nearest,
-    config_options: Dict = None,
-) -> None:
-    """
-    Writes a 2D/3D image to disk using rasterio.
-
-    :param array:
-        A 2D/3D NumPy array.
-
-    :param filename:
-        A string containing the output file name.
-
-    :param driver:
-        A string containing a GDAL compliant image driver. Default is
-        'GTiff'.
-
-    :param geobox:
-        An instance of a GriddedGeoBox object.
-
-    :param nodata:
-        A value representing the no data value for the array.
-
-    :param tags:
-        A dictionary of dataset-level metadata.
-
-    :param options:
-        A dictionary containing other dataset creation options.
-        See creation options for the respective GDAL formats.
-
-    :param levels:
-        build overviews/pyramids according to levels
-
-    :param resampling:
-        If levels is set, build overviews using a resampling method
-        from `rasterio.enums.Resampling`
-        Default is `Resampling.nearest`.
-
-    :param config_options:
-        A dictionary containing the options to configure GDAL's
-        environment's default configurations
-
-    :notes:
-        If array is an instance of a `h5py.Dataset`, then the output
-        file will include blocksizes based on the `h5py.Dataset's`
-        chunks. To override the blocksizes, specify them using the
-        `options` keyword. Eg {'blockxsize': 512, 'blockysize': 512}.
-    """
-    # Get the datatype of the array
-    dtype = array.dtype.name
-
-    # Check for excluded datatypes
-    excluded_dtypes = ["int64", "int8", "uint64"]
-    if dtype in excluded_dtypes:
-        msg = "Datatype not supported: {dt}".format(dt=dtype)
-        raise TypeError(msg)
-
-    # convert any bools to uin8
-    if dtype == "bool":
-        array = np.uint8(array)
-        dtype = "uint8"
-
-    ndims = array.ndim
-    dims = array.shape
-
-    # Get the (z, y, x) dimensions (assuming BSQ interleave)
-    if ndims == 2:
-        samples = dims[1]
-        lines = dims[0]
-        bands = 1
-    elif ndims == 3:
-        samples = dims[2]
-        lines = dims[1]
-        bands = dims[0]
-    else:
-        raise IndexError(
-            "Input array is not of 2 or 3 dimensions. Got {dims}".format(dims=ndims)
-        )
-
-    # If we have a geobox, then retrieve the geotransform and projection
-    if geobox is not None:
-        transform = geobox.transform
-        projection = None
-    else:
-        transform = None
-        projection = None
-
-    # compression predictor choices
-    predictor = {
-        "int8": 2,
-        "uint8": 2,
-        "int16": 2,
-        "uint16": 2,
-        "int32": 2,
-        "uint32": 2,
-        "int64": 2,
-        "uint64": 2,
-        "float32": 3,
-        "float64": 3,
-    }
-
-    kwargs = {
-        "count": bands,
-        "width": samples,
-        "height": lines,
-        "crs": projection,
-        "transform": transform,
-        "dtype": dtype,
-        "driver": driver,
-        "nodata": nodata,
-        "predictor": predictor[dtype],
-    }
-
-    if isinstance(array, h5py.Dataset):
-        # TODO: if array is 3D get x & y chunks
-        if array.chunks[1] == array.shape[1]:
-            # GDAL doesn't like tiled or blocksize options to be set
-            # the same length as the columns (probably true for rows as well)
-            array = array[:]
-        else:
-            y_tile, x_tile = array.chunks
-            tiles = generate_tiles(samples, lines, x_tile, y_tile)
-
-            if "tiled" in options:
-                kwargs["blockxsize"] = options.pop("blockxsize", x_tile)
-                kwargs["blockysize"] = options.pop("blockysize", y_tile)
-
-    # the user can override any derived blocksizes by supplying `options`
-    # handle case where no options are provided
-    options = options or {}
-    for key in options:
-        kwargs[key] = options[key]
-
-    def _rasterio_write_raster(filename: Path):
-        """
-        This is a wrapper around rasterio writing tiles to
-        enable writing to a temporary location before rearranging
-        the overviews within the file by gdal when required
-        """
-        with rasterio.open(filename, "w", **kwargs) as outds:
-            if bands == 1:
-                if isinstance(array, h5py.Dataset):
-                    for tile in tiles:
-                        idx = (
-                            slice(tile[0][0], tile[0][1]),
-                            slice(tile[1][0], tile[1][1]),
-                        )
-                        outds.write(array[idx], 1, window=tile)
-                else:
-                    outds.write(array, 1)
-            else:
-                if isinstance(array, h5py.Dataset):
-                    for tile in tiles:
-                        idx = (
-                            slice(tile[0][0], tile[0][1]),
-                            slice(tile[1][0], tile[1][1]),
-                        )
-                        subs = array[:, idx[0], idx[1]]
-                        for i in range(bands):
-                            outds.write(subs[i], i + 1, window=tile)
-                else:
-                    for i in range(bands):
-                        outds.write(array[i], i + 1)
-            if tags is not None:
-                outds.update_tags(**tags)
-
-            # overviews/pyramids to disk
-            if levels:
-                outds.build_overviews(levels, resampling)
-
-    if not levels:
-        # write directly to disk without rewriting with gdal
-        _rasterio_write_raster(filename)
-    else:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            out_fname = Path(tmpdir) / filename.name
-
-            # first write to a temporary location
-            _rasterio_write_raster(out_fname)
-            # Creates the file at filename with the configured options
-            # Will also move the overviews to the start of the file
-            cmd = [
-                "gdal_translate",
-                "-co",
-                "{}={}".format("PREDICTOR", predictor[dtype]),
-            ]
-
-            for key, value in options.items():
-                cmd.extend(["-co", "{}={}".format(key, value)])
-
-            if config_options:
-                for key, value in config_options.items():
-                    cmd.extend(["--config", "{}".format(key), "{}".format(value)])
-
-            cmd.extend([out_fname, filename])
-            subprocess.check_call(cmd, cwd=str(filename.parent))
-
-
-def write_tif_from_dataset(
-    dataset: h5py.Dataset,
-    out_fname: Path,
-    options: Dict,
-    config_options: Dict,
-    nodata: int = None,
-    geobox: GridDoc = None,
-):
-    """
-    Method to write a h5 dataset or numpy array to a tif file
-    :param dataset:
-        h5 dataset containing a numpy array or numpy array
-        Dataset will map to the raster data
-
-    :param options:
-        dictionary of options provided to gdal
-
-    :param config_options:
-        dictionary of configurations provided to gdal
-
-    returns the out_fname param
-    """
-    if hasattr(dataset, "chunks"):
-        data = dataset[:]
-    else:
-        data = dataset
-
-    if nodata is None and hasattr(dataset, "attrs"):
-        nodata = dataset.attrs.get("no_data_value")
-    if geobox is None:
-        geobox = GridSpec.from_h5(dataset)
-
-    out_fname.parent.mkdir(exist_ok=True)
-
-    write_img(
-        data,
-        out_fname,
-        levels=LEVELS,
-        nodata=nodata,
-        geobox=geobox,
-        resampling=Resampling.average,
-        options=options,
-        config_options=config_options,
-    )
-
-    # return MeasurementDoc(path=out_fname, grid=geobox)
-
-
-def write_tif_from_file(
-    input_image: Path,
-    out_fname: Path,
-    options: Dict[str, Any],
-    config_options: Dict[str, Any],
-    overviews: bool = True,
-) -> Path:
-    """
-    Compatible interface for writing (cog)tifs from a source file
-    :param input_image:
-        path to the source file
-
-    :param out_fname:
-        destination of the tif
-
-    :param options:
-        dictionary of options provided to gdal
-
-    :param config_options:
-        dictionary of configurations provided to gdal
-
-    :param overviews:
-        boolean flag to create overviews
-        default (True)
-
-    returns the out_fname param
-    """
-
-    with tempfile.TemporaryDirectory(dir=out_fname.parent, prefix="cogtif-") as tmpdir:
-        run_command(["gdaladdo", "-clean", input_image], tmpdir)
-        if overviews:
-            run_command(
-                ["gdaladdo", "-r", "mode", input_image, *[str(l) for l in LEVELS]],
-                tmpdir,
-            )
-
-        command = ["gdal_translate", "-of", "GTiff"]
-        for key, value in options.items():
-            command.extend(["-co", "{}={}".format(key, value)])
-
-        if config_options:
-            for key, value in config_options.items():
-                command.extend(["--config", "{}".format(key), "{}".format(value)])
-
-        command.extend([input_image, out_fname])
-        run_command(command, input_image.parent)
-
-    return out_fname
-
-
 def unpack_products(
     p: DatasetAssembler,
     product_list: Sequence[str],
@@ -581,7 +147,7 @@ def unpack_products(
     Unpack and package the NBAR and NBART products.
     """
     # listing of all datasets of IMAGE CLASS type
-    img_paths = find(h5group, "IMAGE")
+    img_paths = find_h5_paths(h5group, "IMAGE")
 
     # TODO pass products through from the scheduler rather than hard code
     for product in product_list:
@@ -606,9 +172,12 @@ def unpack_products(
                     )
                 )
             )
-            p.write_measurement_h5(band_name, dataset)
+            # TODO: formal separation of 'product' groups?
+            p.write_measurement_h5(f"{product}_{band_name}", dataset)
 
-    pathnames = [pth for pth in (find(h5group, "SCALAR")) if "NBAR-METADATA" in pth]
+    pathnames = [
+        pth for pth in (find_h5_paths(h5group, "SCALAR")) if "NBAR-METADATA" in pth
+    ]
 
     tags = yaml.load(h5group[pathnames[0]][()])
     for path in pathnames[1:]:
@@ -722,25 +291,23 @@ def create_contiguity(
             out_fname = outdir / QA / "{}_{}_CONTIGUITY.TIF".format(grn_id, product)
             out_fname.parent.mkdir(exist_ok=True)
 
-            # temp vrt
+            # Build a temp vrt
+            # S2 bands are different resolutions. Make them appear the same when taking contiguity.
             tmp_fname = Path(tmpdir) / f"{product}.vrt"
-            run_command(
+            images.run_command(
                 [
                     "gdalbuildvrt",
                     "-resolution",
                     "user",
                     "-tr",
-                    str(res),
-                    str(res),
+                    res,
+                    res,
                     "-separate",
                     tmp_fname,
                     *fnames,
                 ],
                 tmpdir,
             )
-
-            # contiguity mask for nbar product
-            # contiguity(p, tmp_fname, update_timerange=product.lower() == "nbar")
 
             # def contiguity(p: DatasetAssembler, product_name: str, fname: Path):
             """
@@ -757,7 +324,9 @@ def create_contiguity(
 
             # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
             # footprint for Landsat sensor. For Sentinel sensor, it inherits from level 1 yaml file
-            if level1.properties["eo:platform"].startswith("landsat"):
+            if product.lower() == "nbar" and level1.properties[
+                "eo:platform"
+            ].startswith("landsat"):
                 valid_timedelta_data = numpy.ma.masked_where(ones == 0, timedelta_data)
 
                 center_dt = np.datetime64(level1.datetime)
@@ -812,6 +381,32 @@ def package(
         with DatasetAssembler(out_path) as p:
             p.add_source_dataset(level1, auto_inherit_properties=True)
 
+            # TODO better software identifiers
+            p.note_software_version("eugl", EUGL_VERSION)
+            p.note_software_version(FMASK_REPO_URL, FMASK_VERSION)
+            # p.note_software_version('gverify', gverify_version)
+            p.note_software_version(TESP_REPO_URL, TESP_VERSION)
+
+            # TODO there's probably a real one.
+            p["dea:processing_level"] = "Level-2"
+            provider_reference_info(p, granule)
+
+            # GA's collection 3 processes USGS Collection 1
+            if level1.properties["landsat:collection_number"] == 1:
+                org_collection_number = 3
+            else:
+                raise NotImplementedError(f"Unsupported collection number.")
+
+            p.properties["odc:product_family"] = "ard"
+
+            # TODO: Move this into the naming api.
+            p.product_name = "ga_{platform}{instrument}_{family}_{collection}".format(
+                platform=p.platform_abbreviated,
+                instrument=p.instrument[0].lower(),
+                family=p.properties["odc:product_family"],
+                collection=int(org_collection_number),
+            )
+
             # TODO: pan band?
             # cogtif_args = get_cogtif_options(
             #     level1.grids[level1.measurements["blue"].grid].shape
@@ -841,16 +436,6 @@ def package(
             if "gqa" in antecedents:
                 with antecedents["gqa"].open() as fl:
                     p.extend_user_metadata("gqa", yaml.safe_load(fl))
-
-            # TODO better identifiers
-            p.note_software_version("eugl", EUGL_VERSION)
-            p.note_software_version(FMASK_REPO_URL, FMASK_VERSION)
-            # p.note_software_version('gverify', gverify_version)
-            p.note_software_version(TESP_REPO_URL, TESP_VERSION)
-
-            # TODO there's probably a real one.
-            p["dea:processing_level"] = "Level-2"
-            provider_reference_info(p, granule)
 
             p.finish()
 
