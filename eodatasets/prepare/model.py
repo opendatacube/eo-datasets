@@ -3,12 +3,11 @@ from collections import defaultdict
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Tuple, Dict, Optional, Iterable, List, Any, Union
+from typing import Tuple, Dict, Optional, Iterable, List, Any, Sequence
 from uuid import UUID
 
 import affine
 import attr
-import h5py
 import numpy
 import rasterio
 import rasterio.features
@@ -16,7 +15,6 @@ import shapely
 import shapely.affinity
 import shapely.ops
 from rasterio import DatasetReader
-from rasterio.crs import CRS
 from ruamel.yaml.comments import CommentedMap
 from shapely.geometry.base import BaseGeometry
 
@@ -70,7 +68,7 @@ class DatasetDoc:
 
     measurements: Dict[str, MeasurementDoc] = None
 
-    lineage: Dict[str, Tuple[UUID]] = attr.ib(factory=CommentedMap)
+    lineage: Dict[str, Sequence[UUID]] = attr.ib(factory=CommentedMap)
 
     @property
     def producer(self):

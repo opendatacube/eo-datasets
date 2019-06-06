@@ -5,6 +5,7 @@ import warnings
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Optional, Dict, Tuple, List, Any
 
@@ -60,6 +61,16 @@ def nest_properties(d: Dict[str, Any], separator=":") -> Dict[str, Any]:
     return dict(out)
 
 
+class IfExists(Enum):
+    Skip = 0
+    Overwrite = 1
+    ThrowError = 2
+
+
+class AssemblyError(Exception):
+    pass
+
+
 class DatasetAssembler:
     """
     Assemble an ODC dataset.
@@ -72,6 +83,8 @@ class DatasetAssembler:
         self,
         output_folder: Optional[Path] = None,
         metadata_path: Optional[Path] = None,
+        # By default, we complain if the output already exists.
+        if_exists=IfExists.ThrowError,
         allow_absolute_paths=False,
         naming_conventions="dea",
     ) -> None:
@@ -80,13 +93,17 @@ class DatasetAssembler:
                 "Either an output folder or a metadata path must be specified"
             )
 
+        if output_folder.exists() and if_exists.ThrowError:
+            raise AssemblyError(f"Output exists {output_folder.as_posix()!r}")
+
+        self._exists_behaviour = if_exists
         self._destination_folder = output_folder
         self._metadata_path = metadata_path
 
         self._checksum = PackageChecksum()
 
         self._work_path = Path(
-            tempfile.mkdtemp(prefix=".odcdataset-", dir=str(output_folder))
+            tempfile.mkdtemp(prefix=".odcdataset-", dir=str(output_folder.parent))
         )
 
         # The measurements grouped by their grid.
@@ -300,8 +317,8 @@ class DatasetAssembler:
         # write metadata fields:
 
         # Order from most to fewest measurements.
-        grids_by_frequency: List[Tuple[GridSpec, Dict[str, Path]]] = sorted(
-            self._measurements_per_grid.items(), key=lambda k: len(k[1])
+        crs, grid_docs, measurement_docs = self._assemble_geo_docs(
+            self._measurements_per_grid
         )
 
         dataset = DatasetDoc(
@@ -310,36 +327,10 @@ class DatasetAssembler:
             product=ProductDoc.dea_name(self.product_name),
             properties=self.properties,
             lineage=self._lineage,
+            crs=crs.to_epsg() if crs.is_epsg_code else crs.to_wkt(),
+            grids=grid_docs,
+            measurements=measurement_docs,
         )
-
-        crs = grids_by_frequency[0][0].crs
-
-        for i, grid, measurements in enumerate(grids_by_frequency):
-            # TODO: CRS equality is tricky. This may not work.
-            #       We're assuming a group of measurements specify their CRS
-            #       the same way if they are the same.
-            if grid.crs != crs:
-                raise ValueError(
-                    f"Measurements have different CRSes in the same dataset:\n"
-                    f"\t{crs.to_string()!r}\n"
-                    f"\t{grid.crs.to_string()!r}\n"
-                )
-
-            # The grid with the most measurements.
-            if i == 0:
-                grid_name = "default"
-            else:
-                grid_name = "_".join(measurements.keys())
-
-            dataset.grids[grid_name] = GridDoc(grid.shape, grid.transform)
-
-            for measurement_name, measurement_path in measurements:
-                dataset.measurements[measurement_name] = MeasurementDoc(
-                    path=measurement_path,
-                    grid=grid_name if grid_name != "default" else None,
-                )
-
-        dataset.crs = crs.to_epsg() if crs.is_epsg_code else crs.to_wkt()
 
         # TODO: Take geometry on addition to package
         # dataset.geometry =
@@ -361,7 +352,64 @@ class DatasetAssembler:
         # (Temp directories default to 700 otherwise.)
         self._work_path.chmod(self._destination_folder.stat().st_mode & 0o777)
 
-        self._work_path.rename(self._destination_folder)
+        # Now atomically move to final location.
+        # Someone else may have created the output while we were working.
+        # Try, and then decide how to handle it if so.
+        try:
+            self._work_path.rename(self._destination_folder)
+        except OSError:
+            if not self._destination_folder.exists():
+                # Some other error?
+                raise
+
+            if self._exists_behaviour == IfExists.Skip:
+                print(f"Skipping -- exists: {self._destination_folder}")
+            elif self._exists_behaviour == IfExists.ThrowError:
+                raise
+            elif self._exists_behaviour == IfExists.Overwrite:
+                raise NotImplementedError("overwriting outputs not yet implemented")
+            else:
+                raise RuntimeError(
+                    f"Unexpected exists behaviour: {self._exists_behaviour}"
+                )
+
+    @staticmethod
+    def _assemble_geo_docs(measurements_per_grid: Dict[GridSpec, Dict[str, Path]]):
+
+        # PyCharm's typing seems to get confused by the sorted() call.
+        # noinspection PyTypeChecker
+        grids_by_frequency: List[Tuple[GridSpec, Dict[str, Path]]] = sorted(
+            measurements_per_grid.items(), key=lambda k: len(k[1])
+        )
+
+        grid_docs: Dict[str, GridDoc] = {}
+        measurement_docs: Dict[str, MeasurementDoc] = {}
+        crs = grids_by_frequency[0][0].crs
+        for i, (grid, measurements) in enumerate(grids_by_frequency):
+            # TODO: CRS equality is tricky. This may not work.
+            #       We're assuming a group of measurements specify their CRS
+            #       the same way if they are the same.
+            if grid.crs != crs:
+                raise ValueError(
+                    f"Measurements have different CRSes in the same dataset:\n"
+                    f"\t{crs.to_string()!r}\n"
+                    f"\t{grid.crs.to_string()!r}\n"
+                )
+
+            # The grid with the most measurements.
+            if i == 0:
+                grid_name = "default"
+            else:
+                grid_name = "_".join(measurements.keys())
+
+            grid_docs[grid_name] = GridDoc(grid.shape, grid.transform)
+
+            for measurement_name, measurement_path in measurements.items():
+                measurement_docs[measurement_name] = MeasurementDoc(
+                    path=measurement_path,
+                    grid=grid_name if grid_name != "default" else None,
+                )
+        return crs, grid_docs, measurement_docs
 
 
 def example():

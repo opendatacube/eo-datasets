@@ -344,7 +344,7 @@ def package(
     antecedents: Dict[str, Path],
     outdir: Path,
     granule: str,
-    products=("NBAR", "NBART", "LAMBERTIAN", "SBT"),
+    products=("NBAR",),  # "NBART", "LAMBERTIAN", "SBT"),
 ):
     """
     Package an L2 product.
@@ -377,7 +377,7 @@ def package(
 
     with h5py.File(antecedents["wagl"], "r") as fid:
         out_path = outdir / _l1_to_ard(granule)
-        out_path.mkdir(parents=True, exist_ok=True)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
         with DatasetAssembler(out_path) as p:
             p.add_source_dataset(level1, auto_inherit_properties=True)
 

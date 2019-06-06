@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Dict
 from uuid import UUID
 
@@ -9,10 +9,11 @@ import cattr
 import ciso8601
 import click
 import jsonschema
+import numpy
 import shapely
 import shapely.affinity
 import shapely.ops
-from ruamel.yaml import YAML, ruamel
+from ruamel.yaml import YAML, ruamel, Representer
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
@@ -48,11 +49,38 @@ def represent_datetime(self, data: datetime):
     return self.represent_scalar("tag:yaml.org,2002:timestamp", value)
 
 
+def represent_numpy_datetime(self, data: numpy.datetime64):
+    return represent_datetime(self, data.astype("M8[ms]").tolist())
+
+
+def represent_paths(self, data: PurePath):
+    return Representer.represent_str(self, data.as_posix())
+
+
 def _init_yaml() -> YAML:
     yaml = YAML()
     yaml.representer.add_representer(FileFormat, _format_representer)
     yaml.representer.add_multi_representer(UUID, _uuid_representer)
     yaml.representer.add_representer(datetime, represent_datetime)
+    yaml.representer.add_multi_representer(PurePath, represent_paths)
+    # yaml.representer.add_representer(Path, represent_paths)
+
+    # WAGL spits out many numpy primitives in docs.
+    yaml.representer.add_representer(numpy.int8, Representer.represent_int)
+    yaml.representer.add_representer(numpy.uint8, Representer.represent_int)
+    yaml.representer.add_representer(numpy.int16, Representer.represent_int)
+    yaml.representer.add_representer(numpy.uint16, Representer.represent_int)
+    yaml.representer.add_representer(numpy.int32, Representer.represent_int)
+    yaml.representer.add_representer(numpy.uint32, Representer.represent_int)
+    yaml.representer.add_representer(numpy.int, Representer.represent_int)
+    yaml.representer.add_representer(numpy.int64, Representer.represent_int)
+    yaml.representer.add_representer(numpy.uint64, Representer.represent_int)
+    yaml.representer.add_representer(numpy.float, Representer.represent_float)
+    yaml.representer.add_representer(numpy.float32, Representer.represent_float)
+    yaml.representer.add_representer(numpy.float64, Representer.represent_float)
+    yaml.representer.add_representer(numpy.ndarray, Representer.represent_list)
+    yaml.representer.add_representer(numpy.datetime64, represent_numpy_datetime)
+
     yaml.explicit_start = True
     return yaml
 
@@ -147,15 +175,18 @@ def _to_doc(d: DatasetDoc, with_formatting: bool):
             retain_collection_types=False,
         )
     )
-    doc["geometry"] = shapely.geometry.mapping(d.geometry)
+
+    if d.geometry:
+        doc["geometry"] = shapely.geometry.mapping(d.geometry)
     doc["id"] = str(d.id)
 
     if with_formatting:
-        # Set some numeric fields to be compact yaml format.
-        _use_compact_format(doc["geometry"], "coordinates")
-        # _use_compact_format(d, "bbox")
-        for grid in doc["grids"].values():
-            _use_compact_format(grid, "shape", "transform")
+        if "geometry" in doc:
+            # Set some numeric fields to be compact yaml format.
+            _use_compact_format(doc["geometry"], "coordinates")
+        if "grids" in doc:
+            for grid in doc["grids"].values():
+                _use_compact_format(grid, "shape", "transform")
 
         _add_space_before(doc, "id", "crs", "measurements", "properties", "lineage")
 
