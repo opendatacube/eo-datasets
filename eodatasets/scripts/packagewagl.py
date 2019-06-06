@@ -137,11 +137,7 @@ def _l1_to_ard(granule: str) -> str:
 
 
 def unpack_products(
-    p: DatasetAssembler,
-    product_list: Sequence[str],
-    level1: DatasetDoc,
-    h5group: h5py.Group,
-    outdir: Path,
+    p: DatasetAssembler, product_list: Sequence[str], h5group: h5py.Group
 ) -> None:
     """
     Unpack and package the NBAR and NBART products.
@@ -157,23 +153,8 @@ def unpack_products(
             dataset = h5group[pathname]
 
             band_name = _clean_alias(dataset)
-            base_fname = basename(level1.measurements[band_name.replace("_", "")].path)
-
-            match_dict = FILENAME_TIF_BAND.match(base_fname).groupdict()
-            out_fname = (
-                outdir
-                / product
-                / _l1_to_ard(
-                    "{}{}_{}{}".format(
-                        match_dict.get("prefix"),
-                        product,
-                        match_dict.get("band_name"),
-                        match_dict.get("extension"),
-                    )
-                )
-            )
             # TODO: formal separation of 'product' groups?
-            p.write_measurement_h5(f"{product}_{band_name}", dataset)
+            p.write_measurement_h5(f"{product.lower()}:{band_name}", dataset)
 
     pathnames = [
         pth for pth in (find_h5_paths(h5group, "SCALAR")) if "NBAR-METADATA" in pth
@@ -203,7 +184,9 @@ def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
         H5Datasets to tif.
         """
         for dname in dataset_names:
-            p.write_measurement_h5(f"{basedir}/{dname}", h5_group[dname])
+            p.write_measurement_h5(
+                f"{basedir.lower()}:{dname.lower()}", h5_group[dname]
+            )
 
     res_grps = [g for g in h5group.keys() if g.startswith("RES-GROUP-")]
     if len(res_grps) != 1:
@@ -262,12 +245,7 @@ def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
 
 
 def create_contiguity(
-    p: DatasetAssembler,
-    product_list: Sequence[str],
-    level1: DatasetDoc,
-    granule: str,
-    outdir: Path,
-    timedelta_data,
+    p: DatasetAssembler, product_list: Sequence[str], level1: DatasetDoc, timedelta_data
 ):
     """
     Create the contiguity (all pixels valid) dataset.
@@ -275,11 +253,9 @@ def create_contiguity(
     # TODO: Actual res?
     res = level1.properties["eo:gsd"]
 
-    grn_id = _l1_to_ard(granule)
-
-    with tempfile.TemporaryDirectory(dir=outdir, prefix="contiguity-") as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="contiguity-") as tmpdir:
         for product in product_list:
-            search_path = outdir / product
+            search_path = p._work_path / product
             fnames = [
                 str(f) for f in search_path.glob("*.TIF") if "QUICKLOOK" not in str(f)
             ]
@@ -288,8 +264,7 @@ def create_contiguity(
             if not fnames:
                 continue
 
-            out_fname = outdir / QA / "{}_{}_CONTIGUITY.TIF".format(grn_id, product)
-            out_fname.parent.mkdir(exist_ok=True)
+            # out_fname = outdir / QA / "{}_{}_CONTIGUITY.TIF".format(grn_id, product)
 
             # Build a temp vrt
             # S2 bands are different resolutions. Make them appear the same when taking contiguity.
@@ -344,7 +319,7 @@ def package(
     antecedents: Dict[str, Path],
     outdir: Path,
     granule: str,
-    products=("NBAR",),  # "NBART", "LAMBERTIAN", "SBT"),
+    products=("NBAR", "NBART", "LAMBERTIAN", "SBT"),
 ):
     """
     Package an L2 product.
@@ -408,18 +383,15 @@ def package(
             )
 
             # TODO: pan band?
-            # cogtif_args = get_cogtif_options(
-            #     level1.grids[level1.measurements["blue"].grid].shape
-            # )
 
             # unpack the standardised products produced by wagl
-            unpack_products(p, products, level1, h5group=fid[granule], outdir=out_path)
+            unpack_products(p, products, fid[granule])
 
             # unpack supplementary datasets produced by wagl
             timedelta_data = unpack_supplementary(p, fid[granule])
 
             # file based globbing, so can't have any other tifs on disk
-            create_contiguity(p, products, level1, granule, out_path, timedelta_data)
+            create_contiguity(p, products, level1, timedelta_data)
 
             # fmask cogtif conversion
             if "fmask" in antecedents:
@@ -437,7 +409,7 @@ def package(
                 with antecedents["gqa"].open() as fl:
                     p.extend_user_metadata("gqa", yaml.safe_load(fl))
 
-            p.finish()
+            p.done()
 
 
 def run():
