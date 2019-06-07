@@ -3,7 +3,6 @@
 import os
 import re
 import tempfile
-from os.path import basename
 from pathlib import Path
 from posixpath import join as ppjoin
 from typing import Dict, Sequence, List
@@ -192,8 +191,6 @@ def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
     if len(res_grps) != 1:
         raise NotImplementedError(f"expected one res group, got {res_grps!r}")
     [res_grp] = res_grps
-
-    grn_id = ""
 
     # satellite and solar angles
     grp = h5group[ppjoin(res_grp, "SATELLITE-SOLAR")]
@@ -414,13 +411,9 @@ def package(
 
 def run():
     package(
-        l1_path=Path(
-            "/home/jez/dea/eo-datasets/wagltest/LT05_L1TP_091084_19930707_20170118_01_T1.yaml"
-        ),
+        l1_path=next(Path("./wagl-test").glob("LT*_T1.yaml")),
         antecedents={
-            "wagl": Path(
-                "/home/jez/dea/eo-datasets/wagltest/LT50910841993188ASA00.wagl.h5"
-            ),
+            "wagl": next(Path("./wagl-test/").glob("LT*.wagl.h5")),
             # 'eugl-gqa',
             # 'eugl-fmask',
         },

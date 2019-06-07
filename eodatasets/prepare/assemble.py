@@ -283,7 +283,8 @@ class DatasetAssembler:
 
     def _measurement_file_path(self, band_name):
         return self._work_path / self.format_name(
-            r"{product_name}-0-0_{odc[reference_code]}.tif", dict(name=band_name)
+            r"{product_name}-0-0_{odc[reference_code]}-{name}.tif",
+            dict(name=band_name.replace(":", "-")),
         )
 
     def _record_image(self, name: str, grid: GridSpec, path: Path):
@@ -389,7 +390,7 @@ class DatasetAssembler:
         self.properties["dtr:start_datetime"] = start
         self.properties["dtr:end_datetime"] = end
 
-    def finish(self):
+    def done(self):
         """Write the dataset to the destination"""
         # write metadata fields:
 
@@ -431,7 +432,7 @@ class DatasetAssembler:
 
         # Match the lower r/w permission bits to the output folder.
         # (Temp directories default to 700 otherwise.)
-        self._work_path.chmod(self._destination_folder.stat().st_mode & 0o777)
+        self._work_path.chmod(self._destination_folder.parent.stat().st_mode & 0o777)
 
         # Now atomically move to final location.
         # Someone else may have created the output while we were working.
@@ -513,4 +514,4 @@ def example():
         p.write_measurement("blue", Path("tif"))
 
         #
-        p.finish()
+        p.done()
