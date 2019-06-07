@@ -6,12 +6,13 @@ from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Optional, Dict, Tuple, List, Any
 
 import h5py
 import numpy
 import rasterio
+from boltons import iterutils
 from rasterio.enums import Resampling
 
 from eodatasets.prepare import images, serialise
@@ -69,6 +70,82 @@ class IfExists(Enum):
 
 class AssemblyError(Exception):
     pass
+
+
+def docpath_set(doc, path, value):
+    """
+    Set a value in a document using a path (sequence of keys).
+
+    (It's designed to match `boltons.iterutils.get_path()` and related methods)
+
+    >>> d = {'a': 1}
+    >>> docpath_set(d, ['a'], 2)
+    >>> d
+    {'a': 2}
+    >>> d = {'a':{'b':{'c': 1}}}
+    >>> docpath_set(d, ['a', 'b', 'c'], 2)
+    >>> d
+    {'a': {'b': {'c': 2}}}
+    >>> d = {}
+    >>> docpath_set(d, ['a'], 2)
+    >>> d
+    {'a': 2}
+    >>> d = {}
+    >>> docpath_set(d, ['a', 'b'], 2)
+    Traceback (most recent call last):
+    ...
+    KeyError: 'a'
+    >>> d
+    {}
+    >>> docpath_set(d, [], 2)
+    Traceback (most recent call last):
+    ...
+    ValueError: Cannot set a value to an empty path
+    """
+    if not path:
+        raise ValueError("Cannot set a value to an empty path")
+
+    d = doc
+    for part in path[:-1]:
+        d = d[part]
+
+    d[path[-1]] = value
+
+
+def make_paths_relative(
+    doc: Dict, base_directory: PurePath, allow_paths_outside_base=False
+):
+    """
+    Find all pathlib.Path values in a document structure and make them relative to the given path.
+
+    >>> base = PurePath('/tmp/basket')
+    >>> doc = {'id': 1, 'fruits': [{'apple': PurePath('/tmp/basket/fruits/apple.txt')}]}
+    >>> make_paths_relative(doc, base)
+    >>> doc #doctest: +ELLIPSIS
+    {'id': 1, 'fruits': [{'apple': Pure...Path('fruits/apple.txt')}]}
+    >>> # No change if repeated. (relative paths still relative)
+    >>> previous = deepcopy(doc)
+    >>> make_paths_relative(doc, base)
+    >>> doc == previous
+    True
+    """
+    for doc_path, value in iterutils.research(
+        doc, lambda p, k, v: isinstance(v, PurePath)
+    ):
+        value: Path
+
+        if not value.is_absolute():
+            continue
+
+        if base_directory not in value.parents:
+            if not allow_paths_outside_base:
+                raise ValueError(
+                    f"Path {value.as_posix()!r} is outside path {base_directory.as_posix()!r} "
+                    f"(allow_paths_outside_base={allow_paths_outside_base})"
+                )
+            continue
+
+        docpath_set(doc, doc_path, value.relative_to(base_directory))
 
 
 class DatasetAssembler:
@@ -340,7 +417,11 @@ class DatasetAssembler:
             raise NotImplementedError("product name isn't yet auto-generated ")
 
         doc = serialise.to_formatted_doc(dataset)
+
         metadata_path = self._work_path / f"{self._my_label}.odc-dataset.yaml"
+
+        make_paths_relative(doc, self._work_path)
+
         serialise.dump_yaml(metadata_path, doc)
         self._checksum.add_file(metadata_path)
 
