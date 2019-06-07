@@ -156,6 +156,15 @@ def to_formatted_doc(d: DatasetDoc) -> CommentedMap:
     return _to_doc(d, with_formatting=True)
 
 
+def _stac_key_order(key: str):
+    """All keys in alphabetical order, but unprefixed keys first."""
+    if ":" in key:
+        # Tilde comes after all alphanumerics.
+        return f"~{key}"
+    else:
+        return key
+
+
 def _to_doc(d: DatasetDoc, with_formatting: bool):
     if with_formatting:
         doc = CommentedMap()
@@ -171,9 +180,18 @@ def _to_doc(d: DatasetDoc, with_formatting: bool):
             dict_factory=CommentedMap if with_formatting else dict,
             # Exclude fields that are the default.
             filter=lambda attr, value: "doc_exclude" not in attr.metadata
-            and value != attr.default,
+            and value != attr.default
+            # Exclude any fields set to None. The distinction should never matter in our docs.
+            and value is not None,
             retain_collection_types=False,
         )
+    )
+
+    # Sort properties for readability.
+    # PyCharm '19 misunderstands the type of a `sorted(dict.items())`
+    # noinspection PyTypeChecker
+    doc["properties"] = CommentedMap(
+        sorted(doc["properties"].items(), key=_stac_key_order)
     )
 
     if d.geometry:
