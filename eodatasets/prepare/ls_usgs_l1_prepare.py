@@ -8,12 +8,11 @@ import os
 import re
 import tarfile
 import tempfile
-
 import uuid
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from shapely.ops import transform
+
 import ciso8601
 import click
 import pyproj
@@ -21,6 +20,7 @@ import ruamel.yaml
 from osgeo import osr
 from shapely.geometry import Polygon
 from shapely.geometry.base import BaseGeometry
+from shapely.ops import transform
 
 from eodatasets import verify
 from eodatasets.prepare.model import (
@@ -30,7 +30,6 @@ from eodatasets.prepare.model import (
     MeasurementDoc,
     valid_region,
     resolve_absolute_offset,
-    DEA_URI_PREFIX,
 )
 from . import serialise
 
