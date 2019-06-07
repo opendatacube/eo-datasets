@@ -5,18 +5,17 @@ import re
 import tempfile
 from pathlib import Path
 from posixpath import join as ppjoin
-from typing import Dict, Sequence, List
+from typing import Dict, List, Sequence
 
 import h5py
 import numpy
-import numpy as np
 import rasterio
 import yaml
 from click import secho
 from yaml.representer import Representer
 
 import eodatasets
-from eodatasets.prepare import serialise, images
+from eodatasets.prepare import images, serialise
 from eodatasets.prepare.assemble import DatasetAssembler
 from eodatasets.prepare.images import GridSpec
 from eodatasets.prepare.model import DatasetDoc
@@ -288,7 +287,7 @@ def create_contiguity(
             """
             with rasterio.open(tmp_fname) as ds:
                 geobox = GridSpec.from_rio(ds)
-                ones = np.ones((ds.height, ds.width), dtype="uint8")
+                ones = numpy.ones((ds.height, ds.width), dtype="uint8")
                 for band in ds.indexes:
                     ones &= ds.read(band) > 0
 
@@ -301,12 +300,12 @@ def create_contiguity(
             ].startswith("landsat"):
                 valid_timedelta_data = numpy.ma.masked_where(ones == 0, timedelta_data)
 
-                center_dt = np.datetime64(level1.datetime)
-                from_dt = center_dt + np.timedelta64(
-                    int(float(numpy.ma.min(valid_timedelta_data)) * 1000000), "us"
+                center_dt = numpy.datetime64(level1.datetime)
+                from_dt = center_dt + numpy.timedelta64(
+                    int(float(numpy.ma.min(valid_timedelta_data)) * 1_000_000), "us"
                 )
-                to_dt = center_dt + np.timedelta64(
-                    int(float(numpy.ma.max(valid_timedelta_data)) * 1000000), "us"
+                to_dt = center_dt + numpy.timedelta64(
+                    int(float(numpy.ma.max(valid_timedelta_data)) * 1_000_000), "us"
                 )
                 p.datetime_range = (from_dt, to_dt)
 
@@ -394,7 +393,7 @@ def package(
             if "fmask" in antecedents:
 
                 # TODO: this one has different predictor settings?
-                fmask_cogtif_args_predictor = 2
+                # fmask_cogtif_args_predictor = 2
 
                 p.write_measurement("qa/fmask", antecedents["fmask"])
 
