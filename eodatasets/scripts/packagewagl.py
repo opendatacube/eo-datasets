@@ -251,20 +251,21 @@ def create_contiguity(
 
     with tempfile.TemporaryDirectory(prefix="contiguity-") as tmpdir:
         for product in product_list:
-            search_path = p._work_path / product
-            fnames = [
-                str(f) for f in search_path.glob("*.TIF") if "QUICKLOOK" not in str(f)
+            product_image_files = [
+                path
+                for band_name, path in p.measurement_paths_iter()
+                if band_name.startswith(f"{product}:")
             ]
 
             # quick work around for products that aren't being packaged
-            if not fnames:
+            if not product_image_files:
                 continue
 
             # out_fname = outdir / QA / "{}_{}_CONTIGUITY.TIF".format(grn_id, product)
 
             # Build a temp vrt
             # S2 bands are different resolutions. Make them appear the same when taking contiguity.
-            tmp_fname = Path(tmpdir) / f"{product}.vrt"
+            tmp_vrt_path = Path(tmpdir) / f"{product}.vrt"
             images.run_command(
                 [
                     "gdalbuildvrt",
@@ -274,8 +275,8 @@ def create_contiguity(
                     res,
                     res,
                     "-separate",
-                    tmp_fname,
-                    *fnames,
+                    tmp_vrt_path,
+                    *product_image_files,
                 ],
                 tmpdir,
             )
@@ -285,7 +286,7 @@ def create_contiguity(
             Write a contiguity mask file based on the intersection of valid data pixels across all
             bands from the input file and returns with the geobox of the source dataset
             """
-            with rasterio.open(tmp_fname) as ds:
+            with rasterio.open(tmp_vrt_path) as ds:
                 geobox = GridSpec.from_rio(ds)
                 ones = numpy.ones((ds.height, ds.width), dtype="uint8")
                 for band in ds.indexes:
@@ -369,6 +370,8 @@ def package(
                 raise NotImplementedError(f"Unsupported collection number.")
 
             p.properties["odc:product_family"] = "ard"
+            # TODO: nrt / provisional / final classification?
+            p.properties["dea:dataset_condition"] = "final"
 
             # TODO: Move this into the naming api.
             p.product_name = "ga_{platform}{instrument}_{family}_{collection}".format(

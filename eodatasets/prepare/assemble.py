@@ -7,7 +7,7 @@ from copy import deepcopy
 from datetime import datetime
 from enum import Enum
 from pathlib import Path, PurePath
-from typing import Optional, Dict, Tuple, List, Any
+from typing import Any, Dict, List, Optional, Tuple, Generator
 
 import h5py
 import numpy
@@ -16,7 +16,7 @@ from boltons import iterutils
 from rasterio.enums import Resampling
 
 from eodatasets.prepare import images, serialise
-from eodatasets.prepare.images import GridSpec, FileWrite
+from eodatasets.prepare.images import FileWrite, GridSpec
 from eodatasets.prepare.model import DatasetDoc, GridDoc, MeasurementDoc, ProductDoc
 from eodatasets.verify import PackageChecksum
 
@@ -209,11 +209,6 @@ class DatasetAssembler:
         # Clean up.
         self.close()
 
-    @property
-    def _my_label(self):
-        # TODO: Generate dataset label
-        return f"dataset-label-todo"
-
     def close(self):
         """Cleanup any temporary files, even if dataset has not been written"""
         # TODO: add implicit cleanup like tempfile.TemporaryDirectory?
@@ -281,12 +276,6 @@ class DatasetAssembler:
         FileWrite.from_existing(g.shape).write_tif_from_h5(g, out_path, geobox=grid)
         self._record_image(name, grid, out_path)
 
-    def _measurement_file_path(self, band_name):
-        return self._work_path / self.format_name(
-            r"{product_name}-0-0_{odc[reference_code]}-{name}.tif",
-            dict(name=band_name.replace(":", "-")),
-        )
-
     def _record_image(self, name: str, grid: GridSpec, path: Path):
         # We checksum immediately as the file has *just* been written so it may still
         # be in os/filesystem cache.
@@ -301,10 +290,10 @@ class DatasetAssembler:
 
         self._measurements_per_grid[grid][name] = path
 
-    def format_name(self, s: str, custom_fields) -> str:
+    def format_name(self, s: str, custom_fields: Dict = None) -> str:
         properties = nest_properties(self.properties)
         return s.format_map(
-            {**properties, "product_name": self.product_name, **custom_fields}
+            {**properties, "product_name": self.product_name, **(custom_fields or {})}
         )
 
     def write_measurement(self, name: str, p: Path):
@@ -351,6 +340,19 @@ class DatasetAssembler:
                 f"({existing_version!r} != {version!r}"
             )
         self._user_metadata["software_versions"][repository_url] = version
+
+    @property
+    def _my_label(self):
+        # TODO: Configurability?
+        return self.format_name(
+            r"{product_name}-0-0_{odc[reference_code]}_{datetime:%Y-%m-%d}_{dea[dataset_condition]}"
+        )
+
+    def _measurement_file_path(self, band_name):
+        return self._work_path / self.format_name(
+            r"{dataset_label}-{name}.tif",
+            dict(dataset_label=self._my_label, name=band_name.replace(":", "-")),
+        )
 
     def __setitem__(self, key, value):
         if key in self.properties:
@@ -417,18 +419,17 @@ class DatasetAssembler:
             # TODO: Move into customisable naming conventions.
             raise NotImplementedError("product name isn't yet auto-generated ")
 
-        doc = serialise.to_formatted_doc(dataset)
+        self._write_yaml(
+            serialise.to_formatted_doc(dataset),
+            self._work_path / f"{self._my_label}.odc-dataset.yaml",
+        )
+        self._write_yaml(
+            self._user_metadata,
+            self._work_path / f"{self._my_label}.ancil-info.yaml",
+            allow_external_paths=True,
+        )
 
-        metadata_path = self._work_path / f"{self._my_label}.odc-dataset.yaml"
-
-        make_paths_relative(doc, self._work_path)
-
-        serialise.dump_yaml(metadata_path, doc)
-        self._checksum.add_file(metadata_path)
-
-        checksum_path = self._work_path / f"{self._my_label}.sha1"
-        self._checksum.write(checksum_path)
-        checksum_path.chmod(0o664)
+        self._checksum.write(self._work_path / f"{self._my_label}.sha1")
 
         # Match the lower r/w permission bits to the output folder.
         # (Temp directories default to 700 otherwise.)
@@ -454,6 +455,13 @@ class DatasetAssembler:
                 raise RuntimeError(
                     f"Unexpected exists behaviour: {self._exists_behaviour}"
                 )
+
+    def _write_yaml(self, doc, path, allow_external_paths=False):
+        make_paths_relative(
+            doc, self._work_path, allow_paths_outside_base=allow_external_paths
+        )
+        serialise.dump_yaml(path, doc)
+        self._checksum.add_file(path)
 
     @staticmethod
     def _assemble_geo_docs(measurements_per_grid: Dict[GridSpec, Dict[str, Path]]):
@@ -492,6 +500,12 @@ class DatasetAssembler:
                     grid=grid_name if grid_name != "default" else None,
                 )
         return crs, grid_docs, measurement_docs
+
+    def measurement_paths_iter(self) -> Generator[Tuple[str, Path], None, None]:
+        """All current measurement paths on disk"""
+        for grid_name, measurements in self._measurements_per_grid.items():
+            for band_name, path in measurements.items():
+                yield band_name, path
 
 
 def example():
