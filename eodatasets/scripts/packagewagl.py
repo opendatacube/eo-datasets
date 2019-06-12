@@ -367,7 +367,7 @@ def package(
 
             p.properties["odc:product_family"] = "ard"
             # TODO: nrt / provisional / final classification?
-            p.properties["dea:dataset_condition"] = "final"
+            p.properties["dea:dataset_maturity"] = "final"
 
             # TODO: Move this into the naming api.
             p.product_name = "ga_{platform}{instrument}_{family}_{collection}".format(

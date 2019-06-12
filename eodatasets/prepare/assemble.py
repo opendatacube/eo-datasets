@@ -367,7 +367,7 @@ class DatasetAssembler:
     def _my_label(self):
         # TODO: Configurability?
         return self.format_name(
-            r"{product_name}-0-0_{odc[reference_code]}_{datetime:%Y-%m-%d}_{dea[dataset_condition]}"
+            r"{product_name}-0-0_{odc[reference_code]}_{datetime:%Y-%m-%d}_{dea[dataset_maturity]}"
         )
 
     def _measurement_file_path(self, band_name):
