@@ -2,7 +2,7 @@ import collections
 import enum
 import sys
 from pathlib import Path
-from typing import List, Counter, Dict
+from typing import List, Counter, Dict, Generator
 
 import attr
 import click
@@ -69,6 +69,7 @@ class ValidationMessage:
     level: Level
     code: str
     reason: str
+    hint: str = None
 
 
 def _info(code: str, reason: str):
@@ -79,11 +80,13 @@ def _warning(code: str, reason: str):
     return ValidationMessage(Level.warning, code, reason)
 
 
-def _error(code: str, reason: str):
-    return ValidationMessage(Level.error, code, reason)
+def _error(code: str, reason: str, hint: str = None):
+    return ValidationMessage(Level.error, code, reason, hint=hint)
 
 
-def validate(doc: Dict, thorough: bool = False):
+def validate(
+    doc: Dict, thorough: bool = False
+) -> Generator[ValidationMessage, None, None]:
     schema = doc.get("$schema")
     if schema is None:
         yield _error(
@@ -103,8 +106,13 @@ def validate(doc: Dict, thorough: bool = False):
     for error in serialise.DATASET_SCHEMA.iter_errors(doc):
         has_doc_errors = True
         displayable_path = ".".join(error.absolute_path)
+
+        hint = None
+        if displayable_path == "crs" and "not of type" in error.message:
+            hint = "epsg codes should be prefixed with 'epsg:1234'"
+
         context = f"({displayable_path}) " if displayable_path else ""
-        yield _error("structure", f"{context}{error.message} ")
+        yield _error("structure", f"{context}{error.message} ", hint=hint)
 
     if has_doc_errors:
         return
@@ -223,8 +231,12 @@ def run(paths: List[Path], strict_warnings, quiet):
 
             displayable_code = style(f"{message.code}", **s[message.level])
             context = f"{path.stem}\t" if show_document_name else ""
+
+            hint = ""
+            if message.hint:
+                hint = f' ({style("Hint", fg="green")}: {message.hint})'
             echo(
-                f"{context}{message.level.name[0].upper()}\t{displayable_code}\t{message.reason}"
+                f"{context}{message.level.name[0].upper()}\t{displayable_code}\t{message.reason}{hint}"
             )
 
     error_count = validation_counts.get(Level.error) or 0
@@ -237,7 +249,12 @@ def run(paths: List[Path], strict_warnings, quiet):
         )
         secho(f"\n{result}: ", nl=False)
         if validation_counts:
-            echo(", ".join(f"{v} {k.name}" for k, v in validation_counts.items()))
+            echo(
+                ", ".join(
+                    f"{v} {k.name}{'s' if v > 1 else ''}"
+                    for k, v in validation_counts.items()
+                )
+            )
         else:
             secho("All good", fg="green")
 
