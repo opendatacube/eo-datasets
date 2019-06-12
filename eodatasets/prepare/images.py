@@ -1,18 +1,27 @@
 import subprocess
 import tempfile
+from collections import defaultdict
 from pathlib import Path
 from subprocess import check_call
-from typing import Dict, Tuple
-from typing import Sequence, Union, Generator
+from typing import Tuple, Dict, List, Sequence
+from typing import Union, Generator
 
 import attr
 import h5py
 import numpy
 import numpy as np
 import rasterio
+import rasterio.features
+import shapely
+import shapely.affinity
+import shapely.ops
 from affine import Affine
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
+from scipy import ndimage
+from shapely.geometry.base import BaseGeometry, CAP_STYLE, JOIN_STYLE
+
+from eodatasets.prepare.model import GridDoc, MeasurementDoc
 
 LEVELS = [8, 16, 32]
 
@@ -110,7 +119,138 @@ def generate_tiles(
     return tiles
 
 
+class MeasurementRecord:
+    """
+    Record the information for measurements/images to later write out to metadata.
+    """
+
+    def __init__(self):
+        # The measurements grouped by their grid.
+        # (value is band_name->Path)
+        self._measurements_per_grid: Dict[GridSpec, Dict[str, Path]] = defaultdict(dict)
+        # Valid data mask per grid, in pixel coordinates.
+        self.mask_by_grid: Dict[GridSpec, numpy.ndarray] = {}
+
+    def record_image(
+        self, name: str, grid: GridSpec, path: Path, img: numpy.ndarray, nodata
+    ):
+        for measurements in self._measurements_per_grid.values():
+            if name in measurements:
+                raise ValueError(
+                    f"Duplicate addition of band called {name!r}. "
+                    f"Original at {measurements[name]} and now {path}"
+                )
+
+        self._measurements_per_grid[grid][name] = path
+        self._expand_valid_data_mask(grid, img, nodata)
+
+    def _expand_valid_data_mask(self, grid: GridSpec, img: numpy.ndarray, nodata):
+        mask = self.mask_by_grid.get(grid)
+        new_mask = img != nodata
+        if mask is None:
+            mask = new_mask
+        else:
+            mask |= new_mask
+        self.mask_by_grid[grid] = mask
+
+    def as_geo_docs(self) -> Tuple[CRS, Dict[str, GridDoc], Dict[str, MeasurementDoc]]:
+        """Calculate combined information for metadata docs"""
+        # PyCharm's typing seems to get confused by the sorted() call.
+        # noinspection PyTypeChecker
+        grids_by_frequency: List[Tuple[GridSpec, Dict[str, Path]]] = sorted(
+            self._measurements_per_grid.items(), key=lambda k: len(k[1])
+        )
+
+        grid_docs: Dict[str, GridDoc] = {}
+        measurement_docs: Dict[str, MeasurementDoc] = {}
+        crs = grids_by_frequency[0][0].crs
+        for i, (grid, measurements) in enumerate(grids_by_frequency):
+            # TODO: CRS equality is tricky. This may not work.
+            #       We're assuming a group of measurements specify their CRS
+            #       the same way if they are the same.
+            if grid.crs != crs:
+                raise ValueError(
+                    f"Measurements have different CRSes in the same dataset:\n"
+                    f"\t{crs.to_string()!r}\n"
+                    f"\t{grid.crs.to_string()!r}\n"
+                )
+
+            # The grid with the most measurements.
+            if i == 0:
+                grid_name = "default"
+            else:
+                grid_name = "_".join(measurements.keys())
+
+            grid_docs[grid_name] = GridDoc(grid.shape, grid.transform)
+
+            for measurement_name, measurement_path in measurements.items():
+                measurement_docs[measurement_name] = MeasurementDoc(
+                    path=measurement_path,
+                    grid=grid_name if grid_name != "default" else None,
+                )
+        return crs, grid_docs, measurement_docs
+
+    def valid_data(self) -> BaseGeometry:
+        geoms = []
+        for grid, mask in self.mask_by_grid.items():
+            mask = ndimage.binary_fill_holes(mask)
+
+            shape = shapely.ops.unary_union(
+                [
+                    shapely.geometry.shape(shape)
+                    for shape, val in rasterio.features.shapes(
+                        mask.astype("uint8"), mask=mask
+                    )
+                    if val == 1
+                ]
+            )
+
+            # convex hull
+            geom = shape.convex_hull
+
+            # buffer by 1 pixel
+            geom = geom.buffer(
+                1, cap_style=CAP_STYLE.square, join_style=JOIN_STYLE.bevel
+            )
+
+            # simplify with 1 pixel radius
+            geom = geom.simplify(1)
+
+            # intersect with image bounding box
+            geom = geom.intersection(
+                shapely.geometry.box(0, 0, mask.shape[1], mask.shape[0])
+            )
+
+            # transform from pixel space into CRS space
+            geom = shapely.affinity.affine_transform(
+                geom,
+                (
+                    grid.transform.a,
+                    grid.transform.b,
+                    grid.transform.d,
+                    grid.transform.e,
+                    grid.transform.xoff,
+                    grid.transform.yoff,
+                ),
+            )
+            geoms.append(geom)
+
+        return shapely.ops.unary_union(geoms)
+
+    def iter_paths(self) -> Generator[Tuple[str, Path], None, None]:
+        """All current measurement paths on disk"""
+        for grid_name, measurements in self._measurements_per_grid.items():
+            for band_name, path in measurements.items():
+                yield band_name, path
+
+
 class FileWrite:
+    """
+    Write COGs from arrays / files.
+
+    This code is derived from the old eugl packaging code and can probably be improved.
+    """
+
     def __init__(self, gdal_options: Dict, gdal_config_options: Dict) -> None:
         super().__init__()
 
@@ -360,41 +500,6 @@ class FileWrite:
         for key, value in self.config_options.items():
             args.extend(["--config", "{}".format(key), "{}".format(value)])
         return args
-
-    def write_tif_from_h5(
-        self,
-        dataset: h5py.Dataset,
-        out_fname: Path,
-        nodata: int = None,
-        geobox: GridSpec = None,
-    ):
-        """
-        Method to write a h5 dataset or numpy array to a tif file
-        :param dataset:
-            h5 dataset containing a numpy array or numpy array
-            Dataset will map to the raster data
-
-        returns the out_fname param
-        """
-        if hasattr(dataset, "chunks"):
-            data = dataset[:]
-        else:
-            data = dataset
-
-        if nodata is None and hasattr(dataset, "attrs"):
-            nodata = dataset.attrs.get("no_data_value")
-        if geobox is None:
-            geobox = GridSpec.from_h5(dataset)
-
-        out_fname.parent.mkdir(exist_ok=True)
-
-        self.write_from_ndarray(
-            data,
-            out_fname,
-            nodata=nodata,
-            geobox=geobox,
-            overview_resampling=Resampling.average,
-        )
 
     def write_from_file(
         self, input_image: Path, out_fname: Path, overviews: bool = True

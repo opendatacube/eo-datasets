@@ -13,11 +13,12 @@ import h5py
 import numpy
 import rasterio
 from boltons import iterutils
+from rasterio import DatasetReader
 from rasterio.enums import Resampling
 
 from eodatasets.prepare import images, serialise
-from eodatasets.prepare.images import FileWrite, GridSpec
-from eodatasets.prepare.model import DatasetDoc, GridDoc, MeasurementDoc, ProductDoc
+from eodatasets.prepare.images import FileWrite, GridSpec, MeasurementRecord
+from eodatasets.prepare.model import DatasetDoc, ProductDoc
 from eodatasets.verify import PackageChecksum
 
 _INHERITABLE_PROPERTIES = {
@@ -183,9 +184,7 @@ class DatasetAssembler:
             tempfile.mkdtemp(prefix=".odcdataset-", dir=str(output_folder.parent))
         )
 
-        # The measurements grouped by their grid.
-        # (value is band_name->Path)
-        self._measurements_per_grid: Dict[GridSpec, Dict[str, Path]] = defaultdict(dict)
+        self._measurements = MeasurementRecord()
 
         self._allow_absolute_paths = allow_absolute_paths
 
@@ -273,22 +272,27 @@ class DatasetAssembler:
         grid = images.GridSpec.from_h5(g)
         out_path = self._measurement_file_path(name)
 
-        FileWrite.from_existing(g.shape).write_tif_from_h5(g, out_path, geobox=grid)
-        self._record_image(name, grid, out_path)
+        if hasattr(g, "chunks"):
+            data = g[:]
+        else:
+            data = g
 
-    def _record_image(self, name: str, grid: GridSpec, path: Path):
+        for p in g.attrs:
+            print(repr(p))
+        nodata = g.attrs.get("no_data_value")
+
+        FileWrite.from_existing(g.shape).write_from_ndarray(
+            data,
+            out_path,
+            geobox=grid,
+            nodata=nodata,
+            overview_resampling=Resampling.average,
+        )
+        self._measurements.record_image(name, grid, out_path, data, nodata)
+
         # We checksum immediately as the file has *just* been written so it may still
         # be in os/filesystem cache.
-        self._checksum.add_file(path)
-
-        for measurements in self._measurements_per_grid.values():
-            if name in measurements:
-                raise ValueError(
-                    f"Duplicate addition of band called {name!r}. "
-                    f"Original at {measurements[name]} and now {path}"
-                )
-
-        self._measurements_per_grid[grid][name] = path
+        self._checksum.add_file(out_path)
 
     def format_name(self, s: str, custom_fields: Dict = None) -> str:
         properties = nest_properties(self.properties)
@@ -297,13 +301,26 @@ class DatasetAssembler:
         )
 
     def write_measurement(self, name: str, p: Path):
-        with rasterio.open(p) as f:
-            grid = images.GridSpec.from_rio(f)
+        with rasterio.open(p) as ds:
+            ds: DatasetReader
+            grid = images.GridSpec.from_rio(ds)
 
-        out_path = self._measurement_file_path(name)
+            out_path = self._measurement_file_path(name)
 
-        FileWrite.from_existing(grid.shape).write_from_file(p, out_path)
-        self._record_image(name, grid, out_path)
+            FileWrite.from_existing(grid.shape).write_from_file(p, out_path)
+
+            if ds.indexes > 1:
+                raise NotImplementedError(
+                    "TODO: Multi-band images not currently implemented"
+                )
+
+            self._measurements.record_image(
+                name, grid, out_path, img=ds.read(1), nodata=ds.nodata
+            )
+
+        # We checksum immediately as the file has *just* been written so it may still
+        # be in os/filesystem cache.
+        self._checksum.add_file(out_path)
 
     def extend_user_metadata(self, section, d: Dict):
         if section in self._user_metadata:
@@ -328,7 +345,12 @@ class DatasetAssembler:
             nodata=nodata,
             overview_resampling=overview_resampling,
         )
-        self._record_image(name, grid_spec, out_path)
+        self._measurements.record_image(
+            name, grid_spec, out_path, img=array, nodata=nodata
+        )
+        # We checksum immediately as the file has *just* been written so it may still
+        # be in os/filesystem cache.
+        self._checksum.add_file(out_path)
 
     def note_software_version(self, repository_url, version):
         existing_version = self._user_metadata.setdefault("software_versions", {}).get(
@@ -397,23 +419,20 @@ class DatasetAssembler:
         # write metadata fields:
 
         # Order from most to fewest measurements.
-        crs, grid_docs, measurement_docs = self._assemble_geo_docs(
-            self._measurements_per_grid
-        )
+        crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
+        valid_data = self._measurements.valid_data()
 
         dataset = DatasetDoc(
             id=uuid.uuid4(),
             # TODO: configurable/non-dea naming?
             product=ProductDoc.dea_name(self.product_name),
-            properties=self.properties,
-            lineage=self._lineage,
             crs=crs.to_epsg() if crs.is_epsg_code else crs.to_wkt(),
+            geometry=valid_data,
             grids=grid_docs,
+            properties=self.properties,
             measurements=measurement_docs,
+            lineage=self._lineage,
         )
-
-        # TODO: Take geometry on addition to package
-        # dataset.geometry =
 
         if dataset.product is None:
             # TODO: Move into customisable naming conventions.
@@ -463,49 +482,8 @@ class DatasetAssembler:
         serialise.dump_yaml(path, doc)
         self._checksum.add_file(path)
 
-    @staticmethod
-    def _assemble_geo_docs(measurements_per_grid: Dict[GridSpec, Dict[str, Path]]):
-
-        # PyCharm's typing seems to get confused by the sorted() call.
-        # noinspection PyTypeChecker
-        grids_by_frequency: List[Tuple[GridSpec, Dict[str, Path]]] = sorted(
-            measurements_per_grid.items(), key=lambda k: len(k[1])
-        )
-
-        grid_docs: Dict[str, GridDoc] = {}
-        measurement_docs: Dict[str, MeasurementDoc] = {}
-        crs = grids_by_frequency[0][0].crs
-        for i, (grid, measurements) in enumerate(grids_by_frequency):
-            # TODO: CRS equality is tricky. This may not work.
-            #       We're assuming a group of measurements specify their CRS
-            #       the same way if they are the same.
-            if grid.crs != crs:
-                raise ValueError(
-                    f"Measurements have different CRSes in the same dataset:\n"
-                    f"\t{crs.to_string()!r}\n"
-                    f"\t{grid.crs.to_string()!r}\n"
-                )
-
-            # The grid with the most measurements.
-            if i == 0:
-                grid_name = "default"
-            else:
-                grid_name = "_".join(measurements.keys())
-
-            grid_docs[grid_name] = GridDoc(grid.shape, grid.transform)
-
-            for measurement_name, measurement_path in measurements.items():
-                measurement_docs[measurement_name] = MeasurementDoc(
-                    path=measurement_path,
-                    grid=grid_name if grid_name != "default" else None,
-                )
-        return crs, grid_docs, measurement_docs
-
-    def measurement_paths_iter(self) -> Generator[Tuple[str, Path], None, None]:
-        """All current measurement paths on disk"""
-        for grid_name, measurements in self._measurements_per_grid.items():
-            for band_name, path in measurements.items():
-                yield band_name, path
+    def iter_measurement_paths(self) -> Generator[Tuple[str, Path], None, None]:
+        return self._measurements.iter_paths()
 
 
 def example():

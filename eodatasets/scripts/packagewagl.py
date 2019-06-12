@@ -36,9 +36,6 @@ FILENAME_TIF_BAND = re.compile(
     r"(?P<extension>\....)"
 )
 PRODUCT_SUITE_FROM_GRANULE = re.compile("(L1[GTPCS]{1,2})")
-ARD = "ARD"
-QA = "QA"
-SUPPS = "SUPPLEMENTARY"
 
 
 def find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> List[str]:
@@ -131,7 +128,7 @@ yaml.add_representer(numpy.ndarray, Representer.represent_list)
 
 
 def _l1_to_ard(granule: str) -> str:
-    return re.sub(PRODUCT_SUITE_FROM_GRANULE, ARD, granule)
+    return re.sub(PRODUCT_SUITE_FROM_GRANULE, "ARD", granule)
 
 
 def unpack_products(
@@ -176,14 +173,16 @@ def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
     Currently only the mode resolution group gets extracted.
     """
 
-    def _write(dataset_names: Sequence[str], h5_group: h5py.Group, basedir: str):
+    def _write(dataset_names: Sequence[str], offset: str, basedir: str):
         """
         An internal util for serialising the supplementary
         H5Datasets to tif.
         """
-        for dname in dataset_names:
+        for dataset_name in dataset_names:
+            o = ppjoin(offset, dataset_name)
+            secho(f"{basedir.lower()} path {o!r}", fg="blue")
             p.write_measurement_h5(
-                f"{basedir.lower()}:{dname.lower()}", h5_group[dname]
+                f"{basedir.lower()}:{dataset_name.lower()}", h5group[o]
             )
 
     res_grps = [g for g in h5group.keys() if g.startswith("RES-GROUP-")]
@@ -192,8 +191,8 @@ def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
     [res_grp] = res_grps
 
     # satellite and solar angles
-    grp = h5group[ppjoin(res_grp, "SATELLITE-SOLAR")]
 
+    solar_offset = ppjoin(res_grp, "SATELLITE-SOLAR")
     _write(
         [
             "SATELLITE-VIEW",
@@ -203,41 +202,38 @@ def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
             "RELATIVE-AZIMUTH",
             "TIMEDELTA",
         ],
-        grp,
-        SUPPS,
+        solar_offset,
+        "SUPPLEMENTARY",
     )
 
-    # timedelta data
-    timedelta_data = grp["TIMEDELTA"]
-
     # incident angles
-
     _write(
         ["INCIDENT", "AZIMUTHAL-INCIDENT"],
-        h5group[ppjoin(res_grp, "INCIDENT-ANGLES")],
-        SUPPS,
+        ppjoin(res_grp, "INCIDENT-ANGLES"),
+        "SUPPLEMENTARY",
     )
 
     # exiting angles
 
     _write(
         ["EXITING", "AZIMUTHAL-EXITING"],
-        h5group[ppjoin(res_grp, "EXITING-ANGLES")],
-        SUPPS,
+        ppjoin(res_grp, "EXITING-ANGLES"),
+        "SUPPLEMENTARY",
     )
 
     # relative slope
 
-    _write(["RELATIVE-SLOPE"], h5group[ppjoin(res_grp, "RELATIVE-SLOPE")], SUPPS)
+    _write(["RELATIVE-SLOPE"], ppjoin(res_grp, "RELATIVE-SLOPE"), "SUPPLEMENTARY")
 
     # terrain shadow
     # TODO: this one had cogtif=True? (but was unused in `_write()`)
 
-    _write(["COMBINED-TERRAIN-SHADOW"], h5group[ppjoin(res_grp, "SHADOW-MASKS")], QA)
+    _write(["COMBINED-TERRAIN-SHADOW"], ppjoin(res_grp, "SHADOW-MASKS"), "QA")
 
     # TODO do we also include slope and aspect?
 
-    return timedelta_data
+    # timedelta data
+    return h5group[solar_offset]["TIMEDELTA"]
 
 
 def create_contiguity(
@@ -253,7 +249,7 @@ def create_contiguity(
         for product in product_list:
             product_image_files = [
                 path
-                for band_name, path in p.measurement_paths_iter()
+                for band_name, path in p.iter_measurement_paths()
                 if band_name.startswith(f"{product}:")
             ]
 
