@@ -16,9 +16,10 @@ from boltons import iterutils
 from rasterio import DatasetReader
 from rasterio.enums import Resampling
 
-from eodatasets.prepare import images, serialise
+from eodatasets.prepare import images, serialise, validate
 from eodatasets.prepare.images import FileWrite, GridSpec, MeasurementRecord
 from eodatasets.prepare.model import DatasetDoc, ProductDoc
+from eodatasets.prepare.validate import Level, ValidationMessage
 from eodatasets.verify import PackageChecksum
 
 _INHERITABLE_PROPERTIES = {
@@ -147,6 +148,11 @@ def make_paths_relative(
             continue
 
         docpath_set(doc, doc_path, value.relative_to(base_directory))
+
+
+class IncompleteDatasetError(Exception):
+    def __init__(self, validation: ValidationMessage) -> None:
+        self.validation = validation
 
 
 class DatasetAssembler:
@@ -414,7 +420,7 @@ class DatasetAssembler:
         self.properties["dtr:start_datetime"] = start
         self.properties["dtr:end_datetime"] = end
 
-    def done(self):
+    def done(self, validate_correctness=True):
         """Write the dataset to the destination"""
         # write metadata fields:
 
@@ -438,10 +444,19 @@ class DatasetAssembler:
             # TODO: Move into customisable naming conventions.
             raise NotImplementedError("product name isn't yet auto-generated ")
 
-        self._write_yaml(
-            serialise.to_formatted_doc(dataset),
-            self._work_path / f"{self._my_label}.odc-dataset.yaml",
-        )
+        doc = serialise.to_formatted_doc(dataset)
+        if validate_correctness:
+            for m in validate.validate(doc):
+                if m.level in (Level.info, Level.warning):
+                    warnings.warn(m.reason, category=f"doc_validation.{m.code}")
+                elif m.level == Level.error:
+                    raise IncompleteDatasetError(m)
+                else:
+                    raise RuntimeError(
+                        f"Internal error: Unhandled type of message level: {m.level}"
+                    )
+
+        self._write_yaml(doc, self._work_path / f"{self._my_label}.odc-dataset.yaml")
         self._write_yaml(
             self._user_metadata,
             self._work_path / f"{self._my_label}.ancil-info.yaml",
