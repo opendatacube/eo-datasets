@@ -7,9 +7,9 @@ import click
 import rasterio
 from xml.etree import ElementTree
 
-from eodatasets.serialise import write_yaml_from_dict
-from eodatasets.prepare.utils import read_paths_from_file
-from eodatasets.metadata.valid_region import valid_region
+from ..serialise import write_yaml_from_dict
+from ..metadata.valid_region import valid_region
+from .utils import read_paths_from_file, ItemProvider
 
 
 MCD43A1_NS = uuid.UUID(hex='80dc431b-fc6c-4e6f-bf08-585eba1d8dc9')
@@ -138,12 +138,17 @@ def process_datasets(input_path: Path, xml_file: Path):
         'item:providers': [
             {
                 'name': 'National Aeronautics and Space Administration',
-                'roles': ['producer', 'processer'],
+                'roles': [
+                    ItemProvider.PRODUCER.value,
+                    ItemProvider.PROCESSOR.value
+                ],
                 'url': 'https://modis.gsfc.nasa.gov/data/dataprod/mod43.php'
             },
             {
                 'name': 'United States Geological Society',
-                'roles': ['processor'],
+                'roles': [
+                    ItemProvider.PROCESSOR.value
+                ],
                 'url': 'https://lpdaac.usgs.gov/products/mcd43a1v006/'
             }
         ],
