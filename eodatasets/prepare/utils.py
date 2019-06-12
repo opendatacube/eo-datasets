@@ -2,9 +2,17 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable
 import os
+import enum
 
 import click
 import ciso8601
+
+
+class ItemProvider(enum.Enum):
+    PRODUCER = 'producer'
+    PROCESSOR = 'processor'
+    HOST = 'host'
+    LICENSOR = 'licensor'
 
 
 class ClickDatetime(click.ParamType):
