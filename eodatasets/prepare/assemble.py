@@ -123,8 +123,8 @@ def make_paths_relative(
     >>> base = PurePath('/tmp/basket')
     >>> doc = {'id': 1, 'fruits': [{'apple': PurePath('/tmp/basket/fruits/apple.txt')}]}
     >>> make_paths_relative(doc, base)
-    >>> doc #doctest: +ELLIPSIS
-    {'id': 1, 'fruits': [{'apple': Pure...Path('fruits/apple.txt')}]}
+    >>> doc
+    {'id': 1, 'fruits': [{'apple': 'fruits/apple.txt'}]}
     >>> # No change if repeated. (relative paths still relative)
     >>> previous = deepcopy(doc)
     >>> make_paths_relative(doc, base)
