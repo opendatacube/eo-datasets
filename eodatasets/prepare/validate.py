@@ -20,6 +20,8 @@ from eodatasets.ui import PathPath, is_absolute
 # Keep sorted.
 _KNOWN_STAC_PROPERTIES = {
     "datetime",
+    "dea:dataset_maturity",
+    "dea:processing_level",
     "dtr:end_datetime",
     "dtr:start_datetime",
     "eo:azimuth",
@@ -55,6 +57,8 @@ _KNOWN_STAC_PROPERTIES = {
     "odc:file_format",
     "odc:processing_datetime",
     "odc:producer",
+    "odc:product_family",
+    "odc:reference_code",
 }
 
 
