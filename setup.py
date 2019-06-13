@@ -7,13 +7,14 @@ import versioneer
 
 
 tests_require = [
-    'pytest',
-    'pytest-flake8',
     'deepdiff',
     'flake8',
     'hypothesis',
     'mock',
     'pep8-naming',
+    'pytest',
+    'pytest-flake8',
+    'python-rapidjson',
 ]
 
 
