@@ -32,6 +32,8 @@ properties:
       type: string
 
   crs:
+    # Either an epsg code ('epsg:1234') (preferred!)
+    # or a WKT string if no EPSG is possible.
     type: string
 
   # TODO
@@ -65,12 +67,14 @@ properties:
 
     properties:
       datetime:
-        # TODO: "string" type is problematic as they're currently parsed directly into datetime objects...
+        # TODO: "string" type is problematic as they're
+        #       currently parsed directly into datetime objects...
         # type: string
         format: date-time
 
       odc:processing_datetime:
-        # TODO: "string" type is problematic as they're currently parsed directly into datetime objects...
+        # TODO: "string" type is problematic as they're
+        #       currently parsed directly into datetime objects...
         # type: string
         format: date-time
     required:
