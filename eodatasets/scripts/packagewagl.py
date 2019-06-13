@@ -7,6 +7,7 @@ from pathlib import Path
 from posixpath import join as ppjoin
 from typing import Dict, List, Sequence
 
+import ciso8601
 import h5py
 import numpy
 import rasterio
@@ -347,7 +348,7 @@ def package(
             p.note_software_version(TESP_REPO_URL, TESP_VERSION)
 
             # TODO there's probably a real one.
-            p["dea:processing_level"] = "Level-2"
+            p["dea:processing_level"] = "level-2"
             provider_reference_info(p, granule)
 
             # GA's collection 3 processes USGS Collection 1
@@ -414,8 +415,8 @@ def unpack_wagl_docs(p: DatasetAssembler, granule_group: h5py.Group):
     wagl_doc = yaml.safe_load(granule_group[wagl_path][()])
 
     try:
-        p.properties["odc:processing_datetime"] = get_path(
-            wagl_doc, ("system_information", "time_processed")
+        p.properties["odc:processing_datetime"] = ciso8601.parse_datetime(
+            get_path(wagl_doc, ("system_information", "time_processed"))
         )
     except PathAccessError:
         raise ValueError(f"WAGL dataset contains no time processed. Path {wagl_path}")
