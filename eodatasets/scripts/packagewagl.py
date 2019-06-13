@@ -11,6 +11,7 @@ import h5py
 import numpy
 import rasterio
 import yaml
+from boltons.iterutils import get_path, PathAccessError
 from click import secho
 from yaml.representer import Representer
 
@@ -151,17 +152,6 @@ def unpack_products(
             # TODO: formal separation of 'product' groups?
             p.write_measurement_h5(f"{product.lower()}:{band_name}", dataset)
 
-    pathnames = [
-        pth for pth in (find_h5_paths(h5group, "SCALAR")) if "NBAR-METADATA" in pth
-    ]
-
-    tags = yaml.load(h5group[pathnames[0]][()])
-    for path in pathnames[1:]:
-        other = yaml.load(h5group[path][()])
-        tags["ancillary"].update(other["ancillary"])
-
-    p.extend_user_metadata("wagl", tags)
-
 
 def _clean_alias(dataset: h5py.Dataset):
     return dataset.attrs["alias"].lower().replace("-", "_")
@@ -182,7 +172,8 @@ def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
             o = ppjoin(offset, dataset_name)
             secho(f"{basedir.lower()} path {o!r}", fg="blue")
             p.write_measurement_h5(
-                f"{basedir.lower()}:{dataset_name.lower()}", h5group[o]
+                f"{basedir.lower()}:{dataset_name.lower()}".replace("-", "_"),
+                h5group[o],
             )
 
     res_grps = [g for g in h5group.keys() if g.startswith("RES-GROUP-")]
@@ -380,10 +371,13 @@ def package(
             # TODO: pan band?
 
             # unpack the standardised products produced by wagl
-            unpack_products(p, products, fid[granule])
+            granule_group = fid[granule]
+            unpack_products(p, products, granule_group)
+
+            unpack_wagl_docs(p, granule_group)
 
             # unpack supplementary datasets produced by wagl
-            timedelta_data = unpack_supplementary(p, fid[granule])
+            timedelta_data = unpack_supplementary(p, granule_group)
 
             # file based globbing, so can't have any other tifs on disk
             create_contiguity(p, products, level1, timedelta_data)
@@ -405,6 +399,32 @@ def package(
                     p.extend_user_metadata("gqa", yaml.safe_load(fl))
 
             p.done()
+
+
+def unpack_wagl_docs(p: DatasetAssembler, granule_group: h5py.Group):
+    try:
+        wagl_path, *ancil_paths = [
+            pth
+            for pth in (find_h5_paths(granule_group, "SCALAR"))
+            if "NBAR-METADATA" in pth
+        ]
+    except ValueError:
+        raise ValueError("No nbar metadata found in granule")
+
+    wagl_doc = yaml.safe_load(granule_group[wagl_path][()])
+
+    try:
+        p.properties["odc:processing_datetime"] = get_path(
+            wagl_doc, ("system_information", "time_processed")
+        )
+    except PathAccessError:
+        raise ValueError(f"WAGL dataset contains no time processed. Path {wagl_path}")
+    for i, path in enumerate(ancil_paths):
+        wagl_doc.setdefault(f"ancillary_{i}", {}).update(
+            yaml.safe_load(granule_group[path][()])["ancillary"]
+        )
+
+    p.extend_user_metadata("wagl", wagl_doc)
 
 
 def run():
