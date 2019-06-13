@@ -32,6 +32,8 @@ TESP_REPO_URL = "https://github.com/GeoscienceAustralia/eo-datasets"
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
+# From the internal h5 name (after normalisation) to the package name.
+MEASUREMENT_TRANSLATION = {"exiting": "exiting_angle", "incident": "incident_angle"}
 
 FILENAME_TIF_BAND = re.compile(
     r"(?P<prefix>(?:.*_)?)(?P<band_name>B[0-9][A0-9]|B[0-9]*|B[0-9a-zA-z]*)"
@@ -182,8 +184,14 @@ def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
         for dataset_name in dataset_names:
             o = ppjoin(offset, dataset_name)
             secho(f"{basedir.lower()} path {o!r}", fg="blue")
+
+            measurement_name = f"{dataset_name.lower()}".replace("-", "_")
+            measurement_name = MEASUREMENT_TRANSLATION.get(
+                measurement_name, measurement_name
+            )
+
             p.write_measurement_h5(
-                f"{dataset_name.lower()}".replace("-", "_"),
+                measurement_name,
                 h5group[o],
                 # We only use the product bands for valid data calc, not supplementary.
                 expand_valid_data=False,
