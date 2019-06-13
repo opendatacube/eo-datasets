@@ -432,7 +432,7 @@ class DatasetAssembler:
             id=uuid.uuid4(),
             # TODO: configurable/non-dea naming?
             product=ProductDoc.dea_name(self.product_name),
-            crs=crs.to_epsg() if crs.is_epsg_code else crs.to_wkt(),
+            crs=f"epsg:{crs.to_epsg()}" if crs.is_epsg_code else crs.to_wkt(),
             geometry=valid_data,
             grids=grid_docs,
             properties=self.properties,
