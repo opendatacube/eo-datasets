@@ -143,9 +143,17 @@ def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:
     del doc["$schema"]
 
     c = cattr.Converter()
-    c.register_structure_hook(uuid.UUID, lambda d, t: uuid.UUID(d))
-    c.register_structure_hook(BaseGeometry, lambda d, t: shape(d))
+    c.register_structure_hook(uuid.UUID, _structure_as_uuid)
+    c.register_structure_hook(BaseGeometry, _structure_as_shape)
     return c.structure(doc, DatasetDoc)
+
+
+def _structure_as_uuid(d, t):
+    return uuid.UUID(str(d))
+
+
+def _structure_as_shape(d, t):
+    return shape(d)
 
 
 def to_doc(d: DatasetDoc) -> Dict:

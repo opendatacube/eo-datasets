@@ -71,6 +71,12 @@ class ValidationMessage:
     reason: str
     hint: str = None
 
+    def __str__(self) -> str:
+        hint = None
+        if self.hint:
+            hint = f" (Hint: {hint})"
+        return f"{self.code}: {self.reason}{hint}"
+
 
 def _info(code: str, reason: str):
     return ValidationMessage(Level.info, code, reason)

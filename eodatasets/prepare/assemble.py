@@ -147,12 +147,22 @@ def make_paths_relative(
                 )
             continue
 
-        docpath_set(doc, doc_path, value.relative_to(base_directory))
+        docpath_set(doc, doc_path, str(value.relative_to(base_directory)))
 
 
 class IncompleteDatasetError(Exception):
     def __init__(self, validation: ValidationMessage) -> None:
         self.validation = validation
+
+
+class DatasetCompletenessWarning(UserWarning):
+    """A non-critical warning for invalid or incomplete metadata"""
+
+    def __init__(self, validation: ValidationMessage) -> None:
+        self.validation = validation
+
+    def __str__(self) -> str:
+        return str(self.validation)
 
 
 class DatasetAssembler:
@@ -445,18 +455,18 @@ class DatasetAssembler:
             raise NotImplementedError("product name isn't yet auto-generated ")
 
         doc = serialise.to_formatted_doc(dataset)
+        self._write_yaml(doc, self._work_path / f"{self._my_label}.odc-dataset.yaml")
+
         if validate_correctness:
             for m in validate.validate(doc):
                 if m.level in (Level.info, Level.warning):
-                    warnings.warn(m.reason, category=f"doc_validation.{m.code}")
+                    warnings.warn(DatasetCompletenessWarning(m))
                 elif m.level == Level.error:
                     raise IncompleteDatasetError(m)
                 else:
                     raise RuntimeError(
                         f"Internal error: Unhandled type of message level: {m.level}"
                     )
-
-        self._write_yaml(doc, self._work_path / f"{self._my_label}.odc-dataset.yaml")
         self._write_yaml(
             self._user_metadata,
             self._work_path / f"{self._my_label}.ancil-info.yaml",
