@@ -132,7 +132,13 @@ class MeasurementRecord:
         self.mask_by_grid: Dict[GridSpec, numpy.ndarray] = {}
 
     def record_image(
-        self, name: str, grid: GridSpec, path: Path, img: numpy.ndarray, nodata
+        self,
+        name: str,
+        grid: GridSpec,
+        path: Path,
+        img: numpy.ndarray,
+        nodata,
+        expand_valid_data=True,
     ):
         for measurements in self._measurements_per_grid.values():
             if name in measurements:
@@ -142,7 +148,8 @@ class MeasurementRecord:
                 )
 
         self._measurements_per_grid[grid][name] = path
-        self._expand_valid_data_mask(grid, img, nodata)
+        if expand_valid_data:
+            self._expand_valid_data_mask(grid, img, nodata)
 
     def _expand_valid_data_mask(self, grid: GridSpec, img: numpy.ndarray, nodata):
         mask = self.mask_by_grid.get(grid)

@@ -284,7 +284,7 @@ class DatasetAssembler:
                         f"{existing_val!r} != {new_val!r}"
                     )
 
-    def write_measurement_h5(self, name: str, g: h5py.Dataset):
+    def write_measurement_h5(self, name: str, g: h5py.Dataset, expand_valid_data=True):
         grid = images.GridSpec.from_h5(g)
         out_path = self._measurement_file_path(name)
 
@@ -293,8 +293,6 @@ class DatasetAssembler:
         else:
             data = g
 
-        for p in g.attrs:
-            print(repr(p))
         nodata = g.attrs.get("no_data_value")
 
         FileWrite.from_existing(g.shape).write_from_ndarray(
@@ -304,7 +302,9 @@ class DatasetAssembler:
             nodata=nodata,
             overview_resampling=Resampling.average,
         )
-        self._measurements.record_image(name, grid, out_path, data, nodata)
+        self._measurements.record_image(
+            name, grid, out_path, data, nodata, expand_valid_data=expand_valid_data
+        )
 
         # We checksum immediately as the file has *just* been written so it may still
         # be in os/filesystem cache.

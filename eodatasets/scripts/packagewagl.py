@@ -175,6 +175,8 @@ def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
             p.write_measurement_h5(
                 f"{basedir.lower()}:{dataset_name.lower()}".replace("-", "_"),
                 h5group[o],
+                # We only use the product bands for valid data calc, not supplementary.
+                expand_valid_data=False,
             )
 
     res_grps = [g for g in h5group.keys() if g.startswith("RES-GROUP-")]
