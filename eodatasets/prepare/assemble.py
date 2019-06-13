@@ -388,8 +388,8 @@ class DatasetAssembler:
 
     def _measurement_file_path(self, band_name):
         return self._work_path / self.format_name(
-            r"{dataset_label}-{name}.tif",
-            dict(dataset_label=self._my_label, name=band_name.replace(":", "-")),
+            r"{dataset_label}_{name}.tif",
+            dict(dataset_label=self._my_label, name=band_name.replace("_", "-")),
         )
 
     def __setitem__(self, key, value):

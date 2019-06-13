@@ -354,6 +354,11 @@ class FileWrite:
             chunks. To override the blocksizes, specify them using the
             `options` keyword. Eg {'blockxsize': 512, 'blockysize': 512}.
         """
+        if out_filename.exists():
+            # Sanity check. Our measurements should have different names...
+            raise RuntimeError(
+                f"measurement output file already exists? {out_filename}"
+            )
 
         levels = self.default_levels
 

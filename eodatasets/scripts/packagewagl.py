@@ -148,14 +148,24 @@ def unpack_products(
         for pathname in [p for p in img_paths if "/{}/".format(product) in p]:
             secho(f"Path {pathname}", fg="blue")
             dataset = h5group[pathname]
-
-            band_name = _clean_alias(dataset)
-            # TODO: formal separation of 'product' groups?
-            p.write_measurement_h5(f"{product.lower()}:{band_name}", dataset)
+            p.write_measurement_h5(f"{product.lower()}_{_band_name(dataset)}", dataset)
 
 
-def _clean_alias(dataset: h5py.Dataset):
-    return dataset.attrs["alias"].lower().replace("-", "_")
+def _band_name(dataset: h5py.Dataset):
+    # What we have to work with:
+    # >>> print(repr((dataset.attrs["band_id"], dataset.attrs["band_name"], dataset.attrs["alias"])))
+    # ('1', 'BAND-1', 'Blue')
+
+    band_name = dataset.attrs["band_id"]
+
+    # A purely numeric id needs to be formatted like 'band01' according to naming conventions.
+    try:
+        number = int(dataset.attrs["band_id"])
+        band_name = f"band{number:02}"
+    except ValueError:
+        pass
+
+    return band_name.lower().replace("-", "_")
 
 
 def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
@@ -173,7 +183,7 @@ def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
             o = ppjoin(offset, dataset_name)
             secho(f"{basedir.lower()} path {o!r}", fg="blue")
             p.write_measurement_h5(
-                f"{basedir.lower()}:{dataset_name.lower()}".replace("-", "_"),
+                f"{dataset_name.lower()}".replace("-", "_"),
                 h5group[o],
                 # We only use the product bands for valid data calc, not supplementary.
                 expand_valid_data=False,
@@ -440,6 +450,7 @@ def run():
         },
         outdir=Path("./wagl-out").absolute(),
         granule="LT50910841993188ASA00",
+        products=("NBAR",),
     )
 
 
