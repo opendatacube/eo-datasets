@@ -12,8 +12,6 @@ import numpy
 import pathlib
 from osgeo import gdal, gdalconst
 
-import eodatasets.type as ptype
-from eodatasets import serialise, drivers
 
 GDAL_CACHE_MAX_MB = 512
 
@@ -21,9 +19,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def run_command(command, work_dir):
-    _LOG.debug('Running %r', command)
+    _LOG.debug("Running %r", command)
     check_call(command, cwd=work_dir)
-    _LOG.debug('Finished %s', command[0])
+    _LOG.debug("Finished %s", command[0])
 
 
 # This method comes from the old ULA codebase and should be cleaned up eventually.
@@ -79,8 +77,16 @@ def _calculate_scale_offset(nodata, band):
 
 # This method comes from the old ULA codebase and should be cleaned up eventually.
 # pylint: disable=too-many-locals
-def _create_thumbnail(red_file, green_file, blue_file, output_path,
-                      x_constraint=None, nodata=-999, work_dir=None, overwrite=True):
+def _create_thumbnail(
+    red_file,
+    green_file,
+    blue_file,
+    output_path,
+    x_constraint=None,
+    nodata=-999,
+    work_dir=None,
+    overwrite=True,
+):
     """
     Create JPEG thumbnail image using individual R, G, B images.
 
@@ -105,28 +111,35 @@ def _create_thumbnail(red_file, green_file, blue_file, output_path,
     thumbnail_path = pathlib.Path(output_path).absolute()
 
     if thumbnail_path.exists() and not overwrite:
-        _LOG.warning('File already exists. Skipping creation of %s', thumbnail_path)
+        _LOG.warning("File already exists. Skipping creation of %s", thumbnail_path)
         return None, None, None
 
     # thumbnail_image = os.path.abspath(thumbnail_image)
 
     out_directory = str(thumbnail_path.parent)
-    work_dir = os.path.abspath(work_dir) if work_dir else tempfile.mkdtemp(prefix='.thumb-tmp', dir=out_directory)
+    work_dir = (
+        os.path.abspath(work_dir)
+        if work_dir
+        else tempfile.mkdtemp(prefix=".thumb-tmp", dir=out_directory)
+    )
     try:
         # working files
-        file_to = os.path.join(work_dir, 'rgb.vrt')
-        warp_to_file = os.path.join(work_dir, 'rgb-warped.vrt')
-        outtif = os.path.join(work_dir, 'thumbnail.tif')
+        file_to = os.path.join(work_dir, "rgb.vrt")
+        warp_to_file = os.path.join(work_dir, "rgb-warped.vrt")
+        outtif = os.path.join(work_dir, "thumbnail.tif")
 
         # Build the RGB Virtual Raster at full resolution
         run_command(
             [
                 "gdalbuildvrt",
-                "-overwrite", "-separate",
+                "-overwrite",
+                "-separate",
                 file_to,
-                str(red_file), str(green_file), str(blue_file)
+                str(red_file),
+                str(green_file),
+                str(blue_file),
             ],
-            work_dir
+            work_dir,
         )
         assert os.path.exists(file_to), "VRT must exist"
 
@@ -141,19 +154,29 @@ def _create_thumbnail(red_file, green_file, blue_file, output_path,
         # If a specific resolution is asked for.
         if x_constraint:
             outresx = inpixelx * incols / x_constraint
-            _LOG.info('Input pixel res %r, output pixel res %r', inpixelx, outresx)
+            _LOG.info("Input pixel res %r, output pixel res %r", inpixelx, outresx)
 
             outrows = int(math.ceil((float(inrows) / float(incols)) * x_constraint))
 
-            run_command([
-                "gdalwarp",
-                "--config", "GDAL_CACHEMAX", str(GDAL_CACHE_MAX_MB),
-                "-of", "VRT",
-                "-tr", str(outresx), str(outresx),
-                "-r", "near",
-                "-overwrite", file_to,
-                warp_to_file
-            ], work_dir)
+            run_command(
+                [
+                    "gdalwarp",
+                    "--config",
+                    "GDAL_CACHEMAX",
+                    str(GDAL_CACHE_MAX_MB),
+                    "-of",
+                    "VRT",
+                    "-tr",
+                    str(outresx),
+                    str(outresx),
+                    "-r",
+                    "near",
+                    "-overwrite",
+                    file_to,
+                    warp_to_file,
+                ],
+                work_dir,
+            )
         else:
             # Otherwise use a full resolution browse image.
             outrows = inrows
@@ -161,7 +184,11 @@ def _create_thumbnail(red_file, green_file, blue_file, output_path,
             warp_to_file = file_to
             outresx = inpixelx
 
-        _LOG.debug('Current GDAL cache max %rMB. Setting to %rMB', gdal.GetCacheMax() / 1024 / 1024, GDAL_CACHE_MAX_MB)
+        _LOG.debug(
+            "Current GDAL cache max %rMB. Setting to %rMB",
+            gdal.GetCacheMax() / 1024 / 1024,
+            GDAL_CACHE_MAX_MB,
+        )
         gdal.SetCacheMax(GDAL_CACHE_MAX_MB * 1024 * 1024)
 
         # Open VRT file to array
@@ -177,9 +204,10 @@ def _create_thumbnail(red_file, green_file, blue_file, output_path,
 
             # Apply gain and offset
             outdataset.GetRasterBand(band_number).WriteArray(
-                (numpy.ma.masked_less_equal(band.ReadAsArray(), nodata) * scale) + offset
+                (numpy.ma.masked_less_equal(band.ReadAsArray(), nodata) * scale)
+                + offset
             )
-            _LOG.debug('Scale %r, offset %r', scale, offset)
+            _LOG.debug("Scale %r, offset %r", scale, offset)
 
         # Must close datasets to flush to disk.
         # noinspection PyUnusedLocal
@@ -191,14 +219,18 @@ def _create_thumbnail(red_file, green_file, blue_file, output_path,
         run_command(
             [
                 "gdal_translate",
-                "--config", "GDAL_CACHEMAX", str(GDAL_CACHE_MAX_MB),
-                "-of", "JPEG",
+                "--config",
+                "GDAL_CACHEMAX",
+                str(GDAL_CACHE_MAX_MB),
+                "-of",
+                "JPEG",
                 outtif,
-                str(thumbnail_path)
+                str(thumbnail_path),
             ],
-            work_dir)
+            work_dir,
+        )
 
-        _LOG.debug('Cleaning work files')
+        _LOG.debug("Cleaning work files")
     finally:
         # Clean up work files
         if os.path.exists(work_dir):
@@ -207,123 +239,9 @@ def _create_thumbnail(red_file, green_file, blue_file, output_path,
     # Newer versions of GDAL create aux files due to the histogram. Clean them up.
     for f in (red_file, blue_file, green_file):
         f = pathlib.Path(f)
-        aux_file = f.with_name(f.name + '.aux.xml')
+        aux_file = f.with_name(f.name + ".aux.xml")
         if aux_file.exists():
-            _LOG.info('Cleaning aux: %s', aux_file)
+            _LOG.info("Cleaning aux: %s", aux_file)
             os.remove(str(aux_file.absolute()))
 
     return x_constraint, outrows, outresx
-
-
-def create_typical_browse_metadata(dataset_driver, dataset, destination_directory):
-    """
-    Create browse metadata.
-    :type dataset_driver: eodatasets.package.DatasetDriver
-    :type dataset: ptype.DatasetMetadata
-    :type destination_directory: Path
-    :return:
-    """
-    rgb_bands = dataset_driver.browse_image_bands(dataset)
-    if len(rgb_bands) == 3:
-        r, g, b = rgb_bands
-    elif len(rgb_bands) == 1:
-        band = rgb_bands[0]
-        r, g, b = band, band, band
-    else:
-        raise ValueError('Unexpected number of bands (%s). Received %r' % (len(rgb_bands), rgb_bands))
-
-    dataset.browse = {
-        'medium': ptype.BrowseMetadata(
-            path=destination_directory.joinpath('browse.jpg'),
-            file_type='image/jpg',
-            # cell_size=output_res,
-            shape=ptype.Point(1024, None),
-            red_band=r,
-            green_band=g,
-            blue_band=b
-        ),
-        'full': ptype.BrowseMetadata(
-            path=destination_directory.joinpath('browse.fr.jpg'),
-            file_type='image/jpg',
-            # cell_size=output_res,
-            red_band=r,
-            green_band=g,
-            blue_band=b
-        )
-    }
-    return dataset
-
-
-def create_dataset_browse_images(
-        dataset_driver,
-        dataset,
-        target_directory,
-        after_file_creation=lambda file_path: None):
-    """
-    :type dataset_driver: drivers.DatasetDriver
-    :type dataset: ptype.DatasetMetadata
-    :type target_directory: Path
-    :type after_file_creation: Path -> None
-    :rtype: ptype.DatasetMetadata
-    """
-    if not dataset.image or not dataset.image.bands:
-        # A dataset without defined bands doesn't get a browse image (eg. raw file)
-        _LOG.info('No bands defined. Skipping browse image.')
-        return dataset
-
-    # Create browse image metadata if missing.
-    if not dataset.browse:
-        create_typical_browse_metadata(dataset_driver, dataset, target_directory)
-
-    # Create browse images based on the metadata.
-    for browse_id, browse_metadata in dataset.browse.items():
-        x_constraint = None
-        if browse_metadata.shape:
-            x_constraint = browse_metadata.shape.x
-
-        bands = dataset.image.bands
-
-        necessary_bands = (browse_metadata.red_band, browse_metadata.green_band, browse_metadata.blue_band)
-        if not all([bands.get(band) for band in necessary_bands]):
-            raise ValueError(
-                'Some browse bands missing. Requires {!r}, has {!r}'
-                ''.format(necessary_bands, bands.keys())
-            )
-
-        r_path, g_path, b_path = [bands[p].path for p in necessary_bands]
-        cols, rows, output_res = _create_thumbnail(
-            r_path,
-            g_path,
-            b_path,
-            browse_metadata.path,
-            x_constraint=x_constraint
-        )
-        # Update with the exact shape information.
-        browse_metadata.shape = ptype.Point(cols, rows)
-        browse_metadata.cell_size = output_res
-
-        after_file_creation(browse_metadata.path)
-
-    return dataset
-
-
-def regenerate_browse_image(dataset_directory):
-    """
-    Regenerate the browse image for a given dataset path.
-
-    (TODO: This doesn't regenerate package checksums yet. It's mostly useful for development.)
-
-    :param dataset_directory:
-    :return:
-    """
-    dataset_metadata = serialise.read_dataset_metadata(dataset_directory)
-
-    product_type = dataset_metadata.product_type
-    dataset_driver = drivers.PACKAGE_DRIVERS[product_type]
-
-    # Clear existing browse metadata, so we can create updated info.
-    dataset_metadata.browse = None
-
-    dataset_metadata = create_dataset_browse_images(dataset_driver, dataset_metadata, dataset_directory)
-
-    serialise.write_dataset_metadata(dataset_directory, dataset_metadata)
