@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import binascii
 import hashlib
 import logging
+
 # PyLint doesn't recognise many distutils functions when in virtualenv. Not worth the effort.
 # pylint: disable=no-name-in-module
 import typing
@@ -22,7 +23,7 @@ def find_exe(name):
     """
     executable = spawn.find_executable(name)
     if not executable:
-        raise Exception('No %s command found.' % (name,))
+        raise Exception("No %s command found." % (name,))
 
     return executable
 
@@ -44,7 +45,7 @@ def calculate_file_hash(filename, hash_fn=hashlib.sha1, block_size=4096):
     :return: String of hex characters.
     :rtype: str
     """
-    with Path(filename).open('rb') as f:
+    with Path(filename).open("rb") as f:
         return calculate_hash(f, hash_fn, block_size)
 
 
@@ -57,7 +58,7 @@ def calculate_hash(f, hash_fn=hashlib.sha1, block_size=4096):
             break
         m.update(d)
 
-    return binascii.hexlify(m.digest()).decode('ascii')
+    return binascii.hexlify(m.digest()).decode("ascii")
 
 
 # 16K seems to be the sweet spot in performance on my machine.
@@ -70,7 +71,7 @@ def calculate_file_crc32(filename, block_size=1024 * 16):
     :rtype: str
     """
     m = 0
-    with Path(filename).open('rb') as f:
+    with Path(filename).open("rb") as f:
         while True:
             d = f.read(block_size)
             if not d:
@@ -110,15 +111,15 @@ class PackageChecksum(object):
         if not name:
             raise ValueError("No usable name for checksummed file descriptor")
 
-        _LOG.info('Checksumming %r', name)
+        _LOG.info("Checksumming %r", name)
         hash_ = calculate_hash(fd)
-        _LOG.debug('%r -> %r', name, hash_)
+        _LOG.debug("%r -> %r", name, hash_)
         self._append_hash(name, hash_)
 
     def _checksum(self, file_path):
-        _LOG.info('Checksumming %r', file_path)
+        _LOG.info("Checksumming %r", file_path)
         hash_ = calculate_file_hash(file_path)
-        _LOG.debug('%r -> %r', file_path, hash_)
+        _LOG.debug("%r -> %r", file_path, hash_)
         return hash_
 
     def _append_hash(self, file_path, hash_):
@@ -134,13 +135,12 @@ class PackageChecksum(object):
         :type output_file: Path or str
         """
         output_file = Path(output_file)
-        with output_file.open('wb') as f:
+        with output_file.open("wb") as f:
             f.writelines(
                 (
-                    u'{0}\t{1}\n'.format(
-                        str(hash_),
-                        str(filename.relative_to(output_file.parent))
-                    ).encode('utf-8')
+                    u"{0}\t{1}\n".format(
+                        str(hash_), str(filename.relative_to(output_file.parent))
+                    ).encode("utf-8")
                     for filename, hash_ in sorted(self._file_hashes.items())
                 )
             )
@@ -151,10 +151,12 @@ class PackageChecksum(object):
         :type checksum_path: Path or str
         """
         checksum_path = Path(checksum_path)
-        with checksum_path.open('r') as f:
+        with checksum_path.open("r") as f:
             for line in f.readlines():
-                hash_, path = str(line).strip().split('\t')
-                self._append_hash(checksum_path.parent.joinpath(*path.split('/')), hash_)
+                hash_, path = str(line).strip().split("\t")
+                self._append_hash(
+                    checksum_path.parent.joinpath(*path.split("/")), hash_
+                )
 
     def items(self):
         return self._file_hashes.items()

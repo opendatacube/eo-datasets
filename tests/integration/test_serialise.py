@@ -3,7 +3,7 @@ from typing import Dict
 
 import rapidjson
 
-from eodatasets.prepare import serialise
+from eodatasets import serialise
 from .common import assert_same
 
 

@@ -9,10 +9,10 @@ import ciso8601
 
 
 class ItemProvider(enum.Enum):
-    PRODUCER = 'producer'
-    PROCESSOR = 'processor'
-    HOST = 'host'
-    LICENSOR = 'licensor'
+    PRODUCER = "producer"
+    PROCESSOR = "processor"
+    HOST = "host"
+    LICENSOR = "licensor"
 
 
 class ClickDatetime(click.ParamType):
@@ -20,7 +20,7 @@ class ClickDatetime(click.ParamType):
     Take a datetime parameter, supporting any ISO8601 date/time/timezone combination.
     """
 
-    name = 'date'
+    name = "date"
 
     def convert(self, value, param, ctx):
         if value is None:
@@ -34,11 +34,11 @@ class ClickDatetime(click.ParamType):
         except ValueError:
             self.fail(
                 (
-                    'Invalid date string {!r}. Expected any ISO date/time format '
+                    "Invalid date string {!r}. Expected any ISO date/time format "
                     '(eg. "2017-04-03" or "2014-05-14 12:34")'.format(value)
-                 ),
+                ),
                 param,
-                ctx
+                ctx,
             )
 
 
@@ -46,10 +46,12 @@ def read_paths_from_file(listing: Path) -> Iterable[Path]:
     """
     A generator that yields path from a file; paths encoded one per line
     """
-    with listing.open('r') as f:
+    with listing.open("r") as f:
         for loc in f.readlines():
             path = Path(loc.strip())
             if not path.exists():
-                raise FileNotFoundError('No such file or directory: %s' % (os.path.abspath(loc),))
+                raise FileNotFoundError(
+                    "No such file or directory: %s" % (os.path.abspath(loc),)
+                )
 
             yield path.absolute()

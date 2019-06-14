@@ -18,7 +18,7 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets.prepare.model import FileFormat, DatasetDoc, ODC_DATASET_SCHEMA_URL
+from eodatasets.model import FileFormat, DatasetDoc, ODC_DATASET_SCHEMA_URL
 
 
 def _format_representer(dumper, data: FileFormat):
@@ -85,7 +85,7 @@ def _init_yaml() -> YAML:
     return yaml
 
 
-def dump_yaml(output_yaml: Path, doc: Dict) -> None:
+def dump_yaml(output_yaml: Path, *docs: Dict) -> None:
     if not output_yaml.name.lower().endswith(".yaml"):
         raise ValueError(
             "YAML filename doesn't end in *.yaml (?). Received {!r}".format(output_yaml)
@@ -93,7 +93,7 @@ def dump_yaml(output_yaml: Path, doc: Dict) -> None:
 
     yaml = _init_yaml()
     with output_yaml.open("w") as stream:
-        yaml.dump(doc, stream)
+        yaml.dump_all(docs, stream)
 
 
 def load_yaml(p: Path) -> Dict:

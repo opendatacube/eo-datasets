@@ -17,10 +17,10 @@ from click import secho
 from yaml.representer import Representer
 
 import eodatasets
-from eodatasets.prepare import images, serialise
-from eodatasets.prepare.assemble import DatasetAssembler
-from eodatasets.prepare.images import GridSpec
-from eodatasets.prepare.model import DatasetDoc
+from eodatasets import serialise, images
+from eodatasets.assemble import DatasetAssembler
+from eodatasets.images import GridSpec
+from eodatasets.model import DatasetDoc
 
 EUGL_VERSION = "DO_SOMETHING_HERE"
 

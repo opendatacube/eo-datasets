@@ -24,8 +24,12 @@ import traceback
 from contextlib import suppress
 from functools import partial
 from pathlib import Path
-from structlog.processors import (StackInfoRenderer, TimeStamper, format_exc_info,
-                                  JSONRenderer)
+from structlog.processors import (
+    StackInfoRenderer,
+    TimeStamper,
+    format_exc_info,
+    JSONRenderer,
+)
 from subprocess import call
 from typing import List, Iterable, Tuple, Callable, IO, Dict
 
@@ -33,16 +37,16 @@ from eodatasets.ui import PathPath
 from eodatasets.verify import PackageChecksum
 
 _PREDICTOR_TABLE = {
-    'int8': 2,
-    'uint8': 2,
-    'int16': 2,
-    'uint16': 2,
-    'int32': 2,
-    'uint32': 2,
-    'int64': 2,
-    'uint64': 2,
-    'float32': 3,
-    'float64': 3
+    "int8": 2,
+    "uint8": 2,
+    "int16": 2,
+    "uint16": 2,
+    "int32": 2,
+    "uint32": 2,
+    "int64": 2,
+    "uint64": 2,
+    "float32": 3,
+    "float64": 3,
 }
 
 # The info of a file, and a method to open the file for reading.
@@ -118,24 +122,21 @@ def _folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMemb
     # (The primary practical benefit is predictable outputs in tests)
 
     for item in sorted(path.iterdir()):
-        member = _create_tarinfo(
-            item,
-            name=str(item.relative_to(base_path)),
-        )
+        member = _create_tarinfo(item, name=str(item.relative_to(base_path)))
         if member.type == tarfile.DIRTYPE:
             yield member, None
             yield from _folder_members(item, base_path=path)
         else:
             # We return a lambda/callable so that the file isn't opened until it's needed.
-            yield member, partial(item.open, 'rb')
+            yield member, partial(item.open, "rb")
 
 
 def repackage_tar(
-        input_path: Path,
-        input_files: Iterable[ReadableMember],
-        output_tar_path: Path,
-        clean_inputs: bool,
-        **compress_args,
+    input_path: Path,
+    input_files: Iterable[ReadableMember],
+    output_tar_path: Path,
+    clean_inputs: bool,
+    **compress_args,
 ) -> bool:
     log = _LOG.bind(
         name=output_tar_path.stem,
@@ -144,7 +145,7 @@ def repackage_tar(
     )
 
     if output_tar_path.exists():
-        log.info('skip.exists')
+        log.info("skip.exists")
         return True
 
     try:
@@ -157,7 +158,7 @@ def repackage_tar(
         _create_tar_with_files(input_path, members, output_tar_path, **compress_args)
 
         log.info(
-            'complete',
+            "complete",
             in_size=sum(m.size for m, _ in members),
             in_count=len(members),
             # The user/group give us a hint as to whether this was repackaged outside of USGS.
@@ -168,26 +169,24 @@ def repackage_tar(
         result_exists = output_tar_path.exists()
         if not result_exists:
             # This should never happen, so it's an exception.
-            raise RuntimeError(
-                f"No output after a success? Expected {output_tar_path}"
-            )
+            raise RuntimeError(f"No output after a success? Expected {output_tar_path}")
 
         if clean_inputs:
             # Be extra sure the new file was flushed to disk before we clean the original.
-            call('sync')
+            call("sync")
             log.info("input.cleanup")
             please_remove(input_path, excluding=output_tar_path)
     except Exception:
-        log.exception('error', exc_info=True)
+        log.exception("error", exc_info=True)
         return False
     return True
 
 
 def _create_tar_with_files(
-        input_path: Path,
-        members: List[ReadableMember],
-        output_tar_path: Path,
-        **compress_args,
+    input_path: Path,
+    members: List[ReadableMember],
+    output_tar_path: Path,
+    **compress_args,
 ) -> None:
     """
     Package and compress the given input files to a new tar path.
@@ -201,32 +200,32 @@ def _create_tar_with_files(
     verify = PackageChecksum()
 
     # Use a temporary file so that we can move to the output path atomically.
-    with tempfile.TemporaryDirectory(prefix='.extract-', dir=str(out_dir)) as tmpdir:
+    with tempfile.TemporaryDirectory(prefix=".extract-", dir=str(out_dir)) as tmpdir:
         tmpdir = Path(tmpdir).absolute()
         tmp_out_tar = tmpdir.joinpath(output_tar_path.name)
 
-        with tarfile.open(tmp_out_tar, 'w') as out_tar:
-            with click.progressbar(label=input_path.name,
-                                   length=sum(member.size for member, _ in members),
-                                   file=sys.stderr) as progress:
+        with tarfile.open(tmp_out_tar, "w") as out_tar:
+            with click.progressbar(
+                label=input_path.name,
+                length=sum(member.size for member, _ in members),
+                file=sys.stderr,
+            ) as progress:
                 file_number = 0
                 for readable_member in members:
                     file_number += 1
-                    progress.label = f"{input_path.name} ({file_number:2d}/{len(members)})"
+                    progress.label = (
+                        f"{input_path.name} ({file_number:2d}/{len(members)})"
+                    )
 
                     _recompress_tar_member(
-                        readable_member,
-                        out_tar,
-                        compress_args,
-                        verify,
-                        tmpdir
+                        readable_member, out_tar, compress_args, verify, tmpdir
                     )
 
                     member, _ = readable_member
                     progress.update(member.size)
 
             # Append sha1 checksum file
-            checksum_path = tmpdir / 'package.sha1'
+            checksum_path = tmpdir / "package.sha1"
             verify.write(checksum_path)
             checksum_path.chmod(0o664)
             out_tar.add(checksum_path, checksum_path.name)
@@ -239,11 +238,11 @@ def _create_tar_with_files(
 
 
 def _recompress_tar_member(
-        readable_member: ReadableMember,
-        out_tar: tarfile.TarFile,
-        compress_args: Dict,
-        verify: PackageChecksum,
-        tmpdir: Path
+    readable_member: ReadableMember,
+    out_tar: tarfile.TarFile,
+    compress_args: Dict,
+    verify: PackageChecksum,
+    tmpdir: Path,
 ):
     member, open_member = readable_member
 
@@ -253,10 +252,9 @@ def _recompress_tar_member(
     new_member.mode = new_member.mode | 0o664
 
     # If it's a tif, check whether it's compressed.
-    if member.name.lower().endswith('.tif'):
-        with open_member() as input_fp, \
-                rasterio.open(input_fp) as ds:
-            if not ds.profile.get('compress'):
+    if member.name.lower().endswith(".tif"):
+        with open_member() as input_fp, rasterio.open(input_fp) as ds:
+            if not ds.profile.get("compress"):
                 # No compression: let's compress it
                 with rasterio.MemoryFile(filename=member.name) as memory_file:
                     try:
@@ -293,12 +291,14 @@ def _reorder_tar_members(members: List[ReadableMember], identifier: str):
     """
     # Find MTL
     for i, (member, _) in enumerate(members):
-        if '_MTL' in member.path:
+        if "_MTL" in member.path:
             mtl_index = i
             break
     else:
-        formatted_members = '\n\t'.join(m.name for m, _ in members)
-        raise ValueError(f"No MTL file found in package {identifier}. Have:\n\t{formatted_members}")
+        formatted_members = "\n\t".join(m.name for m, _ in members)
+        raise ValueError(
+            f"No MTL file found in package {identifier}. Have:\n\t{formatted_members}"
+        )
 
     # Move to front
     mtl_item = members.pop(mtl_index)
@@ -306,10 +306,10 @@ def _reorder_tar_members(members: List[ReadableMember], identifier: str):
 
 
 def _recompress_image(
-        input_image: rasterio.DatasetReader,
-        output_fp: rasterio.MemoryFile,
-        zlevel=9,
-        block_size=(512, 512),
+    input_image: rasterio.DatasetReader,
+    output_fp: rasterio.MemoryFile,
+    zlevel=9,
+    block_size=(512, 512),
 ):
     """
     Read an image from given file pointer, and write as a compressed GeoTIFF.
@@ -319,15 +319,17 @@ def _recompress_image(
     block_size_y, block_size_x = block_size
 
     if len(input_image.indexes) != 1:
-        raise ValueError(f"Expecting one-band-per-tif input (USGS packages). "
-                         f"Input has multiple layers {repr(input_image.indexes)}")
+        raise ValueError(
+            f"Expecting one-band-per-tif input (USGS packages). "
+            f"Input has multiple layers {repr(input_image.indexes)}"
+        )
 
     array: numpy.ndarray = input_image.read(1)
     profile = input_image.profile
     profile.update(
-        driver='GTiff',
+        driver="GTiff",
         predictor=_PREDICTOR_TABLE[array.dtype.name],
-        compress='deflate',
+        compress="deflate",
         zlevel=zlevel,
         blockxsize=block_size_x,
         blockysize=block_size_y,
@@ -342,41 +344,51 @@ def _recompress_image(
 
 
 @click.command(help=__doc__)
-@click.option("--output-base", type=PathPath(file_okay=False, writable=True),
-              help="The base output directory "
-                   "(default to same dir as input if --clean-inputs).")
-@click.option("--zlevel", type=click.IntRange(0, 9), default=5,
-              help="Deflate compression level.")
-@click.option("--block-size", type=int, default=512,
-              help="Compression block size (both x and y)")
-@click.option("--clean-inputs/--no-clean-inputs", default=False,
-              help="Delete originals after repackaging")
-@click.option('-f', 'input_file', help='Read paths from file', type=click.File('r'))
+@click.option(
+    "--output-base",
+    type=PathPath(file_okay=False, writable=True),
+    help="The base output directory "
+    "(default to same dir as input if --clean-inputs).",
+)
+@click.option(
+    "--zlevel", type=click.IntRange(0, 9), default=5, help="Deflate compression level."
+)
+@click.option(
+    "--block-size", type=int, default=512, help="Compression block size (both x and y)"
+)
+@click.option(
+    "--clean-inputs/--no-clean-inputs",
+    default=False,
+    help="Delete originals after repackaging",
+)
+@click.option("-f", "input_file", help="Read paths from file", type=click.File("r"))
 @click.argument("paths", nargs=-1, type=PathPath(exists=True, readable=True))
-def main(paths: List[Path],
-         input_file,
-         output_base: Path,
-         zlevel: int,
-         clean_inputs: bool,
-         block_size: int):
+def main(
+    paths: List[Path],
+    input_file,
+    output_base: Path,
+    zlevel: int,
+    clean_inputs: bool,
+    block_size: int,
+):
     # Structured (json) logging goes to stdout
-    structlog.configure(processors=[
-        StackInfoRenderer(),
-        format_exc_info,
-        TimeStamper(utc=False, fmt='iso'),
-        JSONRenderer(),
-    ])
+    structlog.configure(
+        processors=[
+            StackInfoRenderer(),
+            format_exc_info,
+            TimeStamper(utc=False, fmt="iso"),
+            JSONRenderer(),
+        ]
+    )
 
     if (not output_base) and (not clean_inputs):
         raise click.UsageError(
             "Need to specify either a different output directory (--output-base) "
-            "or to clean inputs (--clean-inputs)")
+            "or to clean inputs (--clean-inputs)"
+        )
 
     if input_file:
-        paths = chain(
-            (Path(p.strip()) for p in input_file),
-            paths
-        )
+        paths = chain((Path(p.strip()) for p in input_file), paths)
 
     with rasterio.Env():
         total = failures = 0
@@ -384,8 +396,8 @@ def main(paths: List[Path],
             total += 1
 
             # Input is either a tar.gz file, or a directory containing an MTL (already extracted)
-            if path.suffix.lower() == '.gz':
-                with tarfile.open(str(path), 'r') as in_tar:
+            if path.suffix.lower() == ".gz":
+                with tarfile.open(str(path), "r") as in_tar:
                     success = repackage_tar(
                         path,
                         _tar_members(in_tar),
@@ -405,8 +417,9 @@ def main(paths: List[Path],
                     block_size=(block_size, block_size),
                 )
             else:
-                raise ValueError(f"Expected either tar.gz or a dataset folder. "
-                                 f"Got: {repr(path)}")
+                raise ValueError(
+                    f"Expected either tar.gz or a dataset folder. " f"Got: {repr(path)}"
+                )
 
             if not success:
                 failures += 1
@@ -453,35 +466,35 @@ def _output_tar_path(base_output, input_path):
 
     # Remove .gz suffix
     name = out_path.stem
-    if not name.endswith('.tar'):
+    if not name.endswith(".tar"):
         raise RuntimeError(f"Expected path to end in .tar.gz, got: {out_path}")
     return out_path.with_name(name)
 
 
 def _output_tar_path_from_directory(base_output, input_path):
-    mtl_files = list(input_path.glob('*_MTL.txt'))
+    mtl_files = list(input_path.glob("*_MTL.txt"))
     if not mtl_files:
         raise ValueError(f"Dataset has no mtl: {input_path}")
     if len(mtl_files) > 1:
-        _LOG.warn('multiple.mtl.files', in_path=input_path)
+        _LOG.warn("multiple.mtl.files", in_path=input_path)
     mtl_file = mtl_files[0]
-    dataset_name = mtl_file.name.replace('_MTL.txt', '')
+    dataset_name = mtl_file.name.replace("_MTL.txt", "")
 
     if base_output:
-        return _calculate_out_base_path(base_output, input_path) / f'{dataset_name}.tar'
+        return _calculate_out_base_path(base_output, input_path) / f"{dataset_name}.tar"
     else:
-        return input_path / f'{dataset_name}.tar'
+        return input_path / f"{dataset_name}.tar"
 
 
 def _calculate_out_base_path(out_base: Path, path: Path) -> Path:
-    if 'USGS' not in path.parts:
+    if "USGS" not in path.parts:
         raise ValueError(
             "Expected AODH input path structure, "
             "eg: /AODH/USGS/L1/Landsat/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz"
         )
     # The directory structure after the "USGS" folder is recreated onto the output base folder.
-    return out_base.joinpath(*path.parts[path.parts.index('USGS') + 1:-1], path.name)
+    return out_base.joinpath(*path.parts[path.parts.index("USGS") + 1 : -1], path.name)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

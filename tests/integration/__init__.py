@@ -4,20 +4,17 @@ Module
 """
 from __future__ import absolute_import
 
-import binascii
-import datetime
 import hashlib
-import socket
 import tempfile
-
 from pathlib import Path
 
-import eodatasets
-from eodatasets.package import _RUNTIME_ID
+import binascii
 
 
 def load_checksum_filenames(output_metadata_path):
-    return [line.split('\t')[-1][:-1] for line in output_metadata_path.open('r').readlines()]
+    return [
+        line.split("\t")[-1][:-1] for line in output_metadata_path.open("r").readlines()
+    ]
 
 
 def on_same_filesystem(path1, path2):
@@ -25,7 +22,7 @@ def on_same_filesystem(path1, path2):
 
 
 def hardlink_arg(path1, path2):
-    return '--hard-link' if on_same_filesystem(path1, path2) else '--no-hard-link'
+    return "--hard-link" if on_same_filesystem(path1, path2) else "--no-hard-link"
 
 
 def directory_size(directory):
@@ -34,22 +31,7 @@ def directory_size(directory):
     :type file_paths: Path
     :rtype: int
     """
-    return sum(p.stat().st_size
-               for p in directory.rglob('*') if p.is_file())
-
-
-def add_default_software_versions(ds_dict):
-    m = ds_dict['lineage']['machine']
-
-    if 'software_versions' not in m:
-        m['software_versions'] = {}
-
-    m['software_versions']['eodatasets'] = {
-        'version': eodatasets.__version__,
-        'repo_url': eodatasets.REPO_URL
-    }
-
-    return ds_dict
+    return sum(p.stat().st_size for p in directory.rglob("*") if p.is_file())
 
 
 class FakeAncilFile(object):
@@ -69,15 +51,15 @@ class FakeAncilFile(object):
     def create(self):
         """Create our dummy ancillary file"""
         self.containing_folder.mkdir(parents=True)
-        with self.file_path.open('wb') as f:
+        with self.file_path.open("wb") as f:
             # Write the file path into it so that it has a unique checksum.
-            f.write(str(self.file_path).encode('utf8'))
+            f.write(str(self.file_path).encode("utf8"))
 
     @property
     def checksum(self):
         m = hashlib.sha1()
-        m.update(str(self.file_path).encode('utf8'))
-        return binascii.hexlify(m.digest()).decode('ascii')
+        m.update(str(self.file_path).encode("utf8"))
+        return binascii.hexlify(m.digest()).decode("ascii")
 
     @property
     def containing_folder(self):
@@ -86,50 +68,6 @@ class FakeAncilFile(object):
     @property
     def file_path(self):
         return self.containing_folder.joinpath(self.filename)
-
-
-def prepare_datasets_for_comparison(expected_md, output_md, ancil_files, product_dir_path):
-    """
-    Set or clear any dynamic properties so that we can directly compare two datasets.
-
-    :type expected_md: dict
-    :type output_md: dict
-    :type ancil_files: tuple[FakeAncilFile]
-    :type product_dir_path: pathlib.Path
-    """
-    # ID is different every time: check not none, and clear it.
-    assert output_md['id'] is not None
-    output_md['id'] = None
-
-    expected_md['size_bytes'] = directory_size(product_dir_path)
-    add_default_software_versions(expected_md)
-    # A newly-processed dataset: extra fields
-    assert output_md['lineage']['machine']['uname'] is not None
-    del output_md['lineage']['machine']['uname']
-    expected_md['lineage']['machine']['runtime_id'] = str(_RUNTIME_ID)
-    expected_md['lineage']['machine']['hostname'] = socket.getfqdn()
-    # Create the expected ancillary information.
-    for ancil_name, ancil_d in expected_md['lineage']['ancillary'].items():
-        ancils = [a for a in ancil_files if a.type_ == ancil_name]
-        assert ancils, 'Unexpected ancil type: ' + ancil_name
-        ancil = ancils[0]
-        # filter ancil names.
-
-        #: :type: pathlib.Path
-        ancil_path = ancil.file_path
-        ancil_d['uri'] = str(ancil_path)
-        ancil_d['modification_dt'] = datetime.datetime.fromtimestamp(ancil_path.stat().st_mtime)
-        ancil_d['checksum_sha1'] = ancil.checksum
-
-        # Ensure the output has this ancillary file.
-        assert ancil_name in output_md['lineage']['ancillary']
-        # Ensure it has an access time
-        output_ancil = output_md['lineage']['ancillary'][ancil_name]
-        assert 'access_dt' in output_ancil, "{} has no access time" \
-                                            ", was the original file found during packaging?".format(ancil_name)
-        assert output_ancil['access_dt'] is not None
-        # Clear the access time: we can't compare it accurately (short of mocking)
-        del output_ancil['access_dt']
 
 
 def prepare_work_order(ancil_files, work_order_template_path):
@@ -145,12 +83,14 @@ def prepare_work_order(ancil_files, work_order_template_path):
 
     work_dir = Path(tempfile.mkdtemp())
     # Write a work order with ancillary locations replaced.
-    output_work_order = work_dir.joinpath('work_order.xml')
-    with work_order_template_path.open('rb') as wo:
-        wo_text = wo.read().decode('utf-8').format(
-            **{a.type_ + '_path': a.file_path for a in ancil_files}
+    output_work_order = work_dir.joinpath("work_order.xml")
+    with work_order_template_path.open("rb") as wo:
+        wo_text = (
+            wo.read()
+            .decode("utf-8")
+            .format(**{a.type_ + "_path": a.file_path for a in ancil_files})
         )
-        with output_work_order.open('w') as out_wo:
+        with output_work_order.open("w") as out_wo:
             out_wo.write(wo_text)
 
     return output_work_order

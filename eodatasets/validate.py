@@ -11,8 +11,8 @@ from rasterio.crs import CRS
 from rasterio.errors import CRSError
 from shapely.validation import explain_validity
 
-from eodatasets.prepare import serialise, model
-from eodatasets.prepare.model import DatasetDoc
+from eodatasets import serialise, model
+from eodatasets.model import DatasetDoc
 from eodatasets.ui import PathPath, is_absolute
 
 # Every property we've seen or dealt with so far. Feel free to expand with abandon...

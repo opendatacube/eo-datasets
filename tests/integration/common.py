@@ -1,13 +1,10 @@
 from functools import partial
-from pprint import pformat, pprint
-from uuid import UUID
+from pprint import pformat
 
 import yaml
 from boltons.iterutils import remap
 from click.testing import CliRunner, Result
 from deepdiff import DeepDiff
-
-from eodatasets.prepare import serialise
 
 diff = partial(DeepDiff, significant_digits=6)
 

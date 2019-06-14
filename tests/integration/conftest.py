@@ -1,4 +1,3 @@
-from copy import deepcopy
 from pathlib import Path
 
 from datetime import datetime
@@ -6,9 +5,9 @@ from typing import Dict, Callable
 
 import pytest
 
-from eodatasets.prepare import serialise
+from eodatasets import serialise
 from eodatasets.prepare.ls_usgs_l1_prepare import normalise_nci_symlinks
-from eodatasets.prepare.model import DatasetDoc
+from eodatasets.model import DatasetDoc
 
 L71GT_TARBALL_PATH: Path = Path(
     __file__

@@ -13,12 +13,12 @@ def run():
     pass
 
 
-run.add_command(s2_scihub, name='s2-cophub')
-run.add_command(ls_usgs, name='ls-usgs')
-run.add_command(s2_awspds, name='s2-awspds')
-run.add_command(mcd43a1, name='modis-mcd43a1')
-run.add_command(prwtr, name='noaa-prwtr')
+run.add_command(s2_scihub, name="s2-cophub")
+run.add_command(ls_usgs, name="ls-usgs")
+run.add_command(s2_awspds, name="s2-awspds")
+run.add_command(mcd43a1, name="modis-mcd43a1")
+run.add_command(prwtr, name="noaa-prwtr")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run()

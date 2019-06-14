@@ -22,8 +22,8 @@ from shapely.geometry import Polygon
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
-from eodatasets import verify
-from eodatasets.prepare.model import (
+from eodatasets import verify, serialise
+from eodatasets.model import (
     DatasetDoc,
     ProductDoc,
     FileFormat,
@@ -31,7 +31,6 @@ from eodatasets.prepare.model import (
     valid_region,
     resolve_absolute_offset,
 )
-from . import serialise
 
 try:
     # flake8 doesn't recognise type hints as usage

@@ -5,7 +5,7 @@ from typing import Dict, Union
 
 from click.testing import CliRunner, Result
 
-from eodatasets.prepare import validate, serialise
+from eodatasets import serialise, validate
 
 
 def test_valid_document_works(tmp_path: Path, example_metadata: Dict):

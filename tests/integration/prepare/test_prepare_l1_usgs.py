@@ -4,8 +4,8 @@ from textwrap import dedent
 from typing import Dict
 
 from eodatasets.prepare import ls_usgs_l1_prepare
-from .common import check_prepare_outputs
-from .common import run_prepare_cli
+from tests.integration.common import check_prepare_outputs
+from tests.integration.common import run_prepare_cli
 
 
 def test_prepare_l5_l1_usgs_tarball(tmpdir, l1_ls5_tarball_md_expected, l1_ls5_tarball):

@@ -11,18 +11,18 @@ import eodatasets.type as ptype
 _LOG = logging.getLogger(__name__)
 
 # From the gaip codebase. Lookup table for sensor information.
-with Path(__file__).parent.joinpath('sensors.json').open() as fo:
+with Path(__file__).parent.joinpath("sensors.json").open() as fo:
     SENSORS = json.load(fo)
 
-with Path(__file__).parent.joinpath('groundstations.json').open() as f:
+with Path(__file__).parent.joinpath("groundstations.json").open() as f:
     _GROUNDSTATION_LIST = json.load(f)
 
 # Build groundstation alias lookup table.
 _GROUNDSTATION_ALIASES = {}
 for _station in _GROUNDSTATION_LIST:
-    gsi_ = _station['code']
+    gsi_ = _station["code"]
     _GROUNDSTATION_ALIASES[gsi_] = gsi_
-    _GROUNDSTATION_ALIASES.update({alias: gsi_ for alias in _station['aliases']})
+    _GROUNDSTATION_ALIASES.update({alias: gsi_ for alias in _station["aliases"]})
 
 
 def normalise_gsi(gsi):
@@ -76,15 +76,15 @@ def get_groundstation(gsi):
     >>> get_groundstation('UNKNOWN_GSI')
     """
     gsi = normalise_gsi(gsi)
-    stations = [g for g in _GROUNDSTATION_LIST if g['code'].upper() == gsi]
+    stations = [g for g in _GROUNDSTATION_LIST if g["code"].upper() == gsi]
     if not stations:
-        _LOG.warning('Station GSI not known: %r', gsi)
+        _LOG.warning("Station GSI not known: %r", gsi)
         return None
     station = stations[0]
     return ptype.GroundstationMetadata(
-        code=str(station['code']),
-        label=str(station['label']),
-        eods_domain_code=str(station['eods_domain_code'])
+        code=str(station["code"]),
+        label=str(station["label"]),
+        eods_domain_code=str(station["eods_domain_code"]),
     )
 
 
@@ -100,13 +100,13 @@ def _expand_band_information(satellite, sensor, band_metadata):
     BandMetadata(type_='reflective', label='Visible Red', number='4', cell_size=25.0)
     """
 
-    bands = SENSORS[satellite]['sensors'][sensor]['bands']
+    bands = SENSORS[satellite]["sensors"][sensor]["bands"]
 
     band = bands.get(band_metadata.number)
     if band:
-        band_metadata.label = str(band['desc'])
-        band_metadata.cell_size = band['resolution']
-        band_metadata.type_ = str(band['type_desc']).lower()
+        band_metadata.label = str(band["desc"])
+        band_metadata.cell_size = band["resolution"]
+        band_metadata.type_ = str(band["type_desc"]).lower()
 
     return band_metadata
 
@@ -119,9 +119,15 @@ def expand_common_metadata(d):
     if d.platform and d.instrument:
         if d.image and d.image.bands:
             for band_metadata in d.image.bands.values():
-                _expand_band_information(d.platform.code, d.instrument.name, band_metadata)
+                _expand_band_information(
+                    d.platform.code, d.instrument.name, band_metadata
+                )
 
-    if d.acquisition and d.acquisition.groundstation and d.acquisition.groundstation.code:
+    if (
+        d.acquisition
+        and d.acquisition.groundstation
+        and d.acquisition.groundstation.code
+    ):
         gstation = d.acquisition.groundstation
         # Ensure we're using a standard GSI code.
         gstation.code = normalise_gsi(gstation.code)

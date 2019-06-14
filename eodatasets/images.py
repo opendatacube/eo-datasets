@@ -21,7 +21,7 @@ from rasterio.enums import Resampling
 from scipy import ndimage
 from shapely.geometry.base import BaseGeometry, CAP_STYLE, JOIN_STYLE
 
-from eodatasets.prepare.model import GridDoc, MeasurementDoc
+from eodatasets.model import GridDoc, MeasurementDoc
 
 LEVELS = [8, 16, 32]
 

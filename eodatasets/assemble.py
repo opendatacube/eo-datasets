@@ -16,10 +16,10 @@ from boltons import iterutils
 from rasterio import DatasetReader
 from rasterio.enums import Resampling
 
-from eodatasets.prepare import images, serialise, validate
-from eodatasets.prepare.images import FileWrite, GridSpec, MeasurementRecord
-from eodatasets.prepare.model import DatasetDoc, ProductDoc
-from eodatasets.prepare.validate import Level, ValidationMessage
+from eodatasets import serialise, validate, images
+from eodatasets.images import FileWrite, GridSpec, MeasurementRecord
+from eodatasets.model import DatasetDoc, ProductDoc
+from eodatasets.validate import Level, ValidationMessage
 from eodatasets.verify import PackageChecksum
 
 _INHERITABLE_PROPERTIES = {

@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 
 class PathPath(click.Path):
     """A Click path argument that returns a pathlib Path, not a string"""
+
     def convert(self, value, param, ctx):
         return Path(super().convert(value, param, ctx))
 

@@ -27,7 +27,7 @@ def valid_region(images, mask_value=None):
         return None
 
     for fname in images:
-        with rasterio.open(str(fname), 'r') as ds:
+        with rasterio.open(str(fname), "r") as ds:
             transform = ds.transform
             img = ds.read(1)
 
@@ -45,8 +45,10 @@ def valid_region(images, mask_value=None):
     # when there are lots of holes in the data eg NBART, PQ, and Landsat 7
     mask = ndimage.binary_fill_holes(mask)
 
-    shapes = rasterio.features.shapes(mask.astype('uint8'), mask=mask)
-    shape = shapely.ops.unary_union([shapely.geometry.shape(shape) for shape, val in shapes if val == 1])
+    shapes = rasterio.features.shapes(mask.astype("uint8"), mask=mask)
+    shape = shapely.ops.unary_union(
+        [shapely.geometry.shape(shape) for shape, val in shapes if val == 1]
+    )
 
     # convex hull
     geom = shape.convex_hull
@@ -61,11 +63,20 @@ def valid_region(images, mask_value=None):
     geom = geom.intersection(shapely.geometry.box(0, 0, mask.shape[1], mask.shape[0]))
 
     # transform from pixel space into CRS space
-    geom = shapely.affinity.affine_transform(geom, (transform.a, transform.b, transform.d,
-                                                    transform.e, transform.xoff, transform.yoff))
+    geom = shapely.affinity.affine_transform(
+        geom,
+        (
+            transform.a,
+            transform.b,
+            transform.d,
+            transform.e,
+            transform.xoff,
+            transform.yoff,
+        ),
+    )
 
     output = shapely.geometry.mapping(geom)
-    output['coordinates'] = _to_lists(output['coordinates'])
+    output["coordinates"] = _to_lists(output["coordinates"])
     return output
 
 

@@ -14,13 +14,15 @@ try:
 except ImportError:
     from yaml import SafeLoader
 
-_DOCUMENT_EXTENSIONS = ('.yaml', '.yml', '.json')
-_COMPRESSION_EXTENSIONS = ('', '.gz')
+_DOCUMENT_EXTENSIONS = (".yaml", ".yml", ".json")
+_COMPRESSION_EXTENSIONS = ("", ".gz")
 
 # Both compressed (*.gz) and uncompressed.
-_ALL_SUPPORTED_EXTENSIONS = tuple(doc_type + compression_type
-                                  for doc_type in _DOCUMENT_EXTENSIONS
-                                  for compression_type in _COMPRESSION_EXTENSIONS)
+_ALL_SUPPORTED_EXTENSIONS = tuple(
+    doc_type + compression_type
+    for doc_type in _DOCUMENT_EXTENSIONS
+    for compression_type in _COMPRESSION_EXTENSIONS
+)
 
 
 def is_supported_document_type(path):
@@ -40,7 +42,9 @@ def is_supported_document_type(path):
     >>> is_supported_document_type(Path('/tmp/something.tif.gz'))
     False
     """
-    return any([str(path).lower().endswith(suffix) for suffix in _ALL_SUPPORTED_EXTENSIONS])
+    return any(
+        [str(path).lower().endswith(suffix) for suffix in _ALL_SUPPORTED_EXTENSIONS]
+    )
 
 
 def find_metadata_path(dataset_path):
@@ -55,18 +59,20 @@ def find_metadata_path(dataset_path):
     if dataset_path.is_file() and is_supported_document_type(dataset_path):
         return dataset_path
 
-    system_names = ('agdc', 'ga')
+    system_names = ("agdc", "ga")
 
     for system_name in system_names:
         # Otherwise there may be a sibling file with appended suffix '.ga-md.yaml'.
-        expected_name = dataset_path.parent.joinpath('{}.{}-md'.format(dataset_path.name, system_name))
+        expected_name = dataset_path.parent.joinpath(
+            "{}.{}-md".format(dataset_path.name, system_name)
+        )
         found = _find_any_metadata_suffix(expected_name)
         if found:
             return found
 
         # Otherwise if it's a directory, there may be an 'ga-metadata.yaml' file describing all contained datasets.
         if dataset_path.is_dir():
-            expected_name = dataset_path.joinpath(system_name + '-metadata')
+            expected_name = dataset_path.joinpath(system_name + "-metadata")
             found = _find_any_metadata_suffix(expected_name)
             if found:
                 return found
@@ -86,12 +92,12 @@ def new_metadata_path(dataset_path):
     # - A dataset file expects a sibling file with suffix '.ga-md.yaml'.
 
     if dataset_path.is_dir():
-        return dataset_path.joinpath('ga-metadata.yaml')
+        return dataset_path.joinpath("ga-metadata.yaml")
 
     if dataset_path.is_file():
-        return dataset_path.parent.joinpath('{}.ga-md.yaml'.format(dataset_path.name))
+        return dataset_path.parent.joinpath("{}.ga-md.yaml".format(dataset_path.name))
 
-    raise ValueError('Unhandled path type for %r' % dataset_path)
+    raise ValueError("Unhandled path type for %r" % dataset_path)
 
 
 def _find_any_metadata_suffix(path):
@@ -100,12 +106,14 @@ def _find_any_metadata_suffix(path):
     (supported suffixes are tried on the name)
     :type path: pathlib.Path
     """
-    existing_paths = list(filter(is_supported_document_type, path.parent.glob(path.name + '*')))
+    existing_paths = list(
+        filter(is_supported_document_type, path.parent.glob(path.name + "*"))
+    )
     if not existing_paths:
         return None
 
     if len(existing_paths) > 1:
-        raise ValueError('Multiple matched metadata files: {!r}'.format(existing_paths))
+        raise ValueError("Multiple matched metadata files: {!r}".format(existing_paths))
 
     return existing_paths[0]
 
@@ -124,15 +132,18 @@ def read_documents(*paths):
 
         # If compressed, open as gzip stream.
         opener = open
-        if suffix == '.gz':
+        if suffix == ".gz":
             suffix = path.suffixes[-2].lower()
             opener = gzip.open
 
-        if suffix in ('.yaml', '.yml'):
-            for parsed_doc in yaml.load_all(opener(str(path), 'r'), Loader=SafeLoader):
+        if suffix in (".yaml", ".yml"):
+            for parsed_doc in yaml.load_all(opener(str(path), "r"), Loader=SafeLoader):
                 yield path, parsed_doc
-        elif suffix == '.json':
-            yield path, json.load(opener(str(path), 'r'))
+        elif suffix == ".json":
+            yield path, json.load(opener(str(path), "r"))
         else:
-            raise ValueError('Unknown document type for {}; expected one of {!r}.'
-                             .format(path.name, _ALL_SUPPORTED_EXTENSIONS))
+            raise ValueError(
+                "Unknown document type for {}; expected one of {!r}.".format(
+                    path.name, _ALL_SUPPORTED_EXTENSIONS
+                )
+            )
