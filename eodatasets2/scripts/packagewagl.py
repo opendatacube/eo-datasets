@@ -16,18 +16,18 @@ from boltons.iterutils import get_path, PathAccessError
 from click import secho
 from yaml.representer import Representer
 
-import eodatasets
-from eodatasets import serialise, images
-from eodatasets.assemble import DatasetAssembler
-from eodatasets.images import GridSpec
-from eodatasets.model import DatasetDoc
+import eodatasets2
+from eodatasets2 import serialise, images
+from eodatasets2.assemble import DatasetAssembler
+from eodatasets2.images import GridSpec
+from eodatasets2.model import DatasetDoc
 
 EUGL_VERSION = "DO_SOMETHING_HERE"
 
 FMASK_VERSION = "DO_SOMETHING_HERE2"
 FMASK_REPO_URL = "https://bitbucket.org/chchrsc/python-fmask"
 
-TESP_VERSION = eodatasets.__version__
+TESP_VERSION = eodatasets2.__version__
 TESP_REPO_URL = "https://github.com/GeoscienceAustralia/eo-datasets"
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"

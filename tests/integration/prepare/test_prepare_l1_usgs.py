@@ -3,7 +3,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Dict
 
-from eodatasets.prepare import ls_usgs_l1_prepare
+from eodatasets2.prepare import ls_usgs_l1_prepare
 from tests.integration.common import check_prepare_outputs
 from tests.integration.common import run_prepare_cli
 

@@ -27,7 +27,7 @@ import yaml
 from osgeo import osr
 from rasterio.errors import RasterioIOError
 
-from eodatasets.utils import read_paths_from_file, ClickDatetime
+from eodatasets2.utils import read_paths_from_file, ClickDatetime
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 

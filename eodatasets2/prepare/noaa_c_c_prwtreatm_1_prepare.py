@@ -13,9 +13,9 @@ import rasterio
 import rasterio.crs
 from rasterio.io import DatasetReader
 
-from eodatasets import serialise
+from eodatasets2 import serialise
 from ..metadata.valid_region import valid_region
-from eodatasets.utils import read_paths_from_file, ItemProvider
+from eodatasets2.utils import read_paths_from_file, ItemProvider
 
 
 NOAA_WATER_VAPOUR_NS = uuid.UUID(hex="857bd048-8c86-4670-a2b4-5dbea26d7692")

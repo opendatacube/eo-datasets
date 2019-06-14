@@ -33,8 +33,8 @@ from structlog.processors import (
 from subprocess import call
 from typing import List, Iterable, Tuple, Callable, IO, Dict
 
-from eodatasets.ui import PathPath
-from eodatasets.verify import PackageChecksum
+from eodatasets2.ui import PathPath
+from eodatasets2.verify import PackageChecksum
 
 _PREDICTOR_TABLE = {
     "int8": 2,

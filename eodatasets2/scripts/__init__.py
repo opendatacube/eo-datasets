@@ -9,4 +9,4 @@ def init_logging(debug):
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
     else:
-        logging.getLogger("eodatasets").setLevel(logging.INFO)
+        logging.getLogger("eodatasets2").setLevel(logging.INFO)

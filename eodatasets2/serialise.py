@@ -18,7 +18,7 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets.model import FileFormat, DatasetDoc, ODC_DATASET_SCHEMA_URL
+from eodatasets2.model import FileFormat, DatasetDoc, ODC_DATASET_SCHEMA_URL
 
 
 def _format_representer(dumper, data: FileFormat):

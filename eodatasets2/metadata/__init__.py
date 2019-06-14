@@ -6,7 +6,7 @@ import logging
 
 from pathlib import Path
 
-import eodatasets.type as ptype
+import eodatasets2.type as ptype
 
 _LOG = logging.getLogger(__name__)
 

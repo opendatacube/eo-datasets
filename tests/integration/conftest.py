@@ -5,9 +5,9 @@ from typing import Dict, Callable
 
 import pytest
 
-from eodatasets import serialise
-from eodatasets.prepare.ls_usgs_l1_prepare import normalise_nci_symlinks
-from eodatasets.model import DatasetDoc
+from eodatasets2 import serialise
+from eodatasets2.prepare.ls_usgs_l1_prepare import normalise_nci_symlinks
+from eodatasets2.model import DatasetDoc
 
 L71GT_TARBALL_PATH: Path = Path(
     __file__

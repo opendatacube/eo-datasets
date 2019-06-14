@@ -19,8 +19,8 @@ tests_require = [
 
 
 setup(
-    name="eodatasets",
-    description="Packaging, metadata and provenance for GA EO datasets",
+    name="eodatasets2",
+    description="Packaging, metadata and provenance for ODC EO datasets",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     packages=find_packages(exclude=("tests", "tests.*")),
@@ -50,8 +50,8 @@ setup(
     extras_require={"test": tests_require},
     entry_points="""
         [console_scripts]
-        eod-validate=eodatasets.prepare.validate:run
-        eod-prepare=eodatasets.scripts.genprepare:run
-        eod-recompress-tar=eodatasets.scripts.recompress:main
+        eo2-validate=eodatasets2.prepare.validate:run
+        eo2-prepare=eodatasets2.scripts.genprepare:run
+        eo2-recompress-tar=eodatasets2.scripts.recompress:main
     """,
 )

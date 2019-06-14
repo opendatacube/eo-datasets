@@ -8,9 +8,9 @@ import click
 import rasterio
 from xml.etree import ElementTree
 
-from eodatasets import serialise
+from eodatasets2 import serialise
 from ..metadata.valid_region import valid_region
-from eodatasets.utils import read_paths_from_file, ItemProvider
+from eodatasets2.utils import read_paths_from_file, ItemProvider
 
 
 MCD43A1_NS = uuid.UUID(hex="80dc431b-fc6c-4e6f-bf08-585eba1d8dc9")

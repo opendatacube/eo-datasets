@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import hashlib
 import unittest
 
-from eodatasets import verify
+from eodatasets2 import verify
 from tests import write_files
 
 

@@ -6,7 +6,7 @@ from deepdiff import DeepDiff
 from pathlib import Path
 
 from tests.integration.common import run_prepare_cli
-from eodatasets.prepare import noaa_c_c_prwtreatm_1_prepare
+from eodatasets2.prepare import noaa_c_c_prwtreatm_1_prepare
 
 NCEP_PR_WTR_FILE: Path = Path(
     __file__

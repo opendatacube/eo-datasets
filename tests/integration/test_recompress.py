@@ -5,8 +5,8 @@ from click.testing import CliRunner, Result
 from pathlib import Path
 from typing import List, Dict, Tuple
 
-from eodatasets import verify
-from eodatasets.scripts import recompress
+from eodatasets2 import verify
+from eodatasets2.scripts import recompress
 
 this_folder = Path(__file__).parent
 packaged_base: Path = this_folder.joinpath("recompress_packed")
