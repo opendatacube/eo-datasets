@@ -243,4 +243,5 @@ def test_prepare_s2a_l1c_safe(tmpdir):
         ],
         expected_doc=expected_doc,
         expected_metadata_path=expected_metadata_path,
+        normalise_tuples=False,
     )
