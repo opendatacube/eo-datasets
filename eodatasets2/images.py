@@ -14,6 +14,7 @@ import rasterio
 import rasterio.features
 import shapely
 import shapely.affinity
+import os
 import shapely.ops
 from affine import Affine
 from rasterio.crs import CRS
@@ -186,7 +187,19 @@ class MeasurementRecord:
             if i == 0:
                 grid_name = "default"
             else:
-                grid_name = "_".join(measurements.keys())
+                # If all measurements have a common prefix (like 'band08_') it makes a nice grid name.
+                grid_name = os.path.commonprefix(measurements.keys())
+                grid_name = grid_name.strip("_")
+                # If another grid already has this name: TODO: make both names more specific?
+                if grid_name in grid_docs:
+                    raise NotImplementedError(
+                        f"Clashing grid names. Needs a recalculation. "
+                        f"Name {grid_name!r}, but have {tuple(grid_docs.keys())!r}"
+                    )
+                # There was no common prefix. Just concat all band names.
+                # Perhaps we just fallback to enumeration in these weird cases. grid a, grid b etc....
+                if not grid_name:
+                    grid_name = "_".join(measurements.keys())
 
             grid_docs[grid_name] = GridDoc(grid.shape, grid.transform)
 
