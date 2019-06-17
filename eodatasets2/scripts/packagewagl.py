@@ -194,6 +194,7 @@ def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
                 measurement_name,
                 h5group[o],
                 # We only use the product bands for valid data calc, not supplementary.
+                # According to Josh: Supplementary pixels outside of the product bounds are implicitly invalid.
                 expand_valid_data=False,
             )
 
@@ -253,6 +254,9 @@ def create_contiguity(
 ):
     """
     Create the contiguity (all pixels valid) dataset.
+
+    Write a contiguity mask file based on the intersection of valid data pixels across all
+    bands from the input files.
     """
     # TODO: Actual res?
     res = level1.properties["eo:gsd"]
@@ -262,14 +266,11 @@ def create_contiguity(
             product_image_files = [
                 path
                 for band_name, path in p.iter_measurement_paths()
-                if band_name.startswith(f"{product}:")
+                if band_name.startswith(f"{product.lower()}_")
             ]
 
-            # quick work around for products that aren't being packaged
             if not product_image_files:
-                continue
-
-            # out_fname = outdir / QA / "{}_{}_CONTIGUITY.TIF".format(grn_id, product)
+                raise RuntimeError(f"No images found for requested product {product}")
 
             # Build a temp vrt
             # S2 bands are different resolutions. Make them appear the same when taking contiguity.
@@ -289,11 +290,6 @@ def create_contiguity(
                 tmpdir,
             )
 
-            # def contiguity(p: DatasetAssembler, product_name: str, fname: Path):
-            """
-            Write a contiguity mask file based on the intersection of valid data pixels across all
-            bands from the input file and returns with the geobox of the source dataset
-            """
             with rasterio.open(tmp_vrt_path) as ds:
                 geobox = GridSpec.from_rio(ds)
                 ones = numpy.ones((ds.height, ds.width), dtype="uint8")
@@ -306,7 +302,7 @@ def create_contiguity(
             # footprint for Landsat sensor. For Sentinel sensor, it inherits from level 1 yaml file
             if product.lower() == "nbar" and level1.properties[
                 "eo:platform"
-            ].startswith("landsat"):
+            ].lower().startswith("landsat"):
                 valid_timedelta_data = numpy.ma.masked_where(ones == 0, timedelta_data)
 
                 center_dt = numpy.datetime64(level1.datetime)
@@ -322,7 +318,7 @@ def create_contiguity(
 def package(
     l1_path: Path,
     antecedents: Dict[str, Path],
-    outdir: Path,
+    out_directory: Path,
     granule: str,
     products=("NBAR", "NBART", "LAMBERTIAN", "SBT"),
 ):
@@ -330,17 +326,15 @@ def package(
     Package an L2 product.
 
     :param l1_path:
-        A string containing the full file pathname to the Level-1
-        dataset.
+        The path to the Level-1 dataset this was processed from.
 
     :param antecedents:
         A dictionary describing antecedent task outputs
         (currently supporting wagl, eugl-gqa, eugl-fmask)
         to package.
 
-    :param outdir:
-        A string containing the full file pathname to the directory
-        that will contain the packaged Level-2 datasets.
+    :param out_directory:
+        Output directory: the dataset will be placed inside it.
 
     :param granule:
         The identifier for the granule
@@ -356,7 +350,7 @@ def package(
     level1 = serialise.from_path(l1_path)
 
     with h5py.File(antecedents["wagl"], "r") as fid:
-        out_path = outdir / _l1_to_ard(granule)
+        out_path = out_directory / _l1_to_ard(granule)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with DatasetAssembler(out_path) as p:
             p.add_source_dataset(level1, auto_inherit_properties=True)
@@ -378,7 +372,6 @@ def package(
                 raise NotImplementedError(f"Unsupported collection number.")
 
             p.properties["odc:product_family"] = "ard"
-            # TODO: nrt / provisional / final classification?
             p.properties["dea:dataset_maturity"] = "final"
 
             # TODO: Move this into the naming api.
@@ -456,9 +449,9 @@ def run():
             # 'eugl-gqa',
             # 'eugl-fmask',
         },
-        outdir=Path("./wagl-out").absolute(),
+        out_directory=Path("./wagl-out").absolute(),
         granule="LT50910841993188ASA00",
-        products=("NBAR",),
+        products=("NBAR", "NBART", "LAMBERTIAN"),
     )
 
 
