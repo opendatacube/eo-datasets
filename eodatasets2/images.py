@@ -3,7 +3,7 @@ import tempfile
 from collections import defaultdict
 from pathlib import Path
 from subprocess import check_call
-from typing import Tuple, Dict, List, Sequence
+from typing import Tuple, Dict, List, Sequence, Optional
 from typing import Union, Generator
 
 import attr
@@ -120,6 +120,32 @@ def generate_tiles(
     return tiles
 
 
+def _find_a_common_name(names: Sequence[str]) -> Optional[str]:
+    """
+    If we have a list of band names, can we find a nice name for the group of them?
+
+    (used when naming the grid for a set of bands)
+
+    >>> _find_a_common_name(['nbar_blue', 'nbar_red'])
+    'nbar'
+    >>> _find_a_common_name(['nbar_band08', 'nbart_band08'])
+    'band08'
+    >>> _find_a_common_name(['panchromatic'])
+    'panchromatic'
+    >>> # It's ok to find nothing.
+    >>> _find_a_common_name(['nbar_blue', 'nbar_red', 'qa'])
+    >>> _find_a_common_name(['a', 'b'])
+    """
+    # Is the last component the same? (eg, ending in. '_band08')
+    grid_name = os.path.commonprefix([s.split("_")[-1] for s in names])
+    if not grid_name:
+        # If all measurements have a common prefix (like 'nbar_') it makes a nice grid name.
+        grid_name = os.path.commonprefix(names)
+
+    grid_name = grid_name.strip("_")
+    return grid_name or None
+
+
 class MeasurementRecord:
     """
     Record the information for measurements/images to later write out to metadata.
@@ -187,9 +213,7 @@ class MeasurementRecord:
             if i == 0:
                 grid_name = "default"
             else:
-                # If all measurements have a common prefix (like 'band08_') it makes a nice grid name.
-                grid_name = os.path.commonprefix(measurements.keys())
-                grid_name = grid_name.strip("_")
+                grid_name = _find_a_common_name(list(measurements.keys()))
                 # If another grid already has this name: TODO: make both names more specific?
                 if grid_name in grid_docs:
                     raise NotImplementedError(
