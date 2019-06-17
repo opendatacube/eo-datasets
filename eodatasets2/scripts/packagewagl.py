@@ -14,6 +14,7 @@ import rasterio
 import yaml
 from boltons.iterutils import get_path, PathAccessError
 from click import secho
+from rasterio import DatasetReader
 from yaml.representer import Representer
 
 import eodatasets2
@@ -170,20 +171,19 @@ def _band_name(dataset: h5py.Dataset):
     return band_name.lower().replace("-", "_")
 
 
-def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
+def unpack_observation_attributes(p: DatasetAssembler, h5group: h5py.Group):
     """
     Unpack the angles + other supplementary datasets produced by wagl.
     Currently only the mode resolution group gets extracted.
     """
 
-    def _write(dataset_names: Sequence[str], offset: str, basedir: str):
+    def _write(dataset_names: Sequence[str], offset: str, group_name: str):
         """
-        An internal util for serialising the supplementary
-        H5Datasets to tif.
+        Write supplementary attributes as measurement.
         """
         for dataset_name in dataset_names:
             o = ppjoin(offset, dataset_name)
-            secho(f"{basedir.lower()} path {o!r}", fg="blue")
+            secho(f"{group_name.lower()} path {o!r}", fg="blue")
 
             measurement_name = f"{dataset_name.lower()}".replace("-", "_")
             measurement_name = MEASUREMENT_TRANSLATION.get(
@@ -191,17 +191,24 @@ def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
             )
 
             p.write_measurement_h5(
-                measurement_name,
+                f"{group_name}_{measurement_name}",
                 h5group[o],
                 # We only use the product bands for valid data calc, not supplementary.
                 # According to Josh: Supplementary pixels outside of the product bounds are implicitly invalid.
                 expand_valid_data=False,
             )
 
-    res_grps = [g for g in h5group.keys() if g.startswith("RES-GROUP-")]
-    if len(res_grps) != 1:
-        raise NotImplementedError(f"expected one res group, got {res_grps!r}")
-    [res_grp] = res_grps
+    res_grps = sorted(g for g in h5group.keys() if g.startswith("RES-GROUP-"))
+    if len(res_grps) not in (1, 2):
+        raise NotImplementedError(
+            f"Unexpected set of res-groups. "
+            f"Expected either two (with pan) or one (without pan), "
+            f"got {res_grps!r}"
+        )
+    # Res groups are ordered in descending resolution, so res-group-0 is the panchromatic band.
+    # We only package OA information for the regular bands, not pan.
+    # So we pick the last res group.
+    res_grp = res_grps[-1]
 
     # satellite and solar angles
 
@@ -216,32 +223,24 @@ def unpack_supplementary(p: DatasetAssembler, h5group: h5py.Group):
             "TIMEDELTA",
         ],
         solar_offset,
-        "SUPPLEMENTARY",
+        "oa",
     )
 
     # incident angles
-    _write(
-        ["INCIDENT", "AZIMUTHAL-INCIDENT"],
-        ppjoin(res_grp, "INCIDENT-ANGLES"),
-        "SUPPLEMENTARY",
-    )
+    _write(["INCIDENT", "AZIMUTHAL-INCIDENT"], ppjoin(res_grp, "INCIDENT-ANGLES"), "oa")
 
     # exiting angles
 
-    _write(
-        ["EXITING", "AZIMUTHAL-EXITING"],
-        ppjoin(res_grp, "EXITING-ANGLES"),
-        "SUPPLEMENTARY",
-    )
+    _write(["EXITING", "AZIMUTHAL-EXITING"], ppjoin(res_grp, "EXITING-ANGLES"), "oa")
 
     # relative slope
 
-    _write(["RELATIVE-SLOPE"], ppjoin(res_grp, "RELATIVE-SLOPE"), "SUPPLEMENTARY")
+    _write(["RELATIVE-SLOPE"], ppjoin(res_grp, "RELATIVE-SLOPE"), "oa")
 
     # terrain shadow
     # TODO: this one had cogtif=True? (but was unused in `_write()`)
 
-    _write(["COMBINED-TERRAIN-SHADOW"], ppjoin(res_grp, "SHADOW-MASKS"), "QA")
+    _write(["COMBINED-TERRAIN-SHADOW"], ppjoin(res_grp, "SHADOW-MASKS"), "qa")
 
     # TODO do we also include slope and aspect?
 
@@ -291,19 +290,24 @@ def create_contiguity(
             )
 
             with rasterio.open(tmp_vrt_path) as ds:
+                ds: DatasetReader
                 geobox = GridSpec.from_rio(ds)
-                ones = numpy.ones((ds.height, ds.width), dtype="uint8")
+                contiguity = numpy.ones((ds.height, ds.width), dtype="uint8")
                 for band in ds.indexes:
-                    ones &= ds.read(band) > 0
+                    contiguity &= ds.read(band) > 0
 
-                p.write_measurement_numpy(f"{product.lower()}_contiguity", ones, geobox)
+                p.write_measurement_numpy(
+                    f"{product.lower()}_contiguity", contiguity, geobox
+                )
 
             # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
             # footprint for Landsat sensor. For Sentinel sensor, it inherits from level 1 yaml file
             if product.lower() == "nbar" and level1.properties[
                 "eo:platform"
             ].lower().startswith("landsat"):
-                valid_timedelta_data = numpy.ma.masked_where(ones == 0, timedelta_data)
+                valid_timedelta_data = numpy.ma.masked_where(
+                    contiguity == 0, timedelta_data
+                )
 
                 center_dt = numpy.datetime64(level1.datetime)
                 from_dt = center_dt + numpy.timedelta64(
@@ -391,7 +395,7 @@ def package(
             unpack_wagl_docs(p, granule_group)
 
             # unpack supplementary datasets produced by wagl
-            timedelta_data = unpack_supplementary(p, granule_group)
+            timedelta_data = unpack_observation_attributes(p, granule_group)
 
             # file based globbing, so can't have any other tifs on disk
             create_contiguity(p, products, level1, timedelta_data)
@@ -418,9 +422,7 @@ def package(
 def unpack_wagl_docs(p: DatasetAssembler, granule_group: h5py.Group):
     try:
         wagl_path, *ancil_paths = [
-            pth
-            for pth in (find_h5_paths(granule_group, "SCALAR"))
-            if "NBAR-METADATA" in pth
+            pth for pth in (find_h5_paths(granule_group, "SCALAR")) if "METADATA" in pth
         ]
     except ValueError:
         raise ValueError("No nbar metadata found in granule")
