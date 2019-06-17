@@ -165,7 +165,7 @@ class MeasurementRecord:
         # PyCharm's typing seems to get confused by the sorted() call.
         # noinspection PyTypeChecker
         grids_by_frequency: List[Tuple[GridSpec, Dict[str, Path]]] = sorted(
-            self._measurements_per_grid.items(), key=lambda k: len(k[1])
+            self._measurements_per_grid.items(), key=lambda k: len(k[1]), reverse=True
         )
 
         grid_docs: Dict[str, GridDoc] = {}
