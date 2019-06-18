@@ -5,15 +5,16 @@ import re
 import tempfile
 from pathlib import Path
 from posixpath import join as ppjoin
-from typing import Dict, List, Sequence
+from typing import List, Sequence, Optional
 
 import ciso8601
+import click
 import h5py
 import numpy
 import rasterio
 import yaml
 from boltons.iterutils import get_path, PathAccessError
-from click import secho
+from click import secho, echo
 from rasterio import DatasetReader
 from yaml.representer import Representer
 
@@ -319,29 +320,31 @@ def create_contiguity(
                 p.datetime_range = (from_dt, to_dt)
 
 
+def _boolstyle(s):
+    if s:
+        return click.style("✓", fg="green")
+    else:
+        return click.style("✗", fg="yellow")
+
+
 def package(
-    l1_path: Path,
-    antecedents: Dict[str, Path],
+    wagl_hdf5: Path,
+    source_level1: Path,
     out_directory: Path,
-    granule: str,
-    products=("NBAR", "NBART", "LAMBERTIAN", "SBT"),
+    granule_name: str = None,
+    products: Sequence[str] = ("NBAR", "NBART", "LAMBERTIAN", "SBT"),
+    fmask_image: Optional[Path] = None,
+    fmask_doc: Optional[Path] = None,
+    gqa_doc: Optional[Path] = None,
 ):
     """
     Package an L2 product.
 
-    :param l1_path:
+    :param source_level1:
         The path to the Level-1 dataset this was processed from.
-
-    :param antecedents:
-        A dictionary describing antecedent task outputs
-        (currently supporting wagl, eugl-gqa, eugl-fmask)
-        to package.
 
     :param out_directory:
         Output directory: the dataset will be placed inside it.
-
-    :param granule:
-        The identifier for the granule
 
     :param products:
         A list of imagery products to include in the package.
@@ -351,10 +354,40 @@ def package(
         None; The packages will be written to disk directly.
     """
 
-    level1 = serialise.from_path(l1_path)
+    if not granule_name:
+        granule_name = _find_a_granule_name(wagl_hdf5)
 
-    with h5py.File(antecedents["wagl"], "r") as fid:
-        out_path = out_directory / _l1_to_ard(granule)
+    if not fmask_image:
+        fmask_image = wagl_hdf5.with_name(f"{granule_name}.fmask.img")
+        if not fmask_image.exists():
+            raise ValueError(f"Fmask not found {fmask_image}")
+
+    if not fmask_doc:
+        fmask_doc = fmask_image.with_suffix(".yaml")
+        if not fmask_image.exists():
+            raise ValueError(f"Fmask not found {fmask_image}")
+
+    if not gqa_doc:
+        gqa_doc = wagl_hdf5.with_name(f"{granule_name}.gqa.yaml")
+        if not gqa_doc.exists():
+            raise ValueError(f"GQA not found {gqa_doc}")
+
+    level1 = serialise.from_path(source_level1)
+
+    echo(
+        f"Packaging {granule_name}. "
+        f"FMASK:{_boolstyle(fmask_image)}&{_boolstyle(fmask_doc)} "
+        f"GQA:{_boolstyle(gqa_doc)}"
+    )
+
+    with h5py.File(wagl_hdf5, "r") as fid:
+        if granule_name not in fid:
+            raise ValueError(
+                f"Granule name {granule_name!r} not found in HDF5 file. "
+                f"Options: {', '.join(fid.keys())}"
+            )
+
+        out_path = out_directory / _l1_to_ard(granule_name)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with DatasetAssembler(out_path) as p:
             p.add_source_dataset(level1, auto_inherit_properties=True)
@@ -365,18 +398,17 @@ def package(
             # p.note_software_version('gverify', gverify_version)
             p.note_software_version(TESP_REPO_URL, TESP_VERSION)
 
-            # TODO there's probably a real one.
             p["dea:processing_level"] = "level-2"
-            provider_reference_info(p, granule)
+            provider_reference_info(p, granule_name)
+            p.properties["odc:product_family"] = "ard"
+            # TODO: maturity, where to load from?
+            p.properties["dea:dataset_maturity"] = "final"
 
             # GA's collection 3 processes USGS Collection 1
             if level1.properties["landsat:collection_number"] == 1:
                 org_collection_number = 3
             else:
                 raise NotImplementedError(f"Unsupported collection number.")
-
-            p.properties["odc:product_family"] = "ard"
-            p.properties["dea:dataset_maturity"] = "final"
 
             # TODO: Move this into the naming api.
             p.product_name = "ga_{platform}{instrument}_{family}_{collection}".format(
@@ -386,10 +418,8 @@ def package(
                 collection=int(org_collection_number),
             )
 
-            # TODO: pan band?
-
             # unpack the standardised products produced by wagl
-            granule_group = fid[granule]
+            granule_group = fid[granule_name]
             unpack_products(p, products, granule_group)
 
             unpack_wagl_docs(p, granule_group)
@@ -401,22 +431,40 @@ def package(
             create_contiguity(p, products, level1, timedelta_data)
 
             # fmask cogtif conversion
-            if "fmask" in antecedents:
-
+            if fmask_image:
                 # TODO: this one has different predictor settings?
                 # fmask_cogtif_args_predictor = 2
-
-                p.write_measurement("qa/fmask", antecedents["fmask"])
-
+                p.write_measurement("qa_fmask", fmask_image)
+            if fmask_doc:
+                with gqa_doc.open() as fl:
+                    p.extend_user_metadata("fmask", yaml.safe_load(fl))
                 # The processing version should be supplied somewhere in their metadata.
                 p.note_software_version("fmask_repo", "TODO")
-
-            # merge all the yaml documents
-            if "gqa" in antecedents:
-                with antecedents["gqa"].open() as fl:
+            if gqa_doc:
+                with gqa_doc.open() as fl:
                     p.extend_user_metadata("gqa", yaml.safe_load(fl))
 
             p.done()
+
+
+def _find_a_granule_name(wagl_hdf5: Path) -> str:
+    """
+    Try to extract granule name from wagl filename,
+
+    >>> _find_a_granule_name(Path('LT50910841993188ASA00.wagl.h5'))
+    'LT50910841993188ASA00'
+    >>> _find_a_granule_name(Path('my-test-granule.h5'))
+    Traceback (most recent call last):
+    ...
+    ValueError: No granule specified, and cannot find it on input filename 'my-test-granule'.
+    """
+    #
+    granule_name = wagl_hdf5.stem.split(".")[0]
+    if not granule_name.startswith("L"):
+        raise ValueError(
+            f"No granule specified, and cannot find it on input filename {wagl_hdf5.stem!r}."
+        )
+    return granule_name
 
 
 def unpack_wagl_docs(p: DatasetAssembler, granule_group: h5py.Group):
@@ -445,15 +493,10 @@ def unpack_wagl_docs(p: DatasetAssembler, granule_group: h5py.Group):
 
 def run():
     package(
-        l1_path=next(Path("./wagl-test").glob("LT*_T1.yaml")),
-        antecedents={
-            "wagl": next(Path("./wagl-test/").glob("LT*.wagl.h5")),
-            # 'eugl-gqa',
-            # 'eugl-fmask',
-        },
+        source_level1=next(Path("./wagl-test").glob("LT*_T1.yaml")),
+        wagl_hdf5=next(Path("./wagl-test").rglob("LC8*.wagl.h5")),
         out_directory=Path("./wagl-out").absolute(),
-        granule="LT50910841993188ASA00",
-        products=("NBAR", "NBART", "LAMBERTIAN"),
+        products=["NBAR"],
     )
 
 
