@@ -132,17 +132,20 @@ def _find_a_common_name(names: Sequence[str]) -> Optional[str]:
     'band08'
     >>> _find_a_common_name(['panchromatic'])
     'panchromatic'
+    >>> _find_a_common_name(['nbar_panchromatic'])
+    'nbar_panchromatic'
     >>> # It's ok to find nothing.
     >>> _find_a_common_name(['nbar_blue', 'nbar_red', 'qa'])
     >>> _find_a_common_name(['a', 'b'])
     """
-    # Is the last component the same? (eg, ending in. '_band08')
-    grid_name = os.path.commonprefix([s.split("_")[-1] for s in names])
-    if not grid_name:
-        # If all measurements have a common prefix (like 'nbar_') it makes a nice grid name.
-        grid_name = os.path.commonprefix(names)
+    # If all measurements have a common prefix (like 'nbar_') it makes a nice grid name.
+    one = os.path.commonprefix(names).strip("_")
 
-    grid_name = grid_name.strip("_")
+    # Is the last component the same? (eg, ending in. '_band08')
+    two = os.path.commonprefix([s.split("_")[-1] for s in names]).strip("_")
+
+    # Pick the longest candidate.
+    grid_name = one if len(one) > len(two) else two
     return grid_name or None
 
 
