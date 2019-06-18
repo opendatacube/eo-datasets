@@ -213,7 +213,7 @@ class DatasetAssembler:
 
         self.properties = {}
 
-        # TODO generate?
+        # TODO generate product name?
         self.product_name = None
 
     def __enter__(self):
@@ -310,39 +310,30 @@ class DatasetAssembler:
         # be in os/filesystem cache.
         self._checksum.add_file(out_path)
 
-    def format_name(self, s: str, custom_fields: Dict = None) -> str:
-        properties = nest_properties(self.properties)
-        return s.format_map(
-            {**properties, "product_name": self.product_name, **(custom_fields or {})}
-        )
-
     def write_measurement(self, name: str, p: Path):
         with rasterio.open(p) as ds:
-            ds: DatasetReader
-            grid = images.GridSpec.from_rio(ds)
+            self.write_measurement_rio(name, ds)
 
-            out_path = self._measurement_file_path(name)
+    def write_measurement_rio(self, name: str, ds: DatasetReader):
+        grid = images.GridSpec.from_rio(ds)
+        out_path = self._measurement_file_path(name)
 
-            FileWrite.from_existing(grid.shape).write_from_file(p, out_path)
-
-            if ds.indexes > 1:
-                raise NotImplementedError(
-                    "TODO: Multi-band images not currently implemented"
-                )
-
-            self._measurements.record_image(
-                name, grid, out_path, img=ds.read(1), nodata=ds.nodata
+        if len(ds.indexes) != 1:
+            raise NotImplementedError(
+                f"TODO: Multi-band images not currently implemented (have {len(ds.indexes)})"
             )
+
+        array = ds.read(1)
+        FileWrite.from_existing(grid.shape).write_from_ndarray(
+            array, out_path, grid, ds.nodata
+        )
+
+        args = dict(nodata=ds.nodata) if ds.nodata is not None else {}
+        self._measurements.record_image(name, grid, out_path, img=array, **args)
 
         # We checksum immediately as the file has *just* been written so it may still
         # be in os/filesystem cache.
         self._checksum.add_file(out_path)
-
-    def extend_user_metadata(self, section, d: Dict):
-        if section in self._user_metadata:
-            raise ValueError(f"metadata section {section} already exists")
-
-        self._user_metadata[section] = deepcopy(d)
 
     def write_measurement_numpy(
         self,
@@ -368,6 +359,18 @@ class DatasetAssembler:
         # be in os/filesystem cache.
         self._checksum.add_file(out_path)
 
+    def format_name(self, s: str, custom_fields: Dict = None) -> str:
+        properties = nest_properties(self.properties)
+        return s.format_map(
+            {**properties, "product_name": self.product_name, **(custom_fields or {})}
+        )
+
+    def extend_user_metadata(self, section, d: Dict):
+        if section in self._user_metadata:
+            raise ValueError(f"metadata section {section} already exists")
+
+        self._user_metadata[section] = deepcopy(d)
+
     def note_software_version(self, repository_url, version):
         existing_version = self._user_metadata.setdefault("software_versions", {}).get(
             repository_url
@@ -381,7 +384,7 @@ class DatasetAssembler:
 
     @property
     def _my_label(self):
-        # TODO: Configurability?
+        # TODO: Dataset label Configurability?
         return self.format_name(
             r"{product_name}-0-0_{odc[reference_code]}_{datetime:%Y-%m-%d}_{dea[dataset_maturity]}"
         )
@@ -430,12 +433,16 @@ class DatasetAssembler:
         self.properties["dtr:start_datetime"] = start
         self.properties["dtr:end_datetime"] = end
 
-    def done(self, validate_correctness=True):
+    def done(self, validate_correctness=True, sort_bands=True):
         """Write the dataset to the destination"""
         # write metadata fields:
 
         # Order from most to fewest measurements.
         crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
+
+        if sort_bands:
+            measurement_docs = dict(sorted(measurement_docs.items()))
+
         valid_data = self._measurements.valid_data()
 
         dataset = DatasetDoc(

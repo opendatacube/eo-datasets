@@ -1,11 +1,17 @@
 #!/usr/bin/env python
+"""
+Package WAGL HDF5 Outputs
 
+This will conver the HDF5 file (and sibling fmask/gqa files) into
+GeoTIFFS (COGs) with datacube metadata using the DEA naming conventions
+for files.
+"""
 import os
 import re
 import tempfile
 from pathlib import Path
 from posixpath import join as ppjoin
-from typing import List, Sequence, Optional
+from typing import List, Sequence, Optional, Iterable
 
 import ciso8601
 import click
@@ -23,6 +29,9 @@ from eodatasets2 import serialise, images
 from eodatasets2.assemble import DatasetAssembler
 from eodatasets2.images import GridSpec
 from eodatasets2.model import DatasetDoc
+from eodatasets2.ui import PathPath
+
+_DEFAULT_PRODUCTS = ("NBAR", "NBART", "LAMBERTIAN", "SBT")
 
 EUGL_VERSION = "DO_SOMETHING_HERE"
 
@@ -138,7 +147,7 @@ def _l1_to_ard(granule: str) -> str:
 
 
 def unpack_products(
-    p: DatasetAssembler, product_list: Sequence[str], h5group: h5py.Group
+    p: DatasetAssembler, product_list: Iterable[str], h5group: h5py.Group
 ) -> None:
     """
     Unpack and package the NBAR and NBART products.
@@ -250,7 +259,7 @@ def unpack_observation_attributes(p: DatasetAssembler, h5group: h5py.Group):
 
 
 def create_contiguity(
-    p: DatasetAssembler, product_list: Sequence[str], level1: DatasetDoc, timedelta_data
+    p: DatasetAssembler, product_list: Iterable[str], level1: DatasetDoc, timedelta_data
 ):
     """
     Create the contiguity (all pixels valid) dataset.
@@ -270,7 +279,8 @@ def create_contiguity(
             ]
 
             if not product_image_files:
-                raise RuntimeError(f"No images found for requested product {product}")
+                secho(f"No images found for requested product {product}", fg="red")
+                continue
 
             # Build a temp vrt
             # S2 bands are different resolutions. Make them appear the same when taking contiguity.
@@ -295,6 +305,7 @@ def create_contiguity(
                 geobox = GridSpec.from_rio(ds)
                 contiguity = numpy.ones((ds.height, ds.width), dtype="uint8")
                 for band in ds.indexes:
+                    # TODO Shouldn't this use ds.nodata instead of 0? Copied from the old packager.
                     contiguity &= ds.read(band) > 0
 
                 p.write_measurement_numpy(
@@ -332,7 +343,7 @@ def package(
     source_level1: Path,
     out_directory: Path,
     granule_name: str = None,
-    products: Sequence[str] = ("NBAR", "NBART", "LAMBERTIAN", "SBT"),
+    products: Iterable[str] = _DEFAULT_PRODUCTS,
     fmask_image: Optional[Path] = None,
     fmask_doc: Optional[Path] = None,
     gqa_doc: Optional[Path] = None,
@@ -376,8 +387,8 @@ def package(
 
     echo(
         f"Packaging {granule_name}. "
-        f"FMASK:{_boolstyle(fmask_image)}&{_boolstyle(fmask_doc)} "
-        f"GQA:{_boolstyle(gqa_doc)}"
+        f"fmask:{_boolstyle(fmask_image)}{_boolstyle(fmask_doc)} "
+        f"gqa:{_boolstyle(gqa_doc)}"
     )
 
     with h5py.File(wagl_hdf5, "r") as fid:
@@ -491,12 +502,39 @@ def unpack_wagl_docs(p: DatasetAssembler, granule_group: h5py.Group):
     p.extend_user_metadata("wagl", wagl_doc)
 
 
-def run():
+@click.command(help=__doc__)
+@click.option(
+    "--level1",
+    help="the path to the input level1 metadata doc",
+    required=True,
+    type=PathPath(exists=True, readable=True, dir_okay=False, file_okay=True),
+)
+@click.option(
+    "--output",
+    help="Put the output package into this directory",
+    required=True,
+    type=PathPath(exists=True, writable=True, dir_okay=True, file_okay=False),
+)
+@click.option(
+    "-p",
+    "--product",
+    "products",
+    help="Package only the given products (can specify multiple times)",
+    type=click.Choice(_DEFAULT_PRODUCTS, case_sensitive=False),
+    multiple=True,
+)
+@click.argument("h5_file", type=PathPath(exists=True, readable=True, writable=False))
+def run(level1: Path, output: Path, h5_file: Path, products: Sequence[str]):
+    if products:
+        products = set(p.upper() for p in products)
+    else:
+        products = _DEFAULT_PRODUCTS
+
     package(
-        source_level1=next(Path("./wagl-test").glob("LT*_T1.yaml")),
-        wagl_hdf5=next(Path("./wagl-test").rglob("LC8*.wagl.h5")),
-        out_directory=Path("./wagl-out").absolute(),
-        products=["NBAR"],
+        source_level1=level1,
+        wagl_hdf5=h5_file,
+        out_directory=output.absolute(),
+        products=products,
     )
 
 

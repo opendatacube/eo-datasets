@@ -36,7 +36,7 @@ properties:
     # or a WKT string if no EPSG is possible.
     type: string
 
-  # TODO
+  # TODO: more thorough geometry check?
   geometry:
     type: object
 

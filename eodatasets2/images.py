@@ -1,3 +1,4 @@
+import os
 import subprocess
 import tempfile
 from collections import defaultdict
@@ -14,7 +15,6 @@ import rasterio
 import rasterio.features
 import shapely
 import shapely.affinity
-import os
 import shapely.ops
 from affine import Affine
 from rasterio.crs import CRS
@@ -217,7 +217,7 @@ class MeasurementRecord:
                 grid_name = "default"
             else:
                 grid_name = _find_a_common_name(list(measurements.keys()))
-                # If another grid already has this name: TODO: make both names more specific?
+                # If another grid already has this name: TODO: make both grid names more specific?
                 if grid_name in grid_docs:
                     raise NotImplementedError(
                         f"Clashing grid names. Needs a recalculation. "
