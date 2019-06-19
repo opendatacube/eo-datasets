@@ -4,10 +4,9 @@ import uuid
 import warnings
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime
 from enum import Enum
 from pathlib import Path, PurePath
-from typing import Any, Dict, List, Optional, Tuple, Generator
+from typing import Dict, List, Optional, Tuple, Generator
 
 import h5py
 import numpy
@@ -18,7 +17,13 @@ from rasterio.enums import Resampling
 
 from eodatasets2 import serialise, validate, images
 from eodatasets2.images import FileWrite, GridSpec, MeasurementRecord
-from eodatasets2.model import DatasetDoc, ProductDoc
+from eodatasets2.model import (
+    DatasetDoc,
+    ProductDoc,
+    StacPropertyView,
+    DeaNamingConventions,
+    DEA_URI_PREFIX,
+)
 from eodatasets2.validate import Level, ValidationMessage
 from eodatasets2.verify import PackageChecksum
 
@@ -37,31 +42,6 @@ _INHERITABLE_PROPERTIES = {
     "landsat:wrs_row",
     "landsat:collection_category",
 }
-
-
-def nest_properties(d: Dict[str, Any], separator=":") -> Dict[str, Any]:
-    """
-    Split keys with embedded colons into sub dictionaries.
-
-    Intended for stac-like properties
-
-    >>> nest_properties({'landsat:path':1, 'landsat:row':2, 'clouds':3})
-    {'landsat': {'path': 1, 'row': 2}, 'clouds': 3}
-    """
-    out = defaultdict(dict)
-    for key, val in d.items():
-        section, *remainder = key.split(separator, 1)
-        if remainder:
-            [sub_key] = remainder
-            out[section][sub_key] = val
-        else:
-            out[section] = val
-
-    for key, val in out.items():
-        if isinstance(val, dict):
-            out[key] = nest_properties(val, separator=separator)
-
-    return dict(out)
 
 
 class IfExists(Enum):
@@ -180,7 +160,7 @@ class DatasetAssembler:
         # By default, we complain if the output already exists.
         if_exists=IfExists.ThrowError,
         allow_absolute_paths=False,
-        naming_conventions="dea",
+        naming_conventions="default",
     ) -> None:
         if not output_folder and not metadata_path:
             raise ValueError(
@@ -204,17 +184,18 @@ class DatasetAssembler:
 
         self._allow_absolute_paths = allow_absolute_paths
 
-        if naming_conventions != "dea":
-            raise NotImplementedError("configurable naming conventions")
-
         self._user_metadata = dict()
 
         self._lineage: Dict[str, List[uuid.UUID]] = defaultdict(list)
 
-        self.properties = {}
+        self.properties = StacPropertyView()
 
-        # TODO generate product name?
-        self.product_name = None
+        if naming_conventions == "default":
+            self.names = DeaNamingConventions(self.properties)
+        elif naming_conventions == "dea":
+            self.names = DeaNamingConventions(self.properties, DEA_URI_PREFIX)
+        else:
+            raise NotImplementedError("configurable naming conventions")
 
     def __enter__(self):
         return self
@@ -286,7 +267,7 @@ class DatasetAssembler:
 
     def write_measurement_h5(self, name: str, g: h5py.Dataset, expand_valid_data=True):
         grid = images.GridSpec.from_h5(g)
-        out_path = self._measurement_file_path(name)
+        out_path = self.names.measurement_file_path(self._work_path, name, "tif")
 
         if hasattr(g, "chunks"):
             data = g[:]
@@ -316,7 +297,7 @@ class DatasetAssembler:
 
     def write_measurement_rio(self, name: str, ds: DatasetReader):
         grid = images.GridSpec.from_rio(ds)
-        out_path = self._measurement_file_path(name)
+        out_path = self.names.measurement_file_path(self._work_path, name, "tif")
 
         if len(ds.indexes) != 1:
             raise NotImplementedError(
@@ -343,7 +324,7 @@ class DatasetAssembler:
         nodata=None,
         overview_resampling=Resampling.nearest,
     ):
-        out_path = self._measurement_file_path(name)
+        out_path = self.names.measurement_file_path(self._work_path, name, "tif")
 
         FileWrite.from_existing(array.shape).write_from_ndarray(
             array,
@@ -358,12 +339,6 @@ class DatasetAssembler:
         # We checksum immediately as the file has *just* been written so it may still
         # be in os/filesystem cache.
         self._checksum.add_file(out_path)
-
-    def format_name(self, s: str, custom_fields: Dict = None) -> str:
-        properties = nest_properties(self.properties)
-        return s.format_map(
-            {**properties, "product_name": self.product_name, **(custom_fields or {})}
-        )
 
     def extend_user_metadata(self, section, d: Dict):
         if section in self._user_metadata:
@@ -382,57 +357,6 @@ class DatasetAssembler:
             )
         self._user_metadata["software_versions"][repository_url] = version
 
-    @property
-    def _my_label(self):
-        # TODO: Dataset label Configurability?
-        return self.format_name(
-            r"{product_name}-0-0_{odc[reference_code]}_{datetime:%Y-%m-%d}_{dea[dataset_maturity]}"
-        )
-
-    def _measurement_file_path(self, band_name):
-        return self._work_path / self.format_name(
-            r"{dataset_label}_{name}.tif",
-            dict(dataset_label=self._my_label, name=band_name.replace("_", "-")),
-        )
-
-    def __setitem__(self, key, value):
-        if key in self.properties:
-            warnings.warn(f"overridding property {key!r}")
-        self.properties[key] = value
-
-    @property
-    def platform(self) -> str:
-        return self.properties["eo:platform"]
-
-    @property
-    def instrument(self) -> str:
-        return self.properties["eo:instrument"]
-
-    @property
-    def platform_abbreviated(self) -> str:
-        """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
-        p = self.platform
-        if not p.startswith("landsat"):
-            raise NotImplementedError(
-                f"TODO: implement non-landsat platform abbreviation " f"(got {p!r})"
-            )
-
-        return f"ls{p[-1]}"
-
-    @property
-    def datetime_range(self):
-        return (
-            self.properties.get("dtr:start_datetime"),
-            self.properties.get("dtr:end_datetime"),
-        )
-
-    @datetime_range.setter
-    def datetime_range(self, val: Tuple[datetime, datetime]):
-        # TODO: string type conversion, better validation/errors
-        start, end = val
-        self.properties["dtr:start_datetime"] = start
-        self.properties["dtr:end_datetime"] = end
-
     def done(self, validate_correctness=True, sort_bands=True):
         """Write the dataset to the destination"""
         # write metadata fields:
@@ -448,7 +372,9 @@ class DatasetAssembler:
         dataset = DatasetDoc(
             id=uuid.uuid4(),
             # TODO: configurable/non-dea naming?
-            product=ProductDoc.dea_name(self.product_name),
+            product=ProductDoc(
+                name=self.names.product_name, href=self.names.product_uri
+            ),
             crs=f"epsg:{crs.to_epsg()}" if crs.is_epsg_code else crs.to_wkt(),
             geometry=valid_data,
             grids=grid_docs,
@@ -457,12 +383,8 @@ class DatasetAssembler:
             lineage=self._lineage,
         )
 
-        if dataset.product is None:
-            # TODO: Move into customisable naming conventions.
-            raise NotImplementedError("product name isn't yet auto-generated ")
-
         doc = serialise.to_formatted_doc(dataset)
-        self._write_yaml(doc, self._work_path / f"{self._my_label}.odc-dataset.yaml")
+        self._write_yaml(doc, self.names.metadata_path(self._work_path))
 
         if validate_correctness:
             for m in validate.validate(doc):
@@ -476,11 +398,11 @@ class DatasetAssembler:
                     )
         self._write_yaml(
             self._user_metadata,
-            self._work_path / f"{self._my_label}.ancil-info.yaml",
+            self.names.metadata_path(self._work_path, kind="ancil-info"),
             allow_external_paths=True,
         )
 
-        self._checksum.write(self._work_path / f"{self._my_label}.sha1")
+        self._checksum.write(self.names.checksum_path(self._work_path))
 
         # Match the lower r/w permission bits to the output folder.
         # (Temp directories default to 700 otherwise.)
@@ -516,26 +438,3 @@ class DatasetAssembler:
 
     def iter_measurement_paths(self) -> Generator[Tuple[str, Path], None, None]:
         return self._measurements.iter_paths()
-
-
-def example():
-    with DatasetAssembler(Path("my-scenes"), naming_conventions="dea") as p:
-        # When we have a main source dataset that our data comes from, we can
-        # inherit the basic properties like platform, instrument
-        p.add_source_dataset(Path(".yaml"), auto_inherit_properties=True)
-
-        # Does normalisation for common eo properties
-        p.platform = "landsat_8"
-        p.instrument = "OLIT_TIRS"
-        # Any stac properties
-        p["eo:gsd"] = 234
-
-        # Will reference existing file if inside base folder, or global use_absolute or local allow_absolute=True
-        p.add_measurement("blue", Path())
-        p.add_measurement("blue", "")
-
-        # Copy data to a local cogtif using default naming conventions
-        p.write_measurement("blue", Path("tif"))
-
-        #
-        p.done()

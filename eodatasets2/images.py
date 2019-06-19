@@ -231,6 +231,9 @@ class MeasurementRecord:
             grid_docs[grid_name] = GridDoc(grid.shape, grid.transform)
 
             for measurement_name, measurement_path in measurements.items():
+                # No measurement groups in the doc: we replace with underscores.
+                measurement_name = measurement_name.replace(":", "_")
+
                 measurement_docs[measurement_name] = MeasurementDoc(
                     path=measurement_path,
                     grid=grid_name if grid_name != "default" else None,

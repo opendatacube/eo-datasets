@@ -106,15 +106,15 @@ def provider_reference_info(p: DatasetAssembler, granule: str):
         Dictionary; contains satellite reference if identified
     """
     matches = None
-    if p.platform.startswith("landsat"):
+    if p.properties.platform.startswith("landsat"):
         matches = re.match(r"L\w\d(?P<reference_code>\d{6}).*", granule)
-    elif p.platform.startswith("sentinel-2"):
+    elif p.properties.platform.startswith("sentinel-2"):
         matches = re.match(r".*_T(?P<reference_code>\d{1,2}[A-Z]{3})_.*", granule)
 
     if matches:
         [reference_code] = matches.groups()
         # TODO name properly
-        p["odc:reference_code"] = reference_code
+        p.properties["odc:reference_code"] = reference_code
 
 
 def _gls_version(ref_fname: str) -> str:
@@ -161,7 +161,7 @@ def unpack_products(
         for pathname in [p for p in img_paths if "/{}/".format(product) in p]:
             secho(f"Path {pathname}", fg="blue")
             dataset = h5group[pathname]
-            p.write_measurement_h5(f"{product.lower()}_{_band_name(dataset)}", dataset)
+            p.write_measurement_h5(f"{product.lower()}:{_band_name(dataset)}", dataset)
 
 
 def _band_name(dataset: h5py.Dataset):
@@ -201,7 +201,7 @@ def unpack_observation_attributes(p: DatasetAssembler, h5group: h5py.Group):
             )
 
             p.write_measurement_h5(
-                f"{group_name}_{measurement_name}",
+                f"{group_name}:{measurement_name}",
                 h5group[o],
                 # We only use the product bands for valid data calc, not supplementary.
                 # According to Josh: Supplementary pixels outside of the product bounds are implicitly invalid.
@@ -275,7 +275,7 @@ def create_contiguity(
             product_image_files = [
                 path
                 for band_name, path in p.iter_measurement_paths()
-                if band_name.startswith(f"{product.lower()}_")
+                if band_name.startswith(f"{product.lower()}:")
             ]
 
             if not product_image_files:
@@ -309,7 +309,7 @@ def create_contiguity(
                     contiguity &= ds.read(band) > 0
 
                 p.write_measurement_numpy(
-                    f"{product.lower()}_contiguity", contiguity, geobox
+                    f"oa:{product.lower()}_contiguity", contiguity, geobox
                 )
 
             # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
@@ -321,7 +321,7 @@ def create_contiguity(
                     contiguity == 0, timedelta_data
                 )
 
-                center_dt = numpy.datetime64(level1.datetime)
+                center_dt = numpy.datetime64(level1.properties.datetime)
                 from_dt = center_dt + numpy.timedelta64(
                     int(float(numpy.ma.min(valid_timedelta_data)) * 1_000_000), "us"
                 )
@@ -400,7 +400,7 @@ def package(
 
         out_path = out_directory / _l1_to_ard(granule_name)
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        with DatasetAssembler(out_path) as p:
+        with DatasetAssembler(out_path, naming_conventions="dea") as p:
             p.add_source_dataset(level1, auto_inherit_properties=True)
 
             # TODO better software identifiers
@@ -409,25 +409,15 @@ def package(
             # p.note_software_version('gverify', gverify_version)
             p.note_software_version(TESP_REPO_URL, TESP_VERSION)
 
-            p["dea:processing_level"] = "level-2"
-            provider_reference_info(p, granule_name)
+            # It's a GA ARD product.
+            p.properties.producer = "ga.gov.au"
             p.properties["odc:product_family"] = "ard"
+            p.properties["odc:dataset_version"] = "0.0"
             # TODO: maturity, where to load from?
             p.properties["dea:dataset_maturity"] = "final"
+            p.properties["dea:processing_level"] = "level-2"
 
-            # GA's collection 3 processes USGS Collection 1
-            if level1.properties["landsat:collection_number"] == 1:
-                org_collection_number = 3
-            else:
-                raise NotImplementedError(f"Unsupported collection number.")
-
-            # TODO: Move this into the naming api.
-            p.product_name = "ga_{platform}{instrument}_{family}_{collection}".format(
-                platform=p.platform_abbreviated,
-                instrument=p.instrument[0].lower(),
-                family=p.properties["odc:product_family"],
-                collection=int(org_collection_number),
-            )
+            provider_reference_info(p, granule_name)
 
             # unpack the standardised products produced by wagl
             granule_group = fid[granule_name]

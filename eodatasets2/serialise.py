@@ -18,7 +18,12 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets2.model import FileFormat, DatasetDoc, ODC_DATASET_SCHEMA_URL
+from eodatasets2.model import (
+    FileFormat,
+    DatasetDoc,
+    ODC_DATASET_SCHEMA_URL,
+    StacPropertyView,
+)
 
 
 def _format_representer(dumper, data: FileFormat):
@@ -145,11 +150,22 @@ def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:
     c = cattr.Converter()
     c.register_structure_hook(uuid.UUID, _structure_as_uuid)
     c.register_structure_hook(BaseGeometry, _structure_as_shape)
+    c.register_structure_hook(StacPropertyView, _structure_as_stac_props)
+
+    c.register_unstructure_hook(StacPropertyView, _unstructure_as_stac_props)
     return c.structure(doc, DatasetDoc)
 
 
 def _structure_as_uuid(d, t):
     return uuid.UUID(str(d))
+
+
+def _structure_as_stac_props(d, t):
+    return StacPropertyView(d)
+
+
+def _unstructure_as_stac_props(v: StacPropertyView):
+    return v._props
 
 
 def _structure_as_shape(d, t):

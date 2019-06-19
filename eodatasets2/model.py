@@ -1,9 +1,11 @@
+import collections.abc
 import itertools
+import warnings
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Tuple, Dict, Optional, Iterable, List, Any, Sequence
+from typing import Tuple, Dict, Optional, Iterable, List, Any, Sequence, Mapping
 from uuid import UUID
 
 import affine
@@ -23,9 +25,38 @@ DEA_URI_PREFIX = "https://collections.dea.ga.gov.au"
 ODC_DATASET_SCHEMA_URL = "https://schemas.opendatacube.org/dataset"
 
 
+def nest_properties(d: Mapping[str, Any], separator=":") -> Dict[str, Any]:
+    """
+    Split keys with embedded colons into sub dictionaries.
+
+    Intended for stac-like properties
+
+    >>> nest_properties({'landsat:path':1, 'landsat:row':2, 'clouds':3})
+    {'landsat': {'path': 1, 'row': 2}, 'clouds': 3}
+    """
+    out = defaultdict(dict)
+    for key, val in d.items():
+        section, *remainder = key.split(separator, 1)
+        if remainder:
+            [sub_key] = remainder
+            out[section][sub_key] = val
+        else:
+            out[section] = val
+
+    for key, val in out.items():
+        if isinstance(val, dict):
+            out[key] = nest_properties(val, separator=separator)
+
+    return dict(out)
+
+
 class FileFormat(Enum):
     GeoTIFF = 1
     NetCDF = 2
+
+
+def _dea_uri(product_name, base_uri):
+    return f"{base_uri}/product/{product_name}"
 
 
 @attr.s(auto_attribs=True, slots=True)
@@ -35,7 +66,7 @@ class ProductDoc:
 
     @classmethod
     def dea_name(cls, name: str):
-        return ProductDoc(name=name, href=f"{DEA_URI_PREFIX}/product/{name}")
+        return ProductDoc(name=name, href=_dea_uri(name, DEA_URI_PREFIX))
 
 
 @attr.s(auto_attribs=True, slots=True, hash=True)
@@ -54,6 +85,175 @@ class MeasurementDoc:
     name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
 
 
+class StacPropertyView(collections.abc.Mapping):
+    def __init__(self, properties=None) -> None:
+        self._props = properties or {}
+
+    @property
+    def platform(self) -> str:
+        return self._props["eo:platform"]
+
+    @property
+    def instrument(self) -> str:
+        return self._props["eo:instrument"]
+
+    @property
+    def platform_abbreviated(self) -> str:
+        """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
+        p = self.platform
+        if not p.startswith("landsat"):
+            raise NotImplementedError(
+                f"TODO: implement non-landsat platform abbreviation " f"(got {p!r})"
+            )
+
+        return f"ls{p[-1]}"
+
+    @property
+    def producer(self) -> str:
+        """
+        Organisation that produced the data.
+
+        eg. usgs.gov or ga.gov.au
+        """
+        return self._props.get("odc:producer")
+
+    @property
+    def producer_abbreviated(self) -> Optional[str]:
+        """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
+        if not self.producer:
+            return None
+        p = {"ga.gov.au": "ga", "usgs.gov": "usgs"}
+        try:
+            return p[self.producer]
+        except KeyError:
+            raise NotImplementedError(
+                f"TODO: cannot yet abbreviate organisation domain name {self.producer!r}"
+            )
+
+    @producer.setter
+    def producer(self, domain: str):
+        self._props["odc:producer"] = domain
+
+    @property
+    def datetime_range(self):
+        return (
+            self._props.get("dtr:start_datetime"),
+            self._props.get("dtr:end_datetime"),
+        )
+
+    @datetime_range.setter
+    def datetime_range(self, val: Tuple[datetime, datetime]):
+        # TODO: string type conversion, better validation/errors
+        start, end = val
+        self._props["dtr:start_datetime"] = start
+        self._props["dtr:end_datetime"] = end
+
+    @property
+    def datetime(self) -> datetime:
+        return self._props.get("datetime")
+
+    def __getitem__(self, item):
+        return self._props[item]
+
+    def __iter__(self):
+        return iter(self._props)
+
+    def __len__(self):
+        return len(self._props)
+
+    def __setitem__(self, key, value):
+        if key in self._props:
+            warnings.warn(f"overridding property {key!r}")
+        # TODO: normalise case etc.
+        self._props[key] = value
+
+    def nested(self):
+        return nest_properties(self._props)
+
+
+class DeaNamingConventions:
+    def __init__(self, properties: StacPropertyView, base_uri: str = None) -> None:
+        self.properties = properties
+        self.base_uri = base_uri
+
+    @property
+    def product_name(self) -> str:
+        return self._product_group()
+
+    def _product_group(self, subname=None):
+        # GA's collection 3 processes USGS Collection 1
+        if self.properties["landsat:collection_number"] == 1:
+            org_collection_number = 3
+        else:
+            raise NotImplementedError(f"Unsupported collection number.")
+
+        # Fallback to the whole product's name
+        if not subname:
+            subname = self.properties["odc:product_family"]
+
+        p = "{producer}_{platform}{instrument}_{family}_{collection}".format(
+            producer=self.properties.producer_abbreviated,
+            platform=self.properties.platform_abbreviated,
+            instrument=self.properties.instrument[0].lower(),
+            family=subname,
+            collection=int(org_collection_number),
+        )
+        return p
+
+    @property
+    def product_uri(self) -> Optional[str]:
+        if not self.base_uri:
+            return None
+
+        return _dea_uri(self.product_name, base_uri=self.base_uri)
+
+    @property
+    def dataset_label(self) -> str:
+        """
+        Label for a dataset
+        """
+        # TODO: Dataset label Configurability?
+        p = self.properties
+        return "_".join(
+            (
+                self.product_name,
+                p["odc:dataset_version"],
+                p["odc:reference_code"],
+                f"{p.datetime:%Y-%m-%d}",
+                p["dea:dataset_maturity"],
+            )
+        )
+
+    def metadata_path(
+        self, work_dir: Path, kind: str = "odc-metadata", suffix: str = "yaml"
+    ):
+        return self._file(work_dir, kind, suffix)
+
+    def checksum_path(self, work_dir: Path, suffix: str = "sha1"):
+        return self._file(work_dir, "", suffix)
+
+    def measurement_file_path(
+        self, work_dir: Path, measurement_name: str, suffix: str
+    ) -> Path:
+        if ":" in measurement_name:
+            subgroup, name = measurement_name.split(":")
+        else:
+            subgroup, name = None, measurement_name
+        return self._file(work_dir, name, suffix, sub_name=subgroup)
+
+    def _file(self, work_dir: Path, file_id: str, suffix: str, sub_name: str = None):
+        p = self.properties
+        return work_dir / "_".join(
+            (
+                f"{self._product_group(sub_name)}-{p['odc:dataset_version']}",
+                p["odc:reference_code"],
+                f"{p.datetime:%Y-%m-%d}",
+                p["dea:dataset_maturity"],
+                f'{file_id.replace("_", "-")}.{suffix}',
+            )
+        )
+
+
 @attr.s(auto_attribs=True, slots=True)
 class DatasetDoc:
     id: UUID = None
@@ -64,28 +264,11 @@ class DatasetDoc:
     geometry: BaseGeometry = None
     grids: Dict[str, GridDoc] = None
 
-    properties: Dict[str, Any] = attr.ib(factory=CommentedMap)
+    properties: StacPropertyView = attr.ib(factory=StacPropertyView)
 
     measurements: Dict[str, MeasurementDoc] = None
 
     lineage: Dict[str, Sequence[UUID]] = attr.ib(factory=CommentedMap)
-
-    @property
-    def producer(self):
-        """
-        Organisation that produced the data.
-
-        eg. usgs.gov or ga.gov.au
-        """
-        return self.properties.get("odc:producer")
-
-    @producer.setter
-    def producer(self, domain):
-        self.properties["odc:producer"] = domain
-
-    @property
-    def datetime(self) -> datetime:
-        return self.properties.get("datetime")
 
 
 def resolve_absolute_offset(
