@@ -10,7 +10,6 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from posixpath import join as ppjoin
 from typing import List, Sequence, Optional, Iterable
 
 import ciso8601
@@ -187,43 +186,40 @@ def unpack_observation_attributes(p: DatasetAssembler, h5group: h5py.Group):
     Currently only the mode resolution group gets extracted.
     """
 
-    def _write(dataset_names: Sequence[str], offset: str, group_name: str):
+    resolution_groups = sorted(g for g in h5group.keys() if g.startswith("RES-GROUP-"))
+    if len(resolution_groups) not in (1, 2):
+        raise NotImplementedError(
+            f"Unexpected set of res-groups. "
+            f"Expected either two (with pan) or one (without pan), "
+            f"got {resolution_groups!r}"
+        )
+    # Res groups are ordered in descending resolution, so res-group-0 is the panchromatic band.
+    # We only package OA information for the regular bands, not pan.
+    # So we pick the last res group.
+    res_grp = h5group[resolution_groups[-1]]
+
+    def _write(section: str, dataset_names: Sequence[str]):
         """
         Write supplementary attributes as measurement.
         """
         for dataset_name in dataset_names:
-            o = ppjoin(offset, dataset_name)
-            secho(f"{group_name.lower()} path {o!r}", fg="blue")
-
+            o = f"{section}/{dataset_name}"
+            secho(f"OA path {o!r}", fg="blue")
             measurement_name = f"{dataset_name.lower()}".replace("-", "_")
             measurement_name = MEASUREMENT_TRANSLATION.get(
                 measurement_name, measurement_name
             )
 
             p.write_measurement_h5(
-                f"{group_name}:{measurement_name}",
-                h5group[o],
+                f"oa:{measurement_name}",
+                res_grp[o],
                 # We only use the product bands for valid data calc, not supplementary.
                 # According to Josh: Supplementary pixels outside of the product bounds are implicitly invalid.
                 expand_valid_data=False,
             )
 
-    res_grps = sorted(g for g in h5group.keys() if g.startswith("RES-GROUP-"))
-    if len(res_grps) not in (1, 2):
-        raise NotImplementedError(
-            f"Unexpected set of res-groups. "
-            f"Expected either two (with pan) or one (without pan), "
-            f"got {res_grps!r}"
-        )
-    # Res groups are ordered in descending resolution, so res-group-0 is the panchromatic band.
-    # We only package OA information for the regular bands, not pan.
-    # So we pick the last res group.
-    res_grp = res_grps[-1]
-
-    # satellite and solar angles
-
-    solar_offset = ppjoin(res_grp, "SATELLITE-SOLAR")
     _write(
+        "SATELLITE-SOLAR",
         [
             "SATELLITE-VIEW",
             "SATELLITE-AZIMUTH",
@@ -232,30 +228,16 @@ def unpack_observation_attributes(p: DatasetAssembler, h5group: h5py.Group):
             "RELATIVE-AZIMUTH",
             "TIMEDELTA",
         ],
-        solar_offset,
-        "oa",
     )
-
-    # incident angles
-    _write(["INCIDENT", "AZIMUTHAL-INCIDENT"], ppjoin(res_grp, "INCIDENT-ANGLES"), "oa")
-
-    # exiting angles
-
-    _write(["EXITING", "AZIMUTHAL-EXITING"], ppjoin(res_grp, "EXITING-ANGLES"), "oa")
-
-    # relative slope
-
-    _write(["RELATIVE-SLOPE"], ppjoin(res_grp, "RELATIVE-SLOPE"), "oa")
-
-    # terrain shadow
-    # TODO: this one had cogtif=True? (but was unused in `_write()`)
-
-    _write(["COMBINED-TERRAIN-SHADOW"], ppjoin(res_grp, "SHADOW-MASKS"), "qa")
+    _write("INCIDENT-ANGLES", ["INCIDENT", "AZIMUTHAL-INCIDENT"])
+    _write("EXITING-ANGLES", ["EXITING", "AZIMUTHAL-EXITING"])
+    _write("RELATIVE-SLOPE", ["RELATIVE-SLOPE"])
+    _write("SHADOW-MASKS", ["COMBINED-TERRAIN-SHADOW"])
 
     # TODO do we also include slope and aspect?
 
     # timedelta data
-    return h5group[solar_offset]["TIMEDELTA"]
+    return res_grp["TIMEDELTA"]
 
 
 def create_contiguity(
