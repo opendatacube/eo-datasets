@@ -122,9 +122,9 @@ class StacPropertyView(collections.abc.Mapping):
         """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
         if not self.producer:
             return None
-        p = {"ga.gov.au": "ga", "usgs.gov": "usgs"}
+        producer_domains = {"ga.gov.au": "ga", "usgs.gov": "usgs"}
         try:
-            return p[self.producer]
+            return producer_domains[self.producer]
         except KeyError:
             raise NotImplementedError(
                 f"TODO: cannot yet abbreviate organisation domain name {self.producer!r}"
@@ -132,6 +132,11 @@ class StacPropertyView(collections.abc.Mapping):
 
     @producer.setter
     def producer(self, domain: str):
+        if "." not in domain:
+            warnings.warn(
+                "Property 'odc:producer' is expected to be a domain name, "
+                "eg 'usgs.gov' or 'ga.gov.au'"
+            )
         self._props["odc:producer"] = domain
 
     @property
@@ -214,10 +219,10 @@ class DeaNamingConventions:
         """
         # TODO: Dataset label Configurability?
         p = self.properties
+        version = p["odc:dataset_version"].replace(".", "-")
         return "_".join(
             (
-                self.product_name,
-                p["odc:dataset_version"],
+                f"{self.product_name}-{version}",
                 p["odc:reference_code"],
                 f"{p.datetime:%Y-%m-%d}",
                 p["dea:dataset_maturity"],
@@ -243,9 +248,10 @@ class DeaNamingConventions:
 
     def _file(self, work_dir: Path, file_id: str, suffix: str, sub_name: str = None):
         p = self.properties
+        version = p["odc:dataset_version"].replace(".", "-")
         return work_dir / "_".join(
             (
-                f"{self._product_group(sub_name)}-{p['odc:dataset_version']}",
+                f"{self._product_group(sub_name)}-{version}",
                 p["odc:reference_code"],
                 f"{p.datetime:%Y-%m-%d}",
                 p["dea:dataset_maturity"],
