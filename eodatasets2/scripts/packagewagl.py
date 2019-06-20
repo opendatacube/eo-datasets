@@ -374,10 +374,10 @@ def package(
 
     level1 = serialise.from_path(source_level1)
 
+    echo(f"Packaging {granule_name}. (products: {', '.join(products)})")
     echo(
-        f"Packaging {granule_name}. "
         f"fmask:{_boolstyle(fmask_image)}{_boolstyle(fmask_doc)} "
-        f"gqa:{_boolstyle(gqa_doc)}"
+        f"gqa:{_boolstyle(gqa_doc)} with_oa:{_boolstyle(include_oa)}"
     )
 
     with h5py.File(wagl_hdf5, "r") as fid:
