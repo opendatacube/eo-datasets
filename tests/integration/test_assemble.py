@@ -19,8 +19,8 @@ def test_minimal_dea_package(l1_ls8_dataset: DatasetDoc, tmp_path: Path):
         p.properties.producer = "ga.gov.au"
         p.properties["odc:product_family"] = "ones"
 
-        processing_time = datetime.now()
-        p.properties["odc:processing_datetime"] = processing_time
+        processing_time = datetime.utcnow()
+        p.properties.processed = processing_time
 
         # GA's collection 3 processes USGS Collection 1
         p.properties["odc:dataset_version"] = f"3.0.0"
