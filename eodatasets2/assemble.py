@@ -359,10 +359,22 @@ class DatasetAssembler:
 
     def done(self, validate_correctness=True, sort_bands=True):
         """Write the dataset to the destination"""
-        # write metadata fields:
 
         # Order from most to fewest measurements.
         crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
+        thumb = self.names.measurement_file_path(self._work_path, "thumbnail", "jpeg")
+
+        # TODO: Configurable set of thumbnail bands
+        ms = dict(self._measurements.iter_paths())
+        FileWrite({}, {}).create_thumbnail(
+            (
+                ms["nbar:band07"].absolute(),
+                ms["nbar:band04"].absolute(),
+                ms["nbar:band01"].absolute(),
+            ),
+            thumb,
+        )
+        self._checksum.add_file(thumb)
 
         if sort_bands:
             measurement_docs = dict(sorted(measurement_docs.items()))

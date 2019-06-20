@@ -21,6 +21,7 @@ from rasterio.crs import CRS
 from rasterio.enums import Resampling
 from scipy import ndimage
 from shapely.geometry.base import BaseGeometry, CAP_STYLE, JOIN_STYLE
+from skimage.exposure import rescale_intensity
 
 from eodatasets2.model import GridDoc, MeasurementDoc
 
@@ -537,7 +538,7 @@ class FileWrite:
                         "gdal_translate",
                         "-co",
                         "{}={}".format("PREDICTOR", predictor[dtype]),
-                        *self._gdal_cli_config,
+                        *self._gdal_cli_config(),
                         without_levels,
                         out_filename,
                     ],
@@ -547,13 +548,14 @@ class FileWrite:
             # write directly to disk without rewriting with gdal
             _rasterio_write_raster(out_filename)
 
-    @property
-    def _gdal_cli_config(self):
+    def _gdal_cli_config(self, option_whitelist=None, config_whitelist=None):
         args = []
         for key, value in self.options.items():
-            args.extend(["-co", "{}={}".format(key, value)])
+            if option_whitelist is None or key in option_whitelist:
+                args.extend(["-co", "{}={}".format(key, value)])
         for key, value in self.config_options.items():
-            args.extend(["--config", "{}".format(key), "{}".format(value)])
+            if config_whitelist is None or key in config_whitelist:
+                args.extend(["--config", "{}".format(key), "{}".format(value)])
         return args
 
     def write_from_file(
@@ -590,7 +592,7 @@ class FileWrite:
                     "gdal_translate",
                     "-of",
                     "GTiff",
-                    *self._gdal_cli_config,
+                    *self._gdal_cli_config(),
                     input_image,
                     out_fname,
                 ],
@@ -598,3 +600,142 @@ class FileWrite:
             )
 
         return out_fname
+
+    def create_thumbnail(self, rgb: Tuple[Path, Path, Path], out: Path):
+        with tempfile.TemporaryDirectory(dir=out.parent, prefix=".thumbgen-") as tmpdir:
+            tmpdir = Path(tmpdir)
+            # initial vrt of required rgb bands
+            vrt_file = tmpdir / "input_bands.vrt"
+            run_command(
+                ["gdalbuildvrt", "-separate", "-overwrite", vrt_file, *rgb], tmpdir
+            )
+
+            # quicklook with contrast scaling
+            stretched_file = tmpdir / "stretched.tif"
+            quicklook(
+                vrt_file, out_fname=stretched_file, src_min=1, src_max=3500, out_min=1
+            )
+
+            # warp to Lon/Lat WGS84
+            warped_file = tmpdir / "warped.tif"
+
+            run_command(
+                [
+                    "gdalwarp",
+                    "-t_srs",
+                    "EPSG:4326",
+                    "-co",
+                    "COMPRESS=JPEG",
+                    "-co",
+                    "PHOTOMETRIC=YCBCR",
+                    "-co",
+                    "TILED=YES",
+                    stretched_file,
+                    warped_file,
+                ],
+                tmpdir,
+            )
+
+            warped_file = tmpdir / "warped.tif"
+
+            # create the thumbnail
+            run_command(
+                [
+                    "gdal_translate",
+                    "-of",
+                    "JPEG",
+                    "-outsize",
+                    "10%",
+                    "10%",
+                    warped_file,
+                    out,
+                ],
+                tmpdir,
+            )
+
+
+def quicklook(fname, out_fname, src_min, src_max, out_min=0, out_max=255):
+    """
+    Generate a quicklook image applying a linear contrast enhancement.
+    Outputs will be converted to Uint8.
+    If the input image has a valid no data value, the no data will
+    be set to 0 in the output image.
+    Any non-contiguous data across the colour domain, will be set to
+    zero.
+    The output is a tiled GeoTIFF with JPEG compression, utilising the
+    YCBCR colour model, as well as a mask band.
+    This routine attempts to minimise memory consumption, as such
+    it reads data as needed on-the-fly, and doesn't retain all colour
+    bands in memory.
+    The same can't be said for writing to disk as this'll be in
+    rasterio's code. The pixel interleaved nature of JPEG compression
+    might require (on rasterio's end) to have all bands in memory.
+    Extra code could be written to do I/O utilising the same output
+    tile size in order to only have (y_size, x_size, bands) in memory
+    at a time.
+
+    :param fname:
+        A `str` containing the file pathname to an image containing
+        the relevant data to extract.
+
+    :param out_fname:
+        A `str` containing the file pathname to where the quicklook
+        image will be saved.
+
+    :param src_min:
+        An integer/float containing the minimum data value to be
+        used as input into contrast enhancement.
+
+    :param src_max:
+        An integer/float containing the maximum data value to be
+        used as input into the contrast enhancement.
+
+    :param out_min:
+        An integer specifying the minimum output value that `src_min`
+        will be scaled to. Default is 0.
+
+    :param out_max:
+        An integer specifying the maximum output value that `src_max`
+        will be scaled to. Default is 255.
+
+    :return:
+        None; The output will be written directly to disk.
+        The output datatype will be `UInt8`.
+    """
+    with rasterio.open(fname) as ds:
+
+        # no data locations
+        nulls = numpy.zeros((ds.height, ds.width), dtype="bool")
+        for band in range(1, 4):
+            nulls |= ds.read(band) == ds.nodata
+
+        kwargs = {
+            "driver": "GTiff",
+            "height": ds.height,
+            "width": ds.width,
+            "count": 3,
+            "dtype": "uint8",
+            "crs": ds.crs,
+            "transform": ds.transform,
+            "nodata": 0,
+            "compress": "jpeg",
+            "photometric": "YCBCR",
+            "tiled": "yes",
+        }
+
+        # Only set blocksize on larger imagery; enables reduced resolution processing
+        if ds.height > 512 and ds.width > 512:
+            kwargs["blockxsize"] = 512
+            kwargs["blockysize"] = 512
+
+        with rasterio.open(out_fname, "w", **kwargs) as out_ds:
+            for band in range(1, 4):
+                scaled = rescale_intensity(
+                    ds.read(band),
+                    in_range=(src_min, src_max),
+                    out_range=(out_min, out_max),
+                )
+                scaled = scaled.astype("uint8")
+                scaled[nulls] = 0
+
+                out_ds.write(scaled, band)
