@@ -229,9 +229,7 @@ class DeaNamingConventions:
             )
         )
 
-    def metadata_path(
-        self, work_dir: Path, kind: str = "odc-metadata", suffix: str = "yaml"
-    ):
+    def metadata_path(self, work_dir: Path, kind: str = "", suffix: str = "yaml"):
         return self._file(work_dir, kind, suffix)
 
     def checksum_path(self, work_dir: Path, suffix: str = "sha1"):
@@ -249,13 +247,18 @@ class DeaNamingConventions:
     def _file(self, work_dir: Path, file_id: str, suffix: str, sub_name: str = None):
         p = self.properties
         version = p["odc:dataset_version"].replace(".", "-")
+
+        if file_id:
+            end = f'p["dea:dataset_maturity"]-{file_id.replace("_", "-")}.{suffix}'
+        else:
+            end = f'p["dea:dataset_maturity"].{suffix}'
+
         return work_dir / "_".join(
             (
                 f"{self._product_group(sub_name)}-{version}",
                 p["odc:reference_code"],
                 f"{p.datetime:%Y-%m-%d}",
-                p["dea:dataset_maturity"],
-                f'{file_id.replace("_", "-")}.{suffix}',
+                end,
             )
         )
 

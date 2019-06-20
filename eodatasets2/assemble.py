@@ -401,7 +401,9 @@ class DatasetAssembler:
         )
 
         doc = serialise.to_formatted_doc(dataset)
-        self._write_yaml(doc, self.names.metadata_path(self._work_path))
+        self._write_yaml(
+            doc, self.names.metadata_path(self._work_path, suffix="odc-metadata.yaml")
+        )
 
         if validate_correctness:
             for m in validate.validate(doc):
@@ -415,7 +417,7 @@ class DatasetAssembler:
                     )
         self._write_yaml(
             self._user_metadata,
-            self.names.metadata_path(self._work_path, kind="ancil-info"),
+            self.names.metadata_path(self._work_path, kind="proc-info", suffix="yaml"),
             allow_external_paths=True,
         )
 
