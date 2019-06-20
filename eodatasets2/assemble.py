@@ -252,9 +252,11 @@ class DatasetAssembler:
         if auto_inherit_properties:
             self._inherit_properties_from(dataset)
 
-    def _inherit_properties_from(self, dataset: DatasetDoc):
+    def _inherit_properties_from(self, source_dataset: DatasetDoc):
         for name in _INHERITABLE_PROPERTIES:
-            new_val = dataset.properties[name]
+            if name not in source_dataset.properties:
+                continue
+            new_val = source_dataset.properties[name]
 
             existing_val = self.properties.get(name)
             if existing_val is None:
