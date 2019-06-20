@@ -28,7 +28,8 @@ from eodatasets2.assemble import DatasetAssembler
 from eodatasets2.images import GridSpec
 from eodatasets2.ui import PathPath
 
-_DEFAULT_PRODUCTS = ("NBAR", "NBART", "LAMBERTIAN", "SBT")
+_POSSIBLE_PRODUCTS = ("NBAR", "NBART", "LAMBERTIAN", "SBT")
+_DEFAULT_PRODUCTS = ("NBAR", "NBART")
 
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
@@ -491,7 +492,7 @@ def unpack_wagl_docs(p: DatasetAssembler, granule_group: h5py.Group):
     "--product",
     "products",
     help="Package only the given products (can specify multiple times)",
-    type=click.Choice(_DEFAULT_PRODUCTS, case_sensitive=False),
+    type=click.Choice(_POSSIBLE_PRODUCTS, case_sensitive=False),
     multiple=True,
 )
 @click.argument("h5_file", type=PathPath(exists=True, readable=True, writable=False))
