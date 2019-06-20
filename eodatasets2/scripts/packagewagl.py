@@ -418,16 +418,13 @@ def package(
                     infer_datetime_range=infer_datetime_range,
                 )
 
-            # fmask cogtif conversion
-            if fmask_image:
-                # TODO: this one has different predictor settings?
-                # fmask_cogtif_args_predictor = 2
-                p.write_measurement("qa_fmask", fmask_image)
-            if fmask_doc:
-                with gqa_doc.open() as fl:
-                    p.extend_user_metadata("fmask", yaml.safe_load(fl))
-                # The processing version should be supplied somewhere in their metadata.
-                p.note_software_version("fmask_repo", "TODO")
+                if fmask_image:
+                    # TODO: this one has different predictor settings?
+                    # fmask_cogtif_args_predictor = 2
+                    p.write_measurement("oa:fmask", fmask_image)
+                if fmask_doc:
+                    with fmask_doc.open() as fl:
+                        p.extend_user_metadata("fmask", yaml.safe_load(fl))
             if gqa_doc:
                 with gqa_doc.open() as fl:
                     p.extend_user_metadata("gqa", yaml.safe_load(fl))
