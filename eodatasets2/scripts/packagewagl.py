@@ -2,7 +2,7 @@
 """
 Package WAGL HDF5 Outputs
 
-This will conver the HDF5 file (and sibling fmask/gqa files) into
+This will convert the HDF5 file (and sibling fmask/gqa files) into
 GeoTIFFS (COGs) with datacube metadata using the DEA naming conventions
 for files.
 """
@@ -12,7 +12,6 @@ import tempfile
 from pathlib import Path
 from typing import List, Sequence, Optional, Iterable
 
-import ciso8601
 import click
 import h5py
 import numpy
@@ -21,7 +20,6 @@ import yaml
 from boltons.iterutils import get_path, PathAccessError
 from click import secho, echo
 from rasterio import DatasetReader
-from yaml.representer import Representer
 
 from eodatasets2 import serialise, images
 from eodatasets2.assemble import DatasetAssembler
@@ -50,95 +48,18 @@ PRODUCT_SUITE_FROM_GRANULE = re.compile("(L1[GTPCS]{1,2})")
 
 def find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> List[str]:
     """
-    Given an h5py `Group`, `File` (opened file id; fid),
-    recursively list all objects or optionally only list
-    `h5py.Dataset` objects matching a given class, for example:
+    Find all objects in a h5 of the given class, returning their path.
 
-        * IMAGE
-        * TABLE
-        * SCALAR
-
-    :param h5_obj:
-        A h5py `Group` or `File` object to use as the
-        entry point from which to start listing the contents.
-
-    :param dataset_class:
-        A `str` containing a CLASS name identifier, eg:
-
-        * IMAGE
-        * TABLE
-        * SCALAR
-
-        Default is an empty string `''`.
-
-    :return:
-        A `list` containing the pathname to all matching objects.
+    (class examples: IMAGE, TABLE. SCALAR)
     """
-
     items = []
 
     def _find(name, obj):
-        """
-        An internal utility to find objects matching `dataset_class`.
-        """
         if obj.attrs.get("CLASS") == dataset_class:
             items.append(name)
 
     h5_obj.visititems(_find)
     return items
-
-
-def provider_reference_info(p: DatasetAssembler, granule: str):
-    """
-    Extracts provider reference metadata
-    Supported platforms are:
-        * LANDSAT
-        * SENTINEL2
-    :param granule:
-        A string referring to the name of the capture
-
-    :return:
-        Dictionary; contains satellite reference if identified
-    """
-    matches = None
-    if p.properties.platform.startswith("landsat"):
-        matches = re.match(r"L\w\d(?P<reference_code>\d{6}).*", granule)
-    elif p.properties.platform.startswith("sentinel-2"):
-        matches = re.match(r".*_T(?P<reference_code>\d{1,2}[A-Z]{3})_.*", granule)
-
-    if matches:
-        [reference_code] = matches.groups()
-        # TODO name properly
-        p.properties["odc:reference_code"] = reference_code
-
-
-def _gls_version(ref_fname: str) -> str:
-    # TODO a more appropriate method of version detection and/or population of metadata
-    if "GLS2000_GCP_SCENE" in ref_fname:
-        gls_version = "GLS_v1"
-    else:
-        gls_version = "GQA_v3"
-
-    return gls_version
-
-
-yaml.add_representer(numpy.int8, Representer.represent_int)
-yaml.add_representer(numpy.uint8, Representer.represent_int)
-yaml.add_representer(numpy.int16, Representer.represent_int)
-yaml.add_representer(numpy.uint16, Representer.represent_int)
-yaml.add_representer(numpy.int32, Representer.represent_int)
-yaml.add_representer(numpy.uint32, Representer.represent_int)
-yaml.add_representer(numpy.int, Representer.represent_int)
-yaml.add_representer(numpy.int64, Representer.represent_int)
-yaml.add_representer(numpy.uint64, Representer.represent_int)
-yaml.add_representer(numpy.float, Representer.represent_float)
-yaml.add_representer(numpy.float32, Representer.represent_float)
-yaml.add_representer(numpy.float64, Representer.represent_float)
-yaml.add_representer(numpy.ndarray, Representer.represent_list)
-
-
-def _l1_to_ard(granule: str) -> str:
-    return re.sub(PRODUCT_SUITE_FROM_GRANULE, "ARD", granule)
 
 
 def unpack_products(
@@ -163,14 +84,14 @@ def unpack_products(
             p.write_thumbnail(product, red, green, blue)
 
 
-def _band_name(dataset: h5py.Dataset):
+def _band_name(dataset: h5py.Dataset) -> str:
     # What we have to work with:
     # >>> print(repr((dataset.attrs["band_id"], dataset.attrs["band_name"], dataset.attrs["alias"])))
     # ('1', 'BAND-1', 'Blue')
 
     band_name = dataset.attrs["band_id"]
 
-    # A purely numeric id needs to be formatted like 'band01' according to naming conventions.
+    # A purely numeric id needs to be formatted 'band01' according to naming conventions.
     try:
         number = int(dataset.attrs["band_id"])
         band_name = f"band{number:02}"
@@ -238,8 +159,6 @@ def unpack_observation_attributes(
     _write("EXITING-ANGLES", ["EXITING", "AZIMUTHAL-EXITING"])
     _write("RELATIVE-SLOPE", ["RELATIVE-SLOPE"])
     _write("SHADOW-MASKS", ["COMBINED-TERRAIN-SHADOW"])
-
-    # TODO do we also include slope and aspect?
 
     # TODO: Actual res from res_group
     res = 30  # level1.properties["eo:gsd"]
@@ -334,6 +253,23 @@ def _boolstyle(s):
         return click.style("✗", fg="yellow")
 
 
+def _extract_reference_code(p: DatasetAssembler, granule: str) -> str:
+    matches = None
+    if p.properties.platform.startswith("landsat"):
+        matches = re.match(r"L\w\d(?P<reference_code>\d{6}).*", granule)
+    elif p.properties.platform.startswith("sentinel-2"):
+        matches = re.match(r".*_T(?P<reference_code>\d{1,2}[A-Z]{3})_.*", granule)
+
+    if matches:
+        [reference_code] = matches.groups()
+        # TODO name properly
+        p.properties["odc:reference_code"] = reference_code
+
+
+def _l1_to_ard(granule: str) -> str:
+    return re.sub(PRODUCT_SUITE_FROM_GRANULE, "ARD", granule)
+
+
 def package(
     wagl_hdf5: Path,
     source_level1: Path,
@@ -344,22 +280,22 @@ def package(
     fmask_doc: Optional[Path] = None,
     gqa_doc: Optional[Path] = None,
     include_oa: bool = True,
-):
+) -> Path:
     """
     Package an L2 product.
 
     :param source_level1:
-        The path to the Level-1 dataset this was processed from.
+        The path to the yaml metadata of the Level-1 this was processed from.
 
     :param out_directory:
-        Output directory: the dataset will be placed inside it.
+        The dataset will be placed inside
 
     :param products:
         A list of imagery products to include in the package.
         Defaults to all products.
 
     :return:
-        None; The packages will be written to disk directly.
+        The output Path
     """
 
     if not granule_name:
@@ -416,7 +352,7 @@ def package(
             p.properties["dea:dataset_maturity"] = "final"
             p.properties["dea:processing_level"] = "level-2"
 
-            provider_reference_info(p, granule_name)
+            _extract_reference_code(p, granule_name)
 
             # unpack the standardised products produced by wagl
             granule_group = fid[granule_name]
@@ -446,6 +382,8 @@ def package(
                     p.extend_user_metadata("gqa", yaml.safe_load(fl))
 
             p.done()
+
+    return out_path
 
 
 def _find_a_granule_name(wagl_hdf5: Path) -> str:
@@ -479,11 +417,12 @@ def unpack_wagl_docs(p: DatasetAssembler, granule_group: h5py.Group):
     wagl_doc = yaml.safe_load(granule_group[wagl_path][()])
 
     try:
-        p.properties["odc:processing_datetime"] = ciso8601.parse_datetime(
-            get_path(wagl_doc, ("system_information", "time_processed"))
+        p.properties.processed = get_path(
+            wagl_doc, ("system_information", "time_processed")
         )
     except PathAccessError:
         raise ValueError(f"WAGL dataset contains no time processed. Path {wagl_path}")
+
     for i, path in enumerate(ancil_paths):
         wagl_doc.setdefault(f"ancillary_{i}", {}).update(
             yaml.safe_load(granule_group[path][()])["ancillary"]

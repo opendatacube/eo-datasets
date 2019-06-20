@@ -10,12 +10,14 @@ from uuid import UUID
 
 import affine
 import attr
+import ciso8601
 import numpy
 import rasterio
 import rasterio.features
 import shapely
 import shapely.affinity
 import shapely.ops
+from dateutil import tz
 from rasterio import DatasetReader
 from ruamel.yaml.comments import CommentedMap
 from shapely.geometry.base import BaseGeometry
@@ -83,6 +85,12 @@ class MeasurementDoc:
     grid: str = "default"
 
     name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
+
+
+def _default_utc(d):
+    if d.tzinfo is None:
+        return d.replace(tzinfo=tz.tzutc())
+    return d
 
 
 class StacPropertyView(collections.abc.Mapping):
@@ -178,6 +186,19 @@ class StacPropertyView(collections.abc.Mapping):
     @property
     def datetime(self) -> datetime:
         return self._props.get("datetime")
+
+    @property
+    def processed(self) -> datetime:
+        """
+        When the dataset was processed (Default to UTC if not specified)
+        """
+        return self._props.get("odc:processed_datetime")
+
+    @processed.setter
+    def processed(self, value):
+        if isinstance(value, str):
+            value = ciso8601.parse_datetime(value)
+        self._props["odc:processed_datetime"] = _default_utc(value)
 
     def __getitem__(self, item):
         return self._props[item]
