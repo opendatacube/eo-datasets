@@ -94,6 +94,8 @@ def expected_l1_ls8_folder(
         "properties": {
             "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
             "odc:file_format": "GeoTIFF",
+            "odc:product_family": "level1",
+            "odc:reference_code": "090084",
             "odc:processing_datetime": datetime(2017, 4, 5, 11, 17, 36),
             # TODO: discuss? 'odc:region_code': '90_84',
             "eo:cloud_cover": 93.22,

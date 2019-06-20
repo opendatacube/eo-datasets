@@ -377,6 +377,9 @@ def _prepare(
             ),
         ),
     ]
+    properties["odc:reference_code"] = "".join(
+        (properties["landsat:wrs_path"], properties["landsat:wrs_row"])
+    )
 
     for section, fields in landsat_fields:
         s = mtl_doc[section]
