@@ -335,6 +335,7 @@ def package(
     fmask_image: Optional[Path] = None,
     fmask_doc: Optional[Path] = None,
     gqa_doc: Optional[Path] = None,
+    include_oa: bool = True,
 ):
     """
     Package an L2 product.
@@ -406,12 +407,16 @@ def package(
             unpack_products(p, products, granule_group)
             unpack_wagl_docs(p, granule_group)
 
-            infer_datetime_range = (
-                level1.properties["eo:platform"].lower().startswith("landsat")
-            )
-            unpack_observation_attributes(
-                p, products, granule_group, infer_datetime_range=infer_datetime_range
-            )
+            if include_oa:
+                infer_datetime_range = (
+                    level1.properties["eo:platform"].lower().startswith("landsat")
+                )
+                unpack_observation_attributes(
+                    p,
+                    products,
+                    granule_group,
+                    infer_datetime_range=infer_datetime_range,
+                )
 
             # fmask cogtif conversion
             if fmask_image:
@@ -495,8 +500,17 @@ def unpack_wagl_docs(p: DatasetAssembler, granule_group: h5py.Group):
     type=click.Choice(_POSSIBLE_PRODUCTS, case_sensitive=False),
     multiple=True,
 )
+@click.option(
+    "--with-oa/--no-oa",
+    "with_oa",
+    help="Include observation attributes (default: true)",
+    is_flag=True,
+    default=True,
+)
 @click.argument("h5_file", type=PathPath(exists=True, readable=True, writable=False))
-def run(level1: Path, output: Path, h5_file: Path, products: Sequence[str]):
+def run(
+    level1: Path, output: Path, h5_file: Path, products: Sequence[str], with_oa: bool
+):
     if products:
         products = set(p.upper() for p in products)
     else:
@@ -507,6 +521,7 @@ def run(level1: Path, output: Path, h5_file: Path, products: Sequence[str]):
             wagl_hdf5=h5_file,
             out_directory=output.absolute(),
             products=products,
+            include_oa=with_oa,
         )
 
 
