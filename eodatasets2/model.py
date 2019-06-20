@@ -249,9 +249,9 @@ class DeaNamingConventions:
         version = p["odc:dataset_version"].replace(".", "-")
 
         if file_id:
-            end = f'p["dea:dataset_maturity"]-{file_id.replace("_", "-")}.{suffix}'
+            end = f'{p["dea:dataset_maturity"]}_{file_id.replace("_", "-")}.{suffix}'
         else:
-            end = f'p["dea:dataset_maturity"].{suffix}'
+            end = f'{p["dea:dataset_maturity"]}.{suffix}'
 
         return work_dir / "_".join(
             (
