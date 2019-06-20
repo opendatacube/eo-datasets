@@ -15,6 +15,7 @@ from boltons import iterutils
 from rasterio import DatasetReader
 from rasterio.enums import Resampling
 
+import eodatasets2
 from eodatasets2 import serialise, validate, images
 from eodatasets2.images import FileWrite, GridSpec, MeasurementRecord
 from eodatasets2.model import (
@@ -359,6 +360,10 @@ class DatasetAssembler:
 
     def done(self, validate_correctness=True, sort_bands=True):
         """Write the dataset to the destination"""
+        self.note_software_version(
+            "https://github.com/GeoscienceAustralia/eo-datasets",
+            eodatasets2.__version__,
+        )
 
         # Order from most to fewest measurements.
         crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()

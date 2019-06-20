@@ -23,7 +23,6 @@ from click import secho, echo
 from rasterio import DatasetReader
 from yaml.representer import Representer
 
-import eodatasets2
 from eodatasets2 import serialise, images
 from eodatasets2.assemble import DatasetAssembler
 from eodatasets2.images import GridSpec
@@ -31,13 +30,6 @@ from eodatasets2.ui import PathPath
 
 _DEFAULT_PRODUCTS = ("NBAR", "NBART", "LAMBERTIAN", "SBT")
 
-EUGL_VERSION = "DO_SOMETHING_HERE"
-
-FMASK_VERSION = "DO_SOMETHING_HERE2"
-FMASK_REPO_URL = "https://bitbucket.org/chchrsc/python-fmask"
-
-TESP_VERSION = eodatasets2.__version__
-TESP_REPO_URL = "https://github.com/GeoscienceAustralia/eo-datasets"
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
@@ -397,12 +389,6 @@ def package(
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with DatasetAssembler(out_path, naming_conventions="dea") as p:
             p.add_source_dataset(level1, auto_inherit_properties=True)
-
-            # TODO better software identifiers
-            p.note_software_version("eugl", EUGL_VERSION)
-            p.note_software_version(FMASK_REPO_URL, FMASK_VERSION)
-            # p.note_software_version('gverify', gverify_version)
-            p.note_software_version(TESP_REPO_URL, TESP_VERSION)
 
             # It's a GA ARD product.
             p.properties.producer = "ga.gov.au"
