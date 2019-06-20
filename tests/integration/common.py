@@ -1,6 +1,8 @@
 from functools import partial
-from pprint import pformat
-
+from pathlib import Path
+from pprint import pformat, pprint
+from typing import Dict
+import rapidjson
 import yaml
 from boltons.iterutils import remap
 from click.testing import CliRunner, Result
@@ -23,9 +25,18 @@ def check_prepare_outputs(
     assert_same(expected_doc, generated_doc)
 
 
-def assert_same(expected_doc, generated_doc):
+def assert_same(expected_doc: Dict, generated_doc: Dict):
     __tracebackhide__ = True
     doc_diffs = diff(expected_doc, generated_doc)
+    assert doc_diffs == {}, pformat(doc_diffs)
+
+
+def assert_same_as_file(expected_doc: Dict, generated_file: Path):
+    __tracebackhide__ = True
+
+    generated_doc = yaml.load(generated_file.open("r"))
+    pprint(generated_doc)
+    doc_diffs = diff(dump_roundtrip(expected_doc), dump_roundtrip(generated_doc))
     assert doc_diffs == {}, pformat(doc_diffs)
 
 
@@ -43,3 +54,14 @@ def run_prepare_cli(invoke_script, *args, expect_success=True) -> Result:
         assert res.exit_code == 0, res.output
 
     return res
+
+
+def dump_roundtrip(generated_doc):
+    """Do a dump/load to normalise all doc-neutral dict/date/tuple/list types.
+
+    The in-memory choice of dict/etc subclasses shouldn't matter, as long as the doc
+    is identical once produced.
+    """
+    return rapidjson.loads(
+        rapidjson.dumps(generated_doc, datetime_mode=True, uuid_mode=True)
+    )

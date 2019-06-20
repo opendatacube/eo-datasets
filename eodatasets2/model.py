@@ -72,7 +72,7 @@ class ProductDoc:
 @attr.s(auto_attribs=True, slots=True, hash=True)
 class GridDoc:
     shape: Tuple[int, int]
-    transform: Tuple[float, float, float, float, float, float, float, float, float]
+    transform: affine.Affine
 
 
 @attr.s(auto_attribs=True, slots=True)
@@ -281,6 +281,13 @@ class DeaNamingConventions:
                 end,
             )
         )
+
+    def thumbnail_name(self, work_dir: Path, kind: str = None, suffix: str = "jpg"):
+        if kind:
+            name = f"{kind}:thumbnail"
+        else:
+            name = "thumbnail"
+        return self.measurement_file_path(work_dir, name, suffix)
 
 
 @attr.s(auto_attribs=True, slots=True)

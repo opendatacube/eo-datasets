@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from pathlib import Path, PurePath
-from typing import Dict
+from typing import Dict, Tuple
 from uuid import UUID
 
 import attr
@@ -13,6 +13,7 @@ import numpy
 import shapely
 import shapely.affinity
 import shapely.ops
+from affine import Affine
 from ruamel.yaml import YAML, ruamel, Representer
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
@@ -152,6 +153,8 @@ def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:
     c.register_structure_hook(BaseGeometry, _structure_as_shape)
     c.register_structure_hook(StacPropertyView, _structure_as_stac_props)
 
+    c.register_structure_hook(Affine, _structure_as_affine)
+
     c.register_unstructure_hook(StacPropertyView, _unstructure_as_stac_props)
     return c.structure(doc, DatasetDoc)
 
@@ -162,6 +165,18 @@ def _structure_as_uuid(d, t):
 
 def _structure_as_stac_props(d, t):
     return StacPropertyView(d)
+
+
+def _structure_as_affine(d: Tuple, t):
+    if len(d) != 9:
+        raise ValueError(f"Expected 9 coefficients in transform. Got {d!r}")
+
+    if tuple(d[-3:]) != (0.0, 0.0, 1.0):
+        raise ValueError(
+            f"Nine-element affine should always end in [0, 0, 1]. Got {d!r}"
+        )
+
+    return Affine(*d[:-3])
 
 
 def _unstructure_as_stac_props(v: StacPropertyView):

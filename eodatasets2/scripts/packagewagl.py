@@ -31,6 +31,10 @@ from eodatasets2.ui import PathPath
 _POSSIBLE_PRODUCTS = ("NBAR", "NBART", "LAMBERTIAN", "SBT")
 _DEFAULT_PRODUCTS = ("NBAR", "NBART")
 
+_THUMBNAILS = {
+    "nbar": ("nbar:band07", "nbar:band04", "nbar:band01"),
+    "nbart": ("nbart:band07", "nbart:band04", "nbart:band01"),
+}
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
@@ -153,6 +157,10 @@ def unpack_products(
             secho(f"Path {pathname}", fg="blue")
             dataset = h5group[pathname]
             p.write_measurement_h5(f"{product.lower()}:{_band_name(dataset)}", dataset)
+
+        if product in _THUMBNAILS:
+            red, green, blue = _THUMBNAILS[product]
+            p.write_thumbnail(product, red, green, blue)
 
 
 def _band_name(dataset: h5py.Dataset):

@@ -23,7 +23,7 @@ from scipy import ndimage
 from shapely.geometry.base import BaseGeometry, CAP_STYLE, JOIN_STYLE
 from skimage.exposure import rescale_intensity
 
-from eodatasets2.model import GridDoc, MeasurementDoc
+from eodatasets2.model import GridDoc, MeasurementDoc, DatasetDoc
 
 LEVELS = [8, 16, 32]
 
@@ -40,6 +40,17 @@ class GridSpec:
     crs: CRS = attr.ib(
         metadata=dict(doc_exclude=True), default=None, hash=False, cmp=False
     )
+
+    @classmethod
+    def from_dataset(cls, ds: DatasetDoc, grid="default") -> "GridSpec":
+        g = ds.grids[grid]
+
+        if ds.crs.startswith("epsg:"):
+            crs = CRS.from_epsg(ds.crs[5:])
+        else:
+            crs = CRS.from_wkt(ds.crs)
+
+        return GridSpec(g.shape, g.transform, crs=crs)
 
     @classmethod
     def from_rio(cls, dataset: rasterio.DatasetReader) -> "GridSpec":
@@ -302,7 +313,9 @@ class FileWrite:
     This code is derived from the old eugl packaging code and can probably be improved.
     """
 
-    def __init__(self, gdal_options: Dict, gdal_config_options: Dict) -> None:
+    def __init__(
+        self, gdal_options: Dict = None, gdal_config_options: Dict = None
+    ) -> None:
         super().__init__()
 
         self.options = gdal_options or {}

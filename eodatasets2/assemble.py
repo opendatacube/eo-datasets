@@ -30,18 +30,19 @@ from eodatasets2.verify import PackageChecksum
 
 _INHERITABLE_PROPERTIES = {
     "datetime",
-    "eo:platform",
-    "eo:instrument",
-    "eo:gsd",
     "eo:cloud_cover",
+    "eo:gsd",
+    "eo:instrument",
+    "eo:platform",
     "eo:sun_azimuth",
     "eo:sun_elevation",
+    "landsat:collection_category",
     "landsat:collection_number",
-    "landsat:landsat_scene_id",
     "landsat:landsat_product_id",
+    "landsat:landsat_scene_id",
     "landsat:wrs_path",
     "landsat:wrs_row",
-    "landsat:collection_category",
+    "odc:reference_code",
 }
 
 
@@ -367,19 +368,6 @@ class DatasetAssembler:
 
         # Order from most to fewest measurements.
         crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
-        thumb = self.names.measurement_file_path(self._work_path, "thumbnail", "jpeg")
-
-        # TODO: Configurable set of thumbnail bands
-        ms = dict(self._measurements.iter_paths())
-        FileWrite({}, {}).create_thumbnail(
-            (
-                ms["nbar:band07"].absolute(),
-                ms["nbar:band04"].absolute(),
-                ms["nbar:band01"].absolute(),
-            ),
-            thumb,
-        )
-        self._checksum.add_file(thumb)
 
         if sort_bands:
             measurement_docs = dict(sorted(measurement_docs.items()))
@@ -447,6 +435,43 @@ class DatasetAssembler:
                 raise RuntimeError(
                     f"Unexpected exists behaviour: {self._exists_behaviour}"
                 )
+
+        return dataset.id
+
+    def write_thumbnail(
+        self,
+        red_measurement_name: str,
+        green_measurement_name: str,
+        blue_measurement_name: str,
+        kind: str = None,
+    ):
+        thumb = self.names.thumbnail_name(self._work_path, kind=kind)
+        measurements = dict(self._measurements.iter_paths())
+
+        missing_measurements = {
+            red_measurement_name,
+            green_measurement_name,
+            blue_measurement_name,
+        } - set(measurements)
+        if missing_measurements:
+            raise IncompleteDatasetError(
+                ValidationMessage(
+                    Level.error,
+                    "missing_thumb_measurements",
+                    f"Thumbnail measurements are missing: no measurements called {missing_measurements!r}. ",
+                    hint=f"Available measurements: {', '.join(measurements)}",
+                )
+            )
+
+        FileWrite().create_thumbnail(
+            (
+                measurements[red_measurement_name].absolute(),
+                measurements[green_measurement_name].absolute(),
+                measurements[blue_measurement_name].absolute(),
+            ),
+            thumb,
+        )
+        self._checksum.add_file(thumb)
 
     def _write_yaml(self, doc, path, allow_external_paths=False):
         make_paths_relative(
