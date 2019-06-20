@@ -27,7 +27,6 @@ import eodatasets2
 from eodatasets2 import serialise, images
 from eodatasets2.assemble import DatasetAssembler
 from eodatasets2.images import GridSpec
-from eodatasets2.model import DatasetDoc
 from eodatasets2.ui import PathPath
 
 _DEFAULT_PRODUCTS = ("NBAR", "NBART", "LAMBERTIAN", "SBT")
@@ -180,7 +179,12 @@ def _band_name(dataset: h5py.Dataset):
     return band_name.lower().replace("-", "_")
 
 
-def unpack_observation_attributes(p: DatasetAssembler, h5group: h5py.Group):
+def unpack_observation_attributes(
+    p: DatasetAssembler,
+    product_list: Iterable[str],
+    h5group: h5py.Group,
+    infer_datetime_range=False,
+):
     """
     Unpack the angles + other supplementary datasets produced by wagl.
     Currently only the mode resolution group gets extracted.
@@ -236,12 +240,25 @@ def unpack_observation_attributes(p: DatasetAssembler, h5group: h5py.Group):
 
     # TODO do we also include slope and aspect?
 
-    # timedelta data
-    return res_grp["TIMEDELTA"]
+    # TODO: Actual res from res_group
+    res = 30  # level1.properties["eo:gsd"]
+
+    create_contiguity(
+        p,
+        product_list,
+        res=res,
+        timedelta_data=res_grp["SATELLITE-SOLAR/TIMEDELTA"]
+        if infer_datetime_range
+        else None,
+    )
 
 
 def create_contiguity(
-    p: DatasetAssembler, product_list: Iterable[str], level1: DatasetDoc, timedelta_data
+    p: DatasetAssembler,
+    product_list: Iterable[str],
+    res: int,
+    timedelta_product: str = "nbar",
+    timedelta_data: numpy.ndarray = None,
 ):
     """
     Create the contiguity (all pixels valid) dataset.
@@ -249,8 +266,6 @@ def create_contiguity(
     Write a contiguity mask file based on the intersection of valid data pixels across all
     bands from the input files.
     """
-    # TODO: Actual res?
-    res = level1.properties["eo:gsd"]
 
     with tempfile.TemporaryDirectory(prefix="contiguity-") as tmpdir:
         for product in product_list:
@@ -296,14 +311,12 @@ def create_contiguity(
 
             # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
             # footprint for Landsat sensor. For Sentinel sensor, it inherits from level 1 yaml file
-            if product.lower() == "nbar" and level1.properties[
-                "eo:platform"
-            ].lower().startswith("landsat"):
+            if timedelta_data is not None and product.lower() == timedelta_product:
                 valid_timedelta_data = numpy.ma.masked_where(
                     contiguity == 0, timedelta_data
                 )
 
-                center_dt = numpy.datetime64(level1.properties.datetime)
+                center_dt = numpy.datetime64(p.properties.datetime)
                 from_dt = center_dt + numpy.timedelta64(
                     int(float(numpy.ma.min(valid_timedelta_data)) * 1_000_000), "us"
                 )
@@ -404,14 +417,14 @@ def package(
             # unpack the standardised products produced by wagl
             granule_group = fid[granule_name]
             unpack_products(p, products, granule_group)
-
             unpack_wagl_docs(p, granule_group)
 
-            # unpack supplementary datasets produced by wagl
-            timedelta_data = unpack_observation_attributes(p, granule_group)
-
-            # file based globbing, so can't have any other tifs on disk
-            create_contiguity(p, products, level1, timedelta_data)
+            infer_datetime_range = (
+                level1.properties["eo:platform"].lower().startswith("landsat")
+            )
+            unpack_observation_attributes(
+                p, products, granule_group, infer_datetime_range=infer_datetime_range
+            )
 
             # fmask cogtif conversion
             if fmask_image:
@@ -501,13 +514,13 @@ def run(level1: Path, output: Path, h5_file: Path, products: Sequence[str]):
         products = set(p.upper() for p in products)
     else:
         products = _DEFAULT_PRODUCTS
-
-    package(
-        source_level1=level1,
-        wagl_hdf5=h5_file,
-        out_directory=output.absolute(),
-        products=products,
-    )
+    with rasterio.Env():
+        package(
+            source_level1=level1,
+            wagl_hdf5=h5_file,
+            out_directory=output.absolute(),
+            products=products,
+        )
 
 
 if __name__ == "__main__":
