@@ -395,7 +395,15 @@ def package(
             # It's a GA ARD product.
             p.properties.producer = "ga.gov.au"
             p.properties["odc:product_family"] = "ard"
-            p.properties["odc:dataset_version"] = "0.0"
+
+            # GA's collection 3 processes USGS Collection 1
+            if p.properties["landsat:collection_number"] == 1:
+                org_collection_number = 3
+            else:
+                raise NotImplementedError(f"Unsupported collection number.")
+            # TODO: wagl's algorithm version should determine our dataset version number, right?
+            p.properties["odc:dataset_version"] = f"{org_collection_number}.0.0"
+
             # TODO: maturity, where to load from?
             p.properties["dea:dataset_maturity"] = "final"
             p.properties["dea:processing_level"] = "level-2"

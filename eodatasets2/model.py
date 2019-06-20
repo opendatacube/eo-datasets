@@ -186,11 +186,7 @@ class DeaNamingConventions:
         return self._product_group()
 
     def _product_group(self, subname=None):
-        # GA's collection 3 processes USGS Collection 1
-        if self.properties["landsat:collection_number"] == 1:
-            org_collection_number = 3
-        else:
-            raise NotImplementedError(f"Unsupported collection number.")
+        org_collection_number = self.properties["odc:dataset_version"].split(".")[0]
 
         # Fallback to the whole product's name
         if not subname:
