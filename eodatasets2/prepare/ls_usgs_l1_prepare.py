@@ -335,6 +335,7 @@ def _prepare(
             mtl_doc["metadata_file_info"]["file_date"]
         ),
         "odc:file_format": file_format,
+        "odc:product_family": "level1",
         "eo:platform": platform_id.lower().replace("_", "-"),
         "eo:instrument": sensor_id,
         "eo:gsd": mtl_doc["projection_parameters"]["grid_cell_size_reflective"],
@@ -504,14 +505,14 @@ def yaml_checkums_correctly(output_yaml, data_path):
 def main(output, datasets, check_checksum, force_absolute_paths, newer_than):
     # type: (str, List[str], bool, bool, datetime) -> None
 
-    output = Path(output)
+    output = Path(output).absolute()
 
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
     )
 
     for ds in datasets:
-        ds_path = _normalise_dataset_path(Path(ds))
+        ds_path = _normalise_dataset_path(Path(ds).absolute())
         (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(ds)
         create_date = datetime.utcfromtimestamp(ctime)
         if newer_than and (create_date <= newer_than):
