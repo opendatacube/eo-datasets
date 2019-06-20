@@ -109,6 +109,28 @@ class StacPropertyView(collections.abc.Mapping):
         return f"ls{p[-1]}"
 
     @property
+    def instrument_abbreviated(self) -> str:
+        """Abbreviated form of an instrument name, as used in dea product names. eg. 'c'."""
+        p = self.platform
+        if not p.startswith("landsat"):
+            raise NotImplementedError(
+                f"TODO: implement non-landsat instrument abbreviation " f"(got {p!r})"
+            )
+
+        # Extract from usgs standard:
+        # landsat:landsat_product_id: LC08_L1TP_091075_20161213_20170316_01_T2
+        # landsat:landsat_scene_id: LC80910752016348LGN01
+        landsat_id: str = self._props.get(
+            "landsat:landsat_product_id"
+        ) or self._props.get("landsat:landsat_scene_id")
+        if not landsat_id:
+            raise NotImplementedError(
+                f"TODO: Can only currently abbreviate instruments from landsat refernces."
+            )
+
+        return landsat_id[1].lower()
+
+    @property
     def producer(self) -> str:
         """
         Organisation that produced the data.
@@ -183,21 +205,22 @@ class DeaNamingConventions:
 
     @property
     def product_name(self) -> str:
-        return self._product_group()
+        return f"{self._product_group()}_{self._org_collection_number}"
+
+    @property
+    def _org_collection_number(self):
+        return int(self.properties["odc:dataset_version"].split(".")[0])
 
     def _product_group(self, subname=None):
-        org_collection_number = self.properties["odc:dataset_version"].split(".")[0]
-
         # Fallback to the whole product's name
         if not subname:
             subname = self.properties["odc:product_family"]
 
-        p = "{producer}_{platform}{instrument}_{family}_{collection}".format(
+        p = "{producer}_{platform}{instrument}_{family}".format(
             producer=self.properties.producer_abbreviated,
             platform=self.properties.platform_abbreviated,
-            instrument=self.properties.instrument[0].lower(),
+            instrument=self.properties.instrument_abbreviated,
             family=subname,
-            collection=int(org_collection_number),
         )
         return p
 
@@ -251,7 +274,8 @@ class DeaNamingConventions:
 
         return work_dir / "_".join(
             (
-                f"{self._product_group(sub_name)}-{version}",
+                self._product_group(sub_name),
+                version,
                 p["odc:reference_code"],
                 f"{p.datetime:%Y-%m-%d}",
                 end,
