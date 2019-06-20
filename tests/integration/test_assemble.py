@@ -47,9 +47,9 @@ def test_minimal_dea_package(l1_ls8_dataset: DatasetDoc, tmp_path: Path):
         {
             "test-dataset": {
                 metadata_name: "",
-                "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_proc-info.yaml": "",
                 "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif": "",
                 "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_thumbnail.jpg": "",
+                "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.proc-info.yaml": "",
                 "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.sha1": "",
             }
         },
