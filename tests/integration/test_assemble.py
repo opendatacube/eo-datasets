@@ -10,9 +10,15 @@ from tests import assert_file_structure
 from tests.integration.common import assert_same_as_file
 
 
-def test_minimal_dea_package(l1_ls8_dataset: DatasetDoc, tmp_path: Path):
+def test_minimal_dea_package(
+    l1_ls8_dataset: DatasetDoc, l1_ls8_folder: Path, tmp_path: Path
+):
     out = tmp_path / "test-dataset"
+
+    [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
+
     with DatasetAssembler(out, naming_conventions="dea") as p:
+
         p.add_source_dataset(l1_ls8_dataset, auto_inherit_properties=True)
 
         # It's a GA product called "ones".
@@ -29,15 +35,19 @@ def test_minimal_dea_package(l1_ls8_dataset: DatasetDoc, tmp_path: Path):
         p.properties["dea:dataset_maturity"] = "final"
         p.properties["dea:processing_level"] = "level-2"
 
+        # Write a measurement from a numpy array, using the source dataset's grid spec.
         p.write_measurement_numpy(
-            "blue",
+            "ones",
             numpy.ones((60, 60), numpy.int16),
-            # Same pixel coords as our input level 1
-            GridSpec.from_dataset(l1_ls8_dataset),
+            GridSpec.from_dataset_doc(l1_ls8_dataset),
             nodata=-999,
         )
 
-        p.write_thumbnail("blue", "blue", "blue")
+        # Copy a measurement from an input file (it will write a COG with DEA naming conventions)
+        p.write_measurement("blue", blue_geotiff_path)
+
+        # Write a thumbnail using the given bands as r/g/b.
+        p.write_thumbnail("ones", "ones", "blue")
 
         dataset_id = p.done()
 
@@ -48,12 +58,15 @@ def test_minimal_dea_package(l1_ls8_dataset: DatasetDoc, tmp_path: Path):
             "test-dataset": {
                 metadata_name: "",
                 "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif": "",
+                "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_ones.tif": "",
                 "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_thumbnail.jpg": "",
                 "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.proc-info.yaml": "",
                 "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.sha1": "",
             }
         },
     )
+
+    # TODO: check sha1 checksum list.
 
     assert_same_as_file(
         {
@@ -77,6 +90,7 @@ def test_minimal_dea_package(l1_ls8_dataset: DatasetDoc, tmp_path: Path):
                 "type": "Polygon",
             },
             "grids": {
+                # Note that the two bands had identical grid specs, so it combined them into one grid.
                 "default": {
                     "shape": [60, 60],
                     "transform": [
@@ -93,7 +107,8 @@ def test_minimal_dea_package(l1_ls8_dataset: DatasetDoc, tmp_path: Path):
                 }
             },
             "measurements": {
-                "blue": {"path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif"}
+                "blue": {"path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif"},
+                "ones": {"path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_ones.tif"},
             },
             "properties": {
                 "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),

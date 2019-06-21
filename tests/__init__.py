@@ -36,6 +36,7 @@ def assert_same(o1, o2, prefix=""):
     :type o2: object
     :raises: AssertionError
     """
+    __tracebackhide__ = True
 
     def _compare(k, val1, val2):
         assert_same(val1, val2, prefix=prefix + "." + str(k))
@@ -65,7 +66,7 @@ def assert_file_structure(folder, expected_structure, root=""):
     :type folder: pathlib.Path
     :type expected_structure: dict[str,str|dict]
     """
-
+    __tracebackhide__ = True
     required_filenames = set(
         name for name, option in expected_structure.items() if option != "optional"
     )

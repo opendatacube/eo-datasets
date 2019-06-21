@@ -1,3 +1,6 @@
+"""
+API for easily writing an ODC Dataset
+"""
 import shutil
 import tempfile
 import uuid
@@ -27,23 +30,6 @@ from eodatasets2.model import (
 )
 from eodatasets2.validate import Level, ValidationMessage
 from eodatasets2.verify import PackageChecksum
-
-_INHERITABLE_PROPERTIES = {
-    "datetime",
-    "eo:cloud_cover",
-    "eo:gsd",
-    "eo:instrument",
-    "eo:platform",
-    "eo:sun_azimuth",
-    "eo:sun_elevation",
-    "landsat:collection_category",
-    "landsat:collection_number",
-    "landsat:landsat_product_id",
-    "landsat:landsat_scene_id",
-    "landsat:wrs_path",
-    "landsat:wrs_row",
-    "odc:reference_code",
-}
 
 
 class IfExists(Enum):
@@ -158,11 +144,26 @@ def _no_new_fields_setter(self, key, value):
 
 class DatasetAssembler:
     """
-    Assemble an ODC dataset.
-
-    Either write a metadata document referencing existing files (pass in just a metadata_path)
-    or specify an output folder.
+    Assemble an ODC dataset, writing metadata and (optionally) its imagery as COGs.
     """
+
+    # Properties that can be inherited from a source dataset. (when auto_inherit_properties=True)
+    INHERITABLE_PROPERTIES = {
+        "datetime",
+        "eo:cloud_cover",
+        "eo:gsd",
+        "eo:instrument",
+        "eo:platform",
+        "eo:sun_azimuth",
+        "eo:sun_elevation",
+        "landsat:collection_category",
+        "landsat:collection_number",
+        "landsat:landsat_product_id",
+        "landsat:landsat_scene_id",
+        "landsat:wrs_path",
+        "landsat:wrs_row",
+        "odc:reference_code",
+    }
 
     def __init__(
         self,
@@ -228,9 +229,11 @@ class DatasetAssembler:
     def add_source_path(
         self, path: Path, classifier: str = None, auto_inherit_properties: bool = False
     ):
-        """Add source dataset using its metadata file path.
+        """
+        Record a source dataset using the path to its metadata document.
 
-        Optionally copy any relevant properties (platform, instrument etc)
+        Parameters are the same as self.add_source_dataset()
+
         """
 
         # TODO: if they gave a dataset directory, check the metadata inside?
@@ -243,30 +246,46 @@ class DatasetAssembler:
     def add_source_dataset(
         self,
         dataset: DatasetDoc,
-        classifier: str = None,
+        classifier: Optional[str] = None,
         auto_inherit_properties: bool = False,
     ):
-        """Add source dataset.
+        """
+        Record a source dataset using its metadata document.
 
-        Optionally copy any relevant properties (platform, instrument etc)
+        It can optionally copy common properties from the source dataset (platform, instrument etc)/
+
+        (see self.INHERITABLE_PROPERTIES for the list of fields that are inheritable)
+
+        :param auto_inherit_properties: Whether to copy any common properties from the dataset
+
+        :param classifier: How to classify the kind of source dataset. This is will automatically
+                           be filled with the family of dataset if available (eg. "level1").
+
+                           You want to set this if you have two datasets of the same type that
+                           are used for different purposes. Such as having a second level1 dataset
+                           that was used for QA (but is not this same scene).
+
+
+        See add_source_path() if you have a filepath reference instead of a document.
+
         """
 
         if not classifier:
-            classifier = dataset.properties["odc:product_family"]
-        if not classifier:
-            # TODO: This rule is a little obscure to force people to know.
-            #       We could somehow figure out the product family from the product?
-            raise ValueError(
-                "Source dataset doesn't have a 'odc:product_family' property (eg. 'level1', 'fc'), "
-                "you must specify a more specific classifier parameter."
-            )
+            classifier = dataset.properties.get("odc:product_family")
+            if not classifier:
+                # TODO: This rule is a little obscure to force people to know.
+                #       We could somehow figure out the product family from the product?
+                raise ValueError(
+                    "Source dataset doesn't have a 'odc:product_family' property (eg. 'level1', 'fc'), "
+                    "you must specify a classifier for the kind of source dataset."
+                )
 
         self._lineage[classifier].append(dataset.id)
         if auto_inherit_properties:
             self._inherit_properties_from(dataset)
 
     def _inherit_properties_from(self, source_dataset: DatasetDoc):
-        for name in _INHERITABLE_PROPERTIES:
+        for name in self.INHERITABLE_PROPERTIES:
             if name not in source_dataset.properties:
                 continue
             new_val = source_dataset.properties[name]
@@ -283,6 +302,9 @@ class DatasetAssembler:
                     )
 
     def write_measurement_h5(self, name: str, g: h5py.Dataset, expand_valid_data=True):
+        """
+        Write a measurement by copying it from a hdf5 dataset.
+        """
         grid = images.GridSpec.from_h5(g)
         out_path = self.names.measurement_file_path(self._work_path, name, "tif")
 
@@ -308,11 +330,19 @@ class DatasetAssembler:
         # be in os/filesystem cache.
         self._checksum.add_file(out_path)
 
-    def write_measurement(self, name: str, p: Path):
-        with rasterio.open(p) as ds:
+    def write_measurement(self, name: str, path: Path):
+        """
+        Write a measurement by copying it from a file path.
+
+        Assumes the file is gdal-readable.
+        """
+        with rasterio.open(path) as ds:
             self.write_measurement_rio(name, ds)
 
     def write_measurement_rio(self, name: str, ds: DatasetReader):
+        """
+        Write a measurement by reading it an open rasterio dataset
+        """
         grid = images.GridSpec.from_rio(ds)
         out_path = self.names.measurement_file_path(self._work_path, name, "tif")
 
@@ -341,6 +371,21 @@ class DatasetAssembler:
         nodata=None,
         overview_resampling=Resampling.nearest,
     ):
+        """
+        Write a measurement from a numpy array and grid spec.
+
+        The most common case is to copy the grid spec from your input dataset,
+        assuming you haven't reprojected.
+
+        eg.
+            p.write_measurement_numpy(
+                "blue",
+                new_array,
+                GridSpec.from_dataset_doc(source_dataset),
+                nodata=-999,
+            )
+
+        """
         out_path = self.names.measurement_file_path(self._work_path, name, "tif")
 
         FileWrite.from_existing(array.shape).write_from_ndarray(
@@ -357,26 +402,57 @@ class DatasetAssembler:
         # be in os/filesystem cache.
         self._checksum.add_file(out_path)
 
-    def extend_user_metadata(self, section, d: Dict):
+    def extend_user_metadata(self, section: str, d: Dict):
+        """
+        Record extra metadata from the processing of the dataset.
+
+        It can be any document structure suitable for yaml/json serialisation that you want,
+        and will be written into the sidecar "proc-info" metadata.
+
+        The section name should be unique, and identify the kind of document, eg 'brdf_ancillary'.
+        """
         if section in self._user_metadata:
             raise ValueError(f"metadata section {section} already exists")
 
         self._user_metadata[section] = deepcopy(d)
 
-    def note_software_version(self, repository_url, version):
-        existing_version = self._user_metadata.setdefault("software_versions", {}).get(
-            repository_url
-        )
-        if existing_version and existing_version != version:
-            raise ValueError(
-                f"duplicate setting of software {repository_url!r} with different value "
-                f"({existing_version!r} != {version!r}"
-            )
-        self._user_metadata["software_versions"][repository_url] = version
+    def note_software_version(self, name: str, url: str, version: str):
+        """
+        Record the version of some software used to produce the dataset.
+
+        :param name: a short human-readable name for the software. eg "datacube-core"
+        :param url: A URL that uniquely identifies it, such as the git repository.
+        :param version: the version string, eg. "1.0.0b1"
+        """
+        software_versions = self._user_metadata.setdefault("software_versions", [])
+        for v in software_versions:
+            if v["url"] == url:
+                existing_version = v["version"]
+                if existing_version != version:
+                    raise ValueError(
+                        f"duplicate setting of software {url!r} with different value "
+                        f"({existing_version!r} != {version!r})"
+                    )
+                if not v["name"]:
+                    v["name"] = name
+                return
+
+        software_versions.append(dict(name=name, url=url, version=version))
 
     def done(self, validate_correctness=True, sort_bands=True):
-        """Write the dataset to the destination"""
+        """
+        Write the dataset and move it into place.
+
+        It will be validated, metadata will be written, and if all is correct, it will be
+        moved to the output location.
+
+        The final move is done atomically, so the dataset will only exist in the output
+        location if it is complete.
+
+        IncompleteDatasetError is raised if any critical metadata is incomplete.
+        """
         self.note_software_version(
+            "eodatasets2",
             "https://github.com/GeoscienceAustralia/eo-datasets",
             eodatasets2.__version__,
         )
@@ -466,6 +542,14 @@ class DatasetAssembler:
         blue_measurement_name: str,
         kind: str = None,
     ):
+        """
+        Write a thumbnail for the dataset using the given measurements as r/g/b.
+
+        (the measurements must already have been written.)
+
+        If you have multiple thumbnails, you can specify the 'kind' to distinguish
+        them (it will be put in the filename).
+        """
         thumb = self.names.thumbnail_name(self._work_path, kind=kind)
         measurements = dict(self._measurements.iter_paths())
 
@@ -502,4 +586,9 @@ class DatasetAssembler:
         self._checksum.add_file(path)
 
     def iter_measurement_paths(self) -> Generator[Tuple[str, Path], None, None]:
+        """
+        Iterate through the list of measurement names that have been written, and their current (temporary) paths.
+
+        TODO: Perhaps we want to return a real measurement structure here as it's not very extensible.
+        """
         return self._measurements.iter_paths()

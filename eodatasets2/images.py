@@ -41,7 +41,7 @@ class GridSpec:
     )
 
     @classmethod
-    def from_dataset(cls, ds: DatasetDoc, grid="default") -> "GridSpec":
+    def from_dataset_doc(cls, ds: DatasetDoc, grid="default") -> "GridSpec":
         g = ds.grids[grid]
 
         if ds.crs.startswith("epsg:"):
@@ -178,7 +178,7 @@ class MeasurementRecord:
         grid: GridSpec,
         path: Path,
         img: numpy.ndarray,
-        nodata,
+        nodata=None,
         expand_valid_data=True,
     ):
         for measurements in self._measurements_per_grid.values():
