@@ -1,5 +1,4 @@
 import os
-import subprocess
 import tempfile
 from collections import defaultdict
 from pathlib import Path
@@ -546,7 +545,7 @@ class FileWrite:
                 _rasterio_write_raster(without_levels)
                 # Creates the file at filename with the configured options
                 # Will also move the overviews to the start of the file
-                subprocess.check_call(
+                run_command(
                     [
                         "gdal_translate",
                         "-co",
@@ -555,7 +554,7 @@ class FileWrite:
                         without_levels,
                         out_filename,
                     ],
-                    cwd=str(out_filename.parent),
+                    out_filename.parent,
                 )
         else:
             # write directly to disk without rewriting with gdal

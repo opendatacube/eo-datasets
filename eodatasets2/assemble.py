@@ -147,6 +147,15 @@ class DatasetCompletenessWarning(UserWarning):
         return str(self.validation)
 
 
+def _no_new_fields_setter(self, key, value):
+    if self._have_finished_init and not hasattr(self, key):
+        raise TypeError(
+            "Cannot set new fields on an assembler. "
+            f"(Perhaps you meant to set it on the .properties?)"
+        )
+    object.__setattr__(self, key, value)
+
+
 class DatasetAssembler:
     """
     Assemble an ODC dataset.
@@ -164,6 +173,7 @@ class DatasetAssembler:
         allow_absolute_paths=False,
         naming_conventions="default",
     ) -> None:
+
         if not output_folder and not metadata_path:
             raise ValueError(
                 "Either an output folder or a metadata path must be specified"
@@ -198,6 +208,9 @@ class DatasetAssembler:
             self.names = DeaNamingConventions(self.properties, DEA_URI_PREFIX)
         else:
             raise NotImplementedError("configurable naming conventions")
+
+        # Prevent against users accidentally trying to set new properties (it happened before).
+        self.__setattr__ = _no_new_fields_setter
 
     def __enter__(self):
         return self

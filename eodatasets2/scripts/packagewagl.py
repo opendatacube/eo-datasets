@@ -243,7 +243,7 @@ def create_contiguity(
                 to_dt = center_dt + numpy.timedelta64(
                     int(float(numpy.ma.max(valid_timedelta_data)) * 1_000_000), "us"
                 )
-                p.datetime_range = (from_dt, to_dt)
+                p.properties.datetime_range = (from_dt, to_dt)
 
 
 def _boolstyle(s):
@@ -263,7 +263,8 @@ def _extract_reference_code(p: DatasetAssembler, granule: str) -> str:
     if matches:
         [reference_code] = matches.groups()
         # TODO name properly
-        p.properties["odc:reference_code"] = reference_code
+        return reference_code
+    return None
 
 
 def _l1_to_ard(granule: str) -> str:
@@ -351,8 +352,9 @@ def package(
             # TODO: maturity, where to load from?
             p.properties["dea:dataset_maturity"] = "final"
             p.properties["dea:processing_level"] = "level-2"
-
-            _extract_reference_code(p, granule_name)
+            p.properties["odc:reference_code"] = _extract_reference_code(
+                p, granule_name
+            )
 
             # unpack the standardised products produced by wagl
             granule_group = fid[granule_name]
@@ -360,14 +362,13 @@ def package(
             unpack_wagl_docs(p, granule_group)
 
             if include_oa:
-                infer_datetime_range = (
-                    level1.properties["eo:platform"].lower().startswith("landsat")
-                )
                 unpack_observation_attributes(
                     p,
                     products,
                     granule_group,
-                    infer_datetime_range=infer_datetime_range,
+                    infer_datetime_range=level1.properties.platform.startswith(
+                        "landsat"
+                    ),
                 )
 
                 if fmask_image:
@@ -397,7 +398,6 @@ def _find_a_granule_name(wagl_hdf5: Path) -> str:
     ...
     ValueError: No granule specified, and cannot find it on input filename 'my-test-granule'.
     """
-    #
     granule_name = wagl_hdf5.stem.split(".")[0]
     if not granule_name.startswith("L"):
         raise ValueError(

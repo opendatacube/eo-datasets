@@ -192,13 +192,13 @@ class StacPropertyView(collections.abc.Mapping):
         """
         When the dataset was processed (Default to UTC if not specified)
         """
-        return self._props.get("odc:processed_datetime")
+        return self._props.get("odc:processing_datetime")
 
     @processed.setter
     def processed(self, value):
         if isinstance(value, str):
             value = ciso8601.parse_datetime(value)
-        self._props["odc:processed_datetime"] = _default_utc(value)
+        self._props["odc:processing_datetime"] = _default_utc(value)
 
     def __getitem__(self, item):
         return self._props[item]
