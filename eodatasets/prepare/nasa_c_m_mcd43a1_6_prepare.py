@@ -124,7 +124,11 @@ def process_datasets(input_path: Path, xml_file: Path):
         'href': 'https://collections.dea.ga.gov.au/nasa_c_m_mcd43a1_6'
     }
     md['crs'] = ds_props.pop('crs')
-    md['geometry'] = valid_region(datasets)
+    try:
+        md['geometry'] = valid_region(datasets)
+    except KeyError:
+        # KeyError is raised when the dataset has no valid data
+        md['geometry'] = None
     md['grids'] = ds_props.pop('grids')
     md['lineage'] = {}
     md['measurements'] = band_info
