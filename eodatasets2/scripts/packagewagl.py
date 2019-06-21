@@ -388,17 +388,17 @@ def package(
     return out_path
 
 
-def flatten_dict(d: Mapping, separator=":", prefix=None) -> Iterable[Tuple[str, Any]]:
+def flatten_dict(d: Mapping, prefix=None, separator=".") -> Iterable[Tuple[str, Any]]:
     """
     >>> dict(flatten_dict({'a' : 1, 'b' : {'inner' : 2},'c' : 3}))
-    {'a': 1, 'b:inner': 2, 'c': 3}
-    >>> dict(flatten_dict({'a' : 1, 'b' : {'inner' : {'core' : 2}}}, prefix='outside', separator='.'))
-    {'outside.a': 1, 'outside.b.inner.core': 2}
+    {'a': 1, 'b.inner': 2, 'c': 3}
+    >>> dict(flatten_dict({'a' : 1, 'b' : {'inner' : {'core' : 2}}}, prefix='outside', separator=':'))
+    {'outside:a': 1, 'outside:b:inner:core': 2}
     """
     for k, v in d.items():
         name = f"{prefix}{separator}{k}" if prefix else k
         if isinstance(v, Mapping):
-            yield from flatten_dict(v, separator=separator, prefix=name)
+            yield from flatten_dict(v, prefix=name, separator=separator)
         else:
             yield name, v
 
@@ -407,8 +407,8 @@ def _read_gqa_doc(p: DatasetAssembler, gqa_doc: Dict):
     p.extend_user_metadata("gqa", gqa_doc)
 
     # TODO: more of the GQA fields?
-    for k, v in flatten_dict(gqa_doc["residual"], prefix="gqa"):
-        p.properties[k] = v
+    for k, v in flatten_dict(gqa_doc["residual"]):
+        p.properties[f"gqa:{k}"] = v
 
 
 def _read_fmask_doc(p: DatasetAssembler, doc: Dict):
