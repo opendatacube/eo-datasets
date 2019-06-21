@@ -430,6 +430,12 @@ class DatasetAssembler:
         # (Temp directories default to 700 otherwise.)
         self._work_path.chmod(self._destination_folder.parent.stat().st_mode & 0o777)
 
+        # GDAL writes extra metadata in aux files,
+        # but we consider it a mistake if you're using those extensions.
+        for aux_file in self._work_path.rglob("*.aux.xml"):
+            warnings.warn(f"Cleaning unexpected gdal aux file {aux_file.as_posix()!r}")
+            aux_file.unlink()
+
         # Now atomically move to final location.
         # Someone else may have created the output while we were working.
         # Try, and then decide how to handle it if so.
