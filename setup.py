@@ -44,7 +44,7 @@ setup(
         "ruamel.yaml",
         "scipy",
         "shapely",
-        "skimage",
+        "scikit-image",
         "structlog",
     ],
     tests_require=tests_require,
