@@ -407,7 +407,7 @@ def _read_gqa_doc(p: DatasetAssembler, gqa_doc: Dict):
     p.extend_user_metadata("gqa", gqa_doc)
 
     # TODO: more of the GQA fields?
-    for k, v in _flatten_dict(gqa_doc["residual"]):
+    for k, v in _flatten_dict(gqa_doc["residual"], separator="_"):
         p.properties[f"gqa:{k}"] = v
 
 
