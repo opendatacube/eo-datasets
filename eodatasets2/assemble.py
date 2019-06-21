@@ -407,7 +407,7 @@ class DatasetAssembler:
                     )
         self._write_yaml(
             self._user_metadata,
-            self.names.metadata_path(self._work_path, suffix=".proc-info.yaml"),
+            self.names.metadata_path(self._work_path, suffix="proc-info.yaml"),
             allow_external_paths=True,
         )
 
