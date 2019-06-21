@@ -379,10 +379,12 @@ def package(
                     ),
                 )
                 if fmask_image:
+                    secho(f"Writing fmask from {fmask_image}", fg="blue")
                     # TODO: this one has different predictor settings?
                     # fmask_cogtif_args_predictor = 2
                     p.write_measurement("oa:fmask", fmask_image)
 
+            secho(f"Writing package", fg="blue")
             p.done()
 
     return out_path
