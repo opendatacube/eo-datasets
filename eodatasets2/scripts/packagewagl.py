@@ -10,7 +10,7 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import List, Sequence, Optional, Iterable
+from typing import List, Sequence, Optional, Iterable, Any, Tuple, Dict, Mapping
 
 import click
 import h5py
@@ -349,8 +349,6 @@ def package(
             # TODO: wagl's algorithm version should determine our dataset version number, right?
             p.properties["odc:dataset_version"] = f"{org_collection_number}.0.0"
 
-            # TODO: maturity, where to load from?
-            p.properties["dea:dataset_maturity"] = "final"
             p.properties["dea:processing_level"] = "level-2"
             p.properties["odc:reference_code"] = _extract_reference_code(
                 p, granule_name
@@ -358,8 +356,18 @@ def package(
 
             # unpack the standardised products produced by wagl
             granule_group = fid[granule_name]
+
+            _read_wagl_metadata(p, granule_group)
+
+            if gqa_doc:
+                with gqa_doc.open() as fl:
+                    _read_gqa_doc(p, yaml.safe_load(fl))
+
+            if fmask_doc:
+                with fmask_doc.open() as fl:
+                    _read_fmask_doc(p, yaml.safe_load(fl))
+
             unpack_products(p, products, granule_group)
-            unpack_wagl_docs(p, granule_group)
 
             if include_oa:
                 unpack_observation_attributes(
@@ -370,21 +378,44 @@ def package(
                         "landsat"
                     ),
                 )
-
                 if fmask_image:
                     # TODO: this one has different predictor settings?
                     # fmask_cogtif_args_predictor = 2
                     p.write_measurement("oa:fmask", fmask_image)
-                if fmask_doc:
-                    with fmask_doc.open() as fl:
-                        p.extend_user_metadata("fmask", yaml.safe_load(fl))
-            if gqa_doc:
-                with gqa_doc.open() as fl:
-                    p.extend_user_metadata("gqa", yaml.safe_load(fl))
 
             p.done()
 
     return out_path
+
+
+def flatten_dict(d: Mapping, separator=":", prefix=None) -> Iterable[Tuple[str, Any]]:
+    """
+    >>> dict(flatten_dict({'a' : 1, 'b' : {'inner' : 2},'c' : 3}))
+    {'a': 1, 'b:inner': 2, 'c': 3}
+    >>> dict(flatten_dict({'a' : 1, 'b' : {'inner' : {'core' : 2}}}, prefix='outside', separator='.'))
+    {'outside.a': 1, 'outside.b.inner.core': 2}
+    """
+    for k, v in d.items():
+        name = f"{prefix}{separator}{k}" if prefix else k
+        if isinstance(v, Mapping):
+            yield from flatten_dict(v, separator=separator, prefix=name)
+        else:
+            yield name, v
+
+
+def _read_gqa_doc(p: DatasetAssembler, gqa_doc: Dict):
+    p.extend_user_metadata("gqa", gqa_doc)
+
+    # TODO: more of the GQA fields?
+    for k, v in flatten_dict(gqa_doc["residual"], prefix="gqa"):
+        p.properties[k] = v
+
+
+def _read_fmask_doc(p: DatasetAssembler, doc: Dict):
+    for name, value in doc["percent_class_distribution"].items():
+        p.properties[f"fmask:{name}"] = value
+
+    p.extend_user_metadata("fmask", doc)
 
 
 def _find_a_granule_name(wagl_hdf5: Path) -> str:
@@ -406,7 +437,7 @@ def _find_a_granule_name(wagl_hdf5: Path) -> str:
     return granule_name
 
 
-def unpack_wagl_docs(p: DatasetAssembler, granule_group: h5py.Group):
+def _read_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group):
     try:
         wagl_path, *ancil_paths = [
             pth for pth in (find_h5_paths(granule_group, "SCALAR")) if "METADATA" in pth
@@ -423,10 +454,13 @@ def unpack_wagl_docs(p: DatasetAssembler, granule_group: h5py.Group):
     except PathAccessError:
         raise ValueError(f"WAGL dataset contains no time processed. Path {wagl_path}")
 
-    for i, path in enumerate(ancil_paths):
-        wagl_doc.setdefault(f"ancillary_{i}", {}).update(
+    for i, path in enumerate(ancil_paths, start=2):
+        wagl_doc.setdefault(f"wagl_{i}", {}).update(
             yaml.safe_load(granule_group[path][()])["ancillary"]
         )
+
+    # TODO: Determine maturity using CMI Spec
+    p.properties["dea:dataset_maturity"] = "final"
 
     p.extend_user_metadata("wagl", wagl_doc)
 
