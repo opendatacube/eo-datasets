@@ -377,9 +377,6 @@ def _prepare(
             ),
         ),
     ]
-    properties["odc:reference_code"] = "".join(
-        (properties["landsat:wrs_path"], properties["landsat:wrs_row"])
-    )
 
     for section, fields in landsat_fields:
         s = mtl_doc[section]
@@ -389,6 +386,10 @@ def _prepare(
                     f"Duplicate field {section}.{field} in {mtl_filename!r}"
                 )
             properties[f"landsat:{field}"] = s.get(field)
+
+    properties[
+        "odc:reference_code"
+    ] = f"{properties['landsat:wrs_path']:03d}{properties['landsat:wrs_row']:03d}"
 
     # Assumed below.
     if (
