@@ -17,5 +17,5 @@ exclude_lines =
     if __name__ == .__main__.:
 
 [run]
-omit = eodatasets/_version.py
+omit = eodatasets2/_version.py
 
