@@ -69,7 +69,6 @@ def _init_yaml() -> YAML:
     yaml.representer.add_multi_representer(UUID, _uuid_representer)
     yaml.representer.add_representer(datetime, represent_datetime)
     yaml.representer.add_multi_representer(PurePath, represent_paths)
-    # yaml.representer.add_representer(Path, represent_paths)
 
     # WAGL spits out many numpy primitives in docs.
     yaml.representer.add_representer(numpy.int8, Representer.represent_int)
@@ -249,8 +248,9 @@ def _to_doc(d: DatasetDoc, with_formatting: bool):
 
         p: CommentedMap = doc["properties"]
         p.yaml_add_eol_comment(
-            "# When the dataset was processed/created", "odc:processing_datetime"
+            "# When the data was processed", "odc:processing_datetime"
         )
+        p.yaml_add_eol_comment("# Ground sample distance (m)", "eo:gsd")
 
     return doc
 

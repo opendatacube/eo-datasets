@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
+import eodatasets2
 from eodatasets2.model import DatasetDoc
 from eodatasets2.scripts.packagewagl import package
 from tests import assert_file_structure
@@ -64,6 +65,18 @@ def test_minimal_dea_package(
         expected_folder / "ga_ls8c_ard_3-0-0_089080_2016-01-21_final.odc-metadata.yaml"
     )
     assert expected_metadata.exists()
+
+    # Checksum should include all files other than itself.
+    checksum = expected_folder / "ga_ls8c_ard_3-0-0_089080_2016-01-21_final.sha1"
+    all_output_files = set(
+        p.relative_to(checksum.parent)
+        for p in expected_folder.rglob("*")
+        if p != checksum
+    )
+    files_in_checksum = {
+        Path(l.split("\t")[1]) for l in checksum.read_text().splitlines()
+    }
+    assert all_output_files == files_in_checksum
 
     nan = float("NaN")
     assert_same_as_file(
@@ -280,4 +293,43 @@ def test_minimal_dea_package(
         },
         expected_metadata,
         ignore_fields=["id"],
+    )
+
+    assert_same_as_file(
+        {
+            "fmask": {
+                "parameters": {
+                    "cloud_buffer_distance_metres": 150.0,
+                    "cloud_shadow_buffer_distance_metres": 300.0,
+                    "frantz_parallax_sentinel_2": False,
+                },
+                "percent_class_distribution": {
+                    "clear": 4.869270279446922,
+                    "cloud": 83.93772700416639,
+                    "cloud_shadow": 3.1888579668711876,
+                    "snow": 6.610523895281075e-05,
+                    "water": 8.004078644276545,
+                },
+            },
+            "software_versions": [
+                {
+                    "name": "eugl",
+                    "url": "https://github.com/OpenDataCubePipelines/eugl.git",
+                    "version": "0.1.0+35.g0203248",
+                },
+                {"name": "gverify", "url": None, "version": "v0.25c"},
+                {
+                    "name": "fmask",
+                    "url": "https://bitbucket.org/chchrsc/python-fmask",
+                    "version": "0.4.5",
+                },
+                {
+                    "name": "eodatasets2",
+                    "url": "https://github.com/GeoscienceAustralia/eo-datasets",
+                    "version": eodatasets2.__version__,
+                },
+            ],
+        },
+        expected_folder / "ga_ls8c_ard_3-0-0_089080_2016-01-21_final.proc-info.yaml",
+        ignore_fields=("gqa", "wagl"),
     )

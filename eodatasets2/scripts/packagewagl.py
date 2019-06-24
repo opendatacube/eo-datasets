@@ -420,11 +420,12 @@ def _flatten_dict(d: Mapping, prefix=None, separator=".") -> Iterable[Tuple[str,
             yield name, v
 
 
-def _read_gqa_doc(p: DatasetAssembler, gqa_doc: Dict):
-    p.extend_user_metadata("gqa", gqa_doc)
+def _read_gqa_doc(p: DatasetAssembler, doc: Dict):
+    _take_software_versions(p, doc)
+    p.extend_user_metadata("gqa", doc)
 
     # TODO: more of the GQA fields?
-    for k, v in _flatten_dict(gqa_doc["residual"], separator="_"):
+    for k, v in _flatten_dict(doc["residual"], separator="_"):
         p.properties[f"gqa:{k}"] = v
 
 
@@ -432,7 +433,15 @@ def _read_fmask_doc(p: DatasetAssembler, doc: Dict):
     for name, value in doc["percent_class_distribution"].items():
         p.properties[f"fmask:{name}"] = value
 
+    _take_software_versions(p, doc)
     p.extend_user_metadata("fmask", doc)
+
+
+def _take_software_versions(p: DatasetAssembler, doc: Dict):
+    versions = doc.pop("software_versions", {})
+
+    for name, o in versions.items():
+        p.note_software_version(name, o.get("repo_url"), o.get("version"))
 
 
 def _find_a_granule_name(wagl_hdf5: Path) -> str:

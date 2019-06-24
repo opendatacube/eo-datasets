@@ -34,6 +34,8 @@ def assert_same(expected_doc: Dict, generated_doc: Dict):
 def assert_same_as_file(expected_doc: Dict, generated_file: Path, ignore_fields=()):
     __tracebackhide__ = True
 
+    assert generated_file.exists(), f"Expected file to exist {generated_file.name}"
+
     generated_doc = yaml.load(generated_file.open("r"))
     for field in ignore_fields:
         del generated_doc[field]
