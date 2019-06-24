@@ -31,10 +31,13 @@ def assert_same(expected_doc: Dict, generated_doc: Dict):
     assert doc_diffs == {}, pformat(doc_diffs)
 
 
-def assert_same_as_file(expected_doc: Dict, generated_file: Path):
+def assert_same_as_file(expected_doc: Dict, generated_file: Path, ignore_fields=()):
     __tracebackhide__ = True
 
     generated_doc = yaml.load(generated_file.open("r"))
+    for field in ignore_fields:
+        del generated_doc[field]
+
     pprint(generated_doc)
     doc_diffs = diff(dump_roundtrip(expected_doc), dump_roundtrip(generated_doc))
     assert doc_diffs == {}, pformat(doc_diffs)

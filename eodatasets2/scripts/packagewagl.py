@@ -21,9 +21,10 @@ from boltons.iterutils import get_path, PathAccessError
 from click import secho, echo
 from rasterio import DatasetReader
 
-from eodatasets2 import serialise, images
+from eodatasets2 import images, serialise
 from eodatasets2.assemble import DatasetAssembler
 from eodatasets2.images import GridSpec
+from eodatasets2.model import DatasetDoc
 from eodatasets2.ui import PathPath
 
 _POSSIBLE_PRODUCTS = ("NBAR", "NBART", "LAMBERTIAN", "SBT")
@@ -187,6 +188,13 @@ def create_contiguity(
     bands from the input files.
     """
 
+    def _get_pixel_size(p: Path):
+        with rasterio.open(p) as ds:
+            gt = ds.transform
+            size_x = abs(gt[0])
+            size_y = abs(gt[4])
+            return size_y, size_x
+
     with tempfile.TemporaryDirectory(prefix="contiguity-") as tmpdir:
         for product in product_list:
             product_image_files = [
@@ -199,6 +207,10 @@ def create_contiguity(
                 secho(f"No images found for requested product {product}", fg="red")
                 continue
 
+            sizes = set(_get_pixel_size(i) for i in product_image_files)
+            # TODO: how to choose res group size?
+            (res_y, res_x) = max(sizes)
+
             # Build a temp vrt
             # S2 bands are different resolutions. Make them appear the same when taking contiguity.
             tmp_vrt_path = Path(tmpdir) / f"{product}.vrt"
@@ -208,8 +220,8 @@ def create_contiguity(
                     "-resolution",
                     "user",
                     "-tr",
-                    res,
-                    res,
+                    res_x,
+                    res_y,
                     "-separate",
                     tmp_vrt_path,
                     *product_image_files,
@@ -273,7 +285,7 @@ def _l1_to_ard(granule: str) -> str:
 
 def package(
     wagl_hdf5: Path,
-    source_level1: Path,
+    source_level1: DatasetDoc,
     out_directory: Path,
     granule_name: str = None,
     products: Iterable[str] = _DEFAULT_PRODUCTS,
@@ -299,6 +311,9 @@ def package(
         The output Path
     """
 
+    if not wagl_hdf5.exists():
+        raise ValueError(f"Input hdf5 doesn't exist {wagl_hdf5}")
+
     if not granule_name:
         granule_name = _find_a_granule_name(wagl_hdf5)
 
@@ -317,7 +332,7 @@ def package(
         if not gqa_doc.exists():
             raise ValueError(f"GQA not found {gqa_doc}")
 
-    level1 = serialise.from_path(source_level1)
+    level1 = source_level1
 
     echo(f"Packaging {granule_name}. (products: {', '.join(products)})")
     echo(
@@ -505,7 +520,7 @@ def run(
         products = _DEFAULT_PRODUCTS
     with rasterio.Env():
         package(
-            source_level1=level1,
+            source_level1=serialise.from_path(level1),
             wagl_hdf5=h5_file,
             out_directory=output.absolute(),
             products=products,

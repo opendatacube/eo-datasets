@@ -1,0 +1,44 @@
+colors:
+    blue: 0.0
+    green: 0.0
+    red: 0.0
+    teal: 0.0
+    yellow: 0.0
+error_message: no errors; no QA points can be matched
+final_qa_count: 0
+granule: LC80890802016062LGN01
+ref_date: '2013-09-18T00:00:00+00:00'
+ref_source: GQA_v3
+ref_source_path: /g/data/v10/eoancillarydata/GCP/GQA_v3/wrs2/089/080/LC80890802013261LGN00_B6.TIF
+residual:
+    abs:
+        x: .nan
+        xy: .nan
+        y: .nan
+    abs_iterative_mean:
+        x: .nan
+        xy: .nan
+        y: .nan
+    cep90: .nan
+    iterative_mean:
+        x: .nan
+        xy: .nan
+        y: .nan
+    iterative_stddev:
+        x: .nan
+        xy: .nan
+        y: .nan
+    mean:
+        x: .nan
+        xy: .nan
+        y: .nan
+    stddev:
+        x: .nan
+        xy: .nan
+        y: .nan
+software_versions:
+    eugl:
+        repo_url: https://github.com/OpenDataCubePipelines/eugl.git
+        version: 0.1.0+35.g0203248
+    gverify:
+        version: v0.25c
