@@ -15,6 +15,7 @@ tests_require = [
     "pytest",
     "pytest-flake8",
     "python-rapidjson",
+    "rio_cogeo",
 ]
 
 

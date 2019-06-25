@@ -1,6 +1,8 @@
 from datetime import datetime
 from pathlib import Path
 
+from rio_cogeo import cogeo
+
 import eodatasets2
 from eodatasets2.model import DatasetDoc
 from eodatasets2.scripts.packagewagl import package
@@ -90,11 +92,11 @@ def test_minimal_dea_package(
             "geometry": {
                 "coordinates": [
                     [
-                        [609615.0, -3077085.0],
-                        [609615.0, -3310515.0],
-                        [378285.0, -3310515.0],
-                        [378285.0, -3077085.0],
-                        [609615.0, -3077085.0],
+                        [609_615.0, -3_077_085.0],
+                        [609_615.0, -3_310_515.0],
+                        [378_285.0, -3_310_515.0],
+                        [378_285.0, -3_077_085.0],
+                        [609_615.0, -3_077_085.0],
                     ]
                 ],
                 "type": "Polygon",
@@ -103,12 +105,12 @@ def test_minimal_dea_package(
                 "default": {
                     "shape": [77, 77],
                     "transform": [
-                        3004.285714285714,
+                        3004.285_714_285_714,
                         0.0,
-                        378285.0,
+                        378_285.0,
                         0.0,
-                        -3031.5584415584412,
-                        -3077085.0,
+                        -3031.558_441_558_441_2,
+                        -3_077_085.0,
                         0.0,
                         0.0,
                         1.0,
@@ -117,12 +119,12 @@ def test_minimal_dea_package(
                 "band08": {
                     "shape": [155, 154],
                     "transform": [
-                        1502.0454545454545,
+                        1502.045_454_545_454_5,
                         0.0,
-                        378292.5,
+                        378_292.5,
                         0.0,
-                        -1505.9032258064515,
-                        -3077092.5,
+                        -1505.903_225_806_451_5,
+                        -3_077_092.5,
                         0.0,
                         0.0,
                         1.0,
@@ -133,10 +135,10 @@ def test_minimal_dea_package(
                     "transform": [
                         30.0,
                         0.0,
-                        378285.0,
+                        378_285.0,
                         0.0,
                         -30.0,
-                        -3077085.0,
+                        -3_077_085.0,
                         0.0,
                         0.0,
                         1.0,
@@ -147,19 +149,19 @@ def test_minimal_dea_package(
                 "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
                 "dea:dataset_maturity": "final",
                 "dea:processing_level": "level-2",
-                "dtr:end_datetime": datetime(2016, 1, 21, 23, 50, 37, 778000),
-                "dtr:start_datetime": datetime(2016, 1, 21, 23, 50, 8, 229000),
+                "dtr:end_datetime": datetime(2016, 1, 21, 23, 50, 37, 778_000),
+                "dtr:start_datetime": datetime(2016, 1, 21, 23, 50, 8, 229_000),
                 "eo:cloud_cover": 93.22,
                 "eo:gsd": 30.0,
                 "eo:instrument": "OLI_TIRS",
                 "eo:platform": "landsat-8",
-                "eo:sun_azimuth": 74.0074438,
-                "eo:sun_elevation": 55.486483,
-                "fmask:clear": 4.869270279446922,
-                "fmask:cloud": 83.93772700416639,
-                "fmask:cloud_shadow": 3.1888579668711876,
-                "fmask:snow": 6.610523895281075e-05,
-                "fmask:water": 8.004078644276545,
+                "eo:sun_azimuth": 74.007_443_8,
+                "eo:sun_elevation": 55.486_483,
+                "fmask:clear": 4.869_270_279_446_922,
+                "fmask:cloud": 83.937_727_004_166_39,
+                "fmask:cloud_shadow": 3.188_857_966_871_187_6,
+                "fmask:snow": 6.610_523_895_281_075e-05,
+                "fmask:water": 8.004_078_644_276_545,
                 "gqa:abs_iterative_mean_x": nan,
                 "gqa:abs_iterative_mean_xy": nan,
                 "gqa:abs_iterative_mean_y": nan,
@@ -186,7 +188,7 @@ def test_minimal_dea_package(
                 "landsat:wrs_path": 90,
                 "landsat:wrs_row": 84,
                 "odc:dataset_version": "3.0.0",
-                "odc:processing_datetime": datetime(2019, 6, 14, 13, 33, 18, 526020),
+                "odc:processing_datetime": datetime(2019, 6, 14, 13, 33, 18, 526_020),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ard",
                 "odc:reference_code": "089080",
@@ -304,11 +306,11 @@ def test_minimal_dea_package(
                     "frantz_parallax_sentinel_2": False,
                 },
                 "percent_class_distribution": {
-                    "clear": 4.869270279446922,
-                    "cloud": 83.93772700416639,
-                    "cloud_shadow": 3.1888579668711876,
-                    "snow": 6.610523895281075e-05,
-                    "water": 8.004078644276545,
+                    "clear": 4.869_270_279_446_922,
+                    "cloud": 83.937_727_004_166_39,
+                    "cloud_shadow": 3.188_857_966_871_187_6,
+                    "snow": 6.610_523_895_281_075e-05,
+                    "water": 8.004_078_644_276_545,
                 },
             },
             "software_versions": [
@@ -333,3 +335,7 @@ def test_minimal_dea_package(
         expected_folder / "ga_ls8c_ard_3-0-0_089080_2016-01-21_final.proc-info.yaml",
         ignore_fields=("gqa", "wagl"),
     )
+
+    # All produced tifs should be valid COGs
+    for image in expected_folder.rglob("*.tif"):
+        assert cogeo.cog_validate(image), f"Failed COG validation: {image}"
