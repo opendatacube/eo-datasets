@@ -3,7 +3,7 @@ import tempfile
 from collections import defaultdict
 from pathlib import Path
 from subprocess import check_call
-from typing import Tuple, Dict, List, Sequence, Optional
+from typing import Tuple, Dict, List, Sequence, Optional, Iterable
 from typing import Union, Generator
 
 import attr
@@ -131,6 +131,10 @@ def generate_tiles(
     return tiles
 
 
+def _common_suffix(names: Iterable[str]) -> str:
+    return os.path.commonprefix([s[::-1] for s in names])[::-1]
+
+
 def _find_a_common_name(names: Sequence[str]) -> Optional[str]:
     """
     If we have a list of band names, can we find a nice name for the group of them?
@@ -141,6 +145,8 @@ def _find_a_common_name(names: Sequence[str]) -> Optional[str]:
     'nbar'
     >>> _find_a_common_name(['nbar_band08', 'nbart_band08'])
     'band08'
+    >>> _find_a_common_name(['nbar:band08', 'nbart:band08'])
+    'band08'
     >>> _find_a_common_name(['panchromatic'])
     'panchromatic'
     >>> _find_a_common_name(['nbar_panchromatic'])
@@ -149,15 +155,14 @@ def _find_a_common_name(names: Sequence[str]) -> Optional[str]:
     >>> _find_a_common_name(['nbar_blue', 'nbar_red', 'qa'])
     >>> _find_a_common_name(['a', 'b'])
     """
+
     # If all measurements have a common prefix (like 'nbar_') it makes a nice grid name.
-    one = os.path.commonprefix(names).strip("_")
-
-    # Is the last component the same? (eg, ending in. '_band08')
-    two = os.path.commonprefix([s.split("_")[-1] for s in names]).strip("_")
-
+    options = [
+        s.strip("_:") for s in (os.path.commonprefix(names), _common_suffix(names))
+    ]
     # Pick the longest candidate.
-    grid_name = one if len(one) > len(two) else two
-    return grid_name or None
+    options.sort(key=len, reverse=True)
+    return options[0] or None
 
 
 class MeasurementRecord:

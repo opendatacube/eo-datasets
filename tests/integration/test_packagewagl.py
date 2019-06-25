@@ -114,7 +114,7 @@ def test_minimal_dea_package(
                         1.0,
                     ],
                 },
-                "nbar": {
+                "band08": {
                     "shape": [155, 154],
                     "transform": [
                         1502.0454545454545,
@@ -214,7 +214,7 @@ def test_minimal_dea_package(
                     "path": "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band07.tif"
                 },
                 "nbar_band08": {
-                    "grid": "nbar",
+                    "grid": "band08",
                     "path": "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band08.tif",
                 },
                 "nbart_band01": {
@@ -239,7 +239,7 @@ def test_minimal_dea_package(
                     "path": "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band07.tif"
                 },
                 "nbart_band08": {
-                    "grid": "nbar",
+                    "grid": "band08",
                     "path": "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band08.tif",
                 },
                 "oa_azimuthal_exiting": {
