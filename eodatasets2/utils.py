@@ -6,6 +6,7 @@ import enum
 
 import click
 import ciso8601
+from dateutil import tz
 
 
 class ItemProvider(enum.Enum):
@@ -55,3 +56,9 @@ def read_paths_from_file(listing: Path) -> Iterable[Path]:
                 )
 
             yield path.absolute()
+
+
+def default_utc(d: datetime):
+    if d.tzinfo is None:
+        return d.replace(tzinfo=tz.tzutc())
+    return d

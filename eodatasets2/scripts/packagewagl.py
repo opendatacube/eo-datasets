@@ -9,6 +9,7 @@ for files.
 import os
 import re
 import tempfile
+from datetime import timedelta, datetime
 from pathlib import Path
 from typing import List, Sequence, Optional, Iterable, Any, Tuple, Dict, Mapping
 
@@ -26,6 +27,7 @@ from eodatasets2.assemble import DatasetAssembler
 from eodatasets2.images import GridSpec
 from eodatasets2.model import DatasetDoc
 from eodatasets2.ui import PathPath
+from eodatasets2.utils import default_utc
 
 _POSSIBLE_PRODUCTS = ("NBAR", "NBART", "LAMBERTIAN", "SBT")
 _DEFAULT_PRODUCTS = ("NBAR", "NBART")
@@ -249,13 +251,16 @@ def create_contiguity(
                 )
 
                 center_dt = numpy.datetime64(p.properties.datetime)
-                from_dt = center_dt + numpy.timedelta64(
+                from_dt: numpy.datetime64 = center_dt + numpy.timedelta64(
                     int(float(numpy.ma.min(valid_timedelta_data)) * 1_000_000), "us"
                 )
-                to_dt = center_dt + numpy.timedelta64(
+                to_dt: numpy.datetime64 = center_dt + numpy.timedelta64(
                     int(float(numpy.ma.max(valid_timedelta_data)) * 1_000_000), "us"
                 )
-                p.properties.datetime_range = (from_dt, to_dt)
+                p.properties.datetime_range = (
+                    from_dt.astype(datetime),
+                    to_dt.astype(datetime),
+                )
 
 
 def _boolstyle(s):
@@ -265,7 +270,7 @@ def _boolstyle(s):
         return click.style("✗", fg="yellow")
 
 
-def _extract_reference_code(p: DatasetAssembler, granule: str) -> str:
+def _extract_reference_code(p: DatasetAssembler, granule: str) -> Optional[str]:
     matches = None
     if p.properties.platform.startswith("landsat"):
         matches = re.match(r"L\w\d(?P<reference_code>\d{6}).*", granule)
@@ -485,10 +490,57 @@ def _read_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group):
             yaml.safe_load(granule_group[path][()])["ancillary"]
         )
 
-    # TODO: Determine maturity using CMI Spec
-    p.properties["dea:dataset_maturity"] = "final"
+    p.properties["dea:dataset_maturity"] = _determine_maturity(
+        p.properties.datetime, p.properties.processed, wagl_doc
+    )
 
     p.extend_user_metadata("wagl", wagl_doc)
+
+
+def _determine_maturity(acq_date: datetime, processed: datetime, wagl_doc: Dict):
+    """
+    Determine maturity field of a dataset.
+
+    Based on the fallback logic in nbar pages of CMI, eg: https://cmi.ga.gov.au/ga_ls5t_nbart_3
+    """
+    ancillary_tiers = {
+        key.lower(): o["tier"]
+        for key, o in wagl_doc["ancillary"].items()
+        if "tier" in o
+    }
+
+    if "water_vapour" not in ancillary_tiers:
+        # Perhaps this should be a warning, but I'm being strict until told otherwise.
+        # (a warning is easy to ignore)
+        raise ValueError(
+            f"No water vapour ancillary tier. Got {list(ancillary_tiers.keys())!r}"
+        )
+
+    water_vapour_is_definitive = ancillary_tiers["water_vapour"].lower() == "definitive"
+
+    if (processed - acq_date) < timedelta(hours=48):
+        return "nrt"
+
+    if not water_vapour_is_definitive:
+        return "interim"
+
+    if acq_date < default_utc(datetime(2001, 1, 1)):
+        return "final"
+
+    brdf_tiers = {k: v for k, v in ancillary_tiers.items() if k.startswith("brdf_")}
+    if not brdf_tiers:
+        # Perhaps this should be a warning, but I'm being strict until told otherwise.
+        # (a warning is easy to ignore)
+        raise ValueError(
+            f"No brdf tiers available. Got {list(ancillary_tiers.keys())!r}"
+        )
+
+    brdf_is_definitive = all([v.lower() == "definitive" for k, v in brdf_tiers.items()])
+
+    if brdf_is_definitive:
+        return "final"
+    else:
+        return "interim"
 
 
 @click.command(help=__doc__)

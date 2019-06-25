@@ -17,10 +17,11 @@ import rasterio.features
 import shapely
 import shapely.affinity
 import shapely.ops
-from dateutil import tz
 from rasterio import DatasetReader
 from ruamel.yaml.comments import CommentedMap
 from shapely.geometry.base import BaseGeometry
+
+from eodatasets2.utils import default_utc
 
 # TODO: these need discussion.
 DEA_URI_PREFIX = "https://collections.dea.ga.gov.au"
@@ -87,23 +88,17 @@ class MeasurementDoc:
     name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
 
 
-def _default_utc(d):
-    if d.tzinfo is None:
-        return d.replace(tzinfo=tz.tzutc())
-    return d
-
-
 class StacPropertyView(collections.abc.Mapping):
     def __init__(self, properties=None) -> None:
         self._props = properties or {}
 
     @property
     def platform(self) -> str:
-        return self._props["eo:platform"]
+        return self["eo:platform"]
 
     @property
     def instrument(self) -> str:
-        return self._props["eo:instrument"]
+        return self["eo:instrument"]
 
     @property
     def platform_abbreviated(self) -> str:
@@ -128,9 +123,9 @@ class StacPropertyView(collections.abc.Mapping):
         # Extract from usgs standard:
         # landsat:landsat_product_id: LC08_L1TP_091075_20161213_20170316_01_T2
         # landsat:landsat_scene_id: LC80910752016348LGN01
-        landsat_id: str = self._props.get(
-            "landsat:landsat_product_id"
-        ) or self._props.get("landsat:landsat_scene_id")
+        landsat_id: str = self.get("landsat:landsat_product_id") or self.get(
+            "landsat:landsat_scene_id"
+        )
         if not landsat_id:
             raise NotImplementedError(
                 f"TODO: Can only currently abbreviate instruments from landsat refernces."
@@ -145,7 +140,7 @@ class StacPropertyView(collections.abc.Mapping):
 
         eg. usgs.gov or ga.gov.au
         """
-        return self._props.get("odc:producer")
+        return self.get("odc:producer")
 
     @property
     def producer_abbreviated(self) -> Optional[str]:
@@ -167,38 +162,39 @@ class StacPropertyView(collections.abc.Mapping):
                 "Property 'odc:producer' is expected to be a domain name, "
                 "eg 'usgs.gov' or 'ga.gov.au'"
             )
-        self._props["odc:producer"] = domain
+        self["odc:producer"] = domain
 
     @property
     def datetime_range(self):
-        return (
-            self._props.get("dtr:start_datetime"),
-            self._props.get("dtr:end_datetime"),
-        )
+        return (self.get("dtr:start_datetime"), self.get("dtr:end_datetime"))
 
     @datetime_range.setter
     def datetime_range(self, val: Tuple[datetime, datetime]):
         # TODO: string type conversion, better validation/errors
         start, end = val
-        self._props["dtr:start_datetime"] = start
-        self._props["dtr:end_datetime"] = end
+        self["dtr:start_datetime"] = start
+        self["dtr:end_datetime"] = end
 
     @property
     def datetime(self) -> datetime:
-        return self._props.get("datetime")
+        return self.get("datetime")
+
+    @datetime.setter
+    def datetime(self, val: datetime) -> datetime:
+        self["datetime"] = val
 
     @property
     def processed(self) -> datetime:
         """
         When the dataset was processed (Default to UTC if not specified)
         """
-        return self._props.get("odc:processing_datetime")
+        return self.get("odc:processing_datetime")
 
     @processed.setter
     def processed(self, value):
         if isinstance(value, str):
             value = ciso8601.parse_datetime(value)
-        self._props["odc:processing_datetime"] = _default_utc(value)
+        self["odc:processing_datetime"] = value
 
     def __getitem__(self, item):
         return self._props[item]
@@ -211,8 +207,15 @@ class StacPropertyView(collections.abc.Mapping):
 
     def __setitem__(self, key, value):
         if key in self._props:
-            warnings.warn(f"overridding property {key!r}")
+            warnings.warn(f"Overriding property {key!r}")
         # TODO: normalise case etc.
+
+        # Store all dates with a timezone.
+        # yaml standard says all dates default to UTC.
+        # (and ruamel normalises timezones to UTC itself)
+        if isinstance(value, datetime):
+            value = default_utc(value)
+
         self._props[key] = value
 
     def nested(self):

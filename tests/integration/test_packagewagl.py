@@ -1,10 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
+from dateutil.tz import tzutc
 from rio_cogeo import cogeo
 
 import eodatasets2
 from eodatasets2.model import DatasetDoc
+from eodatasets2.scripts import packagewagl
 from eodatasets2.scripts.packagewagl import package
 from tests import assert_file_structure
 from tests.integration.common import assert_same_as_file
@@ -339,3 +341,109 @@ def test_minimal_dea_package(
     # All produced tifs should be valid COGs
     for image in expected_folder.rglob("*.tif"):
         assert cogeo.cog_validate(image), f"Failed COG validation: {image}"
+
+
+def test_maturity_calculation():
+    # Simplified. Only a few ancillary parts that matter to us.
+    wagl_doc = {
+        "ancillary": {
+            "aerosol": {
+                "CLASS": "SCALAR",
+                "VERSION": "0.1",
+                "id": ["281203f2-aeb2-573c-8207-5bdad109d03f"],
+                "tier": "AATSR_CMP_MONTH",
+                "value": 0.047_768_376_767_635_345,
+            },
+            "brdf_alpha_1_band_2": {
+                "id": [
+                    "71785790-5d66-59c8-beed-12d35d0811ac",
+                    "6093891a-a242-5545-a666-662a2c29aead",
+                ],
+                "tier": "DEFINITIVE",
+                "value": 0.354_201_642_899_772_8,
+            },
+            "brdf_alpha_2_band_2": {
+                "id": [
+                    "71785790-5d66-59c8-beed-12d35d0811ac",
+                    "6093891a-a242-5545-a666-662a2c29aead",
+                ],
+                "tier": "DEFINITIVE",
+                "value": 0.192_742_504_203_452_96,
+            },
+            "elevation": {
+                "CLASS": "SCALAR",
+                "VERSION": "0.1",
+                "id": ["e75ac77d-1ed0-55a5-888b-9ae48080eae9"],
+                "value": 0.549_334_594_726_562_5,
+            },
+            "ozone": {
+                "CLASS": "SCALAR",
+                "VERSION": "0.1",
+                "id": ["c3953cf0-93a0-5217-9c2e-babc16fef3be"],
+                "tier": "DEFINITIVE",
+                "value": 0.263,
+            },
+            "water_vapour": {
+                "CLASS": "SCALAR",
+                "VERSION": "0.1",
+                "id": ["71950fbf-8aeb-56fc-bbd7-41e2046f22f2"],
+                "tier": "DEFINITIVE",
+                "value": 1.010_000_038_146_972_7,
+            },
+        }
+    }
+
+    normal_acq_date = datetime(2002, 11, 20, tzinfo=tzutc())
+    normal_proc_date = normal_acq_date + timedelta(days=7)
+    acq_before_01 = datetime(2000, 11, 20, tzinfo=tzutc())
+
+    # Normal, final dataset. Processed just outside of NRT window.
+    assert (
+        packagewagl._determine_maturity(
+            normal_acq_date, normal_acq_date + timedelta(hours=49), wagl_doc
+        )
+        == "final"
+    )
+
+    # NRT when processed < 48 hours
+    assert (
+        packagewagl._determine_maturity(
+            normal_acq_date, normal_acq_date + timedelta(hours=1), wagl_doc
+        )
+        == "nrt"
+    )
+    assert (
+        packagewagl._determine_maturity(
+            acq_before_01, acq_before_01 + timedelta(hours=47), wagl_doc
+        )
+        == "nrt"
+    )
+
+    # Before 2001: final if water vapour is definitive.
+    assert (
+        packagewagl._determine_maturity(
+            acq_before_01, acq_before_01 + timedelta(days=3), wagl_doc
+        )
+        == "final"
+    )
+
+    # Interim whenever water vapour is fallback.
+    wagl_doc["ancillary"]["water_vapour"]["tier"] = "FALLBACK_DATASET"
+    assert (
+        packagewagl._determine_maturity(normal_acq_date, normal_proc_date, wagl_doc)
+        == "interim"
+    )
+    assert (
+        packagewagl._determine_maturity(
+            acq_before_01, acq_before_01 + timedelta(days=3), wagl_doc
+        )
+        == "interim"
+    )
+    wagl_doc["ancillary"]["water_vapour"]["tier"] = "DEFINITIVE"
+
+    # Fallback BRDF (when at least one is fallback)
+    wagl_doc["ancillary"]["brdf_alpha_2_band_2"]["tier"] = "FALLBACK_DEFAULT"
+    assert (
+        packagewagl._determine_maturity(normal_acq_date, normal_proc_date, wagl_doc)
+        == "interim"
+    )
