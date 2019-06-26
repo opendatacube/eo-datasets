@@ -78,12 +78,12 @@ def unpack_products(
     # TODO pass products through from the scheduler rather than hard code
     for product in product_list:
         secho(f"\n\nStarting {product}", fg="blue")
-        for pathname in [p for p in img_paths if "/{}/".format(product) in p]:
+        for pathname in [p for p in img_paths if "/{}/".format(product.upper()) in p]:
             secho(f"Path {pathname}", fg="blue")
             dataset = h5group[pathname]
             p.write_measurement_h5(f"{product.lower()}:{_band_name(dataset)}", dataset)
 
-        if product in _THUMBNAILS:
+        if product.lower() in _THUMBNAILS:
             red, green, blue = _THUMBNAILS[product]
             p.write_thumbnail(product, red, green, blue)
 
