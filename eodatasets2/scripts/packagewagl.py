@@ -26,7 +26,6 @@ from rasterio import DatasetReader
 from eodatasets2 import images, serialise
 from eodatasets2.assemble import DatasetAssembler
 from eodatasets2.images import GridSpec
-from eodatasets2.model import DatasetDoc
 from eodatasets2.ui import PathPath
 from eodatasets2.utils import default_utc
 
@@ -291,7 +290,7 @@ def _l1_to_ard(granule: str) -> str:
 
 def package(
     wagl_hdf5: Path,
-    source_level1: DatasetDoc,
+    source_level1_metadata: Path,
     out_directory: Path,
     granule_name: str = None,
     products: Iterable[str] = _DEFAULT_PRODUCTS,
@@ -318,6 +317,8 @@ def package(
     """
     products = tuple(s.lower() for s in products)
 
+    level1 = serialise.from_path(source_level1_metadata)
+
     if not wagl_hdf5.exists():
         raise ValueError(f"Input hdf5 doesn't exist {wagl_hdf5}")
 
@@ -338,8 +339,6 @@ def package(
         gqa_doc = wagl_hdf5.with_name(f"{granule_name}.gqa.yaml")
         if not gqa_doc.exists():
             raise ValueError(f"GQA not found {gqa_doc}")
-
-    level1 = source_level1
 
     echo(f"Packaging {granule_name}. (products: {', '.join(products)})")
     echo(
@@ -577,7 +576,7 @@ def run(
         products = _DEFAULT_PRODUCTS
     with rasterio.Env():
         package(
-            source_level1=serialise.from_path(level1),
+            source_level1=level1,
             wagl_hdf5=h5_file,
             out_directory=output.absolute(),
             products=products,

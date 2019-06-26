@@ -18,6 +18,9 @@ from tests.integration.common import assert_same_as_file
 WAGL_INPUT_PATH: Path = Path(
     __file__
 ).parent / "data/wagl-input/LC80890802016062LGN01/LC80890802016062LGN01.wagl.h5"
+L1_METADATA_PATH: Path = Path(
+    __file__
+).parent / "data/LC08_L1TP_089080_20160302_20170328_01_T1.yaml"
 
 
 def test_minimal_dea_package(
@@ -26,7 +29,7 @@ def test_minimal_dea_package(
     out = tmp_path / "out"
 
     with pytest.warns(None) as warning_record:
-        given_path = package(WAGL_INPUT_PATH, l1_ls8_dataset, out)
+        given_path = package(WAGL_INPUT_PATH, L1_METADATA_PATH, out)
 
     # No warnings should have been logged during package.
     # We could tighten this to specific warnings if it proves too noisy, but it's
@@ -41,61 +44,58 @@ def test_minimal_dea_package(
         out,
         {
             "LC80890802016062LGN01": {
-                "ga_ls8c_ard_3-0-0_089080_2016-01-21_final.odc-metadata.yaml": "",
-                "ga_ls8c_ard_3-0-0_089080_2016-01-21_final.proc-info.yaml": "",
-                "ga_ls8c_ard_3-0-0_089080_2016-01-21_final.sha1": "",
-                "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band01.tif": "",
-                "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band02.tif": "",
-                "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band03.tif": "",
-                "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band04.tif": "",
-                "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band05.tif": "",
-                "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band06.tif": "",
-                "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band07.tif": "",
-                "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band08.tif": "",
-                "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_thumbnail.jpg": "",
-                "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band01.tif": "",
-                "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band02.tif": "",
-                "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band03.tif": "",
-                "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band04.tif": "",
-                "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band05.tif": "",
-                "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band06.tif": "",
-                "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band07.tif": "",
-                "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band08.tif": "",
-                "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_thumbnail.jpg": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_azimuthal-exiting.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_azimuthal-incident.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_combined-terrain-shadow.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_exiting-angle.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_fmask.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_incident-angle.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_nbar-contiguity.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_nbart-contiguity.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_relative-azimuth.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_relative-slope.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_satellite-azimuth.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_satellite-view.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_solar-azimuth.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_solar-zenith.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_timedelta.tif": "",
+                "ga_ls8c_ard_3-0-0_089080_2016-03-02_final.odc-metadata.yaml": "",
+                "ga_ls8c_ard_3-0-0_089080_2016-03-02_final.proc-info.yaml": "",
+                "ga_ls8c_ard_3-0-0_089080_2016-03-02_final.sha1": "",
+                "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band01.tif": "",
+                "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band02.tif": "",
+                "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band03.tif": "",
+                "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band04.tif": "",
+                "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band05.tif": "",
+                "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band06.tif": "",
+                "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band07.tif": "",
+                "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band08.tif": "",
+                "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_thumbnail.jpg": "",
+                "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band01.tif": "",
+                "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band02.tif": "",
+                "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band03.tif": "",
+                "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band04.tif": "",
+                "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band05.tif": "",
+                "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band06.tif": "",
+                "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band07.tif": "",
+                "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band08.tif": "",
+                "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_thumbnail.jpg": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_azimuthal-exiting.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_azimuthal-incident.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_combined-terrain-shadow.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_exiting-angle.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_fmask.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_incident-angle.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_nbar-contiguity.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_nbart-contiguity.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_relative-azimuth.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_relative-slope.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_satellite-azimuth.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_satellite-view.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_solar-azimuth.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_solar-zenith.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_timedelta.tif": "",
             }
         },
     )
     expected_folder = out / "LC80890802016062LGN01"
     assert given_path == expected_folder
-    expected_metadata = (
-        expected_folder / "ga_ls8c_ard_3-0-0_089080_2016-01-21_final.odc-metadata.yaml"
-    )
-    assert expected_metadata.exists()
+    [output_metadata] = expected_folder.rglob("*.odc-metadata.yaml")
 
     # Checksum should include all files other than itself.
-    checksum = expected_folder / "ga_ls8c_ard_3-0-0_089080_2016-01-21_final.sha1"
+    [checksum_file] = expected_folder.rglob("*.sha1")
     all_output_files = set(
-        p.relative_to(checksum.parent)
+        p.relative_to(checksum_file.parent)
         for p in expected_folder.rglob("*")
-        if p != checksum
+        if p != checksum_file
     )
     files_in_checksum = {
-        Path(l.split("\t")[1]) for l in checksum.read_text().splitlines()
+        Path(l.split("\t")[1]) for l in checksum_file.read_text().splitlines()
     }
     assert all_output_files == files_in_checksum
 
@@ -121,20 +121,6 @@ def test_minimal_dea_package(
                 "type": "Polygon",
             },
             "grids": {
-                "default": {
-                    "shape": [77, 77],
-                    "transform": [
-                        3004.285_714_285_714,
-                        0.0,
-                        378_285.0,
-                        0.0,
-                        -3031.558_441_558_441_2,
-                        -3_077_085.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                    ],
-                },
                 "band08": {
                     "shape": [155, 154],
                     "transform": [
@@ -144,6 +130,20 @@ def test_minimal_dea_package(
                         0.0,
                         -1505.903_225_806_451_5,
                         -3_077_092.5,
+                        0.0,
+                        0.0,
+                        1.0,
+                    ],
+                },
+                "default": {
+                    "shape": [77, 77],
+                    "transform": [
+                        3004.285_714_285_714,
+                        0.0,
+                        378_285.0,
+                        0.0,
+                        -3031.558_441_558_441_2,
+                        -3_077_085.0,
                         0.0,
                         0.0,
                         1.0,
@@ -165,17 +165,17 @@ def test_minimal_dea_package(
                 },
             },
             "properties": {
-                "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
+                "datetime": datetime(2016, 3, 2, 23, 42, 24, 747_943),
                 "dea:dataset_maturity": "final",
                 "dea:processing_level": "level-2",
-                "dtr:end_datetime": datetime(2016, 1, 21, 23, 50, 37, 778_552),
-                "dtr:start_datetime": datetime(2016, 1, 21, 23, 50, 8, 229_425),
-                "eo:cloud_cover": 93.22,
+                "dtr:end_datetime": datetime(2016, 3, 2, 23, 42, 39, 472_060),
+                "dtr:start_datetime": datetime(2016, 3, 2, 23, 42, 9, 922_933),
+                "eo:cloud_cover": 74.31,
                 "eo:gsd": 30.0,
                 "eo:instrument": "OLI_TIRS",
                 "eo:platform": "landsat-8",
-                "eo:sun_azimuth": 74.007_443_8,
-                "eo:sun_elevation": 55.486_483,
+                "eo:sun_azimuth": 62.480_213_79,
+                "eo:sun_elevation": 50.707_283_49,
                 "fmask:clear": 4.869_270_279_446_922,
                 "fmask:cloud": 83.937_727_004_166_39,
                 "fmask:cloud_shadow": 3.188_857_966_871_187_6,
@@ -202,10 +202,10 @@ def test_minimal_dea_package(
                 "gqa:stddev_y": nan,
                 "landsat:collection_category": "T1",
                 "landsat:collection_number": 1,
-                "landsat:landsat_product_id": "LC08_L1TP_090084_20160121_20170405_01_T1",
-                "landsat:landsat_scene_id": "LC80900842016021LGN02",
-                "landsat:wrs_path": 90,
-                "landsat:wrs_row": 84,
+                "landsat:landsat_product_id": "LC08_L1TP_089080_20160302_20170328_01_T1",
+                "landsat:landsat_scene_id": "LC80890802016062LGN01",
+                "landsat:wrs_path": 89,
+                "landsat:wrs_row": 80,
                 "odc:dataset_version": "3.0.0",
                 "odc:processing_datetime": datetime(2019, 6, 14, 13, 33, 18, 526_020),
                 "odc:producer": "ga.gov.au",
@@ -214,108 +214,109 @@ def test_minimal_dea_package(
             },
             "measurements": {
                 "nbar_band01": {
-                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band01.tif"
+                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band01.tif"
                 },
                 "nbar_band02": {
-                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band02.tif"
+                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band02.tif"
                 },
                 "nbar_band03": {
-                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band03.tif"
+                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band03.tif"
                 },
                 "nbar_band04": {
-                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band04.tif"
+                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band04.tif"
                 },
                 "nbar_band05": {
-                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band05.tif"
+                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band05.tif"
                 },
                 "nbar_band06": {
-                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band06.tif"
+                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band06.tif"
                 },
                 "nbar_band07": {
-                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band07.tif"
+                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band07.tif"
                 },
                 "nbar_band08": {
                     "grid": "band08",
-                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-01-21_final_band08.tif",
+                    "path": "ga_ls8c_nbar_3-0-0_089080_2016-03-02_final_band08.tif",
                 },
                 "nbart_band01": {
-                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band01.tif"
+                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band01.tif"
                 },
                 "nbart_band02": {
-                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band02.tif"
+                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band02.tif"
                 },
                 "nbart_band03": {
-                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band03.tif"
+                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band03.tif"
                 },
                 "nbart_band04": {
-                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band04.tif"
+                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band04.tif"
                 },
                 "nbart_band05": {
-                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band05.tif"
+                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band05.tif"
                 },
                 "nbart_band06": {
-                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band06.tif"
+                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band06.tif"
                 },
                 "nbart_band07": {
-                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band07.tif"
+                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band07.tif"
                 },
                 "nbart_band08": {
                     "grid": "band08",
-                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-01-21_final_band08.tif",
+                    "path": "ga_ls8c_nbart_3-0-0_089080_2016-03-02_final_band08.tif",
                 },
                 "oa_azimuthal_exiting": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_azimuthal-exiting.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_azimuthal-exiting.tif"
                 },
                 "oa_azimuthal_incident": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_azimuthal-incident.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_azimuthal-incident.tif"
                 },
                 "oa_combined_terrain_shadow": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_combined-terrain-shadow.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_combined-terrain-shadow.tif"
                 },
                 "oa_exiting_angle": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_exiting-angle.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_exiting-angle.tif"
                 },
                 "oa_fmask": {
                     "grid": "oa:fmask",
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_fmask.tif",
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_fmask.tif",
                 },
                 "oa_incident_angle": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_incident-angle.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_incident-angle.tif"
                 },
                 "oa_nbar_contiguity": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_nbar-contiguity.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_nbar-contiguity.tif"
                 },
                 "oa_nbart_contiguity": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_nbart-contiguity.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_nbart-contiguity.tif"
                 },
                 "oa_relative_azimuth": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_relative-azimuth.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_relative-azimuth.tif"
                 },
                 "oa_relative_slope": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_relative-slope.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_relative-slope.tif"
                 },
                 "oa_satellite_azimuth": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_satellite-azimuth.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_satellite-azimuth.tif"
                 },
                 "oa_satellite_view": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_satellite-view.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_satellite-view.tif"
                 },
                 "oa_solar_azimuth": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_solar-azimuth.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_solar-azimuth.tif"
                 },
                 "oa_solar_zenith": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_solar-zenith.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_solar-zenith.tif"
                 },
                 "oa_timedelta": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-01-21_final_timedelta.tif"
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_timedelta.tif"
                 },
             },
-            "lineage": {"level1": ["a780754e-a884-58a7-9ac0-df518a67f59d"]},
+            "lineage": {"level1": ["944b3a38-0c42-5a6d-b4e8-4c0fdb67fbfc"]},
         },
-        expected_metadata,
+        output_metadata,
         ignore_fields=["id"],
     )
 
+    [proc_info] = expected_folder.rglob("*.proc-info.yaml")
     assert_same_as_file(
         {
             "fmask": {
@@ -351,7 +352,7 @@ def test_minimal_dea_package(
                 },
             ],
         },
-        expected_folder / "ga_ls8c_ard_3-0-0_089080_2016-01-21_final.proc-info.yaml",
+        proc_info,
         ignore_fields=("gqa", "wagl"),
     )
 
@@ -359,8 +360,13 @@ def test_minimal_dea_package(
     for image in expected_folder.rglob("*.tif"):
         assert cogeo.cog_validate(image), f"Failed COG validation: {image}"
 
+        with rasterio.open(image) as d:
+            d: DatasetReader
+            for i in d.indexes:
+                print(f"{image.stem} {i}: {d.checksum(i)}")
+
     # Check one of the images explicitly.
-    [image] = expected_folder.rglob("ga_ls8c_nbar_*_band08.tif")
+    [image] = expected_folder.rglob("*_nbar_*_band08.tif")
     with rasterio.open(image) as d:
         d: DatasetReader
         assert d.count == 1, "Expected one band"
