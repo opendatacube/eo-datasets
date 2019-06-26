@@ -356,7 +356,7 @@ def package(
 
             # It's a GA ARD product.
             p.producer = "ga.gov.au"
-            p.properties["odc:product_family"] = "ard"
+            p.product_family = "ard"
 
             # GA's collection 3 processes USGS Collection 1
             if p.properties["landsat:collection_number"] == 1:
@@ -364,12 +364,10 @@ def package(
             else:
                 raise NotImplementedError(f"Unsupported collection number.")
             # TODO: wagl's algorithm version should determine our dataset version number, right?
-            p.properties["odc:dataset_version"] = f"{org_collection_number}.0.0"
+            p.dataset_version = f"{org_collection_number}.0.0"
+            p.reference_code = _extract_reference_code(p, granule_name)
 
             p.properties["dea:processing_level"] = "level-2"
-            p.properties["odc:reference_code"] = _extract_reference_code(
-                p, granule_name
-            )
 
             # unpack the standardised products produced by wagl
             granule_group = fid[granule_name]
