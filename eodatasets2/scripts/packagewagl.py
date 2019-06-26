@@ -30,8 +30,8 @@ from eodatasets2.model import DatasetDoc
 from eodatasets2.ui import PathPath
 from eodatasets2.utils import default_utc
 
-_POSSIBLE_PRODUCTS = ("NBAR", "NBART", "LAMBERTIAN", "SBT")
-_DEFAULT_PRODUCTS = ("NBAR", "NBART")
+_POSSIBLE_PRODUCTS = ("nbar", "nbart", "lambertian", "sbt")
+_DEFAULT_PRODUCTS = ("nbar", "nbart")
 
 _THUMBNAILS = {
     "nbar": ("nbar:band07", "nbar:band04", "nbar:band01"),
@@ -81,9 +81,9 @@ def unpack_products(
         for pathname in [p for p in img_paths if "/{}/".format(product.upper()) in p]:
             secho(f"Path {pathname}", fg="blue")
             dataset = h5group[pathname]
-            p.write_measurement_h5(f"{product.lower()}:{_band_name(dataset)}", dataset)
+            p.write_measurement_h5(f"{product}:{_band_name(dataset)}", dataset)
 
-        if product.lower() in _THUMBNAILS:
+        if product in _THUMBNAILS:
             red, green, blue = _THUMBNAILS[product]
             p.write_thumbnail(product, red, green, blue)
 
@@ -316,6 +316,7 @@ def package(
     :return:
         The output Path
     """
+    products = tuple(s.lower() for s in products)
 
     if not wagl_hdf5.exists():
         raise ValueError(f"Input hdf5 doesn't exist {wagl_hdf5}")
@@ -571,7 +572,7 @@ def run(
     level1: Path, output: Path, h5_file: Path, products: Sequence[str], with_oa: bool
 ):
     if products:
-        products = set(p.upper() for p in products)
+        products = set(p.lower() for p in products)
     else:
         products = _DEFAULT_PRODUCTS
     with rasterio.Env():
