@@ -16,20 +16,18 @@ def test_minimal_dea_package(
     out = tmp_path / "test-dataset"
 
     [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
+    processing_time = datetime.utcnow()
 
     with DatasetAssembler(out, naming_conventions="dea") as p:
-
         p.add_source_dataset(l1_ls8_dataset, auto_inherit_properties=True)
 
         # It's a GA product called "ones".
-        p.properties.producer = "ga.gov.au"
-        p.properties["odc:product_family"] = "ones"
-
-        processing_time = datetime.utcnow()
-        p.properties.processed = processing_time
+        p.producer = "ga.gov.au"
+        p.product_family = "ones"
+        p.processed = processing_time
 
         # GA's collection 3 processes USGS Collection 1
-        p.properties["odc:dataset_version"] = f"3.0.0"
+        p.dataset_version = f"3.0.0"
 
         # TODO: maturity, where to load from?
         p.properties["dea:dataset_maturity"] = "FINAL"

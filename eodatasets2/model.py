@@ -17,7 +17,7 @@ from rasterio import DatasetReader
 from ruamel.yaml.comments import CommentedMap
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets2.properties import StacPropertyView
+from eodatasets2.properties import StacPropertyView, EoFields
 
 # TODO: these need discussion.
 DEA_URI_PREFIX = "https://collections.dea.ga.gov.au"
@@ -60,8 +60,8 @@ class MeasurementDoc:
 
 
 class DeaNamingConventions:
-    def __init__(self, properties: StacPropertyView, base_uri: str = None) -> None:
-        self.properties = properties
+    def __init__(self, dataset: EoFields, base_uri: str = None) -> None:
+        self.dataset = dataset
         self.base_uri = base_uri
 
     @property
@@ -70,20 +70,19 @@ class DeaNamingConventions:
 
     @property
     def _org_collection_number(self):
-        return int(self.properties["odc:dataset_version"].split(".")[0])
+        return int(self.dataset.dataset_version.split(".")[0])
 
     def _product_group(self, subname=None):
         # Fallback to the whole product's name
         if not subname:
-            subname = self.properties["odc:product_family"]
+            subname = self.dataset.product_family
 
-        p = "{producer}_{platform}{instrument}_{family}".format(
+        return "{producer}_{platform}{instrument}_{family}".format(
             producer=self.producer_abbreviated,
             platform=self.platform_abbreviated,
             instrument=self.instrument_abbreviated,
             family=subname,
         )
-        return p
 
     @property
     def product_uri(self) -> Optional[str]:
@@ -98,16 +97,18 @@ class DeaNamingConventions:
         Label for a dataset
         """
         # TODO: Dataset label Configurability?
-        p = self.properties
-        version = p["odc:dataset_version"].replace(".", "-")
-        return "_".join(
-            (
-                f"{self.product_name}-{version}",
-                p["odc:reference_code"],
-                f"{p.datetime:%Y-%m-%d}",
-                p["dea:dataset_maturity"],
-            )
+        d = self.dataset
+        version = d.dataset_version.replace(".", "-")
+
+        fs = (
+            f"{self.product_name}-{version}",
+            d.reference_code,
+            f"{d.datetime:%Y-%m-%d}",
         )
+
+        if "dea:dataset_maturity" in d:
+            fs = fs + (d.properties["dea:dataset_maturity"],)
+        return "_".join(fs)
 
     def metadata_path(self, work_dir: Path, kind: str = "", suffix: str = "yaml"):
         return self._file(work_dir, kind, suffix)
@@ -125,19 +126,19 @@ class DeaNamingConventions:
         return self._file(work_dir, name, suffix, sub_name=subgroup)
 
     def _file(self, work_dir: Path, file_id: str, suffix: str, sub_name: str = None):
-        p = self.properties
-        version = p["odc:dataset_version"].replace(".", "-")
+        p = self.dataset
+        version = p.dataset_version.replace(".", "-")
 
         if file_id:
-            end = f'{p["dea:dataset_maturity"]}_{file_id.replace("_", "-")}.{suffix}'
+            end = f'{p.properties["dea:dataset_maturity"]}_{file_id.replace("_", "-")}.{suffix}'
         else:
-            end = f'{p["dea:dataset_maturity"]}.{suffix}'
+            end = f'{p.properties["dea:dataset_maturity"]}.{suffix}'
 
         return work_dir / "_".join(
             (
                 self._product_group(sub_name),
                 version,
-                p["odc:reference_code"],
+                p.reference_code,
                 f"{p.datetime:%Y-%m-%d}",
                 end,
             )
@@ -153,7 +154,7 @@ class DeaNamingConventions:
     @property
     def platform_abbreviated(self) -> str:
         """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
-        p = self.properties.platform
+        p = self.dataset.platform
         if not p.startswith("landsat"):
             raise NotImplementedError(
                 f"TODO: implement non-landsat platform abbreviation " f"(got {p!r})"
@@ -164,7 +165,7 @@ class DeaNamingConventions:
     @property
     def instrument_abbreviated(self) -> str:
         """Abbreviated form of an instrument name, as used in dea product names. eg. 'c'."""
-        p = self.properties.platform
+        p = self.dataset.platform
         if not p.startswith("landsat"):
             raise NotImplementedError(
                 f"TODO: implement non-landsat instrument abbreviation " f"(got {p!r})"
@@ -173,9 +174,9 @@ class DeaNamingConventions:
         # Extract from usgs standard:
         # landsat:landsat_product_id: LC08_L1TP_091075_20161213_20170316_01_T2
         # landsat:landsat_scene_id: LC80910752016348LGN01
-        landsat_id: str = self.properties.get(
+        landsat_id: str = self.dataset.properties.get(
             "landsat:landsat_product_id"
-        ) or self.properties.get("landsat:landsat_scene_id")
+        ) or self.dataset.properties.get("landsat:landsat_scene_id")
         if not landsat_id:
             raise NotImplementedError(
                 f"TODO: Can only currently abbreviate instruments from landsat refernces."
@@ -186,19 +187,19 @@ class DeaNamingConventions:
     @property
     def producer_abbreviated(self) -> Optional[str]:
         """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
-        if not self.properties.producer:
+        if not self.dataset.producer:
             return None
         producer_domains = {"ga.gov.au": "ga", "usgs.gov": "usgs"}
         try:
-            return producer_domains[self.properties.producer]
+            return producer_domains[self.dataset.producer]
         except KeyError:
             raise NotImplementedError(
-                f"TODO: cannot yet abbreviate organisation domain name {self.properties.producer!r}"
+                f"TODO: cannot yet abbreviate organisation domain name {self.dataset.producer!r}"
             )
 
 
 @attr.s(auto_attribs=True, slots=True)
-class DatasetDoc:
+class DatasetDoc(EoFields):
     id: UUID = None
     product: ProductDoc = None
     locations: List[str] = None

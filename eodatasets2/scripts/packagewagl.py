@@ -250,17 +250,14 @@ def create_contiguity(
                     contiguity == 0, timedelta_data
                 )
 
-                center_dt = numpy.datetime64(p.properties.datetime)
+                center_dt = numpy.datetime64(p.datetime)
                 from_dt: numpy.datetime64 = center_dt + numpy.timedelta64(
                     int(float(numpy.ma.min(valid_timedelta_data)) * 1_000_000), "us"
                 )
                 to_dt: numpy.datetime64 = center_dt + numpy.timedelta64(
                     int(float(numpy.ma.max(valid_timedelta_data)) * 1_000_000), "us"
                 )
-                p.properties.datetime_range = (
-                    from_dt.astype(datetime),
-                    to_dt.astype(datetime),
-                )
+                p.datetime_range = (from_dt.astype(datetime), to_dt.astype(datetime))
 
 
 def _boolstyle(s):
@@ -272,9 +269,9 @@ def _boolstyle(s):
 
 def _extract_reference_code(p: DatasetAssembler, granule: str) -> Optional[str]:
     matches = None
-    if p.properties.platform.startswith("landsat"):
+    if p.platform.startswith("landsat"):
         matches = re.match(r"L\w\d(?P<reference_code>\d{6}).*", granule)
-    elif p.properties.platform.startswith("sentinel-2"):
+    elif p.platform.startswith("sentinel-2"):
         matches = re.match(r".*_T(?P<reference_code>\d{1,2}[A-Z]{3})_.*", granule)
 
     if matches:
@@ -358,7 +355,7 @@ def package(
             p.add_source_dataset(level1, auto_inherit_properties=True)
 
             # It's a GA ARD product.
-            p.properties.producer = "ga.gov.au"
+            p.producer = "ga.gov.au"
             p.properties["odc:product_family"] = "ard"
 
             # GA's collection 3 processes USGS Collection 1
@@ -394,9 +391,7 @@ def package(
                     p,
                     products,
                     granule_group,
-                    infer_datetime_range=level1.properties.platform.startswith(
-                        "landsat"
-                    ),
+                    infer_datetime_range=level1.platform.startswith("landsat"),
                 )
                 if fmask_image:
                     secho(f"Writing fmask from {fmask_image}", fg="blue")
@@ -479,9 +474,7 @@ def _read_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group):
     wagl_doc = yaml.safe_load(granule_group[wagl_path][()])
 
     try:
-        p.properties.processed = get_path(
-            wagl_doc, ("system_information", "time_processed")
-        )
+        p.processed = get_path(wagl_doc, ("system_information", "time_processed"))
     except PathAccessError:
         raise ValueError(f"WAGL dataset contains no time processed. Path {wagl_path}")
 
@@ -491,7 +484,7 @@ def _read_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group):
         )
 
     p.properties["dea:dataset_maturity"] = _determine_maturity(
-        p.properties.datetime, p.properties.processed, wagl_doc
+        p.datetime, p.processed, wagl_doc
     )
 
     p.extend_user_metadata("wagl", wagl_doc)

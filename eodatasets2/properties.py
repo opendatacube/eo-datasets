@@ -1,5 +1,6 @@
 import collections.abc
 import warnings
+from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from datetime import datetime
 from typing import Tuple, Dict, Optional, Any, Mapping, Callable, Union
@@ -157,6 +158,19 @@ class StacPropertyView(collections.abc.Mapping):
     def __init__(self, properties=None) -> None:
         self._props = properties or {}
 
+        self._finished_init_ = True
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """
+        Prevent against users accidentally setting new properties (it has happened multiple times).
+        """
+        if hasattr(self, "_finished_init_") and not hasattr(self, name):
+            raise TypeError(
+                f"Cannot set new field '{name}' on a dict. "
+                f"(Perhaps you meant to set it as a dictionary field??)"
+            )
+        super().__setattr__(name, value)
+
     def __getitem__(self, item):
         return self._props[item]
 
@@ -183,11 +197,16 @@ class StacPropertyView(collections.abc.Mapping):
     def nested(self):
         return nest_properties(self._props)
 
-    # Convenient access fields for the most common/essential properties in datasets"""
+
+class EoFields(metaclass=ABCMeta):
+    """
+    Convenient access fields for the most common/essential properties in datasets
+    """
 
     @property
-    def properties(self):
-        return self
+    @abstractmethod
+    def properties(self) -> StacPropertyView:
+        raise NotImplementedError
 
     @property
     def platform(self) -> str:
@@ -242,3 +261,27 @@ class StacPropertyView(collections.abc.Mapping):
     @processed.setter
     def processed(self, value):
         self.properties["odc:processing_datetime"] = value
+
+    @property
+    def dataset_version(self):
+        return self.properties.get("odc:dataset_version")
+
+    @dataset_version.setter
+    def dataset_version(self, value):
+        self.properties["odc:dataset_version"] = value
+
+    @property
+    def product_family(self):
+        return self.properties.get("odc:product_family")
+
+    @product_family.setter
+    def product_family(self, value):
+        self.properties["odc:product_family"] = value
+
+    @property
+    def reference_code(self):
+        return self.properties.get("odc:reference_code")
+
+    @reference_code.setter
+    def reference_code(self, value):
+        self.properties["odc:reference_code"] = value

@@ -9,7 +9,7 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path, PurePath
-from typing import Dict, List, Optional, Tuple, Generator
+from typing import Dict, List, Optional, Tuple, Generator, Any
 
 import h5py
 import numpy
@@ -28,6 +28,7 @@ from eodatasets2.model import (
     DeaNamingConventions,
     DEA_URI_PREFIX,
 )
+from eodatasets2.properties import EoFields
 from eodatasets2.validate import Level, ValidationMessage
 from eodatasets2.verify import PackageChecksum
 
@@ -133,16 +134,7 @@ class DatasetCompletenessWarning(UserWarning):
         return str(self.validation)
 
 
-def _no_new_fields_setter(self, key, value):
-    if self._have_finished_init and not hasattr(self, key):
-        raise TypeError(
-            "Cannot set new fields on an assembler. "
-            f"(Perhaps you meant to set it on the .properties?)"
-        )
-    object.__setattr__(self, key, value)
-
-
-class DatasetAssembler:
+class DatasetAssembler(EoFields):
     """
     Assemble an ODC dataset, writing metadata and (optionally) its imagery as COGs.
     """
@@ -201,20 +193,34 @@ class DatasetAssembler:
 
         self._lineage: Dict[str, List[uuid.UUID]] = defaultdict(list)
 
-        self.properties = StacPropertyView()
+        self._props = StacPropertyView()
 
         if naming_conventions == "default":
-            self.names = DeaNamingConventions(self.properties)
+            self.names = DeaNamingConventions(self)
         elif naming_conventions == "dea":
-            self.names = DeaNamingConventions(self.properties, DEA_URI_PREFIX)
+            self.names = DeaNamingConventions(self, DEA_URI_PREFIX)
         else:
             raise NotImplementedError("configurable naming conventions")
 
-        # Prevent against users accidentally trying to set new properties (it happened before).
-        self.__setattr__ = _no_new_fields_setter
+        self._finished_init_ = True
+
+    @property
+    def properties(self) -> StacPropertyView:
+        return self._props
 
     def __enter__(self):
         return self
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """
+        Prevent against users accidentally setting new properties on the assembler (it has happened multiple times).
+        """
+        if hasattr(self, "_finished_init_") and not hasattr(self, name):
+            raise TypeError(
+                f"Cannot set new field '{name}' on an assembler. "
+                f"(Perhaps you meant to set it on the .properties?)"
+            )
+        super().__setattr__(name, value)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         # The user has already called finish() if everything went right.
