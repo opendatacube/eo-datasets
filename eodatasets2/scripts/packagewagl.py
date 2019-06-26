@@ -20,6 +20,7 @@ import rasterio
 import yaml
 from boltons.iterutils import get_path, PathAccessError
 from click import secho, echo
+from dateutil.tz import tzutc
 from rasterio import DatasetReader
 
 from eodatasets2 import images, serialise
@@ -250,7 +251,10 @@ def create_contiguity(
                     contiguity == 0, timedelta_data
                 )
 
-                center_dt = numpy.datetime64(p.datetime)
+                def _strip_timezone(d: datetime):
+                    return d.astimezone(tz=tzutc()).replace(tzinfo=None)
+
+                center_dt = numpy.datetime64(_strip_timezone(p.datetime))
                 from_dt: numpy.datetime64 = center_dt + numpy.timedelta64(
                     int(float(numpy.ma.min(valid_timedelta_data)) * 1_000_000), "us"
                 )

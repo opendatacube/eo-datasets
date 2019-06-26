@@ -7,6 +7,7 @@ from typing import List, Counter, Dict, Generator
 
 import attr
 import click
+import math
 from click import style, echo, secho
 from rasterio.crs import CRS
 from rasterio.errors import CRSError
@@ -131,10 +132,14 @@ def _validate_stac_properties(dataset: DatasetDoc):
                             f"{type(normalised_value).__name__!r} (got {type(value).__name__!r})",
                         )
                     elif normalised_value != value:
-                        yield _warning(
-                            "property_formatting",
-                            f"Property {value!r} expected to be {normalised_value!r}",
-                        )
+                        if _is_nan(normalised_value) and _is_nan(value):
+                            # Both are NaNs, ignore.
+                            pass
+                        else:
+                            yield _warning(
+                                "property_formatting",
+                                f"Property {value!r} expected to be {normalised_value!r}",
+                            )
                 except ValueError as e:
                     yield _error("invalid_property", e.args[0])
 
@@ -146,6 +151,10 @@ def _validate_stac_properties(dataset: DatasetDoc):
                 "producer_domain",
                 "Property 'odc:producer' should be the organisation's domain name. Eg. 'ga.gov.au'",
             )
+
+
+def _is_nan(v):
+    return isinstance(v, float) and math.isnan(v)
 
 
 def _validate_geo(dataset: DatasetDoc):

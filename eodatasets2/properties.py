@@ -107,6 +107,54 @@ PrimitiveType = Union[str, int, float, datetime]
 # They throw a ValueError if not valid.
 NormaliseValueFn = Callable[[Any], PrimitiveType]
 
+# Extras typically on the ARD product.
+_GQA_FMASK_PROPS = {
+    "fmask:clear": float,
+    "fmask:cloud": float,
+    "fmask:cloud_shadow": float,
+    "fmask:snow": float,
+    "fmask:water": float,
+    "gqa:abs_iterative_mean_x": float,
+    "gqa:abs_iterative_mean_xy": float,
+    "gqa:abs_iterative_mean_y": float,
+    "gqa:abs_x": float,
+    "gqa:abs_xy": float,
+    "gqa:abs_y": float,
+    "gqa:cep90": float,
+    "gqa:iterative_mean_x": float,
+    "gqa:iterative_mean_xy": float,
+    "gqa:iterative_mean_y": float,
+    "gqa:iterative_stddev_x": float,
+    "gqa:iterative_stddev_xy": float,
+    "gqa:iterative_stddev_y": float,
+    "gqa:mean_x": float,
+    "gqa:mean_xy": float,
+    "gqa:mean_y": float,
+    "gqa:stddev_x": float,
+    "gqa:stddev_xy": float,
+    "gqa:stddev_y": float,
+}
+
+# Typically only from LPGS (ie. Level 1 products)
+_LANDSAT_EXTENDED_PROPS = {
+    "landsat:collection_category": None,
+    "landsat:collection_number": int,
+    "landsat:data_type": None,
+    "landsat:earth_sun_distance": None,
+    "landsat:ephemeris_type": None,
+    "landsat:geometric_rmse_model": None,
+    "landsat:geometric_rmse_model_x": None,
+    "landsat:geometric_rmse_model_y": None,
+    "landsat:geometric_rmse_verify": None,
+    "landsat:ground_control_points_model": None,
+    "landsat:ground_control_points_verify": None,
+    "landsat:ground_control_points_version": None,
+    "landsat:image_quality_oli": None,
+    "landsat:image_quality_tirs": None,
+    "landsat:processing_software_version": None,
+    "landsat:station_id": None,
+}
+
 
 class StacPropertyView(collections.abc.Mapping):
     # Every property we've seen or dealt with so far. Feel free to expand with abandon...
@@ -127,24 +175,8 @@ class StacPropertyView(collections.abc.Mapping):
         "eo:platform": normalise_platform,
         "eo:sun_azimuth": degrees_type,
         "eo:sun_elevation": degrees_type,
-        "landsat:collection_category": None,
-        "landsat:collection_number": int,
-        "landsat:data_type": None,
-        "landsat:earth_sun_distance": None,
-        "landsat:ephemeris_type": None,
-        "landsat:geometric_rmse_model": None,
-        "landsat:geometric_rmse_model_x": None,
-        "landsat:geometric_rmse_model_y": None,
-        "landsat:geometric_rmse_verify": None,
-        "landsat:ground_control_points_model": None,
-        "landsat:ground_control_points_verify": None,
-        "landsat:ground_control_points_version": None,
-        "landsat:image_quality_oli": None,
-        "landsat:image_quality_tirs": None,
         "landsat:landsat_product_id": None,
         "landsat:landsat_scene_id": None,
-        "landsat:processing_software_version": None,
-        "landsat:station_id": None,
         "landsat:wrs_path": int,
         "landsat:wrs_row": int,
         "odc:dataset_version": None,
@@ -153,6 +185,8 @@ class StacPropertyView(collections.abc.Mapping):
         "odc:producer": producer_check,
         "odc:product_family": None,
         "odc:reference_code": None,
+        **_LANDSAT_EXTENDED_PROPS,
+        **_GQA_FMASK_PROPS,
     }
 
     def __init__(self, properties=None) -> None:
@@ -181,8 +215,10 @@ class StacPropertyView(collections.abc.Mapping):
         return len(self._props)
 
     def __setitem__(self, key, value):
-        if key in self._props:
-            warnings.warn(f"Overriding property {key!r}")
+        if key in self._props and value != self[key]:
+            warnings.warn(
+                f"Overriding property {key!r} " f"(from {self[key]!r} to {value!r})"
+            )
 
         if key not in self.KNOWN_STAC_PROPERTIES:
             warnings.warn(f"Unknown stac property {key!r}")
