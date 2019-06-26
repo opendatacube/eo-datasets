@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import pytest
 import rasterio
 from dateutil.tz import tzutc
 from rasterio import DatasetReader
@@ -23,7 +24,18 @@ def test_minimal_dea_package(
     l1_ls8_dataset: DatasetDoc, l1_ls8_folder: Path, tmp_path: Path
 ):
     out = tmp_path / "out"
-    given_path = package(WAGL_INPUT_PATH, l1_ls8_dataset, out)
+
+    with pytest.warns(None) as warning_record:
+        given_path = package(WAGL_INPUT_PATH, l1_ls8_dataset, out)
+
+    # No warnings should have been logged during package.
+    # We could tighten this to specific warnings if it proves too noisy, but it's
+    # useful for catching things like unclosed files.
+    if warning_record:
+        messages = "\n".join(f"- {w.message} ({w})\n" for w in warning_record)
+        # TODO: Can't enable until aux.xml file cleanup is finished.
+        print(f"Warnings were produced during wagl package:\n {messages}")
+        # raise AssertionError(f"Warnings were produced during wagl package:\n {messages}")
 
     assert_file_structure(
         out,
