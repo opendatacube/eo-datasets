@@ -1,6 +1,7 @@
 import collections
 import enum
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import List, Counter, Dict, Generator
 
@@ -14,52 +15,7 @@ from shapely.validation import explain_validity
 from eodatasets2 import serialise, model
 from eodatasets2.model import DatasetDoc
 from eodatasets2.ui import PathPath, is_absolute
-
-# Every property we've seen or dealt with so far. Feel free to expand with abandon...
-# This is to minimise minor typos, case differences, etc, which plagued previous systems.
-# Keep sorted.
-_KNOWN_STAC_PROPERTIES = {
-    "datetime",
-    "dea:dataset_maturity",
-    "dea:processing_level",
-    "dtr:end_datetime",
-    "dtr:start_datetime",
-    "eo:azimuth",
-    "eo:cloud_cover",
-    "eo:epsg",
-    "eo:gsd",
-    "eo:instrument",
-    "eo:off_nadir",
-    "eo:platform",
-    "eo:sun_azimuth",
-    "eo:sun_elevation",
-    "landsat:collection_category",
-    "landsat:collection_number",
-    "landsat:data_type",
-    "landsat:earth_sun_distance",
-    "landsat:ephemeris_type",
-    "landsat:geometric_rmse_model",
-    "landsat:geometric_rmse_model_x",
-    "landsat:geometric_rmse_model_y",
-    "landsat:geometric_rmse_verify",
-    "landsat:ground_control_points_model",
-    "landsat:ground_control_points_verify",
-    "landsat:ground_control_points_version",
-    "landsat:image_quality_oli",
-    "landsat:image_quality_tirs",
-    "landsat:landsat_product_id",
-    "landsat:landsat_scene_id",
-    "landsat:processing_software_version",
-    "landsat:station_id",
-    "landsat:wrs_path",
-    "landsat:wrs_row",
-    "odc:dataset_version",
-    "odc:file_format",
-    "odc:processing_datetime",
-    "odc:producer",
-    "odc:product_family",
-    "odc:reference_code",
-}
+from eodatasets2.utils import default_utc
 
 
 class Level(enum.Enum):
@@ -155,10 +111,32 @@ def validate(
 
 def _validate_stac_properties(dataset: DatasetDoc):
     for name, value in dataset.properties.items():
-        if name not in _KNOWN_STAC_PROPERTIES:
+        if name not in dataset.properties.KNOWN_STAC_PROPERTIES:
             yield _warning("unknown_property", f"Unknown stac property {name!r}")
 
-    # TODO: type/other validation
+        else:
+            normaliser = dataset.properties.KNOWN_STAC_PROPERTIES.get(name)
+            if normaliser and value is not None:
+                try:
+                    normalised_value = normaliser(value)
+
+                    # Special case for dates, as "no timezone" and "utc timezone" are treated identical.
+                    if isinstance(value, datetime):
+                        value = default_utc(value)
+
+                    if not isinstance(value, type(normalised_value)):
+                        yield _warning(
+                            "property_type",
+                            f"Value {value} expected to be "
+                            f"{type(normalised_value).__name__!r} (got {type(value).__name__!r})",
+                        )
+                    elif normalised_value != value:
+                        yield _warning(
+                            "property_formatting",
+                            f"Property {value!r} expected to be {normalised_value!r}",
+                        )
+                except ValueError as e:
+                    yield _error("invalid_property", e.args[0])
 
     if "odc:producer" in dataset.properties:
         producer = dataset.properties["odc:producer"]

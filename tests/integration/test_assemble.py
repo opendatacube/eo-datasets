@@ -32,7 +32,7 @@ def test_minimal_dea_package(
         p.properties["odc:dataset_version"] = f"3.0.0"
 
         # TODO: maturity, where to load from?
-        p.properties["dea:dataset_maturity"] = "final"
+        p.properties["dea:dataset_maturity"] = "FINAL"
         p.properties["dea:processing_level"] = "level-2"
 
         # Write a measurement from a numpy array, using the source dataset's grid spec.

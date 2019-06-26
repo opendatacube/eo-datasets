@@ -1,16 +1,12 @@
-import collections.abc
 import itertools
-import warnings
 from collections import defaultdict
-from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Tuple, Dict, Optional, Iterable, List, Any, Sequence, Mapping
+from typing import Tuple, Dict, Optional, Iterable, List, Sequence
 from uuid import UUID
 
 import affine
 import attr
-import ciso8601
 import numpy
 import rasterio
 import rasterio.features
@@ -21,36 +17,11 @@ from rasterio import DatasetReader
 from ruamel.yaml.comments import CommentedMap
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets2.utils import default_utc
+from eodatasets2.properties import StacPropertyView
 
 # TODO: these need discussion.
 DEA_URI_PREFIX = "https://collections.dea.ga.gov.au"
 ODC_DATASET_SCHEMA_URL = "https://schemas.opendatacube.org/dataset"
-
-
-def nest_properties(d: Mapping[str, Any], separator=":") -> Dict[str, Any]:
-    """
-    Split keys with embedded colons into sub dictionaries.
-
-    Intended for stac-like properties
-
-    >>> nest_properties({'landsat:path':1, 'landsat:row':2, 'clouds':3})
-    {'landsat': {'path': 1, 'row': 2}, 'clouds': 3}
-    """
-    out = defaultdict(dict)
-    for key, val in d.items():
-        section, *remainder = key.split(separator, 1)
-        if remainder:
-            [sub_key] = remainder
-            out[section][sub_key] = val
-        else:
-            out[section] = val
-
-    for key, val in out.items():
-        if isinstance(val, dict):
-            out[key] = nest_properties(val, separator=separator)
-
-    return dict(out)
 
 
 class FileFormat(Enum):
@@ -88,140 +59,6 @@ class MeasurementDoc:
     name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
 
 
-class StacPropertyView(collections.abc.Mapping):
-    def __init__(self, properties=None) -> None:
-        self._props = properties or {}
-
-    @property
-    def platform(self) -> str:
-        return self["eo:platform"]
-
-    @property
-    def instrument(self) -> str:
-        return self["eo:instrument"]
-
-    @property
-    def platform_abbreviated(self) -> str:
-        """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
-        p = self.platform
-        if not p.startswith("landsat"):
-            raise NotImplementedError(
-                f"TODO: implement non-landsat platform abbreviation " f"(got {p!r})"
-            )
-
-        return f"ls{p[-1]}"
-
-    @property
-    def instrument_abbreviated(self) -> str:
-        """Abbreviated form of an instrument name, as used in dea product names. eg. 'c'."""
-        p = self.platform
-        if not p.startswith("landsat"):
-            raise NotImplementedError(
-                f"TODO: implement non-landsat instrument abbreviation " f"(got {p!r})"
-            )
-
-        # Extract from usgs standard:
-        # landsat:landsat_product_id: LC08_L1TP_091075_20161213_20170316_01_T2
-        # landsat:landsat_scene_id: LC80910752016348LGN01
-        landsat_id: str = self.get("landsat:landsat_product_id") or self.get(
-            "landsat:landsat_scene_id"
-        )
-        if not landsat_id:
-            raise NotImplementedError(
-                f"TODO: Can only currently abbreviate instruments from landsat refernces."
-            )
-
-        return landsat_id[1].lower()
-
-    @property
-    def producer(self) -> str:
-        """
-        Organisation that produced the data.
-
-        eg. usgs.gov or ga.gov.au
-        """
-        return self.get("odc:producer")
-
-    @property
-    def producer_abbreviated(self) -> Optional[str]:
-        """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
-        if not self.producer:
-            return None
-        producer_domains = {"ga.gov.au": "ga", "usgs.gov": "usgs"}
-        try:
-            return producer_domains[self.producer]
-        except KeyError:
-            raise NotImplementedError(
-                f"TODO: cannot yet abbreviate organisation domain name {self.producer!r}"
-            )
-
-    @producer.setter
-    def producer(self, domain: str):
-        if "." not in domain:
-            warnings.warn(
-                "Property 'odc:producer' is expected to be a domain name, "
-                "eg 'usgs.gov' or 'ga.gov.au'"
-            )
-        self["odc:producer"] = domain
-
-    @property
-    def datetime_range(self):
-        return (self.get("dtr:start_datetime"), self.get("dtr:end_datetime"))
-
-    @datetime_range.setter
-    def datetime_range(self, val: Tuple[datetime, datetime]):
-        # TODO: string type conversion, better validation/errors
-        start, end = val
-        self["dtr:start_datetime"] = start
-        self["dtr:end_datetime"] = end
-
-    @property
-    def datetime(self) -> datetime:
-        return self.get("datetime")
-
-    @datetime.setter
-    def datetime(self, val: datetime) -> datetime:
-        self["datetime"] = val
-
-    @property
-    def processed(self) -> datetime:
-        """
-        When the dataset was processed (Default to UTC if not specified)
-        """
-        return self.get("odc:processing_datetime")
-
-    @processed.setter
-    def processed(self, value):
-        if isinstance(value, str):
-            value = ciso8601.parse_datetime(value)
-        self["odc:processing_datetime"] = value
-
-    def __getitem__(self, item):
-        return self._props[item]
-
-    def __iter__(self):
-        return iter(self._props)
-
-    def __len__(self):
-        return len(self._props)
-
-    def __setitem__(self, key, value):
-        if key in self._props:
-            warnings.warn(f"Overriding property {key!r}")
-        # TODO: normalise case etc.
-
-        # Store all dates with a timezone.
-        # yaml standard says all dates default to UTC.
-        # (and ruamel normalises timezones to UTC itself)
-        if isinstance(value, datetime):
-            value = default_utc(value)
-
-        self._props[key] = value
-
-    def nested(self):
-        return nest_properties(self._props)
-
-
 class DeaNamingConventions:
     def __init__(self, properties: StacPropertyView, base_uri: str = None) -> None:
         self.properties = properties
@@ -241,9 +78,9 @@ class DeaNamingConventions:
             subname = self.properties["odc:product_family"]
 
         p = "{producer}_{platform}{instrument}_{family}".format(
-            producer=self.properties.producer_abbreviated,
-            platform=self.properties.platform_abbreviated,
-            instrument=self.properties.instrument_abbreviated,
+            producer=self.producer_abbreviated,
+            platform=self.platform_abbreviated,
+            instrument=self.instrument_abbreviated,
             family=subname,
         )
         return p
@@ -312,6 +149,52 @@ class DeaNamingConventions:
         else:
             name = "thumbnail"
         return self.measurement_file_path(work_dir, name, suffix)
+
+    @property
+    def platform_abbreviated(self) -> str:
+        """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
+        p = self.properties.platform
+        if not p.startswith("landsat"):
+            raise NotImplementedError(
+                f"TODO: implement non-landsat platform abbreviation " f"(got {p!r})"
+            )
+
+        return f"ls{p[-1]}"
+
+    @property
+    def instrument_abbreviated(self) -> str:
+        """Abbreviated form of an instrument name, as used in dea product names. eg. 'c'."""
+        p = self.properties.platform
+        if not p.startswith("landsat"):
+            raise NotImplementedError(
+                f"TODO: implement non-landsat instrument abbreviation " f"(got {p!r})"
+            )
+
+        # Extract from usgs standard:
+        # landsat:landsat_product_id: LC08_L1TP_091075_20161213_20170316_01_T2
+        # landsat:landsat_scene_id: LC80910752016348LGN01
+        landsat_id: str = self.properties.get(
+            "landsat:landsat_product_id"
+        ) or self.properties.get("landsat:landsat_scene_id")
+        if not landsat_id:
+            raise NotImplementedError(
+                f"TODO: Can only currently abbreviate instruments from landsat refernces."
+            )
+
+        return landsat_id[1].lower()
+
+    @property
+    def producer_abbreviated(self) -> Optional[str]:
+        """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
+        if not self.properties.producer:
+            return None
+        producer_domains = {"ga.gov.au": "ga", "usgs.gov": "usgs"}
+        try:
+            return producer_domains[self.properties.producer]
+        except KeyError:
+            raise NotImplementedError(
+                f"TODO: cannot yet abbreviate organisation domain name {self.properties.producer!r}"
+            )
 
 
 @attr.s(auto_attribs=True, slots=True)

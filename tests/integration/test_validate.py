@@ -46,6 +46,16 @@ def test_missing_geo_fields(tmp_path: Path, example_metadata: Dict):
     _assert_invalid_codes(example_metadata, tmp_path, "incomplete_crs")
 
 
+def test_warn_bad_formatting(tmp_path: Path, example_metadata: Dict):
+    """ A warning if fields aren't formatted in standard manner."""
+    example_metadata["properties"]["eo:platform"] = example_metadata["properties"][
+        "eo:platform"
+    ].upper()
+    _assert_invalid_codes(
+        example_metadata, tmp_path, "property_formatting", warnings_are_errors=True
+    )
+
+
 def test_missing_grid_def(tmp_path: Path, example_metadata: Dict):
     """A Measurement refers to a grid that doesn't exist"""
     a_measurement, *_ = list(example_metadata["measurements"])
@@ -60,11 +70,11 @@ def test_invalid_shape(tmp_path: Path, example_metadata: Dict):
     example_metadata["geometry"] = {
         "coordinates": (
             (
-                (770115.0, -2768985.0),
-                (525285.0, -2981715.0),
-                (770115.0, -2981715.0),
-                (525285.0, -2768985.0),
-                (770115.0, -2768985.0),
+                (770_115.0, -2_768_985.0),
+                (525_285.0, -2_981_715.0),
+                (770_115.0, -2_981_715.0),
+                (525_285.0, -2_768_985.0),
+                (770_115.0, -2_768_985.0),
             ),
         ),
         "type": "Polygon",
@@ -123,8 +133,10 @@ def _assert_valid(example_metadata, tmp_path, expect_no_warnings=True):
     return messages
 
 
-def _assert_invalid_codes(doc: Dict, tmp_path: Path, *expected_error_codes):
-    messages = _assert_invalid(doc, tmp_path)
+def _assert_invalid_codes(
+    doc: Dict, tmp_path: Path, *expected_error_codes, warnings_are_errors=False
+):
+    messages = _assert_invalid(doc, tmp_path, warnings_are_errors=warnings_are_errors)
     assert sorted(expected_error_codes) == sorted(messages.keys())
     return messages
 
@@ -140,7 +152,9 @@ def _assert_invalid(doc: Dict, tmp_path: Path, warnings_are_errors=False):
 
     res = run_validate(*args, md_path, expect_success=False)
     assert res.exit_code != 0, "Expected validation to fail"
-    assert res.exit_code == 1, "Expected error code to be 1 for 1 document failure"
+    assert (
+        res.exit_code == 1
+    ), f"Expected error code to be 1 for 1 document failure.\n{res.output}"
 
     return _read_messages(res)
 
