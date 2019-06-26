@@ -541,15 +541,9 @@ class DatasetAssembler(EoFields):
 
         return dataset.id
 
-    def write_thumbnail(
-        self,
-        red_measurement_name: str,
-        green_measurement_name: str,
-        blue_measurement_name: str,
-        kind: str = None,
-    ):
+    def write_thumbnail(self, red: str, green: str, blue: str, kind: str = None):
         """
-        Write a thumbnail for the dataset using the given measurements as r/g/b.
+        Write a thumbnail for the dataset using the given measurements (specified by name) as r/g/b.
 
         (the measurements must already have been written.)
 
@@ -559,11 +553,7 @@ class DatasetAssembler(EoFields):
         thumb = self.names.thumbnail_name(self._work_path, kind=kind)
         measurements = dict(self._measurements.iter_paths())
 
-        missing_measurements = {
-            red_measurement_name,
-            green_measurement_name,
-            blue_measurement_name,
-        } - set(measurements)
+        missing_measurements = {red, green, blue} - set(measurements)
         if missing_measurements:
             raise IncompleteDatasetError(
                 ValidationMessage(
@@ -576,9 +566,9 @@ class DatasetAssembler(EoFields):
 
         FileWrite().create_thumbnail(
             (
-                measurements[red_measurement_name].absolute(),
-                measurements[green_measurement_name].absolute(),
-                measurements[blue_measurement_name].absolute(),
+                measurements[red].absolute(),
+                measurements[green].absolute(),
+                measurements[blue].absolute(),
             ),
             thumb,
         )

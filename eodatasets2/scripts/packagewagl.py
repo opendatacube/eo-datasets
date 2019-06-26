@@ -85,7 +85,7 @@ def unpack_products(
 
         if product in _THUMBNAILS:
             red, green, blue = _THUMBNAILS[product]
-            p.write_thumbnail(product, red, green, blue)
+            p.write_thumbnail(red, green, blue, kind=product)
 
 
 def _band_name(dataset: h5py.Dataset) -> str:
