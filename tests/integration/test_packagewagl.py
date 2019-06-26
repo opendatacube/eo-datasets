@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import rasterio
 from dateutil.tz import tzutc
+from rasterio import DatasetReader
+from rasterio.enums import Compression
 from rio_cogeo import cogeo
 
 import eodatasets2
@@ -341,6 +344,21 @@ def test_minimal_dea_package(
     # All produced tifs should be valid COGs
     for image in expected_folder.rglob("*.tif"):
         assert cogeo.cog_validate(image), f"Failed COG validation: {image}"
+
+    # Check one of the images explicitly.
+    [image] = expected_folder.rglob("ga_ls8c_nbar_*_band08.tif")
+    with rasterio.open(image) as d:
+        d: DatasetReader
+        assert d.count == 1, "Expected one band"
+        assert d.checksum(1) == 0  # TODO: Why? Bad test data?
+        assert d.overviews(1) == [8, 15, 31]
+
+        assert d.driver == "GTiff"
+        assert d.dtypes == ("float64",)
+        assert d.compression == Compression.deflate
+
+        assert d.height == 155
+        assert d.width == 154
 
 
 def test_maturity_calculation():
