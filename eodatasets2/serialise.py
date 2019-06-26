@@ -65,6 +65,7 @@ def represent_paths(self, data: PurePath):
 
 def _init_yaml() -> YAML:
     yaml = YAML()
+
     yaml.representer.add_representer(FileFormat, _format_representer)
     yaml.representer.add_multi_representer(UUID, _uuid_representer)
     yaml.representer.add_representer(datetime, represent_datetime)
@@ -86,7 +87,10 @@ def _init_yaml() -> YAML:
     yaml.representer.add_representer(numpy.ndarray, Representer.represent_list)
     yaml.representer.add_representer(numpy.datetime64, represent_numpy_datetime)
 
+    # Match yamllint default expectations.
+    yaml.width = 80
     yaml.explicit_start = True
+
     return yaml
 
 
