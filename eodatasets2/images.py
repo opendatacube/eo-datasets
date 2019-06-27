@@ -1,4 +1,5 @@
 import os
+import shlex
 import tempfile
 from collections import defaultdict
 from pathlib import Path
@@ -27,7 +28,11 @@ from eodatasets2.model import GridDoc, MeasurementDoc, DatasetDoc
 LEVELS = [8, 16, 32]
 
 
-def run_command(command: Sequence[Union[str, Path]], work_dir: Path) -> None:
+def run_command(
+    command: Sequence[Union[str, Path]], work_dir: Path, echo=False
+) -> None:
+    if echo:
+        print(" ".join(shlex.quote(str(s)) for s in command))
     check_call([str(s) for s in command], cwd=str(work_dir))
 
 
@@ -555,6 +560,7 @@ class FileWrite:
             run_command(
                 [
                     "gdal_translate",
+                    "-q",
                     "-co",
                     "{}={}".format("PREDICTOR", self.PREDICTOR_DEFAULTS[dtype]),
                     *self._gdal_cli_config(),
@@ -581,7 +587,8 @@ class FileWrite:
             # initial vrt of required rgb bands
             vrt_file = tmpdir / "input_bands.vrt"
             run_command(
-                ["gdalbuildvrt", "-separate", "-overwrite", vrt_file, *rgb], tmpdir
+                ["gdalbuildvrt", "-q", "-separate", "-overwrite", vrt_file, *rgb],
+                tmpdir,
             )
 
             # quicklook with contrast scaling
@@ -596,6 +603,7 @@ class FileWrite:
             run_command(
                 [
                     "gdalwarp",
+                    "-q",
                     *self._gdal_cli_config(),
                     "-t_srs",
                     "EPSG:4326",
@@ -617,6 +625,7 @@ class FileWrite:
             run_command(
                 [
                     "gdal_translate",
+                    "-q",
                     *self._gdal_cli_config(),
                     "-of",
                     "JPEG",

@@ -219,6 +219,7 @@ def create_contiguity(
             images.run_command(
                 [
                     "gdalbuildvrt",
+                    "-q",
                     "-resolution",
                     "user",
                     "-tr",
@@ -576,7 +577,7 @@ def run(
         products = _DEFAULT_PRODUCTS
     with rasterio.Env():
         package(
-            source_level1=level1,
+            source_level1_metadata=level1,
             wagl_hdf5=h5_file,
             out_directory=output.absolute(),
             products=products,
