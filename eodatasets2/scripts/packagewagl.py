@@ -76,15 +76,17 @@ def unpack_products(
 
     # TODO pass products through from the scheduler rather than hard code
     for product in product_list:
-        secho(f"\n\nStarting {product}", fg="blue")
+        secho(f"\nStarting {product}", fg="blue")
         for pathname in [p for p in img_paths if "/{}/".format(product.upper()) in p]:
-            secho(f"Path {pathname}", fg="blue")
+            secho(f"Path {pathname!r} ", nl=False)
             dataset = h5group[pathname]
             p.write_measurement_h5(f"{product}:{_band_name(dataset)}", dataset)
-
+            secho("(done)")
         if product in _THUMBNAILS:
             red, green, blue = _THUMBNAILS[product]
+            secho(f"Thumbnailing {product} ", nl=False)
             p.write_thumbnail(red, green, blue, kind=product)
+            secho("(done)")
 
 
 def _band_name(dataset: h5py.Dataset) -> str:
@@ -114,7 +116,7 @@ def unpack_observation_attributes(
     Unpack the angles + other supplementary datasets produced by wagl.
     Currently only the mode resolution group gets extracted.
     """
-
+    secho(f"\nStarting OA", fg="blue")
     resolution_groups = sorted(g for g in h5group.keys() if g.startswith("RES-GROUP-"))
     if len(resolution_groups) not in (1, 2):
         raise NotImplementedError(
@@ -133,7 +135,7 @@ def unpack_observation_attributes(
         """
         for dataset_name in dataset_names:
             o = f"{section}/{dataset_name}"
-            secho(f"OA path {o!r}", fg="blue")
+            secho(f"Path {o!r} ", nl=False)
             measurement_name = f"{dataset_name.lower()}".replace("-", "_")
             measurement_name = MEASUREMENT_TRANSLATION.get(
                 measurement_name, measurement_name
@@ -146,6 +148,7 @@ def unpack_observation_attributes(
                 # According to Josh: Supplementary pixels outside of the product bounds are implicitly invalid.
                 expand_valid_data=False,
             )
+            secho("(done)")
 
     _write(
         "SATELLITE-SOLAR",
@@ -166,14 +169,12 @@ def unpack_observation_attributes(
     # TODO: Actual res from res_group
     res = 30  # level1.properties["eo:gsd"]
 
-    create_contiguity(
-        p,
-        product_list,
-        res=res,
-        timedelta_data=res_grp["SATELLITE-SOLAR/TIMEDELTA"]
-        if infer_datetime_range
-        else None,
+    timedelta_data = (
+        res_grp["SATELLITE-SOLAR/TIMEDELTA"] if infer_datetime_range else None
     )
+    secho(f"Contiguity (timedelta:{_boolstyle(timedelta_data)}) ", nl=False)
+    create_contiguity(p, product_list, res=res, timedelta_data=timedelta_data)
+    secho("(done)")
 
 
 def create_contiguity(
@@ -397,13 +398,15 @@ def package(
                     infer_datetime_range=level1.platform.startswith("landsat"),
                 )
                 if fmask_image:
-                    secho(f"Writing fmask from {fmask_image}", fg="blue")
+                    secho(f"Writing fmask from {fmask_image} ", nl=False)
                     # TODO: this one has different predictor settings?
                     # fmask_cogtif_args_predictor = 2
                     p.write_measurement("oa:fmask", fmask_image)
+                    secho("(done)")
 
-            secho(f"Writing package", fg="blue")
+            secho(f"\nFinishing package ", nl=False)
             p.done()
+            secho("(done)", fg="green")
 
     return out_path
 
