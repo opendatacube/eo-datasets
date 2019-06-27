@@ -516,15 +516,16 @@ class FileWrite:
             rio_args[key] = self.options[key]
 
         # Write to temp directory first so we can add levels afterwards with gdal.
-        with tempfile.TemporaryDirectory() as tmpdir:
-            without_levels = Path(tmpdir) / out_filename.name
+        with tempfile.TemporaryDirectory(
+            dir=out_filename.parent, prefix=".band_write"
+        ) as tmpdir:
+            unstructured_image = Path(tmpdir) / out_filename.name
             """
             This is a wrapper around rasterio writing tiles to
             enable writing to a temporary location before rearranging
             the overviews within the file by gdal when required
             """
-            out = without_levels
-            with rasterio.open(out, "w", **rio_args) as outds:
+            with rasterio.open(unstructured_image, "w", **rio_args) as outds:
                 if bands == 1:
                     if isinstance(array, h5py.Dataset):
                         for tile in tiles:
@@ -564,7 +565,7 @@ class FileWrite:
                     "-co",
                     "{}={}".format("PREDICTOR", self.PREDICTOR_DEFAULTS[dtype]),
                     *self._gdal_cli_config(),
-                    without_levels,
+                    unstructured_image,
                     out_filename,
                 ],
                 out_filename.parent,
