@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 import rasterio
+from binascii import crc32
 from dateutil.tz import tzutc
 from rasterio import DatasetReader
 from rasterio.enums import Compression
@@ -360,19 +361,19 @@ def test_minimal_dea_package(
     for image in expected_folder.rglob("*.tif"):
         assert cogeo.cog_validate(image), f"Failed COG validation: {image}"
 
-        with rasterio.open(image) as d:
-            d: DatasetReader
-            for i in d.indexes:
-                print(f"{image.stem} {i}: {d.checksum(i)}")
-
     # Check one of the images explicitly.
     [image] = expected_folder.rglob("*_nbar_*_band08.tif")
     with rasterio.open(image) as d:
         d: DatasetReader
         assert d.count == 1, "Expected one band"
-        assert d.checksum(1) == 0  # TODO: Why? Bad test data?
-        assert d.overviews(1) == [8, 15, 31]
+        assert d.nodata == -999.0
 
+        # Verify the pixel values haven't changed.
+        assert crc32(d.read(1).tobytes()) == 3_593_128_880
+        # (Rasterio's checksum is zero on this data for some reason?)
+        assert d.checksum(1) == 0
+
+        assert d.overviews(1) == [8, 15, 31]
         assert d.driver == "GTiff"
         assert d.dtypes == ("float64",)
         assert d.compression == Compression.deflate
