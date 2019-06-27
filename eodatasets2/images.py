@@ -317,13 +317,30 @@ class FileWrite:
     This code is derived from the old eugl packaging code and can probably be improved.
     """
 
+    PREDICTOR_DEFAULTS = {
+        "int8": 2,
+        "uint8": 2,
+        "int16": 2,
+        "uint16": 2,
+        "int32": 2,
+        "uint32": 2,
+        "int64": 2,
+        "uint64": 2,
+        "float32": 3,
+        "float64": 3,
+    }
+
     def __init__(
         self, gdal_options: Dict = None, gdal_config_options: Dict = None
     ) -> None:
         super().__init__()
 
         self.options = gdal_options or {}
-        self.config_options = gdal_config_options or {}
+        self.config_options = {
+            # Suppress aux.xml files.
+            "GDAL_PAM_ENABLED": "NO"
+        }
+        self.config_options.update(gdal_config_options or {})
 
         self.default_levels = LEVELS
 
@@ -439,17 +456,17 @@ class FileWrite:
             dtype = "uint8"
 
         ndims = array.ndim
-        dims = array.shape
+        shape = array.shape
 
         # Get the (z, y, x) dimensions (assuming BSQ interleave)
         if ndims == 2:
-            samples = dims[1]
-            lines = dims[0]
+            samples = shape[1]
+            lines = shape[0]
             bands = 1
         elif ndims == 3:
-            samples = dims[2]
-            lines = dims[1]
-            bands = dims[0]
+            samples = shape[2]
+            lines = shape[1]
+            bands = shape[0]
         else:
             raise IndexError(
                 "Input array is not of 2 or 3 dimensions. Got {dims}".format(dims=ndims)
@@ -461,20 +478,6 @@ class FileWrite:
             transform = geobox.transform
             projection = geobox.crs
 
-        # compression predictor choices
-        predictor = {
-            "int8": 2,
-            "uint8": 2,
-            "int16": 2,
-            "uint16": 2,
-            "int32": 2,
-            "uint32": 2,
-            "int64": 2,
-            "uint64": 2,
-            "float32": 3,
-            "float64": 3,
-        }
-
         rio_args = {
             "count": bands,
             "width": samples,
@@ -483,9 +486,10 @@ class FileWrite:
             "transform": transform,
             "dtype": dtype,
             "driver": "GTiff",
-            "nodata": nodata,
-            "predictor": predictor[dtype],
+            "predictor": self.PREDICTOR_DEFAULTS[dtype],
         }
+        if nodata is not None:
+            rio_args["nodata"] = nodata
 
         if isinstance(array, h5py.Dataset):
             # TODO: if array is 3D get x & y chunks
@@ -506,12 +510,15 @@ class FileWrite:
         for key in self.options:
             rio_args[key] = self.options[key]
 
-        def _rasterio_write_raster(out: Path):
+        # Write to temp directory first so we can add levels afterwards with gdal.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            without_levels = Path(tmpdir) / out_filename.name
             """
             This is a wrapper around rasterio writing tiles to
             enable writing to a temporary location before rearranging
             the overviews within the file by gdal when required
             """
+            out = without_levels
             with rasterio.open(out, "w", **rio_args) as outds:
                 if bands == 1:
                     if isinstance(array, h5py.Dataset):
@@ -543,30 +550,23 @@ class FileWrite:
                 if levels:
                     outds.build_overviews(levels, overview_resampling)
 
-        if levels:
-            # Write to temp directory first so we can add levels afterwards with gdal.
-            with tempfile.TemporaryDirectory() as tmpdir:
-                without_levels = Path(tmpdir) / out_filename.name
-                _rasterio_write_raster(without_levels)
-                # Creates the file at filename with the configured options
-                # Will also move the overviews to the start of the file
-                run_command(
-                    [
-                        "gdal_translate",
-                        "-co",
-                        "{}={}".format("PREDICTOR", predictor[dtype]),
-                        *self._gdal_cli_config(),
-                        without_levels,
-                        out_filename,
-                    ],
-                    out_filename.parent,
-                )
-        else:
-            # write directly to disk without rewriting with gdal
-            _rasterio_write_raster(out_filename)
+            # Creates the file at filename with the configured options
+            # Will also move the overviews to the start of the file
+            run_command(
+                [
+                    "gdal_translate",
+                    "-co",
+                    "{}={}".format("PREDICTOR", self.PREDICTOR_DEFAULTS[dtype]),
+                    *self._gdal_cli_config(),
+                    without_levels,
+                    out_filename,
+                ],
+                out_filename.parent,
+            )
 
     def _gdal_cli_config(self, option_whitelist=None, config_whitelist=None):
         args = []
+
         for key, value in self.options.items():
             if option_whitelist is None or key in option_whitelist:
                 args.extend(["-co", "{}={}".format(key, value)])
@@ -574,49 +574,6 @@ class FileWrite:
             if config_whitelist is None or key in config_whitelist:
                 args.extend(["--config", "{}".format(key), "{}".format(value)])
         return args
-
-    def write_from_file(
-        self, input_image: Path, out_fname: Path, overviews: bool = True
-    ) -> Path:
-        """
-        Compatible interface for writing (cog)tifs from a source file
-        :param input_image:
-            path to the source file
-
-        :param out_fname:
-            destination of the tif
-
-        :param overviews:
-            boolean flag to create overviews
-            default (True)
-
-        returns the out_fname param
-        """
-
-        with tempfile.TemporaryDirectory(
-            dir=out_fname.parent, prefix="cogtif-"
-        ) as tmpdir:
-            # TODO: this modifies the input file? Probably need to make that clear
-            run_command(["gdaladdo", "-clean", input_image], tmpdir)
-            if overviews:
-                run_command(
-                    ["gdaladdo", "-r", "mode", input_image, *[str(l) for l in LEVELS]],
-                    tmpdir,
-                )
-
-            run_command(
-                [
-                    "gdal_translate",
-                    "-of",
-                    "GTiff",
-                    *self._gdal_cli_config(),
-                    input_image,
-                    out_fname,
-                ],
-                input_image.parent,
-            )
-
-        return out_fname
 
     def create_thumbnail(self, rgb: Tuple[Path, Path, Path], out: Path):
         with tempfile.TemporaryDirectory(dir=out.parent, prefix=".thumbgen-") as tmpdir:
@@ -639,6 +596,7 @@ class FileWrite:
             run_command(
                 [
                     "gdalwarp",
+                    *self._gdal_cli_config(),
                     "-t_srs",
                     "EPSG:4326",
                     "-co",
@@ -659,6 +617,7 @@ class FileWrite:
             run_command(
                 [
                     "gdal_translate",
+                    *self._gdal_cli_config(),
                     "-of",
                     "JPEG",
                     "-outsize",

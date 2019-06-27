@@ -37,9 +37,9 @@ def test_minimal_dea_package(
     # useful for catching things like unclosed files.
     if warning_record:
         messages = "\n".join(f"- {w.message} ({w})\n" for w in warning_record)
-        # TODO: Can't enable until aux.xml file cleanup is finished.
-        print(f"Warnings were produced during wagl package:\n {messages}")
-        # raise AssertionError(f"Warnings were produced during wagl package:\n {messages}")
+        raise AssertionError(
+            f"Warnings were produced during wagl package:\n {messages}"
+        )
 
     assert_file_structure(
         out,

@@ -2,6 +2,7 @@ from functools import partial
 from pathlib import Path
 from pprint import pformat, pprint
 from typing import Dict
+
 import rapidjson
 import yaml
 from boltons.iterutils import remap
@@ -40,9 +41,12 @@ def assert_same_as_file(expected_doc: Dict, generated_file: Path, ignore_fields=
     for field in ignore_fields:
         del generated_doc[field]
 
-    pprint(generated_doc)
     doc_diffs = diff(dump_roundtrip(expected_doc), dump_roundtrip(generated_doc))
-    assert doc_diffs == {}, pformat(doc_diffs)
+    try:
+        assert doc_diffs == {}, pformat(doc_diffs)
+    except AssertionError:
+        pprint(generated_doc)
+        raise
 
 
 def lists_to_tuples(doc):
