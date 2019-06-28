@@ -190,6 +190,7 @@ class DatasetAssembler(EoFields):
         self._allow_absolute_paths = allow_absolute_paths
 
         self._user_metadata = dict()
+        self._software_versions: List[Dict] = []
 
         self._lineage: Dict[str, List[uuid.UUID]] = defaultdict(list)
 
@@ -430,8 +431,7 @@ class DatasetAssembler(EoFields):
         :param url: A URL that uniquely identifies it, such as the git repository.
         :param version: the version string, eg. "1.0.0b1"
         """
-        software_versions = self._user_metadata.setdefault("software_versions", [])
-        for v in software_versions:
+        for v in self._software_versions:
             if v["url"] == url:
                 existing_version = v["version"]
                 if existing_version != version:
@@ -443,7 +443,7 @@ class DatasetAssembler(EoFields):
                     v["name"] = name
                 return
 
-        software_versions.append(dict(name=name, url=url, version=version))
+        self._software_versions.append(dict(name=name, url=url, version=version))
 
     def done(self, validate_correctness=True, sort_bands=True):
         """
@@ -500,8 +500,9 @@ class DatasetAssembler(EoFields):
                     raise RuntimeError(
                         f"Internal error: Unhandled type of message level: {m.level}"
                     )
+
         self._write_yaml(
-            self._user_metadata,
+            {**self._user_metadata, "software_versions": self._software_versions},
             self.names.metadata_path(self._work_path, suffix="proc-info.yaml"),
             allow_external_paths=True,
         )
