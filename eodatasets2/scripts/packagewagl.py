@@ -6,6 +6,7 @@ This will convert the HDF5 file (and sibling fmask/gqa files) into
 GeoTIFFS (COGs) with datacube metadata using the DEA naming conventions
 for files.
 """
+import contextlib
 import os
 import re
 import tempfile
@@ -19,7 +20,7 @@ import numpy
 import rasterio
 import yaml
 from boltons.iterutils import get_path, PathAccessError
-from click import secho, echo
+from click import secho
 from dateutil.tz import tzutc
 from rasterio import DatasetReader
 
@@ -76,17 +77,18 @@ def unpack_products(
 
     # TODO pass products through from the scheduler rather than hard code
     for product in product_list:
-        secho(f"\nStarting {product}", fg="blue")
-        for pathname in [p for p in img_paths if "/{}/".format(product.upper()) in p]:
-            secho(f"Path {pathname!r} ", nl=False)
-            dataset = h5group[pathname]
-            p.write_measurement_h5(f"{product}:{_band_name(dataset)}", dataset)
-            secho("(done)")
-        if product in _THUMBNAILS:
-            red, green, blue = _THUMBNAILS[product]
-            secho(f"Thumbnailing {product} ", nl=False)
-            p.write_thumbnail(red, green, blue, kind=product)
-            secho("(done)")
+        with do(f"Starting {product}", heading=True):
+            for pathname in [
+                p for p in img_paths if "/{}/".format(product.upper()) in p
+            ]:
+                with do(f"Path {pathname!r}"):
+                    dataset = h5group[pathname]
+                    p.write_measurement_h5(f"{product}:{_band_name(dataset)}", dataset)
+
+            if product in _THUMBNAILS:
+                red, green, blue = _THUMBNAILS[product]
+                with do(f"Thumbnailing {product}"):
+                    p.write_thumbnail(red, green, blue, kind=product)
 
 
 def _band_name(dataset: h5py.Dataset) -> str:
@@ -116,7 +118,6 @@ def unpack_observation_attributes(
     Unpack the angles + other supplementary datasets produced by wagl.
     Currently only the mode resolution group gets extracted.
     """
-    secho(f"\nStarting OA", fg="blue")
     resolution_groups = sorted(g for g in h5group.keys() if g.startswith("RES-GROUP-"))
     if len(resolution_groups) not in (1, 2):
         raise NotImplementedError(
@@ -135,20 +136,19 @@ def unpack_observation_attributes(
         """
         for dataset_name in dataset_names:
             o = f"{section}/{dataset_name}"
-            secho(f"Path {o!r} ", nl=False)
-            measurement_name = f"{dataset_name.lower()}".replace("-", "_")
-            measurement_name = MEASUREMENT_TRANSLATION.get(
-                measurement_name, measurement_name
-            )
+            with do(f"Path {o!r} "):
+                measurement_name = f"{dataset_name.lower()}".replace("-", "_")
+                measurement_name = MEASUREMENT_TRANSLATION.get(
+                    measurement_name, measurement_name
+                )
 
-            p.write_measurement_h5(
-                f"oa:{measurement_name}",
-                res_grp[o],
-                # We only use the product bands for valid data calc, not supplementary.
-                # According to Josh: Supplementary pixels outside of the product bounds are implicitly invalid.
-                expand_valid_data=False,
-            )
-            secho("(done)")
+                p.write_measurement_h5(
+                    f"oa:{measurement_name}",
+                    res_grp[o],
+                    # We only use the product bands for valid data calc, not supplementary.
+                    # According to Josh: Supplementary pixels outside of the product bounds are implicitly invalid.
+                    expand_valid_data=False,
+                )
 
     _write(
         "SATELLITE-SOLAR",
@@ -172,9 +172,8 @@ def unpack_observation_attributes(
     timedelta_data = (
         res_grp["SATELLITE-SOLAR/TIMEDELTA"] if infer_datetime_range else None
     )
-    secho(f"Contiguity (timedelta:{_boolstyle(timedelta_data)}) ", nl=False)
-    create_contiguity(p, product_list, res=res, timedelta_data=timedelta_data)
-    secho("(done)")
+    with do("Contiguity", timedelta=bool(timedelta_data)):
+        create_contiguity(p, product_list, res=res, timedelta_data=timedelta_data)
 
 
 def create_contiguity(
@@ -272,6 +271,26 @@ def _boolstyle(s):
         return click.style("✗", fg="yellow")
 
 
+@contextlib.contextmanager
+def do(name: str, heading=False, **fields):
+    one_line = not heading
+
+    def val(v: Any):
+        if isinstance(v, bool):
+            return _boolstyle(v)
+        if isinstance(v, Path):
+            return repr(str(v))
+        return repr(v)
+
+    if heading:
+        name = f"\n{name}"
+    fields = " ".join(f"{k}:{val(v)}" for k, v in fields.items())
+    secho(f"{name} {fields} ", nl=one_line, fg="blue" if heading else None)
+    yield
+    if one_line:
+        secho("(done)")
+
+
 def _extract_reference_code(p: DatasetAssembler, granule: str) -> Optional[str]:
     matches = None
     if p.platform.startswith("landsat"):
@@ -342,71 +361,72 @@ def package(
         if not gqa_doc.exists():
             raise ValueError(f"GQA not found {gqa_doc}")
 
-    echo(f"Packaging {granule_name}. (products: {', '.join(products)})")
-    echo(
-        f"fmask:{_boolstyle(fmask_image)}{_boolstyle(fmask_doc)} "
-        f"gqa:{_boolstyle(gqa_doc)} with_oa:{_boolstyle(include_oa)}"
-    )
-
-    with h5py.File(wagl_hdf5, "r") as fid:
-        if granule_name not in fid:
-            raise ValueError(
-                f"Granule name {granule_name!r} not found in HDF5 file. "
-                f"Options: {', '.join(fid.keys())}"
-            )
-
-        out_path = out_directory / _l1_to_ard(granule_name)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        with DatasetAssembler(out_path, naming_conventions="dea") as p:
-            p.add_source_dataset(level1, auto_inherit_properties=True)
-
-            # It's a GA ARD product.
-            p.producer = "ga.gov.au"
-            p.product_family = "ard"
-
-            # GA's collection 3 processes USGS Collection 1
-            if p.properties["landsat:collection_number"] == 1:
-                org_collection_number = 3
-            else:
-                raise NotImplementedError(f"Unsupported collection number.")
-            # TODO: wagl's algorithm version should determine our dataset version number, right?
-            p.dataset_version = f"{org_collection_number}.0.0"
-            p.reference_code = _extract_reference_code(p, granule_name)
-
-            p.properties["dea:processing_level"] = "level-2"
-
-            # unpack the standardised products produced by wagl
-            granule_group = fid[granule_name]
-
-            _read_wagl_metadata(p, granule_group)
-
-            if gqa_doc:
-                with gqa_doc.open() as fl:
-                    _read_gqa_doc(p, yaml.safe_load(fl))
-
-            if fmask_doc:
-                with fmask_doc.open() as fl:
-                    _read_fmask_doc(p, yaml.safe_load(fl))
-
-            unpack_products(p, products, granule_group)
-
-            if include_oa:
-                unpack_observation_attributes(
-                    p,
-                    products,
-                    granule_group,
-                    infer_datetime_range=level1.platform.startswith("landsat"),
+    with do(
+        f"Packaging {granule_name}. (products: {', '.join(products)})",
+        heading=True,
+        fmask=bool(fmask_image),
+        fmask_doc=bool(fmask_doc),
+        gqa=bool(gqa_doc),
+        oa=include_oa,
+    ):
+        with h5py.File(wagl_hdf5, "r") as fid:
+            if granule_name not in fid:
+                raise ValueError(
+                    f"Granule name {granule_name!r} not found in HDF5 file. "
+                    f"Options: {', '.join(fid.keys())}"
                 )
-                if fmask_image:
-                    secho(f"Writing fmask from {fmask_image} ", nl=False)
-                    # TODO: this one has different predictor settings?
-                    # fmask_cogtif_args_predictor = 2
-                    p.write_measurement("oa:fmask", fmask_image)
-                    secho("(done)")
 
-            secho(f"\nFinishing package ", nl=False)
-            p.done()
-            secho("(done)", fg="green")
+            out_path = out_directory / _l1_to_ard(granule_name)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            with DatasetAssembler(out_path, naming_conventions="dea") as p:
+                p.add_source_dataset(level1, auto_inherit_properties=True)
+
+                # It's a GA ARD product.
+                p.producer = "ga.gov.au"
+                p.product_family = "ard"
+
+                # GA's collection 3 processes USGS Collection 1
+                if p.properties["landsat:collection_number"] == 1:
+                    org_collection_number = 3
+                else:
+                    raise NotImplementedError(f"Unsupported collection number.")
+                # TODO: wagl's algorithm version should determine our dataset version number, right?
+                p.dataset_version = f"{org_collection_number}.0.0"
+                p.reference_code = _extract_reference_code(p, granule_name)
+
+                p.properties["dea:processing_level"] = "level-2"
+
+                # unpack the standardised products produced by wagl
+                granule_group = fid[granule_name]
+
+                _read_wagl_metadata(p, granule_group)
+
+                if gqa_doc:
+                    with gqa_doc.open() as fl:
+                        _read_gqa_doc(p, yaml.safe_load(fl))
+
+                if fmask_doc:
+                    with fmask_doc.open() as fl:
+                        _read_fmask_doc(p, yaml.safe_load(fl))
+
+                unpack_products(p, products, granule_group)
+
+                if include_oa:
+                    with do(f"Starting OA", heading=True):
+                        unpack_observation_attributes(
+                            p,
+                            products,
+                            granule_group,
+                            infer_datetime_range=level1.platform.startswith("landsat"),
+                        )
+                    if fmask_image:
+                        with do(f"Writing fmask from {fmask_image} "):
+                            # TODO: this one has different predictor settings?
+                            # fmask_cogtif_args_predictor = 2
+                            p.write_measurement("oa:fmask", fmask_image)
+
+                with do("Finishing package"):
+                    p.done()
 
     return out_path
 
