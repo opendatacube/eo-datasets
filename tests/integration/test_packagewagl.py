@@ -336,6 +336,16 @@ def test_minimal_dea_package(
             },
             "software_versions": [
                 {
+                    "name": "modtran",
+                    "url": "http://www.ontar.com/software/productdetails.aspx?item=modtran",
+                    "version": "6.0.1",
+                },
+                {
+                    "name": "wagl",
+                    "url": "https://github.com/GeoscienceAustralia/wagl.git",
+                    "version": "5.3.1+80.g8714c32.dirty",
+                },
+                {
                     "name": "eugl",
                     "url": "https://github.com/OpenDataCubePipelines/eugl.git",
                     "version": "0.1.0+35.g0203248",
