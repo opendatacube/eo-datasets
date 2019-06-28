@@ -80,7 +80,7 @@ def test_minimal_dea_package(
                 "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_satellite-view.tif": "",
                 "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_solar-azimuth.tif": "",
                 "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_solar-zenith.tif": "",
-                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_timedelta.tif": "",
+                "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_time-delta.tif": "",
             }
         },
     )
@@ -307,8 +307,8 @@ def test_minimal_dea_package(
                 "oa_solar_zenith": {
                     "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_solar-zenith.tif"
                 },
-                "oa_timedelta": {
-                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_timedelta.tif"
+                "oa_time_delta": {
+                    "path": "ga_ls8c_oa_3-0-0_089080_2016-03-02_final_time-delta.tif"
                 },
             },
             "lineage": {"level1": ["944b3a38-0c42-5a6d-b4e8-4c0fdb67fbfc"]},

@@ -41,7 +41,11 @@ _THUMBNAILS = {
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
 # From the internal h5 name (after normalisation) to the package name.
-MEASUREMENT_TRANSLATION = {"exiting": "exiting_angle", "incident": "incident_angle"}
+MEASUREMENT_TRANSLATION = {
+    "exiting": "exiting_angle",
+    "incident": "incident_angle",
+    "timedelta": "time_delta",
+}
 
 FILENAME_TIF_BAND = re.compile(
     r"(?P<prefix>(?:.*_)?)(?P<band_name>B[0-9][A0-9]|B[0-9]*|B[0-9a-zA-z]*)"
