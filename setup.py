@@ -5,7 +5,6 @@ from setuptools import setup, find_packages
 
 import versioneer
 
-
 tests_require = [
     "deepdiff",
     "flake8",
@@ -55,5 +54,6 @@ setup(
         eo2-validate=eodatasets2.prepare.validate:run
         eo2-prepare=eodatasets2.scripts.genprepare:run
         eo2-recompress-tar=eodatasets2.scripts.recompress:main
+        eo2-package-wagl=eodatasets2.scripts.packagewagl:run
     """,
 )
