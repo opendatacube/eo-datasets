@@ -26,7 +26,7 @@ from rasterio import DatasetReader
 from eodatasets2 import images, serialise
 from eodatasets2.assemble import DatasetAssembler
 from eodatasets2.images import GridSpec
-from eodatasets2.serialise import load_yaml
+from eodatasets2.serialise import loads_yaml
 from eodatasets2.ui import PathPath
 from eodatasets2.utils import default_utc
 
@@ -407,11 +407,11 @@ def package(
 
                 if gqa_doc:
                     with gqa_doc.open() as fl:
-                        _read_gqa_doc(p, load_yaml(fl))
+                        _read_gqa_doc(p, loads_yaml(fl))
 
                 if fmask_doc:
                     with fmask_doc.open() as fl:
-                        _read_fmask_doc(p, load_yaml(fl))
+                        _read_fmask_doc(p, loads_yaml(fl))
 
                 unpack_products(p, products, granule_group)
 
@@ -501,7 +501,7 @@ def _read_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group):
     except ValueError:
         raise ValueError("No nbar metadata found in granule")
 
-    wagl_doc = load_yaml(granule_group[wagl_path][()])
+    wagl_doc = loads_yaml(granule_group[wagl_path][()])
 
     try:
         p.processed = get_path(wagl_doc, ("system_information", "time_processed"))
@@ -510,7 +510,7 @@ def _read_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group):
 
     for i, path in enumerate(ancil_paths, start=2):
         wagl_doc.setdefault(f"wagl_{i}", {}).update(
-            load_yaml(granule_group[path][()])["ancillary"]
+            loads_yaml(granule_group[path][()])["ancillary"]
         )
 
     p.properties["dea:dataset_maturity"] = _determine_maturity(

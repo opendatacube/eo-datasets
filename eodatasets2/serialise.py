@@ -111,6 +111,10 @@ def load_yaml(p: Path) -> Dict:
         return yaml.load(f)
 
 
+def loads_yaml(s: str) -> Dict:
+    return _init_yaml().load(s)
+
+
 def from_path(path: Path) -> DatasetDoc:
     if path.suffix.lower() not in (".yaml", ".yml"):
         raise ValueError(f"Unexpected file type {path.suffix}. Expected yaml")
