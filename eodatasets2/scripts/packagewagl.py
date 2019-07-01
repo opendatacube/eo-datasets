@@ -125,6 +125,12 @@ def unpack_observation_attributes(
     Currently only the mode resolution group gets extracted.
     """
     resolution_groups = sorted(g for g in h5group.keys() if g.startswith("RES-GROUP-"))
+    # Use the highest resolution as the ground sample distance.
+    del p.properties["eo:gsd"]
+    p.properties["eo:gsd"] = min(
+        min(h5group[grp].attrs["resolution"]) for grp in resolution_groups
+    )
+
     if len(resolution_groups) not in (1, 2):
         raise NotImplementedError(
             f"Unexpected set of res-groups. "

@@ -171,7 +171,7 @@ def test_minimal_dea_package(
                 "dtr:end_datetime": datetime(2016, 6, 28, 0, 2, 43, 48520),
                 "dtr:start_datetime": datetime(2016, 6, 28, 0, 2, 14, 48434),
                 "eo:cloud_cover": 65.74,
-                "eo:gsd": 30.0,
+                "eo:gsd": 1500.096_774_193_548_3,
                 "eo:instrument": "OLI_TIRS",
                 "eo:platform": "landsat-8",
                 "eo:sun_azimuth": 33.655_125_34,

@@ -214,6 +214,9 @@ class StacPropertyView(collections.abc.Mapping):
     def __len__(self):
         return len(self._props)
 
+    def __delitem__(self, name: str) -> None:
+        del self._props[name]
+
     def __setitem__(self, key, value):
         if key in self._props and value != self[key]:
             warnings.warn(
