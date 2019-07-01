@@ -1,13 +1,12 @@
-from pathlib import Path
-
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, Callable
 
 import pytest
 
 from eodatasets2 import serialise
-from eodatasets2.prepare.ls_usgs_l1_prepare import normalise_nci_symlinks
 from eodatasets2.model import DatasetDoc
+from eodatasets2.prepare.ls_usgs_l1_prepare import normalise_nci_symlinks
 
 L71GT_TARBALL_PATH: Path = Path(
     __file__
@@ -98,7 +97,7 @@ def expected_l1_ls8_folder(
             "odc:product_family": "level1",
             "odc:reference_code": "090084",
             "eo:cloud_cover": 93.22,
-            "eo:gsd": 30.0,
+            "eo:gsd": 15.0,
             "eo:instrument": "OLI_TIRS",
             "eo:platform": "landsat-8",
             "eo:sun_azimuth": 74.0074438,
@@ -246,7 +245,7 @@ def l1_ls7_tarball_md_expected(
             "odc:product_family": "level1",
             "odc:reference_code": "104078",
             "eo:cloud_cover": 0.0,
-            "eo:gsd": 30.0,
+            "eo:gsd": 15.0,
             "eo:instrument": "ETM",
             "eo:platform": "landsat-7",
             "eo:sun_azimuth": 40.56298198,

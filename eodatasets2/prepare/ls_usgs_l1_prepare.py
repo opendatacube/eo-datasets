@@ -324,6 +324,11 @@ def _prepare(
         )
         grids = None
 
+    ground_sample_distance = min(
+        value
+        for name, value in mtl_doc["projection_parameters"].items()
+        if name.startswith("grid_cell_size_")
+    )
     properties = {
         "datetime": ciso8601.parse_datetime(
             "{}T{}".format(
@@ -338,7 +343,7 @@ def _prepare(
         "odc:product_family": "level1",
         "eo:platform": platform_id.lower().replace("_", "-"),
         "eo:instrument": sensor_id,
-        "eo:gsd": mtl_doc["projection_parameters"]["grid_cell_size_reflective"],
+        "eo:gsd": ground_sample_distance,
         "eo:cloud_cover": mtl_doc["image_attributes"]["cloud_cover"],
         "eo:sun_azimuth": mtl_doc["image_attributes"]["sun_azimuth"],
         "eo:sun_elevation": mtl_doc["image_attributes"]["sun_elevation"],
