@@ -79,7 +79,6 @@ def unpack_products(
     # listing of all datasets of IMAGE CLASS type
     img_paths = find_h5_paths(h5group, "IMAGE")
 
-    # TODO pass products through from the scheduler rather than hard code
     for product in product_list:
         with do(f"Starting {product}", heading=True):
             for pathname in [
@@ -96,6 +95,9 @@ def unpack_products(
 
 
 def _band_name(dataset: h5py.Dataset) -> str:
+    """
+    Devise a band name for the given dataset (using its attributes)
+    """
     # What we have to work with:
     # >>> print(repr((dataset.attrs["band_id"], dataset.attrs["band_name"], dataset.attrs["alias"])))
     # ('1', 'BAND-1', 'Blue')
@@ -170,20 +172,22 @@ def unpack_observation_attributes(
     _write("RELATIVE-SLOPE", ["RELATIVE-SLOPE"])
     _write("SHADOW-MASKS", ["COMBINED-TERRAIN-SHADOW"])
 
-    # TODO: Actual res from res_group
-    res = 30  # level1.properties["eo:gsd"]
-
     timedelta_data = (
         res_grp["SATELLITE-SOLAR/TIMEDELTA"] if infer_datetime_range else None
     )
     with do("Contiguity", timedelta=bool(timedelta_data)):
-        create_contiguity(p, product_list, res=res, timedelta_data=timedelta_data)
+        create_contiguity(
+            p,
+            product_list,
+            resolution_yx=res_grp.attrs["resolution"],
+            timedelta_data=timedelta_data,
+        )
 
 
 def create_contiguity(
     p: DatasetAssembler,
     product_list: Iterable[str],
-    res: int,
+    resolution_yx: Tuple[float, float],
     timedelta_product: str = "nbar",
     timedelta_data: numpy.ndarray = None,
 ):
@@ -193,13 +197,6 @@ def create_contiguity(
     Write a contiguity mask file based on the intersection of valid data pixels across all
     bands from the input files.
     """
-
-    def _get_pixel_size(p: Path):
-        with rasterio.open(p) as ds:
-            gt = ds.transform
-            size_x = abs(gt[0])
-            size_y = abs(gt[4])
-            return size_y, size_x
 
     with tempfile.TemporaryDirectory(prefix="contiguity-") as tmpdir:
         for product in product_list:
@@ -213,9 +210,7 @@ def create_contiguity(
                 secho(f"No images found for requested product {product}", fg="red")
                 continue
 
-            sizes = set(_get_pixel_size(i) for i in product_image_files)
-            # TODO: how to choose res group size?
-            (res_y, res_x) = max(sizes)
+            (res_y, res_x) = resolution_yx
 
             # Build a temp vrt
             # S2 bands are different resolutions. Make them appear the same when taking contiguity.
