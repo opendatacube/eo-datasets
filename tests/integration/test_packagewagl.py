@@ -16,9 +16,12 @@ from eodatasets2.scripts.packagewagl import package
 from tests import assert_file_structure
 from tests.integration.common import assert_same_as_file
 
+# This test dataset comes from running `tests/integration/h5downsample.py` on a real
+# wagl output.
 WAGL_INPUT_PATH: Path = Path(
     __file__
 ).parent / "data/wagl-input/LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
+# The matching Level1 metadata (produced by ls_usgs_l1_prepare.py)
 L1_METADATA_PATH: Path = Path(
     __file__
 ).parent / "data/wagl-input/LC08_L1TP_092084_20160628_20170323_01_T1.yaml"

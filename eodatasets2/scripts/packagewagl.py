@@ -349,7 +349,7 @@ def package(
         raise ValueError(f"Input hdf5 doesn't exist {wagl_hdf5}")
 
     if not granule_name:
-        granule_name = _find_a_granule_name(wagl_hdf5)
+        granule_name = find_a_granule_name(wagl_hdf5)
 
     if not fmask_image:
         fmask_image = wagl_hdf5.with_name(f"{granule_name}.fmask.img")
@@ -475,13 +475,13 @@ def _take_software_versions(p: DatasetAssembler, doc: Dict):
         p.note_software_version(name, o.get("repo_url"), o.get("version"))
 
 
-def _find_a_granule_name(wagl_hdf5: Path) -> str:
+def find_a_granule_name(wagl_hdf5: Path) -> str:
     """
     Try to extract granule name from wagl filename,
 
-    >>> _find_a_granule_name(Path('LT50910841993188ASA00.wagl.h5'))
+    >>> find_a_granule_name(Path('LT50910841993188ASA00.wagl.h5'))
     'LT50910841993188ASA00'
-    >>> _find_a_granule_name(Path('my-test-granule.h5'))
+    >>> find_a_granule_name(Path('my-test-granule.h5'))
     Traceback (most recent call last):
     ...
     ValueError: No granule specified, and cannot find it on input filename 'my-test-granule'.
