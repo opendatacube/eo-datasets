@@ -51,7 +51,7 @@ setup(
     extras_require={"test": tests_require},
     entry_points="""
         [console_scripts]
-        eo2-validate=eodatasets2.prepare.validate:run
+        eo2-validate=eodatasets2.validate:run
         eo2-prepare=eodatasets2.scripts.genprepare:run
         eo2-recompress-tar=eodatasets2.scripts.recompress:main
         eo2-package-wagl=eodatasets2.scripts.packagewagl:run
