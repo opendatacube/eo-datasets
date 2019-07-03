@@ -137,9 +137,10 @@ def unpack_observation_attributes(
             f"Expected either two (with pan) or one (without pan), "
             f"got {resolution_groups!r}"
         )
-    # Res groups are ordered in descending resolution, so res-group-0 is the panchromatic band.
-    # We only package OA information for the regular bands, not pan.
-    # So we pick the last res group.
+    # Res groups are ordered in descending resolution, so res-group-0 is the highest resolution.
+    # (ie. res-group-0 in landsat 7/8 is Panchromatic)
+    # We only care about packaging OA data for the "common" bands: not panchromatic.
+    # So we always pick the lowest resolution: the last (or only) group.
     res_grp = h5group[resolution_groups[-1]]
 
     def _write(section: str, dataset_names: Sequence[str]):
