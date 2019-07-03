@@ -370,19 +370,18 @@ class FileWrite:
 
         y_size, x_size = blocksize_yx or (512, 512)
         # Do not set block sizes for small imagery
-        if shape[0] < blocksize_yx[0] and shape[1] < blocksize_yx[1]:
-            y_size, x_size = None, None
-
-        if overviews:
-            options["copy_src_overviews"] = "yes"
-
-        if y_size and x_size:
+        if shape[0] < y_size and shape[1] < x_size:
+            pass
+        else:
             options["blockxsize"] = x_size
             options["blockysize"] = y_size
             options["tiled"] = "yes"
 
             if overviews:
                 config_options["GDAL_TIFF_OVR_BLOCKSIZE"] = x_size
+
+        if overviews:
+            options["copy_src_overviews"] = "yes"
 
         return FileWrite(options, config_options)
 
