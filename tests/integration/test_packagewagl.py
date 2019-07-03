@@ -152,20 +152,6 @@ def test_minimal_dea_package(
                         1.0,
                     ],
                 },
-                "oa:fmask": {
-                    "shape": [7811, 7751],
-                    "transform": [
-                        30.0,
-                        0.0,
-                        360_585.0,
-                        0.0,
-                        -30.0,
-                        -3_713_085.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                    ],
-                },
             },
             "properties": {
                 "datetime": datetime(2016, 6, 28, 0, 2, 28, 624_635),
@@ -210,7 +196,7 @@ def test_minimal_dea_package(
                 "landsat:wrs_path": 92,
                 "landsat:wrs_row": 84,
                 "odc:dataset_version": "3.0.0",
-                "odc:processing_datetime": datetime(2019, 6, 27, 8, 24, 59, 771_445),
+                "odc:processing_datetime": datetime(2019, 7, 2, 7, 24, 31, 841_880),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ard",
                 "odc:reference_code": "092084",
@@ -279,8 +265,7 @@ def test_minimal_dea_package(
                     "path": "ga_ls8c_oa_3-0-0_092084_2016-06-28_final_exiting-angle.tif"
                 },
                 "oa_fmask": {
-                    "grid": "oa:fmask",
-                    "path": "ga_ls8c_oa_3-0-0_092084_2016-06-28_final_fmask.tif",
+                    "path": "ga_ls8c_oa_3-0-0_092084_2016-06-28_final_fmask.tif"
                 },
                 "oa_incident_angle": {
                     "path": "ga_ls8c_oa_3-0-0_092084_2016-06-28_final_incident-angle.tif"
@@ -345,7 +330,7 @@ def test_minimal_dea_package(
                 {
                     "name": "wagl",
                     "url": "https://github.com/GeoscienceAustralia/wagl.git",
-                    "version": "5.3.1+101.g7bddddb",
+                    "version": "5.3.1+104.g6708059",
                 },
                 {
                     "name": "eugl",
@@ -381,7 +366,7 @@ def test_minimal_dea_package(
         assert d.nodata == -999.0
 
         # Verify the pixel values haven't changed.
-        assert crc32(d.read(1).tobytes()) == 757_131_237
+        assert crc32(d.read(1).tobytes()) == 75_138_613
         # (Rasterio's checksum is zero on this data for some reason?)
         assert d.checksum(1) == 0
 

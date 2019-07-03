@@ -41,11 +41,7 @@ _THUMBNAILS = {
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
 # From the internal h5 name (after normalisation) to the package name.
-MEASUREMENT_TRANSLATION = {
-    "exiting": "exiting_angle",
-    "incident": "incident_angle",
-    "timedelta": "time_delta",
-}
+MEASUREMENT_TRANSLATION = {"exiting": "exiting_angle", "incident": "incident_angle"}
 
 FILENAME_TIF_BAND = re.compile(
     r"(?P<prefix>(?:.*_)?)(?P<band_name>B[0-9][A0-9]|B[0-9]*|B[0-9a-zA-z]*)"
@@ -170,7 +166,7 @@ def unpack_observation_attributes(
             "SOLAR-ZENITH",
             "SOLAR-AZIMUTH",
             "RELATIVE-AZIMUTH",
-            "TIMEDELTA",
+            "TIME-DELTA",
         ],
     )
     _write("INCIDENT-ANGLES", ["INCIDENT", "AZIMUTHAL-INCIDENT"])
@@ -179,7 +175,7 @@ def unpack_observation_attributes(
     _write("SHADOW-MASKS", ["COMBINED-TERRAIN-SHADOW"])
 
     timedelta_data = (
-        res_grp["SATELLITE-SOLAR/TIMEDELTA"] if infer_datetime_range else None
+        res_grp["SATELLITE-SOLAR/TIME-DELTA"] if infer_datetime_range else None
     )
     with do("Contiguity", timedelta=bool(timedelta_data)):
         create_contiguity(
