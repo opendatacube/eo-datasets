@@ -350,10 +350,11 @@ class FileWrite:
     @classmethod
     def from_existing(
         cls,
-        shape: Tuple[float, float],
+        shape: Tuple[int, int],
         overviews: bool = True,
-        blockxsize: int = None,
-        blockysize: int = None,
+        blocksize_yx: Optional[Tuple[int, int]] = None,
+        compress="deflate",
+        zlevel=4,
     ) -> "FileWrite":
         """ Returns write_img options according to the source imagery provided
         :param overviews:
@@ -363,41 +364,25 @@ class FileWrite:
         :param blockysize:
             (int) override the derived base blockysize in cogtif conversion
 
-        returns a dict {'options': {}, 'config_options': {}}
         """
-        # TODO Standardizing the Sentinel-2's overview tile size with external inputs
-        options = {"compress": "deflate", "zlevel": 4}
+        options = {"compress": compress, "zlevel": zlevel}
         config_options = {}
 
-        # Fallback to 512 value
-        blockysize = blockysize or 512
-        blockxsize = blockxsize or 512
-
-        if shape[0] <= 512 and shape[1] <= 512:
-            # Do not set block sizes for small imagery
-            pass
-        elif shape[1] <= 512:
-            options["blockysize"] = min(blockysize, 512)
-            # Set blockxsize to power of 2 rounded down
-            options["blockxsize"] = int(2 ** (blockxsize.bit_length() - 1))
-            # gdal does not like a x blocksize the same as the whole dataset
-            if options["blockxsize"] == blockxsize:
-                options["blockxsize"] = int(options["blockxsize"] / 2)
-        else:
-            if shape[1] == blockxsize:
-                # dataset does not have an internal tiling layout
-                # set the layout to a 512 block size
-                blockxsize = 512
-                blockysize = 512
-                if overviews:
-                    config_options["GDAL_TIFF_OVR_BLOCKSIZE"] = blockxsize
-
-            options["blockxsize"] = blockxsize
-            options["blockysize"] = blockysize
-            options["tiled"] = "yes"
+        y_size, x_size = blocksize_yx or (512, 512)
+        # Do not set block sizes for small imagery
+        if shape[0] < blocksize_yx[0] and shape[1] < blocksize_yx[1]:
+            y_size, x_size = None, None
 
         if overviews:
             options["copy_src_overviews"] = "yes"
+
+        if y_size and x_size:
+            options["blockxsize"] = x_size
+            options["blockysize"] = y_size
+            options["tiled"] = "yes"
+
+            if overviews:
+                config_options["GDAL_TIFF_OVR_BLOCKSIZE"] = x_size
 
         return FileWrite(options, config_options)
 
