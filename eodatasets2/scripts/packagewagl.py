@@ -283,7 +283,7 @@ def _boolstyle(s):
 
 @contextlib.contextmanager
 def do(name: str, heading=False, **fields):
-    one_line = not heading
+    single_line = not heading
 
     def val(v: Any):
         if isinstance(v, bool):
@@ -295,9 +295,9 @@ def do(name: str, heading=False, **fields):
     if heading:
         name = f"\n{name}"
     fields = " ".join(f"{k}:{val(v)}" for k, v in fields.items())
-    secho(f"{name} {fields} ", nl=one_line, fg="blue" if heading else None)
+    secho(f"{name} {fields} ", nl=not single_line, fg="blue" if heading else None)
     yield
-    if one_line:
+    if single_line:
         secho("(done)")
 
 
