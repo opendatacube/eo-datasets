@@ -113,7 +113,7 @@ def test_minimal_dea_package(
                 "dea:dataset_maturity": "final",
                 "dea:processing_level": "level-2",
                 "eo:cloud_cover": 93.22,
-                "eo:gsd": 30.0,
+                "eo:gsd": 15.0,
                 "eo:instrument": "OLI_TIRS",
                 "eo:platform": "landsat-8",
                 "eo:sun_azimuth": 74.007_443_8,
