@@ -255,9 +255,6 @@ def _to_doc(d: DatasetDoc, with_formatting: bool):
         _add_space_before(doc, "id", "crs", "measurements", "properties", "lineage")
 
         p: CommentedMap = doc["properties"]
-        p.yaml_add_eol_comment(
-            "# When the data was processed", "odc:processing_datetime"
-        )
         p.yaml_add_eol_comment("# Ground sample distance (m)", "eo:gsd")
 
     return doc
