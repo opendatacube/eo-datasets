@@ -308,7 +308,13 @@ class DatasetAssembler(EoFields):
                         f"{existing_val!r} != {new_val!r}"
                     )
 
-    def write_measurement_h5(self, name: str, g: h5py.Dataset, expand_valid_data=True):
+    def write_measurement_h5(
+        self,
+        name: str,
+        g: h5py.Dataset,
+        expand_valid_data=True,
+        overviews=images.DEFAULT_OVERVIEWS,
+    ):
         """
         Write a measurement by copying it from a hdf5 dataset.
         """
@@ -328,6 +334,7 @@ class DatasetAssembler(EoFields):
             geobox=grid,
             nodata=nodata,
             overview_resampling=Resampling.average,
+            overviews=overviews,
         )
         self._measurements.record_image(
             name, grid, out_path, data, nodata, expand_valid_data=expand_valid_data
@@ -377,6 +384,7 @@ class DatasetAssembler(EoFields):
         grid_spec: GridSpec,
         nodata=None,
         overview_resampling=Resampling.nearest,
+        overviews=images.DEFAULT_OVERVIEWS,
     ):
         """
         Write a measurement from a numpy array and grid spec.
@@ -401,6 +409,7 @@ class DatasetAssembler(EoFields):
             geobox=grid_spec,
             nodata=nodata,
             overview_resampling=overview_resampling,
+            overviews=overviews,
         )
         self._measurements.record_image(
             name, grid_spec, out_path, img=array, nodata=nodata

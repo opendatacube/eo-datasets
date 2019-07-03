@@ -160,6 +160,7 @@ def unpack_observation_attributes(
                     # We only use the product bands for valid data calc, not supplementary.
                     # According to Josh: Supplementary pixels outside of the product bounds are implicitly invalid.
                     expand_valid_data=False,
+                    overviews=None,
                 )
 
     _write(
@@ -246,7 +247,10 @@ def create_contiguity(
                     contiguity &= ds.read(band) > 0
 
                 p.write_measurement_numpy(
-                    f"oa:{product.lower()}_contiguity", contiguity, geobox
+                    f"oa:{product.lower()}_contiguity",
+                    contiguity,
+                    geobox,
+                    overviews=None,
                 )
 
             # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product

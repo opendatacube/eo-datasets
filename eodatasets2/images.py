@@ -25,7 +25,7 @@ from skimage.exposure import rescale_intensity
 
 from eodatasets2.model import GridDoc, MeasurementDoc, DatasetDoc
 
-LEVELS = [8, 16, 32]
+DEFAULT_OVERVIEWS = (8, 16, 32)
 
 
 def run_command(
@@ -347,8 +347,6 @@ class FileWrite:
         }
         self.config_options.update(gdal_config_options or {})
 
-        self.default_levels = LEVELS
-
     @classmethod
     def from_existing(
         cls,
@@ -410,6 +408,7 @@ class FileWrite:
         geobox: GridSpec = None,
         nodata: int = None,
         overview_resampling=Resampling.nearest,
+        overviews: Optional[Tuple[int, ...]] = DEFAULT_OVERVIEWS,
     ) -> None:
         """
         Writes a 2D/3D image to disk using rasterio.
@@ -442,8 +441,6 @@ class FileWrite:
             raise RuntimeError(
                 f"measurement output file already exists? {out_filename}"
             )
-
-        levels = self.default_levels
 
         # TODO: Old packager never passed in tags. Perhaps we want some?
         tags = {}
@@ -553,23 +550,25 @@ class FileWrite:
                     outds.update_tags(**tags)
 
                 # overviews/pyramids to disk
-                if levels:
-                    outds.build_overviews(levels, overview_resampling)
+                if overviews:
+                    outds.build_overviews(overviews, overview_resampling)
 
-            # Creates the file at filename with the configured options
-            # Will also move the overviews to the start of the file
-            run_command(
-                [
-                    "gdal_translate",
-                    "-q",
-                    "-co",
-                    "{}={}".format("PREDICTOR", self.PREDICTOR_DEFAULTS[dtype]),
-                    *self._gdal_cli_config(),
-                    unstructured_image,
-                    out_filename,
-                ],
-                out_filename.parent,
-            )
+            if overviews:
+                # Move the overviews to the start of the file, as required to be COG-compliant.
+                run_command(
+                    [
+                        "gdal_translate",
+                        "-q",
+                        "-co",
+                        "{}={}".format("PREDICTOR", self.PREDICTOR_DEFAULTS[dtype]),
+                        *self._gdal_cli_config(),
+                        unstructured_image,
+                        out_filename,
+                    ],
+                    out_filename.parent,
+                )
+            else:
+                unstructured_image.rename(out_filename)
 
     def _gdal_cli_config(self, option_whitelist=None, config_whitelist=None):
         args = []

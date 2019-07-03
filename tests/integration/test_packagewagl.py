@@ -379,6 +379,23 @@ def test_minimal_dea_package(
         assert d.height == 156
         assert d.width == 155
 
+    # OA data has no overviews.
+
+    [*oa_images] = expected_folder.rglob("*_oa_*.tif")
+    assert oa_images
+    for image in oa_images:
+        with rasterio.open(image) as d:
+            d: DatasetReader
+            assert d.count == 1, "Expected one band"
+
+            # fmask is the only OA that should have overviews according to spec (and Josh).
+            if "fmask" in image.name:
+                assert d.overviews(1) == [8, 15, 26]
+            else:
+                assert (
+                    d.overviews(1) == []
+                ), f"Expected no overviews in OA images (Found in {image.name!r})"
+
 
 def test_maturity_calculation():
     # Simplified. Only a few ancillary parts that matter to us.
