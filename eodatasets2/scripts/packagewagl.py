@@ -34,8 +34,12 @@ _POSSIBLE_PRODUCTS = ("nbar", "nbart", "lambertian", "sbt")
 _DEFAULT_PRODUCTS = ("nbar", "nbart")
 
 _THUMBNAILS = {
-    "nbar": ("nbar:band07", "nbar:band04", "nbar:band01"),
-    "nbart": ("nbart:band07", "nbart:band04", "nbart:band01"),
+    ("landsat-5", "nbar"): ("nbar:band03", "nbar:band02", "nbar:band01"),
+    ("landsat-5", "nbart"): ("nbart:band03", "nbart:band02", "nbart:band01"),
+    ("landsat-7", "nbar"): ("nbar:band03", "nbar:band02", "nbar:band01"),
+    ("landsat-7", "nbart"): ("nbart:band03", "nbart:band02", "nbart:band01"),
+    ("landsat-8", "nbar"): ("nbar:band04", "nbar:band03", "nbar:band02"),
+    ("landsat-8", "nbart"): ("nbart:band04", "nbart:band03", "nbart:band02"),
 }
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
@@ -84,8 +88,8 @@ def unpack_products(
                     dataset = h5group[pathname]
                     p.write_measurement_h5(f"{product}:{_band_name(dataset)}", dataset)
 
-            if product in _THUMBNAILS:
-                red, green, blue = _THUMBNAILS[product]
+            if (p.platform, product) in _THUMBNAILS:
+                red, green, blue = _THUMBNAILS[(p.platform, product)]
                 with do(f"Thumbnailing {product}"):
                     p.write_thumbnail(red, green, blue, kind=product)
 
