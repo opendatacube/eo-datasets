@@ -38,11 +38,8 @@ def test_minimal_dea_package(
             map(str, (WAGL_INPUT_PATH, "--level1", L1_METADATA_PATH, "--output", out)),
             catch_exceptions=False,
         )
-        [output_package] = [
-            l[len("Created folder ") :]
-            for l in res.output.splitlines()
-            if l.startswith("Created folder ")
-        ]
+        # The last line of output ends with the dataset path.
+        words, output_package = res.output.splitlines()[-1].rsplit(" ", 1)
 
     # No warnings should have been logged during package.
     # We could tighten this to specific warnings if it proves too noisy, but it's
