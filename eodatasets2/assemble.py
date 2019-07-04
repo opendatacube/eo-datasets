@@ -161,7 +161,7 @@ class DatasetAssembler(EoFields):
         self,
         output_folder: Path,
         # Optionally give a dataset id.
-        dataset_id: Optional[uuid.UUID],
+        dataset_id: Optional[uuid.UUID] = None,
         # By default, we complain if the output already exists.
         if_exists=IfExists.ThrowError,
         allow_absolute_paths=False,
