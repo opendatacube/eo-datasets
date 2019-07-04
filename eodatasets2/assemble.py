@@ -159,30 +159,19 @@ class DatasetAssembler(EoFields):
 
     def __init__(
         self,
-        output_folder: Optional[Path] = None,
-        metadata_path: Optional[Path] = None,
+        output_folder: Path,
         # By default, we complain if the output already exists.
         if_exists=IfExists.ThrowError,
         allow_absolute_paths=False,
         naming_conventions="default",
     ) -> None:
-
-        if not output_folder and not metadata_path:
-            raise ValueError(
-                "Either an output folder or a metadata path must be specified"
-            )
-
-        if output_folder.exists() and if_exists.ThrowError:
-            raise AssemblyError(f"Output exists {output_folder.as_posix()!r}")
-
         self._exists_behaviour = if_exists
-        self._destination_folder = output_folder
-        self._metadata_path = metadata_path
+        self._base_output_folder = output_folder
 
         self._checksum = PackageChecksum()
 
         self._work_path = Path(
-            tempfile.mkdtemp(prefix=".odcdataset-", dir=str(output_folder.parent))
+            tempfile.mkdtemp(prefix=".odcdataset-", dir=str(output_folder))
         )
 
         self._measurements = MeasurementRecord()
@@ -208,6 +197,15 @@ class DatasetAssembler(EoFields):
     @property
     def properties(self) -> StacPropertyView:
         return self._props
+
+    @property
+    def destination_folder(self) -> Path:
+        """
+        The folder where the finished package will reside.
+
+        This may not be accessible until enough metadata has been set.
+        """
+        return self.names.destination_folder(self._base_output_folder)
 
     def __enter__(self):
         return self
@@ -454,7 +452,9 @@ class DatasetAssembler(EoFields):
 
         self._software_versions.append(dict(name=name, url=url, version=version))
 
-    def done(self, validate_correctness=True, sort_bands=True):
+    def done(
+        self, validate_correctness=True, sort_bands=True
+    ) -> Tuple[uuid.UUID, Path]:
         """
         Write the dataset and move it into place.
 
@@ -520,7 +520,7 @@ class DatasetAssembler(EoFields):
 
         # Match the lower r/w permission bits to the output folder.
         # (Temp directories default to 700 otherwise.)
-        self._work_path.chmod(self._destination_folder.parent.stat().st_mode & 0o777)
+        self._work_path.chmod(self._base_output_folder.stat().st_mode & 0o777)
 
         # GDAL writes extra metadata in aux files,
         # but we consider it a mistake if you're using those extensions.
@@ -532,14 +532,15 @@ class DatasetAssembler(EoFields):
         # Someone else may have created the output while we were working.
         # Try, and then decide how to handle it if so.
         try:
-            self._work_path.rename(self._destination_folder)
+            self.destination_folder.parent.mkdir(parents=True, exist_ok=True)
+            self._work_path.rename(self.destination_folder)
         except OSError:
-            if not self._destination_folder.exists():
+            if not self.destination_folder.exists():
                 # Some other error?
                 raise
 
             if self._exists_behaviour == IfExists.Skip:
-                print(f"Skipping -- exists: {self._destination_folder}")
+                print(f"Skipping -- exists: {self.destination_folder}")
             elif self._exists_behaviour == IfExists.ThrowError:
                 raise
             elif self._exists_behaviour == IfExists.Overwrite:
@@ -549,7 +550,7 @@ class DatasetAssembler(EoFields):
                     f"Unexpected exists behaviour: {self._exists_behaviour}"
                 )
 
-        return dataset.id
+        return dataset.id, self.destination_folder
 
     def write_thumbnail(self, red: str, green: str, blue: str, kind: str = None):
         """

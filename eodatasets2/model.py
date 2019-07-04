@@ -59,6 +59,29 @@ class MeasurementDoc:
     name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
 
 
+def _subfolderise(code: str):
+    """
+    Cut a string folder name into subfolders if long.
+
+    (Forward slashes only, as it assumes you're using Pathlib's normalisation)
+
+    >>> _subfolderise('089090')
+    '089/090'
+    >>> # Prefer fewer folders in first level.
+    >>> _subfolderise('12345')
+    '12/345'
+    >>> _subfolderise('123456')
+    '123/456'
+    >>> _subfolderise('1234567')
+    '123/4567'
+    >>> _subfolderise('12')
+    '12'
+    """
+    if len(code) > 2:
+        return "/".join((code[: len(code) // 2], code[len(code) // 2 :]))
+    return code
+
+
 class DeaNamingConventions:
     def __init__(self, dataset: EoFields, base_uri: str = None) -> None:
         self.dataset = dataset
@@ -109,6 +132,14 @@ class DeaNamingConventions:
         if "dea:dataset_maturity" in d:
             fs = fs + (d.properties["dea:dataset_maturity"],)
         return "_".join(fs)
+
+    def destination_folder(self, base: Path):
+        # DEA naming conventions folder hierarchy.
+        # Example: "ga_ls8c_ard_3/092/084/2016/06/28"
+
+        # Cut the reference code in subfolders
+        code = _subfolderise(self.dataset.reference_code)
+        return base / f"{self.product_name}/{code}/{self.dataset.datetime:%Y/%m/%d}"
 
     def metadata_path(self, work_dir: Path, kind: str = "", suffix: str = "yaml"):
         return self._file(work_dir, kind, suffix)

@@ -13,7 +13,7 @@ from tests.integration.common import assert_same_as_file
 def test_minimal_dea_package(
     l1_ls8_dataset: DatasetDoc, l1_ls8_folder: Path, tmp_path: Path
 ):
-    out = tmp_path / "test-dataset"
+    out = tmp_path
 
     [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
     processing_time = datetime.utcnow()
@@ -47,20 +47,20 @@ def test_minimal_dea_package(
         # Write a thumbnail using the given bands as r/g/b.
         p.write_thumbnail("ones", "ones", "blue")
 
-        dataset_id = p.done()
+        dataset_id, dataset_path = p.done()
 
     metadata_name = "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml"
+    out = tmp_path / "ga_ls8c_ones_3/090/084/2016/01/21"
+    assert out == dataset_path
     assert_file_structure(
-        tmp_path,
+        out,
         {
-            "test-dataset": {
-                metadata_name: "",
-                "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif": "",
-                "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_ones.tif": "",
-                "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_thumbnail.jpg": "",
-                "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.proc-info.yaml": "",
-                "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.sha1": "",
-            }
+            metadata_name: "",
+            "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif": "",
+            "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_ones.tif": "",
+            "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_thumbnail.jpg": "",
+            "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.proc-info.yaml": "",
+            "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.sha1": "",
         },
     )
 
@@ -132,5 +132,5 @@ def test_minimal_dea_package(
             },
             "lineage": {"level1": ["a780754e-a884-58a7-9ac0-df518a67f59d"]},
         },
-        generated_file=tmp_path / "test-dataset" / metadata_name,
+        generated_file=out / metadata_name,
     )

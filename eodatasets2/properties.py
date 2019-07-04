@@ -318,9 +318,9 @@ class EoFields(metaclass=ABCMeta):
         self.properties["odc:product_family"] = value
 
     @property
-    def reference_code(self):
+    def reference_code(self) -> str:
         return self.properties.get("odc:reference_code")
 
     @reference_code.setter
-    def reference_code(self, value):
+    def reference_code(self, value: str):
         self.properties["odc:reference_code"] = value

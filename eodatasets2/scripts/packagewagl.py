@@ -14,6 +14,7 @@ from datetime import timedelta, datetime
 from pathlib import Path
 from typing import List, Sequence, Optional, Iterable, Any, Tuple, Dict, Mapping
 
+import attr
 import click
 import h5py
 import numpy
@@ -26,6 +27,7 @@ from rasterio import DatasetReader
 from eodatasets2 import images, serialise
 from eodatasets2.assemble import DatasetAssembler
 from eodatasets2.images import GridSpec
+from eodatasets2.model import DatasetDoc
 from eodatasets2.serialise import loads_yaml
 from eodatasets2.ui import PathPath
 from eodatasets2.utils import default_utc
@@ -315,130 +317,137 @@ def _extract_reference_code(p: DatasetAssembler, granule: str) -> Optional[str]:
     return None
 
 
-def _l1_to_ard(granule: str) -> str:
-    return re.sub(PRODUCT_SUITE_FROM_GRANULE, "ARD", granule)
+@attr.s(auto_attribs=True)
+class Granule:
+    name: str
+    wagl_hdf5: Path
+    wagl_metadata: Dict
+    source_level1_metadata: DatasetDoc
+
+    fmask_doc: Optional[Dict] = None
+    fmask_image: Optional[Path] = None
+    gqa_doc: Optional[Dict] = None
+
+    @classmethod
+    def for_path(cls, wagl_hdf5: Path, level1_metadata_path: Optional[Path] = None):
+
+        if not wagl_hdf5.exists():
+            raise ValueError(f"Input hdf5 doesn't exist {wagl_hdf5}")
+
+        with h5py.File(wagl_hdf5, "r") as fid:
+            granule_names = fid.keys()
+
+            for granule_name in granule_names:
+                wagl_doc_field = get_path(fid, (granule_name, "METADATA", "CURRENT"))
+                if not wagl_doc_field:
+                    raise ValueError(
+                        f"Granule contains no wagl metadata: {granule_name} in {wagl_hdf5}"
+                    )
+
+                wagl_doc = loads_yaml(wagl_doc_field[()])
+
+                level1 = (
+                    serialise.from_path(level1_metadata_path)
+                    if level1_metadata_path.exists()
+                    else None
+                )
+                if not level1_metadata_path:
+                    level1_tar_path = Path(
+                        get_path(wagl_doc, ("source_datasets", "source_level1"))
+                    )
+                    level1_metadata_path = level1_tar_path.with_suffix(
+                        ".odc-metadata.yaml"
+                    )
+
+                fmask_image = wagl_hdf5.with_name(f"{granule_name}.fmask.img")
+                if not fmask_image.exists():
+                    raise ValueError(f"Fmask not found {fmask_image}")
+
+                fmask_doc_path = fmask_image.with_suffix(".yaml")
+                if not fmask_doc_path.exists():
+                    raise ValueError(f"Fmask doc not found {fmask_doc_path}")
+                with fmask_doc_path.open("r") as fl:
+                    fmask_doc = loads_yaml(fl)
+
+                gqa_doc_path = wagl_hdf5.with_name(f"{granule_name}.gqa.yaml")
+                if not gqa_doc_path.exists():
+                    raise ValueError(f"GQA not found {gqa_doc_path}")
+                with gqa_doc_path.open("r") as fl:
+                    gqa_doc = loads_yaml(fl)
+
+                yield cls(
+                    name=granule_name,
+                    wagl_hdf5=wagl_hdf5,
+                    wagl_metadata=wagl_doc,
+                    source_level1_metadata=level1,
+                    fmask_doc=fmask_doc,
+                    fmask_image=fmask_image,
+                    gqa_doc=gqa_doc,
+                )
 
 
 def package(
-    wagl_hdf5: Path,
-    source_level1_metadata: Path,
     out_directory: Path,
-    granule_name: str = None,
-    products: Iterable[str] = _DEFAULT_PRODUCTS,
-    fmask_image: Optional[Path] = None,
-    fmask_doc: Optional[Path] = None,
-    gqa_doc: Optional[Path] = None,
+    granule: Granule,
+    included_products: Iterable[str] = _DEFAULT_PRODUCTS,
     include_oa: bool = True,
 ) -> Path:
     """
     Package an L2 product.
 
-    :param source_level1:
-        The path to the yaml metadata of the Level-1 this was processed from.
-
     :param out_directory:
         The dataset will be placed inside
 
-    :param products:
+    :param included_products:
         A list of imagery products to include in the package.
         Defaults to all products.
 
     :return:
         The output Path
     """
-    products = tuple(s.lower() for s in products)
+    included_products = tuple(s.lower() for s in included_products)
 
-    level1 = serialise.from_path(source_level1_metadata)
+    with h5py.File(granule.wagl_hdf5, "r") as fid:
+        granule_group = fid[granule.name]
+        with DatasetAssembler(out_directory, naming_conventions="dea") as p:
+            level1 = granule.source_level1_metadata
+            p.add_source_dataset(level1, auto_inherit_properties=True)
 
-    if not wagl_hdf5.exists():
-        raise ValueError(f"Input hdf5 doesn't exist {wagl_hdf5}")
+            # It's a GA ARD product.
+            p.producer = "ga.gov.au"
+            p.product_family = "ard"
 
-    if not granule_name:
-        granule_name = find_a_granule_name(wagl_hdf5)
+            # GA's collection 3 processes USGS Collection 1
+            if p.properties["landsat:collection_number"] == 1:
+                org_collection_number = 3
+            else:
+                raise NotImplementedError(f"Unsupported collection number.")
+            # TODO: wagl's algorithm version should determine our dataset version number, right?
+            p.dataset_version = f"{org_collection_number}.0.0"
+            p.reference_code = _extract_reference_code(p, granule.name)
 
-    if not fmask_image:
-        fmask_image = wagl_hdf5.with_name(f"{granule_name}.fmask.img")
-        if not fmask_image.exists():
-            raise ValueError(f"Fmask not found {fmask_image}")
+            p.properties["dea:processing_level"] = "level-2"
 
-    if not fmask_doc:
-        fmask_doc = fmask_image.with_suffix(".yaml")
-        if not fmask_image.exists():
-            raise ValueError(f"Fmask not found {fmask_image}")
+            _read_wagl_metadata(p, granule_group)
+            _read_gqa_doc(p, granule.gqa_doc)
+            _read_fmask_doc(p, granule.fmask_doc)
 
-    if not gqa_doc:
-        gqa_doc = wagl_hdf5.with_name(f"{granule_name}.gqa.yaml")
-        if not gqa_doc.exists():
-            raise ValueError(f"GQA not found {gqa_doc}")
+            unpack_products(p, included_products, granule_group)
 
-    with do(
-        f"Packaging {granule_name}. (products: {', '.join(products)})",
-        heading=True,
-        fmask=bool(fmask_image),
-        fmask_doc=bool(fmask_doc),
-        gqa=bool(gqa_doc),
-        oa=include_oa,
-    ):
-        with h5py.File(wagl_hdf5, "r") as fid:
-            if granule_name not in fid:
-                raise ValueError(
-                    f"Granule name {granule_name!r} not found in HDF5 file. "
-                    f"Options: {', '.join(fid.keys())}"
-                )
+            if include_oa:
+                with do(f"Starting OA", heading=True):
+                    unpack_observation_attributes(
+                        p,
+                        included_products,
+                        granule_group,
+                        infer_datetime_range=level1.platform.startswith("landsat"),
+                    )
+                if granule.fmask_image:
+                    with do(f"Writing fmask from {granule.fmask_image} "):
+                        p.write_measurement("oa:fmask", granule.fmask_image)
 
-            out_path = out_directory / _l1_to_ard(granule_name)
-            out_path.parent.mkdir(parents=True, exist_ok=True)
-            with DatasetAssembler(out_path, naming_conventions="dea") as p:
-                p.add_source_dataset(level1, auto_inherit_properties=True)
-
-                # It's a GA ARD product.
-                p.producer = "ga.gov.au"
-                p.product_family = "ard"
-
-                # GA's collection 3 processes USGS Collection 1
-                if p.properties["landsat:collection_number"] == 1:
-                    org_collection_number = 3
-                else:
-                    raise NotImplementedError(f"Unsupported collection number.")
-                # TODO: wagl's algorithm version should determine our dataset version number, right?
-                p.dataset_version = f"{org_collection_number}.0.0"
-                p.reference_code = _extract_reference_code(p, granule_name)
-
-                p.properties["dea:processing_level"] = "level-2"
-
-                # unpack the standardised products produced by wagl
-                granule_group = fid[granule_name]
-
-                _read_wagl_metadata(p, granule_group)
-
-                if gqa_doc:
-                    with gqa_doc.open() as fl:
-                        _read_gqa_doc(p, loads_yaml(fl))
-
-                if fmask_doc:
-                    with fmask_doc.open() as fl:
-                        _read_fmask_doc(p, loads_yaml(fl))
-
-                unpack_products(p, products, granule_group)
-
-                if include_oa:
-                    with do(f"Starting OA", heading=True):
-                        unpack_observation_attributes(
-                            p,
-                            products,
-                            granule_group,
-                            infer_datetime_range=level1.platform.startswith("landsat"),
-                        )
-                    if fmask_image:
-                        with do(f"Writing fmask from {fmask_image} "):
-                            # TODO: this one has different predictor settings?
-                            # fmask_cogtif_args_predictor = 2
-                            p.write_measurement("oa:fmask", fmask_image)
-
-                with do("Finishing package"):
-                    p.done()
-
-    return out_path
+            with do("Finishing package"):
+                return p.done()
 
 
 def _flatten_dict(d: Mapping, prefix=None, separator=".") -> Iterable[Tuple[str, Any]]:
@@ -576,8 +585,9 @@ def _determine_maturity(acq_date: datetime, processed: datetime, wagl_doc: Dict)
 @click.command(help=__doc__)
 @click.option(
     "--level1",
-    help="the path to the input level1 metadata doc",
-    required=True,
+    help="An explicit path to the input level1 metadata doc "
+    "(otherwise it will be loaded from the level1 path in the HDF5)",
+    required=False,
     type=PathPath(exists=True, readable=True, dir_okay=False, file_okay=True),
 )
 @click.option(
@@ -610,13 +620,22 @@ def run(
     else:
         products = _DEFAULT_PRODUCTS
     with rasterio.Env():
-        package(
-            source_level1_metadata=level1,
-            wagl_hdf5=h5_file,
-            out_directory=output.absolute(),
-            products=products,
-            include_oa=with_oa,
-        )
+        for granule in Granule.for_path(h5_file, level1_metadata_path=level1):
+            with do(
+                f"Packaging {granule.name}. (products: {', '.join(products)})",
+                heading=True,
+                fmask=bool(granule.fmask_image),
+                fmask_doc=bool(granule.fmask_doc),
+                gqa=bool(granule.gqa_doc),
+                oa=with_oa,
+            ):
+                dataset_id, dataset_path = package(
+                    out_directory=output,
+                    granule=granule,
+                    included_products=products,
+                    include_oa=with_oa,
+                )
+                secho(f"Created folder {click.style(str(dataset_path), fg='green')}")
 
 
 if __name__ == "__main__":
