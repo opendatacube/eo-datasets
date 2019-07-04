@@ -160,11 +160,14 @@ class DatasetAssembler(EoFields):
     def __init__(
         self,
         output_folder: Path,
+        # Optionally give a dataset id.
+        dataset_id: Optional[uuid.UUID],
         # By default, we complain if the output already exists.
         if_exists=IfExists.ThrowError,
         allow_absolute_paths=False,
         naming_conventions="default",
     ) -> None:
+        self.dataset_id = dataset_id or uuid.uuid4()
         self._exists_behaviour = if_exists
         self._base_output_folder = output_folder
 
@@ -481,7 +484,7 @@ class DatasetAssembler(EoFields):
         valid_data = self._measurements.valid_data()
 
         dataset = DatasetDoc(
-            id=uuid.uuid4(),
+            id=self.dataset_id,
             # TODO: configurable/non-dea naming?
             product=ProductDoc(
                 name=self.names.product_name, href=self.names.product_uri

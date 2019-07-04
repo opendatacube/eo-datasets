@@ -409,7 +409,13 @@ def package(
 
     with h5py.File(granule.wagl_hdf5, "r") as fid:
         granule_group = fid[granule.name]
-        with DatasetAssembler(out_directory, naming_conventions="dea") as p:
+
+        with DatasetAssembler(
+            out_directory,
+            # WAGL stamps a good, random ID already.
+            dataset_id=granule.wagl_metadata.get("id"),
+            naming_conventions="dea",
+        ) as p:
             level1 = granule.source_level1_metadata
             p.add_source_dataset(level1, auto_inherit_properties=True)
 

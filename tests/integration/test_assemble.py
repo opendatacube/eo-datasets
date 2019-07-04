@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from uuid import UUID
 
 import numpy
 
@@ -48,6 +49,8 @@ def test_minimal_dea_package(
         p.write_thumbnail("ones", "ones", "blue")
 
         dataset_id, dataset_path = p.done()
+
+    assert isinstance(dataset_id, UUID), "Expected a random UUID to be assigned"
 
     metadata_name = "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml"
     out = tmp_path / "ga_ls8c_ones_3/090/084/2016/01/21"

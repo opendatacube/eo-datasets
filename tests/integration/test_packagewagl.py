@@ -115,6 +115,8 @@ def test_minimal_dea_package(
     assert_same_as_file(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
+            # A stable ID is taken from the WAGL doc.
+            "id": "b4f61917-57c5-4795-9d84-3176061cc6a1",
             "product": {
                 "href": "https://collections.dea.ga.gov.au/product/ga_ls8c_ard_3",
                 "name": "ga_ls8c_ard_3",
@@ -310,7 +312,6 @@ def test_minimal_dea_package(
             "lineage": {"level1": ["fb1c622e-90aa-50e8-9d5e-ad69db82d0f6"]},
         },
         output_metadata,
-        ignore_fields=["id"],
     )
 
     [proc_info] = expected_folder.rglob("*.proc-info.yaml")
