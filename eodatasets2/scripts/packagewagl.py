@@ -591,7 +591,7 @@ def _determine_maturity(acq_date: datetime, processed: datetime, wagl_doc: Dict)
 @click.command(help=__doc__)
 @click.option(
     "--level1",
-    help="An explicit path to the input level1 metadata doc "
+    help="Optional path to the input level1 metadata doc "
     "(otherwise it will be loaded from the level1 path in the HDF5)",
     required=False,
     type=PathPath(exists=True, readable=True, dir_okay=False, file_okay=True),

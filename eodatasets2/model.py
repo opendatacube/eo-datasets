@@ -251,7 +251,7 @@ class DatasetDoc(EoFields):
     measurements: Dict[str, MeasurementDoc] = None
 
     # Paths to accessory files, such as thumbnails.
-    accessories: Dict[str, AccessoryDoc] = None
+    accessories: Dict[str, AccessoryDoc] = attr.ib(factory=CommentedMap)
 
     lineage: Dict[str, Sequence[UUID]] = attr.ib(factory=CommentedMap)
 

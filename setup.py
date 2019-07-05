@@ -55,5 +55,6 @@ setup(
         eo2-prepare=eodatasets2.scripts.genprepare:run
         eo2-recompress-tar=eodatasets2.scripts.recompress:main
         eo2-package-wagl=eodatasets2.scripts.packagewagl:run
+        eo2-to-stac=eodatasets2.scripts.tostac:run
     """,
 )

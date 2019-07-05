@@ -52,7 +52,7 @@ Run tests using [pytest](http://pytest.org/).
 
 `eo2-package-wagl`: Convert and package WAGL HDF5 outputs.
 
-    $ eo2-package-wagl --help
+     $ eo2-package-wagl --help
     Usage: eo2-package-wagl [OPTIONS] H5_FILE
     
       Package WAGL HDF5 Outputs
@@ -62,8 +62,9 @@ Run tests using [pytest](http://pytest.org/).
       for files.
     
     Options:
-      --level1 FILE                   the path to the input level1 metadata doc
-                                      [required]
+      --level1 FILE                   Optional path to the input level1
+                                      metadata doc (otherwise it will be loaded
+                                      from the level1 path in the HDF5)
       --output DIRECTORY              Put the output package into this directory
                                       [required]
       -p, --product [nbar|nbart|lambertian|sbt]
@@ -71,7 +72,17 @@ Run tests using [pytest](http://pytest.org/).
                                       multiple times)
       --with-oa / --no-oa             Include observation attributes (default:
                                       true)
-      --help                          Show this message and exit
+      --help                          Show this message and exit.
+
+`eo2-to-stac`: Convert an ODC metadata to a Stac Item json file (BETA/Incomplete)
+
+     $ eo2-to-stac --help
+    Usage: eo2-to-stac [OPTIONS] [ODC_METADATA_FILES]...
+    
+      Convert a new-style ODC metadata doc to a Stac Item.
+    
+    Options:
+      --help  Show this message and exit.
 
 # Metadata creation API
 
