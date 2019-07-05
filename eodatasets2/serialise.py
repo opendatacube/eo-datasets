@@ -252,7 +252,9 @@ def _to_doc(d: DatasetDoc, with_formatting: bool):
             for grid in doc["grids"].values():
                 _use_compact_format(grid, "shape", "transform")
 
-        _add_space_before(doc, "id", "crs", "measurements", "properties", "lineage")
+        _add_space_before(
+            doc, "id", "crs", "properties", "measurements", "accessories", "lineage"
+        )
 
         p: CommentedMap = doc["properties"]
         p.yaml_add_eol_comment("# Ground sample distance (m)", "eo:gsd")
