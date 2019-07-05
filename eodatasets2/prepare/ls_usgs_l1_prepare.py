@@ -30,6 +30,7 @@ from eodatasets2.model import (
     MeasurementDoc,
     valid_region,
     resolve_absolute_offset,
+    AccessoryDoc,
 )
 
 try:
@@ -181,7 +182,7 @@ def get_satellite_band_names(sat, instrument, file_name):
 def get_mtl_content(acquisition_path):
     # type: (Path) -> Tuple[Dict, str]
     """
-    Find MTL file; return it parsed as a dict with its filename.
+    Find MTL file; return it parsed as a dict with its filename relative to the acquisition path.
     """
     if not acquisition_path.exists():
         raise RuntimeError("Missing path '{}'".format(acquisition_path))
@@ -192,9 +193,8 @@ def get_mtl_content(acquisition_path):
                 internal_file = next(
                     filter(lambda memb: "_MTL" in memb.name, tp.getmembers())
                 )
-                filename = Path(internal_file.name).stem
                 with tp.extractfile(internal_file) as fp:
-                    return read_mtl(fp), filename
+                    return read_mtl(fp), internal_file.name
             except StopIteration:
                 raise RuntimeError(
                     "MTL file not found in {}".format(str(acquisition_path))
@@ -204,9 +204,8 @@ def get_mtl_content(acquisition_path):
         if not path:
             raise RuntimeError("No MTL file")
 
-        filename = Path(path).stem
         with path.open("r") as fp:
-            return read_mtl(fp), filename
+            return read_mtl(fp), path.name
 
 
 def read_mtl(fp):
@@ -254,14 +253,6 @@ def prepare_dataset(base_path: Path, write_checksum: bool = True) -> Optional[Di
             checksum.add_file(base_path)
             checksum.write(checksum_path)
 
-    return prepare_dataset_from_mtl(
-        _file_size_bytes(base_path), mtl_doc, mtl_filename, base_path=base_path
-    )
-
-
-def prepare_dataset_from_mtl(
-    total_size: int, mtl_doc: dict, mtl_filename: str, base_path: Optional[Path] = None
-) -> dict:
     return serialise.to_formatted_doc(_prepare(mtl_doc, mtl_filename, base_path))
 
 
@@ -417,6 +408,7 @@ def _prepare(
         geometry=geometry,
         grids=grids,
         measurements={band.name: band for band in bands},
+        accessories={"metadata:landsat_mtl": AccessoryDoc(mtl_filename)},
         lineage={},
         properties=_remove_nones(properties),
     )

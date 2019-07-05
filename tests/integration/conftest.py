@@ -222,6 +222,11 @@ def expected_l1_ls8_folder(
                 )
             },
         },
+        "accessories": {
+            "metadata:landsat_mtl": {
+                "path": "LC08_L1TP_090084_20160121_20170405_01_T1_MTL.txt"
+            }
+        },
         "lineage": {},
     }
 
@@ -329,6 +334,11 @@ def l1_ls7_tarball_md_expected(
                     l1_ls7_tarball, "LE07_L1TP_104078_20130429_20161124_01_T1_B7.TIF"
                 )
             },
+        },
+        "accessories": {
+            "metadata:landsat_mtl": {
+                "path": "LE07_L1TP_104078_20130429_20161124_01_T1_MTL.txt"
+            }
         },
         "lineage": {},
     }
@@ -439,6 +449,11 @@ def l1_ls5_tarball_md_expected(
                     l1_ls5_tarball, "LT05_L1TP_090085_19970406_20161231_01_T1_BQA.TIF"
                 )
             },
+        },
+        "accessories": {
+            "metadata:landsat_mtl": {
+                "path": "LT05_L1TP_090085_19970406_20161231_01_T1_MTL.txt"
+            }
         },
         "lineage": {},
     }

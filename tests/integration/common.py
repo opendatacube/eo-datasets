@@ -19,11 +19,7 @@ def check_prepare_outputs(
     run_prepare_cli(invoke_script, *run_args)
 
     assert expected_metadata_path.exists()
-    generated_doc = yaml.safe_load(expected_metadata_path.open())
-    if normalise_tuples:
-        generated_doc = lists_to_tuples(generated_doc)
-
-    assert_same(expected_doc, generated_doc)
+    assert_same_as_file(expected_doc, expected_metadata_path)
 
 
 def assert_same(expected_doc: Dict, generated_doc: Dict):
