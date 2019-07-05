@@ -73,6 +73,7 @@ def test_minimal_dea_package(
             "$schema": "https://schemas.opendatacube.org/dataset",
             "id": dataset_id,
             "product": {
+                # This was added automatically because we chose 'dea' conventions.
                 "href": "https://collections.dea.ga.gov.au/product/ga_ls8c_ones_3",
                 "name": "ga_ls8c_ones_3",
             },
@@ -114,10 +115,16 @@ def test_minimal_dea_package(
                 "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
                 "dea:dataset_maturity": "final",
                 "dea:processing_level": "level-2",
+                "odc:dataset_version": "3.0.0",
+                "odc:processing_datetime": "2016-03-04T14:23:30",
+                "odc:producer": "ga.gov.au",
+                "odc:product_family": "ones",
+                # The remaining fields were inherited from the source dataset
+                # (because we set auto_inherit_properties=True, and they're in the whitelist)
+                "eo:platform": "landsat-8",  # matching Stac's examples for capitalisation.
+                "eo:instrument": "OLI_TIRS",  # matching Stac's examples for capitalisation.
                 "eo:cloud_cover": 93.22,
                 "eo:gsd": 15.0,
-                "eo:instrument": "OLI_TIRS",
-                "eo:platform": "landsat-8",
                 "eo:sun_azimuth": 74.007_443_8,
                 "eo:sun_elevation": 55.486_483,
                 "landsat:collection_category": "T1",
@@ -126,19 +133,19 @@ def test_minimal_dea_package(
                 "landsat:landsat_scene_id": "LC80900842016021LGN02",
                 "landsat:wrs_path": 90,
                 "landsat:wrs_row": 84,
-                "odc:dataset_version": "3.0.0",
-                "odc:processing_datetime": "2016-03-04T14:23:30",
-                "odc:producer": "ga.gov.au",
-                "odc:product_family": "ones",
                 "odc:reference_code": "090084",
             },
             "accessories": {
+                # It wrote a checksum file for all of our files.
                 "checksum:sha1": {
                     "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.sha1"
                 },
+                # We didn't add any extra processor metadata, so this just contains
+                # some software versions.
                 "metadata:processor": {
                     "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.proc-info.yaml"
                 },
+                # The thumbnail we made.
                 "thumbnail": {
                     "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_thumbnail.jpg"
                 },
