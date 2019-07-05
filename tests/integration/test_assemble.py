@@ -17,7 +17,6 @@ def test_minimal_dea_package(
     out = tmp_path
 
     [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
-    processing_time = datetime.utcnow()
 
     with DatasetAssembler(out, naming_conventions="dea") as p:
         p.add_source_dataset(l1_ls8_dataset, auto_inherit_properties=True)
@@ -25,13 +24,12 @@ def test_minimal_dea_package(
         # It's a GA product called "ones".
         p.producer = "ga.gov.au"
         p.product_family = "ones"
-        p.processed = processing_time
+        p.dataset_version = "3.0.0"
 
-        # GA's collection 3 processes USGS Collection 1
-        p.dataset_version = f"3.0.0"
-
-        # TODO: maturity, where to load from?
-        p.properties["dea:dataset_maturity"] = "FINAL"
+        # Known properties are normalised (see tests at bottom of file)
+        p.platform = "LANDSAT_8"  # to: 'landsat-8'
+        p.processed = "2016-03-04 14:23:30Z"  # into a date.
+        p.properties["dea:dataset_maturity"] = "FINAL"  # lowercased
         p.properties["dea:processing_level"] = "level-2"
 
         # Write a measurement from a numpy array, using the source dataset's grid spec.
@@ -48,6 +46,7 @@ def test_minimal_dea_package(
         # Write a thumbnail using the given bands as r/g/b.
         p.write_thumbnail("ones", "ones", "blue")
 
+        # p.done() will write the whole dataset into place. (renaming its temp directory)
         dataset_id, dataset_path = p.done()
 
     assert isinstance(dataset_id, UUID), "Expected a random UUID to be assigned"
@@ -128,7 +127,7 @@ def test_minimal_dea_package(
                 "landsat:wrs_path": 90,
                 "landsat:wrs_row": 84,
                 "odc:dataset_version": "3.0.0",
-                "odc:processing_datetime": processing_time,
+                "odc:processing_datetime": "2016-03-04T14:23:30",
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ones",
                 "odc:reference_code": "090084",

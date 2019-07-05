@@ -251,9 +251,17 @@ class EoFields(metaclass=ABCMeta):
     def platform(self) -> str:
         return self.properties["eo:platform"]
 
+    @platform.setter
+    def platform(self, value: str):
+        self.properties["eo:platform"] = value
+
     @property
     def instrument(self) -> str:
         return self.properties["eo:instrument"]
+
+    @instrument.setter
+    def instrument(self, value: str):
+        self.properties["eo:instrument"] = value
 
     @property
     def producer(self) -> str:
