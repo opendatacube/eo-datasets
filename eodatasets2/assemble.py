@@ -27,6 +27,7 @@ from eodatasets2.model import (
     StacPropertyView,
     DeaNamingConventions,
     DEA_URI_PREFIX,
+    AccessoryDoc,
 )
 from eodatasets2.properties import EoFields
 from eodatasets2.validate import Level, ValidationMessage
@@ -185,6 +186,7 @@ class DatasetAssembler(EoFields):
         self._software_versions: List[Dict] = []
 
         self._lineage: Dict[str, List[uuid.UUID]] = defaultdict(list)
+        self._accessories: Dict[str, Path] = {}
 
         self._props = StacPropertyView()
 
@@ -483,6 +485,14 @@ class DatasetAssembler(EoFields):
 
         valid_data = self._measurements.valid_data()
 
+        checksum_path = self.names.checksum_path(self._work_path)
+        processing_metadata = self.names.metadata_path(
+            self._work_path, suffix="proc-info.yaml"
+        )
+
+        self.add_accessory_file("checksum:sha1", checksum_path)
+        self.add_accessory_file("metadata:processor", processing_metadata)
+
         dataset = DatasetDoc(
             id=self.dataset_id,
             # TODO: configurable/non-dea naming?
@@ -493,6 +503,10 @@ class DatasetAssembler(EoFields):
             geometry=valid_data,
             grids=grid_docs,
             properties=self.properties,
+            accessories={
+                name: AccessoryDoc(path, name=name)
+                for name, path in self._accessories.items()
+            },
             measurements=measurement_docs,
             lineage=self._lineage,
         )
@@ -515,11 +529,11 @@ class DatasetAssembler(EoFields):
 
         self._write_yaml(
             {**self._user_metadata, "software_versions": self._software_versions},
-            self.names.metadata_path(self._work_path, suffix="proc-info.yaml"),
+            processing_metadata,
             allow_external_paths=True,
         )
 
-        self._checksum.write(self.names.checksum_path(self._work_path))
+        self._checksum.write(checksum_path)
 
         # Match the lower r/w permission bits to the output folder.
         # (Temp directories default to 700 otherwise.)
@@ -587,6 +601,20 @@ class DatasetAssembler(EoFields):
             thumb,
         )
         self._checksum.add_file(thumb)
+
+        accessory_name = "thumbnail"
+        if kind:
+            accessory_name += f":{kind}"
+        self.add_accessory_file(accessory_name, thumb)
+
+    def add_accessory_file(self, name: str, path: Path):
+        existing_path = self._accessories.get(name)
+        if existing_path is not None and existing_path != path:
+            raise ValueError(
+                f"Duplicate accessory name {name!r}. "
+                f"New: {path.as_posix()!r}, previous: {existing_path.as_posix()!r}"
+            )
+        self._accessories[name] = path
 
     def _write_yaml(self, doc, path, allow_external_paths=False):
         make_paths_relative(

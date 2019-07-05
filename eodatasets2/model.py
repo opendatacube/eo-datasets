@@ -59,6 +59,13 @@ class MeasurementDoc:
     name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
 
 
+@attr.s(auto_attribs=True, slots=True)
+class AccessoryDoc:
+    path: str
+    type: str = None
+    name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
+
+
 def _subfolderise(code: str):
     """
     Cut a string folder name into subfolders if long.
@@ -242,6 +249,9 @@ class DatasetDoc(EoFields):
     properties: StacPropertyView = attr.ib(factory=StacPropertyView)
 
     measurements: Dict[str, MeasurementDoc] = None
+
+    # Paths to accessory files, such as thumbnails.
+    accessories: Dict[str, AccessoryDoc] = None
 
     lineage: Dict[str, Sequence[UUID]] = attr.ib(factory=CommentedMap)
 

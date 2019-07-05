@@ -104,6 +104,21 @@ properties:
       required:
         - path
       additionalProperties: false
+  accessories:
+    type: object
+    propertyNames:
+      pattern: "^[a-z_][a-z0-9_:]*$"
+    additionalProperties:
+      title: Accessory files
+      type: object
+      properties:
+        path:
+          type: string
+        type:
+          type: string
+      required:
+        - path
+      additionalProperties: false
 
   lineage:
     type: object

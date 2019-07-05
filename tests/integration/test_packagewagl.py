@@ -306,6 +306,20 @@ def test_minimal_dea_package(
                     "path": "ga_ls8c_oa_3-0-0_092084_2016-06-28_final_time-delta.tif"
                 },
             },
+            "accessories": {
+                "checksum:sha1": {
+                    "path": "ga_ls8c_ard_3-0-0_092084_2016-06-28_final.sha1"
+                },
+                "metadata:processor": {
+                    "path": "ga_ls8c_ard_3-0-0_092084_2016-06-28_final.proc-info.yaml"
+                },
+                "thumbnail:nbar": {
+                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_thumbnail.jpg"
+                },
+                "thumbnail:nbart": {
+                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_thumbnail.jpg"
+                },
+            },
             "lineage": {"level1": ["fb1c622e-90aa-50e8-9d5e-ad69db82d0f6"]},
         },
         output_metadata,

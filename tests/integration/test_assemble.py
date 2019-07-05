@@ -133,6 +133,17 @@ def test_minimal_dea_package(
                 "odc:product_family": "ones",
                 "odc:reference_code": "090084",
             },
+            "accessories": {
+                "checksum:sha1": {
+                    "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.sha1"
+                },
+                "metadata:processor": {
+                    "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.proc-info.yaml"
+                },
+                "thumbnail": {
+                    "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_thumbnail.jpg"
+                },
+            },
             "lineage": {"level1": ["a780754e-a884-58a7-9ac0-df518a67f59d"]},
         },
         generated_file=out / metadata_name,
