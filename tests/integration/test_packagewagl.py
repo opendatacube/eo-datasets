@@ -403,8 +403,7 @@ def test_minimal_dea_package(
         # The reduced resolution makes it hard to test the chosen block size...
         assert d.block_shapes == [(6, 155)]
 
-    # OA data has no overviews.
-
+    # OA data should have no overviews.
     [*oa_images] = expected_folder.rglob("*_oa_*.tif")
     assert oa_images
     for image in oa_images:

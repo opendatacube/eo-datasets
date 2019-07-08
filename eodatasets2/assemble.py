@@ -315,8 +315,8 @@ class DatasetAssembler(EoFields):
         self,
         name: str,
         g: h5py.Dataset,
-        expand_valid_data=True,
         overviews=images.DEFAULT_OVERVIEWS,
+        expand_valid_data=True,
     ):
         """
         Write a measurement by copying it from a hdf5 dataset.
@@ -340,23 +340,42 @@ class DatasetAssembler(EoFields):
             overviews=overviews,
         )
         self._measurements.record_image(
-            name, grid, out_path, data, nodata, expand_valid_data=expand_valid_data
+            name,
+            grid,
+            out_path,
+            data,
+            nodata=nodata,
+            expand_valid_data=expand_valid_data,
         )
 
         # We checksum immediately as the file has *just* been written so it may still
         # be in os/filesystem cache.
         self._checksum.add_file(out_path)
 
-    def write_measurement(self, name: str, path: Path):
+    def write_measurement(
+        self,
+        name: str,
+        path: Path,
+        overviews=images.DEFAULT_OVERVIEWS,
+        expand_valid_data=True,
+    ):
         """
         Write a measurement by copying it from a file path.
 
         Assumes the file is gdal-readable.
         """
         with rasterio.open(path) as ds:
-            self.write_measurement_rio(name, ds)
+            self.write_measurement_rio(
+                name, ds, overviews=overviews, expand_valid_data=expand_valid_data
+            )
 
-    def write_measurement_rio(self, name: str, ds: DatasetReader):
+    def write_measurement_rio(
+        self,
+        name: str,
+        ds: DatasetReader,
+        overviews=images.DEFAULT_OVERVIEWS,
+        expand_valid_data=True,
+    ):
         """
         Write a measurement by reading it an open rasterio dataset
         """
@@ -370,11 +389,17 @@ class DatasetAssembler(EoFields):
 
         array = ds.read(1)
         FileWrite.from_existing(grid.shape).write_from_ndarray(
-            array, out_path, grid, ds.nodata
+            array, out_path, grid, nodata=ds.nodata, overviews=overviews
         )
 
-        args = dict(nodata=ds.nodata) if ds.nodata is not None else {}
-        self._measurements.record_image(name, grid, out_path, img=array, **args)
+        self._measurements.record_image(
+            name,
+            grid,
+            out_path,
+            img=array,
+            nodata=ds.nodata,
+            expand_valid_data=expand_valid_data,
+        )
 
         # We checksum immediately as the file has *just* been written so it may still
         # be in os/filesystem cache.
@@ -388,6 +413,7 @@ class DatasetAssembler(EoFields):
         nodata=None,
         overview_resampling=Resampling.nearest,
         overviews=images.DEFAULT_OVERVIEWS,
+        expand_valid_data=True,
     ):
         """
         Write a measurement from a numpy array and grid spec.
@@ -415,7 +441,12 @@ class DatasetAssembler(EoFields):
             overviews=overviews,
         )
         self._measurements.record_image(
-            name, grid_spec, out_path, img=array, nodata=nodata
+            name,
+            grid_spec,
+            out_path,
+            img=array,
+            nodata=nodata,
+            expand_valid_data=expand_valid_data,
         )
         # We checksum immediately as the file has *just* been written so it may still
         # be in os/filesystem cache.

@@ -13,6 +13,7 @@ import tempfile
 from datetime import timedelta, datetime
 from pathlib import Path
 from typing import List, Sequence, Optional, Iterable, Any, Tuple, Dict, Mapping
+from uuid import UUID
 
 import attr
 import click
@@ -254,6 +255,7 @@ def create_contiguity(
                     contiguity,
                     geobox,
                     overviews=None,
+                    expand_valid_data=False,
                 )
 
             # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
@@ -391,7 +393,7 @@ def package(
     granule: Granule,
     included_products: Iterable[str] = _DEFAULT_PRODUCTS,
     include_oa: bool = True,
-) -> Path:
+) -> Tuple[UUID, Path]:
     """
     Package an L2 product.
 
@@ -450,7 +452,9 @@ def package(
                     )
                 if granule.fmask_image:
                     with do(f"Writing fmask from {granule.fmask_image} "):
-                        p.write_measurement("oa:fmask", granule.fmask_image)
+                        p.write_measurement(
+                            "oa:fmask", granule.fmask_image, expand_valid_data=False
+                        )
 
             with do("Finishing package"):
                 return p.done()
