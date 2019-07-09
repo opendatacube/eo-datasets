@@ -35,16 +35,16 @@ class ValidationMessage:
     def __str__(self) -> str:
         hint = ""
         if self.hint:
-            hint = f" (Hint: {hint})"
+            hint = f" (Hint: {self.hint})"
         return f"{self.code}: {self.reason}{hint}"
 
 
-def _info(code: str, reason: str):
-    return ValidationMessage(Level.info, code, reason)
+def _info(code: str, reason: str, hint: str = None):
+    return ValidationMessage(Level.info, code, reason, hint=hint)
 
 
-def _warning(code: str, reason: str):
-    return ValidationMessage(Level.warning, code, reason)
+def _warning(code: str, reason: str, hint: str = None):
+    return ValidationMessage(Level.warning, code, reason, hint=hint)
 
 
 def _error(code: str, reason: str, hint: str = None):
@@ -151,6 +151,15 @@ def _validate_stac_properties(dataset: DatasetDoc):
                 "producer_domain",
                 "Property 'odc:producer' should be the organisation's domain name. Eg. 'ga.gov.au'",
             )
+
+    # This field is a little odd, but is expected by the current version of ODC.
+    # (from discussion with Kirill)
+    if not dataset.properties.get("odc:file_format"):
+        yield _warning(
+            "global_file_format",
+            "Property 'odc:file_format' is empty",
+            hint="Usually 'GeoTIFF'",
+        )
 
 
 def _is_nan(v):

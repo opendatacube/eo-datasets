@@ -116,6 +116,7 @@ def test_minimal_dea_package(
                 "dea:dataset_maturity": "final",
                 "dea:processing_level": "level-2",
                 "odc:dataset_version": "3.0.0",
+                "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": "2016-03-04T14:23:30",
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ones",

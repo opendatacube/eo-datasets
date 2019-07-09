@@ -204,6 +204,7 @@ def test_minimal_dea_package(
                 "landsat:wrs_path": 92,
                 "landsat:wrs_row": 84,
                 "odc:dataset_version": "3.0.0",
+                "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": datetime(2019, 7, 2, 7, 24, 31, 841_880),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ard",

@@ -434,7 +434,7 @@ class DatasetAssembler(EoFields):
         overview_resampling: Resampling,
         overviews: Tuple[int, ...],
     ):
-        FileWrite.from_existing(grid.shape).write_from_ndarray(
+        res = FileWrite.from_existing(grid.shape).write_from_ndarray(
             data,
             out_path,
             geobox=grid,
@@ -442,6 +442,18 @@ class DatasetAssembler(EoFields):
             overview_resampling=overview_resampling,
             overviews=overviews,
         )
+
+        # Ensure the file_format field is set to what we're writing.
+        file_format = res.file_format.name
+        if "odc:file_format" not in self.properties:
+            self.properties["odc:file_format"] = file_format
+
+        if file_format != self.properties["odc:file_format"]:
+            raise RuntimeError(
+                f"Inconsistent file formats between bands. "
+                f"Was {self.properties['odc:file_format']!r}, now {file_format !r}"
+            )
+
         self._measurements.record_image(
             name,
             grid,

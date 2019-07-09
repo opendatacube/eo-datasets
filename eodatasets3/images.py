@@ -23,7 +23,7 @@ from scipy import ndimage
 from shapely.geometry.base import BaseGeometry, CAP_STYLE, JOIN_STYLE
 from skimage.exposure import rescale_intensity
 
-from eodatasets3.model import GridDoc, MeasurementDoc, DatasetDoc
+from eodatasets3.model import GridDoc, MeasurementDoc, DatasetDoc, FileFormat
 
 DEFAULT_OVERVIEWS = (8, 16, 32)
 
@@ -315,6 +315,16 @@ class MeasurementRecord:
                 yield band_name, path
 
 
+@attr.s(auto_attribs=True)
+class WriteResult:
+    # path: Path
+
+    # The value to put in 'odc:file_format' metadata field.
+    file_format: FileFormat
+
+    # size_bytes: int
+
+
 class FileWrite:
     """
     Write COGs from arrays / files.
@@ -393,7 +403,7 @@ class FileWrite:
         nodata: int = None,
         overview_resampling=Resampling.nearest,
         overviews: Optional[Tuple[int, ...]] = DEFAULT_OVERVIEWS,
-    ) -> None:
+    ) -> WriteResult:
         """
         Writes a 2D/3D image to disk using rasterio.
 
@@ -553,6 +563,8 @@ class FileWrite:
                 )
             else:
                 unstructured_image.rename(out_filename)
+
+        return WriteResult(file_format=FileFormat.GeoTIFF)
 
     def _gdal_cli_config(self, option_whitelist=None, config_whitelist=None):
         args = []
