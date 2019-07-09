@@ -11,8 +11,8 @@ from rasterio.enums import Compression
 from rio_cogeo import cogeo
 
 import eodatasets3
+from eodatasets3 import wagl
 from eodatasets3.model import DatasetDoc
-from eodatasets3.scripts import packagewagl
 from tests import assert_file_structure
 from tests.integration.common import assert_same_as_file
 
@@ -34,7 +34,7 @@ def test_minimal_dea_package(
 
     with pytest.warns(None) as warning_record:
         res = CliRunner().invoke(
-            packagewagl.run,
+            wagl.run,
             map(str, (WAGL_INPUT_PATH, "--level1", L1_METADATA_PATH, "--output", out)),
             catch_exceptions=False,
         )
@@ -477,7 +477,7 @@ def test_maturity_calculation():
 
     # Normal, final dataset. Processed just outside of NRT window.
     assert (
-        packagewagl._determine_maturity(
+        wagl._determine_maturity(
             normal_acq_date, normal_acq_date + timedelta(hours=49), wagl_doc
         )
         == "final"
@@ -485,13 +485,13 @@ def test_maturity_calculation():
 
     # NRT when processed < 48 hours
     assert (
-        packagewagl._determine_maturity(
+        wagl._determine_maturity(
             normal_acq_date, normal_acq_date + timedelta(hours=1), wagl_doc
         )
         == "nrt"
     )
     assert (
-        packagewagl._determine_maturity(
+        wagl._determine_maturity(
             acq_before_01, acq_before_01 + timedelta(hours=47), wagl_doc
         )
         == "nrt"
@@ -499,7 +499,7 @@ def test_maturity_calculation():
 
     # Before 2001: final if water vapour is definitive.
     assert (
-        packagewagl._determine_maturity(
+        wagl._determine_maturity(
             acq_before_01, acq_before_01 + timedelta(days=3), wagl_doc
         )
         == "final"
@@ -508,11 +508,11 @@ def test_maturity_calculation():
     # Interim whenever water vapour is fallback.
     wagl_doc["ancillary"]["water_vapour"]["tier"] = "FALLBACK_DATASET"
     assert (
-        packagewagl._determine_maturity(normal_acq_date, normal_proc_date, wagl_doc)
+        wagl._determine_maturity(normal_acq_date, normal_proc_date, wagl_doc)
         == "interim"
     )
     assert (
-        packagewagl._determine_maturity(
+        wagl._determine_maturity(
             acq_before_01, acq_before_01 + timedelta(days=3), wagl_doc
         )
         == "interim"
@@ -522,6 +522,6 @@ def test_maturity_calculation():
     # Fallback BRDF (when at least one is fallback)
     wagl_doc["ancillary"]["brdf_alpha_2_band_2"]["tier"] = "FALLBACK_DEFAULT"
     assert (
-        packagewagl._determine_maturity(normal_acq_date, normal_proc_date, wagl_doc)
+        wagl._determine_maturity(normal_acq_date, normal_proc_date, wagl_doc)
         == "interim"
     )

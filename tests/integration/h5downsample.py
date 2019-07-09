@@ -14,8 +14,8 @@ from click import secho
 from click import style
 from skimage.transform import resize
 
-from eodatasets3.scripts.packagewagl import find_a_granule_name
 from eodatasets3.ui import PathPath
+from eodatasets3.wagl import find_a_granule_name
 
 
 def find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> List[str]:
