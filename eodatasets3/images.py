@@ -23,7 +23,7 @@ from scipy import ndimage
 from shapely.geometry.base import BaseGeometry, CAP_STYLE, JOIN_STYLE
 from skimage.exposure import rescale_intensity
 
-from eodatasets2.model import GridDoc, MeasurementDoc, DatasetDoc
+from eodatasets3.model import GridDoc, MeasurementDoc, DatasetDoc
 
 DEFAULT_OVERVIEWS = (8, 16, 32)
 

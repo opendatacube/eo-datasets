@@ -41,9 +41,9 @@ def get_config():
     cfg = VersioneerConfig()
     cfg.VCS = "git"
     cfg.style = "pep440"
-    cfg.tag_prefix = "eodatasets2-"
+    cfg.tag_prefix = "eodatasets3-"
     cfg.parentdir_prefix = "None"
-    cfg.versionfile_source = "eodatasets2/_version.py"
+    cfg.versionfile_source = "eodatasets3/_version.py"
     cfg.verbose = False
     return cfg
 

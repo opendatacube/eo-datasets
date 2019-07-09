@@ -14,8 +14,8 @@ from click import echo
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
-from eodatasets2 import serialise
-from eodatasets2.ui import PathPath
+from eodatasets3 import serialise
+from eodatasets3.ui import PathPath
 
 
 @click.command(help=__doc__)

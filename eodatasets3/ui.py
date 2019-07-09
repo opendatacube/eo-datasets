@@ -1,12 +1,11 @@
 import os
+import urllib.parse
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urljoin
+from urllib.parse import urlparse
 
 import click
-import urllib.parse
-
-from urllib.parse import urlparse
 
 
 class PathPath(click.Path):

@@ -1,6 +1,7 @@
 # coding=utf-8
 
 from __future__ import absolute_import
+
 import logging
 
 
@@ -9,4 +10,4 @@ def init_logging(debug):
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
     else:
-        logging.getLogger("eodatasets2").setLevel(logging.INFO)
+        logging.getLogger("eodatasets3").setLevel(logging.INFO)

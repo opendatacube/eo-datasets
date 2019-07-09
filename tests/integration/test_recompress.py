@@ -1,12 +1,13 @@
-import pytest
 import shutil
 import tarfile
-from click.testing import CliRunner, Result
 from pathlib import Path
 from typing import List, Dict, Tuple
 
-from eodatasets2 import verify
-from eodatasets2.scripts import recompress
+import pytest
+from click.testing import CliRunner, Result
+
+from eodatasets3 import verify
+from eodatasets3.scripts import recompress
 
 this_folder = Path(__file__).parent
 packaged_base: Path = this_folder.joinpath("recompress_packed")

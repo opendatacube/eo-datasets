@@ -17,7 +17,7 @@ from rasterio import DatasetReader
 from ruamel.yaml.comments import CommentedMap
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets2.properties import StacPropertyView, EoFields
+from eodatasets3.properties import StacPropertyView, EoFields
 
 # TODO: these need discussion.
 DEA_URI_PREFIX = "https://collections.dea.ga.gov.au"

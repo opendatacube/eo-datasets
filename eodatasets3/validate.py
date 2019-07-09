@@ -13,10 +13,10 @@ from rasterio.crs import CRS
 from rasterio.errors import CRSError
 from shapely.validation import explain_validity
 
-from eodatasets2 import serialise, model
-from eodatasets2.model import DatasetDoc
-from eodatasets2.ui import PathPath, is_absolute
-from eodatasets2.utils import default_utc
+from eodatasets3 import serialise, model
+from eodatasets3.model import DatasetDoc
+from eodatasets3.ui import PathPath, is_absolute
+from eodatasets3.utils import default_utc
 
 
 class Level(enum.Enum):

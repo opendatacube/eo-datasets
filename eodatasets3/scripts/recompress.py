@@ -7,34 +7,34 @@ They arrive as a *.tar.gz with inner uncompressed tiffs, which Josh's tests have
 We compress the inner tiffs and store them in an uncompressed tar. This allows random reads within the files.
 We also append a checksum file at the end of the tar.
 """
-import sys
-from itertools import chain
-
-import click
 import copy
 import io
-import numpy
-import rasterio
 import socket
 import stat
-import structlog
+import sys
 import tarfile
 import tempfile
 import traceback
 from contextlib import suppress
 from functools import partial
+from itertools import chain
 from pathlib import Path
+from subprocess import call
+from typing import List, Iterable, Tuple, Callable, IO, Dict
+
+import click
+import numpy
+import rasterio
+import structlog
 from structlog.processors import (
     StackInfoRenderer,
     TimeStamper,
     format_exc_info,
     JSONRenderer,
 )
-from subprocess import call
-from typing import List, Iterable, Tuple, Callable, IO, Dict
 
-from eodatasets2.ui import PathPath
-from eodatasets2.verify import PackageChecksum
+from eodatasets3.ui import PathPath
+from eodatasets3.verify import PackageChecksum
 
 _PREDICTOR_TABLE = {
     "int8": 2,

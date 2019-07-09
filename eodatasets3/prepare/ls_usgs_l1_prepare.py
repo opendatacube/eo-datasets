@@ -22,8 +22,8 @@ from shapely.geometry import Polygon
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
-from eodatasets2 import verify, serialise
-from eodatasets2.model import (
+from eodatasets3 import verify, serialise
+from eodatasets3.model import (
     DatasetDoc,
     ProductDoc,
     FileFormat,

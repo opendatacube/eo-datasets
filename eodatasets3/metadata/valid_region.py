@@ -1,13 +1,14 @@
 from __future__ import absolute_import
+
+import logging
+
 import rasterio
-from rasterio.errors import RasterioIOError
 import rasterio.features
-from scipy import ndimage
 import shapely.affinity
 import shapely.geometry
 import shapely.ops
-
-import logging
+from rasterio.errors import RasterioIOError
+from scipy import ndimage
 
 _LOG = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 
+from eodatasets3.prepare import s2_prepare_cophub_zip
 from tests.integration.common import check_prepare_outputs
-from eodatasets2.prepare import s2_prepare_cophub_zip
 
 L1_ZIPFILE_PATH: Path = (
     Path(__file__).parent.parent

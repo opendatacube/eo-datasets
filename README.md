@@ -21,10 +21,10 @@ Run tests using [pytest](http://pytest.org/).
 
 ### Included Scripts
 
-`eo2-validate` a lint-like checker to check ODC metadata.
+`eo3-validate` a lint-like checker to check ODC metadata.
 
-     $ eo2-validate --help
-    Usage: eo2-validate [OPTIONS] [PATHS]...
+     $ eo3-validate --help
+    Usage: eo3-validate [OPTIONS] [PATHS]...
     
       Validate an ODC document
     
@@ -33,10 +33,10 @@ Run tests using [pytest](http://pytest.org/).
       -q, --quiet               Only print problems, one per line
       --help                    Show this message and exit.
 
-`eo2-prepare`: Prepare ODC metadata from the commandline.
+`eo3-prepare`: Prepare ODC metadata from the commandline.
 
-     $ eo2-prepare --help
-    Usage: eo2-prepare [OPTIONS] COMMAND [ARGS]...
+     $ eo3-prepare --help
+    Usage: eo3-prepare [OPTIONS] COMMAND [ARGS]...
     
     Options:
       --version  Show the version and exit.
@@ -50,10 +50,10 @@ Run tests using [pytest](http://pytest.org/).
       s2-awspds      Preparation code for Sentinel-2 L1C AWS PDS Generates...
       s2-cophub      Preparation code for Sentinel-2 L1C SCIHUB ZIP Generates...
 
-`eo2-package-wagl`: Convert and package WAGL HDF5 outputs.
+`eo3-package-wagl`: Convert and package WAGL HDF5 outputs.
 
-     $ eo2-package-wagl --help
-    Usage: eo2-package-wagl [OPTIONS] H5_FILE
+     $ eo3-package-wagl --help
+    Usage: eo3-package-wagl [OPTIONS] H5_FILE
     
       Package WAGL HDF5 Outputs
     
@@ -74,10 +74,10 @@ Run tests using [pytest](http://pytest.org/).
                                       true)
       --help                          Show this message and exit.
 
-`eo2-to-stac`: Convert an ODC metadata to a Stac Item json file (BETA/Incomplete)
+`eo3-to-stac`: Convert an ODC metadata to a Stac Item json file (BETA/Incomplete)
 
-     $ eo2-to-stac --help
-    Usage: eo2-to-stac [OPTIONS] [ODC_METADATA_FILES]...
+     $ eo3-to-stac --help
+    Usage: eo3-to-stac [OPTIONS] [ODC_METADATA_FILES]...
     
       Convert a new-style ODC metadata doc to a Stac Item.
     

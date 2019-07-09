@@ -18,10 +18,10 @@ from boltons import iterutils
 from rasterio import DatasetReader
 from rasterio.enums import Resampling
 
-import eodatasets2
-from eodatasets2 import serialise, validate, images
-from eodatasets2.images import FileWrite, GridSpec, MeasurementRecord
-from eodatasets2.model import (
+import eodatasets3
+from eodatasets3 import serialise, validate, images
+from eodatasets3.images import FileWrite, GridSpec, MeasurementRecord
+from eodatasets3.model import (
     DatasetDoc,
     ProductDoc,
     StacPropertyView,
@@ -29,9 +29,9 @@ from eodatasets2.model import (
     DEA_URI_PREFIX,
     AccessoryDoc,
 )
-from eodatasets2.properties import EoFields
-from eodatasets2.validate import Level, ValidationMessage
-from eodatasets2.verify import PackageChecksum
+from eodatasets3.properties import EoFields
+from eodatasets3.validate import Level, ValidationMessage
+from eodatasets3.verify import PackageChecksum
 
 
 class IfExists(Enum):
@@ -503,9 +503,9 @@ class DatasetAssembler(EoFields):
         IncompleteDatasetError is raised if any critical metadata is incomplete.
         """
         self.note_software_version(
-            "eodatasets2",
+            "eodatasets3",
             "https://github.com/GeoscienceAustralia/eo-datasets",
-            eodatasets2.__version__,
+            eodatasets3.__version__,
         )
 
         # Order from most to fewest measurements.

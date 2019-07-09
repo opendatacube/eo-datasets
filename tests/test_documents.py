@@ -4,7 +4,7 @@ Module
 """
 from __future__ import absolute_import
 
-from eodatasets2.documents import find_metadata_path, _find_any_metadata_suffix
+from eodatasets3.documents import find_metadata_path, _find_any_metadata_suffix
 from tests import write_files
 
 

@@ -1,15 +1,15 @@
 # coding=utf-8
 from __future__ import absolute_import
 
-import binascii
 import hashlib
 import logging
-
 # PyLint doesn't recognise many distutils functions when in virtualenv. Not worth the effort.
 # pylint: disable=no-name-in-module
 import typing
 from distutils import spawn
 from pathlib import Path
+
+import binascii
 
 _LOG = logging.getLogger(__name__)
 

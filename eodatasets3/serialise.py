@@ -19,7 +19,7 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets2.model import (
+from eodatasets3.model import (
     FileFormat,
     DatasetDoc,
     ODC_DATASET_SCHEMA_URL,

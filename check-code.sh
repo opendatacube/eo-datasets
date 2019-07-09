@@ -6,7 +6,7 @@ set -x
 
 pycodestyle tests --max-line-length 120
 
-# pylint -j 2 --reports no eodatasets2
+# pylint -j 2 --reports no eodatasets3
 flake8 -j 2 eodatasets2
 
 # Run tests, taking coverage.

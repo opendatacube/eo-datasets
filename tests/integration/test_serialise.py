@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict
 
-from eodatasets2 import serialise
+from eodatasets3 import serialise
 from .common import assert_same, dump_roundtrip
 
 

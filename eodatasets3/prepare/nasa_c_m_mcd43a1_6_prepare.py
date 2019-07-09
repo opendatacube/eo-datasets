@@ -1,17 +1,16 @@
-import re
 import datetime
-from pathlib import Path
+import re
 import uuid
+from pathlib import Path
 from typing import Iterable, Dict
+from xml.etree import ElementTree
 
 import click
 import rasterio
-from xml.etree import ElementTree
 
-from eodatasets2 import serialise
+from eodatasets3 import serialise
+from eodatasets3.utils import read_paths_from_file, ItemProvider
 from ..metadata.valid_region import valid_region
-from eodatasets2.utils import read_paths_from_file, ItemProvider
-
 
 MCD43A1_NS = uuid.UUID(hex="80dc431b-fc6c-4e6f-bf08-585eba1d8dc9")
 

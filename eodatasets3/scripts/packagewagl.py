@@ -25,13 +25,13 @@ from click import secho
 from dateutil.tz import tzutc
 from rasterio import DatasetReader
 
-from eodatasets2 import images, serialise
-from eodatasets2.assemble import DatasetAssembler
-from eodatasets2.images import GridSpec
-from eodatasets2.model import DatasetDoc
-from eodatasets2.serialise import loads_yaml
-from eodatasets2.ui import PathPath
-from eodatasets2.utils import default_utc
+from eodatasets3 import images, serialise
+from eodatasets3.assemble import DatasetAssembler
+from eodatasets3.images import GridSpec
+from eodatasets3.model import DatasetDoc
+from eodatasets3.serialise import loads_yaml
+from eodatasets3.ui import PathPath
+from eodatasets3.utils import default_utc
 
 _POSSIBLE_PRODUCTS = ("nbar", "nbart", "lambertian", "sbt")
 _DEFAULT_PRODUCTS = ("nbar", "nbart")

@@ -7,7 +7,7 @@ from typing import Tuple, Dict, Optional, Any, Mapping, Callable, Union
 
 import ciso8601
 
-from eodatasets2.utils import default_utc
+from eodatasets3.utils import default_utc
 
 
 def nest_properties(d: Mapping[str, Any], separator=":") -> Dict[str, Any]:

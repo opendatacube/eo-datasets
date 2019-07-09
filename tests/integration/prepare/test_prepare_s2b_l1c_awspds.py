@@ -1,8 +1,8 @@
 import zipfile
 from pathlib import Path
 
+from eodatasets3.prepare import s2_l1c_aws_pds_prepare
 from tests.integration.common import check_prepare_outputs
-from eodatasets2.prepare import s2_l1c_aws_pds_prepare
 
 L1_ZIPFILE_PATH: Path = (
     Path(__file__).parent.parent

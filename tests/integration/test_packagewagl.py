@@ -10,9 +10,9 @@ from rasterio import DatasetReader
 from rasterio.enums import Compression
 from rio_cogeo import cogeo
 
-import eodatasets2
-from eodatasets2.model import DatasetDoc
-from eodatasets2.scripts import packagewagl
+import eodatasets3
+from eodatasets3.model import DatasetDoc
+from eodatasets3.scripts import packagewagl
 from tests import assert_file_structure
 from tests.integration.common import assert_same_as_file
 
@@ -365,9 +365,9 @@ def test_minimal_dea_package(
                     "version": "0.5.3",
                 },
                 {
-                    "name": "eodatasets2",
+                    "name": "eodatasets3",
                     "url": "https://github.com/GeoscienceAustralia/eo-datasets",
-                    "version": eodatasets2.__version__,
+                    "version": eodatasets3.__version__,
                 },
             ],
         },

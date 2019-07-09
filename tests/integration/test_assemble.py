@@ -4,9 +4,9 @@ from uuid import UUID
 
 import numpy
 
-from eodatasets2.assemble import DatasetAssembler
-from eodatasets2.images import GridSpec
-from eodatasets2.model import DatasetDoc
+from eodatasets3.assemble import DatasetAssembler
+from eodatasets3.images import GridSpec
+from eodatasets3.model import DatasetDoc
 from tests import assert_file_structure
 from tests.integration.common import assert_same_as_file
 

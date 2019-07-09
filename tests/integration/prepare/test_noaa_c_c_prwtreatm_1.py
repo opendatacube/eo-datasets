@@ -1,12 +1,13 @@
 # pylint: disable=E501
 from functools import partial
+from pathlib import Path
 from pprint import pformat
+
 import yaml
 from deepdiff import DeepDiff
-from pathlib import Path
 
+from eodatasets3.prepare import noaa_c_c_prwtreatm_1_prepare
 from tests.integration.common import run_prepare_cli
-from eodatasets2.prepare import noaa_c_c_prwtreatm_1_prepare
 
 NCEP_PR_WTR_FILE: Path = Path(
     __file__
