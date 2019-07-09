@@ -24,6 +24,7 @@ from boltons.iterutils import get_path, PathAccessError
 from click import secho
 from dateutil.tz import tzutc
 from rasterio import DatasetReader
+from rasterio.enums import Resampling
 
 from eodatasets3 import images, serialise
 from eodatasets3.assemble import DatasetAssembler
@@ -89,7 +90,11 @@ def unpack_products(
             ]:
                 with do(f"Path {pathname!r}"):
                     dataset = h5group[pathname]
-                    p.write_measurement_h5(f"{product}:{_band_name(dataset)}", dataset)
+                    p.write_measurement_h5(
+                        f"{product}:{_band_name(dataset)}",
+                        dataset,
+                        overview_resampling=Resampling.average,
+                    )
 
             if (p.platform, product) in _THUMBNAILS:
                 red, green, blue = _THUMBNAILS[(p.platform, product)]

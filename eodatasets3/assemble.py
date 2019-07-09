@@ -316,47 +316,34 @@ class DatasetAssembler(EoFields):
         name: str,
         g: h5py.Dataset,
         overviews=images.DEFAULT_OVERVIEWS,
+        overview_resampling=Resampling.nearest,
         expand_valid_data=True,
     ):
         """
         Write a measurement by copying it from a hdf5 dataset.
         """
-        grid = images.GridSpec.from_h5(g)
-        out_path = self.names.measurement_file_path(self._work_path, name, "tif")
-
         if hasattr(g, "chunks"):
             data = g[:]
         else:
             data = g
 
-        nodata = g.attrs.get("no_data_value")
-
-        FileWrite.from_existing(g.shape).write_from_ndarray(
+        self._write_measurement(
+            name,
             data,
-            out_path,
-            geobox=grid,
-            nodata=nodata,
-            overview_resampling=Resampling.average,
+            images.GridSpec.from_h5(g),
+            self.names.measurement_file_path(self._work_path, name, "tif"),
+            expand_valid_data=expand_valid_data,
+            nodata=(g.attrs.get("no_data_value")),
+            overview_resampling=overview_resampling,
             overviews=overviews,
         )
-        self._measurements.record_image(
-            name,
-            grid,
-            out_path,
-            data,
-            nodata=nodata,
-            expand_valid_data=expand_valid_data,
-        )
-
-        # We checksum immediately as the file has *just* been written so it may still
-        # be in os/filesystem cache.
-        self._checksum.add_file(out_path)
 
     def write_measurement(
         self,
         name: str,
         path: Path,
         overviews=images.DEFAULT_OVERVIEWS,
+        overview_resampling=Resampling.nearest,
         expand_valid_data=True,
     ):
         """
@@ -366,7 +353,11 @@ class DatasetAssembler(EoFields):
         """
         with rasterio.open(path) as ds:
             self.write_measurement_rio(
-                name, ds, overviews=overviews, expand_valid_data=expand_valid_data
+                name,
+                ds,
+                overviews=overviews,
+                expand_valid_data=expand_valid_data,
+                overview_resampling=overview_resampling,
             )
 
     def write_measurement_rio(
@@ -374,36 +365,27 @@ class DatasetAssembler(EoFields):
         name: str,
         ds: DatasetReader,
         overviews=images.DEFAULT_OVERVIEWS,
+        overview_resampling=Resampling.nearest,
         expand_valid_data=True,
     ):
         """
         Write a measurement by reading it an open rasterio dataset
         """
-        grid = images.GridSpec.from_rio(ds)
-        out_path = self.names.measurement_file_path(self._work_path, name, "tif")
-
         if len(ds.indexes) != 1:
             raise NotImplementedError(
                 f"TODO: Multi-band images not currently implemented (have {len(ds.indexes)})"
             )
 
-        array = ds.read(1)
-        FileWrite.from_existing(grid.shape).write_from_ndarray(
-            array, out_path, grid, nodata=ds.nodata, overviews=overviews
-        )
-
-        self._measurements.record_image(
+        self._write_measurement(
             name,
-            grid,
-            out_path,
-            img=array,
-            nodata=ds.nodata,
+            ds.read(1),
+            images.GridSpec.from_rio(ds),
+            self.names.measurement_file_path(self._work_path, name, "tif"),
             expand_valid_data=expand_valid_data,
+            nodata=ds.nodata,
+            overview_resampling=overview_resampling,
+            overviews=overviews,
         )
-
-        # We checksum immediately as the file has *just* been written so it may still
-        # be in os/filesystem cache.
-        self._checksum.add_file(out_path)
 
     def write_measurement_numpy(
         self,
@@ -411,8 +393,8 @@ class DatasetAssembler(EoFields):
         array: numpy.ndarray,
         grid_spec: GridSpec,
         nodata=None,
-        overview_resampling=Resampling.nearest,
         overviews=images.DEFAULT_OVERVIEWS,
+        overview_resampling=Resampling.nearest,
         expand_valid_data=True,
     ):
         """
@@ -430,21 +412,41 @@ class DatasetAssembler(EoFields):
             )
 
         """
-        out_path = self.names.measurement_file_path(self._work_path, name, "tif")
-
-        FileWrite.from_existing(array.shape).write_from_ndarray(
+        self._write_measurement(
+            name,
             array,
+            grid_spec,
+            self.names.measurement_file_path(self._work_path, name, "tif"),
+            expand_valid_data=expand_valid_data,
+            nodata=nodata,
+            overview_resampling=overview_resampling,
+            overviews=overviews,
+        )
+
+    def _write_measurement(
+        self,
+        name: str,
+        data: numpy.ndarray,
+        grid: GridSpec,
+        out_path: Path,
+        expand_valid_data: bool,
+        nodata: int,
+        overview_resampling: Resampling,
+        overviews: Tuple[int, ...],
+    ):
+        FileWrite.from_existing(grid.shape).write_from_ndarray(
+            data,
             out_path,
-            geobox=grid_spec,
+            geobox=grid,
             nodata=nodata,
             overview_resampling=overview_resampling,
             overviews=overviews,
         )
         self._measurements.record_image(
             name,
-            grid_spec,
+            grid,
             out_path,
-            img=array,
+            data,
             nodata=nodata,
             expand_valid_data=expand_valid_data,
         )
