@@ -32,6 +32,7 @@ from eodatasets3.model import (
     resolve_absolute_offset,
     AccessoryDoc,
 )
+from eodatasets3.ui import PathPath
 
 try:
     # flake8 doesn't recognise type hints as usage
@@ -479,11 +480,11 @@ def yaml_checkums_correctly(output_yaml, data_path):
 @click.option(
     "--output",
     help="Write output into this directory",
-    required=True,
-    type=click.Path(exists=True, writable=True, dir_okay=True, file_okay=False),
+    required=False,
+    type=PathPath(exists=True, writable=True, dir_okay=True, file_okay=False),
 )
 @click.argument(
-    "datasets", type=click.Path(exists=True, readable=True, writable=False), nargs=-1
+    "datasets", type=PathPath(exists=True, readable=True, writable=False), nargs=-1
 )
 @click.option(
     "--newer-than",
@@ -503,16 +504,20 @@ def yaml_checkums_correctly(output_yaml, data_path):
     help="Embed absolute paths in the metadata document (not recommended)",
     default=False,
 )
-def main(output, datasets, check_checksum, force_absolute_paths, newer_than):
-    # type: (str, List[str], bool, bool, datetime) -> None
-
-    output = Path(output).absolute()
-
+def main(
+    output: Path,
+    datasets: List[Path],
+    check_checksum: bool,
+    force_absolute_paths: bool,
+    newer_than: datetime,
+):
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
     )
-
+    fixed_output = output
     for ds in datasets:
+        if not fixed_output:
+            output = ds.absolute().parent
         ds_path = _normalise_dataset_path(Path(ds).absolute())
         (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(ds)
         create_date = datetime.utcfromtimestamp(ctime)
@@ -525,7 +530,7 @@ def main(output, datasets, check_checksum, force_absolute_paths, newer_than):
             continue
 
         logging.info("Processing %s", ds_path)
-        output_yaml = output / "{}.yaml".format(_dataset_name(ds_path))
+        output_yaml = output / "{}.odc-metadata.yaml".format(_dataset_name(ds_path))
 
         logging.info("Output %s", output_yaml)
         if output_yaml.exists():
