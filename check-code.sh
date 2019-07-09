@@ -7,9 +7,9 @@ set -x
 pycodestyle tests --max-line-length 120
 
 # pylint -j 2 --reports no eodatasets3
-flake8 -j 2 eodatasets2
+flake8 -j 2 eodatasets3
 
 # Run tests, taking coverage.
 # Users can specify extra folders as arguments.
-py.test --cov eodatasets2 --durations=5 eodatasets2 tests $@
+py.test --cov eodatasets3 --durations=5 eodatasets3 tests $@
 
