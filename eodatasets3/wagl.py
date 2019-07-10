@@ -376,11 +376,6 @@ class Granule:
 
                 wagl_doc = loads_yaml(wagl_doc_field[()])
 
-                level1 = (
-                    serialise.from_path(level1_metadata_path)
-                    if level1_metadata_path.exists()
-                    else None
-                )
                 if not level1_metadata_path:
                     level1_tar_path = Path(
                         get_path(wagl_doc, ("source_datasets", "source_level1"))
@@ -388,12 +383,17 @@ class Granule:
                     level1_metadata_path = level1_tar_path.with_suffix(
                         ".odc-metadata.yaml"
                     )
+                level1 = (
+                    serialise.from_path(level1_metadata_path)
+                    if level1_metadata_path.exists()
+                    else None
+                )
 
                 fmask_image_path = fmask_image_path or wagl_hdf5.with_name(
                     f"{granule_name}.fmask.img"
                 )
                 if not fmask_image_path.exists():
-                    fmask_image_path = None
+                    raise ValueError(f"No fmask image found at {fmask_image_path}")
 
                 fmask_doc_path = fmask_doc_path or fmask_image_path.with_suffix(".yaml")
                 if not fmask_doc_path.exists():
