@@ -545,7 +545,12 @@ def _read_gqa_doc(p: DatasetAssembler, doc: Dict):
 
 def _read_fmask_doc(p: DatasetAssembler, doc: Dict):
     for name, value in doc["percent_class_distribution"].items():
-        p.properties[f"fmask:{name}"] = value
+        if name == "cloud":
+            # From Josh: fmask cloud cover trumps the L1 cloud cover.
+            del p.properties[f"eo:cloud_cover"]
+            p.properties[f"eo:cloud_cover"] = value
+        else:
+            p.properties[f"fmask:{name}"] = value
 
     _take_software_versions(p, doc)
     p.extend_user_metadata("fmask", doc)
