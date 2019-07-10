@@ -661,17 +661,18 @@ def _determine_maturity(acq_date: datetime, processed: datetime, wagl_doc: Dict)
     if acq_date < default_utc(datetime(2001, 1, 1)):
         return "final"
 
-    brdf_tiers = {k: v for k, v in ancillary_tiers.items() if k.startswith("brdf_")}
-    if not brdf_tiers:
+    if 'brdf' not in ancillary_tiers:
         # Perhaps this should be a warning, but I'm being strict until told otherwise.
         # (a warning is easy to ignore)
         raise ValueError(
-            f"No brdf tiers available. Got {list(ancillary_tiers.keys())!r}"
+            f"No brdf tier available. Got {list(ancillary_tiers.keys())!r}"
         )
+    brdf_tier = ancillary_tiers['brdf'].lower()
 
-    brdf_is_definitive = all([v.lower() == "definitive" for k, v in brdf_tiers.items()])
-
-    if brdf_is_definitive:
+    if "definitive" in brdf_tier:
         return "final"
-    else:
+    elif "fallback" in brdf_tier:
         return "interim"
+    else:
+        # This value should not occur for production data, only for experiments
+        return "user"
