@@ -26,7 +26,7 @@ from dateutil.tz import tzutc
 from rasterio import DatasetReader
 from rasterio.enums import Resampling
 
-from eodatasets3 import images, serialise, utils
+from eodatasets3 import images, serialise
 from eodatasets3.assemble import DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
@@ -37,12 +37,12 @@ POSSIBLE_PRODUCTS = ("nbar", "nbart", "lambertian", "sbt")
 DEFAULT_PRODUCTS = ("nbar", "nbart")
 
 _THUMBNAILS = {
-    ("landsat-5", "nbar"): ("nbar:band03", "nbar:band02", "nbar:band01"),
-    ("landsat-5", "nbart"): ("nbart:band03", "nbart:band02", "nbart:band01"),
-    ("landsat-7", "nbar"): ("nbar:band03", "nbar:band02", "nbar:band01"),
-    ("landsat-7", "nbart"): ("nbart:band03", "nbart:band02", "nbart:band01"),
-    ("landsat-8", "nbar"): ("nbar:band04", "nbar:band03", "nbar:band02"),
-    ("landsat-8", "nbart"): ("nbart:band04", "nbart:band03", "nbart:band02"),
+    ("landsat-5", "nbar"): ("nbar:red", "nbar:green", "nbar:blue"),
+    ("landsat-5", "nbart"): ("nbart:red", "nbart:green", "nbart:blue"),
+    ("landsat-7", "nbar"): ("nbar:red", "nbar:green", "nbar:blue"),
+    ("landsat-7", "nbart"): ("nbart:red", "nbart:green", "nbart:blue"),
+    ("landsat-8", "nbar"): ("nbar:red", "nbar:green", "nbar:blue"),
+    ("landsat-8", "nbart"): ("nbart:red", "nbart:green", "nbart:blue"),
 }
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
@@ -109,10 +109,10 @@ def _band_name(dataset: h5py.Dataset) -> str:
     # >>> print(repr((dataset.attrs["band_id"], dataset.attrs["band_name"], dataset.attrs["alias"])))
     # ('1', 'BAND-1', 'Blue')
 
-    band_name = dataset.attrs["band_id"]
+    band_name = dataset.attrs["alias"]
 
     # A purely numeric id needs to be formatted 'band01' according to naming conventions.
-    return utils.normalise_band_name(band_name)
+    return band_name.lower().replace("-", "_")
 
 
 def _unpack_observation_attributes(

@@ -281,8 +281,7 @@ def _prepare(
 
     bands = [
         MeasurementDoc(
-            name=utils.normalise_band_name(usgs_band_id),
-            alias=band_alias,
+            name=band_alias,
             path=mtl_doc["product_metadata"]["file_name_band_" + usgs_band_id.lower()],
         )
         for usgs_band_id, band_alias in band_mappings
