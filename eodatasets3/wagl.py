@@ -346,12 +346,20 @@ class Granule:
     gqa_doc: Optional[Dict] = None
 
     @classmethod
-    def for_path(cls, wagl_hdf5: Path, level1_metadata_path: Optional[Path] = None):
+    def for_path(
+        cls,
+        wagl_hdf5: Path,
+        level1_metadata_path: Optional[Path] = None,
+        fmask_image_path: Optional[Path] = None,
+        fmask_doc_path: Optional[Path] = None,
+        gqa_doc_path: Optional[Path] = None,
+    ):
         """
         Create granules by scanning the given hdf5 file.
 
-        It will expect the common naming conventions for fmask/gqa/etc, and read
-        the level1 path from the wagl metadata.
+        Optionally specify additional files and level1 path.
+
+        If they are not specified it look for them using WAGL's output naming conventions.
         """
         if not wagl_hdf5.exists():
             raise ValueError(f"Input hdf5 doesn't exist {wagl_hdf5}")
@@ -381,19 +389,23 @@ class Granule:
                         ".odc-metadata.yaml"
                     )
 
-                fmask_image = wagl_hdf5.with_name(f"{granule_name}.fmask.img")
-                if not fmask_image.exists():
-                    raise ValueError(f"Fmask not found {fmask_image}")
+                fmask_image_path = fmask_image_path or wagl_hdf5.with_name(
+                    f"{granule_name}.fmask.img"
+                )
+                if not fmask_image_path.exists():
+                    fmask_image_path = None
 
-                fmask_doc_path = fmask_image.with_suffix(".yaml")
+                fmask_doc_path = fmask_doc_path or fmask_image_path.with_suffix(".yaml")
                 if not fmask_doc_path.exists():
-                    raise ValueError(f"Fmask doc not found {fmask_doc_path}")
+                    raise ValueError(f"No fmask found at {fmask_doc_path}")
                 with fmask_doc_path.open("r") as fl:
                     fmask_doc = loads_yaml(fl)
 
-                gqa_doc_path = wagl_hdf5.with_name(f"{granule_name}.gqa.yaml")
+                gqa_doc_path = gqa_doc_path or wagl_hdf5.with_name(
+                    f"{granule_name}.gqa.yaml"
+                )
                 if not gqa_doc_path.exists():
-                    raise ValueError(f"GQA not found {gqa_doc_path}")
+                    raise ValueError(f"No gqa found at {gqa_doc_path}")
                 with gqa_doc_path.open("r") as fl:
                     gqa_doc = loads_yaml(fl)
 
@@ -403,7 +415,7 @@ class Granule:
                     wagl_metadata=wagl_doc,
                     source_level1_metadata=level1,
                     fmask_doc=fmask_doc,
-                    fmask_image=fmask_image,
+                    fmask_image=fmask_image_path,
                     gqa_doc=gqa_doc,
                 )
 
