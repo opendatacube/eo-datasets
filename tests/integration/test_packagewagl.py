@@ -57,23 +57,23 @@ def test_minimal_dea_package(
             "ga_ls8c_ard_3-0-0_092084_2016-06-28_final.odc-metadata.yaml": "",
             "ga_ls8c_ard_3-0-0_092084_2016-06-28_final.proc-info.yaml": "",
             "ga_ls8c_ard_3-0-0_092084_2016-06-28_final.sha1": "",
-            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band01.tif": "",
-            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band02.tif": "",
-            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band03.tif": "",
-            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band04.tif": "",
-            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band05.tif": "",
-            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band06.tif": "",
-            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band07.tif": "",
-            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band08.tif": "",
+            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_blue.tif": "",
+            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_coastal-aerosol.tif": "",
+            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_green.tif": "",
+            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_nir.tif": "",
+            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_panchromatic.tif": "",
+            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_red.tif": "",
+            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_swir-1.tif": "",
+            "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_swir-2.tif": "",
             "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_thumbnail.jpg": "",
-            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band01.tif": "",
-            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band02.tif": "",
-            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band03.tif": "",
-            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band04.tif": "",
-            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band05.tif": "",
-            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band06.tif": "",
-            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band07.tif": "",
-            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band08.tif": "",
+            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_blue.tif": "",
+            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_coastal-aerosol.tif": "",
+            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_green.tif": "",
+            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_nir.tif": "",
+            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_panchromatic.tif": "",
+            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_red.tif": "",
+            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_swir-1.tif": "",
+            "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_swir-2.tif": "",
             "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_thumbnail.jpg": "",
             "ga_ls8c_oa_3-0-0_092084_2016-06-28_final_azimuthal-exiting.tif": "",
             "ga_ls8c_oa_3-0-0_092084_2016-06-28_final_azimuthal-incident.tif": "",
@@ -133,7 +133,7 @@ def test_minimal_dea_package(
                 "type": "Polygon",
             },
             "grids": {
-                "band08": {
+                "panchromatic": {
                     "shape": [156, 155],
                     "transform": [
                         1500.096_774_193_548_3,
@@ -211,55 +211,55 @@ def test_minimal_dea_package(
                 "odc:reference_code": "092084",
             },
             "measurements": {
-                "nbar_band01": {
-                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band01.tif"
+                "nbar_blue": {
+                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_blue.tif"
                 },
-                "nbar_band02": {
-                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band02.tif"
+                "nbar_coastal_aerosol": {
+                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_coastal-aerosol.tif"
                 },
-                "nbar_band03": {
-                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band03.tif"
+                "nbar_green": {
+                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_green.tif"
                 },
-                "nbar_band04": {
-                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band04.tif"
+                "nbar_nir": {
+                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_nir.tif"
                 },
-                "nbar_band05": {
-                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band05.tif"
+                "nbar_panchromatic": {
+                    "grid": "panchromatic",
+                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_panchromatic.tif",
                 },
-                "nbar_band06": {
-                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band06.tif"
+                "nbar_red": {
+                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_red.tif"
                 },
-                "nbar_band07": {
-                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band07.tif"
+                "nbar_swir_1": {
+                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_swir-1.tif"
                 },
-                "nbar_band08": {
-                    "grid": "band08",
-                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_band08.tif",
+                "nbar_swir_2": {
+                    "path": "ga_ls8c_nbar_3-0-0_092084_2016-06-28_final_swir-2.tif"
                 },
-                "nbart_band01": {
-                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band01.tif"
+                "nbart_blue": {
+                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_blue.tif"
                 },
-                "nbart_band02": {
-                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band02.tif"
+                "nbart_coastal_aerosol": {
+                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_coastal-aerosol.tif"
                 },
-                "nbart_band03": {
-                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band03.tif"
+                "nbart_green": {
+                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_green.tif"
                 },
-                "nbart_band04": {
-                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band04.tif"
+                "nbart_nir": {
+                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_nir.tif"
                 },
-                "nbart_band05": {
-                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band05.tif"
+                "nbart_panchromatic": {
+                    "grid": "panchromatic",
+                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_panchromatic.tif",
                 },
-                "nbart_band06": {
-                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band06.tif"
+                "nbart_red": {
+                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_red.tif"
                 },
-                "nbart_band07": {
-                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band07.tif"
+                "nbart_swir_1": {
+                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_swir-1.tif"
                 },
-                "nbart_band08": {
-                    "grid": "band08",
-                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_band08.tif",
+                "nbart_swir_2": {
+                    "path": "ga_ls8c_nbart_3-0-0_092084_2016-06-28_final_swir-2.tif"
                 },
                 "oa_azimuthal_exiting": {
                     "path": "ga_ls8c_oa_3-0-0_092084_2016-06-28_final_azimuthal-exiting.tif"
@@ -381,7 +381,7 @@ def test_minimal_dea_package(
         assert cogeo.cog_validate(image), f"Failed COG validation: {image}"
 
     # Check one of the images explicitly.
-    [image] = expected_folder.rglob("*_nbar_*_band08.tif")
+    [image] = expected_folder.rglob("*_nbar_*_panchromatic.tif")
     with rasterio.open(image) as d:
         d: DatasetReader
         assert d.count == 1, "Expected one band"

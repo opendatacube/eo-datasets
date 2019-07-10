@@ -170,58 +170,58 @@ def expected_l1_ls8_folder(
             },
         },
         "measurements": {
-            "band01": {
+            "coastal_aerosol": {
                 "path": offset(
                     l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B1.TIF"
                 )
             },
-            "band02": {
+            "blue": {
                 "path": offset(
                     l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B2.TIF"
                 )
             },
-            "band03": {
+            "green": {
                 "path": offset(
                     l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B3.TIF"
                 )
             },
-            "band04": {
+            "red": {
                 "path": offset(
                     l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B4.TIF"
                 )
             },
-            "band05": {
+            "nir": {
                 "path": offset(
                     l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B5.TIF"
                 )
             },
-            "band06": {
+            "swir1": {
                 "path": offset(
                     l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B6.TIF"
                 )
             },
-            "band07": {
+            "swir2": {
                 "path": offset(
                     l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B7.TIF"
                 )
             },
-            "band08": {
+            "panchromatic": {
                 "grid": "panchromatic",
                 "path": offset(
                     l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B8.TIF"
                 ),
             },
-            "band09": {
+            "cirrus": {
                 "path": offset(
                     l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B9.TIF"
                 )
             },
-            "band10": {
+            "lwir1": {
                 "path": offset(
                     l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B10.TIF"
                 )
             },
-            "band11": {
+            "lwir2": {
                 "path": offset(
                     l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B11.TIF"
                 )
@@ -309,17 +309,17 @@ def l1_ls7_tarball_md_expected(
             }
         },
         "measurements": {
-            "band01": {
+            "blue": {
                 "path": offset(
                     l1_ls7_tarball, "LE07_L1TP_104078_20130429_20161124_01_T1_B1.TIF"
                 )
             },
-            "band02": {
+            "green": {
                 "path": offset(
                     l1_ls7_tarball, "LE07_L1TP_104078_20130429_20161124_01_T1_B2.TIF"
                 )
             },
-            "band04": {
+            "nir": {
                 "path": offset(
                     l1_ls7_tarball, "LE07_L1TP_104078_20130429_20161124_01_T1_B4.TIF"
                 )
@@ -329,17 +329,17 @@ def l1_ls7_tarball_md_expected(
                     l1_ls7_tarball, "LE07_L1TP_104078_20130429_20161124_01_T1_BQA.TIF"
                 )
             },
-            "band03": {
+            "red": {
                 "path": offset(
                     l1_ls7_tarball, "LE07_L1TP_104078_20130429_20161124_01_T1_B3.TIF"
                 )
             },
-            "band05": {
+            "swir1": {
                 "path": offset(
                     l1_ls7_tarball, "LE07_L1TP_104078_20130429_20161124_01_T1_B5.TIF"
                 )
             },
-            "band07": {
+            "swir2": {
                 "path": offset(
                     l1_ls7_tarball, "LE07_L1TP_104078_20130429_20161124_01_T1_B7.TIF"
                 )
@@ -424,32 +424,32 @@ def l1_ls5_tarball_md_expected(
             }
         },
         "measurements": {
-            "band01": {
+            "blue": {
                 "path": offset(
                     l1_ls5_tarball, "LT05_L1TP_090085_19970406_20161231_01_T1_B1.TIF"
                 )
             },
-            "band02": {
+            "green": {
                 "path": offset(
                     l1_ls5_tarball, "LT05_L1TP_090085_19970406_20161231_01_T1_B2.TIF"
                 )
             },
-            "band03": {
+            "red": {
                 "path": offset(
                     l1_ls5_tarball, "LT05_L1TP_090085_19970406_20161231_01_T1_B3.TIF"
                 )
             },
-            "band04": {
+            "nir": {
                 "path": offset(
                     l1_ls5_tarball, "LT05_L1TP_090085_19970406_20161231_01_T1_B4.TIF"
                 )
             },
-            "band05": {
+            "swir1": {
                 "path": offset(
                     l1_ls5_tarball, "LT05_L1TP_090085_19970406_20161231_01_T1_B5.TIF"
                 )
             },
-            "band07": {
+            "swir2": {
                 "path": offset(
                     l1_ls5_tarball, "LT05_L1TP_090085_19970406_20161231_01_T1_B7.TIF"
                 )
