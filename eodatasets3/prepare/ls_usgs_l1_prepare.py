@@ -57,12 +57,12 @@ LANDSAT_8_BANDS = [
     ("3", "green"),
     ("4", "red"),
     ("5", "nir"),
-    ("6", "swir1"),
-    ("7", "swir2"),
+    ("6", "swir_1"),
+    ("7", "swir_2"),
     ("8", "panchromatic"),
     ("9", "cirrus"),
-    ("10", "lwir1"),
-    ("11", "lwir2"),
+    ("10", "lwir_1"),
+    ("11", "lwir_2"),
     ("QUALITY", "quality"),
 ]
 
@@ -74,8 +74,8 @@ LANDSAT_BANDS = [
     ("2", "green"),
     ("3", "red"),
     ("4", "nir"),
-    ("5", "swir1"),
-    ("7", "swir2"),
+    ("5", "swir_1"),
+    ("7", "swir_2"),
     ("QUALITY", "quality"),
 ]
 
