@@ -22,7 +22,7 @@ from shapely.geometry import Polygon
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
-from eodatasets3 import verify, serialise
+from eodatasets3 import verify, serialise, utils
 from eodatasets3.model import (
     DatasetDoc,
     ProductDoc,
@@ -180,8 +180,7 @@ def get_satellite_band_names(sat, instrument, file_name):
     return sat_img
 
 
-def get_mtl_content(acquisition_path):
-    # type: (Path) -> Tuple[Dict, str]
+def get_mtl_content(acquisition_path: Path) -> Tuple[Dict, str]:
     """
     Find MTL file; return it parsed as a dict with its filename relative to the acquisition path.
     """
@@ -239,7 +238,7 @@ def _file_size_bytes(path: Path) -> int:
     return sum(_file_size_bytes(p) for p in path.iterdir())
 
 
-def prepare_dataset(base_path: Path, write_checksum: bool = True) -> Optional[Dict]:
+def prepare_dataset(base_path: Path, write_checksum: bool = False) -> Optional[Dict]:
     mtl_doc, mtl_filename = get_mtl_content(base_path)
 
     if not mtl_doc:
@@ -416,7 +415,7 @@ def _prepare(
     return d
 
 
-def bbox(shape: BaseGeometry, crs: str):
+def bbox(shape: BaseGeometry, crs: str) -> Tuple[float, float, float, float]:
     tranform_wrs84 = partial(
         pyproj.transform, pyproj.Proj(init=crs), pyproj.Proj(init="epsg:4326")
     )
@@ -427,8 +426,7 @@ def _remove_nones(d: Dict) -> Dict:
     return {k: v for (k, v) in d.items() if v is not None}
 
 
-def _checksum_path(base_path):
-    # type: (Path) -> Path
+def _checksum_path(base_path: Path) -> Path:
     """
     Get the checksum file path for the given dataset.
 
@@ -443,8 +441,7 @@ def _checksum_path(base_path):
         return base_path / "package.sha1"
 
 
-def relative_path(basepath, offset):
-    # type: (Path, Path) -> Path
+def relative_path(basepath: Path, offset: Path) -> Path:
     """
     Get relative path (similar to web browser conventions)
     """
@@ -454,7 +451,7 @@ def relative_path(basepath, offset):
     return offset.relative_to(basepath)
 
 
-def yaml_checkums_correctly(output_yaml, data_path):
+def yaml_checkums_correctly(output_yaml: Path, data_path: Path) -> bool:
     with output_yaml.open() as yaml_f:
         logging.info("Running checksum comparison")
         # It can match any dataset in the yaml.
@@ -478,8 +475,8 @@ def yaml_checkums_correctly(output_yaml, data_path):
                     [Path for dataset as : /home/some_space_available_folder/]"""
 )
 @click.option(
-    "--output",
-    help="Write output into this directory",
+    "--output-base",
+    help="Write output into this directory instead of with the dataset",
     required=False,
     type=PathPath(exists=True, writable=True, dir_okay=True, file_okay=False),
 )
@@ -505,7 +502,7 @@ def yaml_checkums_correctly(output_yaml, data_path):
     default=False,
 )
 def main(
-    output: Path,
+    output_base: Optional[Path],
     datasets: List[Path],
     check_checksum: bool,
     force_absolute_paths: bool,
@@ -514,10 +511,15 @@ def main(
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
     )
-    fixed_output = output
+
     for ds in datasets:
-        if not fixed_output:
+        if output_base:
+            output = output_base / utils.subfolderise(_dataset_region_code(ds))
+            output.mkdir(parents=True, exist_ok=True)
+        else:
+            # Alongside the dataset itself.
             output = ds.absolute().parent
+
         ds_path = _normalise_dataset_path(Path(ds).absolute())
         (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(ds)
         create_date = datetime.utcfromtimestamp(ctime)
@@ -543,17 +545,9 @@ def main(
 
         prepare_and_write(ds_path, output_yaml, use_absolute_paths=force_absolute_paths)
 
-    # delete intermediate MTL files for archive datasets in output folder
-    output_mtls = list(output.rglob("*MTL.txt"))
-    for mtl_path in output_mtls:
-        try:
-            mtl_path.unlink()
-        except OSError:
-            pass
-
 
 def prepare_and_write(
-    ds_path, output_yaml_path, use_absolute_paths=False, write_checksum=True
+    ds_path, output_yaml_path, use_absolute_paths=False, write_checksum=False
 ):
     # type: (Path, Path, bool, bool) -> None
 
@@ -634,8 +628,7 @@ def normalise_nci_symlinks(input_path: Path) -> Path:
     return Path("/g/data/" + offset)
 
 
-def _dataset_name(ds_path):
-    # type: (Path) -> str
+def _dataset_name(ds_path: Path) -> str:
     """
     >>> _dataset_name(Path("example/LE07_L1GT_104078_20131209_20161119_01_T1.tar.gz"))
     'LE07_L1GT_104078_20131209_20161119_01_T1'
@@ -646,6 +639,18 @@ def _dataset_name(ds_path):
     """
     # This is a little simpler than before :)
     return ds_path.stem.split(".")[0]
+
+
+def _dataset_region_code(ds_path: Path) -> str:
+    """
+    >>> _dataset_region_code(Path("example/LE07_L1GT_104078_20131209_20161119_01_T1.tar.gz"))
+    '104078'
+    >>> _dataset_region_code(Path("example/LE07_L1GT_104078_20131209_20161119_01_T1.tar"))
+    '104078'
+    >>> _dataset_region_code(Path("example/LE07_L1GT_104078_20131209_20161119_01_T2"))
+    '104078'
+    """
+    return _dataset_name(ds_path).split("_")[2]
 
 
 if __name__ == "__main__":

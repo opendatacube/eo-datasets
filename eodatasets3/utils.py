@@ -62,3 +62,26 @@ def default_utc(d: datetime):
     if d.tzinfo is None:
         return d.replace(tzinfo=tz.tzutc())
     return d
+
+
+def subfolderise(code: str):
+    """
+    Cut a string folder name into subfolders if long.
+
+    (Forward slashes only, as it assumes you're using Pathlib's normalisation)
+
+    >>> subfolderise('089090')
+    '089/090'
+    >>> # Prefer fewer folders in first level.
+    >>> subfolderise('12345')
+    '12/345'
+    >>> subfolderise('123456')
+    '123/456'
+    >>> subfolderise('1234567')
+    '123/4567'
+    >>> subfolderise('12')
+    '12'
+    """
+    if len(code) > 2:
+        return "/".join((code[: len(code) // 2], code[len(code) // 2 :]))
+    return code

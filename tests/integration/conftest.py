@@ -1,3 +1,4 @@
+import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Callable
@@ -34,18 +35,27 @@ def relative_offset(base, offset):
 
 
 @pytest.fixture
-def l1_ls8_folder() -> Path:
-    return L8_INPUT_PATH
+def l1_ls8_folder(tmp_path: Path) -> Path:
+    return _make_copy(L8_INPUT_PATH, tmp_path)
 
 
 @pytest.fixture
-def l1_ls7_tarball() -> Path:
-    return L71GT_TARBALL_PATH
+def l1_ls7_tarball(tmp_path: Path) -> Path:
+    return _make_copy(L71GT_TARBALL_PATH, tmp_path)
 
 
 @pytest.fixture
-def l1_ls5_tarball() -> Path:
-    return L5_TARBALL_PATH
+def l1_ls5_tarball(tmp_path: Path) -> Path:
+    return _make_copy(L5_TARBALL_PATH, tmp_path)
+
+
+def _make_copy(input_path, tmp_path):
+    our_input = tmp_path / input_path.name
+    if input_path.is_file():
+        shutil.copy(input_path, our_input)
+    else:
+        shutil.copytree(input_path, our_input)
+    return our_input
 
 
 @pytest.fixture

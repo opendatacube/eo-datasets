@@ -13,6 +13,7 @@ from rio_cogeo import cogeo
 import eodatasets3
 from eodatasets3 import wagl
 from eodatasets3.model import DatasetDoc
+from eodatasets3.scripts import packagewagl
 from tests import assert_file_structure
 from tests.integration.common import assert_same_as_file
 
@@ -34,7 +35,7 @@ def test_minimal_dea_package(
 
     with pytest.warns(None) as warning_record:
         res = CliRunner().invoke(
-            wagl.run,
+            packagewagl.run,
             map(str, (WAGL_INPUT_PATH, "--level1", L1_METADATA_PATH, "--output", out)),
             catch_exceptions=False,
         )
