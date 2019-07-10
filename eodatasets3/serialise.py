@@ -252,6 +252,11 @@ def _to_doc(d: DatasetDoc, with_formatting: bool):
             for grid in doc["grids"].values():
                 _use_compact_format(grid, "shape", "transform")
 
+        # Add user-readable names for measurements as a comment if present.
+        for band_name, band_doc in d.measurements.items():
+            if band_doc.alias and band_name.lower() != band_doc.alias.lower():
+                doc["measurements"].yaml_add_eol_comment(band_doc.alias, band_name)
+
         _add_space_before(
             doc, "id", "crs", "properties", "measurements", "accessories", "lineage"
         )

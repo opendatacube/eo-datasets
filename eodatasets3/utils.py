@@ -85,3 +85,24 @@ def subfolderise(code: str):
     if len(code) > 2:
         return "/".join((code[: len(code) // 2], code[len(code) // 2 :]))
     return code
+
+
+def normalise_band_name(band_name: str) -> str:
+    """
+    Normalise band names by our norms.
+
+    Numeric bands have a 'band' prefix, others are lowercase with
+
+    >>> normalise_band_name('4')
+    'band04'
+    >>> normalise_band_name('QUALITY')
+    'quality'
+    >>> normalise_band_name('Azimuthal-Angles')
+    'azimuthal_angles'
+    """
+    try:
+        number = int(band_name)
+        band_name = f"band{number:02}"
+    except ValueError:
+        pass
+    return band_name.lower().replace("-", "_")

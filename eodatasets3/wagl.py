@@ -26,7 +26,7 @@ from dateutil.tz import tzutc
 from rasterio import DatasetReader
 from rasterio.enums import Resampling
 
-from eodatasets3 import images, serialise
+from eodatasets3 import images, serialise, utils
 from eodatasets3.assemble import DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
@@ -112,13 +112,7 @@ def _band_name(dataset: h5py.Dataset) -> str:
     band_name = dataset.attrs["band_id"]
 
     # A purely numeric id needs to be formatted 'band01' according to naming conventions.
-    try:
-        number = int(dataset.attrs["band_id"])
-        band_name = f"band{number:02}"
-    except ValueError:
-        pass
-
-    return band_name.lower().replace("-", "_")
+    return utils.normalise_band_name(band_name)
 
 
 def _unpack_observation_attributes(
