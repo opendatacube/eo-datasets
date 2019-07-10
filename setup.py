@@ -24,7 +24,7 @@ setup(
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     packages=find_packages(exclude=("tests", "tests.*")),
-    package_data={"": ["*.json"]},
+    package_data={"": ["*.json", "*.yaml"]},
     install_requires=[
         "attrs",
         "boltons",
