@@ -383,11 +383,12 @@ class Granule:
                     level1_metadata_path = level1_tar_path.with_suffix(
                         ".odc-metadata.yaml"
                     )
-                level1 = (
-                    serialise.from_path(level1_metadata_path)
-                    if level1_metadata_path.exists()
-                    else None
-                )
+                if not level1_metadata_path.exists():
+                    raise ValueError(
+                        f"No level1 metadata found at {level1_metadata_path}"
+                    )
+
+                level1 = serialise.from_path(level1_metadata_path)
 
                 fmask_image_path = fmask_image_path or wagl_hdf5.with_name(
                     f"{granule_name}.fmask.img"
