@@ -47,17 +47,16 @@ def test_minimal_dea_package(
         p.write_thumbnail("ones", "ones", "blue")
 
         # p.done() will write the whole dataset into place. (renaming its temp directory)
-        dataset_id, dataset_path = p.done()
+        dataset_id, metadata_path = p.done()
 
     assert isinstance(dataset_id, UUID), "Expected a random UUID to be assigned"
 
-    metadata_name = "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml"
     out = tmp_path / "ga_ls8c_ones_3/090/084/2016/01/21"
-    assert out == dataset_path
+    assert out == metadata_path.parent
     assert_file_structure(
         out,
         {
-            metadata_name: "",
+            "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml": "",
             "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif": "",
             "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_ones.tif": "",
             "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_thumbnail.jpg": "",
@@ -153,5 +152,5 @@ def test_minimal_dea_package(
             },
             "lineage": {"level1": ["a780754e-a884-58a7-9ac0-df518a67f59d"]},
         },
-        generated_file=out / metadata_name,
+        generated_file=metadata_path,
     )

@@ -26,7 +26,7 @@ from dateutil.tz import tzutc
 from rasterio import DatasetReader
 from rasterio.enums import Resampling
 
-from eodatasets3 import images, serialise
+from eodatasets3 import images, serialise, utils
 from eodatasets3.assemble import DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
@@ -93,6 +93,7 @@ def _unpack_products(
                         f"{product}:{_band_name(dataset)}",
                         dataset,
                         overview_resampling=Resampling.average,
+                        file_id=_file_id(dataset),
                     )
 
             if (p.platform, product) in _THUMBNAILS:
@@ -104,6 +105,8 @@ def _unpack_products(
 def _band_name(dataset: h5py.Dataset) -> str:
     """
     Devise a band name for the given dataset (using its attributes)
+
+    Eg. 'coastal_aerosol'
     """
     # What we have to work with:
     # >>> print(repr((dataset.attrs["band_id"], dataset.attrs["band_name"], dataset.attrs["alias"])))
@@ -113,6 +116,22 @@ def _band_name(dataset: h5py.Dataset) -> str:
 
     # A purely numeric id needs to be formatted 'band01' according to naming conventions.
     return band_name.lower().replace("-", "_")
+
+
+def _file_id(dataset: h5py.Dataset) -> str:
+    """
+    Devise a file id for the given dataset (using its attributes)
+
+    Eg. 'band01'
+    """
+    # What we have to work with:
+    # >>> print(repr((dataset.attrs["band_id"], dataset.attrs["band_name"], dataset.attrs["alias"])))
+    # ('1', 'BAND-1', 'Blue')
+
+    band_name = dataset.attrs["band_id"]
+
+    # A purely numeric id needs to be formatted 'band01' according to naming conventions.
+    return utils.normalise_band_name(band_name)
 
 
 def _unpack_observation_attributes(
@@ -464,7 +483,7 @@ def package(
         Defaults to all products.
 
     :return:
-        The output dataset UUID, Path
+        The dataset UUID and output metadata path
     """
     included_products = tuple(s.lower() for s in included_products)
 

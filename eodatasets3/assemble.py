@@ -318,6 +318,7 @@ class DatasetAssembler(EoFields):
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.nearest,
         expand_valid_data=True,
+        file_id=None,
     ):
         """
         Write a measurement by copying it from a hdf5 dataset.
@@ -331,7 +332,9 @@ class DatasetAssembler(EoFields):
             name,
             data,
             images.GridSpec.from_h5(g),
-            self.names.measurement_file_path(self._work_path, name, "tif"),
+            self.names.measurement_file_path(
+                self._work_path, name, "tif", file_id=file_id
+            ),
             expand_valid_data=expand_valid_data,
             nodata=(g.attrs.get("no_data_value")),
             overview_resampling=overview_resampling,
@@ -345,6 +348,7 @@ class DatasetAssembler(EoFields):
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.nearest,
         expand_valid_data=True,
+        file_id: str = None,
     ):
         """
         Write a measurement by copying it from a file path.
@@ -358,6 +362,7 @@ class DatasetAssembler(EoFields):
                 overviews=overviews,
                 expand_valid_data=expand_valid_data,
                 overview_resampling=overview_resampling,
+                file_id=file_id,
             )
 
     def write_measurement_rio(
@@ -367,6 +372,7 @@ class DatasetAssembler(EoFields):
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.nearest,
         expand_valid_data=True,
+        file_id=None,
     ):
         """
         Write a measurement by reading it an open rasterio dataset
@@ -380,7 +386,9 @@ class DatasetAssembler(EoFields):
             name,
             ds.read(1),
             images.GridSpec.from_rio(ds),
-            self.names.measurement_file_path(self._work_path, name, "tif"),
+            self.names.measurement_file_path(
+                self._work_path, name, "tif", file_id=file_id
+            ),
             expand_valid_data=expand_valid_data,
             nodata=ds.nodata,
             overview_resampling=overview_resampling,
@@ -396,6 +404,7 @@ class DatasetAssembler(EoFields):
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.nearest,
         expand_valid_data=True,
+        file_id: str = None,
     ):
         """
         Write a measurement from a numpy array and grid spec.
@@ -416,7 +425,9 @@ class DatasetAssembler(EoFields):
             name,
             array,
             grid_spec,
-            self.names.measurement_file_path(self._work_path, name, "tif"),
+            self.names.measurement_file_path(
+                self._work_path, name, "tif", file_id=file_id
+            ),
             expand_valid_data=expand_valid_data,
             nodata=nodata,
             overview_resampling=overview_resampling,
@@ -515,6 +526,8 @@ class DatasetAssembler(EoFields):
         location if it is complete.
 
         IncompleteDatasetError is raised if any critical metadata is incomplete.
+
+        Returns the final path to the dataset metadata file.
         """
         self.note_software_version(
             "eodatasets3",
@@ -612,7 +625,11 @@ class DatasetAssembler(EoFields):
                     f"Unexpected exists behaviour: {self._exists_behaviour}"
                 )
 
-        return dataset.id, self.destination_folder
+        resulting_metadata_path = self.names.metadata_path(
+            self.destination_folder, suffix="odc-metadata.yaml"
+        )
+        assert resulting_metadata_path.exists()
+        return dataset.id, resulting_metadata_path
 
     def write_thumbnail(self, red: str, green: str, blue: str, kind: str = None):
         """
