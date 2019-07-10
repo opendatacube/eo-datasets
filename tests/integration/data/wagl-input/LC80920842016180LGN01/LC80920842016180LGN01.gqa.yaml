@@ -39,6 +39,6 @@ residual:
 software_versions:
     eugl:
         repo_url: https://github.com/OpenDataCubePipelines/eugl.git
-        version: 0.1.0+38.gb1d1231.dirty
+        version: 0.0.2+69.gb1d1231
     gverify:
         version: v0.25c
