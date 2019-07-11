@@ -425,47 +425,50 @@ def test_maturity_calculation():
     wagl_doc = {
         "ancillary": {
             "aerosol": {
-                "CLASS": "SCALAR",
-                "VERSION": "0.1",
-                "id": ["281203f2-aeb2-573c-8207-5bdad109d03f"],
+                "id": ["99d73c48-9985-51d2-9639-d37bcdfe119e"],
                 "tier": "AATSR_CMP_MONTH",
-                "value": 0.047_768_376_767_635_345,
+                "value": 0.047_813_605_517_148_97,
             },
-            "brdf_alpha_1_band_2": {
+            "brdf": {
+                "alpha_1": {
+                    "band_1": 0.407_471_513_826_581_4,
+                    "band_2": 0.407_472_440_438_251_7,
+                    "band_3": 0.564_374_828_124_185,
+                    "band_4": 0.452_550_357_394_962_35,
+                    "band_5": 0.720_394_875_348_492_4,
+                    "band_6": 0.475_077_458_430_413_66,
+                    "band_7": 0.549_934_518_094_732,
+                },
+                "alpha_2": {
+                    "band_1": 0.177_715_841_252_848_28,
+                    "band_2": 0.177_716_091_422_247_15,
+                    "band_3": 0.136_703_039_045_401_32,
+                    "band_4": 0.167_629_648_004_969_63,
+                    "band_5": 0.090_148_975_875_461_32,
+                    "band_6": 0.121_059_126_731_143_88,
+                    "band_7": 0.181_073_714_539_622_23,
+                },
                 "id": [
-                    "71785790-5d66-59c8-beed-12d35d0811ac",
-                    "6093891a-a242-5545-a666-662a2c29aead",
+                    "2e95bdec-42e4-50a2-9a4c-1ea970e2696d",
+                    "d02e1c58-7379-5c2d-a080-995838550d0d",
                 ],
                 "tier": "DEFINITIVE",
-                "value": 0.354_201_642_899_772_8,
-            },
-            "brdf_alpha_2_band_2": {
-                "id": [
-                    "71785790-5d66-59c8-beed-12d35d0811ac",
-                    "6093891a-a242-5545-a666-662a2c29aead",
-                ],
-                "tier": "DEFINITIVE",
-                "value": 0.192_742_504_203_452_96,
             },
             "elevation": {
-                "CLASS": "SCALAR",
-                "VERSION": "0.1",
-                "id": ["e75ac77d-1ed0-55a5-888b-9ae48080eae9"],
-                "value": 0.549_334_594_726_562_5,
+                "id": [
+                    "8ad73086-72cf-561a-aa0f-1e3c64d53384",
+                    "e75ac77d-1ed0-55a5-888b-9ae48080eae9",
+                ]
             },
             "ozone": {
-                "CLASS": "SCALAR",
-                "VERSION": "0.1",
-                "id": ["c3953cf0-93a0-5217-9c2e-babc16fef3be"],
+                "id": ["83914de1-c12e-5035-af8d-e2dc1baa54d4"],
                 "tier": "DEFINITIVE",
-                "value": 0.263,
+                "value": 0.295,
             },
             "water_vapour": {
-                "CLASS": "SCALAR",
-                "VERSION": "0.1",
-                "id": ["71950fbf-8aeb-56fc-bbd7-41e2046f22f2"],
+                "id": ["e68035cd-1cd3-57fc-9b0e-2bf710a3df87"],
                 "tier": "DEFINITIVE",
-                "value": 1.010_000_038_146_972_7,
+                "value": 0.490_000_009_536_743_16,
             },
         }
     }
@@ -519,7 +522,7 @@ def test_maturity_calculation():
     wagl_doc["ancillary"]["water_vapour"]["tier"] = "DEFINITIVE"
 
     # Fallback BRDF (when at least one is fallback)
-    wagl_doc["ancillary"]["brdf_alpha_2_band_2"]["tier"] = "FALLBACK_DEFAULT"
+    wagl_doc["ancillary"]["brdf"]["tier"] = "FALLBACK_DEFAULT"
     assert (
         wagl._determine_maturity(normal_acq_date, normal_proc_date, wagl_doc)
         == "interim"
