@@ -22,7 +22,6 @@ import numpy
 import rasterio
 from boltons.iterutils import get_path, PathAccessError
 from click import secho
-from dateutil.tz import tzutc
 from rasterio import DatasetReader
 from rasterio.enums import Resampling
 
@@ -260,17 +259,15 @@ def _create_contiguity(
                     contiguity == 0, timedelta_data
                 )
 
-                def _strip_timezone(d: datetime):
-                    return d.astimezone(tz=tzutc()).replace(tzinfo=None)
+                def offset_from_center(v: numpy.datetime64):
+                    return p.datetime + timedelta(
+                        microseconds=v.astype(float) * 1_000_000.0
+                    )
 
-                center_dt = numpy.datetime64(_strip_timezone(p.datetime))
-                from_dt: numpy.datetime64 = center_dt + numpy.timedelta64(
-                    int(float(numpy.ma.min(valid_timedelta_data)) * 1_000_000), "us"
+                p.datetime_range = (
+                    offset_from_center(numpy.ma.min(valid_timedelta_data)),
+                    offset_from_center(numpy.ma.max(valid_timedelta_data)),
                 )
-                to_dt: numpy.datetime64 = center_dt + numpy.timedelta64(
-                    int(float(numpy.ma.max(valid_timedelta_data)) * 1_000_000), "us"
-                )
-                p.datetime_range = (from_dt.astype(datetime), to_dt.astype(datetime))
 
 
 def _boolstyle(s):
