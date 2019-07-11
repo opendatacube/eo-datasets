@@ -439,23 +439,24 @@ def package_file(
     hdf_file: Path,
     included_products: Iterable[str] = DEFAULT_PRODUCTS,
     include_oa: bool = True,
-) -> List[Tuple[UUID, Path]]:
+) -> Dict[UUID, Path]:
     """
     Simple alternative to package().
 
     Takes a single HDF5 and infers other paths (gqa etc) via naming conventions.
+
+    Returns a dictionary of the output datasets: Mapping UUID to the their metadata path.
     """
 
-    out = []
+    out = {}
     for granule in Granule.for_path(hdf_file):
-        out.append(
-            package(
-                out_directory,
-                granule,
-                included_products=included_products,
-                include_oa=include_oa,
-            )
+        dataset_id, metadata_path = package(
+            out_directory,
+            granule,
+            included_products=included_products,
+            include_oa=include_oa,
         )
+        out[dataset_id] = metadata_path
 
     return out
 
