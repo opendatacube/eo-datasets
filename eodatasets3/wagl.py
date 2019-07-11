@@ -658,7 +658,9 @@ def _determine_maturity(acq_date: datetime, processed: datetime, wagl_doc: Dict)
     if not water_vapour_is_definitive:
         return "interim"
 
-    if acq_date < default_utc(datetime(2001, 1, 1)):
+    # For accurate BRDF, both Acqu and Terra need to be operating
+    # Acqu launched 2002-05-04, so ~2 month buffer of operation should suffice
+    if acq_date < default_utc(datetime(2002, 7, 1)):
         return "final"
 
     if 'brdf' not in ancillary_tiers:
