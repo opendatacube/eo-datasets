@@ -13,7 +13,7 @@ diff = partial(DeepDiff, significant_digits=6)
 
 
 def check_prepare_outputs(
-    invoke_script, run_args, expected_doc, expected_metadata_path, normalise_tuples=True
+    invoke_script, run_args, expected_doc, expected_metadata_path
 ):
     __tracebackhide__ = True
     run_prepare_cli(invoke_script, *run_args)

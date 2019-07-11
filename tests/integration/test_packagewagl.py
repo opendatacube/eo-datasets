@@ -28,7 +28,7 @@ L1_METADATA_PATH: Path = Path(
 ).parent / "data/wagl-input/LC08_L1TP_092084_20160628_20170323_01_T1.yaml"
 
 
-def test_minimal_dea_package(
+def test_whole_wagl_package(
     l1_ls8_dataset: DatasetDoc, l1_ls8_folder: Path, tmp_path: Path
 ):
     out = tmp_path

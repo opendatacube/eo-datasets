@@ -8,7 +8,7 @@ from tests.integration.common import run_prepare_cli
 
 
 def test_prepare_l5_l1_usgs_tarball(
-    tmp_path, l1_ls5_tarball_md_expected, l1_ls5_tarball
+    tmp_path: Path, l1_ls5_tarball_md_expected: Dict, l1_ls5_tarball: Path
 ):
     assert l1_ls5_tarball.exists(), "Test data missing(?)"
     output_path: Path = tmp_path / "out"
@@ -49,12 +49,12 @@ def test_prepare_l8_l1_usgs_tarball(l1_ls8_folder, l1_ls8_folder_md_expected):
 
 
 def test_prepare_l8_l1_usgs_tarball_absolute(
-    tmpdir, l1_ls8_folder, l1_ls8_folder_md_expected_absolute
+    tmp_path: Path, l1_ls8_folder: Path, l1_ls8_folder_md_expected_absolute: Dict
 ):
     """Run prepare script with absolute paths for bands."""
     assert l1_ls8_folder.exists(), "Test data missing(?)"
 
-    output_path = Path(tmpdir)
+    output_path = tmp_path
     expected_metadata_path = (
         output_path
         / "090"
