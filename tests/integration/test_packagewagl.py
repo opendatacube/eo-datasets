@@ -10,7 +10,6 @@ from rasterio import DatasetReader
 from rasterio.enums import Compression
 from rio_cogeo import cogeo
 
-import eodatasets3
 from eodatasets3 import wagl
 from eodatasets3.model import DatasetDoc
 from eodatasets3.scripts import packagewagl
@@ -114,7 +113,7 @@ def test_whole_wagl_package(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             # A stable ID is taken from the WAGL doc.
-            "id": "b4f61917-57c5-4795-9d84-3176061cc6a1",
+            "id": "0fa267fe-3987-447b-be8e-d9ccc44a091c",
             "product": {
                 "href": "https://collections.dea.ga.gov.au/product/ga_ls8c_ard_3",
                 "name": "ga_ls8c_ard_3",
@@ -166,8 +165,8 @@ def test_whole_wagl_package(
                 "datetime": datetime(2016, 6, 28, 0, 2, 28, 624_635),
                 "dea:dataset_maturity": "final",
                 "dea:processing_level": "level-2",
-                "dtr:end_datetime": datetime(2016, 6, 28, 0, 2, 43, 48520),
-                "dtr:start_datetime": datetime(2016, 6, 28, 0, 2, 14, 48434),
+                "dtr:end_datetime": datetime(2016, 6, 28, 0, 2, 42, 991_315),
+                "dtr:start_datetime": datetime(2016, 6, 28, 0, 2, 14, 101_510),
                 "eo:cloud_cover": 63.069_613_577_531_236,
                 "eo:gsd": 1500.096_774_193_548_3,
                 "eo:instrument": "OLI_TIRS",
@@ -205,7 +204,7 @@ def test_whole_wagl_package(
                 "landsat:wrs_row": 84,
                 "odc:dataset_version": "3.0.0",
                 "odc:file_format": "GeoTIFF",
-                "odc:processing_datetime": datetime(2019, 7, 2, 7, 24, 31, 841_880),
+                "odc:processing_datetime": datetime(2019, 7, 10, 7, 44, 48, 45950),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ard",
                 "odc:reference_code": "092084",
@@ -352,12 +351,12 @@ def test_whole_wagl_package(
                 {
                     "name": "wagl",
                     "url": "https://github.com/GeoscienceAustralia/wagl.git",
-                    "version": "5.3.1+104.g6708059",
+                    "version": "5.3.1+115.g18aadd7",
                 },
                 {
                     "name": "eugl",
                     "url": "https://github.com/OpenDataCubePipelines/eugl.git",
-                    "version": "0.1.0+38.gb1d1231.dirty",
+                    "version": "0.0.2+69.gb1d1231",
                 },
                 {"name": "gverify", "url": None, "version": "v0.25c"},
                 {
@@ -368,7 +367,7 @@ def test_whole_wagl_package(
                 {
                     "name": "eodatasets3",
                     "url": "https://github.com/GeoscienceAustralia/eo-datasets",
-                    "version": eodatasets3.__version__,
+                    "version": "0+untagged.686.g09eb716.dirty",
                 },
             ],
         },
@@ -388,7 +387,7 @@ def test_whole_wagl_package(
         assert d.nodata == -999.0
 
         # Verify the pixel values haven't changed.
-        assert crc32(d.read(1).tobytes()) == 75_138_613
+        assert crc32(d.read(1).tobytes()) == 2_831_293_304
         # (Rasterio's checksum is zero on this data for some reason?)
         assert d.checksum(1) == 0
 
