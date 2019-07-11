@@ -10,6 +10,7 @@ from rasterio import DatasetReader
 from rasterio.enums import Compression
 from rio_cogeo import cogeo
 
+import eodatasets3
 from eodatasets3 import wagl
 from eodatasets3.model import DatasetDoc
 from eodatasets3.scripts import packagewagl
@@ -367,7 +368,7 @@ def test_whole_wagl_package(
                 {
                     "name": "eodatasets3",
                     "url": "https://github.com/GeoscienceAustralia/eo-datasets",
-                    "version": "0+untagged.686.g09eb716.dirty",
+                    "version": eodatasets3.__version__,
                 },
             ],
         },
