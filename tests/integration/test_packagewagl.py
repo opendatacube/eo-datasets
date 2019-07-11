@@ -114,9 +114,9 @@ def test_whole_wagl_package(
 
     # Verify the computed contiguity looks the same. (metadata fields will depend on it)
     [image] = expected_folder.rglob("*_oa_*nbar-contiguity.tif")
-    _assert_image(image, nodata=None, unique_pixel_counts={0: 1886, 1: 4120})
+    _assert_image(image, nodata=None, unique_pixel_counts={0: 1853, 1: 4153})
     [image] = expected_folder.rglob("*_oa_*nbart-contiguity.tif")
-    _assert_image(image, nodata=None, unique_pixel_counts={0: 1891, 1: 4115})
+    _assert_image(image, nodata=None, unique_pixel_counts={0: 1855, 1: 4151})
 
     assert_same_as_file(
         {
@@ -174,8 +174,8 @@ def test_whole_wagl_package(
                 "datetime": datetime(2016, 6, 28, 0, 2, 28, 624_635),
                 "dea:dataset_maturity": "final",
                 "dea:processing_level": "level-2",
-                "dtr:end_datetime": datetime(2016, 6, 28, 0, 2, 42, 991_315),
-                "dtr:start_datetime": datetime(2016, 6, 28, 0, 2, 14, 101_510),
+                "dtr:end_datetime": datetime(2016, 6, 28, 0, 2, 43, 142_273),
+                "dtr:start_datetime": datetime(2016, 6, 28, 0, 2, 13, 927_173),
                 "eo:cloud_cover": 63.069_613_577_531_236,
                 "eo:gsd": 1500.096_774_193_548_3,
                 "eo:instrument": "OLI_TIRS",

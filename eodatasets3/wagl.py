@@ -184,7 +184,7 @@ def _unpack_observation_attributes(
         _create_contiguity(
             p,
             product_list,
-            resolution_yx=res_grp.attrs["resolution"],
+            resolution_yx=tuple(res_grp.attrs["resolution"]),
             timedelta_data=timedelta_data,
         )
 
@@ -207,8 +207,9 @@ def _create_contiguity(
         for product in product_list:
             product_image_files = [
                 path
-                for band_name, path in p.iter_measurement_paths()
+                for grid, band_name, path in p.iter_measurement_paths()
                 if band_name.startswith(f"{product.lower()}:")
+                and grid.resolution_yx == resolution_yx
             ]
 
             if not product_image_files:

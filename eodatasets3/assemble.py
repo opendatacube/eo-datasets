@@ -641,7 +641,9 @@ class DatasetAssembler(EoFields):
         them (it will be put in the filename).
         """
         thumb = self.names.thumbnail_name(self._work_path, kind=kind)
-        measurements = dict(self._measurements.iter_paths())
+        measurements = dict(
+            (name, path) for grid, name, path in self._measurements.iter_paths()
+        )
 
         missing_measurements = {red, green, blue} - set(measurements)
         if missing_measurements:
@@ -685,7 +687,9 @@ class DatasetAssembler(EoFields):
         serialise.dump_yaml(path, doc)
         self._checksum.add_file(path)
 
-    def iter_measurement_paths(self) -> Generator[Tuple[str, Path], None, None]:
+    def iter_measurement_paths(
+        self
+    ) -> Generator[Tuple[GridSpec, str, Path], None, None]:
         """
         Iterate through the list of measurement names that have been written, and their current (temporary) paths.
 

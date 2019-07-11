@@ -68,6 +68,10 @@ class GridSpec:
             crs=CRS.from_wkt(dataset.attrs["crs_wkt"]),
         )
 
+    @property
+    def resolution_yx(self):
+        return abs(self.transform[4]), abs(self.transform[0])
+
 
 def generate_tiles(
     samples: int, lines: int, xtile: int = None, ytile: int = None
@@ -308,11 +312,11 @@ class MeasurementRecord:
 
         return shapely.ops.unary_union(geoms)
 
-    def iter_paths(self) -> Generator[Tuple[str, Path], None, None]:
+    def iter_paths(self) -> Generator[Tuple[GridSpec, str, Path], None, None]:
         """All current measurement paths on disk"""
-        for grid_name, measurements in self._measurements_per_grid.items():
+        for grid, measurements in self._measurements_per_grid.items():
             for band_name, path in measurements.items():
-                yield band_name, path
+                yield grid, band_name, path
 
 
 @attr.s(auto_attribs=True)
