@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Dict
 
+import numpy as np
 import pytest
 import rasterio
 from binascii import crc32
@@ -110,16 +112,9 @@ def test_whole_wagl_package(
     }
     assert all_output_files == files_in_checksum
 
-    # Verify the computed contiguity is the same. (metadata fields will depend on it)
+    # Verify the computed contiguity looks the same. (metadata fields will depend on it)
     [image] = expected_folder.rglob("*_oa_*nbar-contiguity.tif")
-    with rasterio.open(image) as d:
-        assert d.count == 1, "Expected one contiguity band"
-        assert d.nodata is None
-
-        # Verify the pixel values haven't changed.
-        assert crc32(d.read(1).tobytes()) == 3_135_211_691
-        # (Rasterio's checksum is zero on this data for some reason?)
-        assert d.checksum(1) == 0
+    _assert_image(image, nodata=None, unique_pixel_counts={0: 1886, 1: 4120})
 
     assert_same_as_file(
         {
@@ -419,17 +414,36 @@ def test_whole_wagl_package(
     [*oa_images] = expected_folder.rglob("*_oa_*.tif")
     assert oa_images
     for image in oa_images:
-        with rasterio.open(image) as d:
-            d: DatasetReader
-            assert d.count == 1, "Expected one band"
+        # fmask is the only OA that should have overviews according to spec (and Josh).
+        if "fmask" in image.name:
+            _assert_image(image, overviews=[8, 15, 26])
+        else:
+            _assert_image(image, overviews=[])
 
-            # fmask is the only OA that should have overviews according to spec (and Josh).
-            if "fmask" in image.name:
-                assert d.overviews(1) == [8, 15, 26]
-            else:
-                assert (
-                    d.overviews(1) == []
-                ), f"Expected no overviews in OA images (Found in {image.name!r})"
+
+allow_anything = object()
+
+
+def _assert_image(
+    image,
+    overviews=allow_anything,
+    nodata=allow_anything,
+    unique_pixel_counts: Dict = allow_anything,
+):
+    __tracebackhide__ = True
+    with rasterio.open(image) as d:
+        d: DatasetReader
+        assert d.count == 1, "Expected one band"
+
+        if overviews is not allow_anything:
+            assert d.overviews(1) == overviews
+        if nodata is not allow_anything:
+            assert d.nodata == nodata
+
+        if unique_pixel_counts is not allow_anything:
+            array = d.read(1)
+            value_counts = dict(zip(*np.unique(array, return_counts=True)))
+            assert value_counts == unique_pixel_counts
 
 
 def test_maturity_calculation():
