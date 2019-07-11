@@ -420,6 +420,17 @@ def test_whole_wagl_package(
                     d.overviews(1) == []
                 ), f"Expected no overviews in OA images (Found in {image.name!r})"
 
+    # The packager computes contiguity, so we'll verify pixel values.
+    [image] = expected_folder.rglob("*_oa_*nbar-contiguity.tif")
+    with rasterio.open(image) as d:
+        assert d.count == 1, "Expected one contiguity band"
+        assert d.nodata is None
+
+        # Verify the pixel values haven't changed.
+        assert crc32(d.read(1).tobytes()) == 3_135_211_691
+        # (Rasterio's checksum is zero on this data for some reason?)
+        assert d.checksum(1) == 0
+
 
 def test_maturity_calculation():
     # Simplified. Only a few ancillary parts that matter to us.
