@@ -47,9 +47,6 @@ _THUMBNAILS = {
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
-# From the internal h5 name (after normalisation) to the package name.
-MEASUREMENT_TRANSLATION = {"exiting": "exiting_angle", "incident": "incident_angle"}
-
 FILENAME_TIF_BAND = re.compile(
     r"(?P<prefix>(?:.*_)?)(?P<band_name>B[0-9][A0-9]|B[0-9]*|B[0-9a-zA-z]*)"
     r"(?P<extension>\....)"
@@ -89,8 +86,9 @@ def _unpack_products(
             ]:
                 with do(f"Path {pathname!r}"):
                     dataset = h5group[pathname]
+                    band_name = utils.normalise_band_name(dataset.attrs["alias"])
                     p.write_measurement_h5(
-                        f"{product}:{_band_name(dataset)}",
+                        f"{product}:{band_name}",
                         dataset,
                         overview_resampling=Resampling.average,
                         file_id=_file_id(dataset),
@@ -100,22 +98,6 @@ def _unpack_products(
                 red, green, blue = _THUMBNAILS[(p.platform, product)]
                 with do(f"Thumbnailing {product}"):
                     p.write_thumbnail(red, green, blue, kind=product)
-
-
-def _band_name(dataset: h5py.Dataset) -> str:
-    """
-    Devise a band name for the given dataset (using its attributes)
-
-    Eg. 'coastal_aerosol'
-    """
-    # What we have to work with:
-    # >>> print(repr((dataset.attrs["band_id"], dataset.attrs["band_name"], dataset.attrs["alias"])))
-    # ('1', 'BAND-1', 'Blue')
-
-    band_name = dataset.attrs["alias"]
-
-    # A purely numeric id needs to be formatted 'band01' according to naming conventions.
-    return band_name.lower().replace("-", "_")
 
 
 def _file_id(dataset: h5py.Dataset) -> str:
@@ -170,11 +152,7 @@ def _unpack_observation_attributes(
         for dataset_name in dataset_names:
             o = f"{section}/{dataset_name}"
             with do(f"Path {o!r} "):
-                measurement_name = f"{dataset_name.lower()}".replace("-", "_")
-                measurement_name = MEASUREMENT_TRANSLATION.get(
-                    measurement_name, measurement_name
-                )
-
+                measurement_name = utils.normalise_band_name(dataset_name)
                 p.write_measurement_h5(
                     f"oa:{measurement_name}",
                     res_grp[o],
@@ -195,8 +173,8 @@ def _unpack_observation_attributes(
             "TIME-DELTA",
         ],
     )
-    _write("INCIDENT-ANGLES", ["INCIDENT", "AZIMUTHAL-INCIDENT"])
-    _write("EXITING-ANGLES", ["EXITING", "AZIMUTHAL-EXITING"])
+    _write("INCIDENT-ANGLES", ["INCIDENT-ANGLE", "AZIMUTHAL-INCIDENT"])
+    _write("EXITING-ANGLES", ["EXITING-ANGLE", "AZIMUTHAL-EXITING"])
     _write("RELATIVE-SLOPE", ["RELATIVE-SLOPE"])
     _write("SHADOW-MASKS", ["COMBINED-TERRAIN-SHADOW"])
 
@@ -664,13 +642,13 @@ def _determine_maturity(acq_date: datetime, processed: datetime, wagl_doc: Dict)
     if acq_date < default_utc(datetime(2002, 7, 1)):
         return "final"
 
-    if 'brdf' not in ancillary_tiers:
+    if "brdf" not in ancillary_tiers:
         # Perhaps this should be a warning, but I'm being strict until told otherwise.
         # (a warning is easy to ignore)
         raise ValueError(
             f"No brdf tier available. Got {list(ancillary_tiers.keys())!r}"
         )
-    brdf_tier = ancillary_tiers['brdf'].lower()
+    brdf_tier = ancillary_tiers["brdf"].lower()
 
     if "definitive" in brdf_tier:
         return "final"
