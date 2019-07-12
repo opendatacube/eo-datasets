@@ -9,7 +9,6 @@ for files.
 import contextlib
 import os
 import re
-import tempfile
 from datetime import timedelta, datetime
 from pathlib import Path
 from typing import List, Sequence, Optional, Iterable, Any, Tuple, Dict, Mapping
@@ -25,7 +24,7 @@ from click import secho
 from rasterio import DatasetReader
 from rasterio.enums import Resampling
 
-from eodatasets3 import images, serialise, utils
+from eodatasets3 import serialise, utils
 from eodatasets3.assemble import DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
@@ -202,73 +201,56 @@ def _create_contiguity(
     Write a contiguity mask file based on the intersection of valid data pixels across all
     bands from the input files.
     """
-
-    with tempfile.TemporaryDirectory(prefix="contiguity-") as tmpdir:
-        for product in product_list:
-            product_image_files = [
-                path
-                for grid, band_name, path in p.iter_measurement_paths()
-                if band_name.startswith(f"{product.lower()}:")
-                and grid.resolution_yx == resolution_yx
-            ]
-
-            if not product_image_files:
-                secho(f"No images found for requested product {product}", fg="red")
+    for product in product_list:
+        contiguity = None
+        for grid, band_name, path in p.iter_measurement_paths():
+            if not band_name.startswith(f"{product.lower()}:"):
+                continue
+            # Only our given res group (no pan band in Landsat)
+            if grid.resolution_yx != resolution_yx:
                 continue
 
-            (res_y, res_x) = resolution_yx
-
-            # Build a temp vrt
-            # S2 bands are different resolutions. Make them appear the same when taking contiguity.
-            tmp_vrt_path = Path(tmpdir) / f"{product}.vrt"
-            images.run_command(
-                [
-                    "gdalbuildvrt",
-                    "-q",
-                    "-resolution",
-                    "user",
-                    "-tr",
-                    res_x,
-                    res_y,
-                    "-separate",
-                    tmp_vrt_path,
-                    *product_image_files,
-                ],
-                tmpdir,
-            )
-
-            with rasterio.open(tmp_vrt_path) as ds:
+            with rasterio.open(path) as ds:
                 ds: DatasetReader
-                geobox = GridSpec.from_rio(ds)
-                contiguity = numpy.ones((ds.height, ds.width), dtype="uint8")
-                for band in ds.indexes:
-                    # TODO Shouldn't this use ds.nodata instead of 0? Copied from the old packager.
-                    contiguity &= ds.read(band) > 0
-
-                p.write_measurement_numpy(
-                    f"oa:{product.lower()}_contiguity",
-                    contiguity,
-                    geobox,
-                    overviews=None,
-                    expand_valid_data=False,
-                )
-
-            # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
-            # footprint for Landsat sensor. For Sentinel sensor, it inherits from level 1 yaml file
-            if timedelta_data is not None and product.lower() == timedelta_product:
-                valid_timedelta_data = numpy.ma.masked_where(
-                    contiguity == 0, timedelta_data
-                )
-
-                def offset_from_center(v: numpy.datetime64):
-                    return p.datetime + timedelta(
-                        microseconds=v.astype(float) * 1_000_000.0
+                if contiguity is None:
+                    contiguity = numpy.ones((ds.height, ds.width), dtype="uint8")
+                    geobox = GridSpec.from_rio(ds)
+                elif ds.shape != contiguity.shape:
+                    raise NotImplementedError(
+                        "Contiguity from measurements of different shape"
                     )
 
-                p.datetime_range = (
-                    offset_from_center(numpy.ma.min(valid_timedelta_data)),
-                    offset_from_center(numpy.ma.max(valid_timedelta_data)),
+                for band in ds.indexes:
+                    contiguity &= ds.read(band) > 0
+
+        if contiguity is None:
+            secho(f"No images found for requested product {product}", fg="red")
+            continue
+
+        p.write_measurement_numpy(
+            f"oa:{product.lower()}_contiguity",
+            contiguity,
+            geobox,
+            overviews=None,
+            expand_valid_data=False,
+        )
+
+        # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
+        # footprint for Landsat sensor. For Sentinel sensor, it inherits from level 1 yaml file
+        if timedelta_data is not None and product.lower() == timedelta_product:
+            valid_timedelta_data = numpy.ma.masked_where(
+                contiguity == 0, timedelta_data
+            )
+
+            def offset_from_center(v: numpy.datetime64):
+                return p.datetime + timedelta(
+                    microseconds=v.astype(float) * 1_000_000.0
                 )
+
+            p.datetime_range = (
+                offset_from_center(numpy.ma.min(valid_timedelta_data)),
+                offset_from_center(numpy.ma.max(valid_timedelta_data)),
+            )
 
 
 def _boolstyle(s):
