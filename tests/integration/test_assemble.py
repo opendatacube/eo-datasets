@@ -133,7 +133,7 @@ def test_minimal_dea_package(
                 "landsat:landsat_scene_id": "LC80900842016021LGN02",
                 "landsat:wrs_path": 90,
                 "landsat:wrs_row": 84,
-                "odc:reference_code": "090084",
+                "odc:region_code": "090084",
             },
             "accessories": {
                 # It wrote a checksum file for all of our files.

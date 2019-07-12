@@ -469,7 +469,7 @@ def package(
                 raise NotImplementedError(f"Unsupported collection number.")
             # TODO: wagl's algorithm version should determine our dataset version number, right?
             p.dataset_version = f"{org_collection_number}.0.0"
-            p.reference_code = _extract_reference_code(p, granule.name)
+            p.region_code = _extract_reference_code(p, granule.name)
 
             p.properties["dea:processing_level"] = "level-2"
 

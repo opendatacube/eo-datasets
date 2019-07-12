@@ -45,7 +45,7 @@ properties:
   odc:file_format: GeoTIFF
   odc:processing_datetime: 2017-03-28 13:02:31Z  # When the data was processed
   odc:product_family: level1
-  odc:reference_code: '089080'
+  odc:region_code: '089080'
 
 measurements:
   coastal_aerosol:

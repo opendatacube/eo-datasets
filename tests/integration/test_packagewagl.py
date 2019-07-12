@@ -216,7 +216,7 @@ def test_whole_wagl_package(
                 "odc:processing_datetime": datetime(2019, 7, 10, 7, 44, 48, 45950),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ard",
-                "odc:reference_code": "092084",
+                "odc:region_code": "092084",
             },
             "measurements": {
                 "nbar_blue": {

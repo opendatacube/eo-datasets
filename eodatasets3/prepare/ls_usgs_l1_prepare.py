@@ -384,7 +384,7 @@ def _prepare(
             properties[f"landsat:{field}"] = s.get(field)
 
     properties[
-        "odc:reference_code"
+        "odc:region_code"
     ] = f"{properties['landsat:wrs_path']:03d}{properties['landsat:wrs_row']:03d}"
 
     # Assumed below.

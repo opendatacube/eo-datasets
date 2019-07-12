@@ -155,7 +155,7 @@ class DatasetAssembler(EoFields):
         "landsat:landsat_scene_id",
         "landsat:wrs_path",
         "landsat:wrs_row",
-        "odc:reference_code",
+        "odc:region_code",
     }
 
     def __init__(
