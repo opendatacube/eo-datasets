@@ -320,6 +320,7 @@ class Granule:
     def for_path(
         cls,
         wagl_hdf5: Path,
+        granule_names: Optional[Sequence[str]] = None,
         level1_metadata_path: Optional[Path] = None,
         fmask_image_path: Optional[Path] = None,
         fmask_doc_path: Optional[Path] = None,
@@ -336,7 +337,7 @@ class Granule:
             raise ValueError(f"Input hdf5 doesn't exist {wagl_hdf5}")
 
         with h5py.File(wagl_hdf5, "r") as fid:
-            granule_names = fid.keys()
+            granule_names = granule_names or fid.keys()
 
             for granule_name in granule_names:
                 wagl_doc_field = get_path(fid, (granule_name, "METADATA", "CURRENT"))
