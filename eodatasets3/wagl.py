@@ -340,6 +340,11 @@ class Granule:
             granule_names = granule_names or fid.keys()
 
             for granule_name in granule_names:
+                if granule_name not in fid:
+                    raise ValueError(
+                        f"Granule {granule_name!r} not found in file {wagl_hdf5}"
+                    )
+
                 wagl_doc_field = get_path(fid, (granule_name, "METADATA", "CURRENT"))
                 if not wagl_doc_field:
                     raise ValueError(
