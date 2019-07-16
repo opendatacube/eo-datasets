@@ -190,7 +190,7 @@ class MeasurementRecord:
         self,
         name: str,
         grid: GridSpec,
-        path: Path,
+        path: Union[Path, str],
         img: numpy.ndarray,
         nodata=None,
         expand_valid_data=True,

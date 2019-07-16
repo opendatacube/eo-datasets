@@ -9,7 +9,7 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path, PurePath
-from typing import Dict, List, Optional, Tuple, Generator, Any
+from typing import Dict, List, Optional, Tuple, Generator, Any, Union
 
 import h5py
 import numpy
@@ -100,24 +100,28 @@ def make_paths_relative(
     >>> make_paths_relative(doc, base)
     >>> doc == previous
     True
+    >>> # Relative pathlibs also become relative strings for consistency.
+    >>> doc = {'villains': PurePath('the-baron.txt')}
+    >>> make_paths_relative(doc, base)
+    >>> doc
+    {'villains': 'the-baron.txt'}
     """
     for doc_path, value in iterutils.research(
         doc, lambda p, k, v: isinstance(v, PurePath)
     ):
         value: Path
 
-        if not value.is_absolute():
-            continue
+        if value.is_absolute():
+            if base_directory not in value.parents:
+                if not allow_paths_outside_base:
+                    raise ValueError(
+                        f"Path {value.as_posix()!r} is outside path {base_directory.as_posix()!r} "
+                        f"(allow_paths_outside_base={allow_paths_outside_base})"
+                    )
+                continue
+            value = value.relative_to(base_directory)
 
-        if base_directory not in value.parents:
-            if not allow_paths_outside_base:
-                raise ValueError(
-                    f"Path {value.as_posix()!r} is outside path {base_directory.as_posix()!r} "
-                    f"(allow_paths_outside_base={allow_paths_outside_base})"
-                )
-            continue
-
-        docpath_set(doc, doc_path, str(value.relative_to(base_directory)))
+        docpath_set(doc, doc_path, str(value))
 
 
 class IncompleteDatasetError(Exception):
@@ -160,7 +164,8 @@ class DatasetAssembler(EoFields):
 
     def __init__(
         self,
-        output_folder: Path,
+        output_folder: Optional[Path] = None,
+        metadata_file: Optional[Path] = None,
         # Optionally give a dataset id.
         dataset_id: Optional[uuid.UUID] = None,
         # By default, we complain if the output already exists.
@@ -170,14 +175,18 @@ class DatasetAssembler(EoFields):
     ) -> None:
         self.dataset_id = dataset_id or uuid.uuid4()
         self._exists_behaviour = if_exists
+
+        if not output_folder and not metadata_file:
+            raise ValueError(
+                "Must specify either an output folder or a single metadata file"
+            )
+
         self._base_output_folder = output_folder
+        # If not specified, it will be auto-generated inside the output folder.
+        self._specified_metadata_path = metadata_file
 
         self._checksum = PackageChecksum()
-
-        self._work_path = Path(
-            tempfile.mkdtemp(prefix=".odcdataset-", dir=str(output_folder))
-        )
-
+        self._initialised_work_path: Optional[Path] = None
         self._measurements = MeasurementRecord()
 
         self._allow_absolute_paths = allow_absolute_paths
@@ -198,6 +207,22 @@ class DatasetAssembler(EoFields):
             raise NotImplementedError("configurable naming conventions")
 
         self._finished_init_ = True
+
+    @property
+    def _work_path(self):
+        if not self._initialised_work_path:
+            if not self._base_output_folder:
+                raise ValueError(
+                    "Dataset assembler was given no base path on construction: cannot write files."
+                )
+
+            self._initialised_work_path = Path(
+                tempfile.mkdtemp(
+                    prefix=".odcdataset-", dir=str(self._base_output_folder)
+                )
+            )
+
+        return self._initialised_work_path
 
     @property
     def properties(self) -> StacPropertyView:
@@ -233,8 +258,10 @@ class DatasetAssembler(EoFields):
 
     def close(self):
         """Cleanup any temporary files, even if dataset has not been written"""
-        # TODO: add implicit cleanup like tempfile.TemporaryDirectory?
-        shutil.rmtree(self._work_path, ignore_errors=True)
+
+        if self._initialised_work_path:
+            # TODO: add implicit cleanup like tempfile.TemporaryDirectory?
+            shutil.rmtree(self._work_path, ignore_errors=True)
 
     def add_source_path(
         self, path: Path, classifier: str = None, auto_inherit_properties: bool = False
@@ -477,6 +504,28 @@ class DatasetAssembler(EoFields):
         # be in os/filesystem cache.
         self._checksum.add_file(out_path)
 
+    def note_measurement(self, name, uri: Union[str, Path], expand_valid_data=True):
+        """
+        Add a measurment using its existing file path.
+
+        (no data is copied, but Geo information is read from it.)
+        """
+        with rasterio.open(uri) as ds:
+            ds: DatasetReader
+            if ds.count != 1:
+                raise NotImplementedError(
+                    "TODO: Only single-band files currently supported"
+                )
+
+            self._measurements.record_image(
+                name,
+                images.GridSpec.from_rio(ds),
+                uri,
+                ds.read(1),
+                nodata=ds.nodata,
+                expand_valid_data=expand_valid_data,
+            )
+
     def extend_user_metadata(self, section: str, d: Dict):
         """
         Record extra metadata from the processing of the dataset.
@@ -543,13 +592,13 @@ class DatasetAssembler(EoFields):
 
         valid_data = self._measurements.valid_data()
 
-        checksum_path = self.names.checksum_path(self._work_path)
-        processing_metadata = self.names.metadata_path(
-            self._work_path, suffix="proc-info.yaml"
-        )
-
-        self.add_accessory_file("checksum:sha1", checksum_path)
-        self.add_accessory_file("metadata:processor", processing_metadata)
+        if self._initialised_work_path:
+            checksum_path = self.names.checksum_path(self._work_path)
+            processing_metadata = self.names.metadata_path(
+                self._work_path, suffix="proc-info.yaml"
+            )
+            self.add_accessory_file("checksum:sha1", checksum_path)
+            self.add_accessory_file("metadata:processor", processing_metadata)
 
         dataset = DatasetDoc(
             id=self.dataset_id,
@@ -570,9 +619,7 @@ class DatasetAssembler(EoFields):
         )
 
         doc = serialise.to_formatted_doc(dataset)
-        self._write_yaml(
-            doc, self.names.metadata_path(self._work_path, suffix="odc-metadata.yaml")
-        )
+        self._write_yaml(doc, self.target_metadata_path)
 
         if validate_correctness:
             for m in validate.validate(doc):
@@ -585,51 +632,56 @@ class DatasetAssembler(EoFields):
                         f"Internal error: Unhandled type of message level: {m.level}"
                     )
 
-        self._write_yaml(
-            {**self._user_metadata, "software_versions": self._software_versions},
-            processing_metadata,
-            allow_external_paths=True,
-        )
+        if self._initialised_work_path:
+            self._write_yaml(
+                {**self._user_metadata, "software_versions": self._software_versions},
+                processing_metadata,
+                allow_external_paths=True,
+            )
+            self._checksum.write(checksum_path)
 
-        self._checksum.write(checksum_path)
+            # Match the lower r/w permission bits to the output folder.
+            # (Temp directories default to 700 otherwise.)
+            self._work_path.chmod(self._base_output_folder.stat().st_mode & 0o777)
 
-        # Match the lower r/w permission bits to the output folder.
-        # (Temp directories default to 700 otherwise.)
-        self._work_path.chmod(self._base_output_folder.stat().st_mode & 0o777)
-
-        # GDAL writes extra metadata in aux files,
-        # but we consider it a mistake if you're using those extensions.
-        for aux_file in self._work_path.rglob("*.aux.xml"):
-            warnings.warn(f"Cleaning unexpected gdal aux file {aux_file.as_posix()!r}")
-            aux_file.unlink()
-
-        # Now atomically move to final location.
-        # Someone else may have created the output while we were working.
-        # Try, and then decide how to handle it if so.
-        try:
-            self.destination_folder.parent.mkdir(parents=True, exist_ok=True)
-            self._work_path.rename(self.destination_folder)
-        except OSError:
-            if not self.destination_folder.exists():
-                # Some other error?
-                raise
-
-            if self._exists_behaviour == IfExists.Skip:
-                print(f"Skipping -- exists: {self.destination_folder}")
-            elif self._exists_behaviour == IfExists.ThrowError:
-                raise
-            elif self._exists_behaviour == IfExists.Overwrite:
-                raise NotImplementedError("overwriting outputs not yet implemented")
-            else:
-                raise RuntimeError(
-                    f"Unexpected exists behaviour: {self._exists_behaviour}"
+            # GDAL writes extra metadata in aux files,
+            # but we consider it a mistake if you're using those extensions.
+            for aux_file in self._work_path.rglob("*.aux.xml"):
+                warnings.warn(
+                    f"Cleaning unexpected gdal aux file {aux_file.as_posix()!r}"
                 )
+                aux_file.unlink()
 
-        resulting_metadata_path = self.names.metadata_path(
-            self.destination_folder, suffix="odc-metadata.yaml"
+            # Now atomically move to final location.
+            # Someone else may have created the output while we were working.
+            # Try, and then decide how to handle it if so.
+            try:
+                self.destination_folder.parent.mkdir(parents=True, exist_ok=True)
+                self._work_path.rename(self.destination_folder)
+            except OSError:
+                if not self.destination_folder.exists():
+                    # Some other error?
+                    raise
+
+                if self._exists_behaviour == IfExists.Skip:
+                    print(f"Skipping -- exists: {self.destination_folder}")
+                elif self._exists_behaviour == IfExists.ThrowError:
+                    raise
+                elif self._exists_behaviour == IfExists.Overwrite:
+                    raise NotImplementedError("overwriting outputs not yet implemented")
+                else:
+                    raise RuntimeError(
+                        f"Unexpected exists behaviour: {self._exists_behaviour}"
+                    )
+
+        assert self.target_metadata_path.exists()
+        return dataset.id, self.target_metadata_path
+
+    @property
+    def target_metadata_path(self):
+        return self._specified_metadata_path or self.names.metadata_path(
+            self._work_path, suffix="odc-metadata.yaml"
         )
-        assert resulting_metadata_path.exists()
-        return dataset.id, resulting_metadata_path
 
     def write_thumbnail(self, red: str, green: str, blue: str, kind: str = None):
         """
@@ -682,7 +734,9 @@ class DatasetAssembler(EoFields):
 
     def _write_yaml(self, doc, path, allow_external_paths=False):
         make_paths_relative(
-            doc, self._work_path, allow_paths_outside_base=allow_external_paths
+            doc,
+            self.target_metadata_path or self._work_path,
+            allow_paths_outside_base=allow_external_paths,
         )
         serialise.dump_yaml(path, doc)
         self._checksum.add_file(path)

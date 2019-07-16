@@ -13,26 +13,44 @@ from datetime import datetime
 from functools import partial
 from pathlib import Path
 
-import ciso8601
 import click
 import pyproj
 import ruamel.yaml
 from osgeo import osr
-from shapely.geometry import Polygon
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
-from eodatasets3 import verify, serialise, utils
-from eodatasets3.model import (
-    DatasetDoc,
-    ProductDoc,
-    FileFormat,
-    MeasurementDoc,
-    valid_region,
-    resolve_absolute_offset,
-    AccessoryDoc,
-)
+from eodatasets3 import serialise, utils
+from eodatasets3.assemble import DatasetAssembler
+from eodatasets3.model import FileFormat, resolve_absolute_offset
 from eodatasets3.ui import PathPath
+
+_COPYABLE_MTL_FIELDS = [
+    (
+        "metadata_file_info",
+        (
+            "landsat_scene_id",
+            "landsat_product_id",
+            "station_id",
+            "processing_software_version",
+        ),
+    ),
+    (
+        "product_metadata",
+        ("data_type", "ephemeris_type", "wrs_path", "wrs_row", "collection_category"),
+    ),
+    (
+        "image_attributes",
+        (
+            "ground_control_points_version",
+            "ground_control_points_model",
+            "geometric_rmse_model_x",
+            "geometric_rmse_model_y",
+            "ground_control_points_verify",
+            "geometric_rmse_verify",
+        ),
+    ),
+]
 
 try:
     # flake8 doesn't recognise type hints as usage
@@ -238,27 +256,16 @@ def _file_size_bytes(path: Path) -> int:
     return sum(_file_size_bytes(p) for p in path.iterdir())
 
 
-def prepare_dataset(base_path: Path, write_checksum: bool = False) -> Optional[Dict]:
-    mtl_doc, mtl_filename = get_mtl_content(base_path)
-
+def prepare_and_write(
+    ds_path: Path,
+    output_yaml_path: Path,
+    use_absolute_paths=False,
+    write_checksum=False,
+) -> Tuple[uuid.UUID, Path]:
+    mtl_doc, mtl_filename = get_mtl_content(ds_path)
     if not mtl_doc:
-        return None
+        raise ValueError(f"No MTL file found for {ds_path}")
 
-    if write_checksum:
-        checksum_path = _checksum_path(base_path)
-        if checksum_path.exists():
-            logging.warning("Checksum path exists. Not touching it. %r", checksum_path)
-        else:
-            checksum = verify.PackageChecksum()
-            checksum.add_file(base_path)
-            checksum.write(checksum_path)
-
-    return serialise.to_formatted_doc(_prepare(mtl_doc, mtl_filename, base_path))
-
-
-def _prepare(
-    mtl_doc: dict, mtl_filename: str, base_path: Optional[Path] = None
-) -> DatasetDoc:
     collection_number = mtl_doc["metadata_file_info"].get("collection_number")
 
     if collection_number is None:
@@ -271,121 +278,12 @@ def _prepare(
         raise NotImplementedError(f"Only GTiff currently supported, got {data_format}")
     file_format = FileFormat.GeoTIFF
 
-    epsg_code = 32600 + mtl_doc["projection_parameters"]["utm_zone"]
+    # epsg_code = 32600 + mtl_doc["projection_parameters"]["utm_zone"]
 
     platform_id = mtl_doc["product_metadata"]["spacecraft_id"]
     sensor_id = mtl_doc["product_metadata"]["sensor_id"]
     band_mappings = get_satellite_band_names(platform_id, sensor_id, mtl_filename)
-
     product_id = mtl_doc["metadata_file_info"]["landsat_product_id"]
-
-    bands = [
-        MeasurementDoc(
-            name=band_alias,
-            path=mtl_doc["product_metadata"]["file_name_band_" + usgs_band_id.lower()],
-        )
-        for usgs_band_id, band_alias in band_mappings
-    ]
-
-    # If we have a filesystem path, we can store the actual
-    if base_path:
-        # Mask value?
-        geometry, grids = valid_region(base_path, bands, mask_value=None)
-    else:
-        info = mtl_doc["product_metadata"]
-        geometry = Polygon(
-            (
-                (
-                    info["corner_ul_projection_x_product"],
-                    info["corner_ul_projection_y_product"],
-                ),
-                (
-                    info["corner_ur_projection_x_product"],
-                    info["corner_ur_projection_y_product"],
-                ),
-                (
-                    info["corner_lr_projection_x_product"],
-                    info["corner_lr_projection_y_product"],
-                ),
-                (
-                    info["corner_ll_projection_x_product"],
-                    info["corner_ll_projection_y_product"],
-                ),
-            )
-        )
-        grids = None
-
-    ground_sample_distance = min(
-        value
-        for name, value in mtl_doc["projection_parameters"].items()
-        if name.startswith("grid_cell_size_")
-    )
-    properties = {
-        "datetime": ciso8601.parse_datetime(
-            "{}T{}".format(
-                mtl_doc["product_metadata"]["date_acquired"],
-                mtl_doc["product_metadata"]["scene_center_time"],
-            )
-        ),
-        "odc:processing_datetime": ciso8601.parse_datetime(
-            mtl_doc["metadata_file_info"]["file_date"]
-        ),
-        "odc:file_format": file_format,
-        "odc:product_family": "level1",
-        "eo:platform": platform_id.lower().replace("_", "-"),
-        "eo:instrument": sensor_id,
-        "eo:gsd": ground_sample_distance,
-        "eo:cloud_cover": mtl_doc["image_attributes"]["cloud_cover"],
-        "eo:sun_azimuth": mtl_doc["image_attributes"]["sun_azimuth"],
-        "eo:sun_elevation": mtl_doc["image_attributes"]["sun_elevation"],
-        "landsat:collection_number": collection_number,
-    }
-
-    landsat_fields = [
-        (
-            "metadata_file_info",
-            (
-                "landsat_scene_id",
-                "landsat_product_id",
-                "station_id",
-                "processing_software_version",
-            ),
-        ),
-        (
-            "product_metadata",
-            (
-                "data_type",
-                "ephemeris_type",
-                "wrs_path",
-                "wrs_row",
-                "collection_category",
-            ),
-        ),
-        (
-            "image_attributes",
-            (
-                "ground_control_points_version",
-                "ground_control_points_model",
-                "geometric_rmse_model_x",
-                "geometric_rmse_model_y",
-                "ground_control_points_verify",
-                "geometric_rmse_verify",
-            ),
-        ),
-    ]
-
-    for section, fields in landsat_fields:
-        s = mtl_doc[section]
-        for field in fields:
-            if field in properties:
-                raise ValueError(
-                    f"Duplicate field {section}.{field} in {mtl_filename!r}"
-                )
-            properties[f"landsat:{field}"] = s.get(field)
-
-    properties[
-        "odc:region_code"
-    ] = f"{properties['landsat:wrs_path']:03d}{properties['landsat:wrs_row']:03d}"
 
     # Assumed below.
     if (
@@ -393,26 +291,59 @@ def _prepare(
         != mtl_doc["projection_parameters"]["grid_cell_size_thermal"]
     ):
         raise NotImplementedError("reflective and thermal have different cell sizes")
-
-    # Generate a deterministic UUID for the level 1 dataset
-    product_name = "usgs_ls{}{}_level1_{}".format(
-        platform_id[-1].lower(), sensor_id[0].lower(), int(collection_number)
+    ground_sample_distance = min(
+        value
+        for name, value in mtl_doc["projection_parameters"].items()
+        if name.startswith("grid_cell_size_")
     )
 
-    crs = f"epsg:{epsg_code}"
-    d = DatasetDoc(
-        id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
-        product=ProductDoc.dea_name(product_name),
-        # bbox=bbox(geometry, crs),
-        crs=crs,
-        geometry=geometry,
-        grids=grids,
-        measurements={band.name: band for band in bands},
-        accessories={"metadata:landsat_mtl": AccessoryDoc(mtl_filename)},
-        lineage={},
-        properties=_remove_nones(properties),
-    )
-    return d
+    with DatasetAssembler(
+        metadata_file=output_yaml_path,
+        # Detministic ID based on USGS's product id (which changes when the scene is reprocessed by them)
+        dataset_id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
+        naming_conventions="dea",
+    ) as p:
+        p.platform = platform_id
+        p.instrument = sensor_id
+        p.product_family = "level1"
+        p.producer = "usgs.gov"
+        p.datetime = "{}T{}".format(
+            mtl_doc["product_metadata"]["date_acquired"],
+            mtl_doc["product_metadata"]["scene_center_time"],
+        )
+        p.processed = mtl_doc["metadata_file_info"]["file_date"]
+        p.properties["odc:file_format"] = file_format
+        p.properties["eo:gsd"] = ground_sample_distance
+        p.properties["eo:cloud_cover"] = mtl_doc["image_attributes"]["cloud_cover"]
+        p.properties["eo:sun_azimuth"] = mtl_doc["image_attributes"]["sun_azimuth"]
+        p.properties["eo:sun_elevation"] = mtl_doc["image_attributes"]["sun_elevation"]
+        p.properties["landsat:collection_number"] = collection_number
+
+        for section, fields in _COPYABLE_MTL_FIELDS:
+            s = mtl_doc[section]
+            for field in fields:
+                p.properties[f"landsat:{field}"] = s.get(field)
+
+        p.region_code = f"{p.properties['landsat:wrs_path']:03d}{p.properties['landsat:wrs_row']:03d}"
+
+        p.dataset_version = ".".join(
+            (str(collection_number), "0", mtl_doc["metadata_file_info"]["file_date"])
+        )
+
+        for usgs_band_id, band_alias in band_mappings:
+            p.note_measurement(
+                band_alias,
+                resolve_absolute_offset(
+                    ds_path,
+                    mtl_doc["product_metadata"][
+                        "file_name_band_" + usgs_band_id.lower()
+                    ],
+                ),
+            )
+
+        p.add_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
+
+        return p.done()
 
 
 def bbox(shape: BaseGeometry, crs: str) -> Tuple[float, float, float, float]:
@@ -544,22 +475,6 @@ def main(
                 continue
 
         prepare_and_write(ds_path, output_yaml, use_absolute_paths=force_absolute_paths)
-
-
-def prepare_and_write(
-    ds_path, output_yaml_path, use_absolute_paths=False, write_checksum=False
-):
-    # type: (Path, Path, bool, bool) -> None
-
-    doc = prepare_dataset(ds_path, write_checksum=write_checksum)
-
-    if use_absolute_paths:
-        for band in doc["measurements"].values():
-            band["path"] = resolve_absolute_offset(
-                ds_path, band["path"], target_path=output_yaml_path
-            )
-
-    serialise.dump_yaml(output_yaml_path, doc)
 
 
 def _normalise_dataset_path(input_path: Path) -> Path:
