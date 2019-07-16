@@ -1,6 +1,7 @@
 """
 API for easily writing an ODC Dataset
 """
+import os
 import shutil
 import tempfile
 import uuid
@@ -28,6 +29,7 @@ from eodatasets3.model import (
     DeaNamingConventions,
     DEA_URI_PREFIX,
     AccessoryDoc,
+    resolve_absolute_offset,
 )
 from eodatasets3.properties import EoFields
 from eodatasets3.validate import Level, ValidationMessage
@@ -166,6 +168,7 @@ class DatasetAssembler(EoFields):
         self,
         output_folder: Optional[Path] = None,
         metadata_file: Optional[Path] = None,
+        paths_relative_to: Optional[Path] = None,
         # Optionally give a dataset id.
         dataset_id: Optional[uuid.UUID] = None,
         # By default, we complain if the output already exists.
@@ -182,8 +185,13 @@ class DatasetAssembler(EoFields):
             )
 
         self._base_output_folder = output_folder
+
         # If not specified, it will be auto-generated inside the output folder.
         self._specified_metadata_path = metadata_file
+        # Given relative paths are relative to this.
+        self._base_location = (
+            paths_relative_to or metadata_file or Path(os.getcwd()).absolute()
+        )
 
         self._checksum = PackageChecksum()
         self._initialised_work_path: Optional[Path] = None
@@ -382,7 +390,7 @@ class DatasetAssembler(EoFields):
 
         Assumes the file is gdal-readable.
         """
-        with rasterio.open(path) as ds:
+        with rasterio.open(self._path(path)) as ds:
             self.write_measurement_rio(
                 name,
                 ds,
@@ -391,6 +399,9 @@ class DatasetAssembler(EoFields):
                 overview_resampling=overview_resampling,
                 file_id=file_id,
             )
+
+    def _path(self, path):
+        return resolve_absolute_offset(self._base_location, path)
 
     def write_measurement_rio(
         self,
@@ -504,13 +515,13 @@ class DatasetAssembler(EoFields):
         # be in os/filesystem cache.
         self._checksum.add_file(out_path)
 
-    def note_measurement(self, name, uri: Union[str, Path], expand_valid_data=True):
+    def note_measurement(self, name, path: Union[str, Path], expand_valid_data=True):
         """
         Add a measurment using its existing file path.
 
         (no data is copied, but Geo information is read from it.)
         """
-        with rasterio.open(uri) as ds:
+        with rasterio.open(self._path(path)) as ds:
             ds: DatasetReader
             if ds.count != 1:
                 raise NotImplementedError(
@@ -520,7 +531,7 @@ class DatasetAssembler(EoFields):
             self._measurements.record_image(
                 name,
                 images.GridSpec.from_rio(ds),
-                uri,
+                path,
                 ds.read(1),
                 nodata=ds.nodata,
                 expand_valid_data=expand_valid_data,
@@ -619,7 +630,11 @@ class DatasetAssembler(EoFields):
         )
 
         doc = serialise.to_formatted_doc(dataset)
-        self._write_yaml(doc, self.target_metadata_path)
+        self._write_yaml(
+            doc,
+            self._specified_metadata_path
+            or self.names.metadata_path(self._work_path, suffix="odc-metadata.yaml"),
+        )
 
         if validate_correctness:
             for m in validate.validate(doc):
@@ -674,14 +689,14 @@ class DatasetAssembler(EoFields):
                         f"Unexpected exists behaviour: {self._exists_behaviour}"
                     )
 
-        assert self.target_metadata_path.exists()
-        return dataset.id, self.target_metadata_path
-
-    @property
-    def target_metadata_path(self):
-        return self._specified_metadata_path or self.names.metadata_path(
-            self._work_path, suffix="odc-metadata.yaml"
+        target_metadata_path = (
+            self._specified_metadata_path
+            or self.names.metadata_path(
+                self.destination_folder, suffix="odc-metadata.yaml"
+            )
         )
+        assert target_metadata_path.exists()
+        return dataset.id, target_metadata_path
 
     def write_thumbnail(self, red: str, green: str, blue: str, kind: str = None):
         """
@@ -734,9 +749,7 @@ class DatasetAssembler(EoFields):
 
     def _write_yaml(self, doc, path, allow_external_paths=False):
         make_paths_relative(
-            doc,
-            self.target_metadata_path or self._work_path,
-            allow_paths_outside_base=allow_external_paths,
+            doc, path.parent, allow_paths_outside_base=allow_external_paths
         )
         serialise.dump_yaml(path, doc)
         self._checksum.add_file(path)

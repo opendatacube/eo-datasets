@@ -22,7 +22,7 @@ from shapely.ops import transform
 
 from eodatasets3 import serialise, utils
 from eodatasets3.assemble import DatasetAssembler
-from eodatasets3.model import FileFormat, resolve_absolute_offset
+from eodatasets3.model import FileFormat
 from eodatasets3.ui import PathPath
 
 _COPYABLE_MTL_FIELDS = [
@@ -256,12 +256,7 @@ def _file_size_bytes(path: Path) -> int:
     return sum(_file_size_bytes(p) for p in path.iterdir())
 
 
-def prepare_and_write(
-    ds_path: Path,
-    output_yaml_path: Path,
-    use_absolute_paths=False,
-    write_checksum=False,
-) -> Tuple[uuid.UUID, Path]:
+def prepare_and_write(ds_path: Path, output_yaml_path: Path) -> Tuple[uuid.UUID, Path]:
     mtl_doc, mtl_filename = get_mtl_content(ds_path)
     if not mtl_doc:
         raise ValueError(f"No MTL file found for {ds_path}")
@@ -299,6 +294,7 @@ def prepare_and_write(
 
     with DatasetAssembler(
         metadata_file=output_yaml_path,
+        paths_relative_to=ds_path,
         # Detministic ID based on USGS's product id (which changes when the scene is reprocessed by them)
         dataset_id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
         naming_conventions="dea",
@@ -322,23 +318,22 @@ def prepare_and_write(
         for section, fields in _COPYABLE_MTL_FIELDS:
             s = mtl_doc[section]
             for field in fields:
-                p.properties[f"landsat:{field}"] = s.get(field)
+                value = s.get(field)
+                if value is not None:
+                    p.properties[f"landsat:{field}"] = value
 
         p.region_code = f"{p.properties['landsat:wrs_path']:03d}{p.properties['landsat:wrs_row']:03d}"
+        p.dataset_version = f"{collection_number}.0.{p.processed:%Y%m%d}"
 
-        p.dataset_version = ".".join(
-            (str(collection_number), "0", mtl_doc["metadata_file_info"]["file_date"])
-        )
+        # NRT product?
+        # Category is one of: T1, T2 or RT ('real time')
+        if p.properties["landsat:collection_category"] == "RT":
+            p.properties["odc:dataset_maturity"] = "nrt"
 
         for usgs_band_id, band_alias in band_mappings:
             p.note_measurement(
                 band_alias,
-                resolve_absolute_offset(
-                    ds_path,
-                    mtl_doc["product_metadata"][
-                        "file_name_band_" + usgs_band_id.lower()
-                    ],
-                ),
+                mtl_doc["product_metadata"]["file_name_band_" + usgs_band_id.lower()],
             )
 
         p.add_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
@@ -426,17 +421,10 @@ def yaml_checkums_correctly(output_yaml: Path, data_path: Path) -> bool:
     help="Checksum the input dataset to confirm match",
     default=False,
 )
-@click.option(
-    "--absolute-paths/--relative-paths",
-    "force_absolute_paths",
-    help="Embed absolute paths in the metadata document (not recommended)",
-    default=False,
-)
 def main(
     output_base: Optional[Path],
     datasets: List[Path],
     check_checksum: bool,
-    force_absolute_paths: bool,
     newer_than: datetime,
 ):
     logging.basicConfig(
@@ -474,7 +462,7 @@ def main(
                 )
                 continue
 
-        prepare_and_write(ds_path, output_yaml, use_absolute_paths=force_absolute_paths)
+        prepare_and_write(ds_path, output_yaml)
 
 
 def _normalise_dataset_path(input_path: Path) -> Path:

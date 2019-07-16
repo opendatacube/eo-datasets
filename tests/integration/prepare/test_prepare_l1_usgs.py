@@ -49,7 +49,7 @@ def test_prepare_l8_l1_usgs_tarball(l1_ls8_folder, l1_ls8_folder_md_expected):
 
 
 def test_prepare_l8_l1_usgs_tarball_absolute(
-    tmp_path: Path, l1_ls8_folder: Path, l1_ls8_folder_md_expected_absolute: Dict
+    tmp_path: Path, l1_ls8_folder: Path, l1_ls8_folder_md_expected: Dict
 ):
     """Run prepare script with absolute paths for bands."""
     assert l1_ls8_folder.exists(), "Test data missing(?)"
@@ -64,13 +64,8 @@ def test_prepare_l8_l1_usgs_tarball_absolute(
 
     check_prepare_outputs(
         invoke_script=ls_usgs_l1_prepare.main,
-        run_args=[
-            "--absolute-paths",
-            "--output-base",
-            str(output_path),
-            str(l1_ls8_folder),
-        ],
-        expected_doc=l1_ls8_folder_md_expected_absolute,
+        run_args=["--output-base", str(output_path), str(l1_ls8_folder)],
+        expected_doc=l1_ls8_folder_md_expected,
         expected_metadata_path=expected_metadata_path,
     )
 
