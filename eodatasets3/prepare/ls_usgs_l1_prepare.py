@@ -21,7 +21,7 @@ from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
 from eodatasets3 import serialise, utils
-from eodatasets3.assemble import DatasetAssembler
+from eodatasets3.assemble import DatasetAssembler, IfExists
 from eodatasets3.model import FileFormat
 from eodatasets3.ui import PathPath
 
@@ -303,6 +303,7 @@ def prepare_and_write(
         # Detministic ID based on USGS's product id (which changes when the scene is reprocessed by them)
         dataset_id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
         naming_conventions="dea",
+        if_exists=IfExists.Overwrite,
     ) as p:
         p.platform = platform_id
         p.instrument = sensor_id
@@ -415,21 +416,21 @@ def yaml_checkums_correctly(output_yaml: Path, data_path: Path) -> bool:
     "datasets", type=PathPath(exists=True, readable=True, writable=False), nargs=-1
 )
 @click.option(
+    "--overwrite-existing/--skip-existing",
+    is_flag=True,
+    default=False,
+    help="Overwrite if exists (otherwise skip)",
+)
+@click.option(
     "--newer-than",
     type=serialise.ClickDatetime(),
     default=None,
     help="Only prepare files newer than this date",
 )
-@click.option(
-    "--checksum/--no-checksum",
-    "check_checksum",
-    help="Checksum the input dataset to confirm match",
-    default=False,
-)
 def main(
     output_base: Optional[Path],
     datasets: List[Path],
-    check_checksum: bool,
+    overwrite_existing: bool,
     newer_than: datetime,
 ):
     logging.basicConfig(
@@ -460,12 +461,11 @@ def main(
 
         logging.info("Output %s", output_yaml)
         if output_yaml.exists():
-            logging.info("Output already exists %s", output_yaml)
-            if check_checksum and yaml_checkums_correctly(output_yaml, ds_path):
-                logging.info(
-                    "Dataset preparation already done...SKIPPING %s", ds_path.name
-                )
+            if not overwrite_existing:
+                logging.info("Output exists: skipping. %s", output_yaml)
                 continue
+
+            logging.info("Output exists: overwriting %s", output_yaml)
 
         prepare_and_write(ds_path, output_yaml)
 
