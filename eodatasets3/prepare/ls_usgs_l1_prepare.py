@@ -256,7 +256,12 @@ def _file_size_bytes(path: Path) -> int:
     return sum(_file_size_bytes(p) for p in path.iterdir())
 
 
-def prepare_and_write(ds_path: Path, output_yaml_path: Path) -> Tuple[uuid.UUID, Path]:
+def prepare_and_write(
+    ds_path: Path,
+    output_yaml_path: Path,
+    # TODO: Can we infer producer automatically? This is bound to cause mistakes othewise
+    producer="usgs.gov",
+) -> Tuple[uuid.UUID, Path]:
     mtl_doc, mtl_filename = get_mtl_content(ds_path)
     if not mtl_doc:
         raise ValueError(f"No MTL file found for {ds_path}")
@@ -302,7 +307,7 @@ def prepare_and_write(ds_path: Path, output_yaml_path: Path) -> Tuple[uuid.UUID,
         p.platform = platform_id
         p.instrument = sensor_id
         p.product_family = "level1"
-        p.producer = "usgs.gov"
+        p.producer = producer
         p.datetime = "{}T{}".format(
             mtl_doc["product_metadata"]["date_acquired"],
             mtl_doc["product_metadata"]["scene_center_time"],
