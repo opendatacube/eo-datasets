@@ -1,5 +1,5 @@
 """
-Ingest data from the command-line.
+Prepare eo3 metadata for USGS Landsat Level 1 data
 """
 
 import logging
@@ -280,16 +280,7 @@ def prepare_and_write(
         return p.done()
 
 
-@click.command(
-    help="""\b
-                    Prepare USGS Landsat Collection 1 data for ingestion into the Data Cube.
-                    This prepare script supports only for MTL.txt metadata file
-                    To Set the Path for referring the datasets -
-                    Download the  Landsat scene data from Earth Explorer or GloVis into
-                    'some_space_available_folder' and unpack the file.
-                    For example: yourscript.py --output [Yaml- which writes datasets into this file for indexing]
-                    [Path for dataset as : /home/some_space_available_folder/]"""
-)
+@click.command(help=__doc__)
 @click.option(
     "--output-base",
     help="Write output into this directory instead of with the dataset",
