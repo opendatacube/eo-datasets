@@ -2,7 +2,6 @@
 Ingest data from the command-line.
 """
 
-import hashlib
 import logging
 import os
 import re
@@ -10,16 +9,9 @@ import tarfile
 import tempfile
 import uuid
 from datetime import datetime
-from functools import partial
 from pathlib import Path
 
 import click
-import pyproj
-import ruamel.yaml
-from osgeo import osr
-from shapely.geometry.base import BaseGeometry
-from shapely.ops import transform
-
 from eodatasets3 import serialise, utils
 from eodatasets3.assemble import DatasetAssembler, IfExists
 from eodatasets3.model import FileFormat
@@ -119,29 +111,6 @@ def _parse_value(s):
     return s
 
 
-def find_in(path, s, suffix="txt"):
-    # type: (Path, str, str) -> Optional[Path]
-    """Recursively find any file with a certain string in its name
-
-    Search through `path` and its children for the first occurance of a
-    file with `s` in its name. Returns the path of the file or `None`.
-    """
-
-    def matches(p):
-        # type: (Path) -> bool
-        return s in p.name and p.name.endswith(suffix)
-
-    if path.is_file():
-        return path if matches(path) else None
-
-    for root, _, files in os.walk(str(path)):
-        for f in files:
-            p = Path(root) / f
-            if matches(p):
-                return p
-    return None
-
-
 def _parse_group(lines, key_transform=lambda s: s.lower()):
     # type: (Iterable[Union[str, bytes]], Callable[[str], str]) -> dict
     tree = {}
@@ -162,22 +131,8 @@ def _parse_group(lines, key_transform=lambda s: s.lower()):
     return tree
 
 
-def get_coords(geo_ref_points, epsg_code):
-    # type: (Dict, int) -> Dict
-
-    spatial_ref = osr.SpatialReference()
-    spatial_ref.ImportFromEPSG(epsg_code)
-    t = osr.CoordinateTransformation(spatial_ref, spatial_ref.CloneGeogCS())
-
-    def transform(p):
-        lon, lat, z = t.TransformPoint(p["x"], p["y"])
-        return {"lon": lon, "lat": lat}
-
-    return {key: transform(p) for key, p in geo_ref_points.items()}
-
-
 def get_satellite_band_names(sat, instrument, file_name):
-    # type: (str, str, str) -> List[Tuple[str, str]]
+    # type: (str, str, str) -> Dict[str, str]
     """
     To load the band_names for referencing either LANDSAT8 or LANDSAT7 or LANDSAT5 bands
     Landsat7 and Landsat5 have same band names
@@ -195,7 +150,7 @@ def get_satellite_band_names(sat, instrument, file_name):
         sat_img = LANDSAT_BANDS
     else:
         sat_img = LANDSAT_BANDS[:6]
-    return sat_img
+    return dict(sat_img)
 
 
 def get_mtl_content(acquisition_path: Path) -> Tuple[Dict, str]:
@@ -218,42 +173,20 @@ def get_mtl_content(acquisition_path: Path) -> Tuple[Dict, str]:
                     "MTL file not found in {}".format(str(acquisition_path))
                 )
     else:
-        path = find_in(acquisition_path, "MTL")
-        if not path:
+        paths = list(acquisition_path.rglob("_MTL.txt"))
+        if not paths:
             raise RuntimeError("No MTL file")
-
+        if len(paths) > 1:
+            raise RuntimeError(
+                f"Multiple MTL files found in given acq path {acquisition_path}"
+            )
+        [path] = paths
         with path.open("r") as fp:
             return read_mtl(fp), path.name
 
 
 def read_mtl(fp):
     return _parse_group(fp)["l1_metadata_file"]
-
-
-def _file_size_bytes(path: Path) -> int:
-    """
-    Total file size for the given file/directory.
-
-    >>> import tempfile
-    >>> test_dir = Path(tempfile.mkdtemp())
-    >>> inner_dir = test_dir.joinpath('inner')
-    >>> inner_dir.mkdir()
-    >>> test_file = Path(inner_dir / 'test.txt')
-    >>> test_file.write_text('asdf\\n')
-    5
-    >>> Path(inner_dir / 'other.txt').write_text('secondary\\n')
-    10
-    >>> _file_size_bytes(test_file)
-    5
-    >>> _file_size_bytes(inner_dir)
-    15
-    >>> _file_size_bytes(test_dir)
-    15
-    """
-    if path.is_file():
-        return path.stat().st_size
-
-    return sum(_file_size_bytes(p) for p in path.iterdir())
 
 
 def prepare_and_write(
@@ -345,55 +278,6 @@ def prepare_and_write(
         p.add_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
 
         return p.done()
-
-
-def bbox(shape: BaseGeometry, crs: str) -> Tuple[float, float, float, float]:
-    tranform_wrs84 = partial(
-        pyproj.transform, pyproj.Proj(init=crs), pyproj.Proj(init="epsg:4326")
-    )
-    return transform(tranform_wrs84, shape).buffer(0).bounds
-
-
-def _remove_nones(d: Dict) -> Dict:
-    return {k: v for (k, v) in d.items() if v is not None}
-
-
-def _checksum_path(base_path: Path) -> Path:
-    """
-    Get the checksum file path for the given dataset.
-
-    If it's a file, we add a sibling file with '.sha1' extension
-
-    If it's a directory, we add a 'package.sha1' file inside (existing
-    dataset management scripts like dea-sync expect this)
-    """
-    if base_path.is_file():
-        return base_path.parent / f"{base_path.name}.sha1"
-    else:
-        return base_path / "package.sha1"
-
-
-def relative_path(basepath: Path, offset: Path) -> Path:
-    """
-    Get relative path (similar to web browser conventions)
-    """
-    # pathlib doesn't like relative-to-a-file.
-    if basepath.is_file():
-        basepath = basepath.parent
-    return offset.relative_to(basepath)
-
-
-def yaml_checkums_correctly(output_yaml: Path, data_path: Path) -> bool:
-    with output_yaml.open() as yaml_f:
-        logging.info("Running checksum comparison")
-        # It can match any dataset in the yaml.
-        for doc in ruamel.yaml.safe_load_all(yaml_f):
-            yaml_sha1 = doc["checksum_sha1"]
-            checksum_sha1 = hashlib.sha1(data_path.open("rb").read()).hexdigest()
-            if checksum_sha1 == yaml_sha1:
-                return True
-
-    return False
 
 
 @click.command(
