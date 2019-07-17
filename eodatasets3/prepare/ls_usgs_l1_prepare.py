@@ -173,7 +173,7 @@ def get_mtl_content(acquisition_path: Path) -> Tuple[Dict, str]:
                     "MTL file not found in {}".format(str(acquisition_path))
                 )
     else:
-        paths = list(acquisition_path.rglob("_MTL.txt"))
+        paths = list(acquisition_path.rglob("*_MTL.txt"))
         if not paths:
             raise RuntimeError("No MTL file")
         if len(paths) > 1:
@@ -269,7 +269,7 @@ def prepare_and_write(
         if p.properties["landsat:collection_category"] == "RT":
             p.properties["odc:dataset_maturity"] = "nrt"
 
-        for usgs_band_id, band_alias in band_mappings:
+        for usgs_band_id, band_alias in band_mappings.items():
             p.note_measurement(
                 band_alias,
                 mtl_doc["product_metadata"]["file_name_band_" + usgs_band_id.lower()],
