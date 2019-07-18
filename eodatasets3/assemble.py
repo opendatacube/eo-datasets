@@ -17,6 +17,7 @@ import rasterio
 from boltons import iterutils
 from rasterio import DatasetReader
 from rasterio.enums import Resampling
+from xarray import Dataset
 
 import eodatasets3
 from eodatasets3 import serialise, validate, images
@@ -478,6 +479,37 @@ class DatasetAssembler(EoFields):
             overview_resampling=overview_resampling,
             overviews=overviews,
         )
+
+    def write_measurements_odc_xarray(
+        self,
+        dataset: Dataset,
+        nodata: int,
+        overviews=images.DEFAULT_OVERVIEWS,
+        overview_resampling=Resampling.nearest,
+        expand_valid_data=True,
+        file_id=None,
+    ):
+        """
+        Write measurements from an ODC xarray.Dataset
+
+        The main requirement is that the Dataset contains a CRS attribute
+        and X/Y or lat/long dimensions and coordinates. These are used to
+        create an ODC GeoBox.
+        """
+        grid_spec = images.GridSpec.from_odc_xarray(dataset)
+        for name, dataarray in dataset.data_vars.items():
+            self._write_measurement(
+                name,
+                dataarray.data,
+                grid_spec,
+                self.names.measurement_file_path(
+                    self._work_path, name, "tif", file_id=file_id
+                ),
+                expand_valid_data=expand_valid_data,
+                overview_resampling=overview_resampling,
+                overviews=overviews,
+                nodata=nodata,
+            )
 
     def _write_measurement(
         self,

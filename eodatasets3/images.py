@@ -14,6 +14,7 @@ import rasterio.features
 import shapely
 import shapely.affinity
 import shapely.ops
+import xarray
 from affine import Affine
 from rasterio import DatasetReader
 from rasterio.coords import BoundingBox
@@ -67,6 +68,16 @@ class GridSpec:
     @property
     def resolution_yx(self):
         return abs(self.transform[4]), abs(self.transform[0])
+
+    @classmethod
+    def from_odc_xarray(cls, dataset: xarray.Dataset) -> "GridSpec":
+        shape = set(v.shape for v in dataset.data_vars.values()).pop()
+        return cls(
+            shape=shape,
+            transform=dataset.geobox.transform,
+            crs=CRS.from_wkt(dataset.geobox.crs.crs_str),
+        )
+        pass
 
     @property
     def bounds(self):
@@ -586,7 +597,6 @@ class FileWrite:
         """
         # No aux.xml file with our jpeg.
         with rasterio.Env(GDAL_PAM_ENABLED=False):
-
             with tempfile.TemporaryDirectory(
                 dir=out.parent, prefix=".thumbgen-"
             ) as tmpdir:
