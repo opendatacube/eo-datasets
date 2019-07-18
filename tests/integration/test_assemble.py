@@ -44,8 +44,8 @@ def test_minimal_dea_package(
         # Copy a measurement from an input file (it will write a COG with DEA naming conventions)
         p.write_measurement("blue", blue_geotiff_path)
 
-        # Or reference files from your metadata without copying them.
-        p.note_measurement("external_blue", blue_geotiff_path)
+        # Alternatively, all measurements could be by reference rather that a copy:
+        # p.note_measurement("external_blue", blue_geotiff_path)
 
         # Write a thumbnail using the given bands as r/g/b.
         p.write_thumbnail("ones", "ones", "blue")
