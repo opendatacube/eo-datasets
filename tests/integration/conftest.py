@@ -288,9 +288,9 @@ def l1_ls7_tarball_md_expected(
             "coordinates": (
                 (
                     (770115.0, -2768985.0),
-                    (525285.0, -2768985.0),
-                    (525285.0, -2981715.0),
                     (770115.0, -2981715.0),
+                    (525285.0, -2981715.0),
+                    (525285.0, -2768985.0),
                     (770115.0, -2768985.0),
                 ),
             ),
@@ -310,7 +310,21 @@ def l1_ls7_tarball_md_expected(
                     0.0,
                     1.0,
                 ),
-            }
+            },
+            "panchromatic": {
+                "shape": [60, 60],
+                "transform": [
+                    4080.25,
+                    0.0,
+                    525292.5,
+                    0.0,
+                    -3545.25,
+                    -2768992.5,
+                    0.0,
+                    0.0,
+                    1.0,
+                ],
+            },
         },
         "measurements": {
             "blue": {
@@ -347,6 +361,14 @@ def l1_ls7_tarball_md_expected(
                 "path": offset(
                     l1_ls7_tarball, "LE07_L1TP_104078_20130429_20161124_01_T1_B7.TIF"
                 )
+            },
+            "tir_1": {"path": "LE07_L1TP_104078_20130429_20161124_01_T1_B6_VCID_1.TIF"},
+            "tir_2": {"path": "LE07_L1TP_104078_20130429_20161124_01_T1_B6_VCID_2.TIF"},
+            "panchromatic": {
+                "path": offset(
+                    l1_ls7_tarball, "LE07_L1TP_104078_20130429_20161124_01_T1_B8.TIF"
+                ),
+                "grid": "panchromatic",
             },
         },
         "accessories": {
@@ -458,6 +480,11 @@ def l1_ls5_tarball_md_expected(
             "swir_2": {
                 "path": offset(
                     l1_ls5_tarball, "LT05_L1TP_090085_19970406_20161231_01_T1_B7.TIF"
+                )
+            },
+            "tir": {
+                "path": offset(
+                    l1_ls5_tarball, "LT05_L1TP_090085_19970406_20161231_01_T1_B6.TIF"
                 )
             },
             "quality": {

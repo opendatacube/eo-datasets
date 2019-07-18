@@ -10,8 +10,10 @@ import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
+from typing import List, Optional, Union, Iterable, Dict, Tuple, Callable, Generator
 
 import click
+
 from eodatasets3 import serialise, utils
 from eodatasets3.assemble import DatasetAssembler, IfExists
 from eodatasets3.model import FileFormat
@@ -44,113 +46,78 @@ _COPYABLE_MTL_FIELDS = [
     ),
 ]
 
-try:
-    # flake8 doesn't recognise type hints as usage
-    from typing import (
-        List,
-        Optional,
-        Union,
-        Iterable,
-        Dict,
-        Tuple,
-        Callable,
-    )  # noqa: F401
-except ImportError:
-    pass
-
 # Static namespace to generate uuids for datacube indexing
 USGS_UUID_NAMESPACE = uuid.UUID("276af61d-99f8-4aa3-b2fb-d7df68c5e28f")
 
-LANDSAT_8_BANDS = [
-    ("1", "coastal_aerosol"),
-    ("2", "blue"),
-    ("3", "green"),
-    ("4", "red"),
-    ("5", "nir"),
-    ("6", "swir_1"),
-    ("7", "swir_2"),
-    ("8", "panchromatic"),
-    ("9", "cirrus"),
-    ("10", "lwir_1"),
-    ("11", "lwir_2"),
-    ("QUALITY", "quality"),
-]
+LANDSAT_OLI_TIRS_BAND_ALIASES = {
+    "1": "coastal_aerosol",
+    "2": "blue",
+    "3": "green",
+    "4": "red",
+    "5": "nir",
+    "6": "swir_1",
+    "7": "swir_2",
+    "8": "panchromatic",
+    "9": "cirrus",
+    "10": "lwir_1",
+    "11": "lwir_2",
+    "quality": "quality",
+}
 
-TIRS_ONLY = LANDSAT_8_BANDS[9:12]
-OLI_ONLY = [*LANDSAT_8_BANDS[0:9], LANDSAT_8_BANDS[11]]
-
-LANDSAT_BANDS = [
-    ("1", "blue"),
-    ("2", "green"),
-    ("3", "red"),
-    ("4", "nir"),
-    ("5", "swir_1"),
-    ("7", "swir_2"),
-    ("QUALITY", "quality"),
-]
+LANDSAT_xTM_BAND_ALIASES = {
+    "1": "blue",
+    "2": "green",
+    "3": "red",
+    "4": "nir",
+    "5": "swir_1",
+    "6": "tir",
+    "6_vcid_1": "tir_1",
+    "6_vcid_2": "tir_2",
+    "7": "swir_2",
+    "8": "panchromatic",
+    "quality": "quality",
+}
 
 MTL_PAIRS_RE = re.compile(r"(\w+)\s=\s(.*)")
 
 
-def _parse_value(s):
-    # type: (str) -> Union[int, float, str]
-    """
-    >>> _parse_value("asdf")
-    'asdf'
-    >>> _parse_value("123")
-    123
-    >>> _parse_value("3.14")
-    3.14
-    """
-    s = s.strip('"')
-    for parser in [int, float]:
-        try:
-            return parser(s)
-        except ValueError:
-            pass
-    return s
-
-
-def _parse_group(lines, key_transform=lambda s: s.lower()):
-    # type: (Iterable[Union[str, bytes]], Callable[[str], str]) -> dict
-    tree = {}
-
-    for line in lines:
-        # If line is bytes-like convert to str
-        if isinstance(line, bytes):
-            line = line.decode("utf-8")
-        match = MTL_PAIRS_RE.findall(line)
-        if match:
-            key, value = match[0]
-            if key == "GROUP":
-                tree[key_transform(value)] = _parse_group(lines)
-            elif key == "END_GROUP":
-                break
-            else:
-                tree[key_transform(key)] = _parse_value(value)
-    return tree
-
-
-def get_satellite_band_names(sat, instrument, file_name):
-    # type: (str, str, str) -> Dict[str, str]
+def get_band_alias_mappings(sat: str, instrument: str) -> Dict[str, str]:
     """
     To load the band_names for referencing either LANDSAT8 or LANDSAT7 or LANDSAT5 bands
     Landsat7 and Landsat5 have same band names
+
+    >>> get_band_alias_mappings('landsat-8', 'OLI_TIRS') == LANDSAT_OLI_TIRS_BAND_ALIASES
+    True
+    >>> get_band_alias_mappings('landsat-8', 'OLI') == LANDSAT_OLI_TIRS_BAND_ALIASES
+    True
+    >>> get_band_alias_mappings('landsat-5', 'TM') == LANDSAT_xTM_BAND_ALIASES
+    True
+    >>> get_band_alias_mappings('landsat-5', 'TM') == LANDSAT_xTM_BAND_ALIASES
+    True
+    >>> get_band_alias_mappings('aqua', 'MODIS') == LANDSAT_xTM_BAND_ALIASES
+    Traceback (most recent call last):
+    ...
+    NotImplementedError: Unexpected satellite. Only landsat handled currently. Got 'aqua'
+    >>> get_band_alias_mappings('landsat-5', 'MSS') == LANDSAT_xTM_BAND_ALIASES
+    Traceback (most recent call last):
+    ...
+    NotImplementedError: Landsat version not yet supported: 'landsat-5', 'MSS'
     """
 
-    name_len = file_name.split("_")
-    if sat == "LANDSAT_8":
-        if instrument == "TIRS":
-            sat_img = TIRS_ONLY
-        elif instrument == "OLI":
-            sat_img = OLI_ONLY
-        else:
-            sat_img = LANDSAT_8_BANDS
-    elif len(name_len) > 7:
-        sat_img = LANDSAT_BANDS
-    else:
-        sat_img = LANDSAT_BANDS[:6]
-    return dict(sat_img)
+    if not sat.startswith("landsat-"):
+        raise NotImplementedError(
+            f"Unexpected satellite. Only landsat handled currently. Got {sat!r}"
+        )
+    landsat_number = int(sat.split("-")[1])
+
+    if landsat_number == 8:
+        return LANDSAT_OLI_TIRS_BAND_ALIASES
+    if landsat_number in (4, 5, 7) and instrument.endswith("TM"):
+        return LANDSAT_xTM_BAND_ALIASES
+
+    raise NotImplementedError(
+        f"Landsat version not yet supported: {sat!r}, {instrument!r}"
+    )
 
 
 def get_mtl_content(acquisition_path: Path) -> Tuple[Dict, str]:
@@ -185,8 +152,56 @@ def get_mtl_content(acquisition_path: Path) -> Tuple[Dict, str]:
             return read_mtl(fp), path.name
 
 
-def read_mtl(fp):
+def read_mtl(fp: Iterable[Union[str, bytes]]) -> Dict:
+    def _parse_value(s: str) -> Union[int, float, str]:
+        """
+        >>> _parse_value("asdf")
+        'asdf'
+        >>> _parse_value("123")
+        123
+        >>> _parse_value("3.14")
+        3.14
+        """
+        s = s.strip('"')
+        for parser in [int, float]:
+            try:
+                return parser(s)
+            except ValueError:
+                pass
+        return s
+
+    def _parse_group(
+        lines: Iterable[Union[str, bytes]],
+        key_transform: Callable[[str], str] = lambda s: s.lower(),
+    ) -> dict:
+
+        tree = {}
+
+        for line in lines:
+            # If line is bytes-like convert to str
+            if isinstance(line, bytes):
+                line = line.decode("utf-8")
+            match = MTL_PAIRS_RE.findall(line)
+            if match:
+                key, value = match[0]
+                if key == "GROUP":
+                    tree[key_transform(value)] = _parse_group(lines)
+                elif key == "END_GROUP":
+                    break
+                else:
+                    tree[key_transform(key)] = _parse_value(value)
+        return tree
+
     return _parse_group(fp)["l1_metadata_file"]
+
+
+def _iter_bands_paths(mtl_doc: Dict) -> Generator[Tuple[str, str], None, None]:
+    prefix = "file_name_band_"
+    for name, filepath in mtl_doc["product_metadata"].items():
+        if not name.startswith(prefix):
+            continue
+        usgs_band_id = name[len(prefix) :]
+        yield usgs_band_id, filepath
 
 
 def prepare_and_write(
@@ -200,7 +215,6 @@ def prepare_and_write(
         raise ValueError(f"No MTL file found for {ds_path}")
 
     collection_number = mtl_doc["metadata_file_info"].get("collection_number")
-
     if collection_number is None:
         raise NotImplementedError(
             "Dataset has no collection number: pre-collection data is not supported."
@@ -212,11 +226,6 @@ def prepare_and_write(
     file_format = FileFormat.GeoTIFF
 
     # epsg_code = 32600 + mtl_doc["projection_parameters"]["utm_zone"]
-
-    platform_id = mtl_doc["product_metadata"]["spacecraft_id"]
-    sensor_id = mtl_doc["product_metadata"]["sensor_id"]
-    band_mappings = get_satellite_band_names(platform_id, sensor_id, mtl_filename)
-    product_id = mtl_doc["metadata_file_info"]["landsat_product_id"]
 
     # Assumed below.
     if (
@@ -234,12 +243,14 @@ def prepare_and_write(
         metadata_file=output_yaml_path,
         paths_relative_to=ds_path,
         # Detministic ID based on USGS's product id (which changes when the scene is reprocessed by them)
-        dataset_id=uuid.uuid5(USGS_UUID_NAMESPACE, product_id),
+        dataset_id=uuid.uuid5(
+            USGS_UUID_NAMESPACE, mtl_doc["metadata_file_info"]["landsat_product_id"]
+        ),
         naming_conventions="dea",
         if_exists=IfExists.Overwrite,
     ) as p:
-        p.platform = platform_id
-        p.instrument = sensor_id
+        p.platform = mtl_doc["product_metadata"]["spacecraft_id"]
+        p.instrument = mtl_doc["product_metadata"]["sensor_id"]
         p.product_family = "level1"
         p.producer = producer
         p.datetime = "{}T{}".format(
@@ -255,9 +266,8 @@ def prepare_and_write(
         p.properties["landsat:collection_number"] = collection_number
 
         for section, fields in _COPYABLE_MTL_FIELDS:
-            s = mtl_doc[section]
             for field in fields:
-                value = s.get(field)
+                value = mtl_doc[section].get(field)
                 if value is not None:
                     p.properties[f"landsat:{field}"] = value
 
@@ -269,11 +279,10 @@ def prepare_and_write(
         if p.properties["landsat:collection_category"] == "RT":
             p.properties["odc:dataset_maturity"] = "nrt"
 
-        for usgs_band_id, band_alias in band_mappings.items():
-            p.note_measurement(
-                band_alias,
-                mtl_doc["product_metadata"]["file_name_band_" + usgs_band_id.lower()],
-            )
+        band_aliases = get_band_alias_mappings(p.platform, p.instrument)
+        for usgs_band_id, file_location in _iter_bands_paths(mtl_doc):
+            band_alias = band_aliases[usgs_band_id]
+            p.note_measurement(band_alias, file_location)
 
         p.add_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
 
