@@ -124,23 +124,37 @@ def get_band_alias_mappings(sat: str, instrument: str) -> Dict[str, str]:
 
 def get_mtl_content(acquisition_path: Path) -> Tuple[Dict, str]:
     """
-    Find MTL file; return it parsed as a dict with its filename relative to the acquisition path.
+    Find MTL file for the given path. It could be a directory or a tar file.
+
+    It will return the MTL parsed as a dict and its filename.
     """
+
+    def iter_tar_members(tp: tarfile.TarFile) -> Generator[tarfile.TarInfo, None, None]:
+        """
+        This is a lazy alternative to TarInfo.getmembers() that only reads one tar item at a time.
+
+        We're reading the MTL file, which is almost always the first entry in the tar, and then
+        closing it, so we're avoiding skipping through the entirety of the tar.
+        """
+        member = tp.next()
+        while member is not None:
+            yield member
+            member = tp.next()
+
     if not acquisition_path.exists():
         raise RuntimeError("Missing path '{}'".format(acquisition_path))
 
     if acquisition_path.is_file() and tarfile.is_tarfile(str(acquisition_path)):
         with tarfile.open(str(acquisition_path), "r") as tp:
-            try:
-                internal_file = next(
-                    filter(lambda memb: "_MTL" in memb.name, tp.getmembers())
-                )
-                with tp.extractfile(internal_file) as fp:
-                    return read_mtl(fp), internal_file.name
-            except StopIteration:
+            for member in iter_tar_members(tp):
+                if "_MTL" in member.name:
+                    with tp.extractfile(member) as fp:
+                        return read_mtl(fp), member.name
+            else:
                 raise RuntimeError(
                     "MTL file not found in {}".format(str(acquisition_path))
                 )
+
     else:
         paths = list(acquisition_path.rglob("*_MTL.txt"))
         if not paths:
