@@ -19,6 +19,7 @@ def test_minimal_dea_package(
     [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
 
     with DatasetAssembler(out, naming_conventions="dea") as p:
+        # We add a source dataset, asking to inherit the common properties (eg. platform, instrument, datetime)
         p.add_source_dataset(l1_ls8_dataset, auto_inherit_properties=True)
 
         # It's a GA product called "ones".
@@ -43,10 +44,13 @@ def test_minimal_dea_package(
         # Copy a measurement from an input file (it will write a COG with DEA naming conventions)
         p.write_measurement("blue", blue_geotiff_path)
 
+        # Or reference files from your metadata without copying them.
+        p.note_measurement("external_blue", blue_geotiff_path)
+
         # Write a thumbnail using the given bands as r/g/b.
         p.write_thumbnail("ones", "ones", "blue")
 
-        # p.done() will write the whole dataset into place. (renaming its temp directory)
+        # p.done() will validate the dataset and write it to the destination atomically.
         dataset_id, metadata_path = p.done()
 
     assert isinstance(dataset_id, UUID), "Expected a random UUID to be assigned"

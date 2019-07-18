@@ -517,7 +517,7 @@ class DatasetAssembler(EoFields):
 
     def note_measurement(self, name, path: Union[str, Path], expand_valid_data=True):
         """
-        Add a measurment using its existing file path.
+        Reference a measurement from its existing file path.
 
         (no data is copied, but Geo information is read from it.)
         """
@@ -706,6 +706,8 @@ class DatasetAssembler(EoFields):
 
         If you have multiple thumbnails, you can specify the 'kind' to distinguish
         them (it will be put in the filename).
+
+        Eg. GA's ARD has thumbnails of kind 'nbar' and 'nbart'.
         """
         thumb = self.names.thumbnail_name(self._work_path, kind=kind)
         measurements = dict(
@@ -739,6 +741,14 @@ class DatasetAssembler(EoFields):
         self.add_accessory_file(accessory_name, thumb)
 
     def add_accessory_file(self, name: str, path: Path):
+        """
+        Add a reference to a file that is not an ODC measurement.
+
+        Such as native metadata, thumbanils, checksums, etc.
+
+        By convention, the name should have prefixes with their category, such as
+        'metadata:' or 'thumbnail:'
+        """
         existing_path = self._accessories.get(name)
         if existing_path is not None and existing_path != path:
             raise ValueError(
