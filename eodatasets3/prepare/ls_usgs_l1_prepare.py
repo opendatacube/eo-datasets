@@ -1,5 +1,7 @@
 """
-Prepare eo3 metadata for USGS Landsat Level 1 data
+Prepare eo3 metadata for USGS Landsat Level 1 data.
+
+Input dataset paths can be directories or tar files.
 """
 
 import logging
@@ -210,6 +212,11 @@ def prepare_and_write(
     # TODO: Can we infer producer automatically? This is bound to cause mistakes othewise
     producer="usgs.gov",
 ) -> Tuple[uuid.UUID, Path]:
+    """
+    Prepare an eo3 metadata file for a Level1 dataset.
+
+    Input dataset path can be a folder or a tar file.
+    """
     mtl_doc, mtl_filename = get_mtl_content(ds_path)
     if not mtl_doc:
         raise ValueError(f"No MTL file found for {ds_path}")
@@ -343,7 +350,6 @@ def main(
         logging.info("Processing %s", ds_path)
         output_yaml = output / "{}.odc-metadata.yaml".format(_dataset_name(ds_path))
 
-        logging.info("Output %s", output_yaml)
         if output_yaml.exists():
             if not overwrite_existing:
                 logging.info("Output exists: skipping. %s", output_yaml)
@@ -351,7 +357,8 @@ def main(
 
             logging.info("Output exists: overwriting %s", output_yaml)
 
-        prepare_and_write(ds_path, output_yaml)
+        output_uuid, output_path = prepare_and_write(ds_path, output_yaml)
+        logging.info("Wrote dataset %s to %s", output_uuid, output_path)
 
 
 def _normalise_dataset_path(input_path: Path) -> Path:
