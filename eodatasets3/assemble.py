@@ -556,19 +556,18 @@ class DatasetAssembler(EoFields):
         Record the version of some software used to produce the dataset.
 
         :param name: a short human-readable name for the software. eg "datacube-core"
-        :param url: A URL that uniquely identifies it, such as the git repository.
+        :param url: A URL where the software is found, such as the git repository.
         :param version: the version string, eg. "1.0.0b1"
         """
         for v in self._software_versions:
-            if v["url"] == url:
+            # Uniquely identify software by the tuple (name, url)
+            if v["name"] == name and v["url"] == url:
                 existing_version = v["version"]
                 if existing_version != version:
                     raise ValueError(
                         f"duplicate setting of software {url!r} with different value "
                         f"({existing_version!r} != {version!r})"
                     )
-                if not v["name"]:
-                    v["name"] = name
                 return
 
         self._software_versions.append(dict(name=name, url=url, version=version))

@@ -22,7 +22,7 @@ def test_minimal_dea_package(
         # We add a source dataset, asking to inherit the common properties (eg. platform, instrument, datetime)
         p.add_source_dataset(l1_ls8_dataset, auto_inherit_properties=True)
 
-        # It's a GA product called "ones".
+        # It's a GA product of "numerus-unus" ("the number one").
         p.producer = "ga.gov.au"
         p.product_family = "ones"
         p.dataset_version = "3.0.0"
@@ -46,9 +46,17 @@ def test_minimal_dea_package(
 
         # Alternatively, all measurements could be by reference rather that a copy:
         # p.note_measurement("external_blue", blue_geotiff_path)
+        # (See an example of referencing in eodatasets3/prepare/ls_usgs_l1_prepare.py )
 
         # Write a thumbnail using the given bands as r/g/b.
         p.write_thumbnail("ones", "ones", "blue")
+
+        # Note any software versions important to this created data.
+        p.note_software_version(
+            "numerus-unus-processor",
+            "https://github.com/GeoscienceAustralia/eo-datasets",
+            "1.2.3",
+        )
 
         # p.done() will validate the dataset and write it to the destination atomically.
         dataset_id, metadata_path = p.done()
