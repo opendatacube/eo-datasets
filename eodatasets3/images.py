@@ -216,7 +216,9 @@ class MeasurementRecord:
         self.mask_by_grid[grid] = mask
 
     def as_geo_docs(self) -> Tuple[CRS, Dict[str, GridDoc], Dict[str, MeasurementDoc]]:
-        """Calculate combined information for metadata docs"""
+        """Calculate combined geo information for metadata docs"""
+
+        # Order grids from most to fewest measurements.
         # PyCharm's typing seems to get confused by the sorted() call.
         # noinspection PyTypeChecker
         grids_by_frequency: List[Tuple[GridSpec, Dict[str, Path]]] = sorted(

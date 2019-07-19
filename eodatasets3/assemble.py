@@ -26,8 +26,7 @@ from eodatasets3.model import (
     DatasetDoc,
     ProductDoc,
     StacPropertyView,
-    DeaNamingConventions,
-    DEA_URI_PREFIX,
+    ComplicatedNamingConventions,
     AccessoryDoc,
     resolve_absolute_offset,
 )
@@ -184,6 +183,11 @@ class DatasetAssembler(EoFields):
                 "Must specify either an output folder or a single metadata file"
             )
 
+        if output_folder and not output_folder.exists():
+            raise ValueError(
+                f"Provided base output folder doesn't exist: {output_folder}"
+            )
+
         self._base_output_folder = output_folder
 
         # If not specified, it will be auto-generated inside the output folder.
@@ -208,9 +212,9 @@ class DatasetAssembler(EoFields):
         self._props = StacPropertyView()
 
         if naming_conventions == "default":
-            self.names = DeaNamingConventions(self)
+            self.names = ComplicatedNamingConventions(self)
         elif naming_conventions == "dea":
-            self.names = DeaNamingConventions(self, DEA_URI_PREFIX)
+            self.names = ComplicatedNamingConventions.for_standard_dea(self)
         else:
             raise NotImplementedError("configurable naming conventions")
 
@@ -594,7 +598,6 @@ class DatasetAssembler(EoFields):
             eodatasets3.__version__,
         )
 
-        # Order from most to fewest measurements.
         crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
 
         if sort_bands:
@@ -602,6 +605,7 @@ class DatasetAssembler(EoFields):
 
         valid_data = self._measurements.valid_data()
 
+        # If we wrote any data, a temporary work directory will have been initialised.
         if self._initialised_work_path:
             checksum_path = self.names.checksum_path(self._work_path)
             processing_metadata = self.names.metadata_path(
@@ -612,7 +616,6 @@ class DatasetAssembler(EoFields):
 
         dataset = DatasetDoc(
             id=self.dataset_id,
-            # TODO: configurable/non-dea naming?
             product=ProductDoc(
                 name=self.names.product_name, href=self.names.product_uri
             ),
@@ -646,6 +649,7 @@ class DatasetAssembler(EoFields):
                         f"Internal error: Unhandled type of message level: {m.level}"
                     )
 
+        # If we're using a tmp path, finish the package and move it into place.
         if self._initialised_work_path:
             self._write_yaml(
                 {**self._user_metadata, "software_versions": self._software_versions},

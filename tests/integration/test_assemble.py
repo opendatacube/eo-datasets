@@ -11,7 +11,7 @@ from tests import assert_file_structure
 from tests.integration.common import assert_same_as_file
 
 
-def test_minimal_dea_package(
+def test_dea_style_package(
     l1_ls8_dataset: DatasetDoc, l1_ls8_folder: Path, tmp_path: Path
 ):
     out = tmp_path
@@ -165,4 +165,47 @@ def test_minimal_dea_package(
             "lineage": {"level1": ["a780754e-a884-58a7-9ac0-df518a67f59d"]},
         },
         generated_file=metadata_path,
+    )
+
+
+def test_minimal_package(tmp_path: Path, l1_ls8_folder: Path):
+    """
+    What's the minimum number of fields we can set and still produce a package?
+    """
+
+    out = tmp_path / "out"
+    out.mkdir()
+
+    [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
+
+    with DatasetAssembler(out) as p:
+        p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+        p.product_family = "quaternarius"
+        p.processed = datetime.utcnow()
+
+        p.write_measurement("blue", blue_geotiff_path)
+
+        # p.done() will validate the dataset and write it to the destination atomically.
+        dataset_id, metadata_path = p.done()
+
+    assert dataset_id is not None
+    for f in out.rglob("*"):
+        print(str(f.name))
+    assert_file_structure(
+        out,
+        {
+            "quaternarius": {
+                "2019": {
+                    "07": {
+                        "04": {
+                            # Set a dataset version to get rid of 'beta' label.
+                            "quaternarius_beta_x_2019-07-04_user.odc-metadata.yaml": "",
+                            "quaternarius_beta_x_2019-07-04_user.proc-info.yaml": "",
+                            "quaternarius_beta_x_2019-07-04_user_blue.tif": "",
+                            "quaternarius_beta_x_2019-07-04_user.sha1": "",
+                        }
+                    }
+                }
+            }
+        },
     )

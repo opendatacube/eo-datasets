@@ -24,7 +24,6 @@ properties:
         format: url
     required:
       - name
-      - href
 
   locations:
     type: array

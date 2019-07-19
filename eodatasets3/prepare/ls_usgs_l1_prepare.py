@@ -344,7 +344,7 @@ def main(
 
     for ds in datasets:
         if output_base:
-            output = output_base / utils.subfolderise(_dataset_region_code(ds))
+            output = output_base.joinpath(*utils.subfolderise(_dataset_region_code(ds)))
             output.mkdir(parents=True, exist_ok=True)
         else:
             # Alongside the dataset itself.

@@ -1,5 +1,6 @@
 import collections
 import enum
+import math
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -7,7 +8,6 @@ from typing import List, Counter, Dict, Generator
 
 import attr
 import click
-import math
 from click import style, echo, secho
 from rasterio.crs import CRS
 from rasterio.errors import CRSError
@@ -85,6 +85,9 @@ def validate(
         return
 
     dataset = serialise.from_doc(doc, skip_validation=True)
+
+    if not dataset.product.href:
+        _info("product_href", "A url (href) is recommended for products")
 
     yield from _validate_geo(dataset)
 
