@@ -218,6 +218,7 @@ class DatasetAssembler(EoFields):
         else:
             raise NotImplementedError("configurable naming conventions")
 
+        self._is_finished = False
         self._finished_init_ = True
 
     @property
@@ -268,8 +269,22 @@ class DatasetAssembler(EoFields):
         # Clean up.
         self.close()
 
+    def cancel(self):
+        """Cancel the package, cleaning up temporary files.
+
+        This works like `close()`, but is intentional, so no warning will
+        be raised for forgetting to complete the package first.
+        """
+        self._is_finished = True
+        self.close()
+
     def close(self):
         """Cleanup any temporary files, even if dataset has not been written"""
+        if not self._is_finished:
+            warnings.warn(
+                "Closing assembler without finishing. "
+                "Either call `done()` or `cancel() before closing`"
+            )
 
         if self._initialised_work_path:
             # TODO: add implicit cleanup like tempfile.TemporaryDirectory?
@@ -699,6 +714,7 @@ class DatasetAssembler(EoFields):
             )
         )
         assert target_metadata_path.exists()
+        self._is_finished = True
         return dataset.id, target_metadata_path
 
     def write_thumbnail(self, red: str, green: str, blue: str, kind: str = None):
