@@ -1,7 +1,7 @@
 ## Earth Observation Datasets
 
-[![Build Status](https://travis-ci.org/GeoscienceAustralia/eo-datasets.svg?branch=develop)](https://travis-ci.org/GeoscienceAustralia/eo-datasets)
-[![Coverage Status](https://coveralls.io/repos/GeoscienceAustralia/eo-datasets/badge.svg?branch=develop)](https://coveralls.io/r/GeoscienceAustralia/eo-datasets?branch=develop)
+[![Build Status](https://travis-ci.org/GeoscienceAustralia/eo-datasets.svg?branch=eodatasets3)](https://travis-ci.org/GeoscienceAustralia/eo-datasets)
+[![Coverage Status](https://coveralls.io/repos/GeoscienceAustralia/eo-datasets/badge.svg?branch=eodatasets3)](https://coveralls.io/r/GeoscienceAustralia/eo-datasets?branch=eodatasets3)
 
 Packaging, metadata and provenance libraries for GA EO datasets. See [LICENSE](LICENSE) for
 license details.
