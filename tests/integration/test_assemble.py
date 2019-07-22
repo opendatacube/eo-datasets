@@ -181,7 +181,7 @@ def test_minimal_package(tmp_path: Path, l1_ls8_folder: Path):
     with DatasetAssembler(out) as p:
         p.datetime = datetime(2019, 7, 4, 13, 7, 5)
         p.product_family = "quaternarius"
-        p.processed = datetime.utcnow()
+        p.processed_now()
 
         p.write_measurement("blue", blue_geotiff_path)
 
