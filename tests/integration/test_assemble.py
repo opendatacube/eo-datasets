@@ -20,7 +20,7 @@ def test_dea_style_package(
 
     with DatasetAssembler(out, naming_conventions="dea") as p:
         # We add a source dataset, asking to inherit the common properties (eg. platform, instrument, datetime)
-        p.add_source_dataset(l1_ls8_dataset, auto_inherit_properties=True)
+        p.add_source_path(l1_ls8_folder, auto_inherit_properties=True)
 
         # It's a GA product of "numerus-unus" ("the number one").
         p.producer = "ga.gov.au"
