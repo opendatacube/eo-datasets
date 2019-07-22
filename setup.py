@@ -8,6 +8,7 @@ import versioneer
 tests_require = [
     "deepdiff",
     "flake8",
+    "black",
     "hypothesis",
     "mock",
     "pep8-naming",

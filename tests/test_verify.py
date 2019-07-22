@@ -75,7 +75,7 @@ a94a8fe5ccb19ba61c4c0873d391e987982fbbd3\ttest1.txt
 
         # Corrupt a file, and expect it to fail verification.
         with d.joinpath("package", "test3.txt").open("w") as f:
-            f.write(u"Deliberate corruption!")
+            f.write("Deliberate corruption!")
 
         expected_verification = {
             (d.joinpath("test1.txt").absolute(), True),

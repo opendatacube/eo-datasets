@@ -4,10 +4,8 @@
 set -eu
 set -x
 
-pycodestyle tests --max-line-length 120
-
-# pylint -j 2 --reports no eodatasets3
 flake8 -j 2 eodatasets3
+black --check eodatasets3 tests
 
 # Run tests, taking coverage.
 # Users can specify extra folders as arguments.
