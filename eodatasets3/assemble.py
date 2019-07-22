@@ -12,7 +12,6 @@ from enum import Enum
 from pathlib import Path, PurePath
 from typing import Dict, List, Optional, Tuple, Generator, Any, Union
 
-import h5py
 import numpy
 import rasterio
 from boltons import iterutils
@@ -364,36 +363,6 @@ class DatasetAssembler(EoFields):
                         f"Inheritable property {name!r} is different from current value: "
                         f"{existing_val!r} != {new_val!r}"
                     )
-
-    def write_measurement_h5(
-        self,
-        name: str,
-        g: h5py.Dataset,
-        overviews=images.DEFAULT_OVERVIEWS,
-        overview_resampling=Resampling.nearest,
-        expand_valid_data=True,
-        file_id=None,
-    ):
-        """
-        Write a measurement by copying it from a hdf5 dataset.
-        """
-        if hasattr(g, "chunks"):
-            data = g[:]
-        else:
-            data = g
-
-        self._write_measurement(
-            name,
-            data,
-            images.GridSpec.from_h5(g),
-            self.names.measurement_file_path(
-                self._work_path, name, "tif", file_id=file_id
-            ),
-            expand_valid_data=expand_valid_data,
-            nodata=(g.attrs.get("no_data_value")),
-            overview_resampling=overview_resampling,
-            overviews=overviews,
-        )
 
     def write_measurement(
         self,

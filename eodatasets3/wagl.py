@@ -19,12 +19,14 @@ import click
 import h5py
 import numpy
 import rasterio
+from affine import Affine
 from boltons.iterutils import get_path, PathAccessError
 from click import secho
 from rasterio import DatasetReader
+from rasterio.crs import CRS
 from rasterio.enums import Resampling
 
-from eodatasets3 import serialise, utils
+from eodatasets3 import serialise, utils, images
 from eodatasets3.assemble import DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
@@ -85,7 +87,8 @@ def _unpack_products(
                 with do(f"Path {pathname!r}"):
                     dataset = h5group[pathname]
                     band_name = utils.normalise_band_name(dataset.attrs["alias"])
-                    p.write_measurement_h5(
+                    write_measurement_h5(
+                        p,
                         f"{product}:{band_name}",
                         dataset,
                         overview_resampling=Resampling.average,
@@ -96,6 +99,39 @@ def _unpack_products(
                 red, green, blue = _THUMBNAILS[(p.platform, product)]
                 with do(f"Thumbnailing {product}"):
                     p.write_thumbnail(red, green, blue, kind=product)
+
+
+def write_measurement_h5(
+    p: DatasetAssembler,
+    name: str,
+    g: h5py.Dataset,
+    overviews=images.DEFAULT_OVERVIEWS,
+    overview_resampling=Resampling.nearest,
+    expand_valid_data=True,
+    file_id: str = None,
+):
+    """
+    Write a measurement by copying it from a hdf5 dataset.
+    """
+    if hasattr(g, "chunks"):
+        data = g[:]
+    else:
+        data = g
+
+    p.write_measurement_numpy(
+        name=name,
+        array=data,
+        grid_spec=images.GridSpec(
+            shape=g.shape,
+            transform=Affine.from_gdal(*g.attrs["geotransform"]),
+            crs=CRS.from_wkt(g.attrs["crs_wkt"]),
+        ),
+        nodata=(g.attrs.get("no_data_value")),
+        overviews=overviews,
+        overview_resampling=overview_resampling,
+        expand_valid_data=expand_valid_data,
+        file_id=file_id,
+    )
 
 
 def _file_id(dataset: h5py.Dataset) -> str:
@@ -151,7 +187,8 @@ def _unpack_observation_attributes(
             o = f"{section}/{dataset_name}"
             with do(f"Path {o!r} "):
                 measurement_name = utils.normalise_band_name(dataset_name)
-                p.write_measurement_h5(
+                write_measurement_h5(
+                    p,
                     f"oa:{measurement_name}",
                     res_grp[o],
                     # We only use the product bands for valid data calc, not supplementary.

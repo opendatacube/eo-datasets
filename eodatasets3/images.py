@@ -60,14 +60,6 @@ class GridSpec:
     def from_rio(cls, dataset: rasterio.DatasetReader) -> "GridSpec":
         return cls(shape=dataset.shape, transform=dataset.transform, crs=dataset.crs)
 
-    @classmethod
-    def from_h5(cls, dataset: h5py.Dataset) -> "GridSpec":
-        return cls(
-            shape=dataset.shape,
-            transform=Affine.from_gdal(*dataset.attrs["geotransform"]),
-            crs=CRS.from_wkt(dataset.attrs["crs_wkt"]),
-        )
-
     @property
     def resolution_yx(self):
         return abs(self.transform[4]), abs(self.transform[0])
