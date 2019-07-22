@@ -20,7 +20,7 @@ tests_require = [
 
 setup(
     name="eodatasets3",
-    description="Packaging, metadata and provenance for ODC EO datasets",
+    description="Packaging, metadata and provenance for OpenDataCube EO3 datasets",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     packages=find_packages(exclude=("tests", "tests.*")),
