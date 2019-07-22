@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import List, Optional, Union, Iterable, Dict, Tuple, Callable, Generator
 
 import click
+import rasterio
 
 from eodatasets3 import serialise, utils
 from eodatasets3.assemble import DatasetAssembler, IfExists
@@ -341,38 +342,40 @@ def main(
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
     )
-
-    for ds in datasets:
-        if output_base:
-            output = output_base.joinpath(*utils.subfolderise(_dataset_region_code(ds)))
-            output.mkdir(parents=True, exist_ok=True)
-        else:
-            # Alongside the dataset itself.
-            output = ds.absolute().parent
-
-        ds_path = _normalise_dataset_path(Path(ds).absolute())
-        (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(ds)
-        create_date = datetime.utcfromtimestamp(ctime)
-        if newer_than and (create_date <= newer_than):
-            logging.info(
-                "Creation time {} older than start date {:%Y-%m-%d %H:%M} ...SKIPPING {}".format(
-                    newer_than - create_date, newer_than, ds_path.name
+    with rasterio.Env():
+        for ds in datasets:
+            if output_base:
+                output = output_base.joinpath(
+                    *utils.subfolderise(_dataset_region_code(ds))
                 )
-            )
-            continue
+                output.mkdir(parents=True, exist_ok=True)
+            else:
+                # Alongside the dataset itself.
+                output = ds.absolute().parent
 
-        logging.info("Processing %s", ds_path)
-        output_yaml = output / "{}.odc-metadata.yaml".format(_dataset_name(ds_path))
-
-        if output_yaml.exists():
-            if not overwrite_existing:
-                logging.info("Output exists: skipping. %s", output_yaml)
+            ds_path = _normalise_dataset_path(Path(ds).absolute())
+            (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(ds)
+            create_date = datetime.utcfromtimestamp(ctime)
+            if newer_than and (create_date <= newer_than):
+                logging.info(
+                    "Creation time {} older than start date {:%Y-%m-%d %H:%M} ...SKIPPING {}".format(
+                        newer_than - create_date, newer_than, ds_path.name
+                    )
+                )
                 continue
 
-            logging.info("Output exists: overwriting %s", output_yaml)
+            logging.info("Processing %s", ds_path)
+            output_yaml = output / "{}.odc-metadata.yaml".format(_dataset_name(ds_path))
 
-        output_uuid, output_path = prepare_and_write(ds_path, output_yaml)
-        logging.info("Wrote dataset %s to %s", output_uuid, output_path)
+            if output_yaml.exists():
+                if not overwrite_existing:
+                    logging.info("Output exists: skipping. %s", output_yaml)
+                    continue
+
+                logging.info("Output exists: overwriting %s", output_yaml)
+
+            output_uuid, output_path = prepare_and_write(ds_path, output_yaml)
+            logging.info("Wrote dataset %s to %s", output_uuid, output_path)
 
 
 def _normalise_dataset_path(input_path: Path) -> Path:
