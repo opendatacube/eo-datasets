@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+import pathlib
+
 from setuptools import setup, find_packages
 
 import versioneer
+
+HERE = pathlib.Path(__file__).parent
+
+README = (HERE / "README.md").read_text()
+
 
 tests_require = [
     "deepdiff",
@@ -26,6 +33,14 @@ setup(
     cmdclass=versioneer.get_cmdclass(),
     packages=find_packages(exclude=("tests", "tests.*")),
     package_data={"": ["*.json", "*.yaml"]},
+    license="Apache Software License 2.0",
+    classifiers=[
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+    ],
+    url="https://github.com/GeoscienceAustralia/eo-datasets",
     install_requires=[
         "attrs",
         "boltons",
