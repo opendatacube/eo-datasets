@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from pathlib import Path, PurePath
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Text, IO, Union, Iterable
 from uuid import UUID
 
 import attr
@@ -111,8 +111,8 @@ def load_yaml(p: Path) -> Dict:
         return yaml.load(f)
 
 
-def loads_yaml(s: str) -> Dict:
-    return _init_yaml().load(s)
+def loads_yaml(s: Union[Text, IO]) -> Iterable[Dict]:
+    return _init_yaml().load_all(s)
 
 
 def from_path(path: Path) -> DatasetDoc:

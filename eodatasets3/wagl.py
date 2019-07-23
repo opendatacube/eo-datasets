@@ -388,7 +388,7 @@ class Granule:
                         f"Granule contains no wagl metadata: {granule_name} in {wagl_hdf5}"
                     )
 
-                wagl_doc = loads_yaml(wagl_doc_field[()])
+                [wagl_doc] = loads_yaml(wagl_doc_field[()])
 
                 if not level1_metadata_path:
                     level1_tar_path = Path(
@@ -414,7 +414,7 @@ class Granule:
                 if not fmask_doc_path.exists():
                     raise ValueError(f"No fmask found at {fmask_doc_path}")
                 with fmask_doc_path.open("r") as fl:
-                    fmask_doc = loads_yaml(fl)
+                    [fmask_doc] = loads_yaml(fl)
 
                 gqa_doc_path = gqa_doc_path or wagl_hdf5.with_name(
                     f"{granule_name}.gqa.yaml"
@@ -422,7 +422,7 @@ class Granule:
                 if not gqa_doc_path.exists():
                     raise ValueError(f"No gqa found at {gqa_doc_path}")
                 with gqa_doc_path.open("r") as fl:
-                    gqa_doc = loads_yaml(fl)
+                    [gqa_doc] = loads_yaml(fl)
 
                 yield cls(
                     name=granule_name,
@@ -613,7 +613,7 @@ def _read_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group):
     except ValueError:
         raise ValueError("No nbar metadata found in granule")
 
-    wagl_doc = loads_yaml(granule_group[wagl_path][()])
+    [wagl_doc] = loads_yaml(granule_group[wagl_path][()])
 
     try:
         p.processed = get_path(wagl_doc, ("system_information", "time_processed"))
@@ -622,7 +622,7 @@ def _read_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group):
 
     for i, path in enumerate(ancil_paths, start=2):
         wagl_doc.setdefault(f"wagl_{i}", {}).update(
-            loads_yaml(granule_group[path][()])["ancillary"]
+            list(loads_yaml(granule_group[path][()]))[0]["ancillary"]
         )
 
     p.properties["dea:dataset_maturity"] = _determine_maturity(

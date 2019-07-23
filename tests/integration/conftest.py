@@ -40,6 +40,18 @@ def l1_ls8_folder(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
+def l1_ls8_dataset_path(l1_ls8_folder: Path, l1_ls8_dataset: DatasetDoc) -> Path:
+    """
+    A prepared L1 dataset with an EO3 metadata file.
+    """
+    serialise.dump_yaml(
+        l1_ls8_folder / "dataset.odc-metadata.yaml",
+        serialise.to_formatted_doc(l1_ls8_dataset),
+    )
+    return l1_ls8_folder
+
+
+@pytest.fixture
 def l1_ls7_tarball(tmp_path: Path) -> Path:
     return _make_copy(L71GT_TARBALL_PATH, tmp_path)
 

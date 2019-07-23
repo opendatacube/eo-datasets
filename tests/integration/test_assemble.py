@@ -12,15 +12,15 @@ from tests.integration.common import assert_same_as_file
 
 
 def test_dea_style_package(
-    l1_ls8_dataset: DatasetDoc, l1_ls8_folder: Path, tmp_path: Path
+    l1_ls8_dataset: DatasetDoc, l1_ls8_dataset_path: Path, tmp_path: Path
 ):
     out = tmp_path
 
-    [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
+    [blue_geotiff_path] = l1_ls8_dataset_path.rglob("L*_B2.TIF")
 
     with DatasetAssembler(out, naming_conventions="dea") as p:
         # We add a source dataset, asking to inherit the common properties (eg. platform, instrument, datetime)
-        p.add_source_path(l1_ls8_folder, auto_inherit_properties=True)
+        p.add_source_path(l1_ls8_dataset_path, auto_inherit_properties=True)
 
         # It's a GA product of "numerus-unus" ("the number one").
         p.producer = "ga.gov.au"

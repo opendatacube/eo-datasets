@@ -6,13 +6,10 @@ from __future__ import absolute_import
 
 import gzip
 import json
+from pathlib import Path
+from typing import Generator, Dict, Tuple
 
-import yaml
-
-try:
-    from yaml import CSafeLoader as SafeLoader
-except ImportError:
-    from yaml import SafeLoader
+from eodatasets3 import serialise
 
 _DOCUMENT_EXTENSIONS = (".yaml", ".yml", ".json")
 _COMPRESSION_EXTENSIONS = ("", ".gz")
@@ -59,19 +56,22 @@ def find_metadata_path(dataset_path):
     if dataset_path.is_file() and is_supported_document_type(dataset_path):
         return dataset_path
 
-    system_names = ("agdc", "ga")
-
-    for system_name in system_names:
+    for system_name in ("odc-metadata", "agdc-md", "ga-md"):
         # Otherwise there may be a sibling file with appended suffix '.ga-md.yaml'.
         expected_name = dataset_path.parent.joinpath(
-            "{}.{}-md".format(dataset_path.name, system_name)
+            f"{dataset_path.stem}.{system_name}"
         )
         found = _find_any_metadata_suffix(expected_name)
         if found:
             return found
 
-        # Otherwise if it's a directory, there may be an 'ga-metadata.yaml' file describing all contained datasets.
-        if dataset_path.is_dir():
+    if dataset_path.is_dir():
+        # Eo3-style.
+        for m in dataset_path.glob("*.odc-metadata.*"):
+            return m
+
+        for system_name in "agdc", "ga":
+            # Otherwise if it's a directory, there may be an 'ga-metadata.yaml' file describing all contained datasets.
             expected_name = dataset_path.joinpath(system_name + "-metadata")
             found = _find_any_metadata_suffix(expected_name)
             if found:
@@ -118,14 +118,26 @@ def _find_any_metadata_suffix(path):
     return existing_paths[0]
 
 
-def read_documents(*paths):
+def find_and_read_documents(*paths: Path) -> Generator[Tuple[Path, Dict], None, None]:
+    # Scan all paths immediately so we can fail fast if some are wrong.
+    metadata_paths = [(path, find_metadata_path(path)) for path in paths]
+
+    missing_paths = [path for (path, md) in metadata_paths if md is None]
+    if missing_paths:
+        raise ValueError(
+            f"No metadata found for input path{'s' if len(missing_paths) > 1 else ''}: "
+            f"{', '.join(map(str, missing_paths))}"
+        )
+
+    for input_path, metadata_path in metadata_paths:
+        yield from read_documents(metadata_path)
+
+
+def read_documents(*paths: Path) -> Generator[Tuple[Path, Dict], None, None]:
     """
     Read & parse documents from the filesystem (yaml or json).
 
     Note that a single yaml file can contain multiple documents.
-
-    :type paths: list[pathlib.Path]
-    :rtype: tuple[(pathlib.Path, dict)]
     """
     for path in paths:
         suffix = path.suffix.lower()
@@ -136,14 +148,15 @@ def read_documents(*paths):
             suffix = path.suffixes[-2].lower()
             opener = gzip.open
 
-        if suffix in (".yaml", ".yml"):
-            for parsed_doc in yaml.load_all(opener(str(path), "r"), Loader=SafeLoader):
-                yield path, parsed_doc
-        elif suffix == ".json":
-            yield path, json.load(opener(str(path), "r"))
-        else:
-            raise ValueError(
-                "Unknown document type for {}; expected one of {!r}.".format(
-                    path.name, _ALL_SUPPORTED_EXTENSIONS
+        with opener(str(path), "r") as f:
+            if suffix in (".yaml", ".yml"):
+                for parsed_doc in serialise.loads_yaml(f):
+                    yield path, parsed_doc
+            elif suffix == ".json":
+                yield path, json.load(f)
+            else:
+                raise ValueError(
+                    "Unknown document type for {}; expected one of {!r}.".format(
+                        path.name, _ALL_SUPPORTED_EXTENSIONS
+                    )
                 )
-            )

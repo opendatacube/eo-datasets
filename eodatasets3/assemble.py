@@ -20,6 +20,7 @@ from rasterio.enums import Resampling
 
 import eodatasets3
 from eodatasets3 import serialise, validate, images
+from eodatasets3.documents import find_and_read_documents
 from eodatasets3.images import FileWrite, GridSpec, MeasurementRecord
 from eodatasets3.model import (
     DatasetDoc,
@@ -290,7 +291,10 @@ class DatasetAssembler(EoFields):
             shutil.rmtree(self._work_path, ignore_errors=True)
 
     def add_source_path(
-        self, path: Path, classifier: str = None, auto_inherit_properties: bool = False
+        self,
+        *paths: Path,
+        classifier: str = None,
+        auto_inherit_properties: bool = False,
     ):
         """
         Record a source dataset using the path to its metadata document.
@@ -298,13 +302,28 @@ class DatasetAssembler(EoFields):
         Parameters are the same as self.add_source_dataset()
 
         """
-
-        # TODO: if they gave a dataset directory, check the metadata inside?
-        self.add_source_dataset(
-            serialise.from_path(path),
-            classifier=classifier,
-            auto_inherit_properties=auto_inherit_properties,
-        )
+        for _, doc in find_and_read_documents(*paths):
+            # Newer documents declare a schema.
+            if "$schema" in doc:
+                self.add_source_dataset(
+                    serialise.from_doc(doc),
+                    classifier=classifier,
+                    auto_inherit_properties=auto_inherit_properties,
+                )
+            else:
+                if auto_inherit_properties:
+                    raise NotImplementedError(
+                        "Can't (yet) inherit properties from old-style metadata"
+                    )
+                classifier = classifier or doc.get("dataset_type")
+                if not classifier:
+                    # TODO: This rule is a little obscure to force people to know.
+                    #       We could somehow figure out the product family from the product?
+                    raise ValueError(
+                        "Source dataset (of old-style eo) doesn't have a 'dataset_type' property (eg. 'level1', 'fc'), "
+                        "you must specify a classifier for the kind of source dataset."
+                    )
+                self._lineage[classifier].append(doc["id"])
 
     def add_source_dataset(
         self,
