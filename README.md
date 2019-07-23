@@ -78,8 +78,7 @@ invoke it manually by running `pre-commit run`
       --help     Show this message and exit.
     
     Commands:
-      ls-usgs        Prepare USGS Landsat Collection 1 data for ingestion
-                     into...
+      landsat-l1     Prepare eo3 metadata for USGS Landsat Level 1 data.
       modis-mcd43a1  Prepare MODIS MCD43A1 tiles for indexing into a Data...
       noaa-prwtr     Prepare NCEP/NCAR reanalysis 1 water pressure datasets...
       s2-awspds      Preparation code for Sentinel-2 L1C AWS PDS Generates...
@@ -97,9 +96,9 @@ invoke it manually by running `pre-commit run`
       for files.
     
     Options:
-      --level1 FILE                   Optional path to the input level1
-                                      metadata doc (otherwise it will be loaded
-                                      from the level1 path in the HDF5)
+      --level1 FILE                   Optional path to the input level1 metadata
+                                      doc (otherwise it will be loaded from the
+                                      level1 path in the HDF5)
       --output DIRECTORY              Put the output package into this directory
                                       [required]
       -p, --product [nbar|nbart|lambertian|sbt]

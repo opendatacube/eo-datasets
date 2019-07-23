@@ -68,7 +68,7 @@ setup(
     entry_points="""
         [console_scripts]
         eo3-validate=eodatasets3.validate:run
-        eo3-prepare=eodatasets3.scripts.genprepare:run
+        eo3-prepare=eodatasets3.scripts.prepare:run
         eo3-recompress-tar=eodatasets3.scripts.recompress:main
         eo3-package-wagl=eodatasets3.scripts.packagewagl:run
         eo3-to-stac=eodatasets3.scripts.tostac:run
