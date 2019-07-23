@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict
 
-from eodatasets3.prepare import ls_usgs_l1_prepare
+from eodatasets3.prepare import landsat_l1_prepare
 from tests.integration.common import check_prepare_outputs
 from tests.integration.common import run_prepare_cli
 
@@ -23,7 +23,7 @@ def test_prepare_l5_l1_usgs_tarball(
     )
 
     check_prepare_outputs(
-        invoke_script=ls_usgs_l1_prepare.main,
+        invoke_script=landsat_l1_prepare.main,
         run_args=["--output-base", str(output_path), str(l1_ls5_tarball)],
         expected_doc=l1_ls5_tarball_md_expected,
         expected_metadata_path=expected_metadata_path,
@@ -41,17 +41,17 @@ def test_prepare_l8_l1_usgs_tarball(l1_ls8_folder, l1_ls8_folder_md_expected):
     assert not expected_metadata_path.exists()
 
     check_prepare_outputs(
-        invoke_script=ls_usgs_l1_prepare.main,
+        invoke_script=landsat_l1_prepare.main,
         run_args=[str(l1_ls8_folder)],
         expected_doc=l1_ls8_folder_md_expected,
         expected_metadata_path=expected_metadata_path,
     )
 
 
-def test_prepare_l8_l1_usgs_tarball_absolute(
-    tmp_path: Path, l1_ls8_folder: Path, l1_ls8_folder_md_expected: Dict
+def test_prepare_l8_l1_tarball_with_source(
+    tmp_path: Path, l1_ls8_folder: Path, ls8_telemetry_path, l1_ls8_ga_expected: Dict
 ):
-    """Run prepare script with absolute paths for bands."""
+    """Run prepare script with a source telemetry data and unique producer."""
     assert l1_ls8_folder.exists(), "Test data missing(?)"
 
     output_path = tmp_path
@@ -63,9 +63,17 @@ def test_prepare_l8_l1_usgs_tarball_absolute(
     )
 
     check_prepare_outputs(
-        invoke_script=ls_usgs_l1_prepare.main,
-        run_args=["--output-base", str(output_path), str(l1_ls8_folder)],
-        expected_doc=l1_ls8_folder_md_expected,
+        invoke_script=landsat_l1_prepare.main,
+        run_args=[
+            "--output-base",
+            output_path,
+            "--producer",
+            "ga.gov.au",
+            "--source",
+            ls8_telemetry_path,
+            l1_ls8_folder,
+        ],
+        expected_doc=l1_ls8_ga_expected,
         expected_metadata_path=expected_metadata_path,
     )
 
@@ -81,7 +89,7 @@ def test_prepare_l7_l1_usgs_tarball(
     )
 
     check_prepare_outputs(
-        invoke_script=ls_usgs_l1_prepare.main,
+        invoke_script=landsat_l1_prepare.main,
         run_args=[str(l1_ls7_tarball)],
         expected_doc=l1_ls7_tarball_md_expected,
         expected_metadata_path=expected_metadata_path,
@@ -96,7 +104,7 @@ def test_skips_old_datasets(l1_ls7_tarball):
     )
 
     run_prepare_cli(
-        ls_usgs_l1_prepare.main,
+        landsat_l1_prepare.main,
         # Can't be newer than right now.
         "--newer-than",
         datetime.now().isoformat(),
@@ -108,7 +116,7 @@ def test_skips_old_datasets(l1_ls7_tarball):
 
     # It should work with an old date.
     run_prepare_cli(
-        ls_usgs_l1_prepare.main,
+        landsat_l1_prepare.main,
         # Some old date, from before the test data was created.
         "--newer-than",
         "2014-05-04",

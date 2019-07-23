@@ -224,6 +224,7 @@ def _iter_bands_paths(mtl_doc: Dict) -> Generator[Tuple[str, str], None, None]:
 def prepare_and_write(
     ds_path: Path,
     output_yaml_path: Path,
+    source_telemetry: Path = None,
     # TODO: Can we infer producer automatically? This is bound to cause mistakes othewise
     producer="usgs.gov",
 ) -> Tuple[uuid.UUID, Path]:
@@ -236,8 +237,8 @@ def prepare_and_write(
     if not mtl_doc:
         raise ValueError(f"No MTL file found for {ds_path}")
 
-    collection_number = mtl_doc["metadata_file_info"].get("collection_number")
-    if collection_number is None:
+    usgs_collection_number = mtl_doc["metadata_file_info"].get("collection_number")
+    if usgs_collection_number is None:
         raise NotImplementedError(
             "Dataset has no collection number: pre-collection data is not supported."
         )
@@ -246,8 +247,6 @@ def prepare_and_write(
     if data_format.upper() != "GEOTIFF":
         raise NotImplementedError(f"Only GTiff currently supported, got {data_format}")
     file_format = FileFormat.GeoTIFF
-
-    # epsg_code = 32600 + mtl_doc["projection_parameters"]["utm_zone"]
 
     # Assumed below.
     if (
@@ -271,6 +270,11 @@ def prepare_and_write(
         naming_conventions="dea",
         if_exists=IfExists.Overwrite,
     ) as p:
+        if source_telemetry:
+            # Only GA's data has source telemetry...
+            assert producer == "ga.gov.au"
+            p.add_source_path(source_telemetry)
+
         p.platform = mtl_doc["product_metadata"]["spacecraft_id"]
         p.instrument = mtl_doc["product_metadata"]["sensor_id"]
         p.product_family = "level1"
@@ -285,7 +289,7 @@ def prepare_and_write(
         p.properties["eo:cloud_cover"] = mtl_doc["image_attributes"]["cloud_cover"]
         p.properties["eo:sun_azimuth"] = mtl_doc["image_attributes"]["sun_azimuth"]
         p.properties["eo:sun_elevation"] = mtl_doc["image_attributes"]["sun_elevation"]
-        p.properties["landsat:collection_number"] = collection_number
+        p.properties["landsat:collection_number"] = usgs_collection_number
 
         for section, fields in _COPYABLE_MTL_FIELDS:
             for field in fields:
@@ -294,7 +298,10 @@ def prepare_and_write(
                     p.properties[f"landsat:{field}"] = value
 
         p.region_code = f"{p.properties['landsat:wrs_path']:03d}{p.properties['landsat:wrs_row']:03d}"
-        p.dataset_version = f"{collection_number}.0.{p.processed:%Y%m%d}"
+        org_collection_number = utils.get_collection_number(
+            p.producer, p.properties["landsat:collection_number"]
+        )
+        p.dataset_version = f"{org_collection_number}.0.{p.processed:%Y%m%d}"
 
         # NRT product?
         # Category is one of: T1, T2 or RT ('real time')
@@ -318,6 +325,20 @@ def prepare_and_write(
     required=False,
     type=PathPath(exists=True, writable=True, dir_okay=True, file_okay=False),
 )
+@click.option(
+    "--source",
+    "source_telemetry",
+    help="Paths to the source telemtry data for all of the provided datasets"
+    "(either folder or metadata file)",
+    required=False,
+    type=PathPath(exists=True),
+)
+@click.option(
+    "--producer",
+    help="Organisation that produced the data: probably either 'ga.gov.au' or 'usgs.gov'.",
+    required=False,
+    default="usgs.gov",
+)
 @click.argument(
     "datasets", type=PathPath(exists=True, readable=True, writable=False), nargs=-1
 )
@@ -337,6 +358,8 @@ def main(
     output_base: Optional[Path],
     datasets: List[Path],
     overwrite_existing: bool,
+    producer: str,
+    source_telemetry: Optional[Path],
     newer_than: datetime,
 ):
     logging.basicConfig(
@@ -374,7 +397,12 @@ def main(
 
                 logging.info("Output exists: overwriting %s", output_yaml)
 
-            output_uuid, output_path = prepare_and_write(ds_path, output_yaml)
+            output_uuid, output_path = prepare_and_write(
+                ds_path,
+                output_yaml,
+                producer=producer,
+                source_telemetry=source_telemetry,
+            )
             logging.info("Wrote dataset %s to %s", output_uuid, output_path)
 
 

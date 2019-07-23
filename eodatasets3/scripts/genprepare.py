@@ -1,6 +1,6 @@
 import click
 
-from ..prepare.ls_usgs_l1_prepare import main as ls_usgs
+from ..prepare.landsat_l1_prepare import main as ls_usgs
 from ..prepare.nasa_c_m_mcd43a1_6_prepare import main as mcd43a1
 from ..prepare.noaa_c_c_prwtreatm_1_prepare import main as prwtr
 from ..prepare.s2_l1c_aws_pds_prepare import main as s2_awspds

@@ -54,7 +54,9 @@ def run_prepare_cli(invoke_script, *args, expect_success=True) -> Result:
     """Run the prepare script as a command-line command"""
     __tracebackhide__ = True
 
-    res: Result = CliRunner().invoke(invoke_script, args, catch_exceptions=False)
+    res: Result = CliRunner().invoke(
+        invoke_script, [str(a) for a in args], catch_exceptions=False
+    )
     if expect_success:
         assert res.exit_code == 0, res.output
 

@@ -106,3 +106,19 @@ def normalise_band_name(band_name: str) -> str:
     except ValueError:
         pass
     return band_name.lower().replace("-", "_")
+
+
+def get_collection_number(producer, usgs_collection_number):
+    # This logic is in one place as it's not very future-proof...
+
+    if producer == "usgs.gov":
+        return usgs_collection_number
+    elif producer == "ga.gov.au":
+        # GA's collection 3 processes USGS Collection 1
+        if usgs_collection_number == 1:
+            return 3
+        else:
+            raise NotImplementedError(f"Unsupported GA collection number.")
+    raise NotImplementedError(
+        f"Unsupported collection number mapping for org: {producer!r}"
+    )

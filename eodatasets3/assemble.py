@@ -315,12 +315,12 @@ class DatasetAssembler(EoFields):
                     raise NotImplementedError(
                         "Can't (yet) inherit properties from old-style metadata"
                     )
-                classifier = classifier or doc.get("dataset_type")
+                classifier = classifier or doc.get("product_type")
                 if not classifier:
                     # TODO: This rule is a little obscure to force people to know.
-                    #       We could somehow figure out the product family from the product?
+                    #       We could somehow figure out from the product?
                     raise ValueError(
-                        "Source dataset (of old-style eo) doesn't have a 'dataset_type' property (eg. 'level1', 'fc'), "
+                        "Source dataset (of old-style eo) doesn't have a 'product_type' property (eg. 'level1', 'fc'), "
                         "you must specify a classifier for the kind of source dataset."
                     )
                 self._lineage[classifier].append(doc["id"])

@@ -1,0 +1,37 @@
+id: 30841328-89c2-4693-8802-a3560a6cf67a
+ga_label: LS8_OLITIRS_STD-MD_P00_LC80840720742017365LGN00_084_072-074_20180101T004644Z20180101T004824
+ga_level: P00
+product_type: satellite_telemetry_data
+creation_dt: 2018-01-01 03:43:44
+size_bytes: 1339702109
+checksum_path: package.sha1
+platform:
+    code: LANDSAT_8
+instrument:
+    name: OLI_TIRS
+format:
+    name: MD
+usgs:
+    interval_id: LC80840720742017365LGN00
+acquisition:
+    aos: 2018-01-01 00:46:44.204000
+    los: 2018-01-01 00:48:24.874000
+    groundstation:
+        code: LGN
+        label: Landsat Ground Network
+        eods_domain_code: '032'
+image:
+    satellite_ref_point_start:
+        x: 84
+        y: 72
+    satellite_ref_point_end:
+        x: 84
+        y: 74
+    bands: {}
+lineage:
+    machine:
+        software_versions:
+            eodatasets:
+                repo_url: https://github.com/GeoscienceAustralia/eo-datasets.git
+                version: '0.8'
+    source_datasets: {}

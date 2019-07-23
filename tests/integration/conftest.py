@@ -7,7 +7,7 @@ import pytest
 
 from eodatasets3 import serialise
 from eodatasets3.model import DatasetDoc
-from eodatasets3.prepare.ls_usgs_l1_prepare import normalise_nci_symlinks
+from eodatasets3.prepare.landsat_l1_prepare import normalise_nci_symlinks
 
 L71GT_TARBALL_PATH: Path = Path(
     __file__
@@ -20,6 +20,10 @@ L5_TARBALL_PATH: Path = Path(
 L8_INPUT_PATH: Path = Path(
     __file__
 ).parent / "data" / "LC08_L1TP_090084_20160121_20170405_01_T1"
+
+LS8_TELEMETRY_PATH: Path = Path(
+    __file__
+).parent / "data" / "LS8_OLITIRS_STD-MD_P00_LC80840720742017365LGN00_084_072-074_20180101T004644Z20180101T004824_1"
 
 
 def path_offset(base: Path, offset: str):
@@ -81,8 +85,26 @@ def l1_ls8_folder_md_expected(l1_ls8_folder) -> Dict:
 
 
 @pytest.fixture
+def l1_ls8_ga_expected(l1_ls8_folder) -> Dict:
+    return expected_l1_ls8_folder(
+        l1_ls8_folder,
+        relative_offset,
+        organisation="ga.gov.au",
+        collection="3",
+        # the id in the ls8_telemetry_path fixture
+        lineage={"satellite_telemetry_data": ["30841328-89c2-4693-8802-a3560a6cf67a"]},
+    )
+
+
+@pytest.fixture
 def l1_ls8_folder_md_expected_absolute(l1_ls8_folder) -> Dict:
     return expected_l1_ls8_folder(l1_ls8_folder, path_offset)
+
+
+@pytest.fixture
+def ls8_telemetry_path(tmp_path: Path) -> Path:
+    """Telemetry data with old-style ODC metadata"""
+    return _make_copy(LS8_TELEMETRY_PATH, tmp_path)
 
 
 @pytest.fixture(params=("ls5", "ls7", "ls8"))
@@ -103,29 +125,35 @@ def example_metadata(
 
 
 def expected_l1_ls8_folder(
-    l1_ls8_folder: Path, offset: Callable[[Path, str], str] = relative_offset
+    l1_ls8_folder: Path,
+    offset: Callable[[Path, str], str] = relative_offset,
+    organisation="usgs.gov",
+    collection="1",
+    lineage=None,
 ):
+    product_name = f"{organisation.split('.')[0]}_ls8c_level1_{collection}"
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
         "id": "a780754e-a884-58a7-9ac0-df518a67f59d",
         "product": {
-            "name": "usgs_ls8c_level1_1",
-            "href": "https://collections.dea.ga.gov.au/product/usgs_ls8c_level1_1",
+            "name": product_name,
+            "href": f"https://collections.dea.ga.gov.au/product/{product_name}",
         },
         "properties": {
             "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
-            "odc:dataset_version": "1.0.20170405",
+            # The minor version comes from the processing date (as used in filenames to distinguish reprocesses).
+            "odc:dataset_version": f"{collection}.0.20170405",
             "odc:file_format": "GeoTIFF",
             "odc:processing_datetime": datetime(2017, 4, 5, 11, 17, 36),
-            "odc:producer": "usgs.gov",
+            "odc:producer": organisation,
             "odc:product_family": "level1",
             "odc:region_code": "090084",
             "eo:cloud_cover": 93.22,
             "eo:gsd": 15.0,
             "eo:instrument": "OLI_TIRS",
             "eo:platform": "landsat-8",
-            "eo:sun_azimuth": 74.0074438,
-            "eo:sun_elevation": 55.486483,
+            "eo:sun_azimuth": 74.007_443_8,
+            "eo:sun_elevation": 55.486_483,
             "landsat:collection_category": "T1",
             "landsat:collection_number": 1,
             "landsat:data_type": "L1TP",
@@ -144,11 +172,11 @@ def expected_l1_ls8_folder(
         "geometry": {
             "coordinates": (
                 (
-                    (879315.0, -3714585.0),
-                    (879315.0, -3953115.0),
-                    (641985.0, -3953115.0),
-                    (641985.0, -3714585.0),
-                    (879315.0, -3714585.0),
+                    (879_315.0, -3_714_585.0),
+                    (879_315.0, -3_953_115.0),
+                    (641_985.0, -3_953_115.0),
+                    (641_985.0, -3_714_585.0),
+                    (879_315.0, -3_714_585.0),
                 ),
             ),
             "type": "Polygon",
@@ -159,10 +187,10 @@ def expected_l1_ls8_folder(
                 "transform": (
                     3955.5,
                     0.0,
-                    641985.0,
+                    641_985.0,
                     0.0,
-                    -3975.5000000000005,
-                    -3714585.0,
+                    -3975.500_000_000_000_5,
+                    -3_714_585.0,
                     0.0,
                     0.0,
                     1.0,
@@ -173,10 +201,10 @@ def expected_l1_ls8_folder(
                 "transform": (
                     3955.25,
                     0.0,
-                    641992.5,
+                    641_992.5,
                     0.0,
                     -3975.25,
-                    -3714592.5,
+                    -3_714_592.5,
                     0.0,
                     0.0,
                     1.0,
@@ -251,7 +279,7 @@ def expected_l1_ls8_folder(
                 "path": "LC08_L1TP_090084_20160121_20170405_01_T1_MTL.txt"
             }
         },
-        "lineage": {},
+        "lineage": lineage or {},
     }
 
 
@@ -268,7 +296,7 @@ def l1_ls7_tarball_md_expected(
         },
         "crs": "epsg:32652",
         "properties": {
-            "datetime": datetime(2013, 4, 29, 1, 10, 20, 336104),
+            "datetime": datetime(2013, 4, 29, 1, 10, 20, 336_104),
             "odc:dataset_version": "1.0.20161124",
             "odc:file_format": "GeoTIFF",
             "odc:processing_datetime": datetime(2016, 11, 24, 8, 26, 33),
@@ -279,8 +307,8 @@ def l1_ls7_tarball_md_expected(
             "eo:gsd": 15.0,
             "eo:instrument": "ETM",
             "eo:platform": "landsat-7",
-            "eo:sun_azimuth": 40.56298198,
-            "eo:sun_elevation": 39.37440872,
+            "eo:sun_azimuth": 40.562_981_98,
+            "eo:sun_elevation": 39.374_408_72,
             "landsat:collection_category": "T1",
             "landsat:collection_number": 1,
             "landsat:data_type": "L1TP",
@@ -299,11 +327,11 @@ def l1_ls7_tarball_md_expected(
         "geometry": {
             "coordinates": (
                 (
-                    (770115.0, -2768985.0),
-                    (770115.0, -2981715.0),
-                    (525285.0, -2981715.0),
-                    (525285.0, -2768985.0),
-                    (770115.0, -2768985.0),
+                    (770_115.0, -2_768_985.0),
+                    (770_115.0, -2_981_715.0),
+                    (525_285.0, -2_981_715.0),
+                    (525_285.0, -2_768_985.0),
+                    (770_115.0, -2_768_985.0),
                 ),
             ),
             "type": "Polygon",
@@ -312,12 +340,12 @@ def l1_ls7_tarball_md_expected(
             "default": {
                 "shape": (60, 60),
                 "transform": (
-                    4080.5000000000005,
+                    4080.500_000_000_000_5,
                     0.0,
-                    525285.0,
+                    525_285.0,
                     0.0,
                     -3545.5,
-                    -2768985.0,
+                    -2_768_985.0,
                     0.0,
                     0.0,
                     1.0,
@@ -328,10 +356,10 @@ def l1_ls7_tarball_md_expected(
                 "transform": [
                     4080.25,
                     0.0,
-                    525292.5,
+                    525_292.5,
                     0.0,
                     -3545.25,
-                    -2768992.5,
+                    -2_768_992.5,
                     0.0,
                     0.0,
                     1.0,
@@ -405,7 +433,7 @@ def l1_ls5_tarball_md_expected(
         },
         "crs": "epsg:32655",
         "properties": {
-            "datetime": datetime(1997, 4, 6, 23, 17, 43, 102000),
+            "datetime": datetime(1997, 4, 6, 23, 17, 43, 102_000),
             "odc:dataset_version": "1.0.20161231",
             "odc:file_format": "GeoTIFF",
             "odc:processing_datetime": datetime(2016, 12, 31, 15, 54, 58),
@@ -416,8 +444,8 @@ def l1_ls5_tarball_md_expected(
             "eo:gsd": 30.0,
             "eo:instrument": "TM",
             "eo:platform": "landsat-5",
-            "eo:sun_azimuth": 51.25454223,
-            "eo:sun_elevation": 31.98763219,
+            "eo:sun_azimuth": 51.254_542_23,
+            "eo:sun_elevation": 31.987_632_19,
             "landsat:collection_category": "T1",
             "landsat:collection_number": 1,
             "landsat:data_type": "L1TP",
@@ -438,11 +466,11 @@ def l1_ls5_tarball_md_expected(
         "geometry": {
             "coordinates": (
                 (
-                    (835815.0, -3881685.0),
-                    (593385.0, -3881685.0),
-                    (593385.0, -4101015.0),
-                    (835815.0, -4101015.0),
-                    (835815.0, -3881685.0),
+                    (835_815.0, -3_881_685.0),
+                    (593_385.0, -3_881_685.0),
+                    (593_385.0, -4_101_015.0),
+                    (835_815.0, -4_101_015.0),
+                    (835_815.0, -3_881_685.0),
                 ),
             ),
             "type": "Polygon",
@@ -453,10 +481,10 @@ def l1_ls5_tarball_md_expected(
                 "transform": (
                     4040.5,
                     0.0,
-                    593385.0,
+                    593_385.0,
                     0.0,
                     -3655.5,
-                    -3881685.0,
+                    -3_881_685.0,
                     0.0,
                     0.0,
                     1.0,

@@ -46,7 +46,7 @@ def test_dea_style_package(
 
         # Alternatively, all measurements could be by reference rather that a copy:
         # p.note_measurement("external_blue", blue_geotiff_path)
-        # (See an example of referencing in eodatasets3/prepare/ls_usgs_l1_prepare.py )
+        # (See an example of referencing in eodatasets3/prepare/landsat_l1_prepare.py )
 
         # Write a thumbnail using the given bands as r/g/b.
         p.write_thumbnail("ones", "ones", "blue")

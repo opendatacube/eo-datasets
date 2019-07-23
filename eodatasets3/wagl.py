@@ -505,11 +505,9 @@ def package(
             p.producer = "ga.gov.au"
             p.product_family = "ard"
 
-            # GA's collection 3 processes USGS Collection 1
-            if p.properties["landsat:collection_number"] == 1:
-                org_collection_number = 3
-            else:
-                raise NotImplementedError(f"Unsupported collection number.")
+            org_collection_number = utils.get_collection_number(
+                p.producer, p.properties["landsat:collection_number"]
+            )
             # TODO: wagl's algorithm version should determine our dataset version number, right?
             p.dataset_version = f"{org_collection_number}.0.0"
             p.region_code = _extract_reference_code(p, granule.name)
