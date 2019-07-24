@@ -19,7 +19,6 @@ import shapely.ops
 from affine import Affine
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
-from scipy import ndimage
 from shapely.geometry.base import BaseGeometry, CAP_STYLE, JOIN_STYLE
 from skimage.exposure import rescale_intensity
 
@@ -200,11 +199,10 @@ class MeasurementRecord:
 
     def _expand_valid_data_mask(self, grid: GridSpec, img: numpy.ndarray, nodata):
         mask = self.mask_by_grid.get(grid)
-        new_mask = img != nodata
         if mask is None:
-            mask = new_mask
+            mask = img != nodata
         else:
-            mask |= new_mask
+            mask |= img != nodata
         self.mask_by_grid[grid] = mask
 
     def as_geo_docs(self) -> Tuple[CRS, Dict[str, GridDoc], Dict[str, MeasurementDoc]]:
@@ -259,20 +257,25 @@ class MeasurementRecord:
                 )
         return crs, grid_docs, measurement_docs
 
-    def valid_data(self) -> BaseGeometry:
-        geoms = []
-        for grid, mask in self.mask_by_grid.items():
-            mask = ndimage.binary_fill_holes(mask)
+    def consume_and_get_valid_data(self) -> BaseGeometry:
+        """
+        Consume the stored grids and produce the valid data for them.
 
+        (they are consumed in order to to minimise peak memory usage)
+        """
+        geoms = []
+        while self.mask_by_grid:
+            grid, mask = self.mask_by_grid.popitem()
+            mask = mask.astype("uint8")
             shape = shapely.ops.unary_union(
                 [
                     shapely.geometry.shape(shape)
-                    for shape, val in rasterio.features.shapes(
-                        mask.astype("uint8"), mask=mask
-                    )
+                    for shape, val in rasterio.features.shapes(mask)
                     if val == 1
                 ]
             )
+            shape_y, shape_x = mask.shape
+            del mask
 
             # convex hull
             geom = shape.convex_hull
@@ -286,9 +289,7 @@ class MeasurementRecord:
             geom = geom.simplify(1)
 
             # intersect with image bounding box
-            geom = geom.intersection(
-                shapely.geometry.box(0, 0, mask.shape[1], mask.shape[0])
-            )
+            geom = geom.intersection(shapely.geometry.box(0, 0, shape_x, shape_y))
 
             # transform from pixel space into CRS space
             geom = shapely.affinity.affine_transform(

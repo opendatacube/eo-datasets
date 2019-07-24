@@ -606,7 +606,7 @@ class DatasetAssembler(EoFields):
         if sort_bands:
             measurement_docs = dict(sorted(measurement_docs.items()))
 
-        valid_data = self._measurements.valid_data()
+        valid_data = self._measurements.consume_and_get_valid_data()
 
         # If we wrote any data, a temporary work directory will have been initialised.
         if self._initialised_work_path:

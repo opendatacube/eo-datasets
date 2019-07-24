@@ -58,7 +58,7 @@ def read_paths_from_file(listing: Path) -> Iterable[Path]:
             yield path.absolute()
 
 
-def default_utc(d: datetime):
+def default_utc(d: datetime) -> datetime:
     if d.tzinfo is None:
         return d.replace(tzinfo=tz.tzutc())
     return d
@@ -108,7 +108,7 @@ def normalise_band_name(band_name: str) -> str:
     return band_name.lower().replace("-", "_")
 
 
-def get_collection_number(producer, usgs_collection_number):
+def get_collection_number(producer: str, usgs_collection_number: int) -> int:
     # This logic is in one place as it's not very future-proof...
 
     if producer == "usgs.gov":
