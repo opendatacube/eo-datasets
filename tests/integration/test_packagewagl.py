@@ -114,15 +114,16 @@ def test_whole_wagl_package(
 
     # Verify the computed contiguity looks the same. (metadata fields will depend on it)
     [image] = expected_folder.rglob("*_oa_*nbar-contiguity.tif")
-    _assert_image(image, nodata=None, unique_pixel_counts={0: 1853, 1: 4153})
+    _assert_image(image, nodata=None, unique_pixel_counts={0: 1978, 1: 4184})
+
     [image] = expected_folder.rglob("*_oa_*nbart-contiguity.tif")
-    _assert_image(image, nodata=None, unique_pixel_counts={0: 1855, 1: 4151})
+    _assert_image(image, nodata=None, unique_pixel_counts={0: 1979, 1: 4183})
 
     assert_same_as_file(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             # A stable ID is taken from the WAGL doc.
-            "id": "0fa267fe-3987-447b-be8e-d9ccc44a091c",
+            "id": "787eb74c-e7df-43d6-b562-b796137330ae",
             "product": {
                 "href": "https://collections.dea.ga.gov.au/product/ga_ls8c_ard_3",
                 "name": "ga_ls8c_ard_3",
@@ -131,39 +132,60 @@ def test_whole_wagl_package(
             "geometry": {
                 "coordinates": [
                     [
-                        [593_115.0, -3_713_085.0],
-                        [593_115.0, -3_947_415.0],
-                        [360_585.0, -3_947_415.0],
-                        [360_585.0, -3_713_085.0],
-                        [593_115.0, -3_713_085.0],
+                        [386_170.809_107_605_5, -3_787_581.737_315_514_6],
+                        [393_422.698_122_467_44, -3_754_539.332_156_166_4],
+                        [402_370.463_567_812_2, -3_717_207.883_853_628_3],
+                        [405_296.703_429_750_9, -3_713_106.822_612_258_6],
+                        [405_302.307_692_307_7, -3_713_085.0],
+                        [560_999.714_134_832_8, -3_745_790.820_117_99],
+                        [591_203.344_050_317_7, -3_755_934.776_849_929_2],
+                        [593_107.5, -3_756_373.614_649_681_4],
+                        [593_066.089_284_004_1, -3_756_560.384_007_281_6],
+                        [593_115.0, -3_756_576.810_780_758],
+                        [593_115.0, -3_769_934.639_090_926_4],
+                        [555_895.771_981_598_6, -3_924_204.823_795_153],
+                        [554_316.830_569_659_8, -3_931_326.117_549_759],
+                        [553_913.572_308_820_1, -3_932_420.854_216_015],
+                        [550_505.686_408_068, -3_946_546.219_392_854],
+                        [548_673.645_879_151_9, -3_946_645.831_477_726_3],
+                        [548_393.076_923_077, -3_947_407.5],
+                        [543_888.417_289_877_3, -3_946_906.014_911_907],
+                        [535_826.373_854_402_9, -3_947_344.365_997_631_6],
+                        [362_232.941_315_876_84, -3_905_575.014_223_633],
+                        [362_109.819_892_458_1, -3_904_490.351_889_350_5],
+                        [360_592.5, -3_904_126.385_350_318_6],
+                        [361_565.347_585_850_9, -3_899_693.716_286_561_5],
+                        [360_585.0, -3_891_057.151_898_734_3],
+                        [366_618.297_729_428_5, -3_863_717.869_440_751],
+                        [386_170.809_107_605_5, -3_787_581.737_315_514_6],
                     ]
                 ],
                 "type": "Polygon",
             },
             "grids": {
-                "panchromatic": {
-                    "shape": [156, 155],
+                "default": {
+                    "shape": [79, 78],
                     "transform": [
-                        1500.096_774_193_548_3,
+                        2981.153_846_153_846,
                         0.0,
-                        360_592.5,
+                        360_585.0,
                         0.0,
-                        -1502.019_230_769_230_7,
-                        -3_713_092.5,
+                        -2966.202_531_645_569_7,
+                        -3_713_085.0,
                         0.0,
                         0.0,
                         1.0,
                     ],
                 },
-                "default": {
-                    "shape": [78, 77],
+                "panchromatic": {
+                    "shape": [157, 156],
                     "transform": [
-                        3019.870_129_870_13,
+                        1490.480_769_230_769_3,
                         0.0,
-                        360_585.0,
+                        360_592.5,
                         0.0,
-                        -3004.230_769_230_769,
-                        -3_713_085.0,
+                        -1492.452_229_299_363,
+                        -3_713_092.5,
                         0.0,
                         0.0,
                         1.0,
@@ -174,10 +196,10 @@ def test_whole_wagl_package(
                 "datetime": datetime(2016, 6, 28, 0, 2, 28, 624_635),
                 "dea:dataset_maturity": "final",
                 "dea:processing_level": "level-2",
-                "dtr:end_datetime": datetime(2016, 6, 28, 0, 2, 43, 142_273),
-                "dtr:start_datetime": datetime(2016, 6, 28, 0, 2, 13, 927_173),
+                "dtr:end_datetime": datetime(2016, 6, 28, 0, 2, 43, 114_771),
+                "dtr:start_datetime": datetime(2016, 6, 28, 0, 2, 14, 25815),
                 "eo:cloud_cover": 63.069_613_577_531_236,
-                "eo:gsd": 1500.096_774_193_548_3,
+                "eo:gsd": 1490.480_769_230_769_3,
                 "eo:instrument": "OLI_TIRS",
                 "eo:platform": "landsat-8",
                 "eo:sun_azimuth": 33.655_125_34,
@@ -213,7 +235,7 @@ def test_whole_wagl_package(
                 "landsat:wrs_row": 84,
                 "odc:dataset_version": "3.0.0",
                 "odc:file_format": "GeoTIFF",
-                "odc:processing_datetime": datetime(2019, 7, 10, 7, 44, 48, 45950),
+                "odc:processing_datetime": datetime(2019, 7, 11, 23, 29, 29, 21245),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ard",
                 "odc:region_code": "092084",
@@ -360,7 +382,7 @@ def test_whole_wagl_package(
                 {
                     "name": "wagl",
                     "url": "https://github.com/GeoscienceAustralia/wagl.git",
-                    "version": "5.3.1+115.g18aadd7",
+                    "version": "5.3.1+118.g9edd420",
                 },
                 {
                     "name": "eugl",
@@ -396,21 +418,21 @@ def test_whole_wagl_package(
         assert d.nodata == -999.0
 
         # Verify the pixel values haven't changed.
-        assert crc32(d.read(1).tobytes()) == 2_831_293_304
-        # (Rasterio's checksum is zero on this data for some reason?)
-        assert d.checksum(1) == 0
+        assert crc32(d.read(1).tobytes()) == 3_381_159_350
+        # (Rasterio's checksum is zero on some datasets for some reason? So we use crc above...)
+        assert d.checksum(1) == 58403
 
         # The last overview is an odd size because of the tiny test data image size.
         assert d.overviews(1) == [8, 16, 31]
         assert d.driver == "GTiff"
-        assert d.dtypes == ("float64",)
+        assert d.dtypes == ("int16",)
         assert d.compression == Compression.deflate
 
-        assert d.height == 156
-        assert d.width == 155
+        assert d.height == 157
+        assert d.width == 156
 
         # The reduced resolution makes it hard to test the chosen block size...
-        assert d.block_shapes == [(6, 155)]
+        assert d.block_shapes == [(26, 156)]
 
     # OA data should have no overviews.
     [*oa_images] = expected_folder.rglob("*_oa_*.tif")
@@ -418,7 +440,7 @@ def test_whole_wagl_package(
     for image in oa_images:
         # fmask is the only OA that should have overviews according to spec (and Josh).
         if "fmask" in image.name:
-            _assert_image(image, overviews=[8, 15, 26])
+            _assert_image(image, overviews=[8, 16, 26])
         else:
             _assert_image(image, overviews=[])
 

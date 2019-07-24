@@ -12,7 +12,6 @@ import click
 import h5py
 from click import secho
 from click import style
-from skimage.transform import resize
 
 from eodatasets3.ui import PathPath
 from eodatasets3.wagl import find_a_granule_name
@@ -65,13 +64,12 @@ def downsample(input: Path, factor: int, anti_alias: bool):
                 info(f"Skipping")
                 continue
 
-            new_shape = (old_shape[0] // factor, old_shape[1] // factor)
-            info(f"New shape: {new_shape!r}")
-
             attrs = dict(old_image.attrs.items())
             old_geotransform = attrs["geotransform"]
 
-            new_data = resize(old_image[()], new_shape, anti_aliasing=anti_alias)
+            new_data = old_image[()][::factor, ::factor]
+            new_shape = new_data.shape
+            info(f"New shape: {new_shape!r}")
             del old_image
             del f[str(image_path)]
 
