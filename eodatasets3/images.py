@@ -19,6 +19,7 @@ import shapely.ops
 from affine import Affine
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
+from rasterio.shutil import copy as rio_copy
 from shapely.geometry.base import BaseGeometry, CAP_STYLE, JOIN_STYLE
 from skimage.exposure import rescale_intensity
 
@@ -548,17 +549,10 @@ class FileWrite:
 
             if overviews:
                 # Move the overviews to the start of the file, as required to be COG-compliant.
-                run_command(
-                    [
-                        "gdal_translate",
-                        "-q",
-                        "-co",
-                        "{}={}".format("PREDICTOR", self.PREDICTOR_DEFAULTS[dtype]),
-                        *self._gdal_cli_config(),
-                        unstructured_image,
-                        out_filename,
-                    ],
-                    out_filename.parent,
+                rio_copy(
+                    unstructured_image,
+                    out_filename,
+                    **{"copy_src_overviews": True, **rio_args},
                 )
             else:
                 unstructured_image.rename(out_filename)
