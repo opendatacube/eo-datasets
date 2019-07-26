@@ -226,7 +226,7 @@ class DatasetAssembler(EoFields):
         if not self._initialised_work_path:
             if not self._base_output_folder:
                 raise ValueError(
-                    "Dataset assembler was given no base path on construction: cannot write files."
+                    "Dataset assembler was given no base path on construction: cannot write new files."
                 )
 
             self._initialised_work_path = Path(
