@@ -7,7 +7,6 @@ from typing import Union, Generator
 
 import attr
 import h5py
-import memory_profiler
 import numpy
 import numpy as np
 import rasterio
@@ -24,7 +23,6 @@ from rasterio.io import DatasetWriter
 from rasterio.shutil import copy as rio_copy
 from rasterio.warp import reproject, calculate_default_transform
 from shapely.geometry.base import BaseGeometry, CAP_STYLE, JOIN_STYLE
-from skimage.exposure import rescale_intensity
 
 from eodatasets3.model import GridDoc, MeasurementDoc, DatasetDoc, FileFormat
 
@@ -564,7 +562,6 @@ class FileWrite:
 
         return WriteResult(file_format=FileFormat.GeoTIFF)
 
-    @memory_profiler.profile
     def create_thumbnail(
         self,
         rgb: Tuple[Path, Path, Path],
@@ -699,9 +696,9 @@ def _write_quicklook(
         for band_no, band_path in enumerate(rgb, start=1):
             with rasterio.open(band_path) as ds:
                 ds: DatasetReader
-
-                rescaled_data = ds.read(1)
-                rescale_intensity(rescaled_data, in_range=src_range, out_range=(1, 255))
+                rescaled_data = rescale_intensity(
+                    ds.read(1), in_range=src_range, out_range=(1, 255)
+                )
                 rescaled_data[nulls] = 0
 
                 reprojected_data = numpy.zeros(reproj_grid.shape, dtype=numpy.uint8)
@@ -722,3 +719,27 @@ def _write_quicklook(
                 del reprojected_data
     del nulls
     return reproj_grid
+
+
+def rescale_intensity(
+    image: np.ndarray,
+    in_range: Tuple[int, int],
+    out_range: Tuple[int, int],
+    dtype=np.uint8,
+) -> np.ndarray:
+    """
+    Based on scikit-image's rescale_intensity, but does fewer copies/allocations of the array.
+
+    (and it saves us bringing in the entire dependency for one small method)
+    """
+    imin, imax = in_range
+    omin, omax = out_range
+
+    np.clip(image, imin, imax, out=image)
+    image -= imin
+    # We allocate a float array here, as with the original function.
+    # (I'm not sure how bad int truncation would affect us?)
+    image = image / float(imax - imin)
+    image *= omax - omin
+    image += omin
+    return image.astype(dtype)
