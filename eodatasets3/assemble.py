@@ -718,7 +718,7 @@ class DatasetAssembler(EoFields):
         """
         thumb = self.names.thumbnail_name(self._work_path, kind=kind)
         measurements = dict(
-            (name, path) for grid, name, path in self._measurements.iter_paths()
+            (name, (grid, path)) for grid, name, path in self._measurements.iter_paths()
         )
 
         missing_measurements = {red, green, blue} - set(measurements)
@@ -731,14 +731,17 @@ class DatasetAssembler(EoFields):
                     hint=f"Available measurements: {', '.join(measurements)}",
                 )
             )
+        rgbs = [measurements[b] for b in (red, green, blue)]
+        unique_grids: List[GridSpec] = list(set(grid for grid, path in rgbs))
+        if len(unique_grids) != 1:
+            raise NotImplementedError(
+                "Thumbnails can only currently be created from bands of the same grid spec."
+            )
+        grid = unique_grids[0]
 
+        scale_factor = 10
         FileWrite().create_thumbnail(
-            (
-                measurements[red].absolute(),
-                measurements[green].absolute(),
-                measurements[blue].absolute(),
-            ),
-            thumb,
+            tuple(path for grid, path in rgbs), grid, thumb, out_scale=scale_factor
         )
         self._checksum.add_file(thumb)
 
