@@ -7,6 +7,7 @@ from typing import Union, Generator
 
 import attr
 import h5py
+import memory_profiler
 import numpy
 import numpy as np
 import rasterio
@@ -16,6 +17,7 @@ import shapely.affinity
 import shapely.ops
 from affine import Affine
 from rasterio import DatasetReader
+from rasterio.coords import BoundingBox
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
 from rasterio.io import DatasetWriter
@@ -31,6 +33,17 @@ DEFAULT_OVERVIEWS = (8, 16, 32)
 
 @attr.s(auto_attribs=True, slots=True, hash=True, frozen=True)
 class GridSpec:
+    """
+    >>> g = GridSpec(shape=(7721, 7621),
+    ...              transform=Affine(30.0, 0.0, 241485.0, 0.0, -30.0, -2281485.0),
+    ...              crs=CRS.from_epsg(32656))
+    >>> # Numbers copied from equivalent rio dataset.bounds call.
+    >>> g.bounds
+    BoundingBox(left=241485.0, bottom=-2513115.0, right=470115.0, top=-2281485.0)
+    >>> g.resolution_yx
+    (30.0, 30.0)
+    """
+
     shape: Tuple[int, int]
     transform: Affine
 
@@ -56,6 +69,17 @@ class GridSpec:
     @property
     def resolution_yx(self):
         return abs(self.transform[4]), abs(self.transform[0])
+
+    @property
+    def bounds(self):
+        """
+        Get bounding box.
+
+        """
+        return BoundingBox(
+            *(self.transform * (0, self.shape[0]))
+            + (self.transform * (self.shape[1], 0))
+        )
 
 
 def generate_tiles(
@@ -361,7 +385,6 @@ class FileWrite:
 
         """
         options = {"compress": compress, "zlevel": zlevel}
-        config_options = {}
 
         y_size, x_size = blocksize_yx or (512, 512)
         # Do not set block sizes for small imagery
@@ -372,13 +395,10 @@ class FileWrite:
             options["blockysize"] = y_size
             options["tiled"] = "yes"
 
-            if overviews:
-                config_options["GDAL_TIFF_OVR_BLOCKSIZE"] = x_size
-
         if overviews:
             options["copy_src_overviews"] = "yes"
 
-        return FileWrite(options, config_options)
+        return FileWrite(options)
 
     def write_from_ndarray(
         self,
@@ -544,6 +564,7 @@ class FileWrite:
 
         return WriteResult(file_format=FileFormat.GeoTIFF)
 
+    @memory_profiler.profile
     def create_thumbnail(
         self,
         rgb: Tuple[Path, Path, Path],
@@ -576,90 +597,26 @@ class FileWrite:
         at a time.
 
         """
-        out_crs = "epsg:4326"
-
         with rasterio.Env(TIFF_USE_OVR=True, GDAL_PAM_ENABLED=False):
             with tempfile.TemporaryDirectory(
                 dir=out.parent, prefix=".thumbgen-"
             ) as tmpdir:
-
-                # Calculate combined nodata mask (and read transforms/sizes)
-                nulls = numpy.zeros(input_geobox.shape, dtype="bool")
-                for band_no, band_path in enumerate(rgb, start=1):
-                    with rasterio.open(band_path) as ds:
-                        reprojected_transform, reprojected_width, reprojected_height = calculate_default_transform(
-                            ds.crs, out_crs, ds.width, ds.height, *ds.bounds
-                        )
-                        if ds.count != 1:
-                            raise NotImplementedError(
-                                "multi-band measurement files aren't yet supported"
-                            )
-
-                        nulls |= ds.read(1) == ds.nodata
-
-                # Write an intensity-scaled, reprojected version of the dataset at full res.
-                reprojected_write_args = dict(
-                    driver="GTiff",
-                    dtype="uint8",
-                    count=3,
-                    height=reprojected_height,
-                    width=reprojected_width,
-                    transform=reprojected_transform,
-                    crs=out_crs,
-                    nodata=0,
-                    tiled="yes",
-                )
-
-                # Only set blocksize on larger imagery; enables reduced resolution processing
-                if reprojected_height > 512:
-                    reprojected_write_args["blockysize"] = 512
-                if reprojected_width > 512:
-                    reprojected_write_args["blockxsize"] = 512
-
                 tmp_quicklook_path = Path(tmpdir) / "quicklook.tif"
 
-                with rasterio.open(
-                    tmp_quicklook_path, "w", **reprojected_write_args
-                ) as ql_ds:
-                    ql_ds: DatasetWriter
-                    for band_no, band_path in enumerate(rgb, start=1):
-                        with rasterio.open(band_path) as ds:
-                            ds: DatasetReader
-                            rescaled_data = rescale_intensity(
-                                ds.read(1), in_range=src_range, out_range=(1, 255)
-                            )
-                            rescaled_data = rescaled_data.astype("uint8")
-                            rescaled_data[nulls] = 0
+                reproj_grid = _write_quicklook(
+                    input_geobox, resampling, rgb, src_range, tmp_quicklook_path
+                )
+                out_crs = reproj_grid.crs
 
-                            reprojected_data = numpy.zeros(
-                                (reprojected_width, reprojected_height),
-                                dtype=numpy.uint8,
-                            )
-                            reproject(
-                                rescaled_data,
-                                reprojected_data,
-                                src_crs=ds.crs,
-                                src_transform=ds.transform,
-                                src_nodata=0,
-                                dst_crs=out_crs,
-                                dst_nodata=0,
-                                dst_transform=reprojected_transform,
-                                resampling=resampling,
-                                num_threads=2,
-                            )
-                            del rescaled_data
-                            ql_ds.write(reprojected_data, band_no)
-                            del reprojected_data
-                del nulls
                 # Scale and write as JPEG to the output.
                 thumb_transform, thumb_width, thumb_height = calculate_default_transform(
                     out_crs,
                     out_crs,
-                    reprojected_width,
-                    reprojected_height,
-                    *ds.bounds,
-                    dst_width=reprojected_width // out_scale,
-                    dst_height=reprojected_height // out_scale,
+                    reproj_grid.shape[1],
+                    reproj_grid.shape[0],
+                    *reproj_grid.bounds,
+                    dst_width=reproj_grid.shape[1] // out_scale,
+                    dst_height=reproj_grid.shape[0] // out_scale,
                 )
                 thumb_args = dict(
                     driver="JPEG",
@@ -679,8 +636,89 @@ class FileWrite:
                             thumb_ds.write(
                                 ql_ds.read(
                                     index,
-                                    out_shape=(thumb_width, thumb_height),
+                                    out_shape=(thumb_height, thumb_width),
                                     resampling=resampling,
                                 ),
                                 index,
                             )
+
+
+def _write_quicklook(
+    input_geobox: GridSpec,
+    resampling: Resampling,
+    rgb: Sequence[Path],
+    src_range: Tuple[int, int],
+    dest_path: Path,
+) -> GridSpec:
+    """
+    Write an intensity-scaled wgs84 image using the given files as bands.
+    """
+    out_crs = CRS.from_epsg(4326)
+    reprojected_transform, reprojected_width, reprojected_height = calculate_default_transform(
+        input_geobox.crs,
+        out_crs,
+        input_geobox.shape[1],
+        input_geobox.shape[0],
+        *input_geobox.bounds,
+    )
+    reproj_grid = GridSpec(
+        (reprojected_width, reprojected_height), reprojected_transform, crs=out_crs
+    )
+    # Calculate combined nodata mask
+    nulls = numpy.zeros(input_geobox.shape, dtype="bool")
+    for band_no, band_path in enumerate(rgb, start=1):
+        with rasterio.open(band_path) as ds:
+
+            if ds.count != 1:
+                raise NotImplementedError(
+                    "multi-band measurement files aren't yet supported"
+                )
+
+            nulls |= ds.read(1) == ds.nodata
+    # We write an intensity-scaled, reprojected version of the dataset at full res.
+    # Then write a scaled JPEG verison. (TODO: can we do it in one step?)
+    reprojected_write_args = dict(
+        driver="GTiff",
+        dtype="uint8",
+        count=len(rgb),
+        width=reproj_grid.shape[1],
+        height=reproj_grid.shape[0],
+        transform=reproj_grid.transform,
+        crs=reproj_grid.crs,
+        nodata=0,
+        tiled="yes",
+    )
+    # Only set blocksize on larger imagery; enables reduced resolution processing
+    if reproj_grid.shape[0] > 512:
+        reprojected_write_args["blockysize"] = 512
+    if reproj_grid.shape[1] > 512:
+        reprojected_write_args["blockxsize"] = 512
+
+    with rasterio.open(dest_path, "w", **reprojected_write_args) as ql_ds:
+        ql_ds: DatasetWriter
+        for band_no, band_path in enumerate(rgb, start=1):
+            with rasterio.open(band_path) as ds:
+                ds: DatasetReader
+
+                rescaled_data = ds.read(1)
+                rescale_intensity(rescaled_data, in_range=src_range, out_range=(1, 255))
+                rescaled_data[nulls] = 0
+
+                reprojected_data = numpy.zeros(reproj_grid.shape, dtype=numpy.uint8)
+                reproject(
+                    rescaled_data,
+                    reprojected_data,
+                    src_crs=ds.crs,
+                    src_transform=ds.transform,
+                    src_nodata=0,
+                    dst_crs=reproj_grid.crs,
+                    dst_nodata=0,
+                    dst_transform=reproj_grid.transform,
+                    resampling=resampling,
+                    num_threads=2,
+                )
+                del rescaled_data
+                ql_ds.write(reprojected_data, band_no)
+                del reprojected_data
+    del nulls
+    return reproj_grid
