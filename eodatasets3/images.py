@@ -1,9 +1,7 @@
 import os
-import shlex
 import tempfile
 from collections import defaultdict
 from pathlib import Path
-from subprocess import check_call
 from typing import Tuple, Dict, List, Sequence, Optional, Iterable
 from typing import Union, Generator
 
@@ -29,14 +27,6 @@ from skimage.exposure import rescale_intensity
 from eodatasets3.model import GridDoc, MeasurementDoc, DatasetDoc, FileFormat
 
 DEFAULT_OVERVIEWS = (8, 16, 32)
-
-
-def run_command(
-    command: Sequence[Union[str, Path]], work_dir: Path, echo=False
-) -> None:
-    if echo:
-        print(" ".join(shlex.quote(str(s)) for s in command))
-    check_call([str(s) for s in command], cwd=str(work_dir))
 
 
 @attr.s(auto_attribs=True, slots=True, hash=True, frozen=True)
@@ -348,17 +338,9 @@ class FileWrite:
         "float64": 3,
     }
 
-    def __init__(
-        self, gdal_options: Dict = None, gdal_config_options: Dict = None
-    ) -> None:
+    def __init__(self, gdal_options: Dict = None) -> None:
         super().__init__()
-
         self.options = gdal_options or {}
-        self.config_options = {
-            # Suppress aux.xml files.
-            "GDAL_PAM_ENABLED": "NO"
-        }
-        self.config_options.update(gdal_config_options or {})
 
     @classmethod
     def from_existing(
@@ -562,17 +544,6 @@ class FileWrite:
 
         return WriteResult(file_format=FileFormat.GeoTIFF)
 
-    def _gdal_cli_config(self, option_whitelist=None, config_whitelist=None):
-        args = []
-
-        for key, value in self.options.items():
-            if option_whitelist is None or key in option_whitelist:
-                args.extend(["-co", "{}={}".format(key, value)])
-        for key, value in self.config_options.items():
-            if config_whitelist is None or key in config_whitelist:
-                args.extend(["--config", "{}".format(key), "{}".format(value)])
-        return args
-
     def create_thumbnail(
         self,
         rgb: Tuple[Path, Path, Path],
@@ -659,7 +630,6 @@ class FileWrite:
                             )
                             rescaled_data = rescaled_data.astype("uint8")
                             rescaled_data[nulls] = 0
-                            del nulls
 
                             reprojected_data = numpy.zeros(
                                 (reprojected_width, reprojected_height),
@@ -680,7 +650,7 @@ class FileWrite:
                             del rescaled_data
                             ql_ds.write(reprojected_data, band_no)
                             del reprojected_data
-
+                del nulls
                 # Scale and write as JPEG to the output.
                 thumb_transform, thumb_width, thumb_height = calculate_default_transform(
                     out_crs,
