@@ -1,7 +1,7 @@
 from binascii import crc32
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Tuple
 
 import numpy as np
 import pytest
@@ -444,20 +444,26 @@ def test_whole_wagl_package(
         else:
             _assert_image(image, overviews=[])
 
+    # Check we didn't get height/width mixed up again :)
+    [thumb_path] = expected_folder.rglob("*_nbar_*.jpg")
+    _assert_image(thumb_path, bands=3, shape=(7, 8))
+
 
 allow_anything = object()
 
 
 def _assert_image(
-    image,
+    image: Path,
     overviews=allow_anything,
     nodata=allow_anything,
     unique_pixel_counts: Dict = allow_anything,
+    bands=1,
+    shape: Tuple[int, int] = None,
 ):
     __tracebackhide__ = True
     with rasterio.open(image) as d:
         d: DatasetReader
-        assert d.count == 1, "Expected one band"
+        assert d.count == bands, f"Expected {bands} band{'s' if bands > 1 else ''}"
 
         if overviews is not allow_anything:
             assert d.overviews(1) == overviews
@@ -468,6 +474,9 @@ def _assert_image(
             array = d.read(1)
             value_counts = dict(zip(*np.unique(array, return_counts=True)))
             assert value_counts == unique_pixel_counts
+
+        if shape:
+            assert shape == d.shape, f"Unexpected shape: {shape!r} != {d.shape!r}"
 
 
 def test_maturity_calculation():
