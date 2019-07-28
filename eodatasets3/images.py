@@ -659,7 +659,7 @@ def _write_quicklook(
         *input_geobox.bounds,
     )
     reproj_grid = GridSpec(
-        (reprojected_width, reprojected_height), reprojected_transform, crs=out_crs
+        (reprojected_height, reprojected_width), reprojected_transform, crs=out_crs
     )
     # Calculate combined nodata mask
     nulls = numpy.zeros(input_geobox.shape, dtype="bool")
