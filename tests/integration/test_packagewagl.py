@@ -533,14 +533,17 @@ def test_maturity_calculation():
         }
     }
 
-    normal_acq_date = datetime(2002, 11, 20, tzinfo=tzutc())
-    normal_proc_date = normal_acq_date + timedelta(days=7)
-    acq_before_01 = datetime(2000, 11, 20, tzinfo=tzutc())
+    # July 2002 is when we consider our BRDF to be good enough: both Aqua
+    # and Terra satellites were now operational.
+    acq_before_brdf = datetime(2002, 6, 29, tzinfo=tzutc())
+
+    acq_after_brdf = datetime(2002, 7, 1, tzinfo=tzutc())
+    proc_after_brdf = acq_after_brdf + timedelta(days=7)
 
     # Normal, final dataset. Processed just outside of NRT window.
     assert (
         wagl._determine_maturity(
-            normal_acq_date, normal_acq_date + timedelta(hours=49), wagl_doc
+            acq_after_brdf, acq_after_brdf + timedelta(hours=49), wagl_doc
         )
         == "final"
     )
@@ -548,13 +551,13 @@ def test_maturity_calculation():
     # NRT when processed < 48 hours
     assert (
         wagl._determine_maturity(
-            normal_acq_date, normal_acq_date + timedelta(hours=1), wagl_doc
+            acq_after_brdf, acq_after_brdf + timedelta(hours=1), wagl_doc
         )
         == "nrt"
     )
     assert (
         wagl._determine_maturity(
-            acq_before_01, acq_before_01 + timedelta(hours=47), wagl_doc
+            acq_before_brdf, acq_before_brdf + timedelta(hours=47), wagl_doc
         )
         == "nrt"
     )
@@ -562,7 +565,7 @@ def test_maturity_calculation():
     # Before 2001: final if water vapour is definitive.
     assert (
         wagl._determine_maturity(
-            acq_before_01, acq_before_01 + timedelta(days=3), wagl_doc
+            acq_before_brdf, acq_before_brdf + timedelta(days=3), wagl_doc
         )
         == "final"
     )
@@ -570,12 +573,11 @@ def test_maturity_calculation():
     # Interim whenever water vapour is fallback.
     wagl_doc["ancillary"]["water_vapour"]["tier"] = "FALLBACK_DATASET"
     assert (
-        wagl._determine_maturity(normal_acq_date, normal_proc_date, wagl_doc)
-        == "interim"
+        wagl._determine_maturity(acq_after_brdf, proc_after_brdf, wagl_doc) == "interim"
     )
     assert (
         wagl._determine_maturity(
-            acq_before_01, acq_before_01 + timedelta(days=3), wagl_doc
+            acq_before_brdf, acq_before_brdf + timedelta(days=3), wagl_doc
         )
         == "interim"
     )
@@ -584,6 +586,5 @@ def test_maturity_calculation():
     # Fallback BRDF (when at least one is fallback)
     wagl_doc["ancillary"]["brdf"]["tier"] = "FALLBACK_DEFAULT"
     assert (
-        wagl._determine_maturity(normal_acq_date, normal_proc_date, wagl_doc)
-        == "interim"
+        wagl._determine_maturity(acq_after_brdf, proc_after_brdf, wagl_doc) == "interim"
     )
