@@ -568,52 +568,45 @@ class FileWrite:
         input_geobox: GridSpec,
         out: Path,
         out_scale=10,
+        # TODO: infer source range?
         src_range=(1, 3500),
         resampling=Resampling.bilinear,
     ):
         """
-        Generate a quicklook image applying a linear contrast enhancement.
-        Outputs will be converted to Uint8.
+        Generate a thumbnail jpg image using the given three paths as red,green, blue.
+
+        A linear contrast enhancement is applied, and outputs are converted to Uint8.
 
         If the input image has a valid no data value, the no data will
         be set to 0 in the output image.
+
         Any non-contiguous data across the colour domain, will be set to
         zero.
-
-        The output is a tiled GeoTIFF with JPEG compression, utilising the
-        YCBCR colour model, as well as a mask band.
-        This routine attempts to minimise memory consumption, as such
-        it reads data as needed on-the-fly, and doesn't retain all colour
-        bands in memory.
-
-        The same can't be said for writing to disk as this'll be in
-        rasterio's code. The pixel interleaved nature of JPEG compression
-        might require (on rasterio's end) to have all bands in memory.
-        Extra code could be written to do I/O utilising the same output
-        tile size in order to only have (y_size, x_size, bands) in memory
-        at a time.
-
         """
-        with rasterio.Env(TIFF_USE_OVR=True, GDAL_PAM_ENABLED=False):
+        # No aux.xml file with our jpeg.
+        with rasterio.Env(GDAL_PAM_ENABLED=False):
+
             with tempfile.TemporaryDirectory(
                 dir=out.parent, prefix=".thumbgen-"
             ) as tmpdir:
                 tmp_quicklook_path = Path(tmpdir) / "quicklook.tif"
 
-                reproj_grid = _write_quicklook(
+                # We write an intensity-scaled, reprojected version of the dataset at full res.
+                # Then write a scaled JPEG verison. (TODO: can we do it in one step?)
+                ql_grid = _write_quicklook(
                     input_geobox, resampling, rgb, src_range, tmp_quicklook_path
                 )
-                out_crs = reproj_grid.crs
+                out_crs = ql_grid.crs
 
                 # Scale and write as JPEG to the output.
                 thumb_transform, thumb_width, thumb_height = calculate_default_transform(
                     out_crs,
                     out_crs,
-                    reproj_grid.shape[1],
-                    reproj_grid.shape[0],
-                    *reproj_grid.bounds,
-                    dst_width=reproj_grid.shape[1] // out_scale,
-                    dst_height=reproj_grid.shape[0] // out_scale,
+                    ql_grid.shape[1],
+                    ql_grid.shape[0],
+                    *ql_grid.bounds,
+                    dst_width=ql_grid.shape[1] // out_scale,
+                    dst_height=ql_grid.shape[0] // out_scale,
                 )
                 thumb_args = dict(
                     driver="JPEG",
@@ -665,16 +658,13 @@ def _write_quicklook(
     nulls = numpy.zeros(input_geobox.shape, dtype="bool")
     for band_no, band_path in enumerate(rgb, start=1):
         with rasterio.open(band_path) as ds:
-
             if ds.count != 1:
                 raise NotImplementedError(
                     "multi-band measurement files aren't yet supported"
                 )
-
             nulls |= ds.read(1) == ds.nodata
-    # We write an intensity-scaled, reprojected version of the dataset at full res.
-    # Then write a scaled JPEG verison. (TODO: can we do it in one step?)
-    reprojected_write_args = dict(
+
+    ql_write_args = dict(
         driver="GTiff",
         dtype="uint8",
         count=len(rgb),
@@ -687,11 +677,11 @@ def _write_quicklook(
     )
     # Only set blocksize on larger imagery; enables reduced resolution processing
     if reproj_grid.shape[0] > 512:
-        reprojected_write_args["blockysize"] = 512
+        ql_write_args["blockysize"] = 512
     if reproj_grid.shape[1] > 512:
-        reprojected_write_args["blockxsize"] = 512
+        ql_write_args["blockxsize"] = 512
 
-    with rasterio.open(dest_path, "w", **reprojected_write_args) as ql_ds:
+    with rasterio.open(dest_path, "w", **ql_write_args) as ql_ds:
         ql_ds: DatasetWriter
         for band_no, band_path in enumerate(rgb, start=1):
             with rasterio.open(band_path) as ds:
