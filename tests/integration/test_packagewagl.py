@@ -445,6 +445,7 @@ def test_whole_wagl_package(
             _assert_image(image, overviews=[])
 
     # Check we didn't get height/width mixed up again :)
+    # (The small size of our test data makes this slightly silly, though...)
     [thumb_path] = expected_folder.rglob("*_nbar_*.jpg")
     _assert_image(thumb_path, bands=3, shape=(7, 8))
 

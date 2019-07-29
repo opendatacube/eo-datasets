@@ -571,6 +571,7 @@ class FileWrite:
         # TODO: infer source range?
         src_range=(1, 3500),
         resampling=Resampling.bilinear,
+        compress_quality: int = 85,
     ):
         """
         Generate a thumbnail jpg image using the given three paths as red,green, blue.
@@ -610,6 +611,7 @@ class FileWrite:
                 )
                 thumb_args = dict(
                     driver="JPEG",
+                    quality=compress_quality,
                     height=thumb_height,
                     width=thumb_width,
                     count=3,
