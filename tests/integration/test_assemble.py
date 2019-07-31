@@ -199,10 +199,10 @@ def test_minimal_package(tmp_path: Path, l1_ls8_folder: Path):
                     "07": {
                         "04": {
                             # Set a dataset version to get rid of 'beta' label.
-                            "quaternarius_beta_x_2019-07-04_user.odc-metadata.yaml": "",
-                            "quaternarius_beta_x_2019-07-04_user.proc-info.yaml": "",
-                            "quaternarius_beta_x_2019-07-04_user_blue.tif": "",
-                            "quaternarius_beta_x_2019-07-04_user.sha1": "",
+                            "quaternarius_2019-07-04.odc-metadata.yaml": "",
+                            "quaternarius_2019-07-04.proc-info.yaml": "",
+                            "quaternarius_2019-07-04_blue.tif": "",
+                            "quaternarius_2019-07-04.sha1": "",
                         }
                     }
                 }
