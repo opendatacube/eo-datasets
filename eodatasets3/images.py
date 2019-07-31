@@ -581,7 +581,7 @@ class FileWrite:
         out_scale=10,
         # TODO: infer source range?
         src_range=(1, 3500),
-        resampling=Resampling.bilinear,
+        resampling=Resampling.average,
         compress_quality: int = 85,
     ):
         """
