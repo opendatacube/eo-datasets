@@ -737,7 +737,14 @@ class DatasetAssembler(EoFields):
         self._is_finished = True
         return dataset.id, target_metadata_path
 
-    def write_thumbnail(self, red: str, green: str, blue: str, kind: str = None):
+    def write_thumbnail(
+        self,
+        red: str,
+        green: str,
+        blue: str,
+        resampling: Resampling = Resampling.average,
+        kind: str = None,
+    ):
         """
         Write a thumbnail for the dataset using the given measurements (specified by name) as r/g/b.
 
@@ -773,7 +780,11 @@ class DatasetAssembler(EoFields):
 
         scale_factor = 10
         FileWrite().create_thumbnail(
-            tuple(path for grid, path in rgbs), grid, thumb, out_scale=scale_factor
+            tuple(path for grid, path in rgbs),
+            grid,
+            thumb,
+            out_scale=scale_factor,
+            resampling=resampling,
         )
         self._checksum.add_file(thumb)
 
