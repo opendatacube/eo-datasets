@@ -743,6 +743,8 @@ class DatasetAssembler(EoFields):
         green: str,
         blue: str,
         resampling: Resampling = Resampling.average,
+        static_stretch: Tuple[int, int] = None,
+        percentile_stretch: Tuple[int, int] = (2, 98),
         kind: str = None,
     ):
         """
@@ -754,6 +756,10 @@ class DatasetAssembler(EoFields):
         them (it will be put in the filename).
 
         Eg. GA's ARD has thumbnails of kind 'nbar' and 'nbart'.
+
+        A linear stretch is performed on the colour. By default this is a dynamic 2% stretch
+        (the 2% and 98% percentile values of the input). The static_stretch parameter will
+        override this with a static range of values.
         """
         thumb = self.names.thumbnail_name(self._work_path, kind=kind)
         measurements = dict(
@@ -785,6 +791,8 @@ class DatasetAssembler(EoFields):
             thumb,
             out_scale=scale_factor,
             resampling=resampling,
+            static_stretch=static_stretch,
+            percentile_stretch=percentile_stretch,
         )
         self._checksum.add_file(thumb)
 

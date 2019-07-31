@@ -579,15 +579,17 @@ class FileWrite:
         input_geobox: GridSpec,
         out: Path,
         out_scale=10,
-        # TODO: infer source range?
-        src_range=(1, 3500),
         resampling=Resampling.average,
+        static_stretch: Tuple[int, int] = None,
+        percentile_stretch: Tuple[int, int] = (2, 98),
         compress_quality: int = 85,
     ):
         """
         Generate a thumbnail jpg image using the given three paths as red,green, blue.
 
-        A linear contrast enhancement is applied, and outputs are converted to Uint8.
+        A linear stretch is performed on the colour. By default this is a dynamic 2% stretch
+        (the 2% and 98% percentile values of the input). The static_stretch parameter will
+        override this with a static range of values.
 
         If the input image has a valid no data value, the no data will
         be set to 0 in the output image.
@@ -605,7 +607,12 @@ class FileWrite:
                 # We write an intensity-scaled, reprojected version of the dataset at full res.
                 # Then write a scaled JPEG verison. (TODO: can we do it in one step?)
                 ql_grid = _write_quicklook(
-                    input_geobox, resampling, rgb, src_range, tmp_quicklook_path
+                    input_geobox,
+                    resampling,
+                    rgb,
+                    tmp_quicklook_path,
+                    static_range=static_stretch,
+                    percentile_range=percentile_stretch,
                 )
                 out_crs = ql_grid.crs
 
@@ -649,8 +656,9 @@ def _write_quicklook(
     input_geobox: GridSpec,
     resampling: Resampling,
     rgb: Sequence[Path],
-    src_range: Tuple[int, int],
     dest_path: Path,
+    static_range: Tuple[int, int],
+    percentile_range: Tuple[int, int] = (2, 98),
 ) -> GridSpec:
     """
     Write an intensity-scaled wgs84 image using the given files as bands.
@@ -698,10 +706,15 @@ def _write_quicklook(
         for band_no, band_path in enumerate(rgb, start=1):
             with rasterio.open(band_path) as ds:
                 ds: DatasetReader
+
                 rescaled_data = rescale_intensity(
-                    ds.read(1), in_range=src_range, out_range=(1, 255)
+                    ds.read(1),
+                    null_mask=nulls,
+                    static_range=static_range,
+                    percentile_range=percentile_range,
+                    out_range=(1, 255),
+                    dtype=np.uint8,
                 )
-                rescaled_data[nulls] = 0
 
                 reprojected_data = numpy.zeros(reproj_grid.shape, dtype=numpy.uint8)
                 reproject(
@@ -725,17 +738,30 @@ def _write_quicklook(
 
 def rescale_intensity(
     image: np.ndarray,
-    in_range: Tuple[int, int],
-    out_range: Tuple[int, int],
+    null_mask: np.ndarray,
+    out_range: Optional[Tuple[int, int]],
+    static_range: Optional[Tuple[int, int]],
+    percentile_range: Optional[Tuple[int, int]] = (2, 98),
     dtype=np.uint8,
+    nodata=0,
 ) -> np.ndarray:
     """
     Based on scikit-image's rescale_intensity, but does fewer copies/allocations of the array.
 
+    Specify in-range to do a static stretch, otherwise we'll measure from input min/max
+    percentiles.
+
     (and it saves us bringing in the entire dependency for one small method)
     """
-    imin, imax = in_range
-    omin, omax = out_range
+    if not static_range and not percentile_range:
+        raise ValueError("Either need a linear stretch or percentile")
+
+    with_data = ~null_mask
+    imin, imax = static_range or (
+        np.percentile(image[with_data], percentile_range[0], interpolation="lower"),
+        np.percentile(image[with_data], percentile_range[1], interpolation="higher"),
+    )
+    omin, omax = out_range or (np.iinfo(dtype).min, np.iinfo(dtype).max)
 
     np.clip(image, imin, imax, out=image)
     image -= imin
@@ -744,4 +770,6 @@ def rescale_intensity(
     image = image / float(imax - imin)
     image *= omax - omin
     image += omin
-    return image.astype(dtype)
+    image = image.astype(dtype)
+    image[null_mask] = nodata
+    return image
