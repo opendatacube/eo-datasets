@@ -709,11 +709,11 @@ def _write_quicklook(
 
                 rescaled_data = rescale_intensity(
                     ds.read(1),
-                    null_mask=nulls,
+                    image_null_mask=nulls,
                     static_range=static_range,
                     percentile_range=percentile_range,
                     out_range=(1, 255),
-                    dtype=np.uint8,
+                    out_dtype=np.uint8,
                 )
 
                 reprojected_data = numpy.zeros(reproj_grid.shape, dtype=numpy.uint8)
@@ -738,12 +738,13 @@ def _write_quicklook(
 
 def rescale_intensity(
     image: np.ndarray,
-    null_mask: np.ndarray,
-    out_range: Optional[Tuple[int, int]],
-    static_range: Optional[Tuple[int, int]],
+    out_range: Optional[Tuple[int, int]] = None,
+    static_range: Optional[Tuple[int, int]] = None,
     percentile_range: Optional[Tuple[int, int]] = (2, 98),
-    dtype=np.uint8,
-    nodata=0,
+    image_nodata: int = None,
+    image_null_mask: np.ndarray = None,
+    out_dtype=np.uint8,
+    out_nodata=0,
 ) -> np.ndarray:
     """
     Based on scikit-image's rescale_intensity, but does fewer copies/allocations of the array.
@@ -755,21 +756,27 @@ def rescale_intensity(
     """
     if not static_range and not percentile_range:
         raise ValueError("Either need a linear stretch or percentile")
+    if image_null_mask is None:
+        if image_nodata is None:
+            raise ValueError("Must specify either a null mask or a nodata val")
+        image_null_mask = image == image_nodata
 
-    with_data = ~null_mask
+    image_with_data = image[(~image_null_mask)]
     imin, imax = static_range or (
-        np.percentile(image[with_data], percentile_range[0], interpolation="lower"),
-        np.percentile(image[with_data], percentile_range[1], interpolation="higher"),
+        np.percentile(image_with_data, percentile_range[0], interpolation="lower"),
+        np.percentile(image_with_data, percentile_range[1], interpolation="higher"),
     )
-    omin, omax = out_range or (np.iinfo(dtype).min, np.iinfo(dtype).max)
+    omin, omax = out_range or (np.iinfo(out_dtype).min, np.iinfo(out_dtype).max)
+
+    # The intermediate calculation will need floats.
+    # We'll convert to it immediately to avoid modifying the input array
+    image = image.astype(np.float64)
 
     np.clip(image, imin, imax, out=image)
     image -= imin
-    # We allocate a float array here, as with the original function.
-    # (I'm not sure how bad int truncation would affect us?)
-    image = image / float(imax - imin)
+    image /= float(imax - imin)
     image *= omax - omin
     image += omin
-    image = image.astype(dtype)
-    image[null_mask] = nodata
+    image = image.astype(out_dtype)
+    image[image_null_mask] = out_nodata
     return image
