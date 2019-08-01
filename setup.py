@@ -61,6 +61,7 @@ setup(
         "scipy",
         "shapely",
         "structlog",
+        "xarray",
     ],
     tests_require=tests_require,
     extras_require={"test": tests_require},
