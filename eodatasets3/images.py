@@ -1,4 +1,5 @@
 import os
+import sys
 import tempfile
 from collections import defaultdict
 from pathlib import Path
@@ -675,15 +676,40 @@ def _write_quicklook(
         (reprojected_height, reprojected_width), reprojected_transform, crs=out_crs
     )
     # Calculate combined nodata mask
-    nulls = numpy.zeros(input_geobox.shape, dtype="bool")
+    valid_data_mask = numpy.ones(input_geobox.shape, dtype="bool")
     for band_no, band_path in enumerate(rgb, start=1):
+        calculated_range = (-sys.maxsize - 1, sys.maxsize)
         with rasterio.open(band_path) as ds:
             if ds.count != 1:
                 raise NotImplementedError(
                     "multi-band measurement files aren't yet supported"
                 )
-            nulls |= ds.read(1) == ds.nodata
+            array = ds.read(1)
+            valid_data_mask &= array != ds.nodata
+            if not static_range:
+                calculated_range = (
+                    # "the maximum of the 2-percentiles"
+                    max(
+                        np.percentile(
+                            array[valid_data_mask],
+                            percentile_range[0],
+                            interpolation="lower",
+                        ),
+                        calculated_range[0],
+                    ),
+                    # "the minimum of the 98-percentiles"
+                    min(
+                        np.percentile(
+                            array[valid_data_mask],
+                            percentile_range[1],
+                            interpolation="higher",
+                        ),
+                        calculated_range[1],
+                    ),
+                )
 
+    if not static_range:
+        static_range = calculated_range
     ql_write_args = dict(
         driver="GTiff",
         dtype="uint8",
@@ -709,9 +735,8 @@ def _write_quicklook(
 
                 rescaled_data = rescale_intensity(
                     ds.read(1),
-                    image_null_mask=nulls,
+                    image_null_mask=~valid_data_mask,
                     static_range=static_range,
-                    percentile_range=percentile_range,
                     out_range=(1, 255),
                     out_dtype=np.uint8,
                 )
@@ -732,7 +757,7 @@ def _write_quicklook(
                 del rescaled_data
                 ql_ds.write(reprojected_data, band_no)
                 del reprojected_data
-    del nulls
+
     return reproj_grid
 
 
@@ -740,7 +765,6 @@ def rescale_intensity(
     image: np.ndarray,
     out_range: Optional[Tuple[int, int]] = None,
     static_range: Optional[Tuple[int, int]] = None,
-    percentile_range: Optional[Tuple[int, int]] = (2, 98),
     image_nodata: int = None,
     image_null_mask: np.ndarray = None,
     out_dtype=np.uint8,
@@ -754,18 +778,12 @@ def rescale_intensity(
 
     (and it saves us bringing in the entire dependency for one small method)
     """
-    if not static_range and not percentile_range:
-        raise ValueError("Either need a linear stretch or percentile")
     if image_null_mask is None:
         if image_nodata is None:
             raise ValueError("Must specify either a null mask or a nodata val")
         image_null_mask = image == image_nodata
 
-    image_with_data = image[(~image_null_mask)]
-    imin, imax = static_range or (
-        np.percentile(image_with_data, percentile_range[0], interpolation="lower"),
-        np.percentile(image_with_data, percentile_range[1], interpolation="higher"),
-    )
+    imin, imax = static_range
     omin, omax = out_range or (np.iinfo(out_dtype).min, np.iinfo(out_dtype).max)
 
     # The intermediate calculation will need floats.
