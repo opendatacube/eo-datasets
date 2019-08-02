@@ -577,13 +577,13 @@ class FileWrite:
     def create_thumbnail(
         self,
         rgb: Tuple[Path, Path, Path],
-        input_geobox: GridSpec,
         out: Path,
         out_scale=10,
         resampling=Resampling.average,
         static_stretch: Tuple[int, int] = None,
         percentile_stretch: Tuple[int, int] = (2, 98),
         compress_quality: int = 85,
+        input_geobox: GridSpec = None,
     ):
         """
         Generate a thumbnail jpg image using the given three paths as red,green, blue.
@@ -608,12 +608,12 @@ class FileWrite:
                 # We write an intensity-scaled, reprojected version of the dataset at full res.
                 # Then write a scaled JPEG verison. (TODO: can we do it in one step?)
                 ql_grid = _write_quicklook(
-                    input_geobox,
-                    resampling,
                     rgb,
                     tmp_quicklook_path,
+                    resampling,
                     static_range=static_stretch,
                     percentile_range=percentile_stretch,
+                    input_geobox=input_geobox,
                 )
                 out_crs = ql_grid.crs
 
@@ -654,16 +654,20 @@ class FileWrite:
 
 
 def _write_quicklook(
-    input_geobox: GridSpec,
-    resampling: Resampling,
     rgb: Sequence[Path],
     dest_path: Path,
+    resampling: Resampling,
     static_range: Tuple[int, int],
     percentile_range: Tuple[int, int] = (2, 98),
+    input_geobox: GridSpec = None,
 ) -> GridSpec:
     """
     Write an intensity-scaled wgs84 image using the given files as bands.
     """
+    if input_geobox is None:
+        with rasterio.open(rgb[0]) as ds:
+            input_geobox = GridSpec.from_rio(ds)
+
     out_crs = CRS.from_epsg(4326)
     reprojected_transform, reprojected_width, reprojected_height = calculate_default_transform(
         input_geobox.crs,
@@ -675,28 +679,6 @@ def _write_quicklook(
     reproj_grid = GridSpec(
         (reprojected_height, reprojected_width), reprojected_transform, crs=out_crs
     )
-    # Calculate combined nodata mask
-    valid_data_mask = numpy.ones(input_geobox.shape, dtype="bool")
-    for band_no, band_path in enumerate(rgb, start=1):
-        calculated_range = (-sys.maxsize - 1, sys.maxsize)
-        with rasterio.open(band_path) as ds:
-            if ds.count != 1:
-                raise NotImplementedError(
-                    "multi-band measurement files aren't yet supported"
-                )
-            array = ds.read(1)
-            valid_data_mask &= array != ds.nodata
-            if not static_range:
-                low, high = np.percentile(
-                    array[valid_data_mask], percentile_range, interpolation="nearest"
-                )
-                calculated_range = (
-                    max(low, calculated_range[0]),
-                    min(high, calculated_range[1]),
-                )
-            del array
-    if not static_range:
-        static_range = calculated_range
     ql_write_args = dict(
         driver="GTiff",
         dtype="uint8",
@@ -708,6 +690,7 @@ def _write_quicklook(
         nodata=0,
         tiled="yes",
     )
+
     # Only set blocksize on larger imagery; enables reduced resolution processing
     if reproj_grid.shape[0] > 512:
         ql_write_args["blockysize"] = 512
@@ -716,42 +699,85 @@ def _write_quicklook(
 
     with rasterio.open(dest_path, "w", **ql_write_args) as ql_ds:
         ql_ds: DatasetWriter
-        for band_no, band_path in enumerate(rgb, start=1):
-            with rasterio.open(band_path) as ds:
-                ds: DatasetReader
 
-                rescaled_data = rescale_intensity(
-                    ds.read(1),
+        # Calculate combined nodata mask
+        valid_data_mask = numpy.ones(input_geobox.shape, dtype="bool")
+        calculated_range = read_valid_mask_and_value_range(
+            valid_data_mask, _iter_images(rgb), percentile_range
+        )
+
+        for band_no, (image, nodata) in enumerate(_iter_images(rgb), start=1):
+            reprojected_data = numpy.zeros(reproj_grid.shape, dtype=numpy.uint8)
+            reproject(
+                rescale_intensity(
+                    image,
                     image_null_mask=~valid_data_mask,
-                    static_range=static_range,
+                    in_range=(static_range or calculated_range),
                     out_range=(1, 255),
                     out_dtype=np.uint8,
-                )
-
-                reprojected_data = numpy.zeros(reproj_grid.shape, dtype=numpy.uint8)
-                reproject(
-                    rescaled_data,
-                    reprojected_data,
-                    src_crs=ds.crs,
-                    src_transform=ds.transform,
-                    src_nodata=0,
-                    dst_crs=reproj_grid.crs,
-                    dst_nodata=0,
-                    dst_transform=reproj_grid.transform,
-                    resampling=resampling,
-                    num_threads=2,
-                )
-                del rescaled_data
-                ql_ds.write(reprojected_data, band_no)
-                del reprojected_data
+                ),
+                reprojected_data,
+                src_crs=input_geobox.crs,
+                src_transform=input_geobox.transform,
+                src_nodata=0,
+                dst_crs=reproj_grid.crs,
+                dst_nodata=0,
+                dst_transform=reproj_grid.transform,
+                resampling=resampling,
+                num_threads=2,
+            )
+            ql_ds.write(reprojected_data, band_no)
+            del reprojected_data
 
     return reproj_grid
 
 
+LazyImages = Iterable[Tuple[np.ndarray, int]]
+
+
+def _iter_images(rgb: Sequence[Path]) -> LazyImages:
+    """
+    Lazily load a series of single-band images from a path.
+
+    Yields the image array and nodata value.
+    """
+    for path in rgb:
+        with rasterio.open(path) as ds:
+            ds: DatasetReader
+            if ds.count != 1:
+                raise NotImplementedError(
+                    "multi-band measurement files aren't yet supported"
+                )
+            yield ds.read(1), ds.nodata
+
+
+def read_valid_mask_and_value_range(
+    valid_data_mask: numpy.ndarray,
+    images: LazyImages,
+    calculate_percentiles: Optional[Tuple[int, int]] = None,
+) -> Optional[Tuple[int, int]]:
+    """
+    Read the given images, filling in a valid data mask and optional pixel percentiles.
+    """
+    calculated_range = (-sys.maxsize - 1, sys.maxsize)
+    for array, nodata in images:
+        valid_data_mask &= array != nodata
+        if calculate_percentiles is not None:
+            low, high = np.percentile(
+                array[valid_data_mask], calculate_percentiles, interpolation="nearest"
+            )
+            calculated_range = (
+                max(low, calculated_range[0]),
+                min(high, calculated_range[1]),
+            )
+
+    return calculated_range
+
+
 def rescale_intensity(
     image: np.ndarray,
+    in_range: Tuple[int, int],
     out_range: Optional[Tuple[int, int]] = None,
-    static_range: Optional[Tuple[int, int]] = None,
     image_nodata: int = None,
     image_null_mask: np.ndarray = None,
     out_dtype=np.uint8,
@@ -760,9 +786,6 @@ def rescale_intensity(
     """
     Based on scikit-image's rescale_intensity, but does fewer copies/allocations of the array.
 
-    Specify in-range to do a static stretch, otherwise we'll measure from input min/max
-    percentiles.
-
     (and it saves us bringing in the entire dependency for one small method)
     """
     if image_null_mask is None:
@@ -770,7 +793,7 @@ def rescale_intensity(
             raise ValueError("Must specify either a null mask or a nodata val")
         image_null_mask = image == image_nodata
 
-    imin, imax = static_range
+    imin, imax = in_range
     omin, omax = out_range or (np.iinfo(out_dtype).min, np.iinfo(out_dtype).max)
 
     # The intermediate calculation will need floats.
