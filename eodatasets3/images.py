@@ -687,27 +687,14 @@ def _write_quicklook(
             array = ds.read(1)
             valid_data_mask &= array != ds.nodata
             if not static_range:
-                calculated_range = (
-                    # "the maximum of the 2-percentiles"
-                    max(
-                        np.percentile(
-                            array[valid_data_mask],
-                            percentile_range[0],
-                            interpolation="lower",
-                        ),
-                        calculated_range[0],
-                    ),
-                    # "the minimum of the 98-percentiles"
-                    min(
-                        np.percentile(
-                            array[valid_data_mask],
-                            percentile_range[1],
-                            interpolation="higher",
-                        ),
-                        calculated_range[1],
-                    ),
+                low, high = np.percentile(
+                    array[valid_data_mask], percentile_range, interpolation="nearest"
                 )
-
+                calculated_range = (
+                    max(low, calculated_range[0]),
+                    min(high, calculated_range[1]),
+                )
+            del array
     if not static_range:
         static_range = calculated_range
     ql_write_args = dict(
