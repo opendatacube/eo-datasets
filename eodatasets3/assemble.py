@@ -745,6 +745,7 @@ class DatasetAssembler(EoFields):
         resampling: Resampling = Resampling.average,
         static_stretch: Tuple[int, int] = None,
         percentile_stretch: Tuple[int, int] = (2, 98),
+        scale_factor=10,
         kind: str = None,
     ):
         """
@@ -784,15 +785,14 @@ class DatasetAssembler(EoFields):
             )
         grid = unique_grids[0]
 
-        scale_factor = 10
         FileWrite().create_thumbnail(
             tuple(path for grid, path in rgbs),
-            grid,
             thumb,
             out_scale=scale_factor,
             resampling=resampling,
             static_stretch=static_stretch,
             percentile_stretch=percentile_stretch,
+            input_geobox=grid,
         )
         self._checksum.add_file(thumb)
 
