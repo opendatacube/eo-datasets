@@ -98,7 +98,9 @@ def _unpack_products(
             if (p.platform, product) in _THUMBNAILS:
                 red, green, blue = _THUMBNAILS[(p.platform, product)]
                 with do(f"Thumbnailing {product}"):
-                    p.write_thumbnail(red, green, blue, kind=product)
+                    p.write_thumbnail(
+                        red, green, blue, kind=product, static_stretch=(1, 3000)
+                    )
 
 
 def write_measurement_h5(
