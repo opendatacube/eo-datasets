@@ -389,7 +389,7 @@ class DatasetAssembler(EoFields):
         name: str,
         path: Path,
         overviews=images.DEFAULT_OVERVIEWS,
-        overview_resampling=Resampling.nearest,
+        overview_resampling=Resampling.average,
         expand_valid_data=True,
         file_id: str = None,
     ):
@@ -416,7 +416,7 @@ class DatasetAssembler(EoFields):
         name: str,
         ds: DatasetReader,
         overviews=images.DEFAULT_OVERVIEWS,
-        overview_resampling=Resampling.nearest,
+        overview_resampling=Resampling.average,
         expand_valid_data=True,
         file_id=None,
     ):
@@ -448,7 +448,7 @@ class DatasetAssembler(EoFields):
         grid_spec: GridSpec,
         nodata=None,
         overviews=images.DEFAULT_OVERVIEWS,
-        overview_resampling=Resampling.nearest,
+        overview_resampling=Resampling.average,
         expand_valid_data=True,
         file_id: str = None,
     ):
@@ -485,7 +485,7 @@ class DatasetAssembler(EoFields):
         dataset: Dataset,
         nodata: int,
         overviews=images.DEFAULT_OVERVIEWS,
-        overview_resampling=Resampling.nearest,
+        overview_resampling=Resampling.average,
         expand_valid_data=True,
         file_id=None,
     ):

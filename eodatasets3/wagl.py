@@ -531,7 +531,10 @@ def package(
                 if granule.fmask_image:
                     with do(f"Writing fmask from {granule.fmask_image} "):
                         p.write_measurement(
-                            "oa:fmask", granule.fmask_image, expand_valid_data=False
+                            "oa:fmask",
+                            granule.fmask_image,
+                            expand_valid_data=False,
+                            overview_resampling=Resampling.mode,
                         )
 
             with do("Finishing package"):
