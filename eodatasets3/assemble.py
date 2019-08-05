@@ -651,6 +651,7 @@ class DatasetAssembler(EoFields):
 
         dataset = DatasetDoc(
             id=self.dataset_id,
+            label=self.names.dataset_label,
             product=ProductDoc(
                 name=self.names.product_name, href=self.names.product_uri
             ),

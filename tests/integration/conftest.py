@@ -131,10 +131,12 @@ def expected_l1_ls8_folder(
     collection="1",
     lineage=None,
 ):
-    product_name = f"{organisation.split('.')[0]}_ls8c_level1_{collection}"
+    org_code = organisation.split(".")[0]
+    product_name = f"{org_code}_ls8c_level1_{collection}"
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
         "id": "a780754e-a884-58a7-9ac0-df518a67f59d",
+        "label": f"{product_name}-0-20170405_090084_2016-01-21",
         "product": {
             "name": product_name,
             "href": f"https://collections.dea.ga.gov.au/product/{product_name}",
@@ -290,6 +292,7 @@ def l1_ls7_tarball_md_expected(
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
         "id": "f23c5fa2-3321-5be9-9872-2be73fee12a6",
+        "label": "usgs_ls7e_level1_1-0-20161124_104078_2013-04-29",
         "product": {
             "name": "usgs_ls7e_level1_1",
             "href": "https://collections.dea.ga.gov.au/product/usgs_ls7e_level1_1",
@@ -427,6 +430,7 @@ def l1_ls5_tarball_md_expected(
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
         "id": "b0d31709-dda4-5a67-9fdf-3ae026a99a72",
+        "label": "usgs_ls5t_level1_1-0-20161231_090085_1997-04-06",
         "product": {
             "name": "usgs_ls5t_level1_1",
             "href": "https://collections.dea.ga.gov.au/product/usgs_ls5t_level1_1",

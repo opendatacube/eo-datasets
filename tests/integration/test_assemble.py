@@ -84,6 +84,7 @@ def test_dea_style_package(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             "id": dataset_id,
+            "label": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final",
             "product": {
                 # This was added automatically because we chose 'dea' conventions.
                 "href": "https://collections.dea.ga.gov.au/product/ga_ls8c_ones_3",

@@ -124,6 +124,7 @@ def test_whole_wagl_package(
             "$schema": "https://schemas.opendatacube.org/dataset",
             # A stable ID is taken from the WAGL doc.
             "id": "787eb74c-e7df-43d6-b562-b796137330ae",
+            "label": "ga_ls8c_ard_3-0-0_092084_2016-06-28_final",
             "product": {
                 "href": "https://collections.dea.ga.gov.au/product/ga_ls8c_ard_3",
                 "name": "ga_ls8c_ard_3",

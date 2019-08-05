@@ -11,7 +11,9 @@ properties:
   id:
     type: string
     format: uuid
-
+  label:
+    type: string
+    pattern: "^[a-zA-Z0-9-_]*$"
   product:
     title: Product
     type: object
