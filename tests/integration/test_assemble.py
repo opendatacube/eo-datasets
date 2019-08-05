@@ -32,7 +32,6 @@ def test_dea_style_package(
         p.platform = "LANDSAT_8"  # to: 'landsat-8'
         p.processed = "2016-03-04 14:23:30Z"  # into a date.
         p.properties["dea:dataset_maturity"] = "FINAL"  # lowercased
-        p.properties["dea:processing_level"] = "level-2"
 
         # Write a measurement from a numpy array, using the source dataset's grid spec.
         p.write_measurement_numpy(
@@ -127,7 +126,6 @@ def test_dea_style_package(
             "properties": {
                 "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
                 "dea:dataset_maturity": "final",
-                "dea:processing_level": "level-2",
                 "odc:dataset_version": "3.0.0",
                 "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": "2016-03-04T14:23:30",

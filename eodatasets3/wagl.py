@@ -514,8 +514,6 @@ def package(
             p.dataset_version = f"{org_collection_number}.0.0"
             p.region_code = _extract_reference_code(p, granule.name)
 
-            p.properties["dea:processing_level"] = "level-2"
-
             _read_wagl_metadata(p, granule_group)
             _read_gqa_doc(p, granule.gqa_doc)
             _read_fmask_doc(p, granule.fmask_doc)
