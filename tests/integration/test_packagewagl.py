@@ -196,7 +196,6 @@ def test_whole_wagl_package(
             "properties": {
                 "datetime": datetime(2016, 6, 28, 0, 2, 28, 624_635),
                 "dea:dataset_maturity": "final",
-                "dea:processing_level": "level-2",
                 "dtr:end_datetime": datetime(2016, 6, 28, 0, 2, 43, 114_771),
                 "dtr:start_datetime": datetime(2016, 6, 28, 0, 2, 14, 25815),
                 "eo:cloud_cover": 63.069_613_577_531_236,
