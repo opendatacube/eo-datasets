@@ -290,7 +290,6 @@ def prepare_and_write(
         p.properties["eo:sun_azimuth"] = mtl_doc["image_attributes"]["sun_azimuth"]
         p.properties["eo:sun_elevation"] = mtl_doc["image_attributes"]["sun_elevation"]
         p.properties["landsat:collection_number"] = usgs_collection_number
-
         for section, fields in _COPYABLE_MTL_FIELDS:
             for field in fields:
                 value = mtl_doc[section].get(field)
