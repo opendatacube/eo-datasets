@@ -3,6 +3,7 @@ from pathlib import Path
 from uuid import UUID
 
 import numpy
+import pytest
 
 from eodatasets3.assemble import DatasetAssembler
 from eodatasets3.images import GridSpec
@@ -209,3 +210,54 @@ def test_minimal_package(tmp_path: Path, l1_ls8_folder: Path):
             }
         },
     )
+
+
+def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
+    """
+    It should complain immediately if I add a file without enough metadata to write the filename.
+
+    (and with a friendly error message)
+    """
+
+    out = tmp_path / "out"
+    out.mkdir()
+
+    [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
+
+    # Default simple naming conventions need at least a date and family...
+    with DatasetAssembler(out) as p:
+        with pytest.raises(
+            ValueError, match="Need more properties to fulfill naming conventions."
+        ):
+            p.write_measurement("blue", blue_geotiff_path)
+
+    # It should mention the field that's missing (we added a date, so product_family is needed)
+    with DatasetAssembler(out) as p:
+        with pytest.raises(ValueError, match="odc:product_family"):
+            p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+            p.write_measurement("blue", blue_geotiff_path)
+
+    # DEA naming conventions should have stricter standards, and will tell your which fields you need to add.
+    with DatasetAssembler(out, naming_conventions="dea") as p:
+        # We set all the fields that work in default naming conventions.
+        p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+        p.product_family = "quaternarius"
+        p.processed_now()
+
+        # These fields are mandatory for DEA, and so should be complained about.
+        expected_extra_fields_needed = (
+            "eo:platform",
+            "eo:instrument",
+            "odc:dataset_version",
+            "odc:producer",
+            "odc:region_code",
+        )
+        with pytest.raises(ValueError) as got_error:
+            p.write_measurement("blue", blue_geotiff_path)
+
+        # All needed fields should have been in the error message.
+        for needed_field_name in expected_extra_fields_needed:
+            assert needed_field_name in got_error.value.args[0], (
+                f"Expected field {needed_field_name} to "
+                f"be listed as mandatory in the error message"
+            )
