@@ -211,6 +211,7 @@ class DatasetAssembler(EoFields):
         self._accessories: Dict[str, Path] = {}
 
         self._props = StacPropertyView()
+        self._label = None
 
         if naming_conventions == "default":
             self.names = ComplicatedNamingConventions(self)
@@ -243,6 +244,27 @@ class DatasetAssembler(EoFields):
         return self._props
 
     @property
+    def label(self) -> Optional[str]:
+        """
+        An optional displayable string to identify this dataset.
+
+        These are often used when when presenting a list of datasets, such as in search results or a filesystem folder.
+        They are unstructured, but should be more humane than showing a list of UUIDs.
+
+        By convention they have no spaces, due to their usage in filenames.
+
+        Eg. 'ga_ls5t_ard_3-0-0_092084_2009-12-17_final' or USGS's 'LT05_L1TP_092084_20091217_20161017_01_T1'
+
+        A label will be auto-generated using the naming-conventions, but you can manually override it by
+        setting this property.
+        """
+        return self._label or self.names.dataset_label
+
+    @label.setter
+    def label(self, val: str):
+        self._label = val
+
+    @property
     def destination_folder(self) -> Path:
         """
         The folder where the finished package will reside.
@@ -258,7 +280,11 @@ class DatasetAssembler(EoFields):
         """
         Prevent against users accidentally setting new properties on the assembler (it has happened multiple times).
         """
-        if hasattr(self, "_finished_init_") and not hasattr(self, name):
+        if (
+            name != "label"
+            and hasattr(self, "_finished_init_")
+            and not hasattr(self, name)
+        ):
             raise TypeError(
                 f"Cannot set new field '{name}' on an assembler. "
                 f"(Perhaps you meant to set it on the .properties?)"
