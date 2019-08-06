@@ -31,7 +31,8 @@ def test_dea_style_package(
         # Known properties are normalised (see tests at bottom of file)
         p.platform = "LANDSAT_8"  # to: 'landsat-8'
         p.processed = "2016-03-04 14:23:30Z"  # into a date.
-        p.properties["dea:dataset_maturity"] = "FINAL"  # lowercased
+        p.maturity = "FINAL"  # lowercased
+        p.properties["eo:off_nadir"] = "34"  # into a number
 
         # Write a measurement from a numpy array, using the source dataset's grid spec.
         p.write_measurement_numpy(
@@ -136,6 +137,7 @@ def test_dea_style_package(
                 "eo:platform": "landsat-8",  # matching Stac's examples for capitalisation.
                 "eo:instrument": "OLI_TIRS",  # matching Stac's examples for capitalisation.
                 "eo:cloud_cover": 93.22,
+                "eo:off_nadir": 34.0,
                 "eo:gsd": 15.0,
                 "eo:sun_azimuth": 74.007_443_8,
                 "eo:sun_elevation": 55.486_483,
@@ -189,8 +191,6 @@ def test_minimal_package(tmp_path: Path, l1_ls8_folder: Path):
         dataset_id, metadata_path = p.done()
 
     assert dataset_id is not None
-    for f in out.rglob("*"):
-        print(str(f.name))
     assert_file_structure(
         out,
         {

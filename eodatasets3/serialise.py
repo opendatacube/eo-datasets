@@ -258,7 +258,13 @@ def _to_doc(d: DatasetDoc, with_formatting: bool):
                 doc["measurements"].yaml_add_eol_comment(band_doc.alias, band_name)
 
         _add_space_before(
-            doc, "id", "crs", "properties", "measurements", "accessories", "lineage"
+            doc,
+            "label" if "label" in doc else "id",
+            "crs",
+            "properties",
+            "measurements",
+            "accessories",
+            "lineage",
         )
 
         p: CommentedMap = doc["properties"]
