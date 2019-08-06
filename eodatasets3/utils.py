@@ -1,12 +1,11 @@
 import enum
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Tuple
 
 import ciso8601
 import click
-from dateutil import tz
 
 
 class ItemProvider(enum.Enum):
@@ -60,7 +59,7 @@ def read_paths_from_file(listing: Path) -> Iterable[Path]:
 
 def default_utc(d: datetime) -> datetime:
     if d.tzinfo is None:
-        return d.replace(tzinfo=tz.tzutc())
+        return d.replace(tzinfo=timezone.utc)
     return d
 
 

@@ -70,6 +70,8 @@ invoke it manually by running `pre-commit run`
 
 `eo3-prepare`: Prepare ODC metadata from the commandline.
 
+Some preparers need the ancillary dependencies: `pip install .[ancillary]`
+
      $ eo3-prepare --help
     Usage: eo3-prepare [OPTIONS] COMMAND [ARGS]...
     
@@ -86,6 +88,8 @@ invoke it manually by running `pre-commit run`
 
 `eo3-package-wagl`: Convert and package WAGL HDF5 outputs.
 
+ Needs the wagl dependencies group: `pip install .[wagl]`
+     
      $ eo3-package-wagl --help
     Usage: eo3-package-wagl [OPTIONS] H5_FILE
     

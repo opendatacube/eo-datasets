@@ -1,26 +1,32 @@
 from __future__ import absolute_import
 
 import logging
+import sys
 
 import rasterio
 import rasterio.features
 import shapely.affinity
 import shapely.geometry
 import shapely.ops
-from rasterio.errors import RasterioIOError
-from scipy import ndimage
 
 _LOG = logging.getLogger(__name__)
 
 
-def safe_valid_region(images, mask_value=None):
-    try:
-        return valid_region(images, mask_value)
-    except (OSError, RasterioIOError):
-        return None
-
-
 def valid_region(images, mask_value=None):
+    """
+    Deprecated valid_region method.
+
+    Used by the legacy prepare scripts. Newer ones will
+    presumably use the DatasetAssembler api instead.
+    """
+    try:
+        from scipy import ndimage
+    except ImportError:
+        sys.stderr.write(
+            "eodatasets3 has not been installed with the ancillary extras. \n"
+            "    Try `pip install eodatasets3[ancillary]\n"
+        )
+        raise
     mask = None
 
     if not images:

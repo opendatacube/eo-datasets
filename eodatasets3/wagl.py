@@ -9,6 +9,7 @@ for files.
 import contextlib
 import os
 import re
+import sys
 from datetime import timedelta, datetime
 from pathlib import Path
 from typing import List, Sequence, Optional, Iterable, Any, Tuple, Dict, Mapping
@@ -16,7 +17,6 @@ from uuid import UUID
 
 import attr
 import click
-import h5py
 import numpy
 import rasterio
 from affine import Affine
@@ -32,6 +32,15 @@ from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
 from eodatasets3.serialise import loads_yaml
 from eodatasets3.utils import default_utc
+
+try:
+    import h5py
+except ImportError:
+    sys.stderr.write(
+        "eodatasets3 has not been installed with the wagl extras. \n"
+        "    Try `pip install eodatasets3[wagl]\n"
+    )
+    raise
 
 POSSIBLE_PRODUCTS = ("nbar", "nbart", "lambertian", "sbt")
 DEFAULT_PRODUCTS = ("nbar", "nbart")

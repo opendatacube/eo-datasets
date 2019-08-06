@@ -2,6 +2,7 @@
 # coding=utf-8
 
 import pathlib
+from itertools import chain
 
 from setuptools import setup, find_packages
 
@@ -25,6 +26,14 @@ tests_require = [
     "rio_cogeo",
 ]
 
+EXTRAS_REQUIRE = {
+    "test": tests_require,
+    # If packaging ard/wagl.
+    "wagl": ["h5py"],
+    # The (legacy) prepare scripts
+    "ancillary": ["scipy", "checksumdir", "netCDF4", "gdal"],
+}
+EXTRAS_REQUIRE["all"] = list(chain(EXTRAS_REQUIRE.values()))
 
 setup(
     name="eodatasets3",
@@ -45,26 +54,19 @@ setup(
         "attrs",
         "boltons",
         "cattrs",
-        "checksumdir",
         "ciso8601",
         "click",
-        "gdal",
-        "h5py",
         "jsonschema",
-        "netCDF4",
         "numpy",
         "pyproj",
-        "python-dateutil",
-        "PyYAML!=5.1",
         "rasterio",
         "ruamel.yaml",
-        "scipy",
         "shapely",
         "structlog",
         "xarray",
     ],
     tests_require=tests_require,
-    extras_require={"test": tests_require},
+    extras_require=EXTRAS_REQUIRE,
     entry_points="""
         [console_scripts]
         eo3-validate=eodatasets3.validate:run

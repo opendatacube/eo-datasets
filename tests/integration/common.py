@@ -4,7 +4,7 @@ from pprint import pformat, pprint
 from typing import Dict
 
 import rapidjson
-import yaml
+from ruamel import yaml
 from boltons.iterutils import remap
 from click.testing import CliRunner, Result
 from deepdiff import DeepDiff
@@ -33,7 +33,8 @@ def assert_same_as_file(expected_doc: Dict, generated_file: Path, ignore_fields=
 
     assert generated_file.exists(), f"Expected file to exist {generated_file.name}"
 
-    generated_doc = yaml.load(generated_file.open("r"))
+    with generated_file.open("r") as f:
+        generated_doc = yaml.load(f)
     for field in ignore_fields:
         del generated_doc[field]
 

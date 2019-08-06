@@ -1,5 +1,5 @@
 from binascii import crc32
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Tuple
 
@@ -7,17 +7,21 @@ import numpy as np
 import pytest
 import rasterio
 from click.testing import CliRunner
-from dateutil.tz import tzutc
 from rasterio import DatasetReader
 from rasterio.enums import Compression
 from rio_cogeo import cogeo
 
 import eodatasets3
-from eodatasets3 import wagl
 from eodatasets3.model import DatasetDoc
-from eodatasets3.scripts import packagewagl
 from tests import assert_file_structure
 from tests.integration.common import assert_same_as_file
+
+h5py = pytest.importorskip(
+    "h5py",
+    reason="Extra dependencies needed to run wagl package test. "
+    "Try pip install eodatasets3[wagl]",
+)
+
 
 # This test dataset comes from running `tests/integration/h5downsample.py` on a real
 # wagl output.
@@ -34,6 +38,8 @@ def test_whole_wagl_package(
     l1_ls8_dataset: DatasetDoc, l1_ls8_folder: Path, tmp_path: Path
 ):
     out = tmp_path
+
+    from eodatasets3.scripts import packagewagl
 
     with pytest.warns(None) as warning_record:
         res = CliRunner().invoke(
@@ -481,6 +487,8 @@ def _assert_image(
 
 
 def test_maturity_calculation():
+    from eodatasets3 import wagl
+
     # Simplified. Only a few ancillary parts that matter to us.
     wagl_doc = {
         "ancillary": {
@@ -535,9 +543,9 @@ def test_maturity_calculation():
 
     # July 2002 is when we consider our BRDF to be good enough: both Aqua
     # and Terra satellites were now operational.
-    acq_before_brdf = datetime(2002, 6, 29, tzinfo=tzutc())
+    acq_before_brdf = datetime(2002, 6, 29, tzinfo=timezone.utc)
 
-    acq_after_brdf = datetime(2002, 7, 1, tzinfo=tzutc())
+    acq_after_brdf = datetime(2002, 7, 1, tzinfo=timezone.utc)
     proc_after_brdf = acq_after_brdf + timedelta(days=7)
 
     # Normal, final dataset. Processed just outside of NRT window.

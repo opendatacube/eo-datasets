@@ -3,7 +3,7 @@ from functools import partial
 from pathlib import Path
 from pprint import pformat
 
-import yaml
+from ruamel import yaml
 from deepdiff import DeepDiff
 
 from eodatasets3.prepare import noaa_c_c_prwtreatm_1_prepare
