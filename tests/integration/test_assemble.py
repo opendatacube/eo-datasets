@@ -4,6 +4,7 @@ from uuid import UUID
 
 import numpy
 import pytest
+from ruamel import yaml
 
 from eodatasets3.assemble import DatasetAssembler
 from eodatasets3.images import GridSpec
@@ -209,6 +210,23 @@ def test_minimal_package(tmp_path: Path, l1_ls8_folder: Path):
             }
         },
     )
+
+
+def test_dataset_no_measurements(tmp_path: Path):
+    """Can we make a dataset with no measurements? (eg. telemetry data)"""
+    with DatasetAssembler(tmp_path) as p:
+        # A custom label too.
+        p.label = "chipmonk_sightings_2019"
+        p.datetime = datetime(2019, 1, 1)
+        p.product_family = "chipmonk_sightings"
+        p.processed_now()
+
+        dataset_id, metadata_path = p.done()
+
+    with metadata_path.open("r") as f:
+        doc = yaml.load(f)
+
+    assert doc["label"] == "chipmonk_sightings_2019", "Couldn't override label field"
 
 
 def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):

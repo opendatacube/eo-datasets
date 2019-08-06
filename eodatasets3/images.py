@@ -236,6 +236,8 @@ class MeasurementRecord:
     def as_geo_docs(self) -> Tuple[CRS, Dict[str, GridDoc], Dict[str, MeasurementDoc]]:
         """Calculate combined geo information for metadata docs"""
 
+        if not self._measurements_per_grid:
+            return None, None, None
         # Order grids from most to fewest measurements.
         # PyCharm's typing seems to get confused by the sorted() call.
         # noinspection PyTypeChecker

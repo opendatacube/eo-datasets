@@ -91,24 +91,27 @@ def validate(
 
     yield from _validate_geo(dataset)
 
-    for name, measurement in dataset.measurements.items():
-        grid_name = measurement.grid
-        if grid_name != "default" or dataset.grids:
-            if grid_name not in dataset.grids:
-                yield _error(
-                    "invalid_grid_ref",
-                    f"Measurement {name!r} refers to unknown grid {grid_name!r}",
+    # Note that a dataset may have no measurements (eg. telemetry data).
+    # (TODO: a stricter mode for when we know we should have geo and measurement info)
+    if dataset.measurements:
+        for name, measurement in dataset.measurements.items():
+            grid_name = measurement.grid
+            if grid_name != "default" or dataset.grids:
+                if grid_name not in dataset.grids:
+                    yield _error(
+                        "invalid_grid_ref",
+                        f"Measurement {name!r} refers to unknown grid {grid_name!r}",
+                    )
+
+            if is_absolute(measurement.path):
+                yield _warning(
+                    "absolute_path",
+                    f"measurement {name!r} has an absolute path: {measurement.path!r}",
                 )
 
-        if is_absolute(measurement.path):
-            yield _warning(
-                "absolute_path",
-                f"measurement {name!r} has an absolute path: {measurement.path!r}",
-            )
-
-        if thorough:
-            # Load file, check dimensions etc are correct.
-            pass
+            if thorough:
+                # Load files, check dimensions etc are correct.
+                pass
 
     yield from _validate_stac_properties(dataset)
 
@@ -170,7 +173,7 @@ def _is_nan(v):
 
 
 def _validate_geo(dataset: DatasetDoc):
-    has_some_geo = dataset.geometry is not None or dataset.grids or dataset.crs
+    has_some_geo = _has_some_geo(dataset)
     if not has_some_geo:
         yield _info("non_geo", "No geo information in dataset")
         return
@@ -214,6 +217,10 @@ def _validate_geo(dataset: DatasetDoc):
                     "non_epsg",
                     f"Prefer an EPSG code to a WKT when possible. (Can change CRS to 'epsg:{wkt_crs.to_epsg()}')",
                 )
+
+
+def _has_some_geo(dataset):
+    return dataset.geometry is not None or dataset.grids or dataset.crs
 
 
 @click.command(help="Validate an ODC document")
