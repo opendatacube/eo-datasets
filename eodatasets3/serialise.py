@@ -240,7 +240,7 @@ def _to_doc(d: DatasetDoc, with_formatting: bool):
         sorted(doc["properties"].items(), key=_stac_key_order)
     )
 
-    if d.geometry:
+    if d.geometry is not None:
         doc["geometry"] = shapely.geometry.mapping(d.geometry)
     doc["id"] = str(d.id)
 
@@ -253,9 +253,10 @@ def _to_doc(d: DatasetDoc, with_formatting: bool):
                 _use_compact_format(grid, "shape", "transform")
 
         # Add user-readable names for measurements as a comment if present.
-        for band_name, band_doc in d.measurements.items():
-            if band_doc.alias and band_name.lower() != band_doc.alias.lower():
-                doc["measurements"].yaml_add_eol_comment(band_doc.alias, band_name)
+        if d.measurements:
+            for band_name, band_doc in d.measurements.items():
+                if band_doc.alias and band_name.lower() != band_doc.alias.lower():
+                    doc["measurements"].yaml_add_eol_comment(band_doc.alias, band_name)
 
         _add_space_before(
             doc,
@@ -276,8 +277,9 @@ def _to_doc(d: DatasetDoc, with_formatting: bool):
 def _use_compact_format(d: dict, *keys):
     """Change the given sequence to compact YAML form"""
     for key in keys:
-        d[key] = CommentedSeq(d[key])
-        d[key].fa.set_flow_style()
+        if key in d:
+            d[key] = CommentedSeq(d[key])
+            d[key].fa.set_flow_style()
 
 
 def _add_space_before(d: CommentedMap, *keys):

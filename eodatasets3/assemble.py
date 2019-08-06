@@ -16,6 +16,7 @@ import numpy
 import rasterio
 from boltons import iterutils
 from rasterio import DatasetReader
+from rasterio.crs import CRS
 from rasterio.enums import Resampling
 from xarray import Dataset
 
@@ -661,13 +662,17 @@ class DatasetAssembler(EoFields):
 
         crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
 
-        if sort_bands:
+        if measurement_docs and sort_bands:
             measurement_docs = dict(sorted(measurement_docs.items()))
 
         valid_data = self._measurements.consume_and_get_valid_data()
+        # Avoid the messiness of different empty collection types.
+        # (to have a non-null geometry we'd also need non-null grids and crses)
+        if valid_data.is_empty:
+            valid_data = None
 
         # If we wrote any data, a temporary work directory will have been initialised.
-        if self._initialised_work_path:
+        if self._base_output_folder:
             checksum_path = self.names.checksum_path(self._work_path)
             processing_metadata = self.names.metadata_path(
                 self._work_path, suffix="proc-info.yaml"
@@ -677,11 +682,11 @@ class DatasetAssembler(EoFields):
 
         dataset = DatasetDoc(
             id=self.dataset_id,
-            label=self.names.dataset_label,
+            label=self.label,
             product=ProductDoc(
                 name=self.names.product_name, href=self.names.product_uri
             ),
-            crs=f"epsg:{crs.to_epsg()}" if crs.is_epsg_code else crs.to_wkt(),
+            crs=self._crs_str(crs) if crs is not None else None,
             geometry=valid_data,
             grids=grid_docs,
             properties=self.properties,
@@ -712,7 +717,7 @@ class DatasetAssembler(EoFields):
                     )
 
         # If we're using a tmp path, finish the package and move it into place.
-        if self._initialised_work_path:
+        if self._base_output_folder:
             self._write_yaml(
                 {**self._user_metadata, "software_versions": self._software_versions},
                 processing_metadata,
@@ -763,6 +768,9 @@ class DatasetAssembler(EoFields):
         assert target_metadata_path.exists()
         self._is_finished = True
         return dataset.id, target_metadata_path
+
+    def _crs_str(self, crs: CRS) -> str:
+        return f"epsg:{crs.to_epsg()}" if crs.is_epsg_code else crs.to_wkt()
 
     def write_thumbnail(
         self,
