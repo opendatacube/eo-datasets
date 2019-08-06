@@ -23,7 +23,7 @@ install:
   # The python gdal bindings version need to match the gdal version of the system
 - travis_retry pip install --upgrade pip cattrs
 - travis_retry pip install --upgrade pytest pytest-cov pycodestyle flake8 coveralls GDAL==1.10.0 rasterio[s3]
-- travis_retry pip install -e .[test]
+- travis_retry pip install -e .[all]
 - pip freeze
   # Either both set or none. See: https://github.com/mapbox/rasterio/issues/1494
 - '[ "${AWS_SECRET_ACCESS_KEY}" ] || unset AWS_ACCESS_KEY_ID'

@@ -22,6 +22,7 @@ import hashlib
 import json
 import logging
 import os
+import sys
 import uuid
 from pathlib import Path
 from typing import Tuple, List, Dict, Optional
@@ -33,10 +34,18 @@ import rasterio.features
 import shapely.affinity
 import shapely.geometry
 import shapely.ops
-import yaml
-from checksumdir import dirhash
-from osgeo import osr
 from rasterio.errors import RasterioIOError
+from ruamel import yaml
+
+try:
+    from checksumdir import dirhash
+    from osgeo import osr
+except ImportError:
+    sys.stderr.write(
+        "eodatasets3 has not been installed with the ancillary extras. \n"
+        "    Try `pip install eodatasets3[ancillary]\n"
+    )
+    raise
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 SRC_BUCKET = "sentinel-s2-l1c"

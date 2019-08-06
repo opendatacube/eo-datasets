@@ -10,6 +10,7 @@ from __future__ import absolute_import
 import hashlib
 import logging
 import os
+import sys
 import uuid
 import zipfile
 from datetime import datetime
@@ -23,11 +24,19 @@ import rasterio.features
 import shapely.affinity
 import shapely.geometry
 import shapely.ops
-import yaml
-from osgeo import osr
 from rasterio.errors import RasterioIOError
+from ruamel import yaml
 
 from eodatasets3.utils import read_paths_from_file, ClickDatetime
+
+try:
+    from osgeo import osr
+except ImportError:
+    sys.stderr.write(
+        "eodatasets3 has not been installed with the ancillary extras. \n"
+        "    Try `pip install eodatasets3[ancillary]\n"
+    )
+    raise
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
