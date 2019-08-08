@@ -55,12 +55,12 @@ setup(
     ],
     url="https://github.com/GeoscienceAustralia/eo-datasets",
     install_requires=[
-        "attrs",
+        "attrs>=18.1",  # 18.1 adds 'factory' syntactic sugar
         "boltons",
         "cattrs",
         "ciso8601",
         "click",
-        "jsonschema",
+        "jsonschema>=3",  # We want a Draft6Validator
         "numpy",
         "pyproj",
         "rasterio",
