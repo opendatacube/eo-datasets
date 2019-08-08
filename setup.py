@@ -38,6 +38,9 @@ EXTRAS_REQUIRE["all"] = list(chain(EXTRAS_REQUIRE.values()))
 setup(
     name="eodatasets3",
     description="Packaging, metadata and provenance for OpenDataCube EO3 datasets",
+    long_description=README,
+    long_description_content_type="text/markdown",
+    author="Open Data Cube",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     packages=find_packages(exclude=("tests", "tests.*")),
@@ -48,6 +51,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Operating System :: OS Independent",
     ],
     url="https://github.com/GeoscienceAustralia/eo-datasets",
     install_requires=[
