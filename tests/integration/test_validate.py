@@ -3,9 +3,13 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Dict, Union, Mapping, Sequence, Optional
 
+import numpy as np
 import pytest
+import rasterio
 from click.testing import CliRunner, Result
 from eodatasets3 import serialise, validate
+from eodatasets3.model import DatasetDoc
+from rasterio.io import DatasetWriter
 
 # Either a dict or a path to a document
 Doc = Union[Dict, Path]
@@ -223,24 +227,90 @@ def test_valid_with_product_doc(
     eo_validator.assert_valid(product, l1_ls8_metadata_path)
 
 
-def test_measurements_compare_with_product_doc(
+def test_dtype_compare_with_product_doc(
     eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
 ):
-    """A thorough validation should check nodata and dtype of measurements"""
+    """A thorough validation should check dtype of measurements against the product"""
 
     product = dict(
         name="wrong_product",
         metadata_type="eo3",
-        measurements=[dict(name="blue", dtype="uint8", nodata=-999)],
+        measurements=[dict(name="blue", dtype="uint8", nodata=None)],
     )
 
     # When thorough, the dtype and nodata are wrong
     eo_validator.thorough = True
     eo_validator.assert_invalid(product, l1_ls8_metadata_path)
     assert eo_validator.messages == {
-        "different_dtype": "dtype mismatch for blue: product has dtype 'uint8', dataset has 'uint16'",
-        "different_nodata": "nodata mismatch for blue: product -999 != dataset None",
+        "different_dtype": "blue dtype: product 'uint8' != dataset 'uint16'"
     }
+
+
+def test_nodata_compare_with_product_doc(
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+):
+    """A thorough validation should check nodata of measurements against the product"""
+
+    product = dict(
+        name="wrong_product",
+        metadata_type="eo3",
+        measurements=[dict(name="blue", dtype="uint16", nodata=-999)],
+    )
+
+    # When thorough, the dtype and nodata are wrong
+    eo_validator.thorough = True
+    eo_validator.assert_invalid(product, l1_ls8_metadata_path)
+    assert eo_validator.messages == {
+        "different_nodata": "blue nodata: product -999 != dataset None"
+    }
+
+
+def test_measurements_compare_with_nans(
+    eo_validator: ValidateRunner, l1_ls8_dataset: DatasetDoc, l1_ls8_metadata_path: Path
+):
+    """When dataset and product have NaN nodata values, it should handle them correctly"""
+    eo_validator.thorough = True
+    blue_tif = l1_ls8_metadata_path.parent / l1_ls8_dataset.measurements["blue"].path
+
+    _create_dummy_tif(blue_tif, dtype="float32")
+    product = dict(
+        name="nanned_product",
+        metadata_type="eo3",
+        measurements=[dict(name="blue", dtype="float32", nodata=float("NaN"))],
+    )
+
+    # When product is NaN, dataset is None, they don't match
+    eo_validator.assert_invalid(product, l1_ls8_metadata_path)
+    assert eo_validator.messages == {
+        "different_nodata": "blue nodata: product nan != dataset None"
+    }
+
+    # When both are NaN, it should be valid
+    _create_dummy_tif(blue_tif, nodata=float("NaN"))
+    eo_validator.assert_valid(product, l1_ls8_metadata_path)
+
+    # When product is None, dataset is NaN, they no longer match.
+    product["measurements"][0]["nodata"] = None
+    eo_validator.assert_invalid(product, l1_ls8_metadata_path)
+    assert eo_validator.messages == {
+        "different_nodata": "blue nodata: product None != dataset nan"
+    }
+
+
+def _create_dummy_tif(blue_tif, nodata=None, dtype="float32", **opts):
+    with rasterio.open(
+        blue_tif,
+        "w",
+        width=10,
+        height=10,
+        count=1,
+        dtype=dtype,
+        driver="GTiff",
+        nodata=nodata,
+        **opts,
+    ) as ds:
+        ds: DatasetWriter
+        ds.write(np.ones((10, 10), dtype=dtype), 1)
 
 
 def test_missing_measurement_from_product(
