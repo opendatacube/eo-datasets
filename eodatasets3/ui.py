@@ -1,7 +1,7 @@
 import os
 import urllib.parse
-from pathlib import Path
-from typing import Optional
+from pathlib import Path, PurePath
+from typing import Optional, Union
 from urllib.parse import urljoin
 from urllib.parse import urlparse
 
@@ -15,7 +15,7 @@ class PathPath(click.Path):
         return Path(super().convert(value, param, ctx))
 
 
-def uri_resolve(base: str, path: Optional[str]) -> str:
+def uri_resolve(base: Union[str, PurePath], path: Optional[str]) -> str:
     """
     Backport of datacube.utils.uris.uri_resolve()
     """
@@ -24,6 +24,8 @@ def uri_resolve(base: str, path: Optional[str]) -> str:
         if p.is_absolute():
             return p.as_uri()
 
+    if isinstance(base, PurePath):
+        base = base.as_uri()
     return urljoin(base, path)
 
 
@@ -57,3 +59,4 @@ def register_scheme(*schemes):
 
 
 register_scheme("tar")
+register_scheme("s3")

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from pathlib import Path, PurePath
-from typing import Dict, Tuple, Text, IO, Union, Iterable
+from typing import Dict, Tuple, Text, IO, Union, Iterable, Mapping
 from uuid import UUID
 
 import attr
@@ -94,7 +94,7 @@ def _init_yaml() -> YAML:
     return yaml
 
 
-def dump_yaml(output_yaml: Path, *docs: Dict) -> None:
+def dump_yaml(output_yaml: Path, *docs: Mapping) -> None:
     if not output_yaml.name.lower().endswith(".yaml"):
         raise ValueError(
             "YAML filename doesn't end in *.yaml (?). Received {!r}".format(output_yaml)

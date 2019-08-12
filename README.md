@@ -61,10 +61,15 @@ invoke it manually by running `pre-commit run`
      $ eo3-validate --help
     Usage: eo3-validate [OPTIONS] [PATHS]...
     
-      Validate an ODC document
+      Validate ODC dataset documents
+    
+      Paths can be both product and dataset documents, but each product must
+      come before its datasets to be matched against it.
     
     Options:
       -W, --warnings-as-errors  Fail if any warnings are produced
+      --thorough                Attempt to read the data/measurements, and check
+                                their properties match the product
       -q, --quiet               Only print problems, one per line
       --help                    Show this message and exit.
 
