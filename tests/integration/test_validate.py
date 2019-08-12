@@ -206,11 +206,12 @@ def test_crs_as_wkt(eo_validator: ValidateRunner, example_metadata: Dict):
     eo_validator.assert_invalid(example_metadata)
 
 
-def test_against_product_doc(eo_validator: ValidateRunner, l1_ls8_metadata_path: Path):
+def test_valid_with_product_doc(
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+):
     """When a product is specified, it will validate that the measurements match the product"""
 
     # Document is valid on its own.
-    eo_validator.warnings_are_errors = True
     eo_validator.assert_valid(l1_ls8_metadata_path)
 
     # It contains all measurements in the product, so will be valid when not thorough.
@@ -221,16 +222,31 @@ def test_against_product_doc(eo_validator: ValidateRunner, l1_ls8_metadata_path:
     )
     eo_validator.assert_valid(product, l1_ls8_metadata_path)
 
+
+def test_measurements_compare_with_product_doc(
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+):
+    """A thorough validation should check nodata and dtype of measurements"""
+
+    product = dict(
+        name="wrong_product",
+        metadata_type="eo3",
+        measurements=[dict(name="blue", dtype="uint8", nodata=-999)],
+    )
+
     # When thorough, the dtype and nodata are wrong
     eo_validator.thorough = True
-    eo_validator.warnings_are_errors = True
     eo_validator.assert_invalid(product, l1_ls8_metadata_path)
     assert eo_validator.messages == {
         "different_dtype": "dtype mismatch for blue: product has dtype 'uint8', dataset has 'uint16'",
         "different_nodata": "nodata mismatch for blue: product -999 != dataset None",
     }
 
-    # A missing measurement should be identified
+
+def test_missing_measurement_from_product(
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+):
+    """Validator should notice a missing measurement from the product def"""
     product = dict(
         name="wrong_product",
         metadata_type="eo3",
@@ -241,17 +257,22 @@ def test_against_product_doc(eo_validator: ValidateRunner, l1_ls8_metadata_path:
         "missing_measurement": "Product wrong_product expects a measurement 'razzmatazz')"
     }
 
+
+def test_complains_when_no_product(
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+):
+    """When a product is specified, it will validate that the measurements match the product"""
     # Thorough checking should fail when there's no product provided
+    eo_validator.thorough = True
     eo_validator.assert_invalid(l1_ls8_metadata_path, codes=["no_product"])
 
 
 def test_is_product():
+    """Product documents should be correctly identified as products"""
     product = dict(
         name="minimal_product", metadata_type="eo3", measurements=[dict(name="blue")]
     )
     assert validate.is_product(product)
-
-    assert not validate.is_product(dict())
 
 
 def test_dataset_is_not_a_product(example_metadata: Dict):
