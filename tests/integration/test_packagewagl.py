@@ -120,10 +120,10 @@ def test_whole_wagl_package(
 
     # Verify the computed contiguity looks the same. (metadata fields will depend on it)
     [image] = expected_folder.rglob("*_oa_*nbar-contiguity.tif")
-    _assert_image(image, nodata=None, unique_pixel_counts={0: 1978, 1: 4184})
+    _assert_image(image, nodata=255, unique_pixel_counts={0: 1978, 1: 4184})
 
     [image] = expected_folder.rglob("*_oa_*nbart-contiguity.tif")
-    _assert_image(image, nodata=None, unique_pixel_counts={0: 1979, 1: 4183})
+    _assert_image(image, nodata=255, unique_pixel_counts={0: 1979, 1: 4183})
 
     assert_same_as_file(
         {

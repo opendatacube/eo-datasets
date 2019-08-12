@@ -279,6 +279,7 @@ def _create_contiguity(
             f"oa:{product.lower()}_contiguity",
             contiguity,
             geobox,
+            nodata=255,
             overviews=None,
             expand_valid_data=False,
         )
