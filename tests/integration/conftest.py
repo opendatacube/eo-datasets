@@ -44,14 +44,17 @@ def l1_ls8_folder(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def l1_ls8_dataset_path(l1_ls8_folder: Path, l1_ls8_dataset: DatasetDoc) -> Path:
+def l1_ls8_metadata_path(l1_ls8_folder: Path, l1_ls8_dataset: DatasetDoc) -> Path:
+    path = l1_ls8_folder / f"{l1_ls8_dataset.label}.odc-metadata.yaml"
+    serialise.dump_yaml(path, serialise.to_formatted_doc(l1_ls8_dataset))
+    return path
+
+
+@pytest.fixture
+def l1_ls8_dataset_path(l1_ls8_folder: Path, l1_ls8_metadata_path: Path) -> Path:
     """
     A prepared L1 dataset with an EO3 metadata file.
     """
-    serialise.dump_yaml(
-        l1_ls8_folder / "dataset.odc-metadata.yaml",
-        serialise.to_formatted_doc(l1_ls8_dataset),
-    )
     return l1_ls8_folder
 
 
@@ -114,6 +117,9 @@ def example_metadata(
     l1_ls7_tarball_md_expected: Dict,
     l1_ls8_folder_md_expected: Dict,
 ):
+    """
+    Test against arbitrary valid eo3 documents.
+    """
     which = request.param
     if which == "ls5":
         return l1_ls5_tarball_md_expected

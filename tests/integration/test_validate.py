@@ -1,31 +1,114 @@
 import operator
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, Union
+from typing import Dict, Union, Mapping, Sequence, Optional
 
+import pytest
 from click.testing import CliRunner, Result
-
 from eodatasets3 import serialise, validate
 
+# Either a dict or a path to a document
+Doc = Union[Dict, Path]
 
-def test_valid_document_works(tmp_path: Path, example_metadata: Dict):
-    _assert_valid(example_metadata, tmp_path)
+
+class ValidateRunner:
+    """
+    Run the eo3 validator command-line interface and assert the results.
+    """
+
+    def __init__(self, tmp_path: Path) -> None:
+        self.tmp_path = tmp_path
+        self.quiet = False
+        self.warnings_are_errors = False
+        self.record_informational_messages = False
+        self.thorough: bool = False
+
+        self.result: Optional[Result] = None
+
+    def assert_valid(self, *docs: Doc, expect_no_messages=True):
+        __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
+        self.run_validate(docs)
+        if expect_no_messages and self.messages:
+            raise AssertionError(
+                "\n".join(f"{k}: {v}" for k, v in self.messages.items())
+            )
+
+        assert (
+            self.result.exit_code == 0
+        ), f"Expected validation to succeed. Output:\n{self.result.output}"
+
+    def assert_invalid(self, *docs: Doc, codes: Sequence[str] = None):
+        __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
+        self.run_validate(docs)
+        assert (
+            self.result.exit_code != 0
+        ), f"Expected validation to fail.\n{self.result.output}"
+
+        if codes is not None:
+            assert sorted(codes) == sorted(self.messages.keys())
+
+    def run_validate(self, docs: Sequence[Doc]):
+        __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
+
+        args = ()
+
+        if self.quiet:
+            args += ("-q",)
+        if self.warnings_are_errors:
+            args += ("-W",)
+        if self.thorough:
+            args += ("--thorough",)
+
+        for i, doc in enumerate(docs):
+            if isinstance(doc, Mapping):
+                md_path = self.tmp_path / f"doc-{i}.yaml"
+                serialise.dump_yaml(md_path, doc)
+                doc = md_path
+            args += (doc,)
+
+        self.result = CliRunner(mix_stderr=False).invoke(
+            validate.run, [str(a) for a in args], catch_exceptions=False
+        )
+
+    @property
+    def messages(self) -> Dict[str, str]:
+        """Read the messages/warnings for validation tool stdout.
+
+        Returned as a dict of error_code -> human_message
+        """
+
+        def _read_message(line: str):
+            severity, code, *message = line.split("\t")
+            return code, "\t".join(message)
+
+        return dict(
+            _read_message(line)
+            for line in self.result.stdout.split("\n")
+            if line
+            and line.startswith("-")
+            and (self.record_informational_messages or not line.startswith("- I\t"))
+        )
 
 
-def test_missing_field(tmp_path: Path, example_metadata: Dict):
+def test_valid_document_works(eo_validator: ValidateRunner, example_metadata: Dict):
+    eo_validator.assert_valid(example_metadata)
+
+
+def test_missing_field(eo_validator: ValidateRunner, example_metadata: Dict):
+    """when a required field (id) is missing, validation should fail"""
     del example_metadata["id"]
-    messages = _assert_invalid(example_metadata, tmp_path)
-    assert list(messages.keys()) == ["structure"]
-    assert "'id' is a required property" in messages["structure"]
+    eo_validator.assert_invalid(example_metadata, codes=["structure"])
+    assert "'id' is a required property" in eo_validator.messages["structure"]
 
 
-def test_invalid_ls8_schema(tmp_path: Path, example_metadata: Dict):
+def test_invalid_ls8_schema(eo_validator: ValidateRunner, example_metadata: Dict):
+    """When there's no eo3 $schema defined"""
     del example_metadata["$schema"]
-    _assert_invalid_codes(example_metadata, tmp_path, "no_schema")
+    eo_validator.assert_invalid(example_metadata, codes=("no_schema",))
 
 
-def test_allow_optional_geo(tmp_path: Path, example_metadata: Dict):
-    # A doc can omit all geo fields and be valid.
+def test_allow_optional_geo(eo_validator: ValidateRunner, example_metadata: Dict):
+    """A doc can omit all geo fields and be valid."""
     del example_metadata["crs"]
     del example_metadata["geometry"]
 
@@ -34,36 +117,35 @@ def test_allow_optional_geo(tmp_path: Path, example_metadata: Dict):
             del m["grid"]
 
     example_metadata["grids"] = {}
-    _assert_valid(example_metadata, tmp_path)
+    eo_validator.assert_valid(example_metadata)
 
     del example_metadata["grids"]
-    _assert_valid(example_metadata, tmp_path)
+    eo_validator.assert_valid(example_metadata)
 
 
-def test_missing_geo_fields(tmp_path: Path, example_metadata: Dict):
+def test_missing_geo_fields(eo_validator: ValidateRunner, example_metadata: Dict):
     """ If you have one gis field, you should have all of them"""
     del example_metadata["crs"]
-    _assert_invalid_codes(example_metadata, tmp_path, "incomplete_crs")
+    eo_validator.assert_invalid(example_metadata, codes=["incomplete_crs"])
 
 
-def test_warn_bad_formatting(tmp_path: Path, example_metadata: Dict):
+def test_warn_bad_formatting(eo_validator: ValidateRunner, example_metadata: Dict):
     """ A warning if fields aren't formatted in standard manner."""
     example_metadata["properties"]["eo:platform"] = example_metadata["properties"][
         "eo:platform"
     ].upper()
-    _assert_invalid_codes(
-        example_metadata, tmp_path, "property_formatting", warnings_are_errors=True
-    )
+    eo_validator.warnings_are_errors = True
+    eo_validator.assert_invalid(example_metadata, codes=["property_formatting"])
 
 
-def test_missing_grid_def(tmp_path: Path, example_metadata: Dict):
+def test_missing_grid_def(eo_validator: ValidateRunner, example_metadata: Dict):
     """A Measurement refers to a grid that doesn't exist"""
     a_measurement, *_ = list(example_metadata["measurements"])
     example_metadata["measurements"][a_measurement]["grid"] = "unknown_grid"
-    _assert_invalid_codes(example_metadata, tmp_path, "invalid_grid_ref")
+    eo_validator.assert_invalid(example_metadata, codes=["invalid_grid_ref"])
 
 
-def test_invalid_shape(tmp_path: Path, example_metadata: Dict):
+def test_invalid_shape(eo_validator: ValidateRunner, example_metadata: Dict):
     """the geometry must be a valid shape"""
 
     # Points are in an invalid order.
@@ -80,11 +162,11 @@ def test_invalid_shape(tmp_path: Path, example_metadata: Dict):
         "type": "Polygon",
     }
 
-    messages = _assert_invalid_codes(example_metadata, tmp_path, "invalid_geometry")
-    assert "not a valid shape" in messages["invalid_geometry"]
+    eo_validator.assert_invalid(example_metadata)
+    assert "not a valid shape" in eo_validator.messages["invalid_geometry"]
 
 
-def test_crs_as_wkt(tmp_path: Path, example_metadata: Dict):
+def test_crs_as_wkt(eo_validator: ValidateRunner, example_metadata: Dict):
     """A CRS should be in epsg form if an EPSG exists, not WKT"""
     example_metadata["crs"] = dedent(
         """PROJCS["WGS 84 / UTM zone 55N",
@@ -113,73 +195,74 @@ def test_crs_as_wkt(tmp_path: Path, example_metadata: Dict):
     )
 
     # It's valid, but a warning is produced.
-    warnings = _assert_valid(example_metadata, tmp_path, expect_no_warnings=False)
-    assert "non_epsg" in warnings
+    eo_validator.assert_valid(example_metadata, expect_no_messages=False)
+
+    assert "non_epsg" in eo_validator.messages
     # Suggests an alternative
-    assert "change CRS to 'epsg:32655'" in warnings["non_epsg"]
+    assert "change CRS to 'epsg:32655'" in eo_validator.messages["non_epsg"]
 
     # .. and it should fail when warnings are treated as errors.
-    _assert_invalid(example_metadata, tmp_path, warnings_are_errors=True)
+    eo_validator.warnings_are_errors = True
+    eo_validator.assert_invalid(example_metadata)
 
 
-def _assert_valid(example_metadata, tmp_path, expect_no_warnings=True):
-    __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
-    md_path = tmp_path / "test_dataset.yaml"
-    serialise.dump_yaml(md_path, example_metadata)
-    res = run_validate("-q", md_path, expect_success=True)
-    messages = _read_messages(res)
-    if expect_no_warnings:
-        assert messages == {}
-    return messages
+def test_against_product_doc(eo_validator: ValidateRunner, l1_ls8_metadata_path: Path):
+    """When a product is specified, it will validate that the measurements match the product"""
 
+    # Document is valid on its own.
+    eo_validator.warnings_are_errors = True
+    eo_validator.assert_valid(l1_ls8_metadata_path)
 
-def _assert_invalid_codes(
-    doc: Dict, tmp_path: Path, *expected_error_codes, warnings_are_errors=False
-):
-    messages = _assert_invalid(doc, tmp_path, warnings_are_errors=warnings_are_errors)
-    assert sorted(expected_error_codes) == sorted(messages.keys())
-    return messages
-
-
-def _assert_invalid(doc: Dict, tmp_path: Path, warnings_are_errors=False):
-    __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
-    md_path = tmp_path / "test_dataset.yaml"
-    serialise.dump_yaml(md_path, doc)
-
-    args = ("-q",)
-    if warnings_are_errors:
-        args += ("-W",)
-
-    res = run_validate(*args, md_path, expect_success=False)
-    assert res.exit_code != 0, "Expected validation to fail"
-    assert (
-        res.exit_code == 1
-    ), f"Expected error code to be 1 for 1 document failure.\n{res.output}"
-
-    return _read_messages(res)
-
-
-def _read_messages(res) -> Dict[str, str]:
-    """Read the messages/warnings for validation tool stdout.
-
-    Returned as a dict of error_code -> human_message
-    """
-
-    def _read_message(line: str):
-        severity, code, *message = line.split("\t")
-        return code, "\t".join(message)
-
-    return dict(_read_message(line) for line in res.stdout.split("\n") if line)
-
-
-def run_validate(*args: Union[str, Path], expect_success=True) -> Result:
-    """eod-validate as a command-line command"""
-    __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
-
-    res: Result = CliRunner(mix_stderr=False).invoke(
-        validate.run, [str(a) for a in args], catch_exceptions=False
+    # It contains all measurements in the product, so will be valid when not thorough.
+    product = dict(
+        name="wrong_product",
+        metadata_type="eo3",
+        measurements=[dict(name="blue", dtype="uint8", nodata=-999)],
     )
-    if expect_success:
-        assert res.exit_code == 0, res.output
+    eo_validator.assert_valid(product, l1_ls8_metadata_path)
 
-    return res
+    # When thorough, the dtype and nodata are wrong
+    eo_validator.thorough = True
+    eo_validator.warnings_are_errors = True
+    eo_validator.assert_invalid(product, l1_ls8_metadata_path)
+    assert eo_validator.messages == {
+        "different_dtype": "dtype mismatch for blue: product has dtype 'uint8', dataset has 'uint16'",
+        "different_nodata": "nodata mismatch for blue: product -999 != dataset None",
+    }
+
+    # A missing measurement should be identified
+    product = dict(
+        name="wrong_product",
+        metadata_type="eo3",
+        measurements=[dict(name="razzmatazz", dtype="uint8", nodata=-999)],
+    )
+    eo_validator.assert_invalid(product, l1_ls8_metadata_path)
+    assert eo_validator.messages == {
+        "missing_measurement": "Product wrong_product expects a measurement 'razzmatazz')"
+    }
+
+    # Thorough checking should fail when there's no product provided
+    eo_validator.assert_invalid(l1_ls8_metadata_path, codes=["no_product"])
+
+
+def test_is_product():
+    product = dict(
+        name="minimal_product", metadata_type="eo3", measurements=[dict(name="blue")]
+    )
+    assert validate.is_product(product)
+
+    assert not validate.is_product(dict())
+
+
+def test_dataset_is_not_a_product(example_metadata: Dict):
+    """
+    Datasets should not be identified as products
+
+    (checks all example metadata files)
+    """
+    assert not validate.is_product(example_metadata)
+
+
+@pytest.fixture
+def eo_validator(tmp_path) -> ValidateRunner:
+    return ValidateRunner(tmp_path)

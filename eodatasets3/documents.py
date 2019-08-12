@@ -6,9 +6,11 @@ from __future__ import absolute_import
 
 import gzip
 import json
-from pathlib import Path
-from typing import Generator, Dict, Tuple
+from copy import deepcopy
+from pathlib import Path, PurePath
+from typing import Generator, Dict, Tuple, Optional
 
+from boltons import iterutils
 from eodatasets3 import serialise
 
 _DOCUMENT_EXTENSIONS = (".yaml", ".yml", ".json")
@@ -160,3 +162,128 @@ def read_documents(*paths: Path) -> Generator[Tuple[Path, Dict], None, None]:
                         path.name, _ALL_SUPPORTED_EXTENSIONS
                     )
                 )
+
+
+def docpath_set(doc, path, value):
+    """
+    Set a value in a document using a path (sequence of keys).
+
+    (It's designed to mirror `boltons.iterutils.get_path()` and related methods)
+
+    >>> d = {'a': 1}
+    >>> docpath_set(d, ['a'], 2)
+    >>> d
+    {'a': 2}
+    >>> d = {'a':{'b':{'c': 1}}}
+    >>> docpath_set(d, ['a', 'b', 'c'], 2)
+    >>> d
+    {'a': {'b': {'c': 2}}}
+    >>> d = {}
+    >>> docpath_set(d, ['a'], 2)
+    >>> d
+    {'a': 2}
+    >>> d = {}
+    >>> docpath_set(d, ['a', 'b'], 2)
+    Traceback (most recent call last):
+    ...
+    KeyError: 'a'
+    >>> d
+    {}
+    >>> docpath_set(d, [], 2)
+    Traceback (most recent call last):
+    ...
+    ValueError: Cannot set a value to an empty path
+    """
+    if not path:
+        raise ValueError("Cannot set a value to an empty path")
+
+    d = doc
+    for part in path[:-1]:
+        d = d[part]
+
+    d[path[-1]] = value
+
+
+def make_paths_relative(
+    doc: Dict, base_directory: PurePath, allow_paths_outside_base=False
+):
+    """
+    Find all pathlib.Path values in a document structure and make them relative to the given path.
+
+    >>> base = PurePath('/tmp/basket')
+    >>> doc = {'id': 1, 'fruits': [{'apple': PurePath('/tmp/basket/fruits/apple.txt')}]}
+    >>> make_paths_relative(doc, base)
+    >>> doc
+    {'id': 1, 'fruits': [{'apple': 'fruits/apple.txt'}]}
+    >>> # No change if repeated. (relative paths still relative)
+    >>> previous = deepcopy(doc)
+    >>> make_paths_relative(doc, base)
+    >>> doc == previous
+    True
+    >>> # Relative pathlibs also become relative strings for consistency.
+    >>> doc = {'villains': PurePath('the-baron.txt')}
+    >>> make_paths_relative(doc, base)
+    >>> doc
+    {'villains': 'the-baron.txt'}
+    """
+    for doc_path, value in iterutils.research(
+        doc, lambda p, k, v: isinstance(v, PurePath)
+    ):
+        value: Path
+
+        if value.is_absolute():
+            if base_directory not in value.parents:
+                if not allow_paths_outside_base:
+                    raise ValueError(
+                        f"Path {value.as_posix()!r} is outside path {base_directory.as_posix()!r} "
+                        f"(allow_paths_outside_base={allow_paths_outside_base})"
+                    )
+                continue
+            value = value.relative_to(base_directory)
+
+        docpath_set(doc, doc_path, str(value))
+
+
+def resolve_absolute_offset(
+    dataset_path: Path, offset: str, target_path: Optional[Path] = None
+) -> str:
+    """
+    Expand a filename (offset) relative to the dataset.
+
+    >>> external_metadata_loc = Path('/tmp/target-metadata.yaml')
+    >>> resolve_absolute_offset(
+    ...     Path('/tmp/great_test_dataset'),
+    ...     'band/my_great_band.jpg',
+    ...     external_metadata_loc,
+    ... )
+    '/tmp/great_test_dataset/band/my_great_band.jpg'
+    >>> resolve_absolute_offset(
+    ...     Path('/tmp/great_test_dataset.tar.gz'),
+    ...     'band/my_great_band.jpg',
+    ...     external_metadata_loc,
+    ... )
+    'tar:/tmp/great_test_dataset.tar.gz!band/my_great_band.jpg'
+    >>> resolve_absolute_offset(
+    ...     Path('/tmp/great_test_dataset.tar'),
+    ...     'band/my_great_band.jpg',
+    ... )
+    'tar:/tmp/great_test_dataset.tar!band/my_great_band.jpg'
+    >>> resolve_absolute_offset(
+    ...     Path('/tmp/MY_DATASET'),
+    ...     'band/my_great_band.jpg',
+    ...     Path('/tmp/MY_DATASET/ga-metadata.yaml'),
+    ... )
+    'band/my_great_band.jpg'
+    """
+    dataset_path = dataset_path.absolute()
+
+    if target_path:
+        # If metadata is stored inside the dataset, keep paths relative.
+        if str(target_path.absolute()).startswith(str(dataset_path)):
+            return offset
+    # Bands are inside a tar file
+
+    if ".tar" in dataset_path.suffixes:
+        return "tar:{}!{}".format(dataset_path, offset)
+    else:
+        return str(dataset_path / offset)

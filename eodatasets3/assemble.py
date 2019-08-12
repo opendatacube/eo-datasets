@@ -9,19 +9,13 @@ import warnings
 from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
-from pathlib import Path, PurePath
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Generator, Any, Union
 
+import eodatasets3
 import numpy
 import rasterio
-from boltons import iterutils
-from rasterio import DatasetReader
-from rasterio.crs import CRS
-from rasterio.enums import Resampling
-from xarray import Dataset
-
-import eodatasets3
-from eodatasets3 import serialise, validate, images
+from eodatasets3 import serialise, validate, images, documents
 from eodatasets3.documents import find_and_read_documents
 from eodatasets3.images import FileWrite, GridSpec, MeasurementRecord
 from eodatasets3.model import (
@@ -30,11 +24,14 @@ from eodatasets3.model import (
     StacPropertyView,
     ComplicatedNamingConventions,
     AccessoryDoc,
-    resolve_absolute_offset,
 )
 from eodatasets3.properties import EoFields
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
+from rasterio import DatasetReader
+from rasterio.crs import CRS
+from rasterio.enums import Resampling
+from xarray import Dataset
 
 
 class IfExists(Enum):
@@ -45,86 +42,6 @@ class IfExists(Enum):
 
 class AssemblyError(Exception):
     pass
-
-
-def docpath_set(doc, path, value):
-    """
-    Set a value in a document using a path (sequence of keys).
-
-    (It's designed to match `boltons.iterutils.get_path()` and related methods)
-
-    >>> d = {'a': 1}
-    >>> docpath_set(d, ['a'], 2)
-    >>> d
-    {'a': 2}
-    >>> d = {'a':{'b':{'c': 1}}}
-    >>> docpath_set(d, ['a', 'b', 'c'], 2)
-    >>> d
-    {'a': {'b': {'c': 2}}}
-    >>> d = {}
-    >>> docpath_set(d, ['a'], 2)
-    >>> d
-    {'a': 2}
-    >>> d = {}
-    >>> docpath_set(d, ['a', 'b'], 2)
-    Traceback (most recent call last):
-    ...
-    KeyError: 'a'
-    >>> d
-    {}
-    >>> docpath_set(d, [], 2)
-    Traceback (most recent call last):
-    ...
-    ValueError: Cannot set a value to an empty path
-    """
-    if not path:
-        raise ValueError("Cannot set a value to an empty path")
-
-    d = doc
-    for part in path[:-1]:
-        d = d[part]
-
-    d[path[-1]] = value
-
-
-def make_paths_relative(
-    doc: Dict, base_directory: PurePath, allow_paths_outside_base=False
-):
-    """
-    Find all pathlib.Path values in a document structure and make them relative to the given path.
-
-    >>> base = PurePath('/tmp/basket')
-    >>> doc = {'id': 1, 'fruits': [{'apple': PurePath('/tmp/basket/fruits/apple.txt')}]}
-    >>> make_paths_relative(doc, base)
-    >>> doc
-    {'id': 1, 'fruits': [{'apple': 'fruits/apple.txt'}]}
-    >>> # No change if repeated. (relative paths still relative)
-    >>> previous = deepcopy(doc)
-    >>> make_paths_relative(doc, base)
-    >>> doc == previous
-    True
-    >>> # Relative pathlibs also become relative strings for consistency.
-    >>> doc = {'villains': PurePath('the-baron.txt')}
-    >>> make_paths_relative(doc, base)
-    >>> doc
-    {'villains': 'the-baron.txt'}
-    """
-    for doc_path, value in iterutils.research(
-        doc, lambda p, k, v: isinstance(v, PurePath)
-    ):
-        value: Path
-
-        if value.is_absolute():
-            if base_directory not in value.parents:
-                if not allow_paths_outside_base:
-                    raise ValueError(
-                        f"Path {value.as_posix()!r} is outside path {base_directory.as_posix()!r} "
-                        f"(allow_paths_outside_base={allow_paths_outside_base})"
-                    )
-                continue
-            value = value.relative_to(base_directory)
-
-        docpath_set(doc, doc_path, str(value))
 
 
 class IncompleteDatasetError(Exception):
@@ -170,7 +87,7 @@ class DatasetAssembler(EoFields):
         output_folder: Optional[Path] = None,
         metadata_file: Optional[Path] = None,
         paths_relative_to: Optional[Path] = None,
-        # Optionally give a dataset id.
+        # Optionally give a fixed dataset id.
         dataset_id: Optional[uuid.UUID] = None,
         # By default, we complain if the output already exists.
         if_exists=IfExists.ThrowError,
@@ -225,7 +142,10 @@ class DatasetAssembler(EoFields):
         self._finished_init_ = True
 
     @property
-    def _work_path(self):
+    def _work_path(self) -> Path:
+        """
+        The temporary folder path of the partially-built dataset.
+        """
         if not self._initialised_work_path:
             if not self._base_output_folder:
                 raise ValueError(
@@ -274,12 +194,12 @@ class DatasetAssembler(EoFields):
         """
         return self.names.destination_folder(self._base_output_folder)
 
-    def __enter__(self):
+    def __enter__(self) -> "DatasetAssembler":
         return self
 
     def __setattr__(self, name: str, value: Any) -> None:
         """
-        Prevent against users accidentally setting new properties on the assembler (it has happened multiple times).
+        Prevent the accident of setting new properties on the assembler (it has happened multiple times).
         """
         if (
             name != "label"
@@ -293,12 +213,12 @@ class DatasetAssembler(EoFields):
         super().__setattr__(name, value)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # The user has already called finish() if everything went right.
         # Clean up.
         self.close()
 
     def cancel(self):
-        """Cancel the package, cleaning up temporary files.
+        """
+        Cancel the package, cleaning up temporary files.
 
         This works like `close()`, but is intentional, so no warning will
         be raised for forgetting to complete the package first.
@@ -327,8 +247,7 @@ class DatasetAssembler(EoFields):
         """
         Record a source dataset using the path to its metadata document.
 
-        Parameters are the same as self.add_source_dataset()
-
+        See :func:`DatasetAssembler.foo` for parameters
         """
         for _, doc in find_and_read_documents(*paths):
             # Newer documents declare a schema.
@@ -436,7 +355,7 @@ class DatasetAssembler(EoFields):
             )
 
     def _path(self, path):
-        return resolve_absolute_offset(self._base_location, path)
+        return documents.resolve_absolute_offset(self._base_location, path)
 
     def write_measurement_rio(
         self,
@@ -854,7 +773,7 @@ class DatasetAssembler(EoFields):
         self._accessories[name] = path
 
     def _write_yaml(self, doc, path, allow_external_paths=False):
-        make_paths_relative(
+        documents.make_paths_relative(
             doc, path.parent, allow_paths_outside_base=allow_external_paths
         )
         serialise.dump_yaml(path, doc)

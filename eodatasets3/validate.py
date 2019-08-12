@@ -1,22 +1,27 @@
+"""
+Validate ODC dataset documents
+"""
 import collections
 import enum
 import math
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Counter, Dict, Generator
+from typing import List, Counter, Dict, Generator, Optional, Union, Tuple
 
 import attr
 import click
+import rasterio
+from boltons.iterutils import get_path
 from click import style, echo, secho
+from eodatasets3 import serialise, model
+from eodatasets3.model import DatasetDoc
+from eodatasets3.ui import PathPath, is_absolute, uri_resolve
+from eodatasets3.utils import default_utc
+from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.errors import CRSError
 from shapely.validation import explain_validity
-
-from eodatasets3 import serialise, model
-from eodatasets3.model import DatasetDoc
-from eodatasets3.ui import PathPath, is_absolute
-from eodatasets3.utils import default_utc
 
 
 class Level(enum.Enum):
@@ -52,7 +57,13 @@ def _error(code: str, reason: str, hint: str = None):
 
 
 def validate(
-    doc: Dict, thorough: bool = False
+    doc: Dict,
+    # Optionally check that the dataset mathces this product definition.
+    product_definition: Optional[Dict] = None,
+    # A thorough validation will try to open the data itself.
+    thorough: bool = False,
+    # Dataset location to use, if not the metadata path.
+    readable_location: Union[str, Path] = None,
 ) -> Generator[ValidationMessage, None, None]:
     schema = doc.get("$schema")
     if schema is None:
@@ -109,11 +120,167 @@ def validate(
                     f"measurement {name!r} has an absolute path: {measurement.path!r}",
                 )
 
-            if thorough:
-                # Load files, check dimensions etc are correct.
-                pass
-
     yield from _validate_stac_properties(dataset)
+
+    required_measurements: Dict[str, ExpectedMeasurement] = {}
+    if product_definition is not None:
+        required_measurements.update(
+            {
+                m.name: m
+                for m in map(
+                    ExpectedMeasurement.from_definition,
+                    product_definition["measurements"],
+                )
+            }
+        )
+
+        product_name = product_definition.get("name")
+        if product_name != dataset.product.name:
+            # This is only informational as it's possible products may be indexed with finer-grained
+            # categories than the original datasets: eg. a separate "nrt" product, or test product.
+            yield _info(
+                "product_mismatch",
+                f"Dataset product name {dataset.product.name!r} "
+                f"does not match the given product ({product_name!r}",
+            )
+
+        for name in required_measurements:
+            if name not in dataset.measurements.keys():
+                yield _error(
+                    "missing_measurement",
+                    f"Product {product_name} expects a measurement {name!r})",
+                )
+
+    # If we have a location:
+    # For each measurement, try to load it.
+    # If loadable:
+    if thorough:
+        for name, measurement in dataset.measurements.items():
+            full_path = uri_resolve(readable_location, measurement.path)
+            expected_measurement = required_measurements.get(name)
+
+            band = measurement.band or 1
+            with rasterio.open(full_path) as ds:
+                ds: DatasetReader
+
+                if band not in ds.indexes:
+                    yield _error(
+                        "incorrect_band",
+                        f"Measurement {name!r} file contains no rio index {band!r}.",
+                        hint=f"contains indexes {ds.indexes!r}",
+                    )
+                    continue
+
+                if not expected_measurement:
+                    # The measurement is not in the product definition
+                    #
+                    # This is only informational because a product doesn't have to define all
+                    # measurements that the datasets contain.
+                    #
+                    # This is historically because dataset documents reflect the measurements that
+                    # are stored on disk, which can differ. But products define the set of measurments
+                    # that are mandatory in every dataset.
+                    #
+                    # (datasets differ when, for example, sensors go offline, or when there's on-disk
+                    #  measurements like panchromatic that GA doesn't want in their product definitions)
+                    yield _info(
+                        "unspecified_measurement",
+                        f"Measurement {name} is not in the product",
+                    )
+                else:
+                    expected_dtype = expected_measurement.dtype
+                    band_dtype = ds.dtypes[band - 1]
+                    # TODO: NaN handling
+                    if expected_dtype != band_dtype:
+                        yield _error(
+                            "different_dtype",
+                            f"dtype mismatch for {name}: "
+                            f"product has dtype {expected_dtype!r}, dataset has {band_dtype!r}",
+                        )
+
+                    # TODO: the nodata can also be a fill value, as mentioned by Kirill.
+                    if expected_measurement.nodata != ds.nodatavals[band - 1]:
+                        yield _error(
+                            "different_nodata",
+                            f"nodata mismatch for {name}: "
+                            f"product {expected_measurement.nodata!r} != dataset {ds.nodatavals[band - 1]!r}",
+                        )
+
+
+# - product definition checks: nodata, dtype.
+# - grid matches?
+
+
+@attr.s(auto_attribs=True)
+class ExpectedMeasurement:
+    name: str
+    dtype: str
+    nodata: int
+
+    @classmethod
+    def from_definition(cls, doc: Dict):
+        return ExpectedMeasurement(doc["name"], doc.get("dtype"), doc.get("nodata"))
+
+
+def validate_paths(
+    paths: List[Path], thorough: bool = False, strict=False
+) -> Generator[Tuple[Path, List[ValidationMessage]], None, None]:
+    """Validate the list of paths. Product documents can be specified before their datasets."""
+    products: Dict[str, Dict] = {}
+
+    for path in paths:
+        # Load yaml. If product, add to products.
+        # Otherwise validate.
+        doc = serialise.load_yaml(path)
+
+        if is_product(doc):
+            products[doc["name"]] = doc
+            continue
+        messages = []
+
+        # TODO: follow ODC's match rules?
+        product = None
+        product_name = get_path(doc, ("product", "name"), default=None)
+
+        if products:
+            if len(products) == 1:
+                [product] = products.values()
+            elif product_name is not None:
+                product = products.get(product_name)
+
+            if product is None:
+                messages.append(
+                    _warning(
+                        "unknown_product",
+                        f"Cannot match dataset to product",
+                        hint=f"Nothing matches {product_name!r}"
+                        if product_name
+                        else "No product name in dataset (TODO: field matching)",
+                    )
+                )
+        else:
+            messages.append(
+                ValidationMessage(
+                    Level.error if thorough else Level.info,
+                    "no_product",
+                    f"No product provided: validating dataset information alone",
+                )
+            )
+
+        messages.extend(
+            validate(
+                doc,
+                product_definition=product,
+                readable_location=path,
+                thorough=thorough,
+            )
+        )
+        yield path, messages
+
+
+def is_product(doc: Dict) -> bool:
+    """Is this a product document?"""
+    return "metadata_type" in doc
 
 
 def _validate_stac_properties(dataset: DatasetDoc):
@@ -223,7 +390,14 @@ def _has_some_geo(dataset):
     return dataset.geometry is not None or dataset.grids or dataset.crs
 
 
-@click.command(help="Validate an ODC document")
+@click.command(
+    help=__doc__
+    + """
+Paths can be both product and dataset
+documents, but each product must come before
+its datasets to be matched against it.
+"""
+)
 @click.argument("paths", nargs=-1, type=PathPath(exists=True, readable=True))
 @click.option(
     "--warnings-as-errors",
@@ -232,46 +406,54 @@ def _has_some_geo(dataset):
     is_flag=True,
     help="Fail if any warnings are produced",
 )
+@click.option(
+    "--thorough",
+    is_flag=True,
+    help="Attempt to read the data/measurements, and check their properties match",
+)
 @click.option("-q", "--quiet", is_flag=True, help="Only print problems, one per line")
-def run(paths: List[Path], strict_warnings, quiet):
+def run(paths: List[Path], strict_warnings, quiet, thorough: bool):
     validation_counts: Counter[Level] = collections.Counter()
 
     s = {Level.info: {}, Level.warning: dict(bold=True), Level.error: dict(fg="red")}
-    show_document_name = len(paths) > 1
-    for path in paths:
-        doc = serialise.load_yaml(path)
-        for message in validate(doc):
+    for path, messages in validate_paths(paths, thorough=thorough):
+        if quiet:
+            messages = [m for m in messages if m.level != Level.info]
+
+        if not messages:
+            if not quiet:
+                secho(f"{path.stem}: {style('✓', fg='green')}")
+            continue
+
+        secho(path.stem)
+        for message in messages:
             validation_counts[message.level] += 1
-            if message.level == Level.info and quiet:
-                continue
 
             displayable_code = style(f"{message.code}", **s[message.level])
-            context = f"{path.stem}\t" if show_document_name else ""
-
-            hint = ""
-            if message.hint:
-                hint = f' ({style("Hint", fg="green")}: {message.hint})'
             echo(
-                f"{context}{message.level.name[0].upper()}\t{displayable_code}\t{message.reason}{hint}"
+                f"- {message.level.name[0].upper()}\t{displayable_code}\t{message.reason}"
             )
+            if message.hint:
+                echo(f'\t({style("Hint", fg="green")}: {message.hint})')
 
     error_count = validation_counts.get(Level.error) or 0
     if strict_warnings:
-        error_count += validation_counts.get(Level.warning)
+        error_count += validation_counts.get(Level.warning) or 0
 
     if not quiet:
         result = (
             style("failure", fg="red") if error_count > 0 else style("ok", fg="green")
         )
-        secho(f"\n{result}: ", nl=False)
+        secho(f"\n{result}: ", nl=False, err=True)
         if validation_counts:
             echo(
                 ", ".join(
                     f"{v} {k.name}{'s' if v > 1 else ''}"
                     for k, v in validation_counts.items()
-                )
+                ),
+                err=True,
             )
         else:
-            secho("All good", fg="green")
+            secho("All good", fg="green", err=True)
 
     sys.exit(error_count)
