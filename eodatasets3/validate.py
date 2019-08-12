@@ -194,16 +194,20 @@ def validate(
                     if expected_dtype != band_dtype:
                         yield _error(
                             "different_dtype",
-                            f"dtype mismatch for {name}: "
-                            f"product has dtype {expected_dtype!r}, dataset has {band_dtype!r}",
+                            f"{name} dtype: "
+                            f"product {expected_dtype!r} != dataset {band_dtype!r}",
                         )
 
                     # TODO: the nodata can also be a fill value, as mentioned by Kirill.
-                    if expected_measurement.nodata != ds.nodatavals[band - 1]:
+                    expected_nodata = expected_measurement.nodata
+                    ds_nodata = ds.nodatavals[band - 1]
+                    if expected_nodata != ds_nodata and not (
+                        _is_nan(expected_nodata) and _is_nan(ds_nodata)
+                    ):
                         yield _error(
                             "different_nodata",
-                            f"nodata mismatch for {name}: "
-                            f"product {expected_measurement.nodata!r} != dataset {ds.nodatavals[band - 1]!r}",
+                            f"{name} nodata: "
+                            f"product {expected_nodata !r} != dataset {ds_nodata !r}",
                         )
 
 
