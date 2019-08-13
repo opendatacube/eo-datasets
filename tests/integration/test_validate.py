@@ -334,6 +334,7 @@ def test_complains_when_no_product(
     """When a product is specified, it will validate that the measurements match the product"""
     # Thorough checking should fail when there's no product provided
     eo_validator.thorough = True
+    eo_validator.record_informational_messages = True
     eo_validator.assert_invalid(l1_ls8_metadata_path, codes=["no_product"])
 
 
