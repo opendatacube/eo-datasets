@@ -78,7 +78,9 @@ class ValidateRunner:
     def messages(self) -> Dict[str, str]:
         """Read the messages/warnings for validation tool stdout.
 
-        Returned as a dict of error_code -> human_message
+        Returned as a dict of error_code -> human_message.
+
+        (Note: this will swallow duplicates when the same error code is output multiple times.)
         """
 
         def _read_message(line: str):
@@ -318,13 +320,50 @@ def test_missing_measurement_from_product(
 ):
     """Validator should notice a missing measurement from the product def"""
     product = dict(
-        name="wrong_product",
+        name="no_measurement",
         metadata_type="eo3",
-        measurements=[dict(name="razzmatazz", dtype="uint8", nodata=-999)],
+        measurements=[dict(name="razzmatazz", dtype="int32", nodata=-999)],
     )
     eo_validator.assert_invalid(product, l1_ls8_metadata_path)
     assert eo_validator.messages == {
         "missing_measurement": "Product wrong_product expects a measurement 'razzmatazz')"
+    }
+
+
+def test_complains_about_measurement_lists(
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+):
+    """Complain when product measurements are a dict.
+
+    datasets have measurements as a dict, products have them as a List, so this is a common error.
+    """
+
+    product = dict(name="bad_nodata", metadata_type="eo3", measurements={"a": {}})
+    eo_validator.assert_invalid(product)
+    assert eo_validator.messages == {
+        "measurements_list": "Product measurements should be a list/sequence (Found a 'CommentedMap')."
+    }
+
+
+def test_complains_about_impossible_nodata_vals(
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+):
+    """Complain if a product nodata val cannot be represented in the dtype"""
+    product = dict(
+        name="bad_nodata",
+        metadata_type="eo3",
+        measurements=[
+            dict(
+                name="paradox",
+                dtype="uint8",
+                # Impossible for a uint6
+                nodata=-999,
+            )
+        ],
+    )
+    eo_validator.assert_invalid(product)
+    assert eo_validator.messages == {
+        "unsuitable_nodata": "Measurement 'paradox' nodata -999 does not fit a uint8"
     }
 
 
