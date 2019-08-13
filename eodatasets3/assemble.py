@@ -625,7 +625,7 @@ class DatasetAssembler(EoFields):
         )
 
         if validate_correctness:
-            for m in validate.validate(doc):
+            for m in validate.validate_dataset(doc):
                 if m.level in (Level.info, Level.warning):
                     warnings.warn(DatasetCompletenessWarning(m))
                 elif m.level == Level.error:

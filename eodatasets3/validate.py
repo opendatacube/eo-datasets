@@ -7,10 +7,11 @@ import math
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Counter, Dict, Generator, Optional, Union, Tuple
+from typing import List, Counter, Dict, Generator, Optional, Union, Tuple, Sequence
 
 import attr
 import click
+import numpy as np
 import rasterio
 from boltons.iterutils import get_path
 from click import style, echo, secho
@@ -56,7 +57,10 @@ def _error(code: str, reason: str, hint: str = None):
     return ValidationMessage(Level.error, code, reason, hint=hint)
 
 
-def validate(
+ValidationMessages = Generator[ValidationMessage, None, None]
+
+
+def validate_dataset(
     doc: Dict,
     # Optionally check that the dataset mathces this product definition.
     product_definition: Optional[Dict] = None,
@@ -64,7 +68,7 @@ def validate(
     thorough: bool = False,
     # Dataset location to use, if not the metadata path.
     readable_location: Union[str, Path] = None,
-) -> Generator[ValidationMessage, None, None]:
+) -> ValidationMessages:
     schema = doc.get("$schema")
     if schema is None:
         yield _error(
@@ -212,8 +216,58 @@ def validate(
                         )
 
 
-# - product definition checks: nodata, dtype.
-# - grid matches?
+def validate_product(doc: Dict,) -> ValidationMessages:
+    """
+    Check for common product mistakes
+
+    # TODO: validate against a schema. ODC core has one and does this already, but we don't currently depend on it.
+    """
+    # We'll focus on the parts ODC doesn't yet do.
+
+    measurements = doc.get("measurements")
+    if not isinstance(measurements, Sequence):
+        yield _error(
+            "measurements_list",
+            f"Product measurements should be a list/sequence "
+            f"(Found a {type(measurements).__name__!r}).",
+        )
+    else:
+        for measurement in measurements:
+            name = measurement.get("name")
+            dtype = measurement.get("dtype")
+            nodata = measurement.get("nodata")
+            if not numpy_value_fits_dtype(nodata, dtype):
+                yield _error(
+                    "unsuitable_nodata",
+                    f"Measurement {name!r} nodata {nodata} does not fit a {dtype}",
+                )
+
+
+def numpy_value_fits_dtype(value, dtype):
+    """
+    Can the value be exactly represented by the given numpy dtype?
+
+    >>> numpy_value_fits_dtype(3, 'uint8')
+    True
+    >>> numpy_value_fits_dtype(3, np.dtype('uint8'))
+    True
+    >>> numpy_value_fits_dtype(-3, 'uint8')
+    False
+    >>> numpy_value_fits_dtype(3.5, 'float32')
+    True
+    >>> numpy_value_fits_dtype(3.5, 'int16')
+    False
+    >>> numpy_value_fits_dtype(float('NaN'), 'float32')
+    True
+    >>> numpy_value_fits_dtype(float('NaN'), 'int32')
+    False
+    """
+    dtype = np.dtype(dtype)
+
+    if _is_nan(value):
+        return np.issubdtype(dtype, np.floating)
+    else:
+        return np.all(np.array([value], dtype=dtype) == [value])
 
 
 @attr.s(auto_attribs=True)
@@ -237,11 +291,14 @@ def validate_paths(
         # Load yaml. If product, add to products.
         # Otherwise validate.
         doc = serialise.load_yaml(path)
+        messages = []
 
         if is_product(doc):
+            messages.extend(validate_product(doc))
             products[doc["name"]] = doc
+            if messages:
+                yield path, messages
             continue
-        messages = []
 
         # TODO: follow ODC's match rules?
         product = None
@@ -273,7 +330,7 @@ def validate_paths(
             )
 
         messages.extend(
-            validate(
+            validate_dataset(
                 doc,
                 product_definition=product,
                 readable_location=path,
