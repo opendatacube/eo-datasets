@@ -183,10 +183,11 @@ def validate(
                     #
                     # (datasets differ when, for example, sensors go offline, or when there's on-disk
                     #  measurements like panchromatic that GA doesn't want in their product definitions)
-                    yield _info(
-                        "unspecified_measurement",
-                        f"Measurement {name} is not in the product",
-                    )
+                    if required_measurements:
+                        yield _info(
+                            "unspecified_measurement",
+                            f"Measurement {name} is not in the product",
+                        )
                 else:
                     expected_dtype = expected_measurement.dtype
                     band_dtype = ds.dtypes[band - 1]
