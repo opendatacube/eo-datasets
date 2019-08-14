@@ -400,6 +400,9 @@ def _validate_stac_properties(dataset: DatasetDoc):
 
 
 def _is_nan(v):
+    # Due to JSON serialisation, nan can also be represented as a string 'NaN'
+    if isinstance(v, str):
+        return v == "NaN"
     return isinstance(v, float) and math.isnan(v)
 
 

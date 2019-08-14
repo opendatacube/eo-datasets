@@ -309,6 +309,9 @@ def test_measurements_compare_with_nans(
     # When both are NaN, it should be valid
     _create_dummy_tif(blue_tif, nodata=float("NaN"))
     eo_validator.assert_valid(product, l1_ls8_metadata_path, expect_no_messages=True)
+    # ODC can also represent NaNs as strings due to json's lack of NaN
+    product["measurements"][-1]["nodata"] = "NaN"
+    eo_validator.assert_valid(product, l1_ls8_metadata_path, expect_no_messages=True)
 
     # When product is None, dataset is NaN, they no longer match.
     product["measurements"][-1]["nodata"] = None
