@@ -484,6 +484,7 @@ its datasets to be matched against it.
 )
 def run(paths: List[Path], strict_warnings, quiet, thorough: bool):
     validation_counts: Counter[Level] = collections.Counter()
+    invalid_paths = 0
 
     s = {
         Level.info: dict(),
@@ -491,15 +492,23 @@ def run(paths: List[Path], strict_warnings, quiet, thorough: bool):
         Level.error: dict(fg="red"),
     }
     for path, messages in validate_paths(paths, thorough=thorough):
+        levels = collections.Counter(m.level for m in messages)
+        is_invalid = levels[Level.error] > 0
+        if strict_warnings:
+            is_invalid |= levels[Level.warning] > 0
+
         if quiet:
-            # Errors only. Remove info-level.
+            # Errors/Warnings only. Remove info-level.
             messages = [m for m in messages if m.level != Level.info]
 
         if messages or not quiet:
-            secho(f"{bool_style(not messages)} {path.stem}")
+            secho(f"{bool_style(not is_invalid)} {path.stem}")
 
         if not messages:
             continue
+
+        if is_invalid:
+            invalid_paths += 1
 
         for message in messages:
             validation_counts[message.level] += 1
@@ -511,14 +520,10 @@ def run(paths: List[Path], strict_warnings, quiet, thorough: bool):
             if message.hint:
                 echo(f' ({style("Hint", fg="green")}: {message.hint})')
 
-    error_count = validation_counts.get(Level.error) or 0
-    if strict_warnings:
-        error_count += validation_counts.get(Level.warning) or 0
-
     if not quiet:
         result = (
             style("failure", fg="red", bold=True)
-            if error_count > 0
+            if invalid_paths > 0
             else style("valid", fg="green", bold=True)
         )
         secho(f"\n{result}: ", nl=False, err=True)
@@ -533,4 +538,4 @@ def run(paths: List[Path], strict_warnings, quiet, thorough: bool):
         else:
             secho(f"{len(paths)} paths", err=True)
 
-    sys.exit(error_count)
+    sys.exit(invalid_paths)
