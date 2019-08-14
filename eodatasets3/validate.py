@@ -209,7 +209,7 @@ def validate_dataset(
                     if expected_nodata != ds_nodata and not (
                         _is_nan(expected_nodata) and _is_nan(ds_nodata)
                     ):
-                        yield _error(
+                        yield _info(
                             "different_nodata",
                             f"{name} nodata: "
                             f"product {expected_nodata !r} != dataset {ds_nodata !r}",
