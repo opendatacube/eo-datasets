@@ -264,6 +264,9 @@ def numpy_value_fits_dtype(value, dtype):
     """
     dtype = np.dtype(dtype)
 
+    if value is None:
+        value = 0
+
     if _is_nan(value):
         return np.issubdtype(dtype, np.floating)
     else:
