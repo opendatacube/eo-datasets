@@ -382,7 +382,7 @@ def test_complains_about_impossible_nodata_vals(
     )
     eo_validator.assert_invalid(product)
     assert eo_validator.messages == {
-        "unsuitable_nodata": "Measurement 'paradox' nodata -999 does not fit a uint8"
+        "unsuitable_nodata": "Measurement 'paradox' nodata -999 does not fit a 'uint8'"
     }
 
 
