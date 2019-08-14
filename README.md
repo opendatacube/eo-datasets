@@ -1,21 +1,63 @@
 ## Earth Observation Datasets
 
-[![Build Status](https://travis-ci.org/GeoscienceAustralia/eo-datasets.svg?branch=eodatasets3)](https://travis-ci.org/GeoscienceAustralia/eo-datasets)
-[![Coverage Status](https://coveralls.io/repos/GeoscienceAustralia/eo-datasets/badge.svg?branch=eodatasets3)](https://coveralls.io/r/GeoscienceAustralia/eo-datasets?branch=eodatasets3)
+[![Build Status](
+https://travis-ci.org/GeoscienceAustralia/eo-datasets.svg?branch=eodatasets3
+)](https://travis-ci.org/GeoscienceAustralia/eo-datasets)
+[![Coverage Status](
+https://coveralls.io/repos/GeoscienceAustralia/eo-datasets/badge.svg?branch=eodatasets3
+)](https://coveralls.io/r/GeoscienceAustralia/eo-datasets?branch=eodatasets3)
 
-Packaging, metadata and provenance libraries for GA EO datasets. See [LICENSE](LICENSE) for
-license details.
+A tool to easily write, validate and convert [ODC](https://github.com/opendatacube/datacube-core) 
+datasets and metadata.
 
-### Installation
+## Installation
 
-    pip install -e .
+    pip install eodatasets3
 
-Python 3.6+ is supported. A [GDAL](http://www.gdal.org/) installation is required 
-to use most packaging commands.
+Python 3.6+ is supported.
 
-### Development
+## Metadata creation API
 
-Run tests using [pytest](http://pytest.org/).
+_TODO: Write an overview._ 
+
+See an example in [tests/integration/test_assemble.py](tests/integration/test_assemble.py)
+
+## Validator
+
+
+`eo3-validate` a lint-like checker to check ODC metadata.
+
+     $ eo3-validate --help
+    Usage: eo3-validate [OPTIONS] [PATHS]...
+    
+      Validate ODC dataset documents
+    
+      Paths can be both product and dataset documents, but each product must
+      come before its datasets to be matched against it.
+    
+    Options:
+      -W, --warnings-as-errors  Fail if any warnings are produced
+      --thorough                Attempt to read the data/measurements, and check
+                                their properties match the product
+      -q, --quiet               Only print problems, one per line
+      --help                    Show this message and exit.
+
+## Conversion to Stac metadata
+
+`eo3-to-stac`: Convert an ODC metadata to a Stac Item json file (BETA/Incomplete)
+
+     $ eo3-to-stac --help
+    Usage: eo3-to-stac [OPTIONS] [ODC_METADATA_FILES]...
+    
+      Convert a new-style ODC metadata doc to a Stac Item.
+    
+    Options:
+      --help  Show this message and exit.
+
+
+# Development
+
+Run the tests using [pytest](http://pytest.org/).
 
     pytest
 
@@ -29,7 +71,7 @@ They are included when installing the test dependencies:
 You may want to configure your editor to run black automatically on file save
 (see the Black page for directions), or install the pre-commit hook within Git:
 
-### Pre-commit setup
+## Pre-commit setup
 
 A [pre-commit](https://pre-commit.com/) config is provided to automatically format
 and check your code changes. This allows you to immediately catch and fix
@@ -52,26 +94,10 @@ Now install the pre-commit hook to the current repository:
 Your code will now be formatted and validated before each commit. You can also
 invoke it manually by running `pre-commit run`
 
-    
 
-### Included Scripts
+# DEA Prep
 
-`eo3-validate` a lint-like checker to check ODC metadata.
-
-     $ eo3-validate --help
-    Usage: eo3-validate [OPTIONS] [PATHS]...
-    
-      Validate ODC dataset documents
-    
-      Paths can be both product and dataset documents, but each product must
-      come before its datasets to be matched against it.
-    
-    Options:
-      -W, --warnings-as-errors  Fail if any warnings are produced
-      --thorough                Attempt to read the data/measurements, and check
-                                their properties match the product
-      -q, --quiet               Only print problems, one per line
-      --help                    Show this message and exit.
+Some included scripts to prepare existing DEA products.
 
 `eo3-prepare`: Prepare ODC metadata from the commandline.
 
@@ -116,19 +142,3 @@ Some preparers need the ancillary dependencies: `pip install .[ancillary]`
       --with-oa / --no-oa             Include observation attributes (default:
                                       true)
       --help                          Show this message and exit.
-
-`eo3-to-stac`: Convert an ODC metadata to a Stac Item json file (BETA/Incomplete)
-
-     $ eo3-to-stac --help
-    Usage: eo3-to-stac [OPTIONS] [ODC_METADATA_FILES]...
-    
-      Convert a new-style ODC metadata doc to a Stac Item.
-    
-    Options:
-      --help  Show this message and exit.
-
-# Metadata creation API
-
-_TODO: Write an overview._ 
-
-See an example in [tests/integration/test_assemble.py](tests/integration/test_assemble.py)
