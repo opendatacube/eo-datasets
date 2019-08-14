@@ -1,7 +1,7 @@
 import operator
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, Union, Mapping, Sequence, Optional
+from typing import Dict, Union, Mapping, Sequence, Optional, List
 
 import numpy as np
 import pytest
@@ -32,14 +32,16 @@ class ValidateRunner:
     def assert_valid(self, *docs: Doc, expect_no_messages=True):
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
         self.run_validate(docs)
+        was_successful = self.result.exit_code == 0
+        assert (
+            was_successful
+        ), f"Expected validation to succeed. Output:\n{self.result.output}"
+
         if expect_no_messages and self.messages:
             raise AssertionError(
-                "\n".join(f"{k}: {v}" for k, v in self.messages.items())
+                f"Expected no messages. Got: "
+                + "\n".join(f"{k}: {v}" for k, v in self.messages.items())
             )
-
-        assert (
-            self.result.exit_code == 0
-        ), f"Expected validation to succeed. Output:\n{self.result.output}"
 
     def assert_invalid(self, *docs: Doc, codes: Sequence[str] = None):
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
@@ -47,6 +49,7 @@ class ValidateRunner:
         assert (
             self.result.exit_code != 0
         ), f"Expected validation to fail.\n{self.result.output}"
+        assert self.result.exit_code == 1, f"Expected error code 1 for 1 invalid path"
 
         if codes is not None:
             assert sorted(codes) == sorted(self.messages.keys())
@@ -259,10 +262,7 @@ def test_nodata_compare_with_product_doc(
         name="usgs_ls8c_level1_1",
         metadata_type="eo3",
         measurements=[
-            *[
-                dict(name=name, dtype="uint16")
-                for name, m in l1_ls8_dataset.measurements.items()
-            ],
+            *_copy_measurements(l1_ls8_dataset),
             # Override blue with our invalid one.
             dict(name="blue", dtype="uint16", nodata=255),
         ],
@@ -278,33 +278,41 @@ def test_nodata_compare_with_product_doc(
     }
 
 
+def _copy_measurements(dataset: DatasetDoc, dtype="uint16") -> List:
+    return [dict(name=name, dtype=dtype) for name, m in dataset.measurements.items()]
+
+
 def test_measurements_compare_with_nans(
     eo_validator: ValidateRunner, l1_ls8_dataset: DatasetDoc, l1_ls8_metadata_path: Path
 ):
     """When dataset and product have NaN nodata values, it should handle them correctly"""
     eo_validator.thorough = True
+    eo_validator.record_informational_messages = True
     blue_tif = l1_ls8_metadata_path.parent / l1_ls8_dataset.measurements["blue"].path
 
     _create_dummy_tif(blue_tif, dtype="float32")
     product = dict(
-        name="nanned_product",
+        name="usgs_ls8c_level1_1",
         metadata_type="eo3",
-        measurements=[dict(name="blue", dtype="float32", nodata=float("NaN"))],
+        measurements=[
+            *_copy_measurements(l1_ls8_dataset),
+            dict(name="blue", dtype="float32", nodata=float("NaN")),
+        ],
     )
 
     # When product is NaN, dataset is None, they don't match
-    eo_validator.assert_invalid(product, l1_ls8_metadata_path)
+    eo_validator.assert_valid(product, l1_ls8_metadata_path, expect_no_messages=False)
     assert eo_validator.messages == {
         "different_nodata": "blue nodata: product nan != dataset None"
     }
 
     # When both are NaN, it should be valid
     _create_dummy_tif(blue_tif, nodata=float("NaN"))
-    eo_validator.assert_valid(product, l1_ls8_metadata_path)
+    eo_validator.assert_valid(product, l1_ls8_metadata_path, expect_no_messages=True)
 
     # When product is None, dataset is NaN, they no longer match.
-    product["measurements"][0]["nodata"] = None
-    eo_validator.assert_invalid(product, l1_ls8_metadata_path)
+    product["measurements"][-1]["nodata"] = None
+    eo_validator.assert_valid(product, l1_ls8_metadata_path, expect_no_messages=False)
     assert eo_validator.messages == {
         "different_nodata": "blue nodata: product None != dataset nan"
     }
