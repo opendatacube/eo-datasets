@@ -224,7 +224,7 @@ def test_valid_with_product_doc(
     product = dict(
         name="wrong_product",
         metadata_type="eo3",
-        measurements=[dict(name="blue", dtype="uint8", nodata=-999)],
+        measurements=[dict(name="blue", dtype="uint8", nodata=255)],
     )
     eo_validator.assert_valid(product, l1_ls8_metadata_path)
 
@@ -256,14 +256,14 @@ def test_nodata_compare_with_product_doc(
     product = dict(
         name="wrong_product",
         metadata_type="eo3",
-        measurements=[dict(name="blue", dtype="uint16", nodata=-999)],
+        measurements=[dict(name="blue", dtype="uint16", nodata=255)],
     )
 
     # When thorough, the dtype and nodata are wrong
     eo_validator.thorough = True
     eo_validator.assert_invalid(product, l1_ls8_metadata_path)
     assert eo_validator.messages == {
-        "different_nodata": "blue nodata: product -999 != dataset None"
+        "different_nodata": "blue nodata: product 255 != dataset None"
     }
 
 
@@ -326,7 +326,7 @@ def test_missing_measurement_from_product(
     )
     eo_validator.assert_invalid(product, l1_ls8_metadata_path)
     assert eo_validator.messages == {
-        "missing_measurement": "Product wrong_product expects a measurement 'razzmatazz')"
+        "missing_measurement": "Product no_measurement expects a measurement 'razzmatazz')"
     }
 
 
