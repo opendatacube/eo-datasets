@@ -133,7 +133,7 @@ def validate_dataset(
                 m.name: m
                 for m in map(
                     ExpectedMeasurement.from_definition,
-                    product_definition["measurements"],
+                    product_definition.get("measurements") or (),
                 )
             }
         )
@@ -225,7 +225,10 @@ def validate_product(doc: Dict,) -> ValidationMessages:
     # We'll focus on the parts ODC doesn't yet do.
 
     measurements = doc.get("measurements")
-    if not isinstance(measurements, Sequence):
+    if measurements is None:
+        # Products don't have to have measurements. (eg. provenance-only products)
+        ...
+    elif not isinstance(measurements, Sequence):
         yield _error(
             "measurements_list",
             f"Product measurements should be a list/sequence "

@@ -352,6 +352,20 @@ def test_missing_measurement_from_product(
     }
 
 
+def test_supports_measurementless_products(
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+):
+    """
+    Validator should suport products without any measurements in the document.
+
+    These are valid for prodcuts which can't be dc.load()'ed but are
+    referred to for provenance, such as DEA's telemetry data or DEA's collection-2
+    Level 1 products.
+    """
+    product = dict(name="no_measurement", metadata_type="eo3", measurements=None)
+    eo_validator.assert_valid(product, l1_ls8_metadata_path)
+
+
 def test_complains_about_measurement_lists(
     eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
 ):
