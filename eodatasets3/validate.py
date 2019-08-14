@@ -69,6 +69,12 @@ def validate_dataset(
     # Dataset location to use, if not the metadata path.
     readable_location: Union[str, Path] = None,
 ) -> ValidationMessages:
+    """
+    Validate a a dataset document, optionally against the given product.
+
+    By default this will only look at the metadata, run with thorough=True to
+    open the data files too.
+    """
     schema = doc.get("$schema")
     if schema is None:
         yield _error(
@@ -216,7 +222,7 @@ def validate_dataset(
                         )
 
 
-def validate_product(doc: Dict,) -> ValidationMessages:
+def validate_product(doc: Dict) -> ValidationMessages:
     """
     Check for common product mistakes
 
@@ -288,7 +294,7 @@ class ExpectedMeasurement:
 
 
 def validate_paths(
-    paths: List[Path], thorough: bool = False, strict=False
+    paths: List[Path], thorough: bool = False
 ) -> Generator[Tuple[Path, List[ValidationMessage]], None, None]:
     """Validate the list of paths. Product documents can be specified before their datasets."""
     products: Dict[str, Dict] = {}

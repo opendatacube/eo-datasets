@@ -100,6 +100,7 @@ class ValidateRunner:
 
 
 def test_valid_document_works(eo_validator: ValidateRunner, example_metadata: Dict):
+    """All of our example metadata files should validate"""
     eo_validator.assert_valid(example_metadata)
 
 

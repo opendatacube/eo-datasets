@@ -4,10 +4,9 @@ from pprint import pformat, pprint
 from typing import Dict
 
 import rapidjson
-from ruamel import yaml
-from boltons.iterutils import remap
 from click.testing import CliRunner, Result
 from deepdiff import DeepDiff
+from ruamel import yaml
 
 diff = partial(DeepDiff, significant_digits=6)
 
@@ -44,11 +43,6 @@ def assert_same_as_file(expected_doc: Dict, generated_file: Path, ignore_fields=
     except AssertionError:
         pprint(generated_doc)
         raise
-
-
-def lists_to_tuples(doc):
-    """Recursively change any embedded lists into tuples"""
-    return remap(doc, visit=lambda p, k, v: (k, tuple(v) if type(v) == list else v))
 
 
 def run_prepare_cli(invoke_script, *args, expect_success=True) -> Result:
