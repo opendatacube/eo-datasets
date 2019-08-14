@@ -29,6 +29,13 @@ def uri_resolve(base: Union[str, Path], path: Optional[str]) -> str:
     return urljoin(base, path)
 
 
+def bool_style(b, color=True) -> str:
+    if b:
+        return click.style("✓", fg=color and "green")
+    else:
+        return click.style("✗", fg=color and "yellow")
+
+
 def is_absolute(url):
     """
     >>> is_absolute('LC08_L1TP_108078_20151203_20170401_01_T1.TIF')

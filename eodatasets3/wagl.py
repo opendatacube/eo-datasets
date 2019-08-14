@@ -16,22 +16,21 @@ from typing import List, Sequence, Optional, Iterable, Any, Tuple, Dict, Mapping
 from uuid import UUID
 
 import attr
-import click
 import numpy
 import rasterio
 from affine import Affine
 from boltons.iterutils import get_path, PathAccessError
 from click import secho
-from rasterio import DatasetReader
-from rasterio.crs import CRS
-from rasterio.enums import Resampling
-
 from eodatasets3 import serialise, utils, images
 from eodatasets3.assemble import DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
 from eodatasets3.serialise import loads_yaml
+from eodatasets3.ui import bool_style
 from eodatasets3.utils import default_utc
+from rasterio import DatasetReader
+from rasterio.crs import CRS
+from rasterio.enums import Resampling
 
 try:
     import h5py
@@ -302,13 +301,6 @@ def _create_contiguity(
             )
 
 
-def _boolstyle(s):
-    if s:
-        return click.style("✓", fg="green")
-    else:
-        return click.style("✗", fg="yellow")
-
-
 @contextlib.contextmanager
 def do(name: str, heading=False, **fields):
     """
@@ -320,7 +312,7 @@ def do(name: str, heading=False, **fields):
 
     def val(v: Any):
         if isinstance(v, bool):
-            return _boolstyle(v)
+            return bool_style(v)
         if isinstance(v, Path):
             return repr(str(v))
         return repr(v)

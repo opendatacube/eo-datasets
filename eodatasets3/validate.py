@@ -17,7 +17,7 @@ from boltons.iterutils import get_path
 from click import style, echo, secho
 from eodatasets3 import serialise, model
 from eodatasets3.model import DatasetDoc
-from eodatasets3.ui import PathPath, is_absolute, uri_resolve
+from eodatasets3.ui import PathPath, is_absolute, uri_resolve, bool_style
 from eodatasets3.utils import default_utc
 from rasterio import DatasetReader
 from rasterio.crs import CRS
@@ -296,8 +296,7 @@ def validate_paths(
         if is_product(doc):
             messages.extend(validate_product(doc))
             products[doc["name"]] = doc
-            if messages:
-                yield path, messages
+            yield path, messages
             continue
 
         # TODO: follow ODC's match rules?
@@ -473,30 +472,41 @@ its datasets to be matched against it.
     is_flag=True,
     help="Attempt to read the data/measurements, and check their properties match",
 )
-@click.option("-q", "--quiet", is_flag=True, help="Only print problems, one per line")
+@click.option(
+    "-q",
+    "--quiet",
+    is_flag=True,
+    default=False,
+    help="Only print problems, one per line",
+)
 def run(paths: List[Path], strict_warnings, quiet, thorough: bool):
     validation_counts: Counter[Level] = collections.Counter()
 
-    s = {Level.info: {}, Level.warning: dict(bold=True), Level.error: dict(fg="red")}
+    s = {
+        Level.info: dict(),
+        Level.warning: dict(fg="yellow"),
+        Level.error: dict(fg="red"),
+    }
     for path, messages in validate_paths(paths, thorough=thorough):
         if quiet:
+            # Errors only. Remove info-level.
             messages = [m for m in messages if m.level != Level.info]
 
+        if messages or not quiet:
+            secho(f"{bool_style(not messages)} {path.stem}")
+
         if not messages:
-            if not quiet:
-                secho(f"{path.stem}: {style('✓', fg='green')}")
             continue
 
-        secho(path.stem)
         for message in messages:
             validation_counts[message.level] += 1
 
-            displayable_code = style(f"{message.code}", **s[message.level])
+            displayable_code = style(f"{message.code}", **s[message.level], bold=True)
             echo(
-                f"- {message.level.name[0].upper()}\t{displayable_code}\t{message.reason}"
+                f"\t{message.level.name[0].upper()} {displayable_code} {message.reason}"
             )
             if message.hint:
-                echo(f'\t({style("Hint", fg="green")}: {message.hint})')
+                echo(f' ({style("Hint", fg="green")}: {message.hint})')
 
     error_count = validation_counts.get(Level.error) or 0
     if strict_warnings:
@@ -504,7 +514,9 @@ def run(paths: List[Path], strict_warnings, quiet, thorough: bool):
 
     if not quiet:
         result = (
-            style("failure", fg="red") if error_count > 0 else style("ok", fg="green")
+            style("failure", fg="red", bold=True)
+            if error_count > 0
+            else style("valid", fg="green", bold=True)
         )
         secho(f"\n{result}: ", nl=False, err=True)
         if validation_counts:
@@ -516,6 +528,6 @@ def run(paths: List[Path], strict_warnings, quiet, thorough: bool):
                 err=True,
             )
         else:
-            secho("All good", fg="green", err=True)
+            secho(f"{len(paths)} paths", err=True)
 
     sys.exit(error_count)

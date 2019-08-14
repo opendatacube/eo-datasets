@@ -84,15 +84,15 @@ class ValidateRunner:
         """
 
         def _read_message(line: str):
-            severity, code, *message = line.split("\t")
-            return code, "\t".join(message)
+            severity, code, *message = line.split()
+            return code, " ".join(message)
 
         return dict(
             _read_message(line)
             for line in self.result.stdout.split("\n")
             if line
-            and line.startswith("-")
-            and (self.record_informational_messages or not line.startswith("- I\t"))
+            and line.startswith("\t")
+            and (self.record_informational_messages or not line.startswith("\tI "))
         )
 
 
