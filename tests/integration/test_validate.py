@@ -232,7 +232,7 @@ def test_valid_with_product_doc(
 def test_dtype_compare_with_product_doc(
     eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
 ):
-    """A thorough validation should check dtype of measurements against the product"""
+    """'thorough' validation should check the dtype of measurements against the product"""
 
     product = dict(
         name="wrong_product",
@@ -249,19 +249,30 @@ def test_dtype_compare_with_product_doc(
 
 
 def test_nodata_compare_with_product_doc(
-    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+    eo_validator: ValidateRunner, l1_ls8_dataset: DatasetDoc, l1_ls8_metadata_path: Path
 ):
-    """A thorough validation should check nodata of measurements against the product"""
+    """'thorough' validation should check the nodata of measurements against the product"""
+    eo_validator.thorough = True
+    eo_validator.record_informational_messages = True
 
     product = dict(
-        name="wrong_product",
+        name="usgs_ls8c_level1_1",
         metadata_type="eo3",
-        measurements=[dict(name="blue", dtype="uint16", nodata=255)],
+        measurements=[
+            *[
+                dict(name=name, dtype="uint16")
+                for name, m in l1_ls8_dataset.measurements.items()
+            ],
+            # Override blue with our invalid one.
+            dict(name="blue", dtype="uint16", nodata=255),
+        ],
     )
 
-    # When thorough, the dtype and nodata are wrong
-    eo_validator.thorough = True
-    eo_validator.assert_invalid(product, l1_ls8_metadata_path)
+    # It is only an informational message, not an error, as the product can validly
+    #    have a different nodata:
+    # 1. When the product nodata is only a fill value for dc.load()
+    # 2. When the original images don't specify their no nodata ... Like USGS Level 1 tifs.
+    eo_validator.assert_valid(product, l1_ls8_metadata_path, expect_no_messages=False)
     assert eo_validator.messages == {
         "different_nodata": "blue nodata: product 255 != dataset None"
     }
