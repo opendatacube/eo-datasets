@@ -16,11 +16,40 @@ datasets and metadata.
 
 Python 3.6+ is supported.
 
-## Metadata creation API
+## Dataset assembly
 
-_TODO: Write an overview._ 
+The assembler api aims to make it easy to write datasets.
 
-See an example in [tests/integration/test_assemble.py](tests/integration/test_assemble.py)
+```python
+    from eodatasets3 import DatasetAssembler
+    from datetime import datetime
+    from pathlib import Path
+    
+    with DatasetAssembler(Path('/some/output/collection/path')) as p:
+        p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+        p.product_family = "my_bluegreen_product"
+        p.processed_now()
+        
+        # Custom metadata fields
+        p.properties['my_field'] = 42
+
+        # Copy a measurement from an input file (it will write a COG 
+        # and follow the naming conventions)
+        p.write_measurement("red", red_image_path)
+        
+        ...  # Write other measurements, from numpy arrays or other sources.
+        
+        # Create a jpg thumbnail image using the measurements we've written
+        p.write_thumbnail(red="swir1", green="swir2", blue="blue")
+        
+        # Validate the dataset and write it to the destination folder atomically.
+        p.done()
+```
+
+The assembler will write a folder of [COGS](https://www.cogeo.org/), EO3 metadata for Open DataCube, and create
+ appropriate folder structures. Many other fields are available, see the [recipes](recipes.md) document.
+
+Some further examples can be seen in the tests [tests/integration/test_assemble.py](tests/integration/test_assemble.py)
 
 ## Validator
 
