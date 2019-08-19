@@ -16,7 +16,6 @@ from typing import List, Optional, Union, Iterable, Dict, Tuple, Callable, Gener
 
 import click
 import rasterio
-
 from eodatasets3 import serialise, utils
 from eodatasets3.assemble import DatasetAssembler, IfExists
 from eodatasets3.model import FileFormat
@@ -261,8 +260,8 @@ def prepare_and_write(
     )
 
     with DatasetAssembler(
-        metadata_file=output_yaml_path,
-        paths_relative_to=ds_path,
+        metadata_path=output_yaml_path,
+        dataset_location=ds_path,
         # Detministic ID based on USGS's product id (which changes when the scene is reprocessed by them)
         dataset_id=uuid.uuid5(
             USGS_UUID_NAMESPACE, mtl_doc["metadata_file_info"]["landsat_product_id"]
@@ -309,8 +308,11 @@ def prepare_and_write(
 
         band_aliases = get_band_alias_mappings(p.platform, p.instrument)
         for usgs_band_id, file_location in _iter_bands_paths(mtl_doc):
-            band_alias = band_aliases[usgs_band_id]
-            p.note_measurement(band_alias, file_location)
+            p.note_measurement(
+                band_aliases[usgs_band_id],
+                file_location,
+                relative_to_dataset_location=True,
+            )
 
         p.add_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
 

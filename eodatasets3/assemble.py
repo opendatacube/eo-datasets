@@ -1,7 +1,6 @@
 """
 API for easily writing an ODC Dataset
 """
-import os
 import shutil
 import tempfile
 import uuid
@@ -10,7 +9,7 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Generator, Any, Union
+from typing import Dict, List, Optional, Tuple, Generator, Any
 
 import eodatasets3
 import numpy
@@ -24,6 +23,7 @@ from eodatasets3.model import (
     StacPropertyView,
     ComplicatedNamingConventions,
     AccessoryDoc,
+    Location,
 )
 from eodatasets3.properties import EoFields
 from eodatasets3.validate import Level, ValidationMessage
@@ -84,9 +84,10 @@ class DatasetAssembler(EoFields):
 
     def __init__(
         self,
-        output_folder: Optional[Path] = None,
-        metadata_file: Optional[Path] = None,
-        paths_relative_to: Optional[Path] = None,
+        collection_location: Optional[Path] = None,
+        # If not specified, automatically generated inside the collection.
+        dataset_location: Optional[Location] = None,
+        metadata_path: Optional[Path] = None,
         # Optionally give a fixed dataset id.
         dataset_id: Optional[uuid.UUID] = None,
         # By default, we complain if the output already exists.
@@ -97,39 +98,33 @@ class DatasetAssembler(EoFields):
         self.dataset_id = dataset_id or uuid.uuid4()
         self._exists_behaviour = if_exists
 
-        if not output_folder and not metadata_file:
+        if not collection_location and not metadata_path:
             raise ValueError(
-                "Must specify either an output folder or a single metadata file"
+                "Must specify either a collection folder or a single metadata file"
             )
 
-        if output_folder and not output_folder.exists():
+        if collection_location and not collection_location.exists():
             raise ValueError(
-                f"Provided base output folder doesn't exist: {output_folder}"
+                f"Provided collection location doesn't exist: {collection_location}"
             )
-
-        self._base_output_folder = output_folder
-
-        # If not specified, it will be auto-generated inside the output folder.
-        self._specified_metadata_path = metadata_file
-        # Given relative paths are relative to this.
-        self._base_location = (
-            paths_relative_to or metadata_file or Path(os.getcwd()).absolute()
-        )
 
         self._checksum = PackageChecksum()
-        self._initialised_work_path: Optional[Path] = None
-        self._measurements = MeasurementRecord()
+        self._tmp_work_path: Optional[Path] = None
 
+        self._label = None
+        self._props = StacPropertyView()
+
+        self.collection_location = collection_location
+        self._dataset_location = dataset_location
+        self._metadata_path = metadata_path
         self._allow_absolute_paths = allow_absolute_paths
+
+        self._accessories: Dict[str, Path] = {}
+        self._measurements = MeasurementRecord()
 
         self._user_metadata = dict()
         self._software_versions: List[Dict] = []
-
         self._lineage: Dict[str, List[uuid.UUID]] = defaultdict(list)
-        self._accessories: Dict[str, Path] = {}
-
-        self._props = StacPropertyView()
-        self._label = None
 
         if naming_conventions == "default":
             self.names = ComplicatedNamingConventions(self)
@@ -138,27 +133,35 @@ class DatasetAssembler(EoFields):
         else:
             raise NotImplementedError("configurable naming conventions")
 
-        self._is_finished = False
+        self._is_completed = False
         self._finished_init_ = True
+
+    def _is_writing_files(self):
+        """
+        Have they written any files? Otherwise we're just writing a metadata doc
+        """
+        # A tmpdir is created on the first file written.
+        # TODO: support writing files in declared dataset_locations too.
+        return self.collection_location is not None
 
     @property
     def _work_path(self) -> Path:
         """
-        The temporary folder path of the partially-built dataset.
+        The current folder path of the maybe-partially-built dataset.
         """
-        if not self._initialised_work_path:
-            if not self._base_output_folder:
+        if not self._tmp_work_path:
+            if not self.collection_location:
                 raise ValueError(
                     "Dataset assembler was given no base path on construction: cannot write new files."
                 )
 
-            self._initialised_work_path = Path(
+            self._tmp_work_path = Path(
                 tempfile.mkdtemp(
-                    prefix=".odcdataset-", dir=str(self._base_output_folder)
+                    prefix=".odcdataset-", dir=str(self.collection_location)
                 )
             )
 
-        return self._initialised_work_path
+        return self._tmp_work_path
 
     @property
     def properties(self) -> StacPropertyView:
@@ -184,15 +187,6 @@ class DatasetAssembler(EoFields):
     @label.setter
     def label(self, val: str):
         self._label = val
-
-    @property
-    def destination_folder(self) -> Path:
-        """
-        The folder where the finished package will reside.
-
-        This may not be accessible until enough metadata has been set.
-        """
-        return self.names.destination_folder(self._base_output_folder)
 
     def __enter__(self) -> "DatasetAssembler":
         return self
@@ -223,20 +217,20 @@ class DatasetAssembler(EoFields):
         This works like `close()`, but is intentional, so no warning will
         be raised for forgetting to complete the package first.
         """
-        self._is_finished = True
+        self._is_completed = True
         self.close()
 
     def close(self):
         """Cleanup any temporary files, even if dataset has not been written"""
-        if not self._is_finished:
+        if not self._is_completed:
             warnings.warn(
                 "Closing assembler without finishing. "
                 "Either call `done()` or `cancel() before closing`"
             )
 
-        if self._initialised_work_path:
+        if self._tmp_work_path:
             # TODO: add implicit cleanup like tempfile.TemporaryDirectory?
-            shutil.rmtree(self._work_path, ignore_errors=True)
+            shutil.rmtree(self._tmp_work_path, ignore_errors=True)
 
     def add_source_path(
         self,
@@ -333,7 +327,7 @@ class DatasetAssembler(EoFields):
     def write_measurement(
         self,
         name: str,
-        path: Path,
+        path: Location,
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.average,
         expand_valid_data=True,
@@ -344,7 +338,7 @@ class DatasetAssembler(EoFields):
 
         Assumes the file is gdal-readable.
         """
-        with rasterio.open(self._path(path)) as ds:
+        with rasterio.open(path) as ds:
             self.write_measurement_rio(
                 name,
                 ds,
@@ -353,9 +347,6 @@ class DatasetAssembler(EoFields):
                 overview_resampling=overview_resampling,
                 file_id=file_id,
             )
-
-    def _path(self, path):
-        return documents.resolve_absolute_offset(self._base_location, path)
 
     def write_measurement_rio(
         self,
@@ -500,13 +491,26 @@ class DatasetAssembler(EoFields):
         # be in os/filesystem cache.
         self._checksum.add_file(out_path)
 
-    def note_measurement(self, name, path: Union[str, Path], expand_valid_data=True):
+    def note_measurement(
+        self,
+        name,
+        path: Location,
+        expand_valid_data=True,
+        relative_to_dataset_location=False,
+    ):
         """
         Reference a measurement from its existing file path.
 
         (no data is copied, but Geo information is read from it.)
         """
-        with rasterio.open(self._path(path)) as ds:
+        read_location = path
+        if relative_to_dataset_location:
+            read_location = documents.resolve_absolute_offset(
+                self._dataset_location
+                or (self._metadata_path and self._metadata_path.parent),
+                path,
+            )
+        with rasterio.open(read_location) as ds:
             ds: DatasetReader
             if ds.count != 1:
                 raise NotImplementedError(
@@ -591,12 +595,20 @@ class DatasetAssembler(EoFields):
             valid_data = None
 
         # If we wrote any data, a temporary work directory will have been initialised.
-        if self._base_output_folder:
-            checksum_path = self.names.checksum_path(self._work_path)
+        if self._is_writing_files():
+            # (the checksum isn't written yet -- it'll be the last file)
+            self.add_accessory_file(
+                "checksum:sha1", self.names.checksum_path(self._work_path)
+            )
+
             processing_metadata = self.names.metadata_path(
                 self._work_path, suffix="proc-info.yaml"
             )
-            self.add_accessory_file("checksum:sha1", checksum_path)
+            self._write_yaml(
+                {**self._user_metadata, "software_versions": self._software_versions},
+                processing_metadata,
+                allow_external_paths=True,
+            )
             self.add_accessory_file("metadata:processor", processing_metadata)
 
         dataset = DatasetDoc(
@@ -620,7 +632,7 @@ class DatasetAssembler(EoFields):
         doc = serialise.to_formatted_doc(dataset)
         self._write_yaml(
             doc,
-            self._specified_metadata_path
+            self._metadata_path
             or self.names.metadata_path(self._work_path, suffix="odc-metadata.yaml"),
         )
 
@@ -636,17 +648,12 @@ class DatasetAssembler(EoFields):
                     )
 
         # If we're using a tmp path, finish the package and move it into place.
-        if self._base_output_folder:
-            self._write_yaml(
-                {**self._user_metadata, "software_versions": self._software_versions},
-                processing_metadata,
-                allow_external_paths=True,
-            )
-            self._checksum.write(checksum_path)
+        if self._is_writing_files():
+            self._checksum.write(self._accessories["checksum:sha1"])
 
             # Match the lower r/w permission bits to the output folder.
             # (Temp directories default to 700 otherwise.)
-            self._work_path.chmod(self._base_output_folder.stat().st_mode & 0o777)
+            self._work_path.chmod(self.collection_location.stat().st_mode & 0o777)
 
             # GDAL writes extra metadata in aux files,
             # but we consider it a mistake if you're using those extensions.
@@ -656,19 +663,23 @@ class DatasetAssembler(EoFields):
                 )
                 aux_file.unlink()
 
+            if not self._dataset_location:
+                self._dataset_location = self.names.destination_folder(
+                    self.collection_location
+                )
             # Now atomically move to final location.
             # Someone else may have created the output while we were working.
             # Try, and then decide how to handle it if so.
             try:
-                self.destination_folder.parent.mkdir(parents=True, exist_ok=True)
-                self._work_path.rename(self.destination_folder)
+                self._dataset_location.parent.mkdir(parents=True, exist_ok=True)
+                self._work_path.rename(self._dataset_location)
             except OSError:
-                if not self.destination_folder.exists():
+                if not self._dataset_location.exists():
                     # Some other error?
                     raise
 
                 if self._exists_behaviour == IfExists.Skip:
-                    print(f"Skipping -- exists: {self.destination_folder}")
+                    print(f"Skipping -- exists: {self.names.destination_folder}")
                 elif self._exists_behaviour == IfExists.ThrowError:
                     raise
                 elif self._exists_behaviour == IfExists.Overwrite:
@@ -678,14 +689,11 @@ class DatasetAssembler(EoFields):
                         f"Unexpected exists behaviour: {self._exists_behaviour}"
                     )
 
-        target_metadata_path = (
-            self._specified_metadata_path
-            or self.names.metadata_path(
-                self.destination_folder, suffix="odc-metadata.yaml"
-            )
+        target_metadata_path = self._metadata_path or self.names.metadata_path(
+            self._dataset_location, suffix="odc-metadata.yaml"
         )
         assert target_metadata_path.exists()
-        self._is_finished = True
+        self._is_completed = True
         return dataset.id, target_metadata_path
 
     def _crs_str(self, crs: CRS) -> str:
