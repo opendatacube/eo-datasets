@@ -14,17 +14,16 @@ import shapely
 import shapely.affinity
 import shapely.ops
 from affine import Affine
-from ruamel.yaml import YAML, ruamel, Representer
-from ruamel.yaml.comments import CommentedMap, CommentedSeq
-from shapely.geometry import shape
-from shapely.geometry.base import BaseGeometry
-
 from eodatasets3.model import (
     FileFormat,
     DatasetDoc,
     ODC_DATASET_SCHEMA_URL,
     StacPropertyView,
 )
+from ruamel.yaml import YAML, ruamel, Representer
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
+from shapely.geometry import shape
+from shapely.geometry.base import BaseGeometry
 
 
 def _format_representer(dumper, data: FileFormat):
@@ -87,9 +86,10 @@ def _init_yaml() -> YAML:
     yaml.representer.add_representer(numpy.ndarray, Representer.represent_list)
     yaml.representer.add_representer(numpy.datetime64, represent_numpy_datetime)
 
-    # Match yamllint default expectations.
+    # Match yamllint default expectations. (Explicit start/end are recommended to tell if a file is cut off)
     yaml.width = 80
     yaml.explicit_start = True
+    yaml.explicit_end = True
 
     return yaml
 
