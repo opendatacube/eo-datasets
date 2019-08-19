@@ -4,13 +4,13 @@ from uuid import UUID
 
 import numpy
 import pytest
-from ruamel import yaml
-
 from eodatasets3.assemble import DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
-from tests import assert_file_structure
+from ruamel import yaml
 from tests.integration.common import assert_same_as_file
+
+from tests import assert_file_structure
 
 
 def test_dea_style_package(
@@ -242,10 +242,10 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
     [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
 
     # Default simple naming conventions need at least a date and family...
-    with DatasetAssembler(out) as p:
-        with pytest.raises(
-            ValueError, match="Need more properties to fulfill naming conventions."
-        ):
+    with pytest.raises(
+        ValueError, match="Need more properties to fulfill naming conventions."
+    ):
+        with DatasetAssembler(out) as p:
             p.write_measurement("blue", blue_geotiff_path)
 
     # It should mention the field that's missing (we added a date, so product_family is needed)
@@ -278,3 +278,8 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
                 f"Expected field {needed_field_name} to "
                 f"be listed as mandatory in the error message"
             )
+
+
+def test_tmp_cleanup_on_exception():
+    """If an exception is thrown, no temp directory should be left behind"""
+    ...
