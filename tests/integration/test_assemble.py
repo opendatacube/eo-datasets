@@ -278,8 +278,3 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
                 f"Expected field {needed_field_name} to "
                 f"be listed as mandatory in the error message"
             )
-
-
-def test_tmp_cleanup_on_exception():
-    """If an exception is thrown, no temp directory should be left behind"""
-    ...

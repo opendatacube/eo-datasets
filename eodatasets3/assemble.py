@@ -96,6 +96,43 @@ class DatasetAssembler(EoFields):
         naming_conventions="default",
     ) -> None:
         self.dataset_id = dataset_id or uuid.uuid4()
+        """
+        Assemble a dataset with ODC metadata.
+
+        There are three optional paths that can be specified. At least one must be specified.
+        - A collection path is the root folder where datasets will live in subfolders.
+        - Each dataset has its own location (by default a subfolder of the collection)
+          All metadata paths are calculated relative to this.
+        - A metadata file location. By default, inside the dataset location.
+
+        If you're writing data, you typically only need to specify the collection path, and the others will be
+         automatically generated using the naming conventions.
+
+        If you're only writing a metadata file (for existing data), you only need to specify a metadata path.
+
+        If you're storing using an exotic URI schema, like a 'tar://' URL path, you will need to specify this as
+         your dataset location.
+
+        :param collection_location:
+            Optional base directory where the collection of datasets should live. Subfolders will be
+            created accordion to the naming convention.
+        :param dataset_location:
+            Optional location for this specific dataset. Otherwise it will be generated according to the collection
+            path and naming conventions.
+        :param metadata_path:
+            Optional metadata location for this specific dataset. Otherwise it will be generated according to
+            the collection path and naming conventions.
+        :param dataset_id:
+            Optional UUID for this dataset, otherwise a random only will be created. Use this if you have a stable
+            way of generating your own IDs.
+        :param if_exists:
+            What to do if the output dataset already exists? By default, throw an error.
+        :param allow_absolute_paths:
+            Allow metadata paths to refere to files outside the dataset. this means they will have to be absolute
+             paths, and not portable.
+        :param naming_conventions:
+            Naming conventions to use. Supports 'default' or 'dea'. The latter has stricter metadata requirements.
+        """
         self._exists_behaviour = if_exists
 
         if not collection_location and not metadata_path:
@@ -575,7 +612,7 @@ class DatasetAssembler(EoFields):
 
         IncompleteDatasetError is raised if any critical metadata is incomplete.
 
-        Returns the final path to the dataset metadata file.
+        Returns the id and final path to the dataset metadata file.
         """
         self.note_software_version(
             "eodatasets3",
@@ -594,7 +631,6 @@ class DatasetAssembler(EoFields):
         if valid_data.is_empty:
             valid_data = None
 
-        # If we wrote any data, a temporary work directory will have been initialised.
         if self._is_writing_files():
             # (the checksum isn't written yet -- it'll be the last file)
             self.add_accessory_file(
@@ -647,7 +683,7 @@ class DatasetAssembler(EoFields):
                         f"Internal error: Unhandled type of message level: {m.level}"
                     )
 
-        # If we're using a tmp path, finish the package and move it into place.
+        # If we're writing data, not just a metadata file, finish the package and move it into place.
         if self._is_writing_files():
             self._checksum.write(self._accessories["checksum:sha1"])
 
@@ -679,7 +715,10 @@ class DatasetAssembler(EoFields):
                     raise
 
                 if self._exists_behaviour == IfExists.Skip:
-                    print(f"Skipping -- exists: {self.names.destination_folder}")
+                    # Something else created it while we were busy.
+                    warnings.warn(
+                        f"Skipping -- exists: {self.names.destination_folder}"
+                    )
                 elif self._exists_behaviour == IfExists.ThrowError:
                     raise
                 elif self._exists_behaviour == IfExists.Overwrite:
@@ -724,7 +763,7 @@ class DatasetAssembler(EoFields):
         (the 2% and 98% percentile values of the input). The static_stretch parameter will
         override this with a static range of values.
         """
-        thumb = self.names.thumbnail_name(self._work_path, kind=kind)
+        thumb_path = self.names.thumbnail_name(self._work_path, kind=kind)
         measurements = dict(
             (name, (grid, path)) for grid, name, path in self._measurements.iter_paths()
         )
@@ -743,25 +782,25 @@ class DatasetAssembler(EoFields):
         unique_grids: List[GridSpec] = list(set(grid for grid, path in rgbs))
         if len(unique_grids) != 1:
             raise NotImplementedError(
-                "Thumbnails can only currently be created from bands of the same grid spec."
+                "Thumbnails can only currently be created from measurements of the same grid spec."
             )
         grid = unique_grids[0]
 
         FileWrite().create_thumbnail(
             tuple(path for grid, path in rgbs),
-            thumb,
+            thumb_path,
             out_scale=scale_factor,
             resampling=resampling,
             static_stretch=static_stretch,
             percentile_stretch=percentile_stretch,
             input_geobox=grid,
         )
-        self._checksum.add_file(thumb)
+        self._checksum.add_file(thumb_path)
 
         accessory_name = "thumbnail"
         if kind:
             accessory_name += f":{kind}"
-        self.add_accessory_file(accessory_name, thumb)
+        self.add_accessory_file(accessory_name, thumb_path)
 
     def add_accessory_file(self, name: str, path: Path):
         """
