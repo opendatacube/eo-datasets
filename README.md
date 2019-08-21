@@ -37,8 +37,8 @@ The assembler api aims to make it easy to write datasets.
 
         # Write measurements. They can be from numpy arrays, open rasterio datasets,
         # file paths, ODC Datasets...
-        p.write_measurement("coastal_aerosol", coastal_aerosol_path)
-        ...  # Write more measurements
+        p.write_measurement("red", red_path)
+        ...  # now write more measurements
         
         # Create a jpg thumbnail image using the measurements we've written
         p.write_thumbnail(red="swir1", green="swir2", blue="red")
@@ -47,26 +47,26 @@ The assembler api aims to make it easy to write datasets.
         p.done()
 ```
 
-The assembler will write a folder of [COG](https://www.cogeo.org/) imagery, an [EO3](#open-data-cube-compatibility) metadata 
-doc for Open Data Cube, and create appropriate folder structures. Many other fields are available, see 
-the [recipes](recipes.md). It can also be used for writing a metadata document alone.
+The assembler will write a folder of [COG](https://www.cogeo.org/) imagery, an [eo3](#open-data-cube-compatibility) 
+metadata doc for Open Data Cube, and create appropriate file and folder structures for the chosen naming conventions. 
+Many other fields are available, see the [recipes](recipes.md). It can also be used for writing a metadata 
+document alone.
 
 A further example can be seen in the tests [tests/integration/test_assemble.py](tests/integration/test_assemble.py)
 
 ## Open Data Cube compatibility
 
 The assembler writes a format called "eo3", which will be the native metadata format for Open Data Cube
-2.0. We recommend all new products are written with this format, even if targeting Open DataCube 1.
-A tool is available to transparently index them into version-1 Data Cubes (TODO: link. It's currently 
-homeless).
+2.0. We recommend new products are written with this format, even if targeting Open Data Cube 1.
+A tool is available to transparently index them into version-1 Data Cubes (TODO: link when it has a home).
 
-EO3 adds information about the native grid of the data, and aims to be more easily interoperable 
+eo3 adds information about the native grid of the data, and aims to be more easily interoperable 
 with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec/tree/master/item-spec).
 
 ## Validator
 
 
-`eo3-validate` a lint-like checker to check EO3 metadata.
+`eo3-validate` a lint-like checker to check eo3 metadata.
 
      $ eo3-validate --help
     Usage: eo3-validate [OPTIONS] [PATHS]...
