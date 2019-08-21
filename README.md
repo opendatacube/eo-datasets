@@ -1,4 +1,4 @@
-## Earth Observation Datasets
+## EO Datasets
 
 [![Build Status](
 https://travis-ci.org/GeoscienceAustralia/eo-datasets.svg?branch=eodatasets3
@@ -25,36 +25,48 @@ The assembler api aims to make it easy to write datasets.
     from datetime import datetime
     from pathlib import Path
     
-    with DatasetAssembler(Path('/some/output/collection/path')) as p:
+    with DatasetAssembler(
+            Path('/some/output/collection/path'), 
+            naming_conventions='default') as p:
         p.datetime = datetime(2019, 7, 4, 13, 7, 5)
-        p.product_family = "my_bluegreen_product"
+        p.product_family = "level1"
         p.processed_now()
         
-        # Custom metadata fields
-        p.properties['my_field'] = 42
+        # Support for custom metadata fields
+        p.properties['fmask:cloud_shadow'] = 42.0
 
-        # Copy a measurement from an input file (it will write a COG 
-        # and follow the naming conventions)
-        p.write_measurement("red", red_image_path)
-        
-        ...  # Write other measurements, from numpy arrays or other sources.
+        # Write measurements. They can be from numpy arrays, open rasterio datasets,
+        # file paths, ODC Datasets...
+        p.write_measurement("coastal_aerosol", coastal_aerosol_path)
+        ...  # Write more measurements
         
         # Create a jpg thumbnail image using the measurements we've written
-        p.write_thumbnail(red="swir1", green="swir2", blue="blue")
+        p.write_thumbnail(red="swir1", green="swir2", blue="red")
         
         # Validate the dataset and write it to the destination folder atomically.
         p.done()
 ```
 
-The assembler will write a folder of [COGS](https://www.cogeo.org/), EO3 metadata for Open DataCube, and create
- appropriate folder structures. Many other fields are available, see the [recipes](recipes.md) document.
+The assembler will write a folder of [COG](https://www.cogeo.org/) imagery, an [EO3](#open-data-cube-compatibility) metadata 
+doc for Open Data Cube, and create appropriate folder structures. Many other fields are available, see 
+the [recipes](recipes.md). It can also be used for writing a metadata document alone.
 
-Some further examples can be seen in the tests [tests/integration/test_assemble.py](tests/integration/test_assemble.py)
+A further example can be seen in the tests [tests/integration/test_assemble.py](tests/integration/test_assemble.py)
+
+## Open Data Cube compatibility
+
+The assembler writes a format called "eo3", which will be the native metadata format for Open Data Cube
+2.0. We recommend all new products are written with this format, even if targeting Open DataCube 1.
+A tool is available to transparently index them into version-1 Data Cubes (TODO: link. It's currently 
+homeless).
+
+EO3 adds information about the native grid of the data, and aims to be more easily interoperable 
+with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec/tree/master/item-spec).
 
 ## Validator
 
 
-`eo3-validate` a lint-like checker to check ODC metadata.
+`eo3-validate` a lint-like checker to check EO3 metadata.
 
      $ eo3-validate --help
     Usage: eo3-validate [OPTIONS] [PATHS]...
