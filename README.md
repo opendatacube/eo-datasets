@@ -52,7 +52,8 @@ metadata doc for Open Data Cube, and create appropriate file and folder structur
 Many other fields are available, see the [recipes](recipes.md). It can also be used for writing a metadata 
 document alone.
 
-A further example can be seen in the tests [tests/integration/test_assemble.py](tests/integration/test_assemble.py)
+Further examples can be seen in the tests [tests/integration/test_assemble.py](tests/integration/test_assemble.py),
+[L1](eodatasets3/prepare/landsat_l1_prepare.py) or [ARD](eodatasets3/wagl.py) packagers.
 
 ## Open Data Cube compatibility
 
