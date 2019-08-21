@@ -21,8 +21,7 @@ import rasterio
 from affine import Affine
 from boltons.iterutils import get_path, PathAccessError
 from click import secho
-from eodatasets3 import serialise, utils, images
-from eodatasets3.assemble import DatasetAssembler
+from eodatasets3 import serialise, utils, images, DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
 from eodatasets3.serialise import loads_yaml

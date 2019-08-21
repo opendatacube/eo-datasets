@@ -4,7 +4,7 @@ from uuid import UUID
 
 import numpy
 import pytest
-from eodatasets3.assemble import DatasetAssembler
+from eodatasets3 import DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
 from ruamel import yaml
