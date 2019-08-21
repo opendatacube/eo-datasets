@@ -100,18 +100,18 @@ class DatasetAssembler(EoFields):
         Assemble a dataset with ODC metadata.
 
         There are three optional paths that can be specified. At least one must be specified.
-        - A collection path is the root folder where datasets will live in subfolders.
-        - Each dataset has its own location (by default a subfolder of the collection)
-          All metadata paths are calculated relative to this.
-        - A metadata file location. By default, inside the dataset location.
+        - A collection path is the root folder where datasets will live (in sub-[sub]-folders).
+        - Each dataset has its own location, as stored in an Open Data Cube index. All paths inside the metadata
+          are relative to this location.
+        - A location to write the metadata document.
 
         If you're writing data, you typically only need to specify the collection path, and the others will be
          automatically generated using the naming conventions.
 
         If you're only writing a metadata file (for existing data), you only need to specify a metadata path.
 
-        If you're storing using an exotic URI schema, like a 'tar://' URL path, you will need to specify this as
-         your dataset location.
+        If you're storing data using an exotic URI schema, such as a 'tar://' URL path, you will need to specify
+        this as your dataset location.
 
         :param collection_location:
             Optional base directory where the collection of datasets should live. Subfolders will be
@@ -120,16 +120,16 @@ class DatasetAssembler(EoFields):
             Optional location for this specific dataset. Otherwise it will be generated according to the collection
             path and naming conventions.
         :param metadata_path:
-            Optional metadata location for this specific dataset. Otherwise it will be generated according to
-            the collection path and naming conventions.
+            Optional metadata document output path. Otherwise it will be generated according to the collection path
+            and naming conventions.
         :param dataset_id:
             Optional UUID for this dataset, otherwise a random only will be created. Use this if you have a stable
             way of generating your own IDs.
         :param if_exists:
             What to do if the output dataset already exists? By default, throw an error.
         :param allow_absolute_paths:
-            Allow metadata paths to refere to files outside the dataset. this means they will have to be absolute
-             paths, and not portable.
+            Allow metadata paths to refer to files outside the dataset location. this means they will have to be
+            absolute paths, and not be portable. (default: False)
         :param naming_conventions:
             Naming conventions to use. Supports 'default' or 'dea'. The latter has stricter metadata requirements.
         """
