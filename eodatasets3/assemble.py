@@ -9,6 +9,7 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path
+from textwrap import dedent
 from typing import Dict, List, Optional, Tuple, Generator, Any
 
 import eodatasets3
@@ -835,3 +836,35 @@ class DatasetAssembler(EoFields):
         TODO: Perhaps we want to return a real measurement structure here as it's not very extensible.
         """
         return self._measurements.iter_paths()
+
+    def __str__(self):
+        status = "written" if self._is_completed else "unfinished"
+        target = (
+            self._metadata_path or self._dataset_location or self.collection_location
+        )
+        measurements = list(self._measurements.iter_names())
+        properties = list(self.properties.keys())
+
+        product_name = None
+        try:
+            product_name = self.names.product_name
+        except ValueError:
+            ...
+
+        def shorten(l: List, line_length=60):
+            s = ", ".join(sorted(l))
+            if len(s) > line_length:
+                return f"{s[:line_length]}..."
+            return s
+
+        return dedent(
+            f"""
+            Assembling {product_name or ''} ({status})
+            - {len(measurements)} measurements: {shorten(measurements)}
+            - {len(properties)} properties: {shorten(properties)}
+            Writing to {target}
+        """
+        )
+
+    def __repr__(self):
+        return self.__str__()

@@ -17,6 +17,7 @@ import shapely.affinity
 import shapely.ops
 import xarray
 from affine import Affine
+from eodatasets3.model import GridDoc, MeasurementDoc, DatasetDoc, FileFormat
 from rasterio import DatasetReader
 from rasterio.coords import BoundingBox
 from rasterio.crs import CRS
@@ -25,8 +26,6 @@ from rasterio.io import DatasetWriter
 from rasterio.shutil import copy as rio_copy
 from rasterio.warp import reproject, calculate_default_transform
 from shapely.geometry.base import BaseGeometry, CAP_STYLE, JOIN_STYLE
-
-from eodatasets3.model import GridDoc, MeasurementDoc, DatasetDoc, FileFormat
 
 DEFAULT_OVERVIEWS = (8, 16, 32)
 
@@ -336,6 +335,11 @@ class MeasurementRecord:
             geoms.append(geom)
 
         return shapely.ops.unary_union(geoms)
+
+    def iter_names(self):
+        for grid, measurements in self._measurements_per_grid.items():
+            for band_name, path in measurements.items():
+                yield band_name
 
     def iter_paths(self) -> Generator[Tuple[GridSpec, str, Path], None, None]:
         """All current measurement paths on disk"""

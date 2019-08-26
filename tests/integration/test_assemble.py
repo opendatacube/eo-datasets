@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from textwrap import dedent
 from uuid import UUID
 
 import numpy
@@ -187,6 +188,16 @@ def test_minimal_package(tmp_path: Path, l1_ls8_folder: Path):
         p.processed_now()
 
         p.write_measurement("blue", blue_geotiff_path)
+
+        # A friendly __str__ for notebook/terminal users:
+        assert str(p) == dedent(
+            f"""
+            Assembling quaternarius (unfinished)
+            - 1 measurements: blue
+            - 4 properties: datetime, odc:file_format, odc:processing_datetime, odc:prod...
+            Writing to {out}
+        """
+        )
 
         # p.done() will validate the dataset and write it to the destination atomically.
         dataset_id, metadata_path = p.done()
