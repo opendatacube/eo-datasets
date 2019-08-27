@@ -5,7 +5,6 @@ from typing import List, Dict, Tuple
 
 import pytest
 from click.testing import CliRunner, Result
-
 from eodatasets3 import verify
 from eodatasets3.scripts import recompress
 
@@ -123,7 +122,7 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
 
     output_base = tmp_path / "out"
 
-    with expect_path_unchanged(input_path):
+    with ExpectPathUnchanged(input_path):
         _run_recompress(input_path, "--output-base", str(output_base))
 
     expected_output = (
@@ -182,10 +181,10 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
     ####
     # If packaging is rerun, the output should not be touched!
     # ie. skip if output exists.
-    unchanged_output = expect_path_unchanged(
+    unchanged_output = ExpectPathUnchanged(
         expected_output, "Output file shouldn't be touched on rerun of compress"
     )
-    unchanged_input = expect_path_unchanged(
+    unchanged_input = ExpectPathUnchanged(
         input_path, "Input path shouldn't be cleaned when output is skipped"
     )
     with unchanged_input, unchanged_output:
@@ -206,7 +205,7 @@ def test_recompress_dirty_dataset(tmp_path: Path):
 
     output_base = tmp_path / "out"
 
-    with expect_path_unchanged(input_path):
+    with ExpectPathUnchanged(input_path):
         _run_recompress(input_path, "--output-base", str(output_base))
 
     expected_output = (
@@ -372,7 +371,7 @@ def test_calculate_out_path(tmp_path: Path):
     )
 
 
-class expect_path_unchanged:
+class ExpectPathUnchanged:
     """
     Ensure a file/directory was not modified within a block of code.
     """
