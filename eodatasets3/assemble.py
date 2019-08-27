@@ -10,7 +10,7 @@ from copy import deepcopy
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, Optional, Tuple, Generator, Any
+from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable
 
 import eodatasets3
 import numpy
@@ -61,10 +61,6 @@ class DatasetCompletenessWarning(UserWarning):
 
 
 class DatasetAssembler(EoFields):
-    """
-    Assemble an ODC dataset, writing metadata and (optionally) its imagery as COGs.
-    """
-
     # Properties that can be inherited from a source dataset. (when auto_inherit_properties=True)
     INHERITABLE_PROPERTIES = {
         "datetime",
@@ -86,23 +82,21 @@ class DatasetAssembler(EoFields):
     def __init__(
         self,
         collection_location: Optional[Path] = None,
-        # If not specified, automatically generated inside the collection.
         dataset_location: Optional[Location] = None,
         metadata_path: Optional[Path] = None,
-        # Optionally give a fixed dataset id.
         dataset_id: Optional[uuid.UUID] = None,
         # By default, we complain if the output already exists.
-        if_exists=IfExists.ThrowError,
-        allow_absolute_paths=False,
-        naming_conventions="default",
+        if_exists: IfExists = IfExists.ThrowError,
+        allow_absolute_paths: bool = False,
+        naming_conventions: str = "default",
     ) -> None:
-        self.dataset_id = dataset_id or uuid.uuid4()
         """
-        Assemble a dataset with ODC metadata.
+        Assemble a dataset with ODC metadata, writing metadata and (optionally) its imagery as COGs.
 
         There are three optional paths that can be specified. At least one must be specified.
-        - A collection path is the root folder where datasets will live (in sub-[sub]-folders).
-        - Each dataset has its own location, as stored in an Open Data Cube index. All paths inside the metadata
+
+        - A **collection path** is the root folder where datasets will live (in sub-[sub]-folders).
+        - Each dataset has its own :parameter:`dataset location`, as stored in an Open Data Cube index. All paths inside the metadata
           are relative to this location.
         - A location to write the metadata document.
 
@@ -132,8 +126,12 @@ class DatasetAssembler(EoFields):
             Allow metadata paths to refer to files outside the dataset location. this means they will have to be
             absolute paths, and not be portable. (default: False)
         :param naming_conventions:
-            Naming conventions to use. Supports 'default' or 'dea'. The latter has stricter metadata requirements.
+            Naming conventions to use. Supports `default` or `dea`. The latter has stricter metadata requirements
+            (try it and see -- it will tell your what's missing).
         """
+
+        # Optionally give a fixed dataset id.
+        self.dataset_id = dataset_id or uuid.uuid4()
         self._exists_behaviour = if_exists
 
         if not collection_location and not metadata_path:
@@ -215,7 +213,7 @@ class DatasetAssembler(EoFields):
 
         By convention they have no spaces, due to their usage in filenames.
 
-        Eg. 'ga_ls5t_ard_3-0-0_092084_2009-12-17_final' or USGS's 'LT05_L1TP_092084_20091217_20161017_01_T1'
+        Eg. ``ga_ls5t_ard_3-0-0_092084_2009-12-17_final`` or USGS's ``LT05_L1TP_092084_20091217_20161017_01_T1``
 
         A label will be auto-generated using the naming-conventions, but you can manually override it by
         setting this property.
@@ -252,14 +250,14 @@ class DatasetAssembler(EoFields):
         """
         Cancel the package, cleaning up temporary files.
 
-        This works like `close()`, but is intentional, so no warning will
+        This works like :func:`DatasetAssembler.close`, but is intentional, so no warning will
         be raised for forgetting to complete the package first.
         """
         self._is_completed = True
         self.close()
 
     def close(self):
-        """Cleanup any temporary files, even if dataset has not been written"""
+        """Clean up any temporary files, even if dataset has not been written"""
         if not self._is_completed:
             warnings.warn(
                 "Closing assembler without finishing. "
@@ -279,7 +277,9 @@ class DatasetAssembler(EoFields):
         """
         Record a source dataset using the path to its metadata document.
 
-        See :func:`DatasetAssembler.foo` for parameters
+        :param paths:
+
+        Same parameters as :func:`DatasetAssembler.add_source_dataset`
         """
         for _, doc in find_and_read_documents(*paths):
             # Newer documents declare a schema.
@@ -317,6 +317,7 @@ class DatasetAssembler(EoFields):
 
         (see self.INHERITABLE_PROPERTIES for the list of fields that are inheritable)
 
+        :param dataset:
         :param auto_inherit_properties: Whether to copy any common properties from the dataset
 
         :param classifier: How to classify the kind of source dataset. This is will automatically
@@ -327,7 +328,7 @@ class DatasetAssembler(EoFields):
                            that was used for QA (but is not this same scene).
 
 
-        See add_source_path() if you have a filepath reference instead of a document.
+        See :func:`add_source_path` if you have a filepath reference instead of a document.
 
         """
 
@@ -366,15 +367,24 @@ class DatasetAssembler(EoFields):
         self,
         name: str,
         path: Location,
-        overviews=images.DEFAULT_OVERVIEWS,
-        overview_resampling=Resampling.average,
-        expand_valid_data=True,
+        overviews: Iterable[int] = images.DEFAULT_OVERVIEWS,
+        overview_resampling: Resampling = Resampling.average,
+        expand_valid_data: bool = True,
         file_id: str = None,
     ):
         """
         Write a measurement by copying it from a file path.
 
         Assumes the file is gdal-readable.
+
+        :param name: Identifier for the measurement eg ``'blue'``.
+        :param path:
+        :param overviews: Set of overview sizes to write
+        :param overview_resampling: rasterio Resampling method to use
+        :param expand_valid_data: Include this measurement in the valid-data geometry of the metadata.
+        :param file_id: Optionally, how to identify this in the filename instead of using the name.
+                        (DEA has measurements called ``blue``, but their written filenames must be ``band04`` by
+                        convention.)
         """
         with rasterio.open(path) as ds:
             self.write_measurement_rio(
@@ -397,6 +407,10 @@ class DatasetAssembler(EoFields):
     ):
         """
         Write a measurement by reading it an open rasterio dataset
+
+        :param ds: An open rasterio dataset
+
+        See :func:`write_measurement` for other parameters.
         """
         if len(ds.indexes) != 1:
             raise NotImplementedError(
@@ -433,7 +447,8 @@ class DatasetAssembler(EoFields):
         The most common case is to copy the grid spec from your input dataset,
         assuming you haven't reprojected.
 
-        eg.
+        example::
+
             p.write_measurement_numpy(
                 "blue",
                 new_array,
@@ -441,6 +456,7 @@ class DatasetAssembler(EoFields):
                 nodata=-999,
             )
 
+        See :func:`write_measurement` for other parameters.
         """
         self._write_measurement(
             name,
@@ -470,6 +486,10 @@ class DatasetAssembler(EoFields):
         The main requirement is that the Dataset contains a CRS attribute
         and X/Y or lat/long dimensions and coordinates. These are used to
         create an ODC GeoBox.
+
+        :param Dataset: an xarray dataset (as returned by ``dc.load()`` and other methods)
+
+        See :func:`write_measurement` for other parameters.
         """
         grid_spec = images.GridSpec.from_odc_xarray(dataset)
         for name, dataarray in dataset.data_vars.items():
@@ -564,19 +584,23 @@ class DatasetAssembler(EoFields):
                 expand_valid_data=expand_valid_data,
             )
 
-    def extend_user_metadata(self, section: str, d: Dict):
+    def extend_user_metadata(self, section_name: str, doc: Dict[str, Any]):
         """
         Record extra metadata from the processing of the dataset.
 
-        It can be any document structure suitable for yaml/json serialisation that you want,
-        and will be written into the sidecar "proc-info" metadata.
+        It can be any document suitable for yaml/json serialisation, and will be written into
+        the sidecar "proc-info" metadata.
 
-        The section name should be unique, and identify the kind of document, eg 'brdf_ancillary'.
+        This is typically used for recording processing parameters or environment information.
+
+        :param section_name: Should be unique to your product, and identify the kind of document,
+                             eg 'brdf_ancillary'
+        :param doc: Document
         """
-        if section in self._user_metadata:
-            raise ValueError(f"metadata section {section} already exists")
+        if section_name in self._user_metadata:
+            raise ValueError(f"metadata section {section_name} already exists")
 
-        self._user_metadata[section] = deepcopy(d)
+        self._user_metadata[section_name] = deepcopy(doc)
 
     def note_software_version(self, name: str, url: str, version: str):
         """
@@ -600,7 +624,7 @@ class DatasetAssembler(EoFields):
         self._software_versions.append(dict(name=name, url=url, version=version))
 
     def done(
-        self, validate_correctness=True, sort_bands=True
+        self, validate_correctness: bool = True, sort_measurements: bool = True
     ) -> Tuple[uuid.UUID, Path]:
         """
         Write the dataset and move it into place.
@@ -611,9 +635,11 @@ class DatasetAssembler(EoFields):
         The final move is done atomically, so the dataset will only exist in the output
         location if it is complete.
 
-        IncompleteDatasetError is raised if any critical metadata is incomplete.
+        :param validate_correctness: Run the eo3-validator on the resulting metadata.
+        :param sort_measurements: Order measurements alphabetically. (instead of insert-order)
+        :raises: :class:`IncompleteDatasetError` If any critical metadata is incomplete.
 
-        Returns the id and final path to the dataset metadata file.
+        :returns: The id and final path to the dataset metadata file.
         """
         self.note_software_version(
             "eodatasets3",
@@ -623,7 +649,7 @@ class DatasetAssembler(EoFields):
 
         crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
 
-        if measurement_docs and sort_bands:
+        if measurement_docs and sort_measurements:
             measurement_docs = dict(sorted(measurement_docs.items()))
 
         valid_data = self._measurements.consume_and_get_valid_data()
@@ -805,9 +831,8 @@ class DatasetAssembler(EoFields):
 
     def add_accessory_file(self, name: str, path: Path):
         """
-        Add a reference to a file that is not an ODC measurement.
-
-        Such as native metadata, thumbanils, checksums, etc.
+        Record a reference to an additional file. Such as native metadata, thumbnails,
+        checksums, etc. Anything other than ODC measurements.
 
         By convention, the name should have prefixes with their category, such as
         'metadata:' or 'thumbnail:'
@@ -831,6 +856,9 @@ class DatasetAssembler(EoFields):
         self
     ) -> Generator[Tuple[GridSpec, str, Path], None, None]:
         """
+
+        *not recommended* - will likely change soon.
+
         Iterate through the list of measurement names that have been written, and their current (temporary) paths.
 
         TODO: Perhaps we want to return a real measurement structure here as it's not very extensible.
