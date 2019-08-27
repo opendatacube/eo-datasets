@@ -22,6 +22,7 @@ tests_require = [
     "pep8-naming",
     "pytest",
     "pytest-flake8",
+    "pytest-cov",
     "python-rapidjson",
     "rio_cogeo",
     "sphinx-autodoc-typehints",
