@@ -4,12 +4,10 @@
 set -eu
 set -x
 
-shopt -s globstar
-
-flake8 -j 2 ./**/*.py
-black --check ./**/*.py
+flake8 -j 2 .
+black --check .
 
 # Run tests, taking coverage.
 # Users can specify extra folders as arguments.
-pytest --cov eodatasets3 --durations=5 ./**/*.py $@
+pytest --cov eodatasets3 --durations=5 . $@
 
