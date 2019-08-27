@@ -93,15 +93,15 @@ class DatasetAssembler(EoFields):
         """
         Assemble a dataset with ODC metadata, writing metadata and (optionally) its imagery as COGs.
 
-        There are three optional paths that can be specified. At least one must be specified.
+        There are three optional paths that can be specified. At least one must be.
 
-        - A **collection path** is the root folder where datasets will live (in sub-[sub]-folders).
-        - Each dataset has its own :parameter:`dataset location`, as stored in an Open Data Cube index. All paths inside the metadata
-          are relative to this location.
-        - A location to write the metadata document.
+        - A *collection path* is the root folder where datasets will live (in sub-[sub]-folders).
+        - Each dataset has its own *dataset location*, as stored in an Open Data Cube index.
+          All paths inside the metadata are relative to this location.
+        - An output metadata document location.
 
-        If you're writing data, you typically only need to specify the collection path, and the others will be
-         automatically generated using the naming conventions.
+        If you're writing data, you typically only need to specify the collection path, and the others
+        will be automatically generated using the naming conventions.
 
         If you're only writing a metadata file (for existing data), you only need to specify a metadata path.
 
@@ -279,7 +279,7 @@ class DatasetAssembler(EoFields):
 
         :param paths:
 
-        Same parameters as :func:`DatasetAssembler.add_source_dataset`
+        See other parameters in :func:`DatasetAssembler.add_source_dataset`
         """
         for _, doc in find_and_read_documents(*paths):
             # Newer documents declare a schema.
@@ -447,7 +447,7 @@ class DatasetAssembler(EoFields):
         The most common case is to copy the grid spec from your input dataset,
         assuming you haven't reprojected.
 
-        example::
+        Example::
 
             p.write_measurement_numpy(
                 "blue",
@@ -457,6 +457,10 @@ class DatasetAssembler(EoFields):
             )
 
         See :func:`write_measurement` for other parameters.
+
+        :param array:
+        :param grid_spec:
+        :param nodata:
         """
         self._write_measurement(
             name,
@@ -487,7 +491,7 @@ class DatasetAssembler(EoFields):
         and X/Y or lat/long dimensions and coordinates. These are used to
         create an ODC GeoBox.
 
-        :param Dataset: an xarray dataset (as returned by ``dc.load()`` and other methods)
+        :param dataset: an xarray dataset (as returned by ``dc.load()`` and other methods)
 
         See :func:`write_measurement` for other parameters.
         """
@@ -560,6 +564,11 @@ class DatasetAssembler(EoFields):
         Reference a measurement from its existing file path.
 
         (no data is copied, but Geo information is read from it.)
+
+        :param name:
+        :param path:
+        :param expand_valid_data:
+        :param relative_to_dataset_location:
         """
         read_location = path
         if relative_to_dataset_location:
@@ -773,7 +782,7 @@ class DatasetAssembler(EoFields):
         resampling: Resampling = Resampling.average,
         static_stretch: Tuple[int, int] = None,
         percentile_stretch: Tuple[int, int] = (2, 98),
-        scale_factor=10,
+        scale_factor: int = 10,
         kind: str = None,
     ):
         """
@@ -781,14 +790,21 @@ class DatasetAssembler(EoFields):
 
         (the measurements must already have been written.)
 
-        If you have multiple thumbnails, you can specify the 'kind' to distinguish
-        them (it will be put in the filename).
-
-        Eg. GA's ARD has thumbnails of kind 'nbar' and 'nbart'.
-
         A linear stretch is performed on the colour. By default this is a dynamic 2% stretch
         (the 2% and 98% percentile values of the input). The static_stretch parameter will
         override this with a static range of values.
+
+
+        :param red: Name of measurement to put in red band
+        :param green: Name of measurement to put in green band
+        :param blue: Name of measurement to put in blue band
+        :param kind: If you have multiple thumbnails, you can specify the 'kind' name to distinguish
+                     them (it will be put in the filename).
+                     Eg. GA's ARD has two thumbnails, one of kind ``nbar`` and one of ``nbart``.
+        :param scale_factor: How many multiples smaller to make the thumbnail.
+        :param percentile_stretch: Upper/lower percentiles to stretch by
+        :param resampling: rasterio :class:`rasterio.enums.Resampling` method to use.
+        :param static_stretch: Use a static upper/lower value to stretch by instead of dynamic stretch.
         """
         thumb_path = self.names.thumbnail_name(self._work_path, kind=kind)
         measurements = dict(
@@ -836,6 +852,9 @@ class DatasetAssembler(EoFields):
 
         By convention, the name should have prefixes with their category, such as
         'metadata:' or 'thumbnail:'
+
+        :param name: identifying name, eg 'metadata:mtl'
+        :param path: local path to file.
         """
         existing_path = self._accessories.get(name)
         if existing_path is not None and existing_path != path:
