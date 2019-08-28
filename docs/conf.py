@@ -14,7 +14,6 @@ copyright = "2019, Geoscience Australia"
 author = "Geoscience Australia"
 
 # Show __init__ docstring as the class docstring.
-autoclass_content = "both"
 autosummary_generate = True
 
 extensions = [
