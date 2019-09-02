@@ -2,10 +2,11 @@ import enum
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Union
 
 import ciso8601
 import click
+import fsspec
 
 
 class ItemProvider(enum.Enum):
@@ -46,7 +47,7 @@ def read_paths_from_file(listing: Path) -> Iterable[Path]:
     """
     A generator that yields path from a file; paths encoded one per line
     """
-    with listing.open("r") as f:
+    with open_url_or_path(listing, "r") as f:
         for loc in f.readlines():
             path = Path(loc.strip())
             if not path.exists():
@@ -121,3 +122,7 @@ def get_collection_number(producer: str, usgs_collection_number: int) -> int:
     raise NotImplementedError(
         f"Unsupported collection number mapping for org: {producer!r}"
     )
+
+
+def open_url_or_path(url_or_path: Union[Path, str], mode: str = "rb"):
+    return fsspec.open(str(url_or_path), mode)

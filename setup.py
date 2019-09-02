@@ -24,7 +24,7 @@ tests_require = [
     "pytest-flake8",
     "pytest-cov",
     "python-rapidjson",
-    "rio_cogeo",
+    "rio-cogeo",
     "sphinx-autodoc-typehints",
     "sphinx_rtd_theme",
 ]
@@ -63,6 +63,7 @@ setup(
         "cattrs",
         "ciso8601",
         "click",
+        "fsspec",
         "jsonschema>=3",  # We want a Draft6Validator
         "numpy",
         "pyproj",

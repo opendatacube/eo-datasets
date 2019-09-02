@@ -4,11 +4,12 @@ from __future__ import absolute_import
 import binascii
 import hashlib
 import logging
+from distutils import spawn
 
 import typing
-
-from distutils import spawn
 from pathlib import Path
+
+from eodatasets3.utils import open_url_or_path
 
 _LOG = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ def calculate_file_hash(filename, hash_fn=hashlib.sha1, block_size=4096):
     :return: String of hex characters.
     :rtype: str
     """
-    with Path(filename).open("rb") as f:
+    with open_url_or_path(filename, "rb") as f:
         return calculate_hash(f, hash_fn, block_size)
 
 
@@ -70,7 +71,7 @@ def calculate_file_crc32(filename, block_size=1024 * 16):
     :rtype: str
     """
     m = 0
-    with Path(filename).open("rb") as f:
+    with open_url_or_path(filename, "rb") as f:
         while True:
             d = f.read(block_size)
             if not d:
@@ -133,12 +134,11 @@ class PackageChecksum(object):
         Write checksums to the given file.
         :type output_file: Path or str
         """
-        output_file = Path(output_file)
-        with output_file.open("wb") as f:
+        with open_url_or_path(output_file, "wb") as f:
             f.writelines(
                 (
                     "{0}\t{1}\n".format(
-                        str(hash_), str(filename.relative_to(output_file.parent))
+                        str(hash_), str(filename.relative_to(Path(output_file).parent))
                     ).encode("utf-8")
                     for filename, hash_ in sorted(self._file_hashes.items())
                 )
@@ -150,7 +150,7 @@ class PackageChecksum(object):
         :type checksum_path: Path or str
         """
         checksum_path = Path(checksum_path)
-        with checksum_path.open("r") as f:
+        with open_url_or_path(checksum_path, "r") as f:
             for line in f.readlines():
                 hash_, path = str(line).strip().split("\t")
                 self._append_hash(
