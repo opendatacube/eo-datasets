@@ -27,6 +27,7 @@ tests_require = [
     "rio-cogeo",
     "sphinx-autodoc-typehints",
     "sphinx_rtd_theme",
+    "moto",
 ]
 
 EXTRAS_REQUIRE = {
