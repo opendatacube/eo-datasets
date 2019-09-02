@@ -7,7 +7,6 @@ from typing import Tuple, Dict, List, Sequence, Optional, Iterable
 from typing import Union, Generator
 
 import attr
-import h5py
 import numpy
 import numpy as np
 import rasterio
@@ -28,6 +27,11 @@ from rasterio.warp import reproject, calculate_default_transform
 from shapely.geometry.base import BaseGeometry, CAP_STYLE, JOIN_STYLE
 
 DEFAULT_OVERVIEWS = (8, 16, 32)
+
+try:
+    import h5py
+except ImportError:
+    h5py = None
 
 
 @attr.s(auto_attribs=True, slots=True, hash=True, frozen=True)
@@ -508,7 +512,7 @@ class FileWrite:
         if nodata is not None:
             rio_args["nodata"] = nodata
 
-        if isinstance(array, h5py.Dataset):
+        if h5py is not None and isinstance(array, h5py.Dataset):
             # TODO: if array is 3D get x & y chunks
             if array.chunks[1] == array.shape[1]:
                 # GDAL doesn't like tiled or blocksize options to be set
