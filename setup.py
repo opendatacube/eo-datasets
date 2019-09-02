@@ -28,6 +28,7 @@ tests_require = [
     "sphinx-autodoc-typehints",
     "sphinx_rtd_theme",
     "moto",
+    "s3fs",
 ]
 
 EXTRAS_REQUIRE = {

@@ -311,7 +311,7 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
 
 
 @pytest.fixture
-def tmp_output_url():
+def tmp_s3_url_dest():
     from moto import mock_s3
     import boto3
 
@@ -321,12 +321,12 @@ def tmp_output_url():
         yield SimpleUrl("s3://mybucket/basepath")
 
 
-def test_remote_package(tmp_output_url: SimpleUrl, l1_ls8_folder: Path):
+def test_remote_package(tmp_s3_url_dest, l1_ls8_folder: Path):
     """
     What's the minimum number of fields we can set and still produce a package?
     """
 
-    out = tmp_output_url / "out"
+    out = tmp_s3_url_dest / "out"
     out.mkdir()
 
     [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
