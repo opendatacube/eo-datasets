@@ -121,7 +121,9 @@ def get_band_alias_mappings(sat: str, instrument: str) -> Dict[str, str]:
     )
 
 
-def get_mtl_content(acquisition_path: Path) -> Tuple[Dict, str]:
+def get_mtl_content(
+    acquisition_path: Path, root_element="l1_metadata_file"
+) -> Tuple[Dict, str]:
     """
     Find MTL file for the given path. It could be a directory or a tar file.
 
@@ -164,10 +166,10 @@ def get_mtl_content(acquisition_path: Path) -> Tuple[Dict, str]:
             )
         [path] = paths
         with path.open("r") as fp:
-            return read_mtl(fp), path.name
+            return read_mtl(fp, root_element), path.name
 
 
-def read_mtl(fp: Iterable[Union[str, bytes]]) -> Dict:
+def read_mtl(fp: Iterable[Union[str, bytes]], root_element="l1_metadata_file") -> Dict:
     def _parse_value(s: str) -> Union[int, float, str]:
         """
         >>> _parse_value("asdf")
@@ -207,7 +209,8 @@ def read_mtl(fp: Iterable[Union[str, bytes]]) -> Dict:
                     tree[key_transform(key)] = _parse_value(value)
         return tree
 
-    return _parse_group(fp)["l1_metadata_file"]
+    tree = _parse_group(fp)
+    return tree[root_element]
 
 
 def _iter_bands_paths(mtl_doc: Dict) -> Generator[Tuple[str, str], None, None]:
