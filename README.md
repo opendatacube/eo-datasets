@@ -10,6 +10,7 @@ https://coveralls.io/repos/GeoscienceAustralia/eo-datasets/badge.svg?branch=eoda
 A tool to easily write, validate and convert [ODC](https://github.com/opendatacube/datacube-core) 
 datasets and metadata.
 
+
 ## Installation
 
     pip install eodatasets3
@@ -49,8 +50,8 @@ The assembler api aims to make it easy to write datasets.
 
 The assembler will write a folder of [COG](https://www.cogeo.org/) imagery, an [eo3](#open-data-cube-compatibility) 
 metadata doc for Open Data Cube, and create appropriate file and folder structures for the chosen naming conventions. 
-Many other fields are available, see the [recipes](recipes.md). It can also be used for writing a metadata 
-document alone.
+
+Many other fields are available, see [the docs](https://eodatasets.readthedocs.io/en/latest/).
 
 Further examples can be seen in the tests [tests/integration/test_assemble.py](tests/integration/test_assemble.py),
 [L1](eodatasets3/prepare/landsat_l1_prepare.py) or [ARD](eodatasets3/wagl.py) packagers.
