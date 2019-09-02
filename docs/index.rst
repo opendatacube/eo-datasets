@@ -37,13 +37,13 @@ Here's a simple example of creating a dataset with one measurement (called "blue
       p.done()
 
 Note that until you call `done()`, nothing will exist in the dataset's final output location. It is stored in a hidden temporary
-folder in the output, and renamed by `done()` if complete and valid.
+folder in the output directory, and renamed by `done()` once complete and valid.
 
 Custom stac-like properties can also be set directly on ``.properties``::
 
-      p['fmask:cloud_cover'] = 34.0
+      p.properties['fmask:cloud_cover'] = 34.0
 
-Any known properties are automatically normalised::
+And known properties are automatically normalised::
 
       p.platform = "LANDSAT_8"  # to: 'landsat-8'
       p.processed = "2016-03-04 14:23:30Z"  # into a date.
@@ -53,9 +53,9 @@ Any known properties are automatically normalised::
 
 Including provenance
 ====================
-Most of the time our datasets are processed from an existing (input) dataset and
-have the same spatial information. We can add them as source datasets, to record the provenance, and the
-assembler can optionally copy any common metadata automatically::
+Most of our datasets are processed from an existing (input) dataset and
+have the same spatial information. We can add them as source datasets, to record
+the provenance, and the assembler can optionally copy any common metadata automatically::
 
    collection = Path('/some/output/collection/path')
    with DatasetAssembler(collection) as p:
@@ -69,7 +69,9 @@ assembler can optionally copy any common metadata automatically::
       p.product_family = "blues"
       p.dataset_version = "3.0.0"
 
-We can write our new pixels as a numpy array, inheriting the existing grid spatial information (*gridspec*)
+      ...
+
+In these situations, we often write our new pixels as a numpy array, inheriting the existing grid spatial information (*gridspec*)
 from our input dataset::
 
       # Write a measurement from a numpy array, using the source dataset's grid spec.
@@ -83,10 +85,13 @@ from our input dataset::
 Writing only metadata
 =====================
 
-The above examples copy the imagery, converting them to valid COG imagery. But sometimes you
-don't want to touch your imagery, you only want metadata. We can use :meth:`eodatasets3.DatasetAsssembler.note_measurement`
-instead of :meth:`eodatasets3.DatasetAsssembler.write_measurement`
-to refer to the image at it's current path::
+The above examples copy the imagery, converting them to valid COG_ files in a new location. But sometimes you
+want to leave the imagery as-is and just generate a metadata file for Open Data Cube. We can
+do this by using :meth:`eodatasets3.DatasetAsssembler.note_measurement`
+instead of :meth:`eodatasets3.DatasetAsssembler.write_measurement`, to note the path
+of the current image::
+
+
 
     usgs_level1 = Path('datasets/LC08_L1TP_090084_20160121_20170405_01_T1')
 
@@ -108,11 +113,13 @@ to refer to the image at it's current path::
          relative_to_dataset_location=True
       )
 
-Note that the assembler will throw an error if any measurements live outside
-the dataset location, as they will have to be recorded as absolute rather
-than relative paths. (Relative paths are considered best-practice for Open Data Cube.)
+      ...
 
-You can allow absolute paths with a field on :meth:`eodatasets3.DatasetAssembler.__init__`::
+Note that the assembler will throw an error if the path lives outside
+the dataset (location), as they will be absolute rather than relative paths.
+Relative paths are considered best-practice for Open Data Cube.
+
+You can allow absolute paths with a field on assembler construction :meth:`eodatasets3.DatasetAssembler.__init__`::
 
    with DatasetAssembler(
       dataset_location=usgs_level1,
@@ -120,6 +127,7 @@ You can allow absolute paths with a field on :meth:`eodatasets3.DatasetAssembler
     ):
         ...
 
+.. _COG: https://www.cogeo.org/
 
 API / Class
 ===========
