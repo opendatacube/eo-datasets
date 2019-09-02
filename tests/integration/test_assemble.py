@@ -16,7 +16,7 @@ from tests.integration.common import assert_same_as_file
 
 
 def test_dea_style_package(
-        l1_ls8_dataset: DatasetDoc, l1_ls8_dataset_path: Path, tmp_path: Path
+    l1_ls8_dataset: DatasetDoc, l1_ls8_dataset_path: Path, tmp_path: Path
 ):
     out = tmp_path
 
@@ -273,7 +273,7 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
 
     # Default simple naming conventions need at least a date and family...
     with pytest.raises(
-            ValueError, match="Need more properties to fulfill naming conventions."
+        ValueError, match="Need more properties to fulfill naming conventions."
     ):
         with DatasetAssembler(out) as p:
             p.write_measurement("blue", blue_geotiff_path)
@@ -347,9 +347,10 @@ def test_remote_package(tmp_output_url: SimpleUrl, l1_ls8_folder: Path):
 
     fs = fsspec.filesystem("s3")
     mapper = fs.get_mapper(out)
+
     assert list(mapper.keys()) == [
-        "quaternarius/2019/07/04/quaternarius_beta_x_2019-07-04_user.odc-metadata.yaml",
-        "quaternarius/2019/07/04/quaternarius_beta_x_2019-07-04_user.proc-info.yaml",
-        "quaternarius/2019/07/04/quaternarius_beta_x_2019-07-04_user.sha1",
-        "quaternarius/2019/07/04/quaternarius_beta_x_2019-07-04_user_blue.tif",
+        "quaternarius/2019/07/04/quaternarius_2019-07-04.odc-metadata.yaml",
+        "quaternarius/2019/07/04/quaternarius_2019-07-04.proc-info.yaml",
+        "quaternarius/2019/07/04/quaternarius_2019-07-04.sha1",
+        "quaternarius/2019/07/04/quaternarius_2019-07-04_blue.tif",
     ]

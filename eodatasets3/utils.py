@@ -1,11 +1,11 @@
 import enum
 import os
+from urllib.parse import urlparse
 
 import ciso8601
 import click
 import fsspec
-from datetime import datetime
-from dateutil import tz
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Tuple, Union
 
@@ -84,7 +84,7 @@ def subfolderise(code: str) -> Tuple[str, ...]:
     ('12',)
     """
     if len(code) > 2:
-        return (code[: len(code) // 2], code[len(code) // 2:])
+        return (code[: len(code) // 2], code[len(code) // 2 :])
     return (code,)
 
 
@@ -159,7 +159,7 @@ class SimpleUrl(str):
 
 
 def is_url(maybe_url):
-    return "://" in maybe_url
+    return "://" in str(maybe_url)
 
 
 def upload_directory(src: Path, dest: SimpleUrl):

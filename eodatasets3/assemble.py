@@ -194,9 +194,7 @@ class DatasetAssembler(EoFields):
 
             if is_url(self.collection_location):
                 # Use a local temporary directory, and upload later
-                self._tmp_work_path = Path(
-                    tempfile.mkdtemp(prefix=".odcdataset-")
-                )
+                self._tmp_work_path = Path(tempfile.mkdtemp(prefix=".odcdataset-"))
             else:
                 self._tmp_work_path = Path(
                     tempfile.mkdtemp(
@@ -750,8 +748,8 @@ class DatasetAssembler(EoFields):
             # Now atomically move to final location.
             # Someone else may have created the output while we were working.
             # Try, and then decide how to handle it if so.
-            if is_url(self.destination_folder):
-                upload_directory(self._work_path, self.destination_folder)
+            if is_url(self._dataset_location):
+                upload_directory(self._work_path, self._dataset_location)
                 shutil.rmtree(self._work_path)
             else:
                 try:
