@@ -760,19 +760,21 @@ class DatasetAssembler(EoFields):
                         # Some other error?
                         raise
 
-                if self._exists_behaviour == IfExists.Skip:
-                    # Something else created it while we were busy.
-                    warnings.warn(
-                        f"Skipping -- exists: {self.names.destination_folder}"
-                    )
-                elif self._exists_behaviour == IfExists.ThrowError:
-                    raise
-                elif self._exists_behaviour == IfExists.Overwrite:
-                    raise NotImplementedError("overwriting outputs not yet implemented")
-                else:
-                    raise RuntimeError(
-                        f"Unexpected exists behaviour: {self._exists_behaviour}"
-                    )
+                    if self._exists_behaviour == IfExists.Skip:
+                        # Something else created it while we were busy.
+                        warnings.warn(
+                            f"Skipping -- exists: {self.names.destination_folder}"
+                        )
+                    elif self._exists_behaviour == IfExists.ThrowError:
+                        raise
+                    elif self._exists_behaviour == IfExists.Overwrite:
+                        raise NotImplementedError(
+                            "overwriting outputs not yet implemented"
+                        )
+                    else:
+                        raise RuntimeError(
+                            f"Unexpected exists behaviour: {self._exists_behaviour}"
+                        )
 
         target_metadata_path = self._metadata_path or self.names.metadata_path(
             self._dataset_location, suffix="odc-metadata.yaml"
