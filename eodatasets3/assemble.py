@@ -27,6 +27,7 @@ from eodatasets3.model import (
     Location,
 )
 from eodatasets3.properties import EoFields
+from eodatasets3.utils import is_url, upload_directory
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
 from rasterio import DatasetReader
@@ -191,11 +192,17 @@ class DatasetAssembler(EoFields):
                     "Dataset assembler was given no base path on construction: cannot write new files."
                 )
 
-            self._tmp_work_path = Path(
-                tempfile.mkdtemp(
-                    prefix=".odcdataset-", dir=str(self.collection_location)
+            if is_url(self.collection_location):
+                # Use a local temporary directory, and upload later
+                self._tmp_work_path = Path(
+                    tempfile.mkdtemp(prefix=".odcdataset-")
                 )
-            )
+            else:
+                self._tmp_work_path = Path(
+                    tempfile.mkdtemp(
+                        prefix=".odcdataset-", dir=str(self.collection_location)
+                    )
+                )
 
         return self._tmp_work_path
 
@@ -725,7 +732,8 @@ class DatasetAssembler(EoFields):
 
             # Match the lower r/w permission bits to the output folder.
             # (Temp directories default to 700 otherwise.)
-            self._work_path.chmod(self.collection_location.stat().st_mode & 0o777)
+            if not is_url(self.collection_location):
+                self._work_path.chmod(self.collection_location.stat().st_mode & 0o777)
 
             # GDAL writes extra metadata in aux files,
             # but we consider it a mistake if you're using those extensions.
@@ -742,13 +750,17 @@ class DatasetAssembler(EoFields):
             # Now atomically move to final location.
             # Someone else may have created the output while we were working.
             # Try, and then decide how to handle it if so.
-            try:
-                self._dataset_location.parent.mkdir(parents=True, exist_ok=True)
-                self._work_path.rename(self._dataset_location)
-            except OSError:
-                if not self._dataset_location.exists():
-                    # Some other error?
-                    raise
+            if is_url(self.destination_folder):
+                upload_directory(self._work_path, self.destination_folder)
+                shutil.rmtree(self._work_path)
+            else:
+                try:
+                    self._dataset_location.parent.mkdir(parents=True, exist_ok=True)
+                    self._work_path.rename(self._dataset_location)
+                except OSError:
+                    if not self._dataset_location.exists():
+                        # Some other error?
+                        raise
 
                 if self._exists_behaviour == IfExists.Skip:
                     # Something else created it while we were busy.

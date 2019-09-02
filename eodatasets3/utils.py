@@ -1,12 +1,13 @@
 import enum
 import os
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Iterable, Tuple, Union
 
 import ciso8601
 import click
 import fsspec
+from datetime import datetime
+from dateutil import tz
+from pathlib import Path
+from typing import Iterable, Tuple, Union
 
 
 class ItemProvider(enum.Enum):
@@ -83,7 +84,7 @@ def subfolderise(code: str) -> Tuple[str, ...]:
     ('12',)
     """
     if len(code) > 2:
-        return (code[: len(code) // 2], code[len(code) // 2 :])
+        return (code[: len(code) // 2], code[len(code) // 2:])
     return (code,)
 
 
@@ -126,3 +127,43 @@ def get_collection_number(producer: str, usgs_collection_number: int) -> int:
 
 def open_url_or_path(url_or_path: Union[Path, str], mode: str = "rb"):
     return fsspec.open(str(url_or_path), mode)
+
+
+class SimpleUrl(str):
+    """Obscenely simple wrapper to try and support joining URL strings the same way as Pathlib paths"""
+
+    def __truediv__(self, other):
+        base = self
+        # I don't want to write this, but urllib.parse.urljoin doesn't support s3://
+        if not base.endswith("/"):
+            base += "/"
+        if other.startswith("/"):
+            other = other[1:]
+        return SimpleUrl(base + other)
+
+    @property
+    def parent(self):
+        return SimpleUrl(self[: self.rindex("/")])
+
+    def absolute(self):
+        return self
+
+    def mkdir(self):
+        pass
+
+    def exists(self):
+        return True
+
+    def joinpath(self, *parts):
+        return self / "/".join(parts)
+
+
+def is_url(maybe_url):
+    return "://" in maybe_url
+
+
+def upload_directory(src: Path, dest: SimpleUrl):
+    url = urlparse(dest)
+    fs = fsspec.filesystem(url.scheme)
+    with fs.transaction:
+        fs.put(str(src), dest, recursive=True)

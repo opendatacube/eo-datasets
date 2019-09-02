@@ -1,21 +1,22 @@
-from datetime import datetime
-from pathlib import Path
 from textwrap import dedent
-from uuid import UUID
 
 import numpy
 import pytest
+from datetime import datetime
+from pathlib import Path
+from ruamel import yaml
+from uuid import UUID
+
 from eodatasets3 import DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
-from ruamel import yaml
-from tests.integration.common import assert_same_as_file
-
+from eodatasets3.utils import SimpleUrl
 from tests import assert_file_structure
+from tests.integration.common import assert_same_as_file
 
 
 def test_dea_style_package(
-    l1_ls8_dataset: DatasetDoc, l1_ls8_dataset_path: Path, tmp_path: Path
+        l1_ls8_dataset: DatasetDoc, l1_ls8_dataset_path: Path, tmp_path: Path
 ):
     out = tmp_path
 
@@ -272,7 +273,7 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
 
     # Default simple naming conventions need at least a date and family...
     with pytest.raises(
-        ValueError, match="Need more properties to fulfill naming conventions."
+            ValueError, match="Need more properties to fulfill naming conventions."
     ):
         with DatasetAssembler(out) as p:
             p.write_measurement("blue", blue_geotiff_path)
@@ -307,3 +308,48 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
                 f"Expected field {needed_field_name} to "
                 f"be listed as mandatory in the error message"
             )
+
+
+@pytest.fixture
+def tmp_output_url():
+    from moto import mock_s3
+    import boto3
+
+    with mock_s3():
+        conn = boto3.resource("s3", region_name="us-east-1")
+        conn.create_bucket(Bucket="mybucket")
+        yield SimpleUrl("s3://mybucket/basepath")
+
+
+def test_remote_package(tmp_output_url: SimpleUrl, l1_ls8_folder: Path):
+    """
+    What's the minimum number of fields we can set and still produce a package?
+    """
+
+    out = tmp_output_url / "out"
+    out.mkdir()
+
+    [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
+
+    with DatasetAssembler(out) as p:
+        p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+        p.product_family = "quaternarius"
+        p.processed_now()
+
+        p.write_measurement("blue", blue_geotiff_path)
+
+        # p.done() will validate the dataset and write it to the destination atomically.
+        dataset_id, metadata_path = p.done()
+
+    assert dataset_id is not None
+
+    import fsspec
+
+    fs = fsspec.filesystem("s3")
+    mapper = fs.get_mapper(out)
+    assert list(mapper.keys()) == [
+        "quaternarius/2019/07/04/quaternarius_beta_x_2019-07-04_user.odc-metadata.yaml",
+        "quaternarius/2019/07/04/quaternarius_beta_x_2019-07-04_user.proc-info.yaml",
+        "quaternarius/2019/07/04/quaternarius_beta_x_2019-07-04_user.sha1",
+        "quaternarius/2019/07/04/quaternarius_beta_x_2019-07-04_user_blue.tif",
+    ]
