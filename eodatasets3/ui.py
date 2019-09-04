@@ -1,11 +1,14 @@
 import os
 import urllib.parse
-from pathlib import Path
-from typing import Optional, Union
 from urllib.parse import urljoin
 from urllib.parse import urlparse
 
 import click
+from click import ParamType
+from pathlib import Path
+from typing import Optional, Union
+
+from eodatasets3.utils import SimpleUrl
 
 
 class PathPath(click.Path):
@@ -13,6 +16,16 @@ class PathPath(click.Path):
 
     def convert(self, value, param, ctx):
         return Path(super().convert(value, param, ctx))
+
+
+class UrlOrPath(ParamType):
+    name = "urlorpath"
+
+    def __init__(self):
+        super().__init__()
+
+    def convert(self, value, param, ctx):
+        return SimpleUrl(value)
 
 
 def uri_resolve(base: Union[str, Path], path: Optional[str]) -> str:

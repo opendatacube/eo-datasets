@@ -10,7 +10,7 @@ from copy import deepcopy
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable
+from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable, Union
 
 import eodatasets3
 import numpy
@@ -27,7 +27,7 @@ from eodatasets3.model import (
     Location,
 )
 from eodatasets3.properties import EoFields
-from eodatasets3.utils import is_url, upload_directory
+from eodatasets3.utils import is_url, upload_directory, SimpleUrl
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
 from rasterio import DatasetReader
@@ -82,7 +82,7 @@ class DatasetAssembler(EoFields):
 
     def __init__(
         self,
-        collection_location: Optional[Path] = None,
+        collection_location: Optional[Union[Path, SimpleUrl]] = None,
         dataset_location: Optional[Location] = None,
         metadata_path: Optional[Path] = None,
         dataset_id: Optional[uuid.UUID] = None,

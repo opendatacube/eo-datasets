@@ -145,6 +145,10 @@ class SimpleUrl(str):
     def parent(self):
         return SimpleUrl(self[: self.rindex("/")])
 
+    @property
+    def name(self) -> str:
+        return self.rsplit("/")[-1]
+
     def absolute(self):
         return self
 

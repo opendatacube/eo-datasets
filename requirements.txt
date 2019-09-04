@@ -1,0 +1,16 @@
+attrs>=18.1  # 18.1 adds 'factory' syntactic sugar
+boltons
+cattrs
+ciso8601
+click
+fsspec
+jsonschema>=3  # We want a Draft6Validator
+numpy
+pyproj
+rasterio
+ruamel.yaml
+shapely
+structlog
+xarray
+gdal<3
+s3fs

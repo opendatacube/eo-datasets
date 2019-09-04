@@ -36,7 +36,7 @@ EXTRAS_REQUIRE = {
     # If packaging ard/wagl.
     "wagl": ["h5py"],
     # The (legacy) prepare scripts
-    "ancillary": ["scipy", "checksumdir", "netCDF4", "gdal"],
+    "ancillary": ["scipy", "checksumdir", "netCDF4", "gdal<3"],
 }
 EXTRAS_REQUIRE["all"] = list(chain(EXTRAS_REQUIRE.values()))
 
