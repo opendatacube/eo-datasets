@@ -14,3 +14,4 @@ structlog
 xarray
 gdal<3
 s3fs
+h5py

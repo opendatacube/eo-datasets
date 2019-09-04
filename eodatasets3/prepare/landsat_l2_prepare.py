@@ -5,17 +5,15 @@ Input dataset paths can be directories or tar files.
 """
 
 import logging
-import tempfile
 
 import click
 import fsspec
 import rasterio
 import uuid
-from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict, Generator
 
-from eodatasets3 import serialise, utils, DatasetAssembler, IfExists
+from eodatasets3 import utils, DatasetAssembler, IfExists
 from eodatasets3.model import FileFormat
 from eodatasets3.prepare.utils import read_mtl
 from eodatasets3.ui import UrlOrPath
@@ -164,7 +162,7 @@ def prepare_and_write(
             #     file_location,
             #     relative_to_dataset_location=True,
             # )
-            path_file = ds_path / file_location
+            path_file = ds_path.parent / file_location
             p.write_measurement(LANDSAT_OLI_TIRS_BAND_ALIASES[usgs_band_id], path_file)
 
         p.add_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
@@ -186,18 +184,7 @@ def prepare_and_write(
     default="usgs.gov",
 )
 @click.argument("datasets", type=UrlOrPath(), nargs=-1)
-@click.option(
-    "--newer-than",
-    type=serialise.ClickDatetime(),
-    default=None,
-    help="Only prepare files newer than this date",
-)
-def main(
-    output_base: Optional[SimpleUrl],
-    datasets: List[SimpleUrl],
-    producer: str,
-    newer_than: datetime,
-):
+def main(output_base: Optional[SimpleUrl], datasets: List[SimpleUrl], producer: str):
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
     )
@@ -212,45 +199,5 @@ def main(
             logging.info("Wrote dataset %s to %s", output_uuid, output_path)
 
 
-def _normalise_dataset_path(input_path: Path) -> Path:
-    """
-    Dataset path should be either the direct imagery folder (mtl+bands) or a tar path.
-
-    Translate other inputs (example: the MTL path) to one of the two.
-
-    >>> tmppath = Path(tempfile.mkdtemp())
-    >>> ds_path = tmppath.joinpath('LE07_L1GT_104078_20131209_20161119_01_T1')
-    >>> ds_path.mkdir()
-    >>> mtl_path = ds_path / 'LC08_L1TP_090084_20160121_20170405_01_T1_MTL.txt'
-    >>> mtl_path.write_text('<mtl content>')
-    13
-    >>> _normalise_dataset_path(ds_path).relative_to(tmppath).as_posix()
-    'LE07_L1GT_104078_20131209_20161119_01_T1'
-    >>> _normalise_dataset_path(mtl_path).relative_to(tmppath).as_posix()
-    'LE07_L1GT_104078_20131209_20161119_01_T1'
-    >>> tar_path = tmppath / 'LS_L1GT.tar.gz'
-    >>> tar_path.write_text('fake tar')
-    8
-    >>> _normalise_dataset_path(tar_path).relative_to(tmppath).as_posix()
-    'LS_L1GT.tar.gz'
-    >>> _normalise_dataset_path(Path(tempfile.mkdtemp()))
-    Traceback (most recent call last):
-    ...
-    ValueError: No MTL files within input path .... Not a dataset?
-    """
-    input_path = Path(input_path).absolute()
-    if input_path.is_file():
-        if ".tar" in input_path.suffixes:
-            return input_path
-        input_path = input_path.parent
-
-    mtl_files = list(input_path.rglob("*_MTL.txt"))
-    if not mtl_files:
-        raise ValueError(
-            "No MTL files within input path '{}'. Not a dataset?".format(input_path)
-        )
-    if len(mtl_files) > 1:
-        raise ValueError(
-            "Multiple MTL files in a single dataset (got path: {})".format(input_path)
-        )
-    return input_path
+if __name__ == "__main__":
+    main()
