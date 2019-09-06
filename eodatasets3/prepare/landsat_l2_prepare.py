@@ -42,27 +42,67 @@ _COPYABLE_MTL_FIELDS = [
 USGS_UUID_NAMESPACE = uuid.UUID("276af61d-99f8-4aa3-b2fb-d7df68c5e28f")
 
 LANDSAT_OLI_TIRS_BAND_ALIASES = {
-    "band_1": "coastal_aerosol",
-    "band_2": "blue",
-    "band_3": "green",
-    "band_4": "red",
-    "band_5": "nir",
-    "band_6": "swir_1",
-    "band_7": "swir_2",
-    "band_st_b10": "st_b10",
-    "thermal_radiance": "thermal_radiance",
-    "upwell_radiance": "upwell_radiance",
-    "downwell_radiance": "downwell_radiance",
-    "atmospheric_transmittance": "atmospheric_transmittance",
-    "emissivity": "emissivity",
-    "emissivity_stdev": "emissivity_stdev",
-    "cloud_distance": "cloud_distance",
-    "quality_l2_aerosol": "quality_l2_aerosol",
-    "quality_l2_surface_temperature": "quality_l2_surface_temperature",
-    "quality_l1_pixel": "quality_l1_pixel",
-    "quality_l1_radiometric_saturation": "quality_l1_radiometric_saturation",
-    "metadata_odl": "metadata_odl",
-    "metadata_xml": "metadata_xml",
+    "band_1": {"output_name": "coastal_aerosol", "nodata": 0, "dtype": "uint16"},
+    "band_2": {"output_name": "blue", "nodata": 0, "dtype": "uint16"},
+    "band_3": {"output_name": "green", "nodata": 0, "dtype": "uint16"},
+    "band_4": {"output_name": "red", "nodata": 0, "dtype": "uint16"},
+    "band_5": {"output_name": "nir", "nodata": 0, "dtype": "uint16"},
+    "band_6": {"output_name": "swir_1", "nodata": 0, "dtype": "uint16"},
+    "band_7": {"output_name": "swir_2", "nodata": 0, "dtype": "uint16"},
+    "band_st_b10": {"output_name": "st_b10", "nodata": 0, "dtype": "int16"},
+    "thermal_radiance": {
+        "output_name": "thermal_radiance",
+        "nodata": -9999,
+        "dtype": "int16",
+    },
+    "upwell_radiance": {
+        "output_name": "upwell_radiance",
+        "nodata": -9999,
+        "dtype": "int16",
+    },
+    "downwell_radiance": {
+        "output_name": "downwell_radiance",
+        "nodata": -9999,
+        "dtype": "int16",
+    },
+    "atmospheric_transmittance": {
+        "output_name": "atmospheric_transmittance",
+        "nodata": -9999,
+        "dtype": "int16",
+    },
+    "emissivity": {"output_name": "emissivity", "nodata": -9999, "dtype": "int16"},
+    "emissivity_stdev": {
+        "output_name": "emissivity_stdev",
+        "nodata": -9999,
+        "dtype": "int16",
+    },
+    "cloud_distance": {
+        "output_name": "cloud_distance",
+        "nodata": -9999,
+        "dtype": "int16",
+    },
+    "quality_l2_aerosol": {
+        "output_name": "quality_l2_aerosol",
+        "nodata": 0,
+        "dtype": "uint16",
+    },
+    "quality_l2_surface_temperature": {
+        "output_name": "quality_l2_surface_temperature",
+        "nodata": -9999,
+        "dtype": "int16",
+    },
+    "quality_l1_pixel": {
+        "output_name": "quality_l1_pixel",
+        "nodata": 0,
+        "dtype": "uint16",
+    },
+    "quality_l1_radiometric_saturation": {
+        "output_name": "quality_l1_radiometric_saturation",
+        "nodata": 0,
+        "dtype": "uint16",
+    },
+    "metadata_odl": {"output_name": "metadata_odl"},
+    "metadata_xml": {"output_name": "metadata_xml"},
 }
 
 
@@ -167,7 +207,7 @@ def prepare_and_write(
 
         p.add_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
 
-        return p.done()
+        return p.done(sort_measurements=False)
 
 
 @click.command(help=__doc__)
