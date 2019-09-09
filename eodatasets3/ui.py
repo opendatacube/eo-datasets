@@ -8,7 +8,7 @@ from click import ParamType
 from pathlib import Path
 from typing import Optional, Union
 
-from eodatasets3.utils import SimpleUrl
+from eodatasets3.utils import SimpleUrl, is_url
 
 
 class PathPath(click.Path):
@@ -25,7 +25,10 @@ class UrlOrPath(ParamType):
         super().__init__()
 
     def convert(self, value, param, ctx):
-        return SimpleUrl(value)
+        if is_url(value):
+            return SimpleUrl(value)
+        else:
+            return Path(value)
 
 
 def uri_resolve(base: Union[str, Path], path: Optional[str]) -> str:

@@ -27,7 +27,7 @@ from eodatasets3.model import (
     Location,
 )
 from eodatasets3.properties import EoFields
-from eodatasets3.utils import is_url, upload_directory, SimpleUrl
+from eodatasets3.utils import is_url, upload_directory, SimpleUrl, copy_file
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
 from rasterio import DatasetReader
@@ -856,6 +856,10 @@ class DatasetAssembler(EoFields):
         if kind:
             accessory_name += f":{kind}"
         self.add_accessory_file(accessory_name, thumb_path)
+
+    def copy_accessory_file(self, name: str, path: Union[Path, SimpleUrl]):
+        copy_file(path, self._work_path)
+        self.add_accessory_file(name, self._work_path / path.name)
 
     def add_accessory_file(self, name: str, path: Path):
         """

@@ -11,9 +11,9 @@ import fsspec
 import rasterio
 import uuid
 from pathlib import Path
-from typing import List, Optional, Tuple, Dict, Generator
+from typing import List, Optional, Tuple, Dict, Generator, Union
 
-from eodatasets3 import utils, DatasetAssembler, IfExists
+from eodatasets3 import utils, DatasetAssembler, IfExists, images
 from eodatasets3.model import FileFormat
 from eodatasets3.prepare.utils import read_mtl
 from eodatasets3.ui import UrlOrPath
@@ -41,68 +41,121 @@ _COPYABLE_MTL_FIELDS = [
 # Static namespace to generate uuids for datacube indexing
 USGS_UUID_NAMESPACE = uuid.UUID("276af61d-99f8-4aa3-b2fb-d7df68c5e28f")
 
-LANDSAT_OLI_TIRS_BAND_ALIASES = {
-    "band_1": {"output_name": "coastal_aerosol", "nodata": 0, "dtype": "uint16"},
-    "band_2": {"output_name": "blue", "nodata": 0, "dtype": "uint16"},
-    "band_3": {"output_name": "green", "nodata": 0, "dtype": "uint16"},
-    "band_4": {"output_name": "red", "nodata": 0, "dtype": "uint16"},
-    "band_5": {"output_name": "nir", "nodata": 0, "dtype": "uint16"},
-    "band_6": {"output_name": "swir_1", "nodata": 0, "dtype": "uint16"},
-    "band_7": {"output_name": "swir_2", "nodata": 0, "dtype": "uint16"},
-    "band_st_b10": {"output_name": "st_b10", "nodata": 0, "dtype": "int16"},
+BAND_CONFIGURATIONS = {
+    "band_1": {
+        "output_name": "b1",
+        "nodata": 0,
+        "dtype": "uint16",
+        "overviews": images.DEFAULT_OVERVIEWS,
+    },
+    "band_2": {
+        "output_name": "b2",
+        "nodata": 0,
+        "dtype": "uint16",
+        "overviews": images.DEFAULT_OVERVIEWS,
+    },
+    "band_3": {
+        "output_name": "b3",
+        "nodata": 0,
+        "dtype": "uint16",
+        "overviews": images.DEFAULT_OVERVIEWS,
+    },
+    "band_4": {
+        "output_name": "b4",
+        "nodata": 0,
+        "dtype": "uint16",
+        "overviews": images.DEFAULT_OVERVIEWS,
+    },
+    "band_5": {
+        "output_name": "b5",
+        "nodata": 0,
+        "dtype": "uint16",
+        "overviews": images.DEFAULT_OVERVIEWS,
+    },
+    "band_6": {
+        "output_name": "b6",
+        "nodata": 0,
+        "dtype": "uint16",
+        "overviews": images.DEFAULT_OVERVIEWS,
+    },
+    "band_7": {
+        "output_name": "b7",
+        "nodata": 0,
+        "dtype": "uint16",
+        "overviews": images.DEFAULT_OVERVIEWS,
+    },
+    "band_st_b10": {
+        "output_name": "b10",
+        "nodata": 0,
+        "dtype": "int16",
+        "overviews": images.DEFAULT_OVERVIEWS,
+    },
     "thermal_radiance": {
         "output_name": "thermal_radiance",
         "nodata": -9999,
         "dtype": "int16",
+        "overviews": (),
     },
     "upwell_radiance": {
         "output_name": "upwell_radiance",
         "nodata": -9999,
         "dtype": "int16",
+        "overviews": (),
     },
     "downwell_radiance": {
         "output_name": "downwell_radiance",
         "nodata": -9999,
         "dtype": "int16",
+        "overviews": (),
     },
     "atmospheric_transmittance": {
         "output_name": "atmospheric_transmittance",
         "nodata": -9999,
         "dtype": "int16",
+        "overviews": (),
     },
-    "emissivity": {"output_name": "emissivity", "nodata": -9999, "dtype": "int16"},
+    "emissivity": {
+        "output_name": "emissivity",
+        "nodata": -9999,
+        "dtype": "int16",
+        "overviews": (),
+    },
     "emissivity_stdev": {
         "output_name": "emissivity_stdev",
         "nodata": -9999,
         "dtype": "int16",
+        "overviews": (),
     },
     "cloud_distance": {
         "output_name": "cloud_distance",
         "nodata": -9999,
         "dtype": "int16",
+        "overviews": (),
     },
     "quality_l2_aerosol": {
         "output_name": "quality_l2_aerosol",
         "nodata": 0,
         "dtype": "uint16",
+        "overviews": (),
     },
     "quality_l2_surface_temperature": {
         "output_name": "quality_l2_surface_temperature",
         "nodata": -9999,
         "dtype": "int16",
+        "overviews": (),
     },
     "quality_l1_pixel": {
         "output_name": "quality_l1_pixel",
         "nodata": 0,
         "dtype": "uint16",
+        "overviews": (),
     },
     "quality_l1_radiometric_saturation": {
         "output_name": "quality_l1_radiometric_saturation",
         "nodata": 0,
         "dtype": "uint16",
+        "overviews": (),
     },
-    "metadata_odl": {"output_name": "metadata_odl"},
-    "metadata_xml": {"output_name": "metadata_xml"},
 }
 
 
@@ -120,7 +173,7 @@ def _iter_bands_paths(mtl_doc: Dict) -> Generator[Tuple[str, str], None, None]:
 
 def prepare_and_write(
     ds_path: SimpleUrl,
-    collection_location: SimpleUrl,
+    collection_location: Union[SimpleUrl, Path],
     # TODO: Can we infer producer automatically? This is bound to cause mistakes othewise
     producer="usgs.gov",
 ) -> Tuple[uuid.UUID, Path]:
@@ -128,8 +181,7 @@ def prepare_and_write(
     Prepare an eo3 metadata file for a Level2 dataset.
 
     """
-    mtl_filename = ds_path.name
-    with fsspec.open(ds_path) as fp:
+    with fsspec.open(ds_path, "r") as fp:
         mtl_doc = read_mtl(fp, root_element="landsat_metadata_file")
 
     if not mtl_doc:
@@ -195,6 +247,7 @@ def prepare_and_write(
         )
         p.dataset_version = f"{org_collection_number}.0.{p.processed:%Y%m%d}"
 
+        p.copy_accessory_file("metadata:landsat_mtl", ds_path)
         bands = _iter_bands_paths(mtl_doc)
         for usgs_band_id, file_location in bands:
             # p.note_measurement(
@@ -202,10 +255,15 @@ def prepare_and_write(
             #     file_location,
             #     relative_to_dataset_location=True,
             # )
-            path_file = ds_path.parent / file_location
-            p.write_measurement(LANDSAT_OLI_TIRS_BAND_ALIASES[usgs_band_id], path_file)
+            band_config = BAND_CONFIGURATIONS.get(usgs_band_id)
 
-        p.add_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
+            if band_config is not None:
+                path_file = ds_path.parent / file_location
+                p.write_measurement(
+                    band_config["output_name"],
+                    path_file,
+                    overviews=band_config["overviews"],
+                )
 
         return p.done(sort_measurements=False)
 
@@ -224,7 +282,11 @@ def prepare_and_write(
     default="usgs.gov",
 )
 @click.argument("datasets", type=UrlOrPath(), nargs=-1)
-def main(output_base: Optional[SimpleUrl], datasets: List[SimpleUrl], producer: str):
+def main(
+    output_base: Optional[Union[SimpleUrl, Path]],
+    datasets: List[Union[SimpleUrl, Path]],
+    producer: str,
+):
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
     )

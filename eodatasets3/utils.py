@@ -1,5 +1,6 @@
 import enum
 import os
+import shutil
 from urllib.parse import urlparse
 
 import ciso8601
@@ -167,7 +168,23 @@ def is_url(maybe_url):
 
 
 def upload_directory(src: Path, dest: SimpleUrl):
+    """
+    Upload a local directory or file to a remote URL
+    """
     url = urlparse(dest)
     fs = fsspec.filesystem(url.scheme)
     with fs.transaction:
         fs.put(str(src), dest, recursive=True)
+
+
+def copy_file(src: SimpleUrl, dest: Path):
+    """
+    Download a remote file or directory to a local path
+    """
+    if is_url(src):
+        url = urlparse(src)
+        fs = fsspec.filesystem(url.scheme)
+        with fs.transaction:
+            fs.get(src, str(dest), recursive=True)
+    else:
+        shutil.copy(str(src), dest)
