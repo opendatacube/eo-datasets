@@ -4,5 +4,5 @@
 docker:
 	docker build -t opendatacube/eo-datasets:latest .
 
- clean:
+clean:
 	echo "doing nothing"
