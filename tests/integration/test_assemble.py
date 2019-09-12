@@ -326,10 +326,16 @@ def test_remote_package(tmp_s3_url_dest, l1_ls8_folder: Path):
     What's the minimum number of fields we can set and still produce a package?
     """
 
+    import fsspec
+
+    fs = fsspec.filesystem("s3")
     out = tmp_s3_url_dest / "out"
     out.mkdir()
 
     [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
+
+    s3_geotiff_path = tmp_s3_url_dest / blue_geotiff_path.name
+    fs.put(blue_geotiff_path, s3_geotiff_path)
 
     with DatasetAssembler(out) as p:
         p.datetime = datetime(2019, 7, 4, 13, 7, 5)
@@ -343,9 +349,6 @@ def test_remote_package(tmp_s3_url_dest, l1_ls8_folder: Path):
 
     assert dataset_id is not None
 
-    import fsspec
-
-    fs = fsspec.filesystem("s3")
     mapper = fs.get_mapper(out)
 
     assert list(mapper.keys()) == [
