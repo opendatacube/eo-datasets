@@ -1,0 +1,5 @@
+FROM opendatacube/eo-datasets
+
+RUN conda install pytest rio-cogeo python-rapidjson deepdiff 'moto>1.3'
+
+CMD pytest eodatasets3 tests --runslow
