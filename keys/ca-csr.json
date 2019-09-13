@@ -1,0 +1,14 @@
+{
+    "CN": "Demo CA",
+    "key": {
+      "algo": "rsa",
+      "size": 2048
+    },
+    "names": [
+      {
+        "C": "US",
+        "L": "California",
+        "ST": "Milpitas"
+      }
+    ]
+  }
