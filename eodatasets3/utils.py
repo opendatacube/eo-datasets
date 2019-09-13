@@ -184,7 +184,6 @@ def copy_file(src: SimpleUrl, dest: Path):
     if is_url(src):
         url = urlparse(src)
         fs = fsspec.filesystem(url.scheme)
-        with fs.transaction:
-            fs.get(src, str(dest), recursive=True)
+        fs.get(src, str(dest / src.name))
     else:
         shutil.copy(str(src), dest)

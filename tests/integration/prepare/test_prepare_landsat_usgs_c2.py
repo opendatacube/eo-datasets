@@ -1,6 +1,5 @@
 import pytest
 import shutil
-from moto import mock_s3
 from pathlib import Path
 
 from eodatasets3.prepare import landsat_l2_prepare
@@ -50,7 +49,53 @@ def test_prepare_usgs_l2_c2(tmp_path: Path, l2_c2_sample: Path):
     )
 
 
-@mock_s3
+@pytest.fixture
+def super_mock_s3():
+    """
+    Start a mock S3 server that can be used from within python and C code.
+
+    To avoid any extra configuration, this requires hosts file entries for the default hostnames
+    used by S3, *and* environment variables pointing to alternative SSL keys.
+
+    This can be easily done with Docker, but might be better managed with docker-compose.
+
+    We could potentially use https://github.com/adobe/S3Mock in docker instead of moto.
+    """
+    import socket
+    import subprocess
+    import os
+
+    # Must run with patched S3 hosts
+    hosts_redirected = (
+        socket.gethostbyname("s3.amazonaws.com") == "127.0.0.1"
+        and socket.gethostbyname("mybucket.s3.amazonaws.com") == "127.0.0.1"
+    )
+    environment_variables_set = (
+        "AWS_CA_BUNDLE" in os.environ and "CURL_CA_BUNDLE" in os.environ
+    )
+    if not hosts_redirected or not environment_variables_set:
+        pytest.skip(
+            "super_mock_s3 requires hostnames and environment variables to be set"
+        )
+
+    p = subprocess.Popen(
+        [
+            "moto_server",
+            "-p",
+            "443",
+            "-s",
+            "--ssl-cert",
+            "keys/server.pem",
+            "--ssl-key",
+            "keys/server-key.pem",
+            "s3",
+        ]
+    )
+    yield
+    p.kill()
+
+
+@pytest.usesfixture("super_mock_s3")
 def test_prepare_usgs_l2_c2_on_aws(tmp_path: Path, l2_c2_sample: Path):
     import boto3
     import fsspec
@@ -66,7 +111,7 @@ def test_prepare_usgs_l2_c2_on_aws(tmp_path: Path, l2_c2_sample: Path):
     # When specifying an output base path it will create path/row subfolders within it.
     expected_metadata_path = (
         output_path
-        / "185/052/2018/01/04/usgs_ls8c_level2_2-0-20190821_185052_2018-01-04.odc-metadata.yaml"
+        / "usgs_ls8c_level2_2/185/052/2018/01/04/usgs_ls8c_level2_2-0-20190821_185052_2018-01-04.odc-metadata.yaml"
     )
 
     check_prepare_outputs(
@@ -174,7 +219,7 @@ USGS_L2_C2_EXPECTED = {
         "name": "usgs_ls8c_level2_2",
     },
     "properties": {
-        "datetime": "2018-01-04 09:24:47.733834Z",
+        "datetime": "2018-01-04T09:24:47.733834",
         "eo:cloud_cover": 0.0,
         "eo:gsd": 30.0,
         "eo:instrument": "OLI_TIRS",
@@ -196,7 +241,7 @@ USGS_L2_C2_EXPECTED = {
         "landsat:wrs_row": 52,
         "odc:dataset_version": "2.0.20190821",
         "odc:file_format": "GeoTIFF",
-        "odc:processing_datetime": "2019-08-21 21:40:22Z",
+        "odc:processing_datetime": "2019-08-21T21:40:22",
         "odc:producer": "usgs.gov",
         "odc:product_family": "level2",
         "odc:region_code": "185052",
