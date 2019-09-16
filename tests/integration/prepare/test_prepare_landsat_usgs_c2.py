@@ -1,10 +1,13 @@
+import logging
 import pytest
 import shutil
 from pathlib import Path
+import time
 
 from eodatasets3.prepare import landsat_l2_prepare
 from tests.integration.common import check_prepare_outputs
 
+LOG = logging.getLogger(__name__)
 
 def _make_copy(input_path, tmp_path):
     our_input = tmp_path / input_path.name
@@ -91,11 +94,13 @@ def super_mock_s3():
             "s3",
         ]
     )
+    time.sleep(1)
+    LOG.debug('Started moto_server for mocking s3')
     yield
     p.kill()
 
 
-@pytest.usesfixture("super_mock_s3")
+@pytest.mark.usefixtures("super_mock_s3")
 def test_prepare_usgs_l2_c2_on_aws(tmp_path: Path, l2_c2_sample: Path):
     import boto3
     import fsspec
