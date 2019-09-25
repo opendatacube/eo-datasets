@@ -250,14 +250,19 @@ def prepare_and_write(
     file_format = FileFormat.GeoTIFF
 
     # Assumed below.
+    projection_params = mtl_doc["projection_parameters"]
     if (
-        mtl_doc["projection_parameters"]["grid_cell_size_reflective"]
-        != mtl_doc["projection_parameters"]["grid_cell_size_thermal"]
+        "grid_cell_size_thermal" in projection_params
+        and "grid_cell_size_reflective" in projection_params
+        and (
+            projection_params["grid_cell_size_reflective"]
+            != projection_params["grid_cell_size_thermal"]
+        )
     ):
         raise NotImplementedError("reflective and thermal have different cell sizes")
     ground_sample_distance = min(
         value
-        for name, value in mtl_doc["projection_parameters"].items()
+        for name, value in projection_params.items()
         if name.startswith("grid_cell_size_")
     )
 
