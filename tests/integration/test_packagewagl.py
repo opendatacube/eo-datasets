@@ -3,18 +3,18 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Tuple
 
+import eodatasets3
 import numpy as np
 import pytest
 import rasterio
 from click.testing import CliRunner
+from eodatasets3.model import DatasetDoc
 from rasterio import DatasetReader
 from rasterio.enums import Compression
 from rio_cogeo import cogeo
-
-import eodatasets3
-from eodatasets3.model import DatasetDoc
-from tests import assert_file_structure
 from tests.integration.common import assert_same_as_file
+
+from tests import assert_file_structure
 
 h5py = pytest.importorskip(
     "h5py",
@@ -211,6 +211,7 @@ def test_whole_wagl_package(
                 "eo:sun_azimuth": 33.655_125_34,
                 "eo:sun_elevation": 23.988_361_72,
                 "fmask:clear": 32.735_343_657_403_305,
+                "fmask:cloud": 63.069_613_577_531_236,
                 "fmask:cloud_shadow": 4.139_470_857_647_722,
                 "fmask:snow": 0.005_053_323_801_138_007,
                 "fmask:water": 0.050_518_583_616_596_675,
