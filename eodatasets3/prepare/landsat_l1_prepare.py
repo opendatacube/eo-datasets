@@ -292,7 +292,10 @@ def prepare_and_write(
         p.processed = mtl_doc["metadata_file_info"]["file_date"]
         p.properties["odc:file_format"] = file_format
         p.properties["eo:gsd"] = ground_sample_distance
-        p.properties["eo:cloud_cover"] = mtl_doc["image_attributes"]["cloud_cover"]
+        cloud_cover = mtl_doc["image_attributes"]["cloud_cover"]
+        # Cloud cover is -1 when missing (such as TIRS-only data)
+        if cloud_cover != -1:
+            p.properties["eo:cloud_cover"] = cloud_cover
         p.properties["eo:sun_azimuth"] = mtl_doc["image_attributes"]["sun_azimuth"]
         p.properties["eo:sun_elevation"] = mtl_doc["image_attributes"]["sun_elevation"]
         p.properties["landsat:collection_number"] = usgs_collection_number
