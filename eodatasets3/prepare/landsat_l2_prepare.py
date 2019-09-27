@@ -1,5 +1,5 @@
 """
-Prepare eo3 metadata for USGS Landsat Level 1 data.
+Prepare eo3 metadata for USGS Landsat Level 2 data.
 
 Input dataset paths can be directories or tar files.
 """
@@ -43,115 +43,134 @@ USGS_UUID_NAMESPACE = uuid.UUID("276af61d-99f8-4aa3-b2fb-d7df68c5e28f")
 
 BAND_CONFIGURATIONS = {
     "band_1": {
-        "output_name": "b1",
+        "output_name": "coastal_aerosol",
+        "file_id": "sr_b1",
         "nodata": 0,
         "dtype": "uint16",
         "overviews": images.DEFAULT_OVERVIEWS,
     },
     "band_2": {
-        "output_name": "b2",
+        "output_name": "blue",
+        "file_id": "sr_b2",
         "nodata": 0,
         "dtype": "uint16",
         "overviews": images.DEFAULT_OVERVIEWS,
     },
     "band_3": {
-        "output_name": "b3",
+        "output_name": "green",
+        "file_id": "sr_b3",
         "nodata": 0,
         "dtype": "uint16",
         "overviews": images.DEFAULT_OVERVIEWS,
     },
     "band_4": {
-        "output_name": "b4",
+        "output_name": "red",
+        "file_id": "sr_b4",
         "nodata": 0,
         "dtype": "uint16",
         "overviews": images.DEFAULT_OVERVIEWS,
     },
     "band_5": {
-        "output_name": "b5",
+        "output_name": "nir",
+        "file_id": "sr_b5",
         "nodata": 0,
         "dtype": "uint16",
         "overviews": images.DEFAULT_OVERVIEWS,
     },
     "band_6": {
-        "output_name": "b6",
+        "output_name": "swir_1",
+        "file_id": "sr_b6",
         "nodata": 0,
         "dtype": "uint16",
         "overviews": images.DEFAULT_OVERVIEWS,
     },
     "band_7": {
-        "output_name": "b7",
+        "output_name": "swir_2",
+        "file_id": "sr_b7",
         "nodata": 0,
         "dtype": "uint16",
         "overviews": images.DEFAULT_OVERVIEWS,
     },
     "band_st_b10": {
-        "output_name": "b10",
+        "output_name": "surface_temperature",
+        "file_id": "st_b10",
         "nodata": 0,
         "dtype": "int16",
         "overviews": images.DEFAULT_OVERVIEWS,
     },
     "thermal_radiance": {
         "output_name": "thermal_radiance",
+        "file_id": "thermal_radiance",
         "nodata": -9999,
         "dtype": "int16",
         "overviews": (),
     },
     "upwell_radiance": {
         "output_name": "upwell_radiance",
+        "file_id": "upwell_radiance",
         "nodata": -9999,
         "dtype": "int16",
         "overviews": (),
     },
     "downwell_radiance": {
         "output_name": "downwell_radiance",
+        "file_id": "downwell_radiance",
         "nodata": -9999,
         "dtype": "int16",
         "overviews": (),
     },
     "atmospheric_transmittance": {
         "output_name": "atmospheric_transmittance",
+        "file_id": "atmospheric_transmittance",
         "nodata": -9999,
         "dtype": "int16",
         "overviews": (),
     },
     "emissivity": {
         "output_name": "emissivity",
+        "file_id": "emissivity",
         "nodata": -9999,
         "dtype": "int16",
         "overviews": (),
     },
     "emissivity_stdev": {
         "output_name": "emissivity_stdev",
+        "file_id": "emissivity_stdev",
         "nodata": -9999,
         "dtype": "int16",
         "overviews": (),
     },
     "cloud_distance": {
         "output_name": "cloud_distance",
+        "file_id": "cloud_distance",
         "nodata": -9999,
         "dtype": "int16",
         "overviews": (),
     },
     "quality_l2_aerosol": {
         "output_name": "quality_l2_aerosol",
+        "file_id": "quality_l2_aerosol",
         "nodata": 0,
         "dtype": "uint16",
         "overviews": (),
     },
     "quality_l2_surface_temperature": {
         "output_name": "quality_l2_surface_temperature",
+        "file_id": "quality_l2_surface_temperature",
         "nodata": -9999,
         "dtype": "int16",
         "overviews": (),
     },
     "quality_l1_pixel": {
         "output_name": "quality_l1_pixel",
+        "file_id": "quality_l1_pixel",
         "nodata": 0,
         "dtype": "uint16",
         "overviews": (),
     },
     "quality_l1_radiometric_saturation": {
         "output_name": "quality_l1_radiometric_saturation",
+        "file_id": "quality_l1_radiometric_saturation",
         "nodata": 0,
         "dtype": "uint16",
         "overviews": (),
@@ -260,9 +279,10 @@ def prepare_and_write(
             if band_config is not None:
                 path_file = ds_path.parent / file_location
                 p.write_measurement(
-                    band_config["output_name"],
-                    path_file,
+                    name=band_config["output_name"],
+                    path=path_file,
                     overviews=band_config["overviews"],
+                    file_id=band_config['file_id'],
                 )
 
         return p.done(sort_measurements=False)
