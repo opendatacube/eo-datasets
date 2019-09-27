@@ -1,10 +1,12 @@
 
 .PHONY: docker clean
 
+# The FROM line in Dockerfile-test *must* refer to the image tagged :local which is built here.
 docker:
 	docker build -t opendatacube/eo-datasets:local .
 	docker build -f Dockerfile-test -t opendatacube/eo-datasets:test .
 
+# Redirect S3 traffic to a local server which is started internally by pytest
 docker_test_args = -e AWS_CA_BUNDLE=/opt/app/keys/ca.pem -e CURL_CA_BUNDLE=/opt/app/keys/ca.pem --add-host s3.amazonaws.com:127.0.0.1 --add-host mybucket.s3.amazonaws.com:127.0.0.1
 
 test-interactive:

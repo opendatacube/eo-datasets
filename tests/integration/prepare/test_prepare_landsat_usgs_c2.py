@@ -180,14 +180,14 @@ USGS_L2_C2_EXPECTED = {
         "atmospheric_transmittance": {
             "path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_atmospheric-transmittance.tif"
         },
-        "b1": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_b1.tif"},
-        "b10": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_b10.tif"},
-        "b2": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_b2.tif"},
-        "b3": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_b3.tif"},
-        "b4": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_b4.tif"},
-        "b5": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_b5.tif"},
-        "b6": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_b6.tif"},
-        "b7": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_b7.tif"},
+        "coastal_aerosol": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_sr-b1.tif"},
+        "surface_temperature": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_st-b10.tif"},
+        "blue": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_sr-b2.tif"},
+        "green": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_sr-b3.tif"},
+        "red": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_sr-b4.tif"},
+        "nir": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_sr-b5.tif"},
+        "swir_1": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_sr-b6.tif"},
+        "swir_2": {"path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_sr-b7.tif"},
         "cloud_distance": {
             "path": "usgs_ls8c_level2_2-0-20190821_185052_2018-01-04_cloud-distance.tif"
         },
