@@ -1,4 +1,4 @@
-FROM opendatacube/eo-datasets
+FROM opendatacube/eo-datasets:local
 
 RUN conda install pytest rio-cogeo python-rapidjson deepdiff 'moto>1.3'
 

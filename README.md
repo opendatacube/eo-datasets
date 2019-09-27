@@ -138,6 +138,21 @@ Your code will now be formatted and validated before each commit. You can also
 invoke it manually by running `pre-commit run`
 
 
+## Development with Docker
+
+Build a local image (and test image):
+
+    make docker
+
+Test the local image (with mocked S3):
+
+    make test
+    
+Push to a remote registry:
+
+    docker tag opendatacube/eo-datasets:local opendatacube/eo-datasets:latest
+    docker push opendatacube/eo-datasets:latest
+
 # DEA Prep
 
 Some included scripts to prepare existing DEA products.
