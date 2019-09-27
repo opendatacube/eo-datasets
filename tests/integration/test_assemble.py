@@ -16,7 +16,7 @@ from tests.integration.common import assert_same_as_file
 
 
 def test_dea_style_package(
-    l1_ls8_dataset: DatasetDoc, l1_ls8_dataset_path: Path, tmp_path: Path
+        l1_ls8_dataset: DatasetDoc, l1_ls8_dataset_path: Path, tmp_path: Path
 ):
     out = tmp_path
 
@@ -273,7 +273,7 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
 
     # Default simple naming conventions need at least a date and family...
     with pytest.raises(
-        ValueError, match="Need more properties to fulfill naming conventions."
+            ValueError, match="Need more properties to fulfill naming conventions."
     ):
         with DatasetAssembler(out) as p:
             p.write_measurement("blue", blue_geotiff_path)
@@ -311,14 +311,13 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
 
 
 @pytest.fixture
-def tmp_s3_url_dest():
+def tmp_s3_url_dest(super_mock_s3):
     from moto import mock_s3
     import boto3
 
-    with mock_s3():
-        conn = boto3.resource("s3", region_name="us-east-1")
-        conn.create_bucket(Bucket="mybucket")
-        yield SimpleUrl("s3://mybucket/basepath")
+    conn = boto3.resource("s3", region_name="us-east-1")
+    conn.create_bucket(Bucket="mybucket")
+    yield SimpleUrl("s3://mybucket/basepath")
 
 
 def test_remote_package(tmp_s3_url_dest, l1_ls8_folder: Path):
@@ -330,7 +329,6 @@ def test_remote_package(tmp_s3_url_dest, l1_ls8_folder: Path):
 
     fs = fsspec.filesystem("s3")
     out = tmp_s3_url_dest / "out"
-    out.mkdir()
 
     [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
 
@@ -342,8 +340,7 @@ def test_remote_package(tmp_s3_url_dest, l1_ls8_folder: Path):
         p.product_family = "quaternarius"
         p.processed_now()
 
-        p.write_measurement("blue", blue_geotiff_path)
-
+        p.write_measurement("blue", s3_geotiff_path)
         # p.done() will validate the dataset and write it to the destination atomically.
         dataset_id, metadata_path = p.done()
 
@@ -357,3 +354,31 @@ def test_remote_package(tmp_s3_url_dest, l1_ls8_folder: Path):
         "quaternarius/2019/07/04/quaternarius_2019-07-04.sha1",
         "quaternarius/2019/07/04/quaternarius_2019-07-04_blue.tif",
     ]
+
+
+@pytest.mark.xfail
+def test_remote_package_failure(tmp_s3_url_dest):
+    """
+    What's the minimum number of fields we can set and still produce a package?
+    """
+
+    import fsspec
+
+    fs = fsspec.filesystem("s3")
+    out = tmp_s3_url_dest / "out"
+
+    with DatasetAssembler(out) as p:
+        p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+        p.product_family = "quaternarius"
+        p.processed_now()
+
+        # Attempt to put something which doesn't exist
+        p.write_measurement("blue", "s3://mybucket/file/or/bucket.tif")
+
+        dataset_id, metadata_path = p.done()
+
+    assert dataset_id is not None
+
+    mapper = fs.get_mapper(out)
+
+    assert list(mapper.keys()) == []
