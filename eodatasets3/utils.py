@@ -167,6 +167,13 @@ def is_url(maybe_url):
     return "://" in str(maybe_url)
 
 
+def _files_to_copy(src_base: Path, dst_base: SimpleUrl) -> Iterable[Tuple[Path, SimpleUrl]]:
+    for base, _, files in os.walk(src_base):
+        b = Path(base)
+        for f in files:
+            yield (b/f, dst_base/str(b/f))
+
+
 def upload_directory(src: Path, dest: SimpleUrl):
     """
     Upload a local directory or file to a remote URL
@@ -174,7 +181,8 @@ def upload_directory(src: Path, dest: SimpleUrl):
     url = urlparse(dest)
     fs = fsspec.filesystem(url.scheme)
     with fs.transaction:
-        fs.put(str(src), dest, recursive=True)
+        for f_src, f_dst in _files_to_copy(src, dest):
+            fs.put(str(f_src), str(f_dst))
 
 
 def copy_file(src: SimpleUrl, dest: Path):
