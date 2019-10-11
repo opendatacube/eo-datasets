@@ -168,10 +168,15 @@ def is_url(maybe_url):
 
 
 def _files_to_copy(src_base: Path, dst_base: SimpleUrl) -> Iterable[Tuple[Path, SimpleUrl]]:
+    src_base = src_base.absolute()
+    n_skip = len(str(src_base))
+
     for base, _, files in os.walk(src_base):
         b = Path(base)
         for f in files:
-            yield (b/f, dst_base/str(b/f))
+            src = b/f
+            dst = str(src)[n_skip:]
+            yield (src, dst_base/dst)
 
 
 def upload_directory(src: Path, dest: SimpleUrl):
