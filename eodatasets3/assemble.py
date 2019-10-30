@@ -637,6 +637,18 @@ class DatasetAssembler(EoFields):
 
         self._software_versions.append(dict(name=name, url=url, version=version))
 
+    def output_location_exists(self) -> bool:
+        """
+        Provides an earlier check for already computed outputs
+
+        Still requires most of the metadata to be set up, but doesn't require any data
+        outputs to have been computed yet.
+        """
+        self._dataset_location = self.names.destination_folder(
+            self.collection_location
+        )
+        return self._dataset_location.exists()
+
     def done(
         self, validate_correctness: bool = True, sort_measurements: bool = True
     ) -> Tuple[uuid.UUID, Path]:
