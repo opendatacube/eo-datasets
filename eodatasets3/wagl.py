@@ -40,8 +40,9 @@ except ImportError:
     )
     raise
 
-POSSIBLE_PRODUCTS = ("nbar", "nbart", "lambertian", "sbt")
+POSSIBLE_PRODUCTS = ("nbar", "nbart", "lambertian", "lmbadj", "lmbskyg", "fv", "sbt")
 DEFAULT_PRODUCTS = ("nbar", "nbart")
+MARINE_PRODUCTS = ("nbar", "nbart", "lambertian", "lmbadj", "lmbskyg", "fv")
 
 _THUMBNAILS = {
     ("landsat-5", "nbar"): ("nbar:red", "nbar:green", "nbar:blue"),
@@ -99,6 +100,7 @@ def _unpack_products(
                         f"{product}:{band_name}",
                         dataset,
                         overview_resampling=Resampling.average,
+                        expand_valid_data=False if dataset.dtype == "f" else True,
                         file_id=_file_id(dataset),
                     )
 
@@ -176,22 +178,54 @@ def _unpack_observation_attributes(
         min(h5group[grp].attrs["resolution"]) for grp in resolution_groups
     )
 
-    if len(resolution_groups) not in (1, 2):
+    # TODO change to account for Sentinel 2 packaging with three resolution groups
+    if p.platform.lower().startswith("landsat"):
+        if len(resolution_groups) not in (1, 2):
+            raise NotImplementedError(
+                f"Unexpected set of res-groups. "
+                f"Expected either two (with pan) or one (without pan), "
+                f"got {resolution_groups!r}"
+            )
+    elif p.platform.lower().startswith("sentinel"):
+        if len(resolution_groups) not in (1, 2, 3):
+            raise NotImplementedError(
+                f"Unexpected set of res-groups. "
+                f"Expected either three, two or one, "
+                f"got {resolution_groups!r}"
+            )
+    else:
         raise NotImplementedError(
-            f"Unexpected set of res-groups. "
-            f"Expected either two (with pan) or one (without pan), "
-            f"got {resolution_groups!r}"
+            f"unknown sensor platform. "
+            f"Expected either landsat or sentinel, "
+            f"got {p.platform!r}"
         )
+
     # Res groups are ordered in descending resolution, so res-group-0 is the highest resolution.
     # (ie. res-group-0 in landsat 7/8 is Panchromatic)
     # We only care about packaging OA data for the "common" bands: not panchromatic.
     # So we always pick the lowest resolution: the last (or only) group.
+
+    # TODO rework to account for sentinel-2 acquisitions this assumptions only holds
+    # for Landsat acquisitions, Sentinel-2's 'common' band will be in res-group-1 (20 m). not last!
+
     res_grp = h5group[resolution_groups[-1]]
 
-    def _write(section: str, dataset_names: Sequence[str]):
-        """
-        Write supplementary attributes as measurement.
-        """
+    supplementary_observations = {
+        "SATELLITE-SOLAR": [
+            "SATELLITE-VIEW",
+            "SATELLITE-AZIMUTH",
+            "SOLAR-ZENITH",
+            "SOLAR-AZIMUTH",
+            "RELATIVE-AZIMUTH",
+            "TIME-DELTA",
+        ],
+        "INCIDENT-ANGLES": ["INCIDENT-ANGLE", "AZIMUTHAL-INCIDENT"],
+        "EXITING-ANGLES": ["EXITING-ANGLE", "AZIMUTHAL-EXITING"],
+        "RELATIVE-SLOPE": ["RELATIVE-SLOPE"],
+        "SHADOW-MASKS": ["COMBINED-TERRAIN-SHADOW"],
+    }
+
+    for section, dataset_names in supplementary_observations.items():
         for dataset_name in dataset_names:
             o = f"{section}/{dataset_name}"
             with do(f"Path {o!r} "):
@@ -206,25 +240,10 @@ def _unpack_observation_attributes(
                     overviews=None,
                 )
 
-    _write(
-        "SATELLITE-SOLAR",
-        [
-            "SATELLITE-VIEW",
-            "SATELLITE-AZIMUTH",
-            "SOLAR-ZENITH",
-            "SOLAR-AZIMUTH",
-            "RELATIVE-AZIMUTH",
-            "TIME-DELTA",
-        ],
-    )
-    _write("INCIDENT-ANGLES", ["INCIDENT-ANGLE", "AZIMUTHAL-INCIDENT"])
-    _write("EXITING-ANGLES", ["EXITING-ANGLE", "AZIMUTHAL-EXITING"])
-    _write("RELATIVE-SLOPE", ["RELATIVE-SLOPE"])
-    _write("SHADOW-MASKS", ["COMBINED-TERRAIN-SHADOW"])
-
     timedelta_data = (
         res_grp["SATELLITE-SOLAR/TIME-DELTA"] if infer_datetime_range else None
     )
+
     with do("Contiguity", timedelta=bool(timedelta_data)):
         _create_contiguity(
             p,
@@ -267,7 +286,11 @@ def _create_contiguity(
                     )
 
                 for band in ds.indexes:
-                    contiguity &= ds.read(band) > 0
+                    # check to account float values with negative number as valid data
+                    if ds.dtypes[0] in (rasterio.float64, rasterio.float32):
+                        contiguity &= numpy.isfinite(ds.read(band))
+                    else:
+                        contiguity &= ds.read(band) > 0
 
         if contiguity is None:
             secho(f"No images found for requested product {product}", fg="red")
@@ -475,14 +498,12 @@ def package(
     Package an L2 product.
 
     :param include_oa:
-
+        The observation attributes used in producing products.
     :param out_directory:
         The base directory for output datasets. A DEA-naming-conventions folder hierarchy
         will be created inside this folder.
-
     :param granule:
         Granule information. You probably want to make one with Granule.from_path()
-
     :param included_products:
         A list of imagery products to include in the package.
         Defaults to all products.
