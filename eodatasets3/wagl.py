@@ -206,7 +206,7 @@ def _unpack_observation_attributes(
     # So we always pick the lowest resolution: the last (or only) group.
 
     # TODO rework to account for sentinel-2 acquisitions this assumptions only holds
-    # for Landsat acquisitions, Sentinel-2's 'common' band will be in res-group-1 (20 m). not last!
+    #  for Landsat acquisitions, Sentinel-2's 'common' band will be in res-group-1 (20 m). not last!
 
     res_grp = h5group[resolution_groups[-1]]
 
@@ -425,10 +425,15 @@ class Granule:
                     level1_metadata_path = level1_tar_path.with_suffix(
                         ".odc-metadata.yaml"
                     )
+
+                # work around for sentinel 2 where yaml does not exist in source path
                 if not level1_metadata_path.exists():
+                    # TODO remove this error message after implementing method
+                    #  to write level1 metadata in wagl_h5 parent path
                     raise ValueError(
                         f"No level1 metadata found at {level1_metadata_path}"
                     )
+                    # level1_metadata_path = wagl_hdf5.parent.joinpath(level1_tar_path.name + ".yaml")
 
                 level1 = serialise.from_path(level1_metadata_path)
 
