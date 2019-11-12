@@ -40,9 +40,9 @@ except ImportError:
     )
     raise
 
-POSSIBLE_PRODUCTS = ("nbar", "nbart", "lambertian", "lmbadj", "lmbskyg", "fv", "sbt")
+POSSIBLE_PRODUCTS = ("nbar", "nbart", "lambertian", "lmbadj", "lmbskyg", "fs", "sbt")
 DEFAULT_PRODUCTS = ("nbar", "nbart")
-MARINE_PRODUCTS = ("nbar", "nbart", "lambertian", "lmbadj", "lmbskyg", "fv")
+MARINE_PRODUCTS = ("nbar", "nbart", "lambertian", "lmbadj", "lmbskyg", "fs")
 
 _THUMBNAILS = {
     ("landsat-5", "nbar"): ("nbar:red", "nbar:green", "nbar:blue"),
