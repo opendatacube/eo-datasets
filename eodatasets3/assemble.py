@@ -872,7 +872,7 @@ class DatasetAssembler(EoFields):
         self._checksum.add_file(path)
 
     def iter_measurement_paths(
-        self
+        self,
     ) -> Generator[Tuple[GridSpec, str, Path], None, None]:
         """
 
