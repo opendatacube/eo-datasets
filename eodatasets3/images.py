@@ -772,14 +772,18 @@ def read_valid_mask_and_value_range(
     calculated_range = (-sys.maxsize - 1, sys.maxsize)
     for array, nodata in images:
         valid_data_mask &= array != nodata
+
         if calculate_percentiles is not None:
-            low, high = np.percentile(
-                array[valid_data_mask], calculate_percentiles, interpolation="nearest"
-            )
-            calculated_range = (
-                max(low, calculated_range[0]),
-                min(high, calculated_range[1]),
-            )
+            the_data = array[valid_data_mask]
+            # Check if there's a non-empty array first
+            if the_data:
+                low, high = np.percentile(
+                    the_data, calculate_percentiles, interpolation="nearest"
+                )
+                calculated_range = (
+                    max(low, calculated_range[0]),
+                    min(high, calculated_range[1]),
+                )
 
     return calculated_range
 
