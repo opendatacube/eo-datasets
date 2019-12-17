@@ -784,7 +784,7 @@ def read_valid_mask_and_value_range(
         if calculate_percentiles is not None:
             the_data = array[valid_data_mask]
             # Check if there's a non-empty array first
-            if the_data:
+            if the_data.any():
                 low, high = np.percentile(
                     the_data, calculate_percentiles, interpolation="nearest"
                 )
