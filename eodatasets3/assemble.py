@@ -632,6 +632,20 @@ class DatasetAssembler(EoFields):
 
         self._software_versions.append(dict(name=name, url=url, version=version))
 
+    def add_uuid_to_output_location(self):
+        """
+        Add the dataset_id to the output location.
+        Warning: It's assumed this function will only be used for sentinel 2 data.
+        Plus using this function breaks the DEA folder format specification.
+
+        :return:
+        """
+        if not self._dataset_location:
+            self._dataset_location = self.names.destination_folder(
+                self.collection_location
+            )
+        self._dataset_location = self._dataset_location.joinpath(str(self.dataset_id))
+
     def done(
         self, validate_correctness: bool = True, sort_measurements: bool = True
     ) -> Tuple[uuid.UUID, Path]:
