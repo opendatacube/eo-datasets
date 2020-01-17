@@ -77,6 +77,7 @@ class DatasetAssembler(EoFields):
         "landsat:wrs_path",
         "landsat:wrs_row",
         "odc:region_code",
+        "sentinel:sentinel_tile_id",
     }
 
     def __init__(
