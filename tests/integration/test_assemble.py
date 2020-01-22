@@ -258,6 +258,24 @@ def test_minimal_s2_dataset(tmp_path: Path):
     assert doc["label"] == "s2am_blueberries_2018-11-04", "Unexpected dataset label"
 
 
+def test_minimal_s1_dataset(tmp_path: Path):
+    """A minimal dataset with sentinel-1a/b platform/instrument"""
+    with DatasetAssembler(tmp_path) as p:
+        # A custom label too.
+        p.platform = "sentinel-1a"
+        p.instrument = "c-sar"
+        p.datetime = datetime(2018, 11, 4)
+        p.product_family = "bck"
+        p.processed = "2018-11-05T12:23:23"
+
+        dataset_id, metadata_path = p.done()
+
+    with metadata_path.open("r") as f:
+        doc = yaml.load(f)
+
+    assert doc["label"] == "s1ac_bck_2018-11-04", "Unexpected dataset label"
+
+
 def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
     """
     It should complain immediately if I add a file without enough metadata to write the filename.
