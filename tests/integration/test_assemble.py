@@ -259,21 +259,21 @@ def test_minimal_s1_dataset(tmp_path: Path):
 
 def test_minimal_s2_dataset_naming(tmp_path: Path):
     """A minimal dataset with sentinel platform/instrument"""
-    with DatasetAssembler(tmp_path, naming_conventions="dea") as p:
-        # A custom label too.
-        p.platform = "sentinel-2a"
-        p.instrument = "msi"
-        p.datetime = datetime(2018, 11, 4)
-        p.product_family = "blueberries"
-        p.processed = "2018-11-05T12:23:23"
-        p.producer = "ga.gov.au"
-        p.dataset_version = "1.0.0"
-        p.region_code = "Oz"
-        p.properties["sentinel:sentinel_tile_id"] = "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05"
+    p = DatasetAssembler(tmp_path, naming_conventions="dea_s2")
+    p.platform = "sentinel-2a"
+    p.instrument = "msi"
+    p.datetime = datetime(2018, 11, 4)
+    p.product_family = "blueberries"
+    p.processed = "2018-11-05T12:23:23"
+    p.producer = "ga.gov.au"
+    p.dataset_version = "1.0.0"
+    p.region_code = "Oz"
+    p.properties["sentinel:sentinel_tile_id"] = "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05"
 
-        dataset_id, metadata_path = p.done()
-
-        print (p._dataset_location)
+    dataset_id, metadata_path = p.done()
+    print (p.names.dataset.region_code)
+    print (p.names.product_name)  # datatake_sensing_time
+    print (p.names.datatake_sensing_time)
 
     with metadata_path.open("r") as f:
         doc = yaml.load(f)
