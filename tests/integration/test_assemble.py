@@ -269,14 +269,15 @@ def test_minimal_s2_dataset_naming(tmp_path: Path):
     p.dataset_version = "1.0.0"
     p.region_code = "Oz"
     p.properties["sentinel:sentinel_tile_id"] = "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05"
+    p.properties["odc:file_format"] = 'GeoTIFF'
 
     dataset_id, metadata_path = p.done()
-    print (p.names.dataset.region_code)
-    print (p.names.product_name)  # datatake_sensing_time
-    print (p.names.datatake_sensing_time)
+    assert p.names.datatake_sensing_time == '20170822T015626'
+    assert p._dataset_location.parts[-1] == '20170822T015626'
+    assert p._dataset_location.parts[-2] == '04'
 
     with metadata_path.open("r") as f:
-        doc = yaml.load(f)
+        doc = yaml.safe_load(f)  # , Loader=ruamel.yaml.Loader
 
     assert doc["label"] == "ga_s2am_blueberries_1-0-0_Oz_2018-11-04", "Unexpected dataset label"
 
