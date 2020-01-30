@@ -635,22 +635,6 @@ class DatasetAssembler(EoFields):
 
         self._software_versions.append(dict(name=name, url=url, version=version))
 
-    def add_uuid_to_output_location(self, last_dir=None):
-        """
-        Add a directory to the output location. Default to the dataset_id.
-        Note, using this function breaks the DEA folder format specification.
-
-        :param last_dir:
-        :return:
-        """
-        if not self._dataset_location:
-            self._dataset_location = self.names.destination_folder(
-                self.collection_location
-            )
-        if last_dir is None:
-            last_dir = self.dataset_id
-        self._dataset_location = self._dataset_location.joinpath(str(last_dir))
-
     def done(
         self, validate_correctness: bool = True, sort_measurements: bool = True
     ) -> Tuple[uuid.UUID, Path]:
