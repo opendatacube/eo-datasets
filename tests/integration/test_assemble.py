@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from textwrap import dedent
 from uuid import UUID
@@ -258,7 +258,33 @@ def test_minimal_s1_dataset(tmp_path: Path):
     assert doc["label"] == "s1ac_bck_2018-11-04", "Unexpected dataset label"
 
 
-def test_minimal_s2_dataset_naming(tmp_path: Path):
+def test_minimal_s2_dataset_normal(tmp_path: Path):
+    """A minimal dataset with sentinel platform/instrument"""
+    with DatasetAssembler(tmp_path) as p:
+        # A custom label too.
+        p.platform = "sentinel-2a"
+        p.instrument = "msi"
+        p.datetime = datetime(2018, 11, 4)
+        p.product_family = "blueberries"
+        p.processed = "2018-11-05T12:23:23"
+        p.properties[
+            "sentinel:sentinel_tile_id"
+        ] = "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05"
+
+        dataset_id, metadata_path = p.done()
+
+    with metadata_path.open("r") as f:
+        doc = yaml.safe_load(f)
+
+    metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+    assert metadata_path_offset == (
+        "s2am_blueberries/2018/11/04/s2am_blueberries_2018-11-04.odc-metadata.yaml"
+    )
+
+    assert doc["label"] == "s2am_blueberries_2018-11-04", "Unexpected dataset label"
+
+
+def test_s2_naming_conventions(tmp_path: Path):
     """A minimal dataset with sentinel platform/instrument"""
     p = DatasetAssembler(tmp_path, naming_conventions="dea_s2")
     p.platform = "sentinel-2a"
@@ -269,22 +295,59 @@ def test_minimal_s2_dataset_naming(tmp_path: Path):
     p.producer = "ga.gov.au"
     p.dataset_version = "1.0.0"
     p.region_code = "Oz"
+    p.properties["odc:file_format"] = "GeoTIFF"
     p.properties[
         "sentinel:sentinel_tile_id"
     ] = "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05"
-    p.properties["odc:file_format"] = "GeoTIFF"
+
+    # The property normaliser should have extracted inner fields
+    assert p.properties["sentinel:datatake_start_datetime"] == datetime(
+        2017, 8, 22, 1, 56, 26, tzinfo=timezone.utc
+    )
 
     dataset_id, metadata_path = p.done()
-    assert p.names.datatake_sensing_time == "20170822T015626"
-    assert p._dataset_location.parts[-1] == "20170822T015626"
-    assert p._dataset_location.parts[-2] == "04"
 
-    with metadata_path.open("r") as f:
-        doc = yaml.safe_load(f)  # , Loader=ruamel.yaml.Loader
+    # The s2 naming conventions have an extra subfolder of the datatake start time.
+    metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+    assert metadata_path_offset == (
+        "ga_s2am_blueberries_1/Oz/2018/11/04/20170822T015626/"
+        "ga_s2am_blueberries_1-0-0_Oz_2018-11-04.odc-metadata.yaml"
+    )
 
-    assert (
-        doc["label"] == "ga_s2am_blueberries_1-0-0_Oz_2018-11-04"
-    ), "Unexpected dataset label"
+    assert_same_as_file(
+        {
+            "$schema": "https://schemas.opendatacube.org/dataset",
+            "accessories": {
+                "checksum:sha1": {
+                    "path": "ga_s2am_blueberries_1-0-0_Oz_2018-11-04.sha1"
+                },
+                "metadata:processor": {
+                    "path": "ga_s2am_blueberries_1-0-0_Oz_2018-11-04.proc-info.yaml"
+                },
+            },
+            "id": dataset_id,
+            "label": "ga_s2am_blueberries_1-0-0_Oz_2018-11-04",
+            "lineage": {},
+            "product": {
+                "href": "https://collections.dea.ga.gov.au/product/ga_s2am_blueberries_1",
+                "name": "ga_s2am_blueberries_1",
+            },
+            "properties": {
+                "datetime": datetime(2018, 11, 4, 0, 0),
+                "eo:instrument": "msi",
+                "eo:platform": "sentinel-2a",
+                "odc:dataset_version": "1.0.0",
+                "odc:file_format": "GeoTIFF",
+                "odc:processing_datetime": datetime(2018, 11, 5, 12, 23, 23),
+                "odc:producer": "ga.gov.au",
+                "odc:product_family": "blueberries",
+                "odc:region_code": "Oz",
+                "sentinel:datatake_start_datetime": datetime(2017, 8, 22, 1, 56, 26),
+                "sentinel:sentinel_tile_id": "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05",
+            },
+        },
+        generated_file=metadata_path,
+    )
 
 
 def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
