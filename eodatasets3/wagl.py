@@ -512,7 +512,7 @@ def package(
                 p.producer, p.properties["landsat:collection_number"]
             )
             # TODO: wagl's algorithm version should determine our dataset version number, right?
-            p.dataset_version = f"{org_collection_number}.0.0"
+            p.dataset_version = f"{org_collection_number}.0.1"
             p.region_code = _extract_reference_code(p, granule.name)
 
             _read_wagl_metadata(p, granule_group)
