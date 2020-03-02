@@ -240,7 +240,7 @@ def test_whole_wagl_package(
                 "landsat:landsat_scene_id": "LC80920842016180LGN01",
                 "landsat:wrs_path": 92,
                 "landsat:wrs_row": 84,
-                "odc:dataset_version": "3.0.0",
+                "odc:dataset_version": "3.0.1",
                 "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": datetime(2019, 7, 11, 23, 29, 29, 21245),
                 "odc:producer": "ga.gov.au",
