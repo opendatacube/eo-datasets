@@ -21,15 +21,16 @@ import rasterio
 from affine import Affine
 from boltons.iterutils import get_path, PathAccessError
 from click import secho
+from rasterio import DatasetReader
+from rasterio.crs import CRS
+from rasterio.enums import Resampling
+
 from eodatasets3 import serialise, utils, images, DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
 from eodatasets3.serialise import loads_yaml
 from eodatasets3.ui import bool_style
 from eodatasets3.utils import default_utc
-from rasterio import DatasetReader
-from rasterio.crs import CRS
-from rasterio.enums import Resampling
 
 try:
     import h5py
@@ -355,6 +356,7 @@ class Granule:
     fmask_doc: Optional[Dict] = None
     fmask_image: Optional[Path] = None
     gqa_doc: Optional[Dict] = None
+    tesp_doc: Optional[Dict] = None
 
     @classmethod
     def for_path(
@@ -365,6 +367,7 @@ class Granule:
         fmask_image_path: Optional[Path] = None,
         fmask_doc_path: Optional[Path] = None,
         gqa_doc_path: Optional[Path] = None,
+        tesp_doc_path: Optional[Path] = None,
     ):
         """
         Create granules by scanning the given hdf5 file.
@@ -427,6 +430,19 @@ class Granule:
                 with gqa_doc_path.open("r") as fl:
                     [gqa_doc] = loads_yaml(fl)
 
+                # Optional doc
+                if tesp_doc_path:
+                    # But if they gave us a path, we're strict about it existing.
+                    if not tesp_doc_path.exists():
+                        raise ValueError(
+                            f"Supplied tesp doc path doesn't exist: {tesp_doc_path}"
+                        )
+                else:
+                    tesp_doc_path = wagl_hdf5.with_name(f"{granule_name}.tesp.yaml")
+                if tesp_doc_path.exists():
+                    with tesp_doc_path.open("r") as fl:
+                        [tesp_doc] = loads_yaml(fl)
+
                 yield cls(
                     name=granule_name,
                     wagl_hdf5=wagl_hdf5,
@@ -435,6 +451,7 @@ class Granule:
                     fmask_doc=fmask_doc,
                     fmask_image=fmask_image_path,
                     gqa_doc=gqa_doc,
+                    tesp_doc=tesp_doc,
                 )
 
 
@@ -518,6 +535,8 @@ def package(
             _read_wagl_metadata(p, granule_group)
             _read_gqa_doc(p, granule.gqa_doc)
             _read_fmask_doc(p, granule.fmask_doc)
+            if granule.tesp_doc:
+                _take_software_versions(p, granule.tesp_doc)
 
             _unpack_products(p, included_products, granule_group)
 
