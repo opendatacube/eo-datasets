@@ -3,17 +3,17 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Tuple
 
-import eodatasets3
 import numpy as np
 import pytest
 import rasterio
 from click.testing import CliRunner
-from eodatasets3.model import DatasetDoc
 from rasterio import DatasetReader
 from rasterio.enums import Compression
 from rio_cogeo import cogeo
 from tests.integration.common import assert_same_as_file
 
+import eodatasets3
+from eodatasets3.model import DatasetDoc
 from tests import assert_file_structure
 
 h5py = pytest.importorskip(
@@ -21,7 +21,6 @@ h5py = pytest.importorskip(
     reason="Extra dependencies needed to run wagl package test. "
     "Try pip install eodatasets3[wagl]",
 )
-
 
 # This test dataset comes from running `tests/integration/h5downsample.py` on a real
 # wagl output.
@@ -401,6 +400,11 @@ def test_whole_wagl_package(
                     "name": "fmask",
                     "url": "https://bitbucket.org/chchrsc/python-fmask",
                     "version": "0.5.3",
+                },
+                {
+                    "name": "tesp",
+                    "url": "https://github.com/OpenDataCubePipelines/tesp.git",
+                    "version": "0.6.1",
                 },
                 {
                     "name": "eodatasets3",
