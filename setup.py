@@ -37,6 +37,8 @@ EXTRAS_REQUIRE = {
     "ancillary": ["scipy", "checksumdir", "netCDF4", "gdal"],
 }
 EXTRAS_REQUIRE["all"] = list(chain(EXTRAS_REQUIRE.values()))
+# Tests need all those optionals too.
+EXTRAS_REQUIRE["test"] = EXTRAS_REQUIRE["all"]
 
 setup(
     name="eodatasets3",
