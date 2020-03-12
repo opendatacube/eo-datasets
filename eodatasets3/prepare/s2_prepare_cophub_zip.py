@@ -30,13 +30,18 @@ from ruamel import yaml
 from eodatasets3.utils import read_paths_from_file, ClickDatetime
 
 try:
-    from osgeo import osr
+    from osgeo import osr, gdal
 except ImportError:
     sys.stderr.write(
         "eodatasets3 has not been installed with the ancillary extras. \n"
         "    Try `pip install eodatasets3[ancillary]\n"
     )
     raise
+
+
+# Before gdal 3, coordinate transforms were reversed.
+# https://github.com/OSGeo/gdal/issues/1546
+_NEWER_GDAL_CONVENTIONS = int(gdal.__version__.split(".")[0]) >= 3
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
 
@@ -135,11 +140,14 @@ def get_geo_ref_points(root):
     }
 
 
-def get_coords(geo_ref_points, spatial_ref):
+def get_coords(geo_ref_points, spatial_ref: osr.SpatialReference):
     """
     Returns transformed coordinates in latitude and longitude from input
     reference points and spatial reference
     """
+    if _NEWER_GDAL_CONVENTIONS:
+        spatial_ref.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
     t = osr.CoordinateTransformation(spatial_ref, spatial_ref.CloneGeogCS())
 
     def transform(p):
