@@ -525,14 +525,18 @@ def package(
             p.producer = "ga.gov.au"
             p.product_family = "ard"
 
+            _read_wagl_metadata(p, granule_group)
+
             org_collection_number = utils.get_collection_number(
                 p.producer, p.properties["landsat:collection_number"]
             )
+
             # TODO: wagl's algorithm version should determine our dataset version number, right?
-            p.dataset_version = f"{org_collection_number}.0.1"
+            dataset_proc_version = p.processed.strftime("%Y%m%d")
+            # The '1' is after gadi software changes.
+            p.dataset_version = f"{org_collection_number}.1.{dataset_proc_version}"
             p.region_code = _extract_reference_code(p, granule.name)
 
-            _read_wagl_metadata(p, granule_group)
             _read_gqa_doc(p, granule.gqa_doc)
             _read_fmask_doc(p, granule.fmask_doc)
             if granule.tesp_doc:
