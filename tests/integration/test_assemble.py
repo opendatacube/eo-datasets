@@ -235,7 +235,7 @@ def test_dataset_no_measurements(tmp_path: Path):
         dataset_id, metadata_path = p.done()
 
     with metadata_path.open("r") as f:
-        doc = yaml.load(f)
+        doc = yaml.safe_load(f)
 
     assert doc["label"] == "chipmonk_sightings_2019", "Couldn't override label field"
 
@@ -253,7 +253,7 @@ def test_minimal_s1_dataset(tmp_path: Path):
         dataset_id, metadata_path = p.done()
 
     with metadata_path.open("r") as f:
-        doc = yaml.load(f)
+        doc = yaml.safe_load(f)
 
     assert doc["label"] == "s1ac_bck_2018-11-04", "Unexpected dataset label"
 
