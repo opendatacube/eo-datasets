@@ -330,6 +330,7 @@ def l1_ls7_tarball_md_expected(
             "landsat:landsat_scene_id": "LE71040782013119ASA00",
             "landsat:processing_software_version": "LPGS_12.8.2",
             "landsat:station_id": "ASA",
+            "landsat:scan_gap_interpolation": 2.0,
             "landsat:wrs_path": 104,
             "landsat:wrs_row": 78,
         },
