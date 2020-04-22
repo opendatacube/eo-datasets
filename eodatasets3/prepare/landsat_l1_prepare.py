@@ -332,15 +332,15 @@ def prepare_and_write(
 @click.command(help=__doc__)
 @click.option(
     "--output-base",
-    help="Write output into this directory instead of with the dataset",
+    help="Write metadata files into a directory instead of alongside each dataset",
     required=False,
     type=PathPath(exists=True, writable=True, dir_okay=True, file_okay=False),
 )
 @click.option(
     "--source",
     "source_telemetry",
-    help="Paths to the source telemtry data for all of the provided datasets"
-    "(either folder or metadata file)",
+    help="Path to the source telemetry data for all of the provided datasets"
+    "(either the folder or metadata file)",
     required=False,
     type=PathPath(exists=True),
 )
@@ -363,7 +363,7 @@ def prepare_and_write(
     "--newer-than",
     type=serialise.ClickDatetime(),
     default=None,
-    help="Only prepare files newer than this date",
+    help="Only process files newer than this date",
 )
 def main(
     output_base: Optional[Path],
