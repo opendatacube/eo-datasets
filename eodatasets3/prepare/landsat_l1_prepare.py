@@ -45,6 +45,7 @@ _COPYABLE_MTL_FIELDS = [
             "geometric_rmse_verify",
         ),
     ),
+    ("projection_parameters", ("scan_gap_interpolation",)),
 ]
 
 # Static namespace to generate uuids for datacube indexing
