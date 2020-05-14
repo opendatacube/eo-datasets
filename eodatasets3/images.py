@@ -51,11 +51,7 @@ class GridSpec:
     transform: Affine
 
     crs: CRS = attr.ib(
-        metadata=dict(doc_exclude=True),
-        default=None,
-        hash=False,
-        eq=False,
-        order=False,
+        metadata=dict(doc_exclude=True), default=None, hash=False, cmp=False
     )
 
     @classmethod
