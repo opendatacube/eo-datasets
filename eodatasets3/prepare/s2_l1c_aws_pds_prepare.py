@@ -12,7 +12,7 @@ in a format to be read by datacube.
 
 example usage:
 
-    eod-prepare s2-awspds\
+    eo3-prepare s2-awspds\
  S2A_OPER_PRD_MSIL1C_PDMC_20161017T123606_R018_V20161016T034742_20161016T034739\
  --output . --no-checksum
 """
