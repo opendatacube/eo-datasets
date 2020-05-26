@@ -19,7 +19,6 @@ from contextlib import suppress
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from subprocess import call
 from typing import List, Iterable, Tuple, Callable, IO, Dict
 
 import click
@@ -172,8 +171,6 @@ def repackage_tar(
             raise RuntimeError(f"No output after a success? Expected {output_tar_path}")
 
         if clean_inputs:
-            # Be extra sure the new file was flushed to disk before we clean the original.
-            call("sync")
             log.info("input.cleanup")
             please_remove(input_path, excluding=output_tar_path)
     except Exception:
