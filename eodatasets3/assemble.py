@@ -901,17 +901,17 @@ class DatasetAssembler(EoFields):
         except ValueError:
             ...
 
-        def shorten(l: List, line_length=60):
-            s = ", ".join(sorted(l))
-            if len(s) > line_length:
-                return f"{s[:line_length]}..."
+        def format_list(items: List, max_len=60):
+            s = ", ".join(sorted(items))
+            if len(s) > max_len:
+                return f"{s[:max_len]}..."
             return s
 
         return dedent(
             f"""
             Assembling {product_name or ''} ({status})
-            - {len(measurements)} measurements: {shorten(measurements)}
-            - {len(properties)} properties: {shorten(properties)}
+            - {len(measurements)} measurements: {format_list(measurements)}
+            - {len(properties)} properties: {format_list(properties)}
             Writing to {target}
         """
         )

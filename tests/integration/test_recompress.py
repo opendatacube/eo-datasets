@@ -136,7 +136,7 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
 
     assert (
         len(all_output_files) == 1
-    ), f"Expected one output tar file. Got: \n\t" + "\n\t".join(all_output_files)
+    ), "Expected one output tar file. Got: \n\t" + "\n\t".join(all_output_files)
     assert all_output_files == [str(expected_output)]
 
     assert (
@@ -219,7 +219,7 @@ def test_recompress_dirty_dataset(tmp_path: Path):
 
     assert (
         len(all_output_files) == 1
-    ), f"Expected one output tar file. Got: \n\t" + "\n\t".join(all_output_files)
+    ), "Expected one output tar file. Got: \n\t" + "\n\t".join(all_output_files)
     assert all_output_files == [str(expected_output)]
 
     assert (

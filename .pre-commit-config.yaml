@@ -9,6 +9,7 @@ repos:
       hooks:
           - id: yamllint
     - repo: https://gitlab.com/pycqa/flake8
-      rev: 3.7.9
+      # flake8 version should match .travis.yml
+      rev: 3.8.2
       hooks:
           - id: flake8

@@ -39,7 +39,7 @@ class ValidateRunner:
 
         if expect_no_messages and self.messages:
             raise AssertionError(
-                f"Expected no messages. Got: "
+                "Expected no messages. Got: "
                 + "\n".join(f"{k}: {v}" for k, v in self.messages.items())
             )
 
@@ -49,7 +49,7 @@ class ValidateRunner:
         assert (
             self.result.exit_code != 0
         ), f"Expected validation to fail.\n{self.result.output}"
-        assert self.result.exit_code == 1, f"Expected error code 1 for 1 invalid path"
+        assert self.result.exit_code == 1, "Expected error code 1 for 1 invalid path"
 
         if codes is not None:
             assert sorted(codes) == sorted(self.messages.keys())

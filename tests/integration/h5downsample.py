@@ -61,7 +61,7 @@ def downsample(input: Path, factor: int, anti_alias: bool):
 
             old_shape = old_image.shape
             if all(dim_size < factor for dim_size in old_shape):
-                info(f"Skipping")
+                info("Skipping")
                 continue
 
             attrs = dict(old_image.attrs.items())

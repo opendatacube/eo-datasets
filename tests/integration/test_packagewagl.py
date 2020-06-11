@@ -113,7 +113,7 @@ def test_whole_wagl_package(
         if p != checksum_file
     )
     files_in_checksum = {
-        Path(l.split("\t")[1]) for l in checksum_file.read_text().splitlines()
+        Path(line.split("\t")[1]) for line in checksum_file.read_text().splitlines()
     }
     assert all_output_files == files_in_checksum
 
