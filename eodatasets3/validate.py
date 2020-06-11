@@ -325,7 +325,7 @@ def validate_paths(
                 messages.append(
                     _warning(
                         "unknown_product",
-                        f"Cannot match dataset to product",
+                        "Cannot match dataset to product",
                         hint=f"Nothing matches {product_name!r}"
                         if product_name
                         else "No product name in dataset (TODO: field matching)",
@@ -336,7 +336,7 @@ def validate_paths(
                 ValidationMessage(
                     Level.error if thorough else Level.info,
                     "no_product",
-                    f"No product provided: validating dataset information alone",
+                    "No product provided: validating dataset information alone",
                 )
             )
 

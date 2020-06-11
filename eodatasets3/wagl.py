@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Package WAGL HDF5 Outputs
 
@@ -544,7 +543,7 @@ def package(
             _unpack_products(p, included_products, granule_group)
 
             if include_oa:
-                with do(f"Starting OA", heading=True):
+                with do("Starting OA", heading=True):
                     _unpack_observation_attributes(
                         p,
                         included_products,
@@ -592,8 +591,8 @@ def _read_fmask_doc(p: DatasetAssembler, doc: Dict):
     for name, value in doc["percent_class_distribution"].items():
         # From Josh: fmask cloud cover trumps the L1 cloud cover.
         if name == "cloud":
-            del p.properties[f"eo:cloud_cover"]
-            p.properties[f"eo:cloud_cover"] = value
+            del p.properties["eo:cloud_cover"]
+            p.properties["eo:cloud_cover"] = value
 
         p.properties[f"fmask:{name}"] = value
 

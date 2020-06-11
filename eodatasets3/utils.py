@@ -117,7 +117,7 @@ def get_collection_number(producer: str, usgs_collection_number: int) -> int:
         if usgs_collection_number == 1:
             return 3
         else:
-            raise NotImplementedError(f"Unsupported GA collection number.")
+            raise NotImplementedError("Unsupported GA collection number.")
     raise NotImplementedError(
         f"Unsupported collection number mapping for org: {producer!r}"
     )
