@@ -558,9 +558,8 @@ def package(
             )
 
             # TODO: wagl's algorithm version should determine our dataset version number, right?
-            dataset_proc_version = p.processed.strftime("%Y%m%d")
             # The '1' is after gadi software changes.
-            p.dataset_version = f"{org_collection_number}.1.{dataset_proc_version}"
+            p.dataset_version = f"{org_collection_number}.1.0"
             p.region_code = _extract_reference_code(p, granule.name)
 
             _read_gqa_doc(p, granule.gqa_doc)
