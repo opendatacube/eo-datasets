@@ -48,11 +48,13 @@ def package(outdir):
 
 
         with h5py.File(str(INDIR.joinpath(WAGL_FNAME)), 'r') as fid:
-            group = fid[GROUP_PATH]
-            img_paths = [ppjoin(group.name, pth) for pth in find(group, 'IMAGE')]
+            img_paths = [ppjoin(fid.name, pth) for pth in find(fid, 'IMAGE')]
 
             for pathname in img_paths:
                 ds = fid[pathname]
+
+                if ds.dtype == 'bool':
+                   continue
 
                 # eodatasets internally uses this grid spec to group
                 # image dataset
