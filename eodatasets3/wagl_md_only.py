@@ -46,7 +46,6 @@ def package(outdir):
         da.dataset_version = '1.0.0'
         da.producer = 'ga.gov.au'
 
-
         with h5py.File(str(INDIR.joinpath(WAGL_FNAME)), 'r') as fid:
             img_paths = [ppjoin(fid.name, pth) for pth in find(fid, 'IMAGE')]
 
