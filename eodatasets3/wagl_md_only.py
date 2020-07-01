@@ -53,7 +53,7 @@ def package(outdir):
             for pathname in img_paths:
                 ds = fid[pathname]
 
-                if ds.dtype == 'bool':
+                if ds.dtype.name == 'bool':
                    continue
 
                 # eodatasets internally uses this grid spec to group
