@@ -229,6 +229,9 @@ class MeasurementRecord:
             self._expand_valid_data_mask(grid, img, nodata)
 
     def _expand_valid_data_mask(self, grid: GridSpec, img: numpy.ndarray, nodata):
+        if nodata is None:
+            nodata = 0
+
         mask = self.mask_by_grid.get(grid)
         if mask is None:
             mask = img != nodata
