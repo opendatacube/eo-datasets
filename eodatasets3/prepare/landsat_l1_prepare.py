@@ -323,6 +323,7 @@ def prepare_and_write(
                 band_aliases[usgs_band_id],
                 file_location,
                 relative_to_dataset_location=True,
+                expand_valid_data=usgs_band_id != "quality",
             )
 
         p.add_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
