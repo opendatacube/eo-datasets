@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from datetime import datetime
-from posixpath import join as ppjoin, basename as pbasename
+from posixpath import join as ppjoin, basename as pbasename, dirname
 from pathlib import Path
 import h5py
 from rasterio.crs import CRS
@@ -10,15 +10,15 @@ from eodatasets3 import DatasetAssembler, images
 from wagl.hdf5 import find
 
 
-INDIR = Path("/g/data/v10/testing_ground/jps547/test-jq-indexing/workdir/batchid-6f608760a3/jobid-635fa0/LC08_L1GT_088078_20151206_20170401_01_T2.tar.ARD/LC80880782015340LGN01")
-WAGL_FNAME = Path("LC80880782015340LGN01.wagl.h5")
-GROUP_PATH = "/LC80880782015340LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS"
+INDIR = Path("/g/data/up71/projects/index-testing-wagl/wagl/workdir/batchid-48b378b0f0/jobid-c59136/LC08_L1TP_099080_20160613_20180203_01_T1.tar.ARD/LC80990802016165LGN02")
+WAGL_FNAME = Path("LC80990802016165LGN02.wagl.h5")
+GROUP_PATH = "/LC80990802016165LGN02/RES-GROUP-1/STANDARDISED-PRODUCTS"
 GDAL_H5_FMT = 'HDF5:"{filename}":/{dataset_pathname}'
 
 
-def package(outdir):
+def package_non_standard(outdir):
     """
-    Quick toy yaml creator for the ard pipeline.
+    ick toy yaml creator for the ard pipeline.
     Purely for demonstration purposes only.
     Can easily be expanded to include other datasets.
 
@@ -29,13 +29,13 @@ def package(outdir):
 
     
     """
-    out_fname = INDIR.joinpath('LC80880782015340LGN01.yaml')
+    out_fname = INDIR.joinpath('LC80990802016165LGN02.yaml')
     with DatasetAssembler(metadata_path=out_fname, naming_conventions='dea') as da:
         da.platform = 'landsat8'
         da.product_family = 'ard'
         da.maturity = 'final'
 
-        da.properties["landsat:landsat_scene_id"] = "LC80880782015340LGN01"
+        da.properties["landsat:landsat_scene_id"] = "LC80990802016165LGN02"
         da.properties['eo:instrument'] = 'olitirs'
 
         # not the real date of the dataset
@@ -54,7 +54,7 @@ def package(outdir):
 
                 if ds.dtype.name == 'bool':
                    continue
-
+                
                 # eodatasets internally uses this grid spec to group
                 # image dataset
                 grid_spec = images.GridSpec(
@@ -73,12 +73,18 @@ def package(outdir):
                 # otherwise we'll get duplicates if just using blue
                 # something can be done for the other datasets
                 parent = pbasename(ds.parent.name)
+                
+                # Get spatial resolution
+                resolution = Path(ds.parent.name).parts[2]
+                
                 measurement_name = "_".join(
                     [
+                        resolution,
                         parent,
                         ds.attrs.get('alias', pbasename(ds.name)),
                     ]
                 ).replace('-', '_').lower()  # we don't wan't hyphens in odc land
+                print(measurement_name)
 
                 # include this band in defining the valid data bounds?
                 include = True if 'nbart' in measurement_name else False
@@ -100,7 +106,7 @@ def package(outdir):
                 #     pathname,
                 #     expand_valid_data=False,
                 # )
-
+                
         # the longest part here is generating the valid data bounds vector
         # landsat 7 post SLC-OFF can take a really long time
         da.done()
