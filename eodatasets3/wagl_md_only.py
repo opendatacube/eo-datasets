@@ -16,9 +16,9 @@ GROUP_PATH = "/LC80990802016165LGN02/RES-GROUP-1/STANDARDISED-PRODUCTS"
 GDAL_H5_FMT = 'HDF5:"{filename}":/{dataset_pathname}'
 
 
-def package_non_standard(outdir):
+def package_non_standard(outdir, granule):
     """
-    ick toy yaml creator for the ard pipeline.
+    yaml creator for the ard pipeline.
     Purely for demonstration purposes only.
     Can easily be expanded to include other datasets.
 
@@ -31,17 +31,22 @@ def package_non_standard(outdir):
     """
     out_fname = INDIR.joinpath('LC80990802016165LGN02.yaml')
     with DatasetAssembler(metadata_path=out_fname, naming_conventions='dea') as da:
-        da.platform = 'landsat8'
+        level1 = granule.source_level1_metadata
+        da.add_source_dataset(level1, auto_inherit_properties=True)
+        
+        #da.platform = 'landsat8'
         da.product_family = 'ard'
         da.maturity = 'final'
 
-        da.properties["landsat:landsat_scene_id"] = "LC80990802016165LGN02"
-        da.properties['eo:instrument'] = 'olitirs'
+        #da.properties["landsat:landsat_scene_id"] = "LC80990802016165LGN02"
+        #da.properties['eo:instrument'] = 'olitirs'
+        da.properties['landsat:collection_number'] = '1'
+
 
         # not the real date of the dataset
-        da.datetime = datetime(2018, 6, 30, 19, 33, 4, 334934)
+        #da.datetime = datetime(2018, 6, 30, 19, 33, 4, 334934)
 
-        da.region_code = '096091'
+        #da.region_code = '096091'
         da.processed = '2019-07-12 07:40:50.137089Z'  # not the real processed date
         da.dataset_version = '1.0.0'
         da.producer = 'ga.gov.au'
@@ -113,7 +118,7 @@ def package_non_standard(outdir):
 
 
 def main():
-    package(INDIR)
+    package_non_standard(INDIR, granule)
 
 
 if __name__ == "__main__":
