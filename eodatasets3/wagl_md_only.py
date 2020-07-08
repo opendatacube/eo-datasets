@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-from datetime import datetime
-from posixpath import join as ppjoin, basename as pbasename, dirname
+from posixpath import join as ppjoin, basename as pbasename
 from pathlib import Path
 import h5py
 from rasterio.crs import CRS
 from affine import Affine
 from eodatasets3 import DatasetAssembler, images
 from wagl.hdf5 import find
+from datetime import datetime
 
 
 INDIR = Path("/g/data/up71/projects/index-testing-wagl/wagl/workdir/batchid-48b378b0f0/jobid-c59136/LC08_L1TP_099080_20160613_20180203_01_T1.tar.ARD/LC80990802016165LGN02")
@@ -34,20 +34,20 @@ def package_non_standard(outdir, granule):
         level1 = granule.source_level1_metadata
         da.add_source_dataset(level1, auto_inherit_properties=True)
         
-        #da.platform = 'landsat8'
         da.product_family = 'ard'
         da.maturity = 'final'
-
-        #da.properties["landsat:landsat_scene_id"] = "LC80990802016165LGN02"
-        #da.properties['eo:instrument'] = 'olitirs'
-        da.properties['landsat:collection_number'] = '1'
-
-
-        # not the real date of the dataset
-        #da.datetime = datetime(2018, 6, 30, 19, 33, 4, 334934)
-
-        #da.region_code = '096091'
-        da.processed = '2019-07-12 07:40:50.137089Z'  # not the real processed date
+        da.properties['landsat:collection_number'] = '3'
+        
+        now = datetime.utcnow()
+        processed_date = '%s-%s-%s %s:%s:%s.%sZ' % (str(now.year),             
+                                                    str(now.month),         \
+                                                    str(now.day),           \
+                                                    str(now.hour),          \
+                                                    str(now.minute),        \
+                                                    str(now.second),        \
+                                                    str(now.microsecond),)
+        print(processed_date)
+        da.processed = processed_date
         da.dataset_version = '1.0.0'
         da.producer = 'ga.gov.au'
 
@@ -115,11 +115,3 @@ def package_non_standard(outdir, granule):
         # the longest part here is generating the valid data bounds vector
         # landsat 7 post SLC-OFF can take a really long time
         da.done()
-
-
-def main():
-    package_non_standard(INDIR, granule)
-
-
-if __name__ == "__main__":
-    main()
