@@ -5,16 +5,15 @@ from pathlib import Path
 import h5py
 from rasterio.crs import CRS
 from affine import Affine
-from eodatasets3 import DatasetAssembler, images
+from eodatasets3 import DatasetAssembler, images, utils
+import eodatasets3.wagl
 from wagl.hdf5 import find
 from datetime import datetime
-
 
 INDIR = Path("/g/data/up71/projects/index-testing-wagl/wagl/workdir/batchid-48b378b0f0/jobid-c59136/LC08_L1TP_099080_20160613_20180203_01_T1.tar.ARD/LC80990802016165LGN02")
 WAGL_FNAME = Path("LC80990802016165LGN02.wagl.h5")
 GROUP_PATH = "/LC80990802016165LGN02/RES-GROUP-1/STANDARDISED-PRODUCTS"
 GDAL_H5_FMT = 'HDF5:"{filename}":/{dataset_pathname}'
-
 
 def package_non_standard(outdir, granule):
     """
@@ -26,34 +25,31 @@ def package_non_standard(outdir, granule):
     doc contained withing the HDF5 file at the following path:
 
     [/<granule_id>/METADATA/CURRENT]
-
-    
     """
+
     out_fname = INDIR.joinpath('LC80990802016165LGN02.yaml')
     with DatasetAssembler(metadata_path=out_fname, naming_conventions='dea') as da:
         level1 = granule.source_level1_metadata
         da.add_source_dataset(level1, auto_inherit_properties=True)
-        
         da.product_family = 'ard'
-        da.maturity = 'final'
-        da.properties['landsat:collection_number'] = '3'
-        
-        now = datetime.utcnow()
-        processed_date = '%s-%s-%s %s:%s:%s.%sZ' % (str(now.year),             
-                                                    str(now.month),         \
-                                                    str(now.day),           \
-                                                    str(now.hour),          \
-                                                    str(now.minute),        \
-                                                    str(now.second),        \
-                                                    str(now.microsecond),)
-        print(processed_date)
-        da.processed = processed_date
-        da.dataset_version = '1.0.0'
+        da.processed = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%fZ")
         da.producer = 'ga.gov.au'
 
         with h5py.File(str(INDIR.joinpath(WAGL_FNAME)), 'r') as fid:
             img_paths = [ppjoin(fid.name, pth) for pth in find(fid, 'IMAGE')]
+            granule_group = fid[granule.name]
+            eodatasets3.wagl._read_wagl_metadata(da, granule_group)
 
+            org_collection_number = utils.get_collection_number(
+                da.producer, da.properties["landsat:collection_number"]
+            )
+
+            da.dataset_version = f"{org_collection_number}.1.0"
+            da.region_code = eodatasets3.wagl._extract_reference_code(da, granule.name)
+
+            eodatasets3.wagl._read_gqa_doc(da, granule.gqa_doc)
+            eodatasets3.wagl._read_fmask_doc(da, granule.fmask_doc)
+            
             for pathname in img_paths:
                 ds = fid[pathname]
 
