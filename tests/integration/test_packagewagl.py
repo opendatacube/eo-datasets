@@ -423,33 +423,38 @@ def test_whole_wagl_package(
 
     # Check one of the images explicitly.
     [image] = expected_folder.rglob("*_nbar_*_band08.tif")
-    with rasterio.open(image) as d:
-        d: DatasetReader
-        assert d.count == 1, "Expected one band"
-        assert d.nodata == -999.0
+    with rasterio.Env(GDAL_CACHEMAX=64):
+        with rasterio.open(image) as d:
+            d: DatasetReader
+            assert d.count == 1, "Expected one band"
+            assert d.nodata == -999.0
 
-        # Verify the pixel values haven't changed.
-        assert crc32(d.read(1).tobytes()) == 3_381_159_350
-        # (Rasterio's checksum is zero on some datasets for some reason? So we use crc above...)
-        assert d.checksum(1) == 58403
+            # Verify the pixel values haven't changed.
+            assert crc32(d.read(1).tobytes()) == 3_381_159_350
+            # (Rasterio's checksum is zero on some datasets for
+            #  some reason? So we use crc above...)
+            assert d.checksum(1) == 58403
 
-        # The last overview is an odd size because of the tiny test data image size.
-        assert d.overviews(1) == [8, 16, 31]
-        assert d.driver == "GTiff"
-        assert d.dtypes == ("int16",)
-        assert d.compression == Compression.deflate
+            # The last overview is an odd size because of the tiny
+            # test data image size.
+            assert d.overviews(1) == [8, 16, 31]
+            assert d.driver == "GTiff"
+            assert d.dtypes == ("int16",)
+            assert d.compression == Compression.deflate
 
-        assert d.height == 157
-        assert d.width == 156
+            assert d.height == 157
+            assert d.width == 156
 
-        # The reduced resolution makes it hard to test the chosen block size...
-        assert d.block_shapes == [(26, 156)]
+            # The reduced resolution makes it hard to test the
+            # chosen block size...
+            assert d.block_shapes == [(26, 156)]
 
     # OA data should have no overviews.
     [*oa_images] = expected_folder.rglob("*_oa_*.tif")
     assert oa_images
     for image in oa_images:
-        # fmask is the only OA that should have overviews according to spec (and Josh).
+        # fmask is the only OA that should have overviews according
+        # to spec (and Josh).
         if "fmask" in image.name:
             _assert_image(image, overviews=[8, 16, 26])
         else:
@@ -473,22 +478,23 @@ def _assert_image(
     shape: Tuple[int, int] = None,
 ):
     __tracebackhide__ = True
-    with rasterio.open(image) as d:
-        d: DatasetReader
-        assert d.count == bands, f"Expected {bands} band{'s' if bands > 1 else ''}"
+    with rasterio.Env(GDAL_CACHEMAX=64):
+        with rasterio.open(image) as d:
+            d: DatasetReader
+            assert d.count == bands, f"Expected {bands} band{'s' if bands > 1 else ''}"
 
-        if overviews is not allow_anything:
-            assert d.overviews(1) == overviews
-        if nodata is not allow_anything:
-            assert d.nodata == nodata
+            if overviews is not allow_anything:
+                assert d.overviews(1) == overviews
+            if nodata is not allow_anything:
+                assert d.nodata == nodata
 
-        if unique_pixel_counts is not allow_anything:
-            array = d.read(1)
-            value_counts = dict(zip(*np.unique(array, return_counts=True)))
-            assert value_counts == unique_pixel_counts
+            if unique_pixel_counts is not allow_anything:
+                array = d.read(1)
+                value_counts = dict(zip(*np.unique(array, return_counts=True)))
+                assert value_counts == unique_pixel_counts
 
-        if shape:
-            assert shape == d.shape, f"Unexpected shape: {shape!r} != {d.shape!r}"
+            if shape:
+                assert shape == d.shape, f"Unexpected shape: {shape!r} != {d.shape!r}"
 
 
 def test_maturity_calculation():
