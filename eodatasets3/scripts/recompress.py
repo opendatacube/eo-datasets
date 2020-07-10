@@ -250,24 +250,25 @@ def _recompress_tar_member(
 
     # If it's a tif, check whether it's compressed.
     if member.name.lower().endswith(".tif"):
-        with open_member() as input_fp, rasterio.open(input_fp) as ds:
-            if not ds.profile.get("compress"):
-                # No compression: let's compress it
-                with rasterio.MemoryFile(filename=member.name) as memory_file:
-                    try:
-                        _recompress_image(ds, memory_file, **compress_args)
-                    except Exception as e:
-                        raise RecompressFailure(f"Error during {member.name}") from e
-                    new_member.size = memory_file.getbuffer().nbytes
-                    out_tar.addfile(new_member, memory_file)
+        with rasterio.Env(GDAL_CACHEMAX=64):
+            with open_member() as input_fp, rasterio.open(input_fp) as ds:
+                if not ds.profile.get("compress"):
+                    # No compression: let's compress it
+                    with rasterio.MemoryFile(filename=member.name) as memory_file:
+                        try:
+                            _recompress_image(ds, memory_file, **compress_args)
+                        except Exception as e:
+                            raise RecompressFailure(f"Error during {member.name}") from e
+                        new_member.size = memory_file.getbuffer().nbytes
+                        out_tar.addfile(new_member, memory_file)
 
-                    # Image has been written. Seek to beginning to take a checksum.
-                    memory_file.seek(0)
-                    verify.add(memory_file, tmpdir / new_member.name)
-                    return
-            else:
-                # It's already compressed, we'll fall through and copy it verbatim.
-                pass
+                        # Image has been written. Seek to beginning to take a checksum.
+                        memory_file.seek(0)
+                        verify.add(memory_file, tmpdir / new_member.name)
+                        return
+                else:
+                    # It's already compressed, we'll fall through and copy it verbatim.
+                    pass
 
     if member.size == 0:
         # Typically a directory entry.
@@ -387,7 +388,7 @@ def main(
     if input_file:
         paths = chain((Path(p.strip()) for p in input_file), paths)
 
-    with rasterio.Env():
+    with rasterio.Env(GDAL_CACHEMAX=64):
         total = failures = 0
         for path in paths:
             total += 1
