@@ -323,19 +323,20 @@ def test_measurements_compare_with_nans(
 
 
 def _create_dummy_tif(blue_tif, nodata=None, dtype="float32", **opts):
-    with rasterio.open(
-        blue_tif,
-        "w",
-        width=10,
-        height=10,
-        count=1,
-        dtype=dtype,
-        driver="GTiff",
-        nodata=nodata,
-        **opts,
-    ) as ds:
-        ds: DatasetWriter
-        ds.write(np.ones((10, 10), dtype=dtype), 1)
+    with rasterio.Env(GDAL_CACHEMAX=64):
+        with rasterio.open(
+            blue_tif,
+            "w",
+            width=10,
+            height=10,
+            count=1,
+            dtype=dtype,
+            driver="GTiff",
+            nodata=nodata,
+            **opts,
+        ) as ds:
+            ds: DatasetWriter
+            ds.write(np.ones((10, 10), dtype=dtype), 1)
 
 
 def test_missing_measurement_from_product(
