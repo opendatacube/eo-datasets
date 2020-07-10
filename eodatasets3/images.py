@@ -229,8 +229,8 @@ class MeasurementRecord:
             self._expand_valid_data_mask(grid, img, nodata)
 
     def _expand_valid_data_mask(self, grid: GridSpec, img: numpy.ndarray, nodata):
-        if nodata is None:
-            nodata = 0
+        #if nodata is None:
+        #    nodata = 0
 
         mask = self.mask_by_grid.get(grid)
         if mask is None:
@@ -544,37 +544,39 @@ class FileWrite:
             enable writing to a temporary location before rearranging
             the overviews within the file by gdal when required
             """
-            with rasterio.open(unstructured_image, "w", **rio_args) as outds:
-                if bands == 1:
-                    if isinstance(array, h5py.Dataset):
-                        for tile in tiles:
-                            idx = (
-                                slice(tile[0][0], tile[0][1]),
-                                slice(tile[1][0], tile[1][1]),
-                            )
-                            outds.write(array[idx], 1, window=tile)
+            with rasterio.Env(GDAL_CACHEMAX=64):
+                with rasterio.open(unstructured_image, "w", **rio_args) as outds:
+                    if bands == 1:
+                        if isinstance(array, h5py.Dataset):
+                            for tile in tiles:
+                                idx = (
+                                    slice(tile[0][0], tile[0][1]),
+                                    slice(tile[1][0], tile[1][1]),
+                                )
+                                outds.write(array[idx], 1, window=tile)
+                        else:
+                            outds.write(array, 1)
                     else:
-                        outds.write(array, 1)
-                else:
-                    if isinstance(array, h5py.Dataset):
-                        for tile in tiles:
-                            idx = (
-                                slice(tile[0][0], tile[0][1]),
-                                slice(tile[1][0], tile[1][1]),
-                            )
-                            subs = array[:, idx[0], idx[1]]
+                        if isinstance(array, h5py.Dataset):
+                            for tile in tiles:
+                                idx = (
+                                    slice(tile[0][0], tile[0][1]),
+                                    slice(tile[1][0], tile[1][1]),
+                                )
+                                subs = array[:, idx[0], idx[1]]
+                                for i in range(bands):
+                                    outds.write(subs[i], i + 1, window=tile)
+                        else:
                             for i in range(bands):
-                                outds.write(subs[i], i + 1, window=tile)
-                    else:
-                        for i in range(bands):
-                            outds.write(array[i], i + 1)
-                if tags is not None:
-                    outds.update_tags(**tags)
+                                outds.write(array[i], i + 1)
+                    if tags is not None:
+                        outds.update_tags(**tags)
 
-                # overviews/pyramids to disk
-                if overviews:
-                    outds.build_overviews(overviews, overview_resampling)
-
+                    # overviews/pyramids to disk
+                    if overviews:
+                        outds.build_overviews(overviews, overview_resampling)
+                    # end-with rasterio.open
+                # end-with rasterio.Env
             if overviews:
                 # Move the overviews to the start of the file, as required to be COG-compliant.
                 rio_copy(
@@ -612,7 +614,7 @@ class FileWrite:
         zero.
         """
         # No aux.xml file with our jpeg.
-        with rasterio.Env(GDAL_PAM_ENABLED=False):
+        with rasterio.Env(GDAL_PAM_ENABLED=False, GDAL_CACHEMAX=64):
             with tempfile.TemporaryDirectory(
                 dir=out.parent, prefix=".thumbgen-"
             ) as tmpdir:
@@ -682,8 +684,9 @@ def _write_quicklook(
     Write an intensity-scaled wgs84 image using the given files as bands.
     """
     if input_geobox is None:
-        with rasterio.open(rgb[0]) as ds:
-            input_geobox = GridSpec.from_rio(ds)
+        with rasterio.Env(GDAL_CACHEMAX=64):
+            with rasterio.open(rgb[0]) as ds:
+                input_geobox = GridSpec.from_rio(ds)
 
     out_crs = CRS.from_epsg(4326)
     (
@@ -718,37 +721,38 @@ def _write_quicklook(
     if reproj_grid.shape[1] > 512:
         ql_write_args["blockxsize"] = 512
 
-    with rasterio.open(dest_path, "w", **ql_write_args) as ql_ds:
-        ql_ds: DatasetWriter
+    with rasterio.Env(GDAL_CACHEMAX=64):
+        with rasterio.open(dest_path, "w", **ql_write_args) as ql_ds:
+            ql_ds: DatasetWriter
 
-        # Calculate combined nodata mask
-        valid_data_mask = numpy.ones(input_geobox.shape, dtype="bool")
-        calculated_range = read_valid_mask_and_value_range(
-            valid_data_mask, _iter_images(rgb), percentile_range
-        )
-
-        for band_no, (image, nodata) in enumerate(_iter_images(rgb), start=1):
-            reprojected_data = numpy.zeros(reproj_grid.shape, dtype=numpy.uint8)
-            reproject(
-                rescale_intensity(
-                    image,
-                    image_null_mask=~valid_data_mask,
-                    in_range=(static_range or calculated_range),
-                    out_range=(1, 255),
-                    out_dtype=np.uint8,
-                ),
-                reprojected_data,
-                src_crs=input_geobox.crs,
-                src_transform=input_geobox.transform,
-                src_nodata=0,
-                dst_crs=reproj_grid.crs,
-                dst_nodata=0,
-                dst_transform=reproj_grid.transform,
-                resampling=resampling,
-                num_threads=2,
+            # Calculate combined nodata mask
+            valid_data_mask = numpy.ones(input_geobox.shape, dtype="bool")
+            calculated_range = read_valid_mask_and_value_range(
+                valid_data_mask, _iter_images(rgb), percentile_range
             )
-            ql_ds.write(reprojected_data, band_no)
-            del reprojected_data
+
+            for band_no, (image, nodata) in enumerate(_iter_images(rgb), start=1):
+                reprojected_data = numpy.zeros(reproj_grid.shape, dtype=numpy.uint8)
+                reproject(
+                    rescale_intensity(
+                        image,
+                        image_null_mask=~valid_data_mask,
+                        in_range=(static_range or calculated_range),
+                        out_range=(1, 255),
+                        out_dtype=np.uint8,
+                    ),
+                    reprojected_data,
+                    src_crs=input_geobox.crs,
+                    src_transform=input_geobox.transform,
+                    src_nodata=0,
+                    dst_crs=reproj_grid.crs,
+                    dst_nodata=0,
+                    dst_transform=reproj_grid.transform,
+                    resampling=resampling,
+                    num_threads=2,
+                )
+                ql_ds.write(reprojected_data, band_no)
+                del reprojected_data
 
     return reproj_grid
 
@@ -763,13 +767,14 @@ def _iter_images(rgb: Sequence[Path]) -> LazyImages:
     Yields the image array and nodata value.
     """
     for path in rgb:
-        with rasterio.open(path) as ds:
-            ds: DatasetReader
-            if ds.count != 1:
-                raise NotImplementedError(
-                    "multi-band measurement files aren't yet supported"
-                )
-            yield ds.read(1), ds.nodata
+        with rasterio.Env(GDAL_CACHEMAX=64):
+            with rasterio.open(path) as ds:
+                ds: DatasetReader
+                if ds.count != 1:
+                    raise NotImplementedError(
+                        "multi-band measurement files aren't yet supported"
+                    )
+                yield ds.read(1), ds.nodata
 
 
 def read_valid_mask_and_value_range(
