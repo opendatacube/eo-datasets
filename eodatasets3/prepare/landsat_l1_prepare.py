@@ -378,7 +378,7 @@ def main(
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
     )
-    with rasterio.Env():
+    with rasterio.Env(GDAL_CACHEMAX=64):
         for ds in datasets:
             if output_base:
                 output = output_base.joinpath(
