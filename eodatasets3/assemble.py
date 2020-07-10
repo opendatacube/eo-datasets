@@ -389,15 +389,16 @@ class DatasetAssembler(EoFields):
                         (DEA has measurements called ``blue``, but their written filenames must be ``band04`` by
                         convention.)
         """
-        with rasterio.open(path) as ds:
-            self.write_measurement_rio(
-                name,
-                ds,
-                overviews=overviews,
-                expand_valid_data=expand_valid_data,
-                overview_resampling=overview_resampling,
-                file_id=file_id,
-            )
+        with rasterio.Env(GDAL_CACHEMAX=64):
+            with rasterio.open(path) as ds:
+                self.write_measurement_rio(
+                    name,
+                    ds,
+                    overviews=overviews,
+                    expand_valid_data=expand_valid_data,
+                    overview_resampling=overview_resampling,
+                    file_id=file_id,
+                )
 
     def write_measurement_rio(
         self,
@@ -580,21 +581,22 @@ class DatasetAssembler(EoFields):
                 or (self._metadata_path and self._metadata_path.parent),
                 path,
             )
-        with rasterio.open(read_location) as ds:
-            ds: DatasetReader
-            if ds.count != 1:
-                raise NotImplementedError(
-                    "TODO: Only single-band files currently supported"
-                )
+        with rasterio.Env(GDAL_CACHEMAX=64):
+            with rasterio.open(read_location) as ds:
+                ds: DatasetReader
+                if ds.count != 1:
+                    raise NotImplementedError(
+                        "TODO: Only single-band files currently supported"
+                    )
 
-            self._measurements.record_image(
-                name,
-                images.GridSpec.from_rio(ds),
-                path,
-                ds.read(1),
-                nodata=ds.nodata,
-                expand_valid_data=expand_valid_data,
-            )
+                self._measurements.record_image(
+                    name,
+                    images.GridSpec.from_rio(ds),
+                    path,
+                    ds.read(1),
+                    nodata=ds.nodata,
+                    expand_valid_data=expand_valid_data,
+                )
 
     def extend_user_metadata(self, section_name: str, doc: Dict[str, Any]):
         """
