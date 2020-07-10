@@ -256,18 +256,19 @@ def _create_contiguity(
             if grid.resolution_yx != resolution_yx:
                 continue
 
-            with rasterio.open(path) as ds:
-                ds: DatasetReader
-                if contiguity is None:
-                    contiguity = numpy.ones((ds.height, ds.width), dtype="uint8")
-                    geobox = GridSpec.from_rio(ds)
-                elif ds.shape != contiguity.shape:
-                    raise NotImplementedError(
-                        "Contiguity from measurements of different shape"
-                    )
+            with rasterio.Env(GDAL_CACHEMAX=64):
+                with rasterio.open(path) as ds:
+                    ds: DatasetReader
+                    if contiguity is None:
+                        contiguity = numpy.ones((ds.height, ds.width), dtype="uint8")
+                        geobox = GridSpec.from_rio(ds)
+                    elif ds.shape != contiguity.shape:
+                        raise NotImplementedError(
+                            "Contiguity from measurements of different shape"
+                        )
 
-                for band in ds.indexes:
-                    contiguity &= ds.read(band) > 0
+                    for band in ds.indexes:
+                        contiguity &= ds.read(band) > 0
 
         if contiguity is None:
             secho(f"No images found for requested product {product}", fg="red")
