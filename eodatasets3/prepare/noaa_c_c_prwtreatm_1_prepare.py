@@ -56,45 +56,46 @@ def process_datasets(dataset: Path) -> Iterable[Dict]:
     creation_dt = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
     geometry = valid_region([str(dataset)])
 
-    with rasterio.open(str(dataset), "r") as collection:
-        collection_start_date = datetime.datetime.strptime(
-            collection.tags()["time#units"], "hours since %Y-%m-%d %H:%M:%S.%f"
-        )
+    with rasterio.Env(GDAL_CACHEMAX=64):
+        with rasterio.open(str(dataset), "r") as collection:
+            collection_start_date = datetime.datetime.strptime(
+                collection.tags()["time#units"], "hours since %Y-%m-%d %H:%M:%S.%f"
+            )
 
-        for _idx in collection.indexes:
-            time_in_hours = int(collection.tags(_idx)["NETCDF_DIM_time"])
-            ds_dt = (
-                collection_start_date + datetime.timedelta(hours=time_in_hours)
-            ).replace(tzinfo=datetime.timezone.utc)
+            for _idx in collection.indexes:
+                time_in_hours = int(collection.tags(_idx)["NETCDF_DIM_time"])
+                ds_dt = (
+                    collection_start_date + datetime.timedelta(hours=time_in_hours)
+                ).replace(tzinfo=datetime.timezone.utc)
 
-            md = {}
-            md["id"] = str(get_uuid(collection, _idx))
-            md["product"] = {
-                "href": "https://collections.dea.ga.gov.au/noaa_c_c_prwtreatm_1"
-            }
-            md["crs"] = "epsg:4236"
-            md["datetime"] = ds_dt.isoformat()
-            md["geometry"] = geometry
-            md["grids"] = {"default": {}}
-            md["grids"]["default"]["shape"] = list(collection.shape)
-            md["grids"]["default"]["transform"] = list(collection.transform)
-            md["lineage"] = {}
-            md["measurements"] = {
-                "water_vapour": {"band": _idx, "layer": "pr_wtr", "path": dataset.name}
-            }
-            md["properties"] = {
-                "item:providers": [
-                    {
-                        "name": "NOAA/OAR/ESRL PSD",
-                        "roles": [ItemProvider.PRODUCER.value],
-                        "url": "https://www.esrl.noaa.gov/psd/data/gridded/data.ncep.reanalysis.derived.surface.html",
-                    }
-                ],
-                "odc:creation_datetime": creation_dt.isoformat(),
-                "odc:file_format": "NetCDF",
-            }
+                md = {}
+                md["id"] = str(get_uuid(collection, _idx))
+                md["product"] = {
+                    "href": "https://collections.dea.ga.gov.au/noaa_c_c_prwtreatm_1"
+                }
+                md["crs"] = "epsg:4236"
+                md["datetime"] = ds_dt.isoformat()
+                md["geometry"] = geometry
+                md["grids"] = {"default": {}}
+                md["grids"]["default"]["shape"] = list(collection.shape)
+                md["grids"]["default"]["transform"] = list(collection.transform)
+                md["lineage"] = {}
+                md["measurements"] = {
+                    "water_vapour": {"band": _idx, "layer": "pr_wtr", "path": dataset.name}
+                }
+                md["properties"] = {
+                    "item:providers": [
+                        {
+                            "name": "NOAA/OAR/ESRL PSD",
+                            "roles": [ItemProvider.PRODUCER.value],
+                            "url": "https://www.esrl.noaa.gov/psd/data/gridded/data.ncep.reanalysis.derived.surface.html",
+                        }
+                    ],
+                    "odc:creation_datetime": creation_dt.isoformat(),
+                    "odc:file_format": "NetCDF",
+                }
 
-            datasets.append(md)
+                datasets.append(md)
 
     return datasets
 
