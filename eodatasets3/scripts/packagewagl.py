@@ -53,7 +53,7 @@ def run(
         products = set(p.lower() for p in products)
     else:
         products = wagl.DEFAULT_PRODUCTS
-    with rasterio.Env():
+    with rasterio.Env(GDAL_CACHEMAX=64):
         for granule in wagl.Granule.for_path(h5_file, level1_metadata_path=level1):
             with wagl.do(
                 f"Packaging {granule.name}. (products: {', '.join(products)})",
