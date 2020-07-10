@@ -170,56 +170,60 @@ def validate_dataset(
             expected_measurement = required_measurements.get(name)
 
             band = measurement.band or 1
-            with rasterio.open(full_path) as ds:
-                ds: DatasetReader
+            with rasterio.Env(GDAL_CACHEMAX=64):
+                with rasterio.open(full_path) as ds:
+                    ds: DatasetReader
 
-                if band not in ds.indexes:
-                    yield _error(
-                        "incorrect_band",
-                        f"Measurement {name!r} file contains no rio index {band!r}.",
-                        hint=f"contains indexes {ds.indexes!r}",
-                    )
-                    continue
-
-                if not expected_measurement:
-                    # The measurement is not in the product definition
-                    #
-                    # This is only informational because a product doesn't have to define all
-                    # measurements that the datasets contain.
-                    #
-                    # This is historically because dataset documents reflect the measurements that
-                    # are stored on disk, which can differ. But products define the set of measurments
-                    # that are mandatory in every dataset.
-                    #
-                    # (datasets differ when, for example, sensors go offline, or when there's on-disk
-                    #  measurements like panchromatic that GA doesn't want in their product definitions)
-                    if required_measurements:
-                        yield _info(
-                            "unspecified_measurement",
-                            f"Measurement {name} is not in the product",
-                        )
-                else:
-                    expected_dtype = expected_measurement.dtype
-                    band_dtype = ds.dtypes[band - 1]
-                    # TODO: NaN handling
-                    if expected_dtype != band_dtype:
+                    if band not in ds.indexes:
                         yield _error(
-                            "different_dtype",
-                            f"{name} dtype: "
-                            f"product {expected_dtype!r} != dataset {band_dtype!r}",
+                            "incorrect_band",
+                            f"Measurement {name!r} file contains no rio index {band!r}.",
+                            hint=f"contains indexes {ds.indexes!r}",
                         )
+                        continue
 
-                    # TODO: the nodata can also be a fill value, as mentioned by Kirill.
-                    expected_nodata = expected_measurement.nodata
-                    ds_nodata = ds.nodatavals[band - 1]
-                    if expected_nodata != ds_nodata and not (
-                        _is_nan(expected_nodata) and _is_nan(ds_nodata)
-                    ):
-                        yield _info(
-                            "different_nodata",
-                            f"{name} nodata: "
-                            f"product {expected_nodata !r} != dataset {ds_nodata !r}",
-                        )
+                    if not expected_measurement:
+                        # The measurement is not in the product definition
+                        #
+                        # This is only informational because a product doesn't have to
+                        # define all measurements that the datasets contain.
+                        #
+                        # This is historically because dataset documents reflect the
+                        # measurements that are stored on disk, which can differ. But
+                        # products define the set of measurments that are mandatory
+                        # in every dataset.
+                        #
+                        # (datasets differ when, for example, sensors go offline, or
+                        #  when there's on-disk measurements like panchromatic that
+                        #  GA doesn't want in their product definitions)
+                        if required_measurements:
+                            yield _info(
+                                "unspecified_measurement",
+                                f"Measurement {name} is not in the product",
+                            )
+                    else:
+                        expected_dtype = expected_measurement.dtype
+                        band_dtype = ds.dtypes[band - 1]
+                        # TODO: NaN handling
+                        if expected_dtype != band_dtype:
+                            yield _error(
+                                "different_dtype",
+                                f"{name} dtype: "
+                                f"product {expected_dtype!r} != dataset {band_dtype!r}",
+                            )
+
+                        # TODO: the nodata can also be a fill value,
+                        #       as mentioned by Kirill.
+                        expected_nodata = expected_measurement.nodata
+                        ds_nodata = ds.nodatavals[band - 1]
+                        if expected_nodata != ds_nodata and not (
+                            _is_nan(expected_nodata) and _is_nan(ds_nodata)
+                        ):
+                            yield _info(
+                                "different_nodata",
+                                f"{name} nodata: "
+                                f"product {expected_nodata !r} != dataset {ds_nodata !r}",
+                            )
 
 
 def validate_product(doc: Dict) -> ValidationMessages:
