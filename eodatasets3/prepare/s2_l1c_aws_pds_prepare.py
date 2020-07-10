@@ -75,24 +75,25 @@ def valid_region(images, mask_value=None):
     Return valid data region for input images based on mask value and input image path
     """
     mask = None
-    for fname in images:
-        logging.info("Valid regions for %s", fname)
-        # ensure formats match
-        with rasterio.open(str(fname), "r") as dataset:
-            transform = dataset.transform
-            img = dataset.read(1)
-            if mask_value is not None:
-                new_mask = img & mask_value == mask_value
-            else:
-                new_mask = img != 0
-            if mask is None:
-                mask = new_mask
-            else:
-                mask |= new_mask
-    shapes = rasterio.features.shapes(mask.astype("uint8"), mask=mask)
-    shape = shapely.ops.unary_union(
-        [shapely.geometry.shape(shape) for shape, val in shapes if val == 1]
-    )
+    with rasterio.Env(GDAL_CACHEMAX=64):
+        for fname in images:
+            logging.info("Valid regions for %s", fname)
+            # ensure formats match
+            with rasterio.open(str(fname), "r") as dataset:
+                transform = dataset.transform
+                img = dataset.read(1)
+                if mask_value is not None:
+                    new_mask = img & mask_value == mask_value
+                else:
+                    new_mask = img != 0
+                if mask is None:
+                    mask = new_mask
+                else:
+                    mask |= new_mask
+        shapes = rasterio.features.shapes(mask.astype("uint8"), mask=mask)
+        shape = shapely.ops.unary_union(
+            [shapely.geometry.shape(shape) for shape, val in shapes if val == 1]
+        )
 
     # convex hull
     geom = shape.convex_hull
