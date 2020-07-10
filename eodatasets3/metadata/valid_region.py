@@ -34,19 +34,20 @@ def valid_region(images, mask_value=None):
         return None
 
     for fname in images:
-        with rasterio.open(str(fname), "r") as ds:
-            transform = ds.transform
-            img = ds.read(1)
+        with rasterio.Env(GDAL_CACHEMAX=64):
+            with rasterio.open(str(fname), "r") as ds:
+                transform = ds.transform
+                img = ds.read(1)
 
-            if mask_value is not None:
-                new_mask = img & mask_value == mask_value
-            else:
-                new_mask = img != ds.nodata
+                if mask_value is not None:
+                    new_mask = img & mask_value == mask_value
+                else:
+                    new_mask = img != ds.nodata
 
-            if mask is None:
-                mask = new_mask
-            else:
-                mask |= new_mask
+                if mask is None:
+                    mask = new_mask
+                else:
+                    mask |= new_mask
 
     # apply a fill holes filter; reduces run time of the union function
     # when there are lots of holes in the data eg NBART, PQ, and Landsat 7
