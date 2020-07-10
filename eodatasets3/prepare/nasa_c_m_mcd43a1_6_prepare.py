@@ -87,27 +87,28 @@ def get_band_info(imagery_file: Path):
 
     """
     band_info = {}
-    with rasterio.open(imagery_file, "r") as collection:
-        datasets = collection.subdatasets
-        for ds in datasets:
-            raster_params = re.match(
-                "(?P<fmt>HDF4_EOS:EOS_GRID):(?P<path>[^:]+):(?P<layer>.*)$", ds
-            )
-            if "_Quality_" in raster_params["layer"]:
-                name = raster_params["layer"].split(":")[-1]
-                band_info[name] = {
-                    "path": Path(raster_params["path"]).name,
-                    "layer": raster_params["layer"],
-                }
-            else:
-                name = raster_params["layer"].split(":")[-1]
-                # BRDF parameter bands are isotropic, volumetric and geometric
-                for idx, band_name in enumerate(["iso", "vol", "geo"], 1):
-                    band_info[name + "_" + band_name] = {
+    with rasterio.Env(GDAL_CACHEMAX=64):
+        with rasterio.open(imagery_file, "r") as collection:
+            datasets = collection.subdatasets
+            for ds in datasets:
+                raster_params = re.match(
+                    "(?P<fmt>HDF4_EOS:EOS_GRID):(?P<path>[^:]+):(?P<layer>.*)$", ds
+                )
+                if "_Quality_" in raster_params["layer"]:
+                    name = raster_params["layer"].split(":")[-1]
+                    band_info[name] = {
                         "path": Path(raster_params["path"]).name,
                         "layer": raster_params["layer"],
-                        "band": idx,
                     }
+                else:
+                    name = raster_params["layer"].split(":")[-1]
+                    # BRDF parameter bands are isotropic, volumetric and geometric
+                    for idx, band_name in enumerate(["iso", "vol", "geo"], 1):
+                        band_info[name + "_" + band_name] = {
+                            "path": Path(raster_params["path"]).name,
+                            "layer": raster_params["layer"],
+                            "band": idx,
+                        }
     return band_info, datasets
 
 
@@ -116,12 +117,13 @@ def _get_dataset_properties(rasterio_path: str):
     returns dataset properties based on a sample dataset
     """
     props = {}
-    with rasterio.open(rasterio_path, "r") as ds:
-        props["eo:gsd"] = float(ds.tags()["CHARACTERISTICBINSIZE"])
-        props["grids"] = {
-            "default": {"shape": list(ds.shape), "transform": list(ds.transform)}
-        }
-        props["crs"] = ds.crs.wkt
+    with rasterio.Env(GDAL_CACHEMAX=64):
+        with rasterio.open(rasterio_path, "r") as ds:
+            props["eo:gsd"] = float(ds.tags()["CHARACTERISTICBINSIZE"])
+            props["grids"] = {
+                "default": {"shape": list(ds.shape), "transform": list(ds.transform)}
+            }
+            props["crs"] = ds.crs.wkt
 
     return props
 
