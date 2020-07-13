@@ -9,6 +9,8 @@ from eodatasets3 import DatasetAssembler, images, utils
 import eodatasets3.wagl
 from wagl.hdf5 import find
 from datetime import datetime
+from rasterio.enums import Resampling
+import os
 
 INDIR = Path("/g/data/up71/projects/index-testing-wagl/wagl/workdir/batchid-48b378b0f0/jobid-c59136/LC08_L1TP_099080_20160613_20180203_01_T1.tar.ARD/LC80990802016165LGN02")
 WAGL_FNAME = Path("LC80990802016165LGN02.wagl.h5")
@@ -27,19 +29,39 @@ def package_non_standard(outdir, granule):
     [/<granule_id>/METADATA/CURRENT]
     """
 
-    out_fname = INDIR.joinpath('LC80990802016165LGN02.yaml')
-    with DatasetAssembler(metadata_path=out_fname, naming_conventions='dea') as da:
+    #out_fname = outdir.joinpath(granule.name+'.yaml')
+    """
+    with DatasetAssembler(Path(outdir), naming_conventions='dea') as da:
+
+        if granule.fmask_image:
+            with eodatasets3.wagl.do(f"Writing fmask from {granule.fmask_image} "):
+                da.write_measurement(
+                    "oa:fmask",
+                    granule.fmask_image,
+                    expand_valid_data=False,
+                    overview_resampling=Resampling.mode,
+                )
+        da.producer = 'ga.gov.au'
+        da.processed_now()
+        level1 = granule.source_level1_metadata
+        da.add_source_dataset(level1, auto_inherit_properties=True)
+        da.product_family = 'ard'
+
+        da.done()
+    """
+    with DatasetAssembler(Path(outdir), naming_conventions='dea', allow_absolute_paths=True) as da:
+#    with DatasetAssembler(Path(outdir), metadata_path=out_fname, naming_conventions='dea') as da:
         level1 = granule.source_level1_metadata
         da.add_source_dataset(level1, auto_inherit_properties=True)
         da.product_family = 'ard'
         da.processed = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%fZ")
         da.producer = 'ga.gov.au'
 
-        with h5py.File(str(INDIR.joinpath(WAGL_FNAME)), 'r') as fid:
+        with h5py.File(granule.wagl_hdf5, 'r') as fid:
             img_paths = [ppjoin(fid.name, pth) for pth in find(fid, 'IMAGE')]
             granule_group = fid[granule.name]
             eodatasets3.wagl._read_wagl_metadata(da, granule_group)
-
+            
             org_collection_number = utils.get_collection_number(
                 da.producer, da.properties["landsat:collection_number"]
             )
@@ -49,7 +71,16 @@ def package_non_standard(outdir, granule):
 
             eodatasets3.wagl._read_gqa_doc(da, granule.gqa_doc)
             eodatasets3.wagl._read_fmask_doc(da, granule.fmask_doc)
-            
+
+            if granule.fmask_image:
+                with eodatasets3.wagl.do(f"Writing fmask from {granule.fmask_image} "):
+                    da.write_measurement(
+                        "oa:fmask",
+                        granule.fmask_image,
+                        expand_valid_data=False,
+                        overview_resampling=Resampling.mode,
+                    )
+
             for pathname in img_paths:
                 ds = fid[pathname]
 
@@ -66,7 +97,7 @@ def package_non_standard(outdir, granule):
 
                 # note; pathname here is only a relative pathname
                 pathname = GDAL_H5_FMT.format(
-                    filename=str(outdir.joinpath(WAGL_FNAME)),
+                    filename=str(outdir.joinpath(granule.wagl_hdf5)),
                     dataset_pathname=pathname
                 )
 
@@ -90,6 +121,14 @@ def package_non_standard(outdir, granule):
                 # include this band in defining the valid data bounds?
                 include = True if 'nbart' in measurement_name else False
 
+                # this method will not give as the transform and crs and eodatasets will complain later
+                # TODO: raise an issue on github for eodatasets
+                # da.note_measurement(
+                #     measurement_name,
+                #     pathname,
+                #     expand_valid_data=False,
+                # )
+
                 # work around as note_measurement doesn't allow us to specify the gridspec
                 da._measurements.record_image(
                     measurement_name,
@@ -100,14 +139,7 @@ def package_non_standard(outdir, granule):
                     expand_valid_data=include
                 )
 
-                # this method will not give as the transform and crs and eodatasets will complain later
-                # TODO: raise an issue on github for eodatasets
-                # da.note_measurement(
-                #     measurement_name,
-                #     pathname,
-                #     expand_valid_data=False,
-                # )
-                
         # the longest part here is generating the valid data bounds vector
         # landsat 7 post SLC-OFF can take a really long time
         da.done()
+        
