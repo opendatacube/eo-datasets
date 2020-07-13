@@ -196,6 +196,12 @@ def _find_a_common_name(names: Sequence[str]) -> Optional[str]:
     return options[0] or None
 
 
+@attr.s(auto_attribs=True, slots=True)
+class MeasPath:
+    path: Path
+    layer: str = None
+
+
 class MeasurementRecord:
     """
     Record the information for measurements/images to later write out to metadata.
@@ -204,7 +210,9 @@ class MeasurementRecord:
     def __init__(self):
         # The measurements grouped by their grid.
         # (value is band_name->Path)
-        self._measurements_per_grid: Dict[GridSpec, Dict[str, Path]] = defaultdict(dict)
+        self._measurements_per_grid: Dict[GridSpec, Dict[str, MeasPath]] = defaultdict(
+            dict
+        )
         # Valid data mask per grid, in pixel coordinates.
         self.mask_by_grid: Dict[GridSpec, numpy.ndarray] = {}
 
@@ -214,6 +222,7 @@ class MeasurementRecord:
         grid: GridSpec,
         path: Union[Path, str],
         img: numpy.ndarray,
+        layer: Optional[str] = None,
         nodata=None,
         expand_valid_data=True,
     ):
@@ -224,7 +233,7 @@ class MeasurementRecord:
                     f"Original at {measurements[name]} and now {path}"
                 )
 
-        self._measurements_per_grid[grid][name] = path
+        self._measurements_per_grid[grid][name] = MeasPath(path, layer)
         if expand_valid_data:
             self._expand_valid_data_mask(grid, img, nodata)
 
@@ -247,7 +256,7 @@ class MeasurementRecord:
         # Order grids from most to fewest measurements.
         # PyCharm's typing seems to get confused by the sorted() call.
         # noinspection PyTypeChecker
-        grids_by_frequency: List[Tuple[GridSpec, Dict[str, Path]]] = sorted(
+        grids_by_frequency: List[Tuple[GridSpec, Dict[str, MeasPath]]] = sorted(
             self._measurements_per_grid.items(), key=lambda k: len(k[1]), reverse=True
         )
 
@@ -288,7 +297,8 @@ class MeasurementRecord:
                 measurement_name = measurement_name.replace(":", "_")
 
                 measurement_docs[measurement_name] = MeasurementDoc(
-                    path=measurement_path,
+                    path=measurement_path.path,
+                    layer=measurement_path.layer,
                     grid=grid_name if grid_name != "default" else None,
                 )
         return crs, grid_docs, measurement_docs
@@ -345,14 +355,14 @@ class MeasurementRecord:
 
     def iter_names(self):
         for grid, measurements in self._measurements_per_grid.items():
-            for band_name, path in measurements.items():
+            for band_name, _ in measurements.items():
                 yield band_name
 
     def iter_paths(self) -> Generator[Tuple[GridSpec, str, Path], None, None]:
         """All current measurement paths on disk"""
         for grid, measurements in self._measurements_per_grid.items():
-            for band_name, path in measurements.items():
-                yield grid, band_name, path
+            for band_name, meas_path in measurements.items():
+                yield grid, band_name, meas_path.path
 
 
 @attr.s(auto_attribs=True)
