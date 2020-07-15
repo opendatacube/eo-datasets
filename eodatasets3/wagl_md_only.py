@@ -25,14 +25,15 @@ def package_non_standard(outdir, granule):
     Can easily be expanded to include other datasets.
 
     A lot of the metadata such as date, can be extracted from the yaml
-    doc contained withing the HDF5 file at the following path:
+    doc contained within the HDF5 file at the following path:
 
     [/<granule_id>/METADATA/CURRENT]
     """
 
-    #out_fname = outdir.joinpath(granule.name+'.yaml')
-    with DatasetAssembler(Path(outdir), naming_conventions='dea', allow_absolute_paths=True) as da:
-#    with DatasetAssembler(Path(outdir), metadata_path=out_fname, naming_conventions='dea') as da:
+    out_fname = outdir.joinpath(granule.name + '.yaml')
+    #with DatasetAssembler(Path(outdir), naming_conventions='dea', allow_absolute_paths=True) as da:
+    with DatasetAssembler(metadata_path=out_fname, naming_conventions='dea') as da:
+    #with DatasetAssembler(Path(outdir), metadata_path=out_fname, naming_conventions='dea') as da:
         level1 = granule.source_level1_metadata
         da.add_source_dataset(level1, auto_inherit_properties=True)
         da.product_family = 'ard'
@@ -55,12 +56,11 @@ def package_non_standard(outdir, granule):
             eodatasets3.wagl._read_fmask_doc(da, granule.fmask_doc)
 
             if granule.fmask_image:
-                with eodatasets3.wagl.do(f"Writing fmask from {granule.fmask_image} "):
-                    da.write_measurement(
+                with eodatasets3.wagl.do(f"Noting fmask from {granule.fmask_image} "):
+                    da.note_measurement(
                         "oa:fmask",
                         granule.fmask_image,
                         expand_valid_data=False,
-                        overview_resampling=Resampling.mode,
                     )
 
             for pathname in img_paths:
@@ -123,5 +123,5 @@ def package_non_standard(outdir, granule):
 
         # the longest part here is generating the valid data bounds vector
         # landsat 7 post SLC-OFF can take a really long time
-        da.done()
+        da.done(validate_correctness=False)
         
