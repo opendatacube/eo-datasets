@@ -17,6 +17,7 @@ WAGL_FNAME = Path("LC80990802016165LGN02.wagl.h5")
 GROUP_PATH = "/LC80990802016165LGN02/RES-GROUP-1/STANDARDISED-PRODUCTS"
 GDAL_H5_FMT = 'HDF5:"{filename}":/{dataset_pathname}'
 
+
 def package_non_standard(outdir, granule):
     """
     yaml creator for the ard pipeline.
@@ -30,25 +31,6 @@ def package_non_standard(outdir, granule):
     """
 
     #out_fname = outdir.joinpath(granule.name+'.yaml')
-    """
-    with DatasetAssembler(Path(outdir), naming_conventions='dea') as da:
-
-        if granule.fmask_image:
-            with eodatasets3.wagl.do(f"Writing fmask from {granule.fmask_image} "):
-                da.write_measurement(
-                    "oa:fmask",
-                    granule.fmask_image,
-                    expand_valid_data=False,
-                    overview_resampling=Resampling.mode,
-                )
-        da.producer = 'ga.gov.au'
-        da.processed_now()
-        level1 = granule.source_level1_metadata
-        da.add_source_dataset(level1, auto_inherit_properties=True)
-        da.product_family = 'ard'
-
-        da.done()
-    """
     with DatasetAssembler(Path(outdir), naming_conventions='dea', allow_absolute_paths=True) as da:
 #    with DatasetAssembler(Path(outdir), metadata_path=out_fname, naming_conventions='dea') as da:
         level1 = granule.source_level1_metadata
