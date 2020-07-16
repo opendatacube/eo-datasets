@@ -129,13 +129,17 @@ def package_non_standard(outdir, granule):
                 #     expand_valid_data=False,
                 # )
 
+                no_data = ds.attrs.get('no_data_value')
+                if no_data is None:
+                    no_data = float('nan')
+
                 # work around as note_measurement doesn't allow us to specify the gridspec
                 da._measurements.record_image(
                     measurement_name,
                     grid_spec,
                     pathname,
                     ds[:],
-                    nodata=-999,
+                    nodata=no_data,
                     expand_valid_data=include
                 )
 
