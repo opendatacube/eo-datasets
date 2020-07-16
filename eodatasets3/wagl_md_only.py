@@ -103,11 +103,7 @@ def package_non_standard(outdir, granule):
 
                 # Get spatial resolution
                 resolution = Path(ds.parent.name).parts[2]
-
-                if resolution == 'RES-GROUP-1':
-                    resolution = 'rg1'
-                else:
-                    resolution = 'rg0'
+                resolution = "rg{}".format(resolution.split("-")[-1])
  
                 measurement_name = "_".join(
                     [
