@@ -33,22 +33,9 @@ def package_non_standard(outdir, granule):
     [/<granule_id>/METADATA/CURRENT]
     """
 
-    # Create output package directory
-    #outdir = outdir.joinpath(granule.name)
-    #os.mkdir(outdir)
+    out_fname = Path(str(granule.wagl_hdf5).replace('wagl.h5', 'yaml'))
 
-    # Move files into it
-    #packaged_hdf5_path = outdir.joinpath(granule.name + '.wagl.h5')
-    #os.rename(granule.wagl_hdf5, packaged_hdf5_path)
-    #copyfile(granule.wagl_hdf5, packaged_hdf5_path) # copy for testing purposes
-    #granule.wagl_hdf5 = packaged_hdf5_path
-    #print(granule.wagl_hdf5)
-
-    out_fname = outdir.joinpath(granule.name + '.yaml')
-
-    #with DatasetAssembler(Path(outdir), naming_conventions='dea', allow_absolute_paths=True) as da:
     with DatasetAssembler(metadata_path=out_fname, naming_conventions='dea') as da:
-    #with DatasetAssembler(Path(outdir), metadata_path=out_fname, naming_conventions='dea') as da:
         level1 = granule.source_level1_metadata
         da.add_source_dataset(level1, auto_inherit_properties=True)
         da.product_family = 'ard'
@@ -113,14 +100,15 @@ def package_non_standard(outdir, granule):
                 # otherwise we'll get duplicates if just using blue
                 # something can be done for the other datasets
                 parent = pbasename(ds.parent.name)
-                
+
                 # Get spatial resolution
                 resolution = Path(ds.parent.name).parts[2]
-                if resolution == 'res_group_1':
-                    resolution = 'RG1'
+
+                if resolution == 'RES-GROUP-1':
+                    resolution = 'rg1'
                 else:
-                    resolution = 'RG0'
-                
+                    resolution = 'rg0'
+ 
                 measurement_name = "_".join(
                     [
                         resolution,
