@@ -7,11 +7,13 @@ from rasterio.crs import CRS
 from affine import Affine
 from eodatasets3 import DatasetAssembler, images, utils
 import eodatasets3.wagl
+from eodatasets3.serialise import loads_yaml
 from wagl.hdf5 import find
 from datetime import datetime
 from rasterio.enums import Resampling
 import os
 from shutil import copyfile
+from boltons.iterutils import get_path
 
 INDIR = Path("/g/data/up71/projects/index-testing-wagl/wagl/workdir/batchid-48b378b0f0/jobid-c59136/LC08_L1TP_099080_20160613_20180203_01_T1.tar.ARD/LC80990802016165LGN02")
 WAGL_FNAME = Path("LC80990802016165LGN02.wagl.h5")
@@ -32,17 +34,16 @@ def package_non_standard(outdir, granule):
     """
 
     # Create output package directory
-    outdir = outdir.joinpath(granule.name)
-    os.mkdir(outdir)
+    #outdir = outdir.joinpath(granule.name)
+    #os.mkdir(outdir)
 
     # Move files into it
-    packaged_hdf5_path = outdir.joinpath(granule.name + '.wagl.h5')
+    #packaged_hdf5_path = outdir.joinpath(granule.name + '.wagl.h5')
     #os.rename(granule.wagl_hdf5, packaged_hdf5_path)
-    copyfile(granule.wagl_hdf5, packaged_hdf5_path) # copy for testing purposes
-    granule.wagl_hdf5 = packaged_hdf5_path
-    print(granule.wagl_hdf5)
+    #copyfile(granule.wagl_hdf5, packaged_hdf5_path) # copy for testing purposes
+    #granule.wagl_hdf5 = packaged_hdf5_path
+    #print(granule.wagl_hdf5)
 
-    return
     out_fname = outdir.joinpath(granule.name + '.yaml')
 
     #with DatasetAssembler(Path(outdir), naming_conventions='dea', allow_absolute_paths=True) as da:
@@ -51,14 +52,26 @@ def package_non_standard(outdir, granule):
         level1 = granule.source_level1_metadata
         da.add_source_dataset(level1, auto_inherit_properties=True)
         da.product_family = 'ard'
-        da.processed = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%fZ")
         da.producer = 'ga.gov.au'
 
         with h5py.File(granule.wagl_hdf5, 'r') as fid:
             img_paths = [ppjoin(fid.name, pth) for pth in find(fid, 'IMAGE')]
             granule_group = fid[granule.name]
-            eodatasets3.wagl._read_wagl_metadata(da, granule_group)
+            #wagl_doc = eodatasets3.wagl._read_wagl_metadata(da, granule_group)
+
+            try:
+                wagl_path, *ancil_paths = [
+                    pth
+                    for pth in (eodatasets3.wagl._find_h5_paths(granule_group, "SCALAR"))
+                    if "METADATA" in pth
+                ]
+            except ValueError:
+                raise ValueError("No nbar metadata found in granule")
+
+            [wagl_doc] = loads_yaml(granule_group[wagl_path][()])
  
+            da.processed = get_path(wagl_doc, ("system_information", "time_processed"))
+
             org_collection_number = utils.get_collection_number(
                 da.producer, da.properties["landsat:collection_number"]
             )
