@@ -82,7 +82,7 @@ def package_non_standard(outdir, granule):
 
                 if ds.dtype.name == 'bool':
                    continue
-                
+ 
                 # eodatasets internally uses this grid spec to group
                 # image dataset
                 grid_spec = images.GridSpec(
