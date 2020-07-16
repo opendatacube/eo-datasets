@@ -19,8 +19,8 @@ from eodatasets3.ui import PathPath
 
 
 @click.command(help=__doc__)
-@click.option("--stac-template", '-t', type=str)
-@click.option("--base-url", '-u', default="", type=str)
+@click.option("--stac-template", "-t", type=str)
+@click.option("--base-url", "-u", default="", type=str)
 @click.argument(
     "odc_metadata_files",
     type=PathPath(exists=True, readable=True, writable=False),
@@ -41,7 +41,9 @@ def run(odc_metadata_files: Iterable[Path], stac_template, base_url):
             stac_data = {}
 
         # Create STAC dict
-        item_doc = create_stac(dataset, input_metadata, output_path, stac_data, base_url)
+        item_doc = create_stac(
+            dataset, input_metadata, output_path, stac_data, base_url
+        )
 
         with output_path.open("w") as f:
             json.dump(item_doc, f, indent=4, default=json_fallback)
@@ -62,14 +64,16 @@ def create_stac(dataset, input_metadata, output_path, stac_data, base_url):
     """
 
     project = partial(
-        pyproj.transform,
-        pyproj.Proj(init=dataset.crs),
-        pyproj.Proj(init="epsg:4326"),
+        pyproj.transform, pyproj.Proj(init=dataset.crs), pyproj.Proj(init="epsg:4326"),
     )
     wgs84_geometry: BaseGeometry = transform(project, dataset.geometry)
     item_doc = dict(
-        stac_version=stac_data["stac_version"] if "stac_version" in stac_data else "1.0.0-beta.1",
-        stac_extensions=stac_data["stac_extensions"] if "stac_extensions" in stac_data else [],
+        stac_version=stac_data["stac_version"]
+        if "stac_version" in stac_data
+        else "1.0.0-beta.1",
+        stac_extensions=stac_data["stac_extensions"]
+        if "stac_extensions" in stac_data
+        else [],
         id=dataset.id,
         type=stac_data["type"] if "type" in stac_data else "Feature",
         bbox=wgs84_geometry.bounds,
@@ -77,16 +81,22 @@ def create_stac(dataset, input_metadata, output_path, stac_data, base_url):
         properties={**dataset.properties, "odc:product": dataset.product.name},
         # TODO: Currently assuming no name collisions.
         assets={
-            **{name: (
-                {**stac_data["assets"][name], "href": base_url + m.path}
-                if "assets" in stac_data and name in stac_data["assets"] else
-                {"href": base_url + m.path}
-            ) for name, m in dataset.measurements.items()},
-            **{name: (
-                {**stac_data["assets"][name], "href": base_url + m.path}
-                if "assets" in stac_data and name in stac_data["assets"] else
-                {"href": base_url + m.path}
-            ) for name, m in dataset.accessories.items()},
+            **{
+                name: (
+                    {**stac_data["assets"][name], "href": base_url + m.path}
+                    if "assets" in stac_data and name in stac_data["assets"]
+                    else {"href": base_url + m.path}
+                )
+                for name, m in dataset.measurements.items()
+            },
+            **{
+                name: (
+                    {**stac_data["assets"][name], "href": base_url + m.path}
+                    if "assets" in stac_data and name in stac_data["assets"]
+                    else {"href": base_url + m.path}
+                )
+                for name, m in dataset.accessories.items()
+            },
         },
         links=[
             # {
@@ -96,18 +106,14 @@ def create_stac(dataset, input_metadata, output_path, stac_data, base_url):
             {
                 "rel": "self",
                 "type": "application/json",
-                "href": base_url + output_path.name
+                "href": base_url + output_path.name,
             },
             {
                 "title": "STAC's Source Item",
                 "rel": "derived_from",
-                "href": base_url + input_metadata.name
+                "href": base_url + input_metadata.name,
             },
-            {
-                "rel": "odc_product",
-                "type": "text/html",
-                "href": dataset.product.href
-            },
+            {"rel": "odc_product", "type": "text/html", "href": dataset.product.href},
             {
                 "rel": "alternative",
                 "type": "text/html",
