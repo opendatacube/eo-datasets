@@ -11,6 +11,7 @@ from wagl.hdf5 import find
 from datetime import datetime
 from rasterio.enums import Resampling
 import os
+from shutil import copyfile
 
 INDIR = Path("/g/data/up71/projects/index-testing-wagl/wagl/workdir/batchid-48b378b0f0/jobid-c59136/LC08_L1TP_099080_20160613_20180203_01_T1.tar.ARD/LC80990802016165LGN02")
 WAGL_FNAME = Path("LC80990802016165LGN02.wagl.h5")
@@ -30,7 +31,20 @@ def package_non_standard(outdir, granule):
     [/<granule_id>/METADATA/CURRENT]
     """
 
+    # Create output package directory
+    outdir = outdir.joinpath(granule.name)
+    os.mkdir(outdir)
+
+    # Move files into it
+    packaged_hdf5_path = outdir.joinpath(granule.name + '.wagl.h5')
+    #os.rename(granule.wagl_hdf5, packaged_hdf5_path)
+    copyfile(granule.wagl_hdf5, packaged_hdf5_path) # copy for testing purposes
+    granule.wagl_hdf5 = packaged_hdf5_path
+    print(granule.wagl_hdf5)
+
+    return
     out_fname = outdir.joinpath(granule.name + '.yaml')
+
     #with DatasetAssembler(Path(outdir), naming_conventions='dea', allow_absolute_paths=True) as da:
     with DatasetAssembler(metadata_path=out_fname, naming_conventions='dea') as da:
     #with DatasetAssembler(Path(outdir), metadata_path=out_fname, naming_conventions='dea') as da:
@@ -44,7 +58,7 @@ def package_non_standard(outdir, granule):
             img_paths = [ppjoin(fid.name, pth) for pth in find(fid, 'IMAGE')]
             granule_group = fid[granule.name]
             eodatasets3.wagl._read_wagl_metadata(da, granule_group)
-            
+ 
             org_collection_number = utils.get_collection_number(
                 da.producer, da.properties["landsat:collection_number"]
             )
@@ -123,5 +137,4 @@ def package_non_standard(outdir, granule):
 
         # the longest part here is generating the valid data bounds vector
         # landsat 7 post SLC-OFF can take a really long time
-        da.done(validate_correctness=False)
-        
+        da.done()
