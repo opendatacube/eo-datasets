@@ -11,11 +11,7 @@ from eodatasets3.serialise import loads_yaml
 from wagl.hdf5 import find
 from boltons.iterutils import get_path
 
-INDIR = Path(
-    "/g/data/up71/projects/index-testing-wagl/wagl/workdir/batchid-48b378b0f0/jobid-c59136/LC08_L1TP_099080_20160613_20180203_01_T1.tar.ARD/LC80990802016165LGN02"
-)
-WAGL_FNAME = Path("LC80990802016165LGN02.wagl.h5")
-GROUP_PATH = "/LC80990802016165LGN02/RES-GROUP-1/STANDARDISED-PRODUCTS"
+
 GDAL_H5_FMT = 'HDF5:"{filename}":/{dataset_pathname}'
 
 
