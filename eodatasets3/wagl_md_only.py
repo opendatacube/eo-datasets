@@ -82,13 +82,12 @@ def package_non_standard(outdir, granule):
             eodatasets3.wagl._read_gqa_doc(da, granule.gqa_doc)
             eodatasets3.wagl._read_fmask_doc(da, granule.fmask_doc)
 
-            if granule.fmask_image:
-                with eodatasets3.wagl.do(f"Noting fmask from {granule.fmask_image} "):
-                    da.note_measurement(
-                        "oa:fmask",
-                        granule.fmask_image,
-                        expand_valid_data=False,
-                    )
+            if granule.fmask_image: 
+                da.note_measurement(
+                    "oa:fmask",
+                    granule.fmask_image,
+                    expand_valid_data=False,
+                )
 
             for pathname in img_paths:
                 ds = fid[pathname]
@@ -117,6 +116,10 @@ def package_non_standard(outdir, granule):
                 
                 # Get spatial resolution
                 resolution = Path(ds.parent.name).parts[2]
+                if resolution == 'res_group_1':
+                    resolution = 'RG1'
+                else:
+                    resolution = 'RG0'
                 
                 measurement_name = "_".join(
                     [
