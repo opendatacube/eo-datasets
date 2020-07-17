@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from posixpath import join as ppjoin, basename as pbasename
+from posixpath import join as ppjoin
 from pathlib import Path
 import h5py
 from rasterio.crs import CRS
@@ -9,7 +9,7 @@ from eodatasets3 import DatasetAssembler, images, utils
 import eodatasets3.wagl
 from eodatasets3.serialise import loads_yaml
 from wagl.hdf5 import find
-
+from wagl.geobox import GriddedGeoBox
 from wagl.data import write_img
 from boltons.iterutils import get_path
 
@@ -28,7 +28,6 @@ def package_non_standard(outdir, granule):
 
     [/<granule_id>/METADATA/CURRENT]
     """
-
 
     outdir = Path(outdir)
     out_fname = Path(str(granule.wagl_hdf5).replace("wagl.h5", "yaml"))
@@ -77,18 +76,13 @@ def package_non_standard(outdir, granule):
                 ds = fid[pathname]
                 ds_path = Path(ds.name)
 
-                if ds.dtype.name == 'bool':
-                   continue
- 
-                # eodatasets internally uses this grid spec to group
-                # image dataset
+                # eodatasets internally uses this grid spec to group image datasets
                 grid_spec = images.GridSpec(
                     shape=ds.shape,
                     transform=Affine.from_gdal(*ds.attrs["geotransform"]),
                     crs=CRS.from_wkt(ds.attrs["crs_wkt"]),
                 )
 
-                # note; pathname here is only a relative pathname
                 pathname = GDAL_H5_FMT.format(
                     filename=str(outdir.joinpath(granule.wagl_hdf5)),
                     dataset_pathname=pathname,
@@ -144,12 +138,11 @@ def package_non_standard(outdir, granule):
                             "blockxsize": ds.chunks[1],
                             "blockysize": ds.chunks[0],
                             "tiled": "yes",
-                        }
+                        },
+                    }
                     write_img(ds, img_out_fname, **kwargs)
                     da.note_measurement(
-                        measurement_name,
-                        img_out_fname,
-                        expand_valid_data=include
+                        measurement_name, img_out_fname, expand_valid_data=include
                     )
                 else:
                     # work around as note_measurement doesn't allow us to specify the gridspec
