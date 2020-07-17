@@ -2,15 +2,14 @@
 
 from posixpath import join as ppjoin
 from pathlib import Path
+import numpy
 import h5py
+import rasterio
 from rasterio.crs import CRS
 from affine import Affine
 from eodatasets3 import DatasetAssembler, images, utils
 import eodatasets3.wagl
 from eodatasets3.serialise import loads_yaml
-from wagl.hdf5 import find
-from wagl.geobox import GriddedGeoBox
-from wagl.data import write_img
 from boltons.iterutils import get_path
 
 
@@ -39,7 +38,10 @@ def package_non_standard(outdir, granule):
         da.producer = "ga.gov.au"
 
         with h5py.File(granule.wagl_hdf5, "r") as fid:
-            img_paths = [ppjoin(fid.name, pth) for pth in find(fid, "IMAGE")]
+            img_paths = [
+                ppjoin(fid.name, pth)
+                for pth in eodatasets3.wagl._find_h5_paths(fid, "IMAGE")
+            ]
             granule_group = fid[granule.name]
 
             try:
@@ -127,20 +129,26 @@ def package_non_standard(outdir, granule):
 
                 # if we are of type bool, we'll have to convert just for GDAL
                 if ds.dtype.name == "bool":
+                    no_data = 255
                     img_out_fname = outdir.joinpath("{}.tif".format(measurement_name))
                     kwargs = {
                         "driver": "GTiff",
-                        "geobox": GriddedGeoBox.from_dataset(ds),
+                        "dtype": "uint8",
+                        "count": 1,
+                        "height": ds.shape[0],
+                        "width": ds.shape[1],
+                        "crs": CRS.from_wkt(ds.attrs["crs_wkt"]),
+                        "transform": Affine.from_gdal(*ds.attrs["geotransform"]),
                         "nodata": no_data,
-                        "options": {
-                            "compress": "deflate",
-                            "zlevel": 4,
-                            "blockxsize": ds.chunks[1],
-                            "blockysize": ds.chunks[0],
-                            "tiled": "yes",
-                        },
+                        "compress": "deflate",
+                        "zlevel": 4,
+                        "predictor": 2,
+                        "blockxsize": ds.chunks[1],
+                        "blockysize": ds.chunks[0],
+                        "tiled": "yes",
                     }
-                    write_img(ds, img_out_fname, **kwargs)
+                    with rasterio.open(img_out_fname, 'w', **kwargs) as out_ds:
+                        out_ds.write(numpy.uint8(ds[:], 1))
                     da.note_measurement(
                         measurement_name, img_out_fname, expand_valid_data=include
                     )
