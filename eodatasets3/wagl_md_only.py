@@ -9,6 +9,7 @@ from eodatasets3 import DatasetAssembler, images, utils
 import eodatasets3.wagl
 from eodatasets3.serialise import loads_yaml
 from wagl.hdf5 import find
+from wagl.data import write_img
 from boltons.iterutils import get_path
 
 
@@ -27,6 +28,7 @@ def package_non_standard(outdir, granule):
     [/<granule_id>/METADATA/CURRENT]
     """
 
+    outdir = Path(outdir)
     out_fname = Path(str(granule.wagl_hdf5).replace("wagl.h5", "yaml"))
 
     with DatasetAssembler(metadata_path=out_fname, naming_conventions="dea") as da:
@@ -66,14 +68,12 @@ def package_non_standard(outdir, granule):
 
             if granule.fmask_image:
                 da.note_measurement(
-                    "oa:fmask", granule.fmask_image, expand_valid_data=False,
+                    "oa_fmask", granule.fmask_image, expand_valid_data=False,
                 )
 
             for pathname in img_paths:
                 ds = fid[pathname]
-
-                if ds.dtype.name == "bool":
-                    continue
+                ds_path = Path(ds.name)
 
                 # eodatasets internally uses this grid spec to group
                 # image dataset
@@ -89,18 +89,23 @@ def package_non_standard(outdir, granule):
                     dataset_pathname=pathname,
                 )
 
-                # just for this example, so we insert nbar_blue
-                # otherwise we'll get duplicates if just using blue
-                # something can be done for the other datasets
-                parent = pbasename(ds.parent.name)
+                # product group name; lambertian, nbar, nbart, oa
+                if "STANDARDISED-PRODUCTS" in str(ds_path):
+                    product_group = ds_path.parent.name
+                else:
+                    product_group = "oa"
 
-                # Get spatial resolution
-                resolution = Path(ds.parent.name).parts[2]
-                resolution = "rg{}".format(resolution.split("-")[-1])
+                # spatial resolution group
+                # used to separate measurements with the same name
+                resolution_group = "rg{}".format(ds_path.parts[2].split("-")[-1])
 
                 measurement_name = (
                     "_".join(
-                        [resolution, parent, ds.attrs.get("alias", pbasename(ds.name))]
+                        [
+                            resolution_group,
+                            product_group,
+                            ds.attrs.get("alias", ds_path.name),
+                        ]
                     )
                     .replace("-", "_")
                     .lower()
@@ -121,15 +126,36 @@ def package_non_standard(outdir, granule):
                 if no_data is None:
                     no_data = float("nan")
 
-                # work around as note_measurement doesn't allow us to specify the gridspec
-                da._measurements.record_image(
-                    measurement_name,
-                    grid_spec,
-                    pathname,
-                    ds[:],
-                    nodata=no_data,
-                    expand_valid_data=include,
-                )
+                # if we are of type bool, we'll have to convert just for GDAL
+                if ds.dtype.name == "bool":
+                    img_out_fname = outdir.joinpath("{}.tif".format(measurement_name))
+                    kwargs = {
+                        "driver": "GTiff",
+                        "geobox": GriddedGeoBox.from_dataset(ds),
+                        "nodata": no_data,
+                        "options": {
+                            "compress": "deflate",
+                            "zlevel": 4,
+                            "blockxsize": ds.chunks[1],
+                            "blockysize": ds.chunks[0],
+                            "tiled": "yes",
+                        }
+                    write_img(ds, img_out_fname, **kwargs)
+                    da.note_measurement(
+                        measurement_name,
+                        img_out_fname,
+                        expand_valid_data=include
+                    )
+                else:
+                    # work around as note_measurement doesn't allow us to specify the gridspec
+                    da._measurements.record_image(
+                        measurement_name,
+                        grid_spec,
+                        pathname,
+                        ds[:],
+                        nodata=no_data,
+                        expand_valid_data=include,
+                    )
 
         # the longest part here is generating the valid data bounds vector
         # landsat 7 post SLC-OFF can take a really long time
