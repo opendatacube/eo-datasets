@@ -9,6 +9,7 @@ from eodatasets3 import DatasetAssembler, images, utils
 import eodatasets3.wagl
 from eodatasets3.serialise import loads_yaml
 from wagl.hdf5 import find
+
 from wagl.data import write_img
 from boltons.iterutils import get_path
 
@@ -27,6 +28,7 @@ def package_non_standard(outdir, granule):
 
     [/<granule_id>/METADATA/CURRENT]
     """
+
 
     outdir = Path(outdir)
     out_fname = Path(str(granule.wagl_hdf5).replace("wagl.h5", "yaml"))
@@ -75,6 +77,9 @@ def package_non_standard(outdir, granule):
                 ds = fid[pathname]
                 ds_path = Path(ds.name)
 
+                if ds.dtype.name == 'bool':
+                   continue
+ 
                 # eodatasets internally uses this grid spec to group
                 # image dataset
                 grid_spec = images.GridSpec(
