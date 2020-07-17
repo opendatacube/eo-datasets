@@ -166,4 +166,4 @@ def package_non_standard(outdir, granule):
 
         # the longest part here is generating the valid data bounds vector
         # landsat 7 post SLC-OFF can take a really long time
-        da.done()
+        return da.done()
