@@ -94,7 +94,7 @@ def package_non_standard(outdir, granule):
                 if "STANDARDISED-PRODUCTS" in str(ds_path):
                     product_group = ds_path.parent.name
                 elif "INTERPOLATED-ATMOSPHERIC-COEFFICIENTS" in str(ds_path):
-                    product_group = "oa_int_atmosp_coeff_{}".format(ds_path.parent.name)
+                    product_group = "oa_{}".format(ds_path.parent.name)
                 else:
                     product_group = "oa"
 
