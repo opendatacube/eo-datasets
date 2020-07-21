@@ -7,6 +7,7 @@ from functools import partial
 from pathlib import Path
 from typing import Iterable
 from uuid import UUID
+from urllib.parse import urljoin
 
 import click
 import pyproj
@@ -18,15 +19,35 @@ from eodatasets3 import serialise
 from eodatasets3.ui import PathPath
 
 
+# Mapping between EO3 field names and STAC properties object field names
+MAPPING_EO3_TO_STAC = {
+    "dtr:end_datetime": "end_datetime",
+    "dtr:start_datetime": "start_datetime",
+    "eo:gsd": "gsd",
+    "eo:instrument": "instruments",
+    "eo:platform": "platform",
+    "eo:constellation": "constellation",
+    "eo:off_nadir": "view:off_nadir",
+    "eo:azimuth": "view:azimuth",
+    "eo:sun_azimuth": "view:sun_azimuth",
+    "eo:sun_elevation": "view:sun_elevation",
+}
+
+
 @click.command(help=__doc__)
 @click.option("--stac-template", "-t", type=str)
-@click.option("--base-url", "-u", default="", type=str)
+@click.option("--stac-base-url", "-u", default="", type=str)
+@click.option(
+    "--product-base-url", "-p", default="https://explorer.dea.ga.gov.au", type=str
+)
 @click.argument(
     "odc_metadata_files",
     type=PathPath(exists=True, readable=True, writable=False),
     nargs=-1,
 )
-def run(odc_metadata_files: Iterable[Path], stac_template, base_url):
+def run(
+    odc_metadata_files: Iterable[Path], stac_template, stac_base_url, product_base_url
+):
     for input_metadata in odc_metadata_files:
         dataset = serialise.from_path(input_metadata)
 
@@ -42,7 +63,12 @@ def run(odc_metadata_files: Iterable[Path], stac_template, base_url):
 
         # Create STAC dict
         item_doc = create_stac(
-            dataset, input_metadata, output_path, stac_data, base_url
+            dataset,
+            input_metadata,
+            output_path,
+            stac_data,
+            stac_base_url,
+            product_base_url,
         )
 
         with output_path.open("w") as f:
@@ -51,7 +77,9 @@ def run(odc_metadata_files: Iterable[Path], stac_template, base_url):
         echo(output_path)
 
 
-def create_stac(dataset, input_metadata, output_path, stac_data, base_url):
+def create_stac(
+    dataset, input_metadata, output_path, stac_data, stac_base_url, product_base_url
+):
     """
     Create STAC document
 
@@ -59,7 +87,8 @@ def create_stac(dataset, input_metadata, output_path, stac_data, base_url):
     :param input_metadata: Path of the Input metadata file
     :param output_path: Path of the STAC output file
     :param stac_data: Dict of the static STAC content
-    :param base_url: Base URL path for STAC file
+    :param stac_base_url: Base URL for STAC file
+    :param product_base_url: Base URL for ODC product
     :return: Dict of the STAC content
     """
 
@@ -68,32 +97,37 @@ def create_stac(dataset, input_metadata, output_path, stac_data, base_url):
     )
     wgs84_geometry: BaseGeometry = transform(project, dataset.geometry)
     item_doc = dict(
-        stac_version=stac_data["stac_version"]
-        if "stac_version" in stac_data
-        else "1.0.0-beta.1",
-        stac_extensions=stac_data["stac_extensions"]
-        if "stac_extensions" in stac_data
-        else [],
+        stac_version=stac_data.get("stac_version", "1.0.0-beta.1"),
+        stac_extensions=stac_data.get("stac_extensions", []),
         id=dataset.id,
-        type=stac_data["type"] if "type" in stac_data else "Feature",
+        type="Feature",
         bbox=wgs84_geometry.bounds,
         geometry=wgs84_geometry.__geo_interface__,
-        properties={**dataset.properties, "odc:product": dataset.product.name},
+        properties={
+            **{
+                MAPPING_EO3_TO_STAC.get(key, key): val
+                for key, val in dataset.properties.items()
+            },
+            "odc:product": dataset.product.name,
+            "proj:epsg": dataset.crs.lstrip("epsg:"),
+        },
         # TODO: Currently assuming no name collisions.
         assets={
             **{
                 name: (
-                    {**stac_data["assets"][name], "href": base_url + m.path}
-                    if "assets" in stac_data and name in stac_data["assets"]
-                    else {"href": base_url + m.path}
+                    {
+                        **stac_data.get("assets", {}).get(name, {}),
+                        "href": urljoin(stac_base_url, m.path),
+                    }
                 )
                 for name, m in dataset.measurements.items()
             },
             **{
                 name: (
-                    {**stac_data["assets"][name], "href": base_url + m.path}
-                    if "assets" in stac_data and name in stac_data["assets"]
-                    else {"href": base_url + m.path}
+                    {
+                        **stac_data.get("assets", {}).get(name, {}),
+                        "href": urljoin(stac_base_url, m.path),
+                    }
                 )
                 for name, m in dataset.accessories.items()
             },
@@ -106,18 +140,24 @@ def create_stac(dataset, input_metadata, output_path, stac_data, base_url):
             {
                 "rel": "self",
                 "type": "application/json",
-                "href": base_url + output_path.name,
+                "href": urljoin(stac_base_url, output_path.name),
             },
             {
-                "title": "STAC's Source Item",
+                "title": "Source Dataset YAML",
                 "rel": "derived_from",
-                "href": base_url + input_metadata.name,
+                "href": urljoin(stac_base_url, input_metadata.name),
             },
-            {"rel": "odc_product", "type": "text/html", "href": dataset.product.href},
             {
+                "title": "Open Data Cube Product",
+                "rel": "odc_product",
+                "type": "text/html",
+                "href": urljoin(product_base_url, f"product/{dataset.product.name}"),
+            },
+            {
+                "title": "Open Data Cube Explorer",
                 "rel": "alternative",
                 "type": "text/html",
-                "href": f"https://explorer.dea.ga.gov.au/dataset/{dataset.id}",
+                "href": urljoin(product_base_url, f"dataset/{dataset.id}"),
             },
         ],
     )
