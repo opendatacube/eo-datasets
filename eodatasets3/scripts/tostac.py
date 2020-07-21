@@ -11,7 +11,6 @@ from urllib.parse import urljoin
 
 import click
 import pyproj
-from click import echo
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
@@ -32,6 +31,21 @@ MAPPING_EO3_TO_STAC = {
     "eo:sun_azimuth": "view:sun_azimuth",
     "eo:sun_elevation": "view:sun_elevation",
 }
+
+
+def convert_value_to_stac_type(key, value):
+    """
+    Convert return type as per STAC specification
+    :param key: Name of the field
+    :param value: Value of the field
+    :return: Converted value with required type in STAC
+
+    """
+    # In STAC spec, "instruments" have [String] type
+    if key == "eo:instrument":
+        return [value]
+    else:
+        return value
 
 
 @click.command(help=__doc__)
@@ -74,8 +88,6 @@ def run(
         with output_path.open("w") as f:
             json.dump(item_doc, f, indent=4, default=json_fallback)
 
-        echo(output_path)
-
 
 def create_stac(
     dataset, input_metadata, output_path, stac_data, stac_base_url, product_base_url
@@ -105,11 +117,13 @@ def create_stac(
         geometry=wgs84_geometry.__geo_interface__,
         properties={
             **{
-                MAPPING_EO3_TO_STAC.get(key, key): val
+                MAPPING_EO3_TO_STAC.get(key, key): convert_value_to_stac_type(key, val)
                 for key, val in dataset.properties.items()
             },
             "odc:product": dataset.product.name,
             "proj:epsg": dataset.crs.lstrip("epsg:"),
+            "proj:shape": dataset.grids["default"].shape,
+            "proj:transform": dataset.grids["default"].transform,
         },
         # TODO: Currently assuming no name collisions.
         assets={
@@ -118,6 +132,12 @@ def create_stac(
                     {
                         **stac_data.get("assets", {}).get(name, {}),
                         "href": urljoin(stac_base_url, m.path),
+                        "proj.shape": dataset.grids[
+                            m.grid if m.grid else "default"
+                        ].shape,
+                        "proj.transform": dataset.grids[
+                            m.grid if m.grid else "default"
+                        ].transform,
                     }
                 )
                 for name, m in dataset.measurements.items()
@@ -133,10 +153,6 @@ def create_stac(
             },
         },
         links=[
-            # {
-            #     "rel": "self",
-            #     "href": '?',
-            # },
             {
                 "rel": "self",
                 "type": "application/json",
@@ -166,7 +182,7 @@ def create_stac(
 
 def json_fallback(o):
     if isinstance(o, datetime):
-        return o.isoformat()
+        return f"{o.isoformat()}Z"
 
     if isinstance(o, UUID):
         return str(o)
