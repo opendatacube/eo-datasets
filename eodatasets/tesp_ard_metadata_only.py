@@ -150,7 +150,7 @@ def package_non_standard(outdir, granule):
                         "tiled": "yes",
                     }
                     with rasterio.open(img_out_fname, "w", **kwargs) as out_ds:
-                        out_ds.write(numpy.uint8(ds[:], 1))
+                        out_ds.write(numpy.uint8(ds[:]), 1)
 
                     da.note_measurement(
                         measurement_name, img_out_fname, expand_valid_data=include
