@@ -15,11 +15,11 @@ import shapely.affinity
 import shapely.ops
 from affine import Affine
 from eodatasets3.model import (
-    FileFormat,
     DatasetDoc,
     ODC_DATASET_SCHEMA_URL,
     StacPropertyView,
 )
+from eodatasets3.properties import FileFormat
 from ruamel.yaml import YAML, ruamel, Representer
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
