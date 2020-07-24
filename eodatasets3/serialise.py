@@ -20,11 +20,11 @@ from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
 from eodatasets3.model import (
-    FileFormat,
     DatasetDoc,
     ODC_DATASET_SCHEMA_URL,
     StacPropertyView,
 )
+from eodatasets3.properties import FileFormat
 
 
 def _format_representer(dumper, data: FileFormat):

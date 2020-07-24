@@ -17,7 +17,7 @@ from typing import List, Optional, Union, Iterable, Dict, Tuple, Callable, Gener
 import click
 import rasterio
 from eodatasets3 import serialise, utils, DatasetAssembler, IfExists
-from eodatasets3.model import FileFormat
+from eodatasets3.properties import FileFormat
 from eodatasets3.ui import PathPath
 
 _COPYABLE_MTL_FIELDS = [
