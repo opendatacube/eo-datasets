@@ -60,7 +60,7 @@ Further examples can be seen in the tests [tests/integration/test_assemble.py](t
 
 The assembler writes a format called "eo3", which will be the native metadata format for Open Data Cube
 2.0. We recommend new products are written with this format, even if targeting Open Data Cube 1.
-A tool is available to transparently index them into version-1 Data Cubes (TODO: link when it has a home).
+Datacube versions from 1.8 onwards are compatible natively with eo3.
 
 eo3 adds information about the native grid of the data, and aims to be more easily interoperable 
 with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec/tree/master/item-spec).
