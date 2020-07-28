@@ -1,0 +1,173 @@
+{
+    "stac_version": "1.0.0-beta.2",
+    "stac_extensions": ["eo"],
+    "assets": {
+        "nbar_nir": {
+            "eo:bands": [{"name": "nbar_nir"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbar_red": {
+            "eo:bands": [{"name": "nbar_red"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_fmask": {
+            "eo:bands": [{"name": "oa_fmask"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbar_blue": {
+            "eo:bands": [{"name": "nbar_blue"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbart_nir": {
+            "eo:bands": [{"name": "nbart_nir"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbart_red": {
+            "eo:bands": [{"name": "nbart_red"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbar_green": {
+            "eo:bands": [{"name": "nbar_green"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbart_blue": {
+            "eo:bands": [{"name": "nbart_blue"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbar_swir_1": {
+            "eo:bands": [{"name": "nbar_swir_1"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbar_swir_2": {
+            "eo:bands": [{"name": "nbar_swir_2"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbart_green": {
+            "eo:bands": [{"name": "nbart_green"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbart_swir_1": {
+            "eo:bands": [{"name": "nbart_swir_1"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbart_swir_2": {
+            "eo:bands": [{"name": "nbart_swir_2"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_time_delta": {
+            "eo:bands": [{"name": "oa_time_delta"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_solar_zenith": {
+            "eo:bands": [{"name": "oa_solar_zenith"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_exiting_angle": {
+            "eo:bands": [{"name": "oa_exiting_angle"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_solar_azimuth": {
+            "eo:bands": [{"name": "oa_solar_azimuth"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_incident_angle": {
+            "eo:bands": [{"name": "oa_incident_angle"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_relative_slope": {
+            "eo:bands": [{"name": "oa_relative_slope"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_satellite_view": {
+            "eo:bands": [{"name": "oa_satellite_view"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_nbar_contiguity": {
+            "eo:bands": [{"name": "oa_nbar_contiguity"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_nbart_contiguity": {
+            "eo:bands": [{"name": "oa_nbart_contiguity"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_relative_azimuth": {
+            "eo:bands": [{"name": "oa_relative_azimuth"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_azimuthal_exiting": {
+            "eo:bands": [{"name": "oa_azimuthal_exiting"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_satellite_azimuth": {
+            "eo:bands": [{"name": "oa_satellite_azimuth"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_azimuthal_incident": {
+            "eo:bands": [{"name": "oa_azimuthal_incident"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "oa_combined_terrain_shadow": {
+            "eo:bands": [{"name": "oa_combined_terrain_shadow"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbar_panchromatic": {
+            "eo:bands": [{"name": "nbar_panchromatic"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbar_coastal_aerosol": {
+            "eo:bands": [{"name": "nbar_coastal_aerosol"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbart_panchromatic": {
+            "eo:bands": [{"name": "nbart_panchromatic"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "nbart_coastal_aerosol": {
+            "eo:bands": [{"name": "nbart_coastal_aerosol"}],
+            "type": "image/tiff; application=geotiff",
+            "roles": ["data"]
+        },
+        "thumbnail:nbar": {
+            "title": "Thumbnail image",
+            "type": "image/jpeg",
+            "roles": ["thumbnail"]
+        },
+        "thumbnail:nbart": {
+            "title": "Thumbnail image",
+            "type": "image/jpeg",
+            "roles": ["thumbnail"]
+        },
+        "checksum:sha1": {"type": "text/plain"},
+        "metadata:processor": {"type": "text/plain", "roles": ["metadata"]}
+    }
+}

@@ -73,6 +73,7 @@ setup(
         "shapely",
         "structlog",
         "xarray",
+        "requests",
     ],
     tests_require=tests_require,
     extras_require=EXTRAS_REQUIRE,

@@ -95,6 +95,12 @@ with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec
       Convert a new-style ODC metadata doc to a Stac Item.
     
     Options:
+      -t, --stac-template TEXT      File path to the STAC template with
+                                    static content
+      -u, --stac-base-url TEXT      Base URL of the STAC file
+      -e, --explorer-base-url TEXT  Base URL of the ODC Explorer
+      --validate / --no-validate    Flag it for stac document validation. By
+                                    default flagged
       --help  Show this message and exit.
 
 
