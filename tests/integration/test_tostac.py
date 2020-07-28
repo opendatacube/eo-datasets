@@ -1,5 +1,6 @@
 import json
 import shutil
+from functools import partial
 from pathlib import Path
 from pprint import pformat
 
@@ -13,6 +14,8 @@ TO_STAC_DATA: Path = Path(__file__).parent.joinpath("data/tostac")
 ODC_METADATA_FILE: str = "ga_ls8c_ard_3-1-0_088080_2020-05-25_final.odc-metadata.yaml"
 STAC_TEMPLATE_FILE: str = "ga_ls_ard_3_stac_item.json"
 STAC_EXPECTED_FILE: str = "ga_ls8c_ard_3-1-0_088080_2020-05-25_final.stac-item_expected.json"
+
+deep_diff = partial(DeepDiff, significant_digits=6)
 
 
 def test_tostac(input_doc_folder: Path):
@@ -36,15 +39,15 @@ def test_tostac(input_doc_folder: Path):
     )
 
     name = input_metadata_path.stem.replace(".odc-metadata", "")
-    expected_metadata_path = input_metadata_path.with_name(f"{name}.stac-item.json")
-    assert expected_metadata_path.exists()
+    actual_stac_path = input_metadata_path.with_name(f"{name}.stac-item.json")
+    assert actual_stac_path.exists()
 
     expected_stac_path = input_doc_folder.joinpath(STAC_EXPECTED_FILE)
     assert expected_stac_path.exists()
 
-    doc = json.load(expected_metadata_path.open())
+    actual_doc = json.load(actual_stac_path.open())
     expected_doc = json.load(expected_stac_path.open())
-    doc_diff = DeepDiff(expected_doc, doc)
+    doc_diff = deep_diff(expected_doc, actual_doc)
     assert doc_diff == {}, pformat(doc_diff)
 
 
