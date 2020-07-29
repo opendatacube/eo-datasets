@@ -66,7 +66,7 @@ setup(
         "ciso8601",
         "click",
         "jsonschema>=3",  # We want a Draft6Validator
-        "numpy",
+        "numpy>=1.15.4",
         "pyproj",
         "rasterio",
         "ruamel.yaml",
