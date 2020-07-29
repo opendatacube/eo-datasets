@@ -2,6 +2,7 @@
 Convert a new-style ODC metadata doc to a Stac Item. (BETA/Incomplete)
 """
 import json
+import math
 from datetime import datetime
 from functools import partial
 from pathlib import Path
@@ -13,12 +14,11 @@ import click
 import pyproj
 import requests
 from jsonschema import validate
-from shapely.geometry.base import BaseGeometry
-from shapely.ops import transform
 
 from eodatasets3 import serialise
 from eodatasets3.model import DatasetDoc
 from eodatasets3.ui import PathPath
+from datacube.utils.geometry import Geometry, CRS
 
 
 # Mapping between EO3 field names and STAC properties object field names
@@ -102,7 +102,7 @@ def run(
             stac_data = {}
 
         # Create STAC dict
-        item_doc = create_stac(
+        item_doc = dc_to_stac(
             dataset,
             input_metadata,
             output_path,
@@ -116,7 +116,7 @@ def run(
             json.dump(item_doc, f, indent=4, default=json_fallback)
 
 
-def create_stac(
+def dc_to_stac(
     dataset: DatasetDoc,
     input_metadata: Path,
     output_path: Path,
@@ -132,21 +132,16 @@ def create_stac(
     stac_ext = ["eo", "view", "projection"]
     stac_ext.extend(stac_data.get("stac_extensions", []))
 
-    project = partial(
-        pyproj.transform,
-        pyproj.Proj(dataset.crs),
-        pyproj.Proj("epsg:4326"),
-        always_xy=True,
-    )
-    wgs84_geometry: BaseGeometry = transform(project, dataset.geometry)
+    geom = Geometry(dataset.geometry, CRS(dataset.crs))
+    wgs84_geometry = geom.to_crs(CRS("epsg:4326"), math.inf)
 
     item_doc = dict(
         stac_version="1.0.0-beta.2",
         stac_extensions=sorted(set(stac_ext)),
         type="Feature",
         id=dataset.id,
-        bbox=wgs84_geometry.bounds,
-        geometry=wgs84_geometry.__geo_interface__,
+        bbox=wgs84_geometry.boundingbox,
+        geometry=wgs84_geometry.json,
         properties={
             **{
                 MAPPING_EO3_TO_STAC.get(key, key): convert_value_to_stac_type(key, val)
