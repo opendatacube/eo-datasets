@@ -4,14 +4,12 @@ Convert a new-style ODC metadata doc to a Stac Item. (BETA/Incomplete)
 import json
 import math
 from datetime import datetime
-from functools import partial
 from pathlib import Path
 from typing import Iterable, Dict
 from uuid import UUID
 from urllib.parse import urljoin
 
 import click
-import pyproj
 import requests
 from jsonschema import validate
 
