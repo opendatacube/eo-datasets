@@ -112,14 +112,13 @@ def dumps_yaml(stream, *docs: Mapping) -> None:
 
 
 def load_yaml(p: Path) -> Dict:
-    yaml = _init_yaml()
     with p.open() as f:
-        return yaml.load(f)
+        return YAML(typ="safe").load(f)
 
 
 def loads_yaml(stream: Union[Text, IO]) -> Iterable[Dict]:
     """Dump yaml through a stream, using the default deserialisation settings."""
-    return _init_yaml().load_all(stream)
+    return YAML(typ="safe").load_all(stream)
 
 
 def from_path(path: Path) -> DatasetDoc:
