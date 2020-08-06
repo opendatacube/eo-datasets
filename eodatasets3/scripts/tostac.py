@@ -50,7 +50,7 @@ def add_types(path: Path) -> Dict:
     """
     Add media type of the asset object
     """
-    mime_type = mimetypes.guess_type(path)[0]
+    mime_type = mimetypes.guess_type(path.name)[0]
     if mime_type:
         if mime_type == "image/tiff":
             return {"type": "image/tiff; application=geotiff"}
@@ -59,6 +59,8 @@ def add_types(path: Path) -> Dict:
     else:
         if path.suffix == ".sha1":
             return {"type": "text/plain"}
+        elif path.suffix == ".yaml":
+            return {"type": "text/yaml"}
         else:
             return {}
 
