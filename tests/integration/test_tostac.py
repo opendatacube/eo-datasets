@@ -1,6 +1,5 @@
 import json
 import shutil
-from datetime import date
 from functools import partial
 from pathlib import Path
 from pprint import pformat
@@ -55,24 +54,7 @@ def test_add_property(input_doc_folder: Path):
     assert actual_stac_path.exists()
 
     actual_doc = json.load(actual_stac_path.open())
-
     assert actual_doc["properties"]["test"] == input_doc["properties"]["test"]
-
-
-def test_datetime_format(input_doc_folder: Path):
-    input_metadata_path = input_doc_folder.joinpath(ODC_METADATA_FILE)
-    assert input_metadata_path.exists()
-
-    run_tostac(input_metadata_path)
-
-    name = input_metadata_path.stem.replace(".odc-metadata", "")
-    actual_stac_path = input_metadata_path.with_name(f"{name}.stac-item.json")
-    assert actual_stac_path.exists()
-
-    actual_doc = json.load(actual_stac_path.open())
-    with pytest.raises(ValueError) as exp:
-        date.fromisoformat(actual_doc["properties"]["datetime"].rstrip("Z"))
-    assert str(exp.value).startswith("Invalid isoformat string:")
 
 
 def test_invalid_crs(input_doc_folder: Path):
