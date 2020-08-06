@@ -1,12 +1,13 @@
 import json
 import shutil
+from datetime import date
 from functools import partial
 from pathlib import Path
 from pprint import pformat
 
 import pytest
 from deepdiff import DeepDiff
-
+from eodatasets3 import serialise
 from eodatasets3.scripts import tostac
 from tests.integration.common import run_prepare_cli
 
@@ -22,21 +23,7 @@ def test_tostac(input_doc_folder: Path):
     input_metadata_path = input_doc_folder.joinpath(ODC_METADATA_FILE)
     assert input_metadata_path.exists()
 
-    input_template_path = input_doc_folder.joinpath(STAC_TEMPLATE_FILE)
-    assert input_template_path.exists()
-
-    run_prepare_cli(
-        tostac.run,
-        "-t",
-        input_template_path.as_posix(),
-        "-u",
-        "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/"
-        "analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/",
-        "-e",
-        "https://explorer.dev.dea.ga.gov.au/",
-        "--validate",
-        input_metadata_path,
-    )
+    run_tostac(input_metadata_path)
 
     name = input_metadata_path.stem.replace(".odc-metadata", "")
     actual_stac_path = input_metadata_path.with_name(f"{name}.stac-item.json")
@@ -49,6 +36,74 @@ def test_tostac(input_doc_folder: Path):
     expected_doc = json.load(expected_stac_path.open())
     doc_diff = deep_diff(expected_doc, actual_doc)
     assert doc_diff == {}, pformat(doc_diff)
+
+
+def test_add_property(input_doc_folder: Path):
+    input_metadata_path = input_doc_folder.joinpath(ODC_METADATA_FILE)
+    assert input_metadata_path.exists()
+
+    input_doc = serialise.load_yaml(input_metadata_path)
+    input_doc["properties"]["test"] = "testvalue"
+
+    serialise.dump_yaml(input_metadata_path, input_doc)
+    assert input_metadata_path.exists()
+
+    run_tostac(input_metadata_path)
+
+    name = input_metadata_path.stem.replace(".odc-metadata", "")
+    actual_stac_path = input_metadata_path.with_name(f"{name}.stac-item.json")
+    assert actual_stac_path.exists()
+
+    actual_doc = json.load(actual_stac_path.open())
+
+    assert actual_doc["properties"]["test"] == input_doc["properties"]["test"]
+
+
+def test_datetime_format(input_doc_folder: Path):
+    input_metadata_path = input_doc_folder.joinpath(ODC_METADATA_FILE)
+    assert input_metadata_path.exists()
+
+    run_tostac(input_metadata_path)
+
+    name = input_metadata_path.stem.replace(".odc-metadata", "")
+    actual_stac_path = input_metadata_path.with_name(f"{name}.stac-item.json")
+    assert actual_stac_path.exists()
+
+    actual_doc = json.load(actual_stac_path.open())
+    with pytest.raises(ValueError) as exp:
+        date.fromisoformat(actual_doc["properties"]["datetime"].rstrip("Z"))
+    assert str(exp.value).startswith("Invalid isoformat string:")
+
+
+def test_invalid_crs(input_doc_folder: Path):
+    input_metadata_path = input_doc_folder.joinpath(ODC_METADATA_FILE)
+    assert input_metadata_path.exists()
+
+    input_doc = serialise.load_yaml(input_metadata_path)
+    del input_doc["crs"]
+
+    serialise.dump_yaml(input_metadata_path, input_doc)
+    assert input_metadata_path.exists()
+
+    with pytest.raises(RuntimeError) as exp:
+        run_tostac(input_metadata_path)
+    assert (
+        str(exp.value) == "Expect string or any object with "
+        "`.to_epsg()` or `.to_wkt()` method"
+    )
+
+
+def run_tostac(input_metadata_path: Path):
+    run_prepare_cli(
+        tostac.run,
+        "-u",
+        "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/"
+        "analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/",
+        "-e",
+        "https://explorer.dev.dea.ga.gov.au/",
+        "--validate",
+        input_metadata_path,
+    )
 
 
 @pytest.fixture
