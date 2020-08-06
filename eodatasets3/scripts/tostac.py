@@ -51,18 +51,17 @@ def add_types(path: Path) -> Dict:
     Add media type of the asset object
     """
     mime_type = mimetypes.guess_type(path.name)[0]
-    if mime_type:
+    if path.suffix == ".sha1":
+        return {"type": "text/plain"}
+    elif path.suffix == ".yaml":
+        return {"type": "text/yaml"}
+    elif mime_type:
         if mime_type == "image/tiff":
             return {"type": "image/tiff; application=geotiff"}
         else:
             return {"type": mime_type}
     else:
-        if path.suffix == ".sha1":
-            return {"type": "text/plain"}
-        elif path.suffix == ".yaml":
-            return {"type": "text/yaml"}
-        else:
-            return {}
+        return {}
 
 
 def add_roles(asset_name: str) -> Dict:
@@ -232,6 +231,7 @@ def dc_to_stac(
             {
                 "title": "Source Dataset YAML",
                 "rel": "derived_from",
+                "type": "text/yaml",
                 "href": urljoin(stac_base_url, input_metadata.name),
             },
             *add_odc_links(explorer_base_url, dataset),

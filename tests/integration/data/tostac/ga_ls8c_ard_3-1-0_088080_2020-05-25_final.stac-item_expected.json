@@ -1050,6 +1050,7 @@
         {
             "title": "Source Dataset YAML",
             "rel": "derived_from",
+            "type": "text/yaml",
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_ard_3-1-0_088080_2020-05-25_final.odc-metadata.yaml"
         },
         {
