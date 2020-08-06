@@ -5,16 +5,17 @@ import json
 import math
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Dict
+from typing import Iterable, Dict, List
 from uuid import UUID
 from urllib.parse import urljoin
 
 import click
-import requests
+import mimetypes
+from requests_cache.core import CachedSession
 from jsonschema import validate
 
 from eodatasets3 import serialise
-from eodatasets3.model import DatasetDoc
+from eodatasets3.model import DatasetDoc, GridDoc
 from eodatasets3.ui import PathPath
 from datacube.utils.geometry import Geometry, CRS
 
@@ -45,27 +46,93 @@ def convert_value_to_stac_type(key: str, value):
         return value
 
 
+def add_types(path: Path) -> Dict:
+    """
+    Add media type of the asset object
+    """
+    mime_type = mimetypes.guess_type(path)[0]
+    if mime_type:
+        if mime_type == "image/tiff":
+            return {"type": "image/tiff; application=geotiff"}
+        else:
+            return {"type": mime_type}
+    else:
+        if path.suffix == ".sha1":
+            return {"type": "text/plain"}
+        else:
+            return {}
+
+
+def add_roles(asset_name: str) -> Dict:
+    """
+    Add roles of the asset object
+    """
+    if asset_name.startswith("thumbnail"):
+        return {"roles": ["thumbnail"]}
+    elif asset_name.startswith("metadata"):
+        return {"roles": ["metadata"]}
+    else:
+        return {}
+
+
+def add_title(asset_name: str) -> Dict:
+    """
+    Add title of the asset object
+    """
+    if asset_name.startswith("thumbnail"):
+        return {"title": "Thumbnail image"}
+    else:
+        return {}
+
+
+def add_proj(
+    field_name: str, grid: Dict[str, GridDoc], grid_name: str = "default"
+) -> Dict:
+    """
+    Add fields of the STAC Projection (proj) Extension to a STAC Item
+    """
+    grid_doc = grid.get(grid_name)
+    if grid_doc:
+        proj_fields = {
+            "proj:shape": grid_doc.shape,
+            "proj:transform": grid_doc.transform,
+        }
+        field_value = proj_fields.get(field_name, None)
+        return {field_name: field_value} if field_value else {}
+    else:
+        return {}
+
+
+def add_odc_links(explorer_base_url: str, dataset: DatasetDoc) -> List:
+    """
+        Add links for ODC product into a STAC Item
+    """
+    if explorer_base_url:
+        return [
+            {
+                "title": "Open Data Cube Product Overview",
+                "rel": "product_overview",
+                "type": "text/html",
+                "href": urljoin(explorer_base_url, f"product/{dataset.product.name}"),
+            },
+            {
+                "title": "Open Data Cube Explorer",
+                "rel": "alternative",
+                "type": "text/html",
+                "href": urljoin(explorer_base_url, f"dataset/{dataset.id}"),
+            },
+        ]
+    else:
+        return []
+
+
 @click.command(help=__doc__)
-@click.option(
-    "--stac-template",
-    "-t",
-    type=str,
-    help="File path to the STAC document template with static content",
-)
-@click.option(
-    "--stac-base-url", "-u", default="", type=str, help="Base URL of the STAC file"
-)
-@click.option(
-    "--explorer-base-url",
-    "-e",
-    default="https://explorer.dea.ga.gov.au",
-    type=str,
-    help="Base URL of the ODC Explorer",
-)
+@click.option("--stac-base-url", "-u", help="Base URL of the STAC file")
+@click.option("--explorer-base-url", "-e", help="Base URL of the ODC Explorer")
 @click.option(
     "--validate/--no-validate",
-    default=True,
-    help="Flag it for stac document validation. By default flagged",
+    default=False,
+    help="Validate output STAC Item against online schemas",
 )
 @click.argument(
     "odc_metadata_files",
@@ -73,11 +140,7 @@ def convert_value_to_stac_type(key: str, value):
     nargs=-1,
 )
 def run(
-    odc_metadata_files: Iterable[Path],
-    stac_template,
-    stac_base_url,
-    explorer_base_url,
-    validate,
+    odc_metadata_files: Iterable[Path], stac_base_url, explorer_base_url, validate,
 ):
     for input_metadata in odc_metadata_files:
         dataset = serialise.from_path(input_metadata)
@@ -85,26 +148,11 @@ def run(
         name = input_metadata.stem.replace(".odc-metadata", "")
         output_path = input_metadata.with_name(f"{name}.stac-item.json")
 
-        # Load STAC template data
-        if stac_template:
-            with open(stac_template, "r") as f:
-                stac_data = json.load(f)
-                if stac_data.get("stac_version", "") not in [
-                    "1.0.0-beta.1",
-                    "1.0.0-beta.2",
-                ]:
-                    raise NotImplementedError(
-                        f"STAC version {stac_data.get('stac_version', '')} not implemented"
-                    )
-        else:
-            stac_data = {}
-
         # Create STAC dict
         item_doc = dc_to_stac(
             dataset,
             input_metadata,
             output_path,
-            stac_data,
             stac_base_url,
             explorer_base_url,
             validate,
@@ -118,7 +166,6 @@ def dc_to_stac(
     dataset: DatasetDoc,
     input_metadata: Path,
     output_path: Path,
-    stac_data: dict,
     stac_base_url: str,
     explorer_base_url: str,
     do_validate: bool,
@@ -127,15 +174,12 @@ def dc_to_stac(
     Creates a STAC document
     """
 
-    stac_ext = ["eo", "view", "projection"]
-    stac_ext.extend(stac_data.get("stac_extensions", []))
-
     geom = Geometry(dataset.geometry, CRS(dataset.crs))
     wgs84_geometry = geom.to_crs(CRS("epsg:4326"), math.inf)
 
     item_doc = dict(
         stac_version="1.0.0-beta.2",
-        stac_extensions=sorted(set(stac_ext)),
+        stac_extensions=["eo", "projection", "view"],
         type="Feature",
         id=dataset.id,
         bbox=wgs84_geometry.boundingbox,
@@ -147,22 +191,20 @@ def dc_to_stac(
             },
             "odc:product": dataset.product.name,
             "proj:epsg": int(dataset.crs.lstrip("epsg:")) if dataset.crs else None,
-            "proj:shape": dataset.grids["default"].shape,
-            "proj:transform": dataset.grids["default"].transform,
+            **add_proj("proj:shape", dataset.grids),
+            **add_proj("proj:transform", dataset.grids),
         },
         # TODO: Currently assuming no name collisions.
         assets={
             **{
                 name: (
                     {
-                        **stac_data.get("assets", {}).get(name, {}),
+                        "eo:bands": [{"name": name}],
+                        **add_types(Path(m.path)),
+                        "roles": ["data"],
                         "href": urljoin(stac_base_url, m.path),
-                        "proj.shape": dataset.grids[
-                            m.grid if m.grid else "default"
-                        ].shape,
-                        "proj.transform": dataset.grids[
-                            m.grid if m.grid else "default"
-                        ].transform,
+                        **add_proj("proj:shape", dataset.grids, m.grid),
+                        **add_proj("proj:transform", dataset.grids, m.grid),
                     }
                 )
                 for name, m in dataset.measurements.items()
@@ -170,7 +212,9 @@ def dc_to_stac(
             **{
                 name: (
                     {
-                        **stac_data.get("assets", {}).get(name, {}),
+                        **add_title(name),
+                        **add_types(Path(m.path)),
+                        **add_roles(name),
                         "href": urljoin(stac_base_url, m.path),
                     }
                 )
@@ -188,18 +232,7 @@ def dc_to_stac(
                 "rel": "derived_from",
                 "href": urljoin(stac_base_url, input_metadata.name),
             },
-            {
-                "title": "Open Data Cube Product Overview",
-                "rel": "product_overview",
-                "type": "text/html",
-                "href": urljoin(explorer_base_url, f"product/{dataset.product.name}"),
-            },
-            {
-                "title": "Open Data Cube Explorer",
-                "rel": "alternative",
-                "type": "text/html",
-                "href": urljoin(explorer_base_url, f"dataset/{dataset.id}"),
-            },
+            *add_odc_links(explorer_base_url, dataset),
         ],
     )
     if do_validate:
@@ -209,7 +242,7 @@ def dc_to_stac(
 
 def json_fallback(o):
     if isinstance(o, datetime):
-        return f"{o.isoformat()}Z"
+        return f"{o.isoformat()}" if o.tzinfo else f"{o.isoformat()}Z"
 
     if isinstance(o, UUID):
         return str(o)
@@ -223,7 +256,7 @@ def json_fallback(o):
 
 def validate_stac(item_doc: Dict):
     # Validates STAC content against schema of STAC item and STAC extensions
-    stac_content = json.loads(json.dumps(item_doc, indent=4, default=json_fallback))
+    stac_content = json.loads(json.dumps(item_doc, default=json_fallback))
     schema_urls = [
         f"https://schemas.stacspec.org/"
         f"v{item_doc.get('stac_version')}"
@@ -238,7 +271,12 @@ def validate_stac(item_doc: Dict):
         )
 
     for schema_url in schema_urls:
-        schema_json = requests.get(schema_url).json()
+        # Caching downloaded Schemas which expires every 1 hour
+        requests = CachedSession(
+            "stac_schema_cache", backend="sqlite", expire_after=3600
+        )
+        r = requests.get(schema_url)
+        schema_json = r.json()
         validate(stac_content, schema_json)
 
 

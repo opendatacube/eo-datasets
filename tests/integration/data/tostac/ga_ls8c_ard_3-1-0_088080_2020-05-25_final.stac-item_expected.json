@@ -187,11 +187,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbar_3-1-0_088080_2020-05-25_final_band02.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -214,11 +214,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbar_3-1-0_088080_2020-05-25_final_band01.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -241,11 +241,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbar_3-1-0_088080_2020-05-25_final_band03.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -268,11 +268,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbar_3-1-0_088080_2020-05-25_final_band05.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -295,11 +295,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbar_3-1-0_088080_2020-05-25_final_band08.tif",
-            "proj.shape": [
+            "proj:shape": [
                 15681,
                 15561
             ],
-            "proj.transform": [
+            "proj:transform": [
                 15.0,
                 0.0,
                 526792.5,
@@ -322,11 +322,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbar_3-1-0_088080_2020-05-25_final_band04.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -349,11 +349,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbar_3-1-0_088080_2020-05-25_final_band06.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -376,11 +376,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbar_3-1-0_088080_2020-05-25_final_band07.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -403,11 +403,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbart_3-1-0_088080_2020-05-25_final_band02.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -430,11 +430,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbart_3-1-0_088080_2020-05-25_final_band01.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -457,11 +457,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbart_3-1-0_088080_2020-05-25_final_band03.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -484,11 +484,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbart_3-1-0_088080_2020-05-25_final_band05.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -511,11 +511,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbart_3-1-0_088080_2020-05-25_final_band08.tif",
-            "proj.shape": [
+            "proj:shape": [
                 15681,
                 15561
             ],
-            "proj.transform": [
+            "proj:transform": [
                 15.0,
                 0.0,
                 526792.5,
@@ -538,11 +538,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbart_3-1-0_088080_2020-05-25_final_band04.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -565,11 +565,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbart_3-1-0_088080_2020-05-25_final_band06.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -592,11 +592,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_nbart_3-1-0_088080_2020-05-25_final_band07.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -619,11 +619,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_azimuthal-exiting.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -646,11 +646,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_azimuthal-incident.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -673,11 +673,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_combined-terrain-shadow.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -700,11 +700,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_exiting-angle.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -727,11 +727,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_fmask.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -754,11 +754,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_incident-angle.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -781,11 +781,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_nbar-contiguity.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -808,11 +808,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_nbart-contiguity.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -835,11 +835,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_relative-azimuth.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -862,11 +862,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_relative-slope.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -889,11 +889,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_satellite-azimuth.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -916,11 +916,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_satellite-view.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -943,11 +943,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_solar-azimuth.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -970,11 +970,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_solar-zenith.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -997,11 +997,11 @@
                 "data"
             ],
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_oa_3-1-0_088080_2020-05-25_final_time-delta.tif",
-            "proj.shape": [
+            "proj:shape": [
                 7841,
                 7781
             ],
-            "proj.transform": [
+            "proj:transform": [
                 30.0,
                 0.0,
                 526785.0,
@@ -1034,7 +1034,6 @@
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_ard_3-1-0_088080_2020-05-25_final.sha1"
         },
         "metadata:processor": {
-            "type": "text/plain",
             "roles": [
                 "metadata"
             ],

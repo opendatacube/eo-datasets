@@ -73,10 +73,9 @@ setup(
         "shapely",
         "structlog",
         "xarray",
-        "requests",
+        "requests-cache",
         "datacube",
     ],
-    dependency_links=["https://packages.dea.ga.gov.au"],
     tests_require=tests_require,
     extras_require=EXTRAS_REQUIRE,
     entry_points="""
