@@ -1,0 +1,44 @@
+colors:
+    blue: 0.0
+    green: 17.0
+    red: 0.0
+    teal: 9.0
+    yellow: 0.0
+error_message: no errors
+final_qa_count: 15
+granule: LC80920842016180LGN01
+ref_date: '2014-03-19T00:00:00+00:00'
+ref_source: GQA_v3
+ref_source_path: /g/data/v10/eoancillarydata/GCP/GQA_v3/wrs2/092/084/LC80920842014078LGN00_B6.TIF
+residual:
+    abs:
+        x: 0.3
+        xy: 0.39
+        y: 0.25
+    abs_iterative_mean:
+        x: 0.21
+        xy: 0.27
+        y: 0.18
+    cep90: 0.46
+    iterative_mean:
+        x: -0.17
+        xy: 0.21
+        y: 0.12
+    iterative_stddev:
+        x: 0.19
+        xy: 0.25
+        y: 0.17
+    mean:
+        x: -0.1
+        xy: 0.14
+        y: 0.1
+    stddev:
+        x: 0.35
+        xy: 0.45
+        y: 0.29
+software_versions:
+    eugl:
+        repo_url: https://github.com/OpenDataCubePipelines/eugl.git
+        version: 0.0.2+69.gb1d1231
+    gverify:
+        version: v0.25c

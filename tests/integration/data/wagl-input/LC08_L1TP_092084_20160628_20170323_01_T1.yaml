@@ -1,0 +1,78 @@
+---
+# Dataset
+$schema: https://schemas.opendatacube.org/dataset
+
+id: fb1c622e-90aa-50e8-9d5e-ad69db82d0f6
+product:
+  name: usgs_ls8o_level1_1
+  href: https://collections.dea.ga.gov.au/product/usgs_ls8o_level1_1
+
+crs: epsg:32655
+geometry:
+  type: Polygon
+  coordinates: [[[593115.0, -3713085.0], [360585.0, -3713085.0], [360585.0, -3947415.0],
+      [593115.0, -3947415.0], [593115.0, -3713085.0]]]
+grids:
+  default:
+    shape: [7811, 7751]
+    transform: [30.0, 0.0, 360585.0, 0.0, -30.0, -3713085.0, 0.0, 0.0, 1.0]
+  panchromatic:
+    shape: [15621, 15501]
+    transform: [15.0, 0.0, 360592.5, 0.0, -15.0, -3713092.5, 0.0, 0.0, 1.0]
+
+properties:
+  datetime: 2016-06-28 00:02:28.624635Z
+  eo:cloud_cover: 65.74
+  eo:gsd: 30.0  # Ground sample distance (m)
+  eo:instrument: OLI_TIRS
+  eo:platform: landsat-8
+  eo:sun_azimuth: 33.65512534
+  eo:sun_elevation: 23.98836172
+  landsat:collection_category: T1
+  landsat:collection_number: 1
+  landsat:data_type: L1TP
+  landsat:geometric_rmse_model_x: 5.478
+  landsat:geometric_rmse_model_y: 5.047
+  landsat:geometric_rmse_verify: 6.826
+  landsat:ground_control_points_model: 91
+  landsat:ground_control_points_verify: 38
+  landsat:ground_control_points_version: 4
+  landsat:landsat_product_id: LC08_L1TP_092084_20160628_20170323_01_T1
+  landsat:landsat_scene_id: LC80920842016180LGN01
+  landsat:processing_software_version: LPGS_2.7.0
+  landsat:station_id: LGN
+  landsat:wrs_path: 92
+  landsat:wrs_row: 84
+  odc:file_format: GeoTIFF
+  odc:processing_datetime: 2017-03-23 15:35:23Z  # When the data was processed
+  odc:product_family: level1
+  odc:region_code: '092084'
+
+measurements:
+  coastal_aerosol:
+    path: LC08_L1TP_092084_20160628_20170323_01_T1_B1.TIF
+  blue:
+    path: LC08_L1TP_092084_20160628_20170323_01_T1_B2.TIF
+  green:
+    path: LC08_L1TP_092084_20160628_20170323_01_T1_B3.TIF
+  red:
+    path: LC08_L1TP_092084_20160628_20170323_01_T1_B4.TIF
+  nir:
+    path: LC08_L1TP_092084_20160628_20170323_01_T1_B5.TIF
+  swir1:
+    path: LC08_L1TP_092084_20160628_20170323_01_T1_B6.TIF
+  swir2:
+    path: LC08_L1TP_092084_20160628_20170323_01_T1_B7.TIF
+  panchromatic:
+    path: LC08_L1TP_092084_20160628_20170323_01_T1_B8.TIF
+    grid: panchromatic
+  cirrus:
+    path: LC08_L1TP_092084_20160628_20170323_01_T1_B9.TIF
+  lwir1:
+    path: LC08_L1TP_092084_20160628_20170323_01_T1_B10.TIF
+  lwir2:
+    path: LC08_L1TP_092084_20160628_20170323_01_T1_B11.TIF
+  quality:
+    path: LC08_L1TP_092084_20160628_20170323_01_T1_BQA.TIF
+
+lineage: {}

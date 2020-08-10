@@ -3,33 +3,15 @@ from __future__ import absolute_import
 
 import atexit
 import os
+import pathlib
 import shutil
 import sys
 import tempfile
 import unittest
-
-import pathlib
-import pytest
-from click.testing import CliRunner
 from pathlib import Path
 
-import eodatasets.scripts.genpackage
-import eodatasets.type as ptype
-from eodatasets import compat
 
-# An annotation for marking slow tests.
-#
-# Unit tests shouldn't usually take more than 30ms – it harms the feasibility of running them constantly.
-# (preferably much less than 20ms... but we often write to the filesystem in tests, due to the nature of this codebase.)
-#
-# This allows users (and CI servers) to selectively only run the slow/fast tests.
-slow = pytest.mark.slow
-
-# Mark integration tests. For now, we run them with the slow tests.
-integration_test = slow
-
-
-def assert_same(o1, o2, prefix=''):
+def assert_same(o1, o2, prefix=""):
     """
     Assert the two are equal.
 
@@ -41,17 +23,12 @@ def assert_same(o1, o2, prefix=''):
     :type o2: object
     :raises: AssertionError
     """
+    __tracebackhide__ = True
 
     def _compare(k, val1, val2):
-        assert_same(val1, val2, prefix=prefix + '.' + str(k))
+        assert_same(val1, val2, prefix=prefix + "." + str(k))
 
-    if isinstance(o1, ptype.SimpleObject):
-        assert o1.__class__ == o2.__class__, "Differing classes %r: %r and %r" \
-                                             % (prefix, o1.__class__.__name__, o2.__class__.__name__)
-
-        for k, val in o1.items_ordered(skip_nones=False):
-            _compare(k, val, getattr(o2, k))
-    elif isinstance(o1, list) and isinstance(o2, list):
+    if isinstance(o1, list) and isinstance(o2, list):
         assert len(o1) == len(o2), "Differing lengths: %s" % prefix
 
         for i, val in enumerate(o1):
@@ -68,7 +45,7 @@ def assert_same(o1, o2, prefix=''):
         raise AssertionError("Mismatch for property %r:  %r != %r" % (prefix, o1, o2))
 
 
-def assert_file_structure(folder, expected_structure, root=''):
+def assert_file_structure(folder, expected_structure, root=""):
     """
     Assert that the contents of a folder (filenames and subfolder names recursively)
     match the given nested dictionary structure.
@@ -76,23 +53,29 @@ def assert_file_structure(folder, expected_structure, root=''):
     :type folder: pathlib.Path
     :type expected_structure: dict[str,str|dict]
     """
-
-    required_filenames = set(name for name, option in expected_structure.items() if option != 'optional')
-    optional_filenames = set(name for name, option in expected_structure.items() if option == 'optional')
+    __tracebackhide__ = True
+    required_filenames = set(
+        name for name, option in expected_structure.items() if option != "optional"
+    )
+    optional_filenames = set(
+        name for name, option in expected_structure.items() if option == "optional"
+    )
 
     actual_filenames = {f.name for f in folder.iterdir()}
 
     if required_filenames != (actual_filenames - optional_filenames):
         missing_files = required_filenames - actual_filenames
-        missing_text = 'Missing: %r' % (sorted(list(missing_files)))
+        missing_text = "Missing: %r" % (sorted(list(missing_files)))
         extra_files = actual_filenames - required_filenames
-        added_text = 'Extra  : %r' % (sorted(list(extra_files)))
-        raise AssertionError('Folder mismatch of %r\n\t%s\n\t%s' % (root, missing_text, added_text))
+        added_text = "Extra  : %r" % (sorted(list(extra_files)))
+        raise AssertionError(
+            "Folder mismatch of %r\n\t%s\n\t%s" % (root, missing_text, added_text)
+        )
 
     for k, v in expected_structure.items():
-        id_ = '%s/%s' % (root, k) if root else k
+        id_ = "%s/%s" % (root, k) if root else k
 
-        is_optional = v == 'optional'
+        is_optional = v == "optional"
 
         f = folder.joinpath(k)
 
@@ -104,10 +87,12 @@ def assert_file_structure(folder, expected_structure, root=''):
         elif isinstance(v, dict):
             assert f.is_dir(), "%s is not a dir" % (id_,)
             assert_file_structure(f, v, id_)
-        elif isinstance(v, compat.string_types):
+        elif isinstance(v, str):
             assert f.is_file(), "%s is not a file" % (id_,)
         else:
-            assert False, "Only strings and dicts expected when defining a folder structure."
+            assert (
+                False
+            ), "Only strings and dicts expected when defining a folder structure."
 
 
 class TestCase(unittest.TestCase):
@@ -148,7 +133,7 @@ def write_files(file_dict):
     :rtype: pathlib.Path
     :return: Created temporary directory path
     """
-    containing_dir = tempfile.mkdtemp(suffix='neotestrun')
+    containing_dir = tempfile.mkdtemp(suffix="neotestrun")
     _write_files_to_dir(containing_dir, file_dict)
 
     def remove_if_exists(path):
@@ -172,23 +157,13 @@ def _write_files_to_dir(directory_path, file_dict):
             os.mkdir(path)
             _write_files_to_dir(path, contents)
         else:
-            with open(path, 'w') as f:
+            with open(path, "w") as f:
                 if isinstance(contents, list):
                     f.writelines(contents)
-                elif isinstance(contents, compat.string_types):
+                elif isinstance(contents, str):
                     f.write(contents)
                 else:
-                    raise Exception('Unexpected file contents: %s' % type(contents))
-
-
-def run_packaging_cli(args):
-    runner = CliRunner()
-    res = runner.invoke(
-        eodatasets.scripts.genpackage.run,
-        args,
-        catch_exceptions=False
-    )
-    assert res.exit_code == 0, "Error output: %r" % res.output
+                    raise Exception("Unexpected file contents: %s" % type(contents))
 
 
 def temp_dir():
@@ -233,5 +208,7 @@ def as_file_list(path):
     """
     output = []
     for directory, _, files in os.walk(str(path)):
-        output.extend(str(Path(directory).relative_to(path).joinpath(file_)) for file_ in files)
+        output.extend(
+            str(Path(directory).relative_to(path).joinpath(file_)) for file_ in files
+        )
     return output

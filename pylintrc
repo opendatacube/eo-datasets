@@ -1,17 +1,32 @@
-
 [MESSAGES CONTROL]
-disable=no-self-use,
-	star-args,
-	duplicate-code,
-	unused-argument,
-	missing-docstring,
-	no-member,
-	unused-variable,
-	unused-import,
-	locally-disabled,
-    wrong-import-order
 
-enable=python3
+disable=no-self-use,
+    comprehension-escape,
+    no-absolute-import,
+    old-division,
+    star-args,
+    duplicate-code,
+    unused-argument,
+    missing-docstring,
+    no-member,
+    unused-variable,
+    unused-import,
+    locally-disabled,
+    no-name-in-module,
+    fixme,
+    no-value-for-parameter,
+    file-ignored,
+    wrong-import-order,
+    ungrouped-imports,
+    bad-whitespace,
+    len-as-condition,
+    no-else-return
+
+# Disabled len-as-condition: Sometimes this allows more readable code as it's more explicit.
+# Eg.
+#      if dataset.uris is not None and len(dataset.uris) == 0:
+# vs
+#      if dataset.uris is not None and not dataset.uris:
 
 [BASIC]
 
@@ -19,7 +34,7 @@ enable=python3
 bad-functions=apply,input
 
 # Regular expression which should only match correct module names
-module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
+module-rgx=(([a-z_][a-z0-9-_]*)|([A-Z][a-zA-Z0-9]+))$
 
 # Regular expression which should only match correct module level names
 const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__)|_log)$
@@ -174,3 +189,6 @@ max-public-methods=20
 # Exceptions that will emit a warning when being caught. Defaults to
 # "Exception"
 overgeneral-exceptions=Exception
+
+[MASTER]
+extension-pkg-whitelist=dawg,lxml

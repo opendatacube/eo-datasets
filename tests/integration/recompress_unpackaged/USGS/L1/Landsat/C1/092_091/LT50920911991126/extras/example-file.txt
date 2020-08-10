@@ -1,0 +1,1 @@
+Extra files/folders should be included in the output package.

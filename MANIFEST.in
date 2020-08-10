@@ -1,0 +1,4 @@
+include versioneer.py
+include eodatasets3/_version.py
+recursive-include eodatasets3 *.json *.yaml
+

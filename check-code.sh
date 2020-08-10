@@ -4,11 +4,10 @@
 set -eu
 set -x
 
-pep8 tests --max-line-length 120
-
-pylint -j 2 --reports no eodatasets
+flake8 -j 2 .
+black --check .
 
 # Run tests, taking coverage.
 # Users can specify extra folders as arguments.
-py.test --cov eodatasets --durations=5 eodatasets tests $@
+pytest --cov eodatasets3 --durations=5 . $@
 
