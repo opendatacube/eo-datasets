@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#/usr/bin/env python
 
 from posixpath import join as ppjoin
 from pathlib import Path
@@ -11,7 +11,7 @@ from eodatasets3 import DatasetAssembler, images, utils
 import eodatasets3.wagl
 from eodatasets3.serialise import loads_yaml
 from boltons.iterutils import get_path
-
+import numpy as np
 
 GDAL_H5_FMT = 'HDF5:"{filename}":/{dataset_pathname}'
 
@@ -30,6 +30,9 @@ def package_non_standard(outdir, granule):
 
     outdir = Path(outdir)
     out_fname = Path(str(granule.wagl_hdf5).replace("wagl.h5", "yaml"))
+    out_fname_bool = Path(str(granule.wagl_hdf5).replace("wagl.h5", "bool.wagl.h5"))
+
+    f = h5py.File(outdir.joinpath(out_fname_bool))
 
     with DatasetAssembler(metadata_path=out_fname, naming_conventions="dea") as da:
         level1 = granule.source_level1_metadata
@@ -85,14 +88,16 @@ def package_non_standard(outdir, granule):
                     crs=CRS.from_wkt(ds.attrs["crs_wkt"]),
                 )
 
-                pathname = GDAL_H5_FMT.format(
-                    filename=str(outdir.joinpath(granule.wagl_hdf5)),
-                    dataset_pathname=pathname,
-                )
+                #pathname = GDAL_H5_FMT.format(
+                #    filename=str(outdir.joinpath(granule.wagl_hdf5)),
+                #    dataset_pathname=pathname,
+                #)
 
                 # product group name; lambertian, nbar, nbart, oa
                 if "STANDARDISED-PRODUCTS" in str(ds_path):
                     product_group = ds_path.parent.name
+                elif "INTERPOLATED-ATMOSPHERIC-COEFFICIENTS" in str(ds_path):
+                    product_group = "oa_{}".format(ds_path.parent.name)
                 else:
                     product_group = "oa"
 
@@ -129,6 +134,34 @@ def package_non_standard(outdir, granule):
 
                 # if we are of type bool, we'll have to convert just for GDAL
                 if ds.dtype.name == "bool":
+
+                    pathname = GDAL_H5_FMT.format(
+                        filename=str(outdir.joinpath(out_fname_bool)),
+                        dataset_pathname=pathname,
+                    )
+
+                    # Create output dataset
+                    out_ds = f.create_dataset(measurement_name, ds.shape, dtype=np.uint8)
+                    # get numpy array from input dataset
+                    np_ds = ds.value
+                    # convert boolean array to unit8
+                    np_ds_int = np.uint8(np_ds[:])
+                    # set nodata values from 0 to 255
+                    np_ds_int[np_ds_int == 0] = 255
+                    # write numpy array back to output h5
+                    out_ds = np_ds_int
+
+                    da._measurements.record_image(
+                        measurement_name,
+                        grid_spec,
+                        pathname,
+                        ds[:],
+                        nodata=no_data,
+                        expand_valid_data=include,
+                    )
+
+
+                    """
                     no_data = 255
                     img_out_fname = outdir.joinpath("{}.tif".format(measurement_name))
                     kwargs = {
@@ -148,12 +181,18 @@ def package_non_standard(outdir, granule):
                         "tiled": "yes",
                     }
                     with rasterio.open(img_out_fname, "w", **kwargs) as out_ds:
-                        out_ds.write(numpy.uint8(ds[:], 1))
+                        out_ds.write(numpy.uint8(ds[:]), 1)
 
                     da.note_measurement(
                         measurement_name, img_out_fname, expand_valid_data=include
                     )
+                    """
                 else:
+                    pathname = GDAL_H5_FMT.format(
+                        filename=str(outdir.joinpath(granule.wagl_hdf5)),
+                        dataset_pathname=pathname,
+                    )
+
                     # work around as note_measurement doesn't allow us to specify the gridspec
                     da._measurements.record_image(
                         measurement_name,
