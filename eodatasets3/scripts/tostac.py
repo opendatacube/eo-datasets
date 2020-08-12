@@ -230,7 +230,7 @@ def dc_to_stac(
             },
             {
                 "title": "Source Dataset YAML",
-                "rel": "derived_from",
+                "rel": "odc_yaml",
                 "type": "text/yaml",
                 "href": urljoin(stac_base_url, input_metadata.name),
             },
