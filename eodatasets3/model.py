@@ -1,5 +1,4 @@
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
 from typing import Tuple, Dict, Optional, List, Sequence, Union
 from uuid import UUID
@@ -11,15 +10,10 @@ from eodatasets3.properties import StacPropertyView, EoFields
 from ruamel.yaml.comments import CommentedMap
 from shapely.geometry.base import BaseGeometry
 
+
 # TODO: these need discussion.
 DEA_URI_PREFIX = "https://collections.dea.ga.gov.au"
 ODC_DATASET_SCHEMA_URL = "https://schemas.opendatacube.org/dataset"
-
-
-class FileFormat(Enum):
-    GeoTIFF = 1
-    NetCDF = 2
-    Zarr = 3
 
 
 # Either a local filesystem path or a string URI.

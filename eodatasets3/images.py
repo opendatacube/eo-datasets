@@ -16,7 +16,8 @@ import shapely.affinity
 import shapely.ops
 import xarray
 from affine import Affine
-from eodatasets3.model import GridDoc, MeasurementDoc, DatasetDoc, FileFormat
+from eodatasets3.model import GridDoc, MeasurementDoc, DatasetDoc
+from eodatasets3.properties import FileFormat
 from rasterio import DatasetReader
 from rasterio.coords import BoundingBox
 from rasterio.crs import CRS
@@ -51,7 +52,7 @@ class GridSpec:
     transform: Affine
 
     crs: CRS = attr.ib(
-        metadata=dict(doc_exclude=True), default=None, hash=False, cmp=False
+        metadata=dict(doc_exclude=True), default=None, hash=False, eq=False
     )
 
     @classmethod

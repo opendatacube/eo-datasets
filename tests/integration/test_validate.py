@@ -378,7 +378,7 @@ def test_complains_about_measurement_lists(
     product = dict(name="bad_nodata", metadata_type="eo3", measurements={"a": {}})
     eo_validator.assert_invalid(product)
     assert eo_validator.messages == {
-        "measurements_list": "Product measurements should be a list/sequence (Found a 'CommentedMap')."
+        "measurements_list": "Product measurements should be a list/sequence (Found a 'dict')."
     }
 
 

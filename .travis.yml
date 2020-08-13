@@ -22,7 +22,7 @@ install:
 - export C_INCLUDE_PATH="/usr/include/gdal"
   # The python gdal bindings version need to match the gdal version of the system
 - travis_retry pip install --upgrade pip cattrs
-- travis_retry pip install --upgrade pytest pytest-cov coveralls GDAL==1.10.0 rasterio[s3] 'scipy<1.5.0'
+- travis_retry pip install --upgrade pytest pytest-cov coveralls GDAL==1.10.0 rasterio[s3] 'scipy<1.5.0' pandas==1.0.5
   # flake8 version should match .pre-commit-config.yaml
 - travis_retry pip install flake8==3.8.2
 - travis_retry pip install -e .[test]
