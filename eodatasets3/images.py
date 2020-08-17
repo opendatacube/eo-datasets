@@ -315,9 +315,9 @@ class MeasurementRecord:
             grid, mask = self.mask_by_grid.popitem()
             mask = mask.astype("uint8")
             shapes = [
-                    shapely.geometry.shape(shape)
-                    for shape, val in rasterio.features.shapes(mask)
-                    if val == 1
+                shapely.geometry.shape(shape)
+                for shape, val in rasterio.features.shapes(mask)
+                if val == 1
             ]
             shapes = [shape for shape in shapes if shape.is_valid]
             shape = shapely.ops.unary_union(shapes)
