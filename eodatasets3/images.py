@@ -310,17 +310,23 @@ class MeasurementRecord:
 
         (they are consumed in order to to minimise peak memory usage)
         """
+
+        def valid_shape(shape):
+            if shape.is_valid:
+                return shape
+            return shape.buffer(0)
+
         geoms = []
         while self.mask_by_grid:
             grid, mask = self.mask_by_grid.popitem()
             mask = mask.astype("uint8")
-            shapes = [
-                shapely.geometry.shape(shape)
-                for shape, val in rasterio.features.shapes(mask)
-                if val == 1
-            ]
-            shapes = [shape for shape in shapes if shape.is_valid]
-            shape = shapely.ops.unary_union(shapes)
+            shape = shapely.ops.unary_union(
+                [
+                    valid_shape(shapely.geometry.shape(shape))
+                    for shape, val in rasterio.features.shapes(mask)
+                    if val == 1
+                ]
+            )
             shape_y, shape_x = mask.shape
             del mask
 
