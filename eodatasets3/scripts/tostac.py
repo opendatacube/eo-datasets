@@ -104,6 +104,16 @@ def add_proj(
         return {}
 
 
+def add_lineage(lineage: Dict) -> Dict:
+    """
+    Add custom lineage field to a STAC Item
+    """
+    if lineage:
+        return {"odc:lineage": lineage}
+    else:
+        return {}
+
+
 def add_odc_links(explorer_base_url: str, dataset: DatasetDoc) -> List:
     """
         Add links for ODC product into a STAC Item
@@ -191,6 +201,7 @@ def dc_to_stac(
                 for key, val in dataset.properties.items()
             },
             "odc:product": dataset.product.name,
+            **add_lineage(dataset.lineage),
             "proj:epsg": int(dataset.crs.lstrip("epsg:")) if dataset.crs else None,
             **add_proj("proj:shape", dataset.grids),
             **add_proj("proj:transform", dataset.grids),
