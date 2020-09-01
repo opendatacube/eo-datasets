@@ -415,7 +415,7 @@ class FileWrite:
         compress="deflate",
         zlevel=4,
     ) -> "FileWrite":
-        """ Returns write_img options according to the source imagery provided
+        """Returns write_img options according to the source imagery provided
         :param overviews:
             (boolean) sets overview flags in gdal config options
         :param blockxsize:
