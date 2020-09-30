@@ -9,9 +9,11 @@ from deepdiff import DeepDiff
 from eodatasets3.prepare import noaa_c_c_prwtreatm_1_prepare
 from tests.integration.common import run_prepare_cli
 
-NCEP_PR_WTR_FILE: Path = Path(
-    __file__
-).parent.parent / "data" / "noaa_c_c_prwtreatm_1/pr_wtr.eatm.2018.test.nc"
+NCEP_PR_WTR_FILE: Path = (
+    Path(__file__).parent.parent
+    / "data"
+    / "noaa_c_c_prwtreatm_1/pr_wtr.eatm.2018.test.nc"
+)
 
 _diff = partial(DeepDiff, significant_digits=6)
 

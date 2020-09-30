@@ -9,21 +9,23 @@ from eodatasets3 import serialise
 from eodatasets3.model import DatasetDoc
 from eodatasets3.prepare.landsat_l1_prepare import normalise_nci_symlinks
 
-L71GT_TARBALL_PATH: Path = Path(
-    __file__
-).parent / "data" / "LE07_L1TP_104078_20130429_20161124_01_T1.tar"
+L71GT_TARBALL_PATH: Path = (
+    Path(__file__).parent / "data" / "LE07_L1TP_104078_20130429_20161124_01_T1.tar"
+)
 
-L5_TARBALL_PATH: Path = Path(
-    __file__
-).parent / "data" / "LT05_L1TP_090085_19970406_20161231_01_T1.tar.gz"
+L5_TARBALL_PATH: Path = (
+    Path(__file__).parent / "data" / "LT05_L1TP_090085_19970406_20161231_01_T1.tar.gz"
+)
 
-L8_INPUT_PATH: Path = Path(
-    __file__
-).parent / "data" / "LC08_L1TP_090084_20160121_20170405_01_T1"
+L8_INPUT_PATH: Path = (
+    Path(__file__).parent / "data" / "LC08_L1TP_090084_20160121_20170405_01_T1"
+)
 
-LS8_TELEMETRY_PATH: Path = Path(
-    __file__
-).parent / "data" / "LS8_OLITIRS_STD-MD_P00_LC80840720742017365LGN00_084_072-074_20180101T004644Z20180101T004824_1"
+LS8_TELEMETRY_PATH: Path = (
+    Path(__file__).parent
+    / "data"
+    / "LS8_OLITIRS_STD-MD_P00_LC80840720742017365LGN00_084_072-074_20180101T004644Z20180101T004824_1"
+)
 
 
 def path_offset(base: Path, offset: str):
