@@ -208,14 +208,14 @@ def dataset_as_stac_item(
     wgs84_geometry = geom.to_crs(CRS("epsg:4326"), math.inf)
 
     properties = {
-        # This field is required by the proj standard, even if null.
+        # This field is required to be present, even if null.
         "proj:epsg": None,
     }
     crs = dataset.crs.lower()
     if crs.startswith("epsg:"):
         properties["proj:epsg"] = int(crs.lstrip("epsg:"))
     else:
-        raise NotImplementedError("TODO: Only epsg crses currently supported")
+        properties["proj:wkt2"] = dataset.crs
 
     if dataset.label:
         properties["title"] = dataset.label
