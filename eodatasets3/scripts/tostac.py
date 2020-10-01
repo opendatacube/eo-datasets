@@ -21,6 +21,7 @@ from datacube.utils.geometry import Geometry, CRS
 
 
 # Mapping between EO3 field names and STAC properties object field names
+
 MAPPING_EO3_TO_STAC = {
     "dtr:end_datetime": "end_datetime",
     "dtr:start_datetime": "start_datetime",
@@ -32,21 +33,36 @@ MAPPING_EO3_TO_STAC = {
     "eo:azimuth": "view:azimuth",
     "eo:sun_azimuth": "view:sun_azimuth",
     "eo:sun_elevation": "view:sun_elevation",
+    "odc:processing_datetime": "created",
 }
 
 
-def convert_value_to_stac_type(key: str, value):
+def _as_stac_instruments(value: str):
+    """
+    >>> _as_stac_instruments('TM')
+    ['tm']
+    >>> _as_stac_instruments('OLI')
+    ['oli']
+    >>> _as_stac_instruments('ETM+')
+    ['etm']
+    >>> _as_stac_instruments('OLI_TIRS')
+    ['oli', 'tirs']
+    """
+    return [i.strip("+-").lower() for i in value.split("_")]
+
+
+def _convert_value_to_stac_type(key: str, value):
     """
     Convert return type as per STAC specification
     """
     # In STAC spec, "instruments" have [String] type
     if key == "eo:instrument":
-        return [value]
+        return _as_stac_instruments(value)
     else:
         return value
 
 
-def add_types(path: Path) -> Dict:
+def _media_fields(path: Path) -> Dict:
     """
     Add media type of the asset object
     """
@@ -64,7 +80,7 @@ def add_types(path: Path) -> Dict:
         return {}
 
 
-def add_roles(asset_name: str) -> Dict:
+def _asset_roles_fields(asset_name: str) -> Dict:
     """
     Add roles of the asset object
     """
@@ -76,7 +92,7 @@ def add_roles(asset_name: str) -> Dict:
         return {}
 
 
-def add_title(asset_name: str) -> Dict:
+def _asset_title_fields(asset_name: str) -> Dict:
     """
     Add title of the asset object
     """
@@ -86,25 +102,21 @@ def add_title(asset_name: str) -> Dict:
         return {}
 
 
-def add_proj(
-    field_name: str, grid: Dict[str, GridDoc], grid_name: str = "default"
-) -> Dict:
+def _proj_fields(grid: Dict[str, GridDoc], grid_name: str = "default") -> Dict:
     """
     Add fields of the STAC Projection (proj) Extension to a STAC Item
     """
     grid_doc = grid.get(grid_name)
     if grid_doc:
-        proj_fields = {
+        return {
             "proj:shape": grid_doc.shape,
             "proj:transform": grid_doc.transform,
         }
-        field_value = proj_fields.get(field_name, None)
-        return {field_name: field_value} if field_value else {}
     else:
         return {}
 
 
-def add_lineage(lineage: Dict) -> Dict:
+def _lineage_fields(lineage: Dict) -> Dict:
     """
     Add custom lineage field to a STAC Item
     """
@@ -114,23 +126,29 @@ def add_lineage(lineage: Dict) -> Dict:
         return {}
 
 
-def add_odc_links(explorer_base_url: str, dataset: DatasetDoc) -> List:
+def _odc_links(explorer_base_url: str, dataset: DatasetDoc) -> List:
     """
     Add links for ODC product into a STAC Item
     """
     if explorer_base_url:
         return [
             {
-                "title": "Open Data Cube Product Overview",
+                "title": "ODC Product Overview",
                 "rel": "product_overview",
                 "type": "text/html",
                 "href": urljoin(explorer_base_url, f"product/{dataset.product.name}"),
             },
             {
-                "title": "Open Data Cube Explorer",
+                "title": "ODC Dataset Overview",
                 "rel": "alternative",
                 "type": "text/html",
                 "href": urljoin(explorer_base_url, f"dataset/{dataset.id}"),
+            },
+            {
+                "rel": "parent",
+                "href": urljoin(
+                    explorer_base_url, f"/stac/collections/{dataset.product.name}"
+                ),
             },
         ]
     else:
@@ -163,33 +181,47 @@ def run(
         output_path = input_metadata.with_name(f"{name}.stac-item.json")
 
         # Create STAC dict
-        item_doc = dc_to_stac(
+        item_doc = dataset_as_stac_item(
             dataset,
-            input_metadata,
-            output_path,
-            stac_base_url,
-            explorer_base_url,
-            validate,
+            input_metadata_url=urljoin(stac_base_url, input_metadata.name),
+            output_url=urljoin(stac_base_url, output_path.name),
+            explorer_base_url=explorer_base_url,
+            do_validate=validate,
         )
 
         with output_path.open("w") as f:
             json.dump(item_doc, f, indent=4, default=json_fallback)
 
 
-def dc_to_stac(
+def dataset_as_stac_item(
     dataset: DatasetDoc,
-    input_metadata: Path,
-    output_path: Path,
-    stac_base_url: str,
+    input_metadata_url: str,
+    output_url: str,
     explorer_base_url: str,
-    do_validate: bool,
+    do_validate: bool = False,
 ) -> dict:
     """
-    Creates a STAC document
+    Creates a STAC document for the given ODC dataset
     """
 
     geom = Geometry(dataset.geometry, CRS(dataset.crs))
     wgs84_geometry = geom.to_crs(CRS("epsg:4326"), math.inf)
+
+    properties = {
+        # This field is required by the proj standard, even if null.
+        "proj:epsg": None,
+    }
+    crs = dataset.crs.lower()
+    if crs.startswith("epsg:"):
+        properties["proj:epsg"] = int(crs.lstrip("epsg:"))
+    else:
+        raise NotImplementedError("TODO: Only epsg crses currently supported")
+
+    if dataset.label:
+        properties["title"] = dataset.label
+
+    # TODO: choose remote if there's multiple locations?
+    dataset_location = dataset.locations[0] if dataset.locations else output_url
 
     item_doc = dict(
         stac_version="1.0.0-beta.2",
@@ -200,14 +232,13 @@ def dc_to_stac(
         geometry=wgs84_geometry.json,
         properties={
             **{
-                MAPPING_EO3_TO_STAC.get(key, key): convert_value_to_stac_type(key, val)
+                MAPPING_EO3_TO_STAC.get(key, key): _convert_value_to_stac_type(key, val)
                 for key, val in dataset.properties.items()
             },
             "odc:product": dataset.product.name,
-            **add_lineage(dataset.lineage),
-            "proj:epsg": int(dataset.crs.lstrip("epsg:")) if dataset.crs else None,
-            **add_proj("proj:shape", dataset.grids),
-            **add_proj("proj:transform", dataset.grids),
+            **_lineage_fields(dataset.lineage),
+            **properties,
+            **(_proj_fields(dataset.grids) if dataset.grids else {}),
         },
         # TODO: Currently assuming no name collisions.
         assets={
@@ -215,11 +246,12 @@ def dc_to_stac(
                 name: (
                     {
                         "eo:bands": [{"name": name}],
-                        **add_types(Path(m.path)),
+                        **_media_fields(Path(m.path)),
                         "roles": ["data"],
-                        "href": urljoin(stac_base_url, m.path),
-                        **add_proj("proj:shape", dataset.grids, m.grid),
-                        **add_proj("proj:transform", dataset.grids, m.grid),
+                        "href": urljoin(dataset_location, m.path),
+                        **(
+                            _proj_fields(dataset.grids, m.grid) if dataset.grids else {}
+                        ),
                     }
                 )
                 for name, m in dataset.measurements.items()
@@ -227,10 +259,10 @@ def dc_to_stac(
             **{
                 name: (
                     {
-                        **add_title(name),
-                        **add_types(Path(m.path)),
-                        **add_roles(name),
-                        "href": urljoin(stac_base_url, m.path),
+                        **_asset_title_fields(name),
+                        **_media_fields(Path(m.path)),
+                        **_asset_roles_fields(name),
+                        "href": urljoin(dataset_location, m.path),
                     }
                 )
                 for name, m in dataset.accessories.items()
@@ -240,15 +272,15 @@ def dc_to_stac(
             {
                 "rel": "self",
                 "type": "application/json",
-                "href": urljoin(stac_base_url, output_path.name),
+                "href": output_url,
             },
             {
-                "title": "Source Dataset YAML",
+                "title": "ODC Dataset YAML",
                 "rel": "odc_yaml",
                 "type": "text/yaml",
-                "href": urljoin(stac_base_url, input_metadata.name),
+                "href": input_metadata_url,
             },
-            *add_odc_links(explorer_base_url, dataset),
+            *_odc_links(explorer_base_url, dataset),
         ],
     )
     if do_validate:
