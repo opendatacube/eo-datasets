@@ -116,7 +116,8 @@
         "eo:cloud_cover": 42.42102985910952,
         "gsd": 15.0,
         "instruments": [
-            "OLI_TIRS"
+            "oli",
+            "tirs"
         ],
         "platform": "landsat-8",
         "view:sun_azimuth": 34.22994171,
@@ -153,7 +154,7 @@
         "landsat:wrs_row": 80,
         "odc:dataset_version": "3.1.0",
         "odc:file_format": "GeoTIFF",
-        "odc:processing_datetime": "2020-06-18T07:07:06.303867Z",
+        "created": "2020-06-18T07:07:06.303867Z",
         "odc:producer": "ga.gov.au",
         "odc:product_family": "ard",
         "odc:region_code": "088080",
@@ -164,6 +165,7 @@
             ]
         },
         "proj:epsg": 32656,
+        "title": "ga_ls8c_ard_3-1-0_088080_2020-05-25_final",
         "proj:shape": [
             7841,
             7781
@@ -1053,22 +1055,26 @@
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_ard_3-1-0_088080_2020-05-25_final.stac-item.json"
         },
         {
-            "title": "Source Dataset YAML",
+            "title": "ODC Dataset YAML",
             "rel": "odc_yaml",
             "type": "text/yaml",
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_ard_3-1-0_088080_2020-05-25_final.odc-metadata.yaml"
         },
         {
-            "title": "Open Data Cube Product Overview",
+            "title": "ODC Product Overview",
             "rel": "product_overview",
             "type": "text/html",
             "href": "https://explorer.dev.dea.ga.gov.au/product/ga_ls8c_ard_3"
         },
         {
-            "title": "Open Data Cube Explorer",
+            "title": "ODC Dataset Overview",
             "rel": "alternative",
             "type": "text/html",
             "href": "https://explorer.dev.dea.ga.gov.au/dataset/2aa69fcf-aa55-4747-9d95-3652f9fe79b0"
+        },
+        {
+            "rel": "parent",
+            "href": "https://explorer.dev.dea.ga.gov.au/stac/collections/ga_ls8c_ard_3"
         }
     ]
 }
