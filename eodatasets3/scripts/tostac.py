@@ -225,7 +225,7 @@ def dataset_as_stac_item(
 
     item_doc = dict(
         stac_version="1.0.0-beta.2",
-        stac_extensions=["eo", "projection", "view"],
+        stac_extensions=["eo", "projection"],
         type="Feature",
         id=dataset.id,
         bbox=wgs84_geometry.boundingbox,
@@ -283,6 +283,11 @@ def dataset_as_stac_item(
             *_odc_links(explorer_base_url, dataset),
         ],
     )
+
+    # To pass validation, only add 'view' extension when we're using it somewhere.
+    if any(k.startswith("view:") for k in item_doc["properties"].keys()):
+        item_doc["stac_extensions"].append("view")
+
     if do_validate:
         validate_stac(item_doc)
     return item_doc
