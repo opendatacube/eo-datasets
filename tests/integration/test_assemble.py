@@ -5,13 +5,13 @@ from uuid import UUID
 
 import numpy
 import pytest
+from ruamel import yaml
+
 from eodatasets3 import DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
-from ruamel import yaml
-from tests.integration.common import assert_same_as_file
-
 from tests import assert_file_structure
+from tests.integration.common import assert_same_as_file
 
 
 def test_dea_style_package(
@@ -309,6 +309,7 @@ def test_s2_naming_conventions(tmp_path: Path):
 
     # The s2 naming conventions have an extra subfolder of the datatake start time.
     metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+
     assert metadata_path_offset == (
         "ga_s2am_blueberries_1/Oz/2018/11/04/20170822T015626/"
         "ga_s2am_blueberries_1-0-0_Oz_2018-11-04.odc-metadata.yaml"
@@ -399,3 +400,25 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
                 f"Expected field {needed_field_name} to "
                 f"be listed as mandatory in the error message"
             )
+
+
+def test_dea_c3_naming_conventions(tmp_path: Path):
+    """
+    A sample scene for Alchemist C3 processing that tests the naming conventions.
+    """
+    p = DatasetAssembler(tmp_path, naming_conventions="dea_c3")
+    p.platform = "ga_ls5t"
+    p.datetime = datetime(1998, 7, 30)
+    p.product_family = "wo"
+    p.processed = "1998-07-30T12:23:23"
+    p.maturity = "interim"
+    p.producer = "ga.gov.au"
+    p.dataset_version = "1.6.0"
+    p.collection_number = "3"
+    p.region_code = "090081"
+    dataset_id, metadata_path = p.done()
+    metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+    assert (
+        metadata_path_offset
+        == "ga_ls_wo_3/1-6-0/090/081/1998/07/30/ga_ls_wo_3_090081_1998-07-30_interim.odc-metadata.yaml"
+    )
