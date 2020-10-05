@@ -413,9 +413,19 @@ def test_dea_c3_naming_conventions(tmp_path: Path):
     p.processed = "1998-07-30T12:23:23"
     p.maturity = "interim"
     p.producer = "ga.gov.au"
+    p.region_code = "090081"
+
+    # Try missing few fields and expect ValueError
+    with pytest.raises(
+        ValueError, match="Need more properties to fulfill naming conventions."
+    ):
+        p.done()
+
+    # Put back the missed ones
     p.dataset_version = "1.6.0"
     p.collection_number = "3"
-    p.region_code = "090081"
+
+    # Success case
     dataset_id, metadata_path = p.done()
     metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
     assert (
