@@ -171,7 +171,7 @@ class DatasetAssembler(EoFields):
         elif naming_conventions == "dea_s2":
             self.names = ComplicatedNamingConventions.for_standard_dea_s2(self)
         elif naming_conventions == "dea_c3":
-            self.names = ComplicatedNamingConventionsAlchemist(self)
+            self.names = ComplicatedNamingConventionsAlchemist.for_c3_processing(self)
         else:
             raise NotImplementedError("configurable naming conventions")
 
