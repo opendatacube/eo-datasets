@@ -25,7 +25,7 @@ from eodatasets3.model import (
     ComplicatedNamingConventions,
     AccessoryDoc,
     Location,
-    ComplicatedNamingConventionsAlchemist,
+    ComplicatedNamingConventionsDerivatives,
 )
 from eodatasets3.properties import EoFields
 from eodatasets3.validate import Level, ValidationMessage
@@ -171,7 +171,9 @@ class DatasetAssembler(EoFields):
         elif naming_conventions == "dea_s2":
             self.names = ComplicatedNamingConventions.for_standard_dea_s2(self)
         elif naming_conventions == "dea_c3":
-            self.names = ComplicatedNamingConventionsAlchemist.for_c3_processing(self)
+            self.names = ComplicatedNamingConventionsDerivatives.for_c3_derivatives(
+                self
+            )
         else:
             raise NotImplementedError("configurable naming conventions")
 
