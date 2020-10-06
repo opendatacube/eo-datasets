@@ -6,6 +6,9 @@ from pathlib import Path
 from typing import Tuple, Dict, List, Sequence, Optional, Iterable
 from typing import Union, Generator
 
+from rasterio.io import MemoryFile
+
+
 import attr
 import numpy
 import numpy as np
@@ -685,6 +688,34 @@ class FileWrite:
                                 ),
                                 index,
                             )
+
+    def create_thumbnail_bitflag(
+        self,
+        in_file: Path,
+        out_file: Path,
+        bit: int = None):
+        """
+        Write out a JPG thumbnail from a singleband image.
+        This takes in a path to a valid raster dataset and writes
+        out a file with on the the values of the int
+        """
+        with rasterio.open(in_file) as dataset:
+            data = dataset.read()
+            if bit is not None:
+                data[data != bit] = 0
+                stretch = [0, bit]
+
+        meta = dataset.meta
+        meta['driver'] = 'GTiff'
+        interim_file = Path(tempfile.gettempdir()) / 'temp.tif'
+
+        with rasterio.open(interim_file, 'w', **meta) as tmpdataset:
+            tmpdataset.write(data)
+        self.create_thumbnail(
+            [interim_file, interim_file, interim_file],
+            out_file,
+            static_stretch=stretch
+        )
 
 
 def _write_quicklook(
