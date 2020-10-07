@@ -725,23 +725,23 @@ class FileWrite:
         with tempfile.TemporaryDirectory() as temp_dir:
             if bit:
                 # Only use one file, three times
-                interim_file = Path(temp_dir) / "temp.tif"
+                temp_file = Path(temp_dir) / "temp.tif"
 
-                with rasterio.open(interim_file, "w", **meta) as tmpdataset:
+                with rasterio.open(temp_file, "w", **meta) as tmpdataset:
                     tmpdataset.write(out_data)
                 self.create_thumbnail(
-                    [interim_file, interim_file, interim_file],
+                    [temp_file, temp_file, temp_file],
                     out_file,
                     static_stretch=stretch,
                 )
             else:
                 # Use three different files
-                tempfiles = [Path(temp_dir) / f"temp_{i}.tif" for i in range(3)]
+                temp_files = [Path(temp_dir) / f"temp_{i}.tif" for i in range(3)]
 
                 for i in range(3):
-                    with rasterio.open(tempfiles[i], "w", **meta) as tmpdataset:
+                    with rasterio.open(temp_files[i], "w", **meta) as tmpdataset:
                         tmpdataset.write(out_data[i])
-                self.create_thumbnail(tempfiles, out_file, static_stretch=stretch)
+                self.create_thumbnail(temp_files, out_file, static_stretch=stretch)
 
 
 def _write_quicklook(
