@@ -683,27 +683,64 @@ class FileWrite:
                                 index,
                             )
 
-    def create_thumbnail_bitflag(self, in_file: Path, out_file: Path, bit: int = None):
+    def create_thumbnail_singleband(
+        self,
+        in_file: Path,
+        out_file: Path,
+        bit: int = None,
+        lookup_table: Dict[int, Tuple[int, int, int]] = None,
+    ):
         """
         Write out a JPG thumbnail from a singleband image.
         This takes in a path to a valid raster dataset and writes
         out a file with only the values of the bit (integer) as white
         """
+        assert not (
+            bit is not None and lookup_table is not None
+        ), "Please set either bit or lookup_table, and not both of them"
+
         with rasterio.open(in_file) as dataset:
             data = dataset.read()
+
             if bit is not None:
-                data[data != bit] = 0
+                out_data = numpy.copy(data)
+                out_data[data != bit] = 0
                 stretch = [0, bit]
+            if lookup_table is not None:
+                out_data = [
+                    numpy.full_like(data, 0),
+                    numpy.full_like(data, 0),
+                    numpy.full_like(data, 0)
+                ]
+                stretch = [0, 255]
+
+                for value, rgb in lookup_table.items():
+                    for index in range(3):
+                        out_data[index][data == value] = rgb[index]
+
 
         meta = dataset.meta
         meta["driver"] = "GTiff"
-        interim_file = Path(tempfile.gettempdir()) / "temp.tif"
 
-        with rasterio.open(interim_file, "w", **meta) as tmpdataset:
-            tmpdataset.write(data)
-        self.create_thumbnail(
-            [interim_file, interim_file, interim_file], out_file, static_stretch=stretch
-        )
+        if bit:
+            interim_file = Path(tempfile.gettempdir()) / "temp.tif"
+
+            with rasterio.open(interim_file, "w", **meta) as tmpdataset:
+                tmpdataset.write(out_data)
+            self.create_thumbnail(
+                [interim_file, interim_file, interim_file], out_file, static_stretch=stretch
+            )
+        else:
+            temp_dir = Path("/tmp")
+
+            tempfiles = [temp_dir / f"temp_{i}.tif" for i in range(3)]
+
+            for i in range(3):
+                with rasterio.open(tempfiles[i], "w", **meta) as tmpdataset:
+                    tmpdataset.write(out_data[i])
+            self.create_thumbnail(
+                tempfiles, out_file, static_stretch=stretch
+            )
 
 
 def _write_quicklook(

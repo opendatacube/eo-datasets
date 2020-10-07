@@ -4,11 +4,43 @@ Module
 """
 from __future__ import absolute_import
 
+import binascii
 import hashlib
+import rasterio
 import tempfile
 from pathlib import Path
+from rasterio import DatasetReader
+from typing import Dict, Tuple
 
-import binascii
+
+allow_anything = object()
+
+
+def assert_image(
+    image: Path,
+    overviews=allow_anything,
+    nodata=allow_anything,
+    unique_pixel_counts: Dict = allow_anything,
+    bands=1,
+    shape: Tuple[int, int] = None,
+):
+    __tracebackhide__ = True
+    with rasterio.open(image) as d:
+        d: DatasetReader
+        assert d.count == bands, f"Expected {bands} band{'s' if bands > 1 else ''}"
+
+        if overviews is not allow_anything:
+            assert d.overviews(1) == overviews
+        if nodata is not allow_anything:
+            assert d.nodata == nodata
+
+        if unique_pixel_counts is not allow_anything:
+            array = d.read(1)
+            value_counts = dict(zip(*np.unique(array, return_counts=True)))
+            assert value_counts == unique_pixel_counts
+
+        if shape:
+            assert shape == d.shape, f"Unexpected shape: {shape!r} != {d.shape!r}"
 
 
 def load_checksum_filenames(output_metadata_path):

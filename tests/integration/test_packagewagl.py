@@ -1,20 +1,21 @@
-from binascii import crc32
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
-from typing import Dict, Tuple
-
 import numpy as np
 import pytest
 import rasterio
+from binascii import crc32
 from click.testing import CliRunner
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from rasterio import DatasetReader
 from rasterio.enums import Compression
 from rio_cogeo import cogeo
-from tests.integration.common import assert_same_as_file
+from typing import Dict
 
 import eodatasets3
 from eodatasets3.model import DatasetDoc
 from tests import assert_file_structure
+from tests.integration.common import assert_same_as_file
+
+from . import assert_image
 
 h5py = pytest.importorskip(
     "h5py",
@@ -121,10 +122,10 @@ def test_whole_wagl_package(
 
     # Verify the computed contiguity looks the same. (metadata fields will depend on it)
     [image] = expected_folder.rglob("*_oa_*nbar-contiguity.tif")
-    _assert_image(image, nodata=255, unique_pixel_counts={0: 1978, 1: 4184})
+    assert_image(image, nodata=255, unique_pixel_counts={0: 1978, 1: 4184})
 
     [image] = expected_folder.rglob("*_oa_*nbart-contiguity.tif")
-    _assert_image(image, nodata=255, unique_pixel_counts={0: 1979, 1: 4183})
+    assert_image(image, nodata=255, unique_pixel_counts={0: 1979, 1: 4183})
 
     assert_same_as_file(
         {
@@ -453,44 +454,14 @@ def test_whole_wagl_package(
     for image in oa_images:
         # fmask is the only OA that should have overviews according to spec (and Josh).
         if "fmask" in image.name:
-            _assert_image(image, overviews=[8, 16, 26])
+            assert_image(image, overviews=[8, 16, 26])
         else:
-            _assert_image(image, overviews=[])
+            assert_image(image, overviews=[])
 
     # Check we didn't get height/width mixed up again :)
     # (The small size of our test data makes this slightly silly, though...)
     [thumb_path] = expected_folder.rglob("*_nbar_*.jpg")
-    _assert_image(thumb_path, bands=3, shape=(7, 8))
-
-
-allow_anything = object()
-
-
-def _assert_image(
-    image: Path,
-    overviews=allow_anything,
-    nodata=allow_anything,
-    unique_pixel_counts: Dict = allow_anything,
-    bands=1,
-    shape: Tuple[int, int] = None,
-):
-    __tracebackhide__ = True
-    with rasterio.open(image) as d:
-        d: DatasetReader
-        assert d.count == bands, f"Expected {bands} band{'s' if bands > 1 else ''}"
-
-        if overviews is not allow_anything:
-            assert d.overviews(1) == overviews
-        if nodata is not allow_anything:
-            assert d.nodata == nodata
-
-        if unique_pixel_counts is not allow_anything:
-            array = d.read(1)
-            value_counts = dict(zip(*np.unique(array, return_counts=True)))
-            assert value_counts == unique_pixel_counts
-
-        if shape:
-            assert shape == d.shape, f"Unexpected shape: {shape!r} != {d.shape!r}"
+    assert_image(thumb_path, bands=3, shape=(7, 8))
 
 
 def test_maturity_calculation():

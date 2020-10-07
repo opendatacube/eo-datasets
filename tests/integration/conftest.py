@@ -1,7 +1,10 @@
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Callable
+from typing import Dict, Callable, Tuple
+
+from rasterio import DatasetReader
+import rasterio
 
 import pytest
 
@@ -599,3 +602,8 @@ def l1_ls5_tarball_md_expected(
 @pytest.fixture
 def input_uint8_tif() -> Path:
     return Path(WOFS_PATH / "ga_ls_wofs_3_099081_2020-07-26_interim_water_clipped.tif")
+
+
+@pytest.fixture
+def input_uint8_tif_2() -> Path:
+    return Path(WOFS_PATH / "ga_ls_wofs_3_090081_1993_01_05_interim_water_clipped.tif")

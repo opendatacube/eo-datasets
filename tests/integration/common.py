@@ -1,12 +1,13 @@
+import rapidjson
+import rasterio
+from click.testing import CliRunner, Result
+from deepdiff import DeepDiff
 from functools import partial
 from pathlib import Path
 from pprint import pformat, pprint
-from typing import Dict
-
-import rapidjson
-from click.testing import CliRunner, Result
-from deepdiff import DeepDiff
+from rasterio import DatasetReader
 from ruamel import yaml
+from typing import Dict, Tuple
 
 diff = partial(DeepDiff, significant_digits=6)
 
