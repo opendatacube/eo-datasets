@@ -721,25 +721,26 @@ class FileWrite:
         meta = dataset.meta
         meta["driver"] = "GTiff"
 
-        if bit:
-            interim_file = Path(tempfile.gettempdir()) / "temp.tif"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            if bit:
+                # Only use one file, three times
+                interim_file = Path(temp_dir) / "temp.tif"
 
-            with rasterio.open(interim_file, "w", **meta) as tmpdataset:
-                tmpdataset.write(out_data)
-            self.create_thumbnail(
-                [interim_file, interim_file, interim_file],
-                out_file,
-                static_stretch=stretch,
-            )
-        else:
-            temp_dir = Path("/tmp")
+                with rasterio.open(interim_file, "w", **meta) as tmpdataset:
+                    tmpdataset.write(out_data)
+                self.create_thumbnail(
+                    [interim_file, interim_file, interim_file],
+                    out_file,
+                    static_stretch=stretch,
+                )
+            else:
+                # Use three different files
+                tempfiles = [temp_dir / f"temp_{i}.tif" for i in range(3)]
 
-            tempfiles = [temp_dir / f"temp_{i}.tif" for i in range(3)]
-
-            for i in range(3):
-                with rasterio.open(tempfiles[i], "w", **meta) as tmpdataset:
-                    tmpdataset.write(out_data[i])
-            self.create_thumbnail(tempfiles, out_file, static_stretch=stretch)
+                for i in range(3):
+                    with rasterio.open(tempfiles[i], "w", **meta) as tmpdataset:
+                        tmpdataset.write(out_data[i])
+                self.create_thumbnail(tempfiles, out_file, static_stretch=stretch)
 
 
 def _write_quicklook(
