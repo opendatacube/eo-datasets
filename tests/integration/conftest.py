@@ -27,11 +27,7 @@ LS8_TELEMETRY_PATH: Path = (
     / "LS8_OLITIRS_STD-MD_P00_LC80840720742017365LGN00_084_072-074_20180101T004644Z20180101T004824_1"
 )
 
-WOFS_PATH: Path = (
-    Path(__file__).parent
-    / "data"
-    / "wofs"
-)
+WOFS_PATH: Path = Path(__file__).parent / "data" / "wofs"
 
 
 def path_offset(base: Path, offset: str):
@@ -599,6 +595,7 @@ def l1_ls5_tarball_md_expected(
         "lineage": {},
     }
 
+
 @pytest.fixture
 def input_uint8_tif() -> Path:
-    return Path(WOFS_PATH / 'ga_ls_wofs_3_099081_2020-07-26_interim_water_clipped.tif')
+    return Path(WOFS_PATH / "ga_ls_wofs_3_099081_2020-07-26_interim_water_clipped.tif")
