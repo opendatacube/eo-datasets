@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 import rasterio
 from binascii import crc32
@@ -8,7 +7,6 @@ from pathlib import Path
 from rasterio import DatasetReader
 from rasterio.enums import Compression
 from rio_cogeo import cogeo
-from typing import Dict
 
 import eodatasets3
 from eodatasets3.model import DatasetDoc

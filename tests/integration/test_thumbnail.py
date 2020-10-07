@@ -5,6 +5,7 @@ from eodatasets3.images import FileWrite
 
 from . import assert_image
 
+
 def test_thumbnail_bitflag(input_uint8_tif: Path):
     writer = FileWrite()
 
@@ -25,8 +26,8 @@ def test_thumbnail_lookuptable(input_uint8_tif_2: Path):
 
     wofs_lookup = {
         0: [150, 150, 110],  # dry
-        1: [255, 255, 255], # nodata,
-        16: [119, 104, 87], # terrain shadow
+        1: [255, 255, 255],  # nodata,
+        16: [119, 104, 87],  # terrain shadow
         32: [89, 88, 86],  # cloud_shadow
         64: [216, 215, 214],  # cloud
         80: [242, 220, 180],  # cloudy terrain
@@ -35,6 +36,8 @@ def test_thumbnail_lookuptable(input_uint8_tif_2: Path):
         192: [186, 211, 242],  # cloudy water
     }
 
-    writer.create_thumbnail_singleband(input_uint8_tif_2, Path(outfile), lookup_table=wofs_lookup)
+    writer.create_thumbnail_singleband(
+        input_uint8_tif_2, Path(outfile), lookup_table=wofs_lookup
+    )
 
     assert_image(outfile, bands=3)

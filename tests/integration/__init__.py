@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 from rasterio import DatasetReader
 from typing import Dict, Tuple
-
+import numpy
 
 allow_anything = object()
 
@@ -36,7 +36,7 @@ def assert_image(
 
         if unique_pixel_counts is not allow_anything:
             array = d.read(1)
-            value_counts = dict(zip(*np.unique(array, return_counts=True)))
+            value_counts = dict(zip(*numpy.unique(array, return_counts=True)))
             assert value_counts == unique_pixel_counts
 
         if shape:

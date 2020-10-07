@@ -710,14 +710,13 @@ class FileWrite:
                 out_data = [
                     numpy.full_like(data, 0),
                     numpy.full_like(data, 0),
-                    numpy.full_like(data, 0)
+                    numpy.full_like(data, 0),
                 ]
                 stretch = [0, 255]
 
                 for value, rgb in lookup_table.items():
                     for index in range(3):
                         out_data[index][data == value] = rgb[index]
-
 
         meta = dataset.meta
         meta["driver"] = "GTiff"
@@ -728,7 +727,9 @@ class FileWrite:
             with rasterio.open(interim_file, "w", **meta) as tmpdataset:
                 tmpdataset.write(out_data)
             self.create_thumbnail(
-                [interim_file, interim_file, interim_file], out_file, static_stretch=stretch
+                [interim_file, interim_file, interim_file],
+                out_file,
+                static_stretch=stretch,
             )
         else:
             temp_dir = Path("/tmp")
@@ -738,9 +739,7 @@ class FileWrite:
             for i in range(3):
                 with rasterio.open(tempfiles[i], "w", **meta) as tmpdataset:
                     tmpdataset.write(out_data[i])
-            self.create_thumbnail(
-                tempfiles, out_file, static_stretch=stretch
-            )
+            self.create_thumbnail(tempfiles, out_file, static_stretch=stretch)
 
 
 def _write_quicklook(
