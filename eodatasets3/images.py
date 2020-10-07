@@ -735,7 +735,7 @@ class FileWrite:
                 )
             else:
                 # Use three different files
-                tempfiles = [temp_dir / f"temp_{i}.tif" for i in range(3)]
+                tempfiles = [Path(temp_dir) / f"temp_{i}.tif" for i in range(3)]
 
                 for i in range(3):
                     with rasterio.open(tempfiles[i], "w", **meta) as tmpdataset:
