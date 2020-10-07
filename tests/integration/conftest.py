@@ -1,10 +1,7 @@
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Callable, Tuple
-
-from rasterio import DatasetReader
-import rasterio
+from typing import Dict, Callable
 
 import pytest
 
