@@ -695,9 +695,10 @@ class FileWrite:
         This takes in a path to a valid raster dataset and writes
         out a file with only the values of the bit (integer) as white
         """
-        assert not (
-            bit is not None and lookup_table is not None
-        ), "Please set either bit or lookup_table, and not both of them"
+        if bit is not None and lookup_table is not None:
+            raise ValueError(
+                "Please set either bit or lookup_table, and not both of them"
+            )
 
         with rasterio.open(in_file) as dataset:
             data = dataset.read()
