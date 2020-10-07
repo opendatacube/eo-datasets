@@ -22,12 +22,11 @@ def test_thumbnail_lookuptable(input_uint8_tif_2: Path):
     writer = FileWrite()
 
     outfile = Path(tempfile.gettempdir()) / "test-lookuptable.jpg"
-    outfile = Path("/tmp") / "test-lookuptable.jpg"
 
     wofs_lookup = {
         0: [150, 150, 110],  # dry
         1: [255, 255, 255],  # nodata,
-        16: [119, 104, 87],  # terrain shadow
+        16: [119, 104, 87],  # terrain
         32: [89, 88, 86],  # cloud_shadow
         64: [216, 215, 214],  # cloud
         80: [242, 220, 180],  # cloudy terrain
