@@ -697,7 +697,7 @@ class FileWrite:
         """
         Write out a JPG thumbnail from a singleband image.
         This takes in a path to a valid raster dataset and writes
-        out a file with on the the values of the int
+        out a file with only the values of the bit (integer) as white
         """
         with rasterio.open(in_file) as dataset:
             data = dataset.read()

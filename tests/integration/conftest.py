@@ -601,4 +601,4 @@ def l1_ls5_tarball_md_expected(
 
 @pytest.fixture
 def input_uint8_tif() -> Path:
-    return Path(WOFS_PATH / 'ga_ls_wofs_3_099081_2020-07-26_interim_water.tif')
+    return Path(WOFS_PATH / 'ga_ls_wofs_3_099081_2020-07-26_interim_water_clipped.tif')
