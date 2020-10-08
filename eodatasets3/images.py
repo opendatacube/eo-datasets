@@ -1,31 +1,29 @@
-import os
-import sys
-import tempfile
-from collections import defaultdict
-from pathlib import Path
-from typing import Tuple, Dict, List, Sequence, Optional, Iterable
-from typing import Union, Generator
-
 import attr
 import numpy
-import numpy as np
+import os
 import rasterio
 import rasterio.features
 import shapely
 import shapely.affinity
 import shapely.ops
+import sys
+import tempfile
 import xarray
 from affine import Affine
-from eodatasets3.model import GridDoc, MeasurementDoc, DatasetDoc
-from eodatasets3.properties import FileFormat
+from collections import defaultdict
+from pathlib import Path
 from rasterio import DatasetReader
 from rasterio.coords import BoundingBox
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
 from rasterio.io import DatasetWriter
 from rasterio.shutil import copy as rio_copy
-from rasterio.warp import reproject, calculate_default_transform
-from shapely.geometry.base import BaseGeometry, CAP_STYLE, JOIN_STYLE
+from rasterio.warp import calculate_default_transform, reproject
+from shapely.geometry.base import CAP_STYLE, JOIN_STYLE, BaseGeometry
+from typing import Dict, Generator, Iterable, List, Optional, Sequence, Tuple, Union
+
+from eodatasets3.model import DatasetDoc, GridDoc, MeasurementDoc
+from eodatasets3.properties import FileFormat
 
 DEFAULT_OVERVIEWS = (8, 16, 32)
 
@@ -82,7 +80,6 @@ class GridSpec:
             transform=dataset.geobox.transform,
             crs=CRS.from_wkt(dataset.geobox.crs.crs_str),
         )
-        pass
 
     @property
     def bounds(self):
@@ -493,7 +490,7 @@ class FileWrite:
 
         # convert any bools to uin8
         if dtype == "bool":
-            array = np.uint8(array)
+            array = numpy.uint8(array)
             dtype = "uint8"
 
         ndims = array.ndim
@@ -686,6 +683,66 @@ class FileWrite:
                                 index,
                             )
 
+    def create_thumbnail_singleband(
+        self,
+        in_file: Path,
+        out_file: Path,
+        bit: int = None,
+        lookup_table: Dict[int, Tuple[int, int, int]] = None,
+    ):
+        """
+        Write out a JPG thumbnail from a singleband image.
+        This takes in a path to a valid raster dataset and writes
+        out a file with only the values of the bit (integer) as white
+        """
+        if bit is not None and lookup_table is not None:
+            raise ValueError(
+                "Please set either bit or lookup_table, and not both of them"
+            )
+
+        with rasterio.open(in_file) as dataset:
+            data = dataset.read()
+
+            if bit is not None:
+                out_data = numpy.copy(data)
+                out_data[data != bit] = 0
+                stretch = [0, bit]
+            if lookup_table is not None:
+                out_data = [
+                    numpy.full_like(data, 0),
+                    numpy.full_like(data, 0),
+                    numpy.full_like(data, 0),
+                ]
+                stretch = [0, 255]
+
+                for value, rgb in lookup_table.items():
+                    for index in range(3):
+                        out_data[index][data == value] = rgb[index]
+
+        meta = dataset.meta
+        meta["driver"] = "GTiff"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            if bit:
+                # Only use one file, three times
+                temp_file = Path(temp_dir) / "temp.tif"
+
+                with rasterio.open(temp_file, "w", **meta) as tmpdataset:
+                    tmpdataset.write(out_data)
+                self.create_thumbnail(
+                    [temp_file, temp_file, temp_file],
+                    out_file,
+                    static_stretch=stretch,
+                )
+            else:
+                # Use three different files
+                temp_files = [Path(temp_dir) / f"temp_{i}.tif" for i in range(3)]
+
+                for i in range(3):
+                    with rasterio.open(temp_files[i], "w", **meta) as tmpdataset:
+                        tmpdataset.write(out_data[i])
+                self.create_thumbnail(temp_files, out_file, static_stretch=stretch)
+
 
 def _write_quicklook(
     rgb: Sequence[Path],
@@ -752,7 +809,7 @@ def _write_quicklook(
                     image_null_mask=~valid_data_mask,
                     in_range=(static_range or calculated_range),
                     out_range=(1, 255),
-                    out_dtype=np.uint8,
+                    out_dtype=numpy.uint8,
                 ),
                 reprojected_data,
                 src_crs=input_geobox.crs,
@@ -770,7 +827,7 @@ def _write_quicklook(
     return reproj_grid
 
 
-LazyImages = Iterable[Tuple[np.ndarray, int]]
+LazyImages = Iterable[Tuple[numpy.ndarray, int]]
 
 
 def _iter_images(rgb: Sequence[Path]) -> LazyImages:
@@ -805,7 +862,7 @@ def read_valid_mask_and_value_range(
             the_data = array[valid_data_mask]
             # Check if there's a non-empty array first
             if the_data.any():
-                low, high = np.percentile(
+                low, high = numpy.percentile(
                     the_data, calculate_percentiles, interpolation="nearest"
                 )
                 calculated_range = (
@@ -817,14 +874,14 @@ def read_valid_mask_and_value_range(
 
 
 def rescale_intensity(
-    image: np.ndarray,
+    image: numpy.ndarray,
     in_range: Tuple[int, int],
     out_range: Optional[Tuple[int, int]] = None,
     image_nodata: int = None,
-    image_null_mask: np.ndarray = None,
-    out_dtype=np.uint8,
+    image_null_mask: numpy.ndarray = None,
+    out_dtype=numpy.uint8,
     out_nodata=0,
-) -> np.ndarray:
+) -> numpy.ndarray:
     """
     Based on scikit-image's rescale_intensity, but does fewer copies/allocations of the array.
 
@@ -836,13 +893,13 @@ def rescale_intensity(
         image_null_mask = image == image_nodata
 
     imin, imax = in_range
-    omin, omax = out_range or (np.iinfo(out_dtype).min, np.iinfo(out_dtype).max)
+    omin, omax = out_range or (numpy.iinfo(out_dtype).min, numpy.iinfo(out_dtype).max)
 
     # The intermediate calculation will need floats.
     # We'll convert to it immediately to avoid modifying the input array
-    image = image.astype(np.float64)
+    image = image.astype(numpy.float64)
 
-    np.clip(image, imin, imax, out=image)
+    numpy.clip(image, imin, imax, out=image)
     image -= imin
     image /= float(imax - imin)
     image *= omax - omin
