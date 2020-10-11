@@ -425,6 +425,9 @@ def test_dea_c3_naming_conventions(tmp_path: Path):
     p.dataset_version = "1.6.0"
     p.collection_number = "3"
 
+    # Collection number returned as integer via the getter.
+    assert p.collection_number == 3
+
     # Success case
     dataset_id, metadata_path = p.done()
     metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
