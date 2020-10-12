@@ -407,7 +407,7 @@ def test_dea_c3_naming_conventions(tmp_path: Path):
     A sample scene for Alchemist C3 processing that tests the naming conventions.
     """
     p = DatasetAssembler(tmp_path, naming_conventions="dea_c3")
-    p.platform = "ga_ls5t"
+    p.platform = "landsat-7"
     p.datetime = datetime(1998, 7, 30)
     p.product_family = "wo"
     p.processed = "1998-07-30T12:23:23"
