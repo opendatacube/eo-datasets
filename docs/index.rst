@@ -66,7 +66,7 @@ the provenance, and the assembler can optionally copy any common metadata automa
       # Set our product information.
       # It's a GA product of "numerus-unus" ("the number one").
       p.producer = "ga.gov.au"
-      p.product_family = "blues"
+      p.product_family = "numerus-unus"
       p.dataset_version = "3.0.0"
 
       ...
@@ -116,10 +116,11 @@ of the current image::
       ...
 
 Note that the assembler will throw an error if the path lives outside
-the dataset (location), as they will be absolute rather than relative paths.
+the dataset (location), as this will require absolute paths.
 Relative paths are considered best-practice for Open Data Cube.
 
-You can allow absolute paths with a field on assembler construction :meth:`eodatasets3.DatasetAssembler.__init__`::
+You can allow absolute paths with a field on assembler construction
+:meth:`eodatasets3.DatasetAssembler.__init__`::
 
    with DatasetAssembler(
       dataset_location=usgs_level1,
