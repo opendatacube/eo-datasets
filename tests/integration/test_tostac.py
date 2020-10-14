@@ -11,10 +11,10 @@ from eodatasets3.scripts import tostac
 from tests.integration.common import run_prepare_cli
 
 TO_STAC_DATA: Path = Path(__file__).parent.joinpath("data/tostac")
-ODC_METADATA_FILE: str = "ga_ls8c_ard_3-1-0_088080_2020-05-25_final.odc-metadata.yaml"
+ODC_METADATA_FILE: str = "ga_ls8c_ard_3-2-0_088080_2020-05-25_final.odc-metadata.yaml"
 STAC_TEMPLATE_FILE: str = "ga_ls_ard_3_stac_item.json"
 STAC_EXPECTED_FILE: str = (
-    "ga_ls8c_ard_3-1-0_088080_2020-05-25_final.stac-item_expected.json"
+    "ga_ls8c_ard_3-2-0_088080_2020-05-25_final.stac-item_expected.json"
 )
 
 deep_diff = partial(DeepDiff, significant_digits=6)
