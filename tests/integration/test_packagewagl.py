@@ -62,42 +62,42 @@ def test_whole_wagl_package(
     assert_file_structure(
         expected_folder,
         {
-            "ga_ls8c_ard_3-1-0_092084_2016-06-28_final.odc-metadata.yaml": "",
-            "ga_ls8c_ard_3-1-0_092084_2016-06-28_final.proc-info.yaml": "",
-            "ga_ls8c_ard_3-1-0_092084_2016-06-28_final.sha1": "",
-            "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band01.tif": "",
-            "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band02.tif": "",
-            "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band03.tif": "",
-            "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band04.tif": "",
-            "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band05.tif": "",
-            "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band06.tif": "",
-            "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band07.tif": "",
-            "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band08.tif": "",
-            "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_thumbnail.jpg": "",
-            "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band01.tif": "",
-            "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band02.tif": "",
-            "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band03.tif": "",
-            "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band04.tif": "",
-            "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band05.tif": "",
-            "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band06.tif": "",
-            "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band07.tif": "",
-            "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band08.tif": "",
-            "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_thumbnail.jpg": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_azimuthal-exiting.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_azimuthal-incident.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_combined-terrain-shadow.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_exiting-angle.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_fmask.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_incident-angle.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_nbar-contiguity.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_nbart-contiguity.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_relative-azimuth.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_relative-slope.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_satellite-azimuth.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_satellite-view.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_solar-azimuth.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_solar-zenith.tif": "",
-            "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_time-delta.tif": "",
+            "ga_ls8c_ard_3-2-0_092084_2016-06-28_final.odc-metadata.yaml": "",
+            "ga_ls8c_ard_3-2-0_092084_2016-06-28_final.proc-info.yaml": "",
+            "ga_ls8c_ard_3-2-0_092084_2016-06-28_final.sha1": "",
+            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band01.tif": "",
+            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band02.tif": "",
+            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band03.tif": "",
+            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band04.tif": "",
+            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band05.tif": "",
+            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band06.tif": "",
+            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band07.tif": "",
+            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band08.tif": "",
+            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_thumbnail.jpg": "",
+            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band01.tif": "",
+            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band02.tif": "",
+            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band03.tif": "",
+            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band04.tif": "",
+            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band05.tif": "",
+            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band06.tif": "",
+            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band07.tif": "",
+            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band08.tif": "",
+            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_thumbnail.jpg": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_azimuthal-exiting.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_azimuthal-incident.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_combined-terrain-shadow.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_exiting-angle.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_fmask.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_incident-angle.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_nbar-contiguity.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_nbart-contiguity.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_relative-azimuth.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_relative-slope.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_satellite-azimuth.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_satellite-view.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_solar-azimuth.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_solar-zenith.tif": "",
+            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_time-delta.tif": "",
         },
     )
     [output_metadata] = expected_folder.rglob("*.odc-metadata.yaml")
@@ -130,7 +130,7 @@ def test_whole_wagl_package(
             "$schema": "https://schemas.opendatacube.org/dataset",
             # A stable ID is taken from the WAGL doc.
             "id": "787eb74c-e7df-43d6-b562-b796137330ae",
-            "label": "ga_ls8c_ard_3-1-0_092084_2016-06-28_final",
+            "label": "ga_ls8c_ard_3-2-0_092084_2016-06-28_final",
             "product": {
                 "href": "https://collections.dea.ga.gov.au/product/ga_ls8c_ard_3",
                 "name": "ga_ls8c_ard_3",
@@ -240,7 +240,7 @@ def test_whole_wagl_package(
                 "landsat:landsat_scene_id": "LC80920842016180LGN01",
                 "landsat:wrs_path": 92,
                 "landsat:wrs_row": 84,
-                "odc:dataset_version": "3.1.0",
+                "odc:dataset_version": "3.2.0",
                 "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": datetime(2019, 7, 11, 23, 29, 29, 21245),
                 "odc:producer": "ga.gov.au",
@@ -249,113 +249,113 @@ def test_whole_wagl_package(
             },
             "measurements": {
                 "nbar_blue": {
-                    "path": "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band02.tif"
+                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band02.tif"
                 },
                 "nbar_coastal_aerosol": {
-                    "path": "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band01.tif"
+                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band01.tif"
                 },
                 "nbar_green": {
-                    "path": "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band03.tif"
+                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band03.tif"
                 },
                 "nbar_nir": {
-                    "path": "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band05.tif"
+                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band05.tif"
                 },
                 "nbar_panchromatic": {
                     "grid": "panchromatic",
-                    "path": "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band08.tif",
+                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band08.tif",
                 },
                 "nbar_red": {
-                    "path": "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band04.tif"
+                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band04.tif"
                 },
                 "nbar_swir_1": {
-                    "path": "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band06.tif"
+                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band06.tif"
                 },
                 "nbar_swir_2": {
-                    "path": "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_band07.tif"
+                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band07.tif"
                 },
                 "nbart_blue": {
-                    "path": "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band02.tif"
+                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band02.tif"
                 },
                 "nbart_coastal_aerosol": {
-                    "path": "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band01.tif"
+                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band01.tif"
                 },
                 "nbart_green": {
-                    "path": "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band03.tif"
+                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band03.tif"
                 },
                 "nbart_nir": {
-                    "path": "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band05.tif"
+                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band05.tif"
                 },
                 "nbart_panchromatic": {
                     "grid": "panchromatic",
-                    "path": "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band08.tif",
+                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band08.tif",
                 },
                 "nbart_red": {
-                    "path": "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band04.tif"
+                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band04.tif"
                 },
                 "nbart_swir_1": {
-                    "path": "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band06.tif"
+                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band06.tif"
                 },
                 "nbart_swir_2": {
-                    "path": "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_band07.tif"
+                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band07.tif"
                 },
                 "oa_azimuthal_exiting": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_azimuthal-exiting.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_azimuthal-exiting.tif"
                 },
                 "oa_azimuthal_incident": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_azimuthal-incident.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_azimuthal-incident.tif"
                 },
                 "oa_combined_terrain_shadow": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_combined-terrain-shadow.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_combined-terrain-shadow.tif"
                 },
                 "oa_exiting_angle": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_exiting-angle.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_exiting-angle.tif"
                 },
                 "oa_fmask": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_fmask.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_fmask.tif"
                 },
                 "oa_incident_angle": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_incident-angle.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_incident-angle.tif"
                 },
                 "oa_nbar_contiguity": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_nbar-contiguity.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_nbar-contiguity.tif"
                 },
                 "oa_nbart_contiguity": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_nbart-contiguity.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_nbart-contiguity.tif"
                 },
                 "oa_relative_azimuth": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_relative-azimuth.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_relative-azimuth.tif"
                 },
                 "oa_relative_slope": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_relative-slope.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_relative-slope.tif"
                 },
                 "oa_satellite_azimuth": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_satellite-azimuth.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_satellite-azimuth.tif"
                 },
                 "oa_satellite_view": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_satellite-view.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_satellite-view.tif"
                 },
                 "oa_solar_azimuth": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_solar-azimuth.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_solar-azimuth.tif"
                 },
                 "oa_solar_zenith": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_solar-zenith.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_solar-zenith.tif"
                 },
                 "oa_time_delta": {
-                    "path": "ga_ls8c_oa_3-1-0_092084_2016-06-28_final_time-delta.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_time-delta.tif"
                 },
             },
             "accessories": {
                 "checksum:sha1": {
-                    "path": "ga_ls8c_ard_3-1-0_092084_2016-06-28_final.sha1"
+                    "path": "ga_ls8c_ard_3-2-0_092084_2016-06-28_final.sha1"
                 },
                 "metadata:processor": {
-                    "path": "ga_ls8c_ard_3-1-0_092084_2016-06-28_final.proc-info.yaml"
+                    "path": "ga_ls8c_ard_3-2-0_092084_2016-06-28_final.proc-info.yaml"
                 },
                 "thumbnail:nbar": {
-                    "path": "ga_ls8c_nbar_3-1-0_092084_2016-06-28_final_thumbnail.jpg"
+                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_thumbnail.jpg"
                 },
                 "thumbnail:nbart": {
-                    "path": "ga_ls8c_nbart_3-1-0_092084_2016-06-28_final_thumbnail.jpg"
+                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_thumbnail.jpg"
                 },
             },
             "lineage": {"level1": ["fb1c622e-90aa-50e8-9d5e-ad69db82d0f6"]},
