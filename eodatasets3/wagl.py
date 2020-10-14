@@ -556,9 +556,7 @@ def package(
                 p.producer, p.properties["landsat:collection_number"]
             )
 
-            # TODO: wagl's algorithm version should determine our dataset version number, right?
-            # The '1' is after gadi software changes.
-            p.dataset_version = f"{org_collection_number}.1.0"
+            p.dataset_version = f"{org_collection_number}.2.0"
             p.region_code = _extract_reference_code(p, granule.name)
 
             _read_gqa_doc(p, granule.gqa_doc)
