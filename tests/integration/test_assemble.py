@@ -401,6 +401,33 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
             )
 
 
+def test_dea_interim_folder_calculation(tmp_path: Path):
+    """
+    DEA Naming conventions should include maturity in the folder name
+    when it's not a 'final' dataset.
+    """
+    with DatasetAssembler(tmp_path, naming_conventions="dea") as p:
+        p.platform = "landsat-7"
+        p.instrument = "ETM+"
+        p.datetime = datetime(1998, 7, 30)
+        p.product_family = "frogs"
+        p.processed = "1999-11-20 00:00:53.152462Z"
+        p.maturity = "interim"
+        p.producer = "ga.gov.au"
+        p.properties["landsat:landsat_scene_id"] = "LE70930821999324EDC00"
+        p.dataset_version = "1.2.3"
+        p.region_code = "093082"
+
+        p.done()
+
+    [metadata_path] = tmp_path.rglob("*.odc-metadata.yaml")
+    calculated_path: Path = metadata_path.relative_to(tmp_path)
+    assert calculated_path == Path(
+        #                                  ⇩⇩⇩⇩⇩⇩⇩⇩ Adds interim flag
+        "ga_ls7e_frogs_1/093/082/1998/07/30_interim/ga_ls7e_frogs_1-2-3_093082_1998-07-30_interim.odc-metadata.yaml"
+    )
+
+
 def test_dea_c3_naming_conventions(tmp_path: Path):
     """
     A sample scene for Alchemist C3 processing that tests the naming conventions.
