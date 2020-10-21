@@ -560,7 +560,7 @@ class FileWrite:
             """
             with rasterio.open(unstructured_image, "w", **rio_args) as outds:
                 if bands == 1:
-                    if isinstance(array, h5py.Dataset):
+                    if h5py is not None and isinstance(array, h5py.Dataset):
                         for tile in tiles:
                             idx = (
                                 slice(tile[0][0], tile[0][1]),
@@ -570,7 +570,7 @@ class FileWrite:
                     else:
                         outds.write(array, 1)
                 else:
-                    if isinstance(array, h5py.Dataset):
+                    if h5py is not None and isinstance(array, h5py.Dataset):
                         for tile in tiles:
                             idx = (
                                 slice(tile[0][0], tile[0][1]),
