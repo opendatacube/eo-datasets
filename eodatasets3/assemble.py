@@ -180,6 +180,7 @@ class DatasetAssembler(EoFields):
         self._is_completed = False
         self._finished_init_ = True
 
+
     def _is_writing_files(self):
         """
         Have they written any files? Otherwise we're just writing a metadata doc
@@ -210,6 +211,12 @@ class DatasetAssembler(EoFields):
     @property
     def properties(self) -> StacPropertyView:
         return self._props
+
+    @property
+    def measurements(self) -> Dict[str: Tuple[GridSpec, Path]]:
+        return dict(
+            (name, (grid, path)) for grid, name, path in self._measurements.iter_paths()
+        )
 
     @property
     def label(self) -> Optional[str]:
@@ -782,6 +789,14 @@ class DatasetAssembler(EoFields):
     def _crs_str(self, crs: CRS) -> str:
         return f"epsg:{crs.to_epsg()}" if crs.is_epsg_code else crs.to_wkt()
 
+    def _document_thumbnail(self, thumb_path, kind=None):
+        self._checksum.add_file(thumb_path)
+
+        accessory_name = "thumbnail"
+        if kind:
+            accessory_name += f":{kind}"
+        self.add_accessory_file(accessory_name, thumb_path)
+
     def write_thumbnail(
         self,
         red: str,
@@ -815,21 +830,18 @@ class DatasetAssembler(EoFields):
         :param static_stretch: Use a static upper/lower value to stretch by instead of dynamic stretch.
         """
         thumb_path = self.names.thumbnail_name(self._work_path, kind=kind)
-        measurements = dict(
-            (name, (grid, path)) for grid, name, path in self._measurements.iter_paths()
-        )
 
-        missing_measurements = {red, green, blue} - set(measurements)
+        missing_measurements = {red, green, blue} - set(self.measurements)
         if missing_measurements:
             raise IncompleteDatasetError(
                 ValidationMessage(
                     Level.error,
                     "missing_thumb_measurements",
                     f"Thumbnail measurements are missing: no measurements called {missing_measurements!r}. ",
-                    hint=f"Available measurements: {', '.join(measurements)}",
+                    hint=f"Available measurements: {', '.join(self.measurements)}",
                 )
             )
-        rgbs = [measurements[b] for b in (red, green, blue)]
+        rgbs = [self.measurements[b] for b in (red, green, blue)]
         unique_grids: List[GridSpec] = list(set(grid for grid, path in rgbs))
         if len(unique_grids) != 1:
             raise NotImplementedError(
@@ -846,12 +858,54 @@ class DatasetAssembler(EoFields):
             percentile_stretch=percentile_stretch,
             input_geobox=grid,
         )
-        self._checksum.add_file(thumb_path)
 
-        accessory_name = "thumbnail"
-        if kind:
-            accessory_name += f":{kind}"
-        self.add_accessory_file(accessory_name, thumb_path)
+        self._document_thumbnail(thumb_path, kind)
+
+
+    def write_thumbnail_singleband(
+        self,
+        measurement: str,
+        thumb_path,
+        bit: int = None,
+        lookup_table: Dict[str, Tuple[int, int, int]] = None,
+        kind: str = None
+        ):
+        """
+        Write a singleband thumbnail out, taking in an input measurement and
+        outputting a JPG with appropriate settings.
+
+        Options are to
+        EITHER
+        Use a bit (int) as the value to scale from black to white to
+        i.e., 0 will be BLACK and bit will be WHITE, with a linear scale between.
+        OR
+        Provide a lookuptable (dict) of int (key) [R, G, B] (value) fields
+        to make the image with.
+        """
+
+        thumb_path = self.names.thumbnail_name(self._work_path, kind=kind)
+
+        _, image_path = self.measurements.get(measurement, None)
+
+        if image is None:
+            raise IncompleteDatasetError(
+                ValidationMessage(
+                    Level.error,
+                    "missing_thumb_measurement",
+                    f"Thumbnail measurement is missing: no measurements called {measurement!r}. ",
+                    hint=f"Available measurements: {', '.join(self.measurements)}",
+                )
+            )
+
+        FileWrite().create_thumbnail_singleband(
+            image_path,
+            thumb_path,
+            bit,
+            lookup_table,
+        )
+
+        self._document_thumbnail(thumb_path, kind)
+
 
     def add_accessory_file(self, name: str, path: Path):
         """
