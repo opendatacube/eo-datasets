@@ -696,6 +696,10 @@ class FileWrite:
             raise ValueError(
                 "Please set either bit or lookup_table, and not both of them"
             )
+        if bit is None and lookup_table is None:
+            raise ValueError(
+                "Please set either bit or lookup_table, you haven't set either of them"
+            )
 
         with rasterio.open(in_file) as dataset:
             data = dataset.read()
