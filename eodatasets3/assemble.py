@@ -163,6 +163,7 @@ class DatasetAssembler(EoFields):
         self._user_metadata = dict()
         self._software_versions: List[Dict] = []
         self._lineage: Dict[str, List[uuid.UUID]] = defaultdict(list)
+        self._inherited_geometry = None
 
         if naming_conventions == "default":
             self.names = ComplicatedNamingConventions(self)
@@ -323,6 +324,7 @@ class DatasetAssembler(EoFields):
         dataset: DatasetDoc,
         classifier: Optional[str] = None,
         auto_inherit_properties: bool = False,
+        inherit_geometry: bool = False,
     ):
         """
         Record a source dataset using its metadata document.
@@ -341,6 +343,9 @@ class DatasetAssembler(EoFields):
                            are used for different purposes. Such as having a second level1 dataset
                            that was used for QA (but is not this same scene).
 
+        :param inherit_geometry: Instead of re-calculating the valid bounds geometry based on the
+                            data, which can be very computationally expensive e.g. Landsat 7
+                            striped data, use the valid data geometry from this source dataset.
 
         See :func:`add_source_path` if you have a filepath reference instead of a document.
 
@@ -359,6 +364,8 @@ class DatasetAssembler(EoFields):
         self._lineage[classifier].append(dataset.id)
         if auto_inherit_properties:
             self._inherit_properties_from(dataset)
+        if inherit_geometry:
+            self._inherited_geometry = dataset.geometry
 
     def _inherit_properties_from(self, source_dataset: DatasetDoc):
         for name in self.INHERITABLE_PROPERTIES:
@@ -675,7 +682,10 @@ class DatasetAssembler(EoFields):
         if measurement_docs and sort_measurements:
             measurement_docs = dict(sorted(measurement_docs.items()))
 
-        valid_data = self._measurements.consume_and_get_valid_data()
+        if self._inherited_geometry:
+            valid_data = self._inherited_geometry
+        else:
+            valid_data = self._measurements.consume_and_get_valid_data()
         # Avoid the messiness of different empty collection types.
         # (to have a non-null geometry we'd also need non-null grids and crses)
         if valid_data.is_empty:
