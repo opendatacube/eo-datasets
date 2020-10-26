@@ -213,7 +213,7 @@ class DatasetAssembler(EoFields):
         return self._props
 
     @property
-    def measurements(self) -> Dict[str : Tuple[GridSpec, Path]]:
+    def measurements(self) -> Dict[str, Tuple[GridSpec, Path]]:
         return dict(
             (name, (grid, path)) for grid, name, path in self._measurements.iter_paths()
         )
