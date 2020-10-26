@@ -895,7 +895,7 @@ class DatasetAssembler(EoFields):
 
         _, image_path = self.measurements.get(measurement, None)
 
-        if image is None:
+        if image_path is None:
             raise IncompleteDatasetError(
                 ValidationMessage(
                     Level.error,
