@@ -931,7 +931,7 @@ def reproject_array_to_array(
         value of no data pixels in src_image
     dst_nodata: float or None
         value of no data pixels in destination image
-    
+
     Returns
     -------
     dst_image: numpy.ndarray
