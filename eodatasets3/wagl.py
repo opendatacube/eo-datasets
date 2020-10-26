@@ -14,7 +14,6 @@ from datetime import timedelta, datetime
 from pathlib import Path
 from typing import List, Sequence, Optional, Iterable, Any, Tuple, Dict, Mapping
 from uuid import UUID
-from pprint import pprint  # RG ADD
 
 import attr
 import numpy
@@ -24,7 +23,6 @@ from boltons.iterutils import get_path, PathAccessError
 from click import secho
 from rasterio import DatasetReader
 from rasterio.crs import CRS
-from rasterio.warp import reproject
 from rasterio.enums import Resampling
 
 from eodatasets3 import serialise, utils, images, DatasetAssembler
