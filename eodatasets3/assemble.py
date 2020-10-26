@@ -180,7 +180,6 @@ class DatasetAssembler(EoFields):
         self._is_completed = False
         self._finished_init_ = True
 
-
     def _is_writing_files(self):
         """
         Have they written any files? Otherwise we're just writing a metadata doc
@@ -213,7 +212,7 @@ class DatasetAssembler(EoFields):
         return self._props
 
     @property
-    def measurements(self) -> Dict[str: Tuple[GridSpec, Path]]:
+    def measurements(self) -> Dict[str : Tuple[GridSpec, Path]]:
         return dict(
             (name, (grid, path)) for grid, name, path in self._measurements.iter_paths()
         )
@@ -861,15 +860,14 @@ class DatasetAssembler(EoFields):
 
         self._document_thumbnail(thumb_path, kind)
 
-
     def write_thumbnail_singleband(
         self,
         measurement: str,
         thumb_path,
         bit: int = None,
         lookup_table: Dict[str, Tuple[int, int, int]] = None,
-        kind: str = None
-        ):
+        kind: str = None,
+    ):
         """
         Write a singleband thumbnail out, taking in an input measurement and
         outputting a JPG with appropriate settings.
@@ -905,7 +903,6 @@ class DatasetAssembler(EoFields):
         )
 
         self._document_thumbnail(thumb_path, kind)
-
 
     def add_accessory_file(self, name: str, path: Path):
         """
