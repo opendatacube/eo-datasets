@@ -9,6 +9,7 @@ import contextlib
 import os
 import re
 import sys
+import warnings
 from datetime import timedelta, datetime
 from pathlib import Path
 from typing import List, Sequence, Optional, Iterable, Any, Tuple, Dict, Mapping
@@ -25,7 +26,7 @@ from rasterio.crs import CRS
 from rasterio.enums import Resampling
 
 from eodatasets3 import serialise, utils, images, DatasetAssembler
-from eodatasets3.images import GridSpec
+from eodatasets3.images import GridSpec, reproject_array_to_array
 from eodatasets3.model import DatasetDoc
 from eodatasets3.serialise import loads_yaml
 from eodatasets3.ui import bool_style
@@ -41,7 +42,8 @@ except ImportError:
     raise
 
 POSSIBLE_PRODUCTS = ("nbar", "nbart", "lambertian", "lmbadj", "lmbskyg", "fs", "sbt")
-DEFAULT_PRODUCTS = ("nbar", "nbart")
+# DEFAULT_PRODUCTS = ("nbar", "nbart")
+DEFAULT_PRODUCTS = ["lmbskyg"]  # doesn't work if ("lmbskyg")
 MARINE_PRODUCTS = ("nbar", "nbart", "lambertian", "lmbadj", "lmbskyg", "fs")
 
 _THUMBNAILS = {
@@ -79,43 +81,56 @@ def _find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> List[str]:
 
 
 def _unpack_products(
-    p: DatasetAssembler, product_list: Iterable[str], h5group: h5py.Group
+    p: DatasetAssembler,
+    product_list: Iterable[str],
+    mndwi_h5: Path,
+    h5group: h5py.Group,
 ) -> None:
     """
-    Unpack and package the NBAR and NBART products.
+    Unpack and package the LMBSKYG product.
     """
+
     # listing of all datasets of IMAGE CLASS type
     img_paths = _find_h5_paths(h5group, "IMAGE")
 
-    for product in product_list:
-        with do(f"Starting {product}", heading=True):
-            for pathname in [
-                p for p in img_paths if "/{}/".format(product.upper()) in p
-            ]:
-                with do(f"Path {pathname!r}"):
-                    dataset = h5group[pathname]
-                    band_name = utils.normalise_band_name(dataset.attrs["alias"])
-                    write_measurement_h5(
-                        p,
-                        f"{product}:{band_name}",
-                        dataset,
-                        overview_resampling=Resampling.average,
-                        expand_valid_data=False if dataset.dtype == "f" else True,
-                        file_id=_file_id(dataset),
-                    )
+    with h5py.File(mndwi_h5, "r") as mfid:
+        mndwi_grp = mfid["/mndwi/mndwi_image_LMBADJ"]
 
-            if (p.platform, product) in _THUMBNAILS:
-                red, green, blue = _THUMBNAILS[(p.platform, product)]
-                with do(f"Thumbnailing {product}"):
-                    p.write_thumbnail(
-                        red, green, blue, kind=product, static_stretch=(1, 3000)
-                    )
+        for product in product_list:
+            with do(f"Starting {product}", heading=True):
+                for pathname in [
+                    p for p in img_paths if "/{}/".format(product.upper()) in p
+                ]:
+                    with do(f"Path {pathname!r}"):
+                        dataset = h5group[pathname]
+                        band_name = utils.normalise_band_name(dataset.attrs["alias"])
+
+                        # expand_valid_data set to False to avoid the
+                        # computation of complex geometry caused by
+                        # mndwi masking.
+                        write_measurement_h5(
+                            p,
+                            f"{product}:{band_name}",
+                            dataset,
+                            mndwi_grp,
+                            overview_resampling=Resampling.average,
+                            expand_valid_data=False,
+                            file_id=_file_id(dataset),
+                        )
+
+                if (p.platform, product) in _THUMBNAILS:
+                    red, green, blue = _THUMBNAILS[(p.platform, product)]
+                    with do(f"Thumbnailing {product}"):
+                        p.write_thumbnail(
+                            red, green, blue, kind=product, static_stretch=(1, 3000)
+                        )
 
 
 def write_measurement_h5(
     p: DatasetAssembler,
     name: str,
     g: h5py.Dataset,
+    mndwi_g: h5py.Dataset = None,
     overviews=images.DEFAULT_OVERVIEWS,
     overview_resampling=Resampling.nearest,
     expand_valid_data=True,
@@ -129,15 +144,36 @@ def write_measurement_h5(
     else:
         data = g
 
+    dst_crs = CRS.from_wkt(g.attrs["crs_wkt"])
+    dst_trans = Affine.from_gdal(*g.attrs["geotransform"])
+    dst_nodata = g.attrs.get("no_data_value")
+    dst_mndwi = None
+
+    if mndwi_g:
+        dst_mndwi = reproject_array_to_array(
+            src_image=mndwi_g[:],
+            src_transform=Affine.from_gdal(*mndwi_g.attrs["geotransform"]),
+            src_crs=CRS.from_wkt(mndwi_g.attrs["crs_wkt"]),
+            dst_transform=dst_trans,
+            dst_crs=dst_crs,
+            dst_shape=g.shape,
+            resampling=Resampling.bilinear,
+            src_nodata=mndwi_g.attrs.get("no_data_value"),
+            dst_nodata=dst_nodata,
+        )
+
+        # mask with mndwi here
+        data[(dst_mndwi < 0) & (dst_mndwi != dst_nodata)] = dst_nodata
+
     p.write_measurement_numpy(
         name=name,
         array=data,
         grid_spec=images.GridSpec(
             shape=g.shape,
-            transform=Affine.from_gdal(*g.attrs["geotransform"]),
-            crs=CRS.from_wkt(g.attrs["crs_wkt"]),
+            transform=dst_trans,
+            crs=dst_crs,
         ),
-        nodata=(g.attrs.get("no_data_value")),
+        nodata=(dst_nodata),
         overviews=overviews,
         overview_resampling=overview_resampling,
         expand_valid_data=expand_valid_data,
@@ -173,7 +209,8 @@ def _unpack_observation_attributes(
     """
     resolution_groups = sorted(g for g in h5group.keys() if g.startswith("RES-GROUP-"))
     # Use the highest resolution as the ground sample distance.
-    del p.properties["eo:gsd"]
+    if "eo:gsd" in list(p.properties.keys()):
+        del p.properties["eo:gsd"]
     p.properties["eo:gsd"] = min(
         min(h5group[grp].attrs["resolution"]) for grp in resolution_groups
     )
@@ -230,14 +267,19 @@ def _unpack_observation_attributes(
             o = f"{section}/{dataset_name}"
             with do(f"Path {o!r} "):
                 measurement_name = utils.normalise_band_name(dataset_name)
+                # We only use the product bands for valid data calc,
+                # not supplementary. According to Josh: Supplementary
+                # pixels outside of the product bounds are implicitly
+                # invalid
                 write_measurement_h5(
-                    p,
-                    f"oa:{measurement_name}",
-                    res_grp[o],
-                    # We only use the product bands for valid data calc, not supplementary.
-                    # According to Josh: Supplementary pixels outside of the product bounds are implicitly invalid.
+                    p=p,
+                    name=f"oa:{measurement_name}",
+                    g=res_grp[o],
+                    mndwi_g=None,
+                    overview_resampling=Resampling.nearest,
                     expand_valid_data=False,
                     overviews=None,
+                    file_id=None,
                 )
 
     timedelta_data = (
@@ -377,6 +419,7 @@ class Granule:
 
     fmask_doc: Optional[Dict] = None
     fmask_image: Optional[Path] = None
+    mndwi_h5: Optional[Path] = None
     gqa_doc: Optional[Dict] = None
     tesp_doc: Optional[Dict] = None
 
@@ -390,6 +433,7 @@ class Granule:
         fmask_doc_path: Optional[Path] = None,
         gqa_doc_path: Optional[Path] = None,
         tesp_doc_path: Optional[Path] = None,
+        mndwi_image_path: Optional[Path] = None,
     ):
         """
         Create granules by scanning the given hdf5 file.
@@ -398,6 +442,7 @@ class Granule:
 
         If they are not specified it look for them using WAGL's output naming conventions.
         """
+
         if not wagl_hdf5.exists():
             raise ValueError(f"Input hdf5 doesn't exist {wagl_hdf5}")
 
@@ -430,25 +475,29 @@ class Granule:
                 if not level1_metadata_path.exists():
                     # TODO remove this error message after implementing method
                     #  to write level1 metadata in wagl_h5 parent path
-                    raise ValueError(
-                        f"No level1 metadata found at {level1_metadata_path}"
-                    )
-                    # level1_metadata_path = wagl_hdf5.parent.joinpath(level1_tar_path.name + ".yaml")
+                    warnings.warn(f"No level1 metadata found at {level1_metadata_path}")
 
-                level1 = serialise.from_path(level1_metadata_path)
+                    # The current work around is set level1 to None
+                    level1 = None
 
+                else:
+                    level1 = serialise.from_path(level1_metadata_path)
+
+                # FMASK IMAGE - get filename & check if it exists
                 fmask_image_path = fmask_image_path or wagl_hdf5.with_name(
                     f"{granule_name}.fmask.img"
                 )
                 if not fmask_image_path.exists():
                     raise ValueError(f"No fmask image found at {fmask_image_path}")
 
+                # FMASK YAML - get filename & check it it exists
                 fmask_doc_path = fmask_doc_path or fmask_image_path.with_suffix(".yaml")
                 if not fmask_doc_path.exists():
                     raise ValueError(f"No fmask found at {fmask_doc_path}")
                 with fmask_doc_path.open("r") as fl:
                     [fmask_doc] = loads_yaml(fl)
 
+                # GQA YAML - get filename & check if it exists
                 gqa_doc_path = gqa_doc_path or wagl_hdf5.with_name(
                     f"{granule_name}.gqa.yaml"
                 )
@@ -456,6 +505,14 @@ class Granule:
                     raise ValueError(f"No gqa found at {gqa_doc_path}")
                 with gqa_doc_path.open("r") as fl:
                     [gqa_doc] = loads_yaml(fl)
+
+                # MDNWI H5 - get filename & check if it exists
+                # an mndwi.h5 file is created per granule in wagl.h5
+                mndwi_image_path = mndwi_image_path or wagl_hdf5.with_name(
+                    f"{granule_name}.mndwi.h5"
+                )
+                if not mndwi_image_path.exists():
+                    raise ValueError(f"No mndwi.h5 file found at {mndwi_image_path}")
 
                 # Optional doc
                 if tesp_doc_path:
@@ -477,6 +534,7 @@ class Granule:
                     source_level1_metadata=level1,
                     fmask_doc=fmask_doc,
                     fmask_image=fmask_image_path,
+                    mndwi_h5=mndwi_image_path,
                     gqa_doc=gqa_doc,
                     tesp_doc=tesp_doc,
                 )
@@ -544,27 +602,48 @@ def package(
             naming_conventions="dea",
         ) as p:
             level1 = granule.source_level1_metadata
-            p.add_source_dataset(level1, auto_inherit_properties=True)
+
+            if level1:
+                p.add_source_dataset(level1, auto_inherit_properties=True)
+            else:
+                # load metadata from yaml file
+                [md] = loads_yaml(fid[granule.name + "/METADATA/CURRENT"][()])
+                p.properties["datetime"] = md["source_datasets"]["acquisition_datetime"]
+                p.properties["eo:instrument"] = md["source_datasets"]["sensor_id"]
+                p.properties["eo:platform"] = md["source_datasets"][
+                    "platform_id"
+                ].lower()
 
             # It's a GA ARD product.
             p.producer = "ga.gov.au"
-            p.product_family = "ard"
+            p.product_family = "aard"
 
             _read_wagl_metadata(p, granule_group)
 
-            org_collection_number = utils.get_collection_number(
-                p.producer, p.properties["landsat:collection_number"]
-            )
+            # Revise this later, for the moment, Sentinel-2 and
+            # Landsat-8 will be designated as collection 3 and 2
+            # respectively
+
+            # org_collection_number = utils.get_collection_number(
+            #    p.producer, p.properties["landsat:collection_number"]
+            # )
+            if p.properties["eo:platform"].startswith("landsat-8"):
+                org_collection_number = 3
+
+            if p.properties["eo:platform"].startswith("sentinel-2"):
+                org_collection_number = 2
 
             p.dataset_version = f"{org_collection_number}.2.0"
             p.region_code = _extract_reference_code(p, granule.name)
 
             _read_gqa_doc(p, granule.gqa_doc)
             _read_fmask_doc(p, granule.fmask_doc)
+
             if granule.tesp_doc:
                 _take_software_versions(p, granule.tesp_doc)
 
-            _unpack_products(p, included_products, granule_group)
+            # pass the mndwi_h5 file to the unpack and then package
+            _unpack_products(p, included_products, granule.mndwi_h5, granule_group)
 
             if include_oa:
                 with do("Starting OA", heading=True):
@@ -572,14 +651,15 @@ def package(
                         p,
                         included_products,
                         granule_group,
-                        infer_datetime_range=level1.platform.startswith("landsat"),
+                        infer_datetime_range=None,
                     )
+                    #    infer_datetime_range=level1.platform.startswith("landsat"),
                 if granule.fmask_image:
                     with do(f"Writing fmask from {granule.fmask_image} "):
                         p.write_measurement(
                             "oa:fmask",
                             granule.fmask_image,
-                            expand_valid_data=False,
+                            expand_valid_data=True,  # False,
                             overview_resampling=Resampling.mode,
                         )
 
@@ -615,7 +695,8 @@ def _read_fmask_doc(p: DatasetAssembler, doc: Dict):
     for name, value in doc["percent_class_distribution"].items():
         # From Josh: fmask cloud cover trumps the L1 cloud cover.
         if name == "cloud":
-            del p.properties["eo:cloud_cover"]
+            if "eo:cloud_cover" in list(p.properties.keys()):
+                del p.properties["eo:cloud_cover"]
             p.properties["eo:cloud_cover"] = value
 
         p.properties[f"fmask:{name}"] = value
