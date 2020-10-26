@@ -100,8 +100,12 @@ def normalise_band_name(band_name: str) -> str:
     'azimuthal_angles'
     """
     try:
-        number = int(band_name)
-        band_name = f"band{number:02}"
+        # account for Sentinel-2's band 8A
+        if band_name == "8A":
+            band_name = "band08a"
+        else:
+            number = int(band_name)
+            band_name = f"band{number:02}"
     except ValueError:
         pass
     return band_name.lower().replace("-", "_")
