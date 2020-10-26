@@ -1,6 +1,9 @@
 """
 API for easily writing an ODC Dataset
 """
+import json
+import numpy
+import rasterio
 import shutil
 import tempfile
 import uuid
@@ -9,31 +12,30 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path
-from textwrap import dedent
-from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable
-
-import eodatasets3
-import numpy
-import rasterio
-from eodatasets3 import serialise, validate, images, documents
-from eodatasets3.documents import find_and_read_documents
-from eodatasets3.images import FileWrite, GridSpec, MeasurementRecord
-from eodatasets3.model import (
-    DatasetDoc,
-    ProductDoc,
-    StacPropertyView,
-    ComplicatedNamingConventions,
-    AccessoryDoc,
-    Location,
-    ComplicatedNamingConventionsDerivatives,
-)
-from eodatasets3.properties import EoFields
-from eodatasets3.validate import Level, ValidationMessage
-from eodatasets3.verify import PackageChecksum
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
+from textwrap import dedent
+from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple
 from xarray import Dataset
+
+import eodatasets3
+from eodatasets3 import documents, images, serialise, validate
+from eodatasets3.documents import find_and_read_documents
+from eodatasets3.images import FileWrite, GridSpec, MeasurementRecord
+from eodatasets3.model import (
+    AccessoryDoc,
+    ComplicatedNamingConventions,
+    ComplicatedNamingConventionsDerivatives,
+    DatasetDoc,
+    Location,
+    ProductDoc,
+    StacPropertyView,
+)
+from eodatasets3.properties import EoFields
+from eodatasets3.scripts.tostac import dc_to_stac, json_fallback
+from eodatasets3.validate import Level, ValidationMessage
+from eodatasets3.verify import PackageChecksum
 
 
 class IfExists(Enum):
@@ -91,6 +93,8 @@ class DatasetAssembler(EoFields):
         if_exists: IfExists = IfExists.ThrowError,
         allow_absolute_paths: bool = False,
         naming_conventions: str = "default",
+        write_stac: bool = False,
+        explorer_uri: str = None,
     ) -> None:
         """
         Assemble a dataset with ODC metadata, writing metadata and (optionally) its imagery as COGs.
@@ -163,6 +167,9 @@ class DatasetAssembler(EoFields):
         self._user_metadata = dict()
         self._software_versions: List[Dict] = []
         self._lineage: Dict[str, List[uuid.UUID]] = defaultdict(list)
+
+        self._do_write_stac = write_stac
+        self._explorer_url = explorer_uri
 
         if naming_conventions == "default":
             self.names = ComplicatedNamingConventions(self)
@@ -716,11 +723,19 @@ class DatasetAssembler(EoFields):
         )
 
         doc = serialise.to_formatted_doc(dataset)
-        self._write_yaml(
-            doc,
-            self._metadata_path
-            or self.names.metadata_path(self._work_path, suffix="odc-metadata.yaml"),
+
+        metadata_path = self._metadata_path or self.names.metadata_path(
+            self._work_path, suffix="odc-metadata.yaml"
         )
+
+        self._write_yaml(doc, metadata_path)
+
+        if self._do_write_stac:
+            self._write_stac(
+                doc,
+                metadata_path,
+                self.names.metadata_path(self._work_path, suffix="stac-item.json"),
+            )
 
         if validate_correctness:
             for m in validate.validate_dataset(doc):
@@ -929,6 +944,23 @@ class DatasetAssembler(EoFields):
         )
         serialise.dump_yaml(path, doc)
         self._checksum.add_file(path)
+
+    def _write_stac(self, doc, metadata_path, stac_path, allow_external_paths=False):
+        out_dataset = serialise.from_path(metadata_path)
+        stac_path = Path(
+            str(metadata_path).replace("odc-metadata.yaml", "stac-item.json")
+        )
+        stac = dc_to_stac(
+            out_dataset,
+            metadata_path,
+            stac_path,
+            stac_path.root,
+            self._explorer_url,
+            False,
+        )
+        with stac_path.open("w") as f:
+            json.dump(stac, f, default=json_fallback)
+        self.add_accessory_file("metadata:stac", stac_path)
 
     def iter_measurement_paths(
         self,
