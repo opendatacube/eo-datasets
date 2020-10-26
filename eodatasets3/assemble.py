@@ -873,7 +873,6 @@ class DatasetAssembler(EoFields):
     def write_thumbnail_singleband(
         self,
         measurement: str,
-        thumb_path,
         bit: int = None,
         lookup_table: Dict[str, Tuple[int, int, int]] = None,
         kind: str = None,
@@ -893,7 +892,7 @@ class DatasetAssembler(EoFields):
 
         thumb_path = self.names.thumbnail_name(self._work_path, kind=kind)
 
-        _, image_path = self.measurements.get(measurement, None)
+        _, image_path = self.measurements.get(measurement, (None, None))
 
         if image_path is None:
             raise IncompleteDatasetError(
