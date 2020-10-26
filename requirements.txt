@@ -1,0 +1,14 @@
+numpy
+pyproj
+xarray
+datacube
+rasterio
+cattrs
+boltons
+jsonschema>=3
+ruamel.yaml
+ciso8601
+shapely
+structlog
+requests-cache
+click
