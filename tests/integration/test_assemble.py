@@ -466,3 +466,43 @@ def test_dea_c3_naming_conventions(tmp_path: Path):
         metadata_path_offset
         == "ga_ls_wo_3/1-6-0/090/081/1998/07/30/ga_ls_wo_3_090081_1998-07-30_interim.odc-metadata.yaml"
     )
+
+
+@pytest.mark.parametrize(
+    "inherit_geom",
+    [True, False],
+    ids=["inherit geom from dataset", "don't inherit geom"],
+)
+def test_add_source_dataset(tmp_path: Path, inherit_geom):
+    from eodatasets3 import serialise
+
+    p = DatasetAssembler(tmp_path, naming_conventions="dea_c3")
+    source_dataset = serialise.from_path(
+        Path(__file__).parent / "data/LC08_L1TP_089080_20160302_20170328_01_T1.yaml"
+    )
+    p.add_source_dataset(
+        source_dataset, auto_inherit_properties=True, inherit_geometry=inherit_geom
+    )
+
+    p.maturity = "interim"
+    p.collection_number = "3"
+    p.dataset_version = "1.6.0"
+    p.producer = "ga.gov.au"
+    p.processed = "1998-07-30T12:23:23"
+    p.product_family = "wofs"
+    p.write_measurement(
+        "water",
+        Path(__file__).parent
+        / "data/wofs/ga_ls_wofs_3_099081_2020-07-26_interim_water_clipped.tif",
+    )
+
+    id, path = p.done()
+
+    output = serialise.from_path(path)
+    if inherit_geom:
+        # POLYGON((609615 - 3077085, 378285 - 3077085, 378285 - 3310515, 609615 - 3310515, 609615 - 3077085))
+        assert output.geometry == source_dataset.geometry
+    else:
+        # POLYGON((684285 - 3439275, 684285 - 3444495, 689925 - 3444495, 689925 - 3439275, 684285 - 3439275))
+        # Geometry is not set from the source dataset, but instead from the added wofs measurement
+        assert output.geometry != source_dataset.geometry
