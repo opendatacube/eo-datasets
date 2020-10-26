@@ -272,21 +272,8 @@ class MeasurementRecord:
                     f"\t{grid.crs.to_string()!r}\n"
                 )
 
-            # The grid with the most measurements.
-            if i == 0:
-                grid_name = "default"
-            else:
-                grid_name = _find_a_common_name(list(measurements.keys()))
-                # If another grid already has this name: TODO: make both grid names more specific?
-                if grid_name in grid_docs:
-                    raise NotImplementedError(
-                        f"Clashing grid names. Needs a recalculation. "
-                        f"Name {grid_name!r}, but have {tuple(grid_docs.keys())!r}"
-                    )
-                # There was no common prefix. Just concat all band names.
-                # Perhaps we just fallback to enumeration in these weird cases. grid a, grid b etc....
-                if not grid_name:
-                    grid_name = "_".join(measurements.keys())
+            # create a simple name for the each resolution groups
+            grid_name = "RES_{0}m".format(int(grid.transform.a))
 
             grid_docs[grid_name] = GridDoc(grid.shape, grid.transform)
 
@@ -299,6 +286,7 @@ class MeasurementRecord:
                     layer=measurement_path.layer,
                     grid=grid_name if grid_name != "default" else None,
                 )
+
         return crs, grid_docs, measurement_docs
 
     def consume_and_get_valid_data(self) -> BaseGeometry:
@@ -730,9 +718,7 @@ class FileWrite:
                 with rasterio.open(temp_file, "w", **meta) as tmpdataset:
                     tmpdataset.write(out_data)
                 self.create_thumbnail(
-                    [temp_file, temp_file, temp_file],
-                    out_file,
-                    static_stretch=stretch,
+                    [temp_file, temp_file, temp_file], out_file, static_stretch=stretch,
                 )
             else:
                 # Use three different files
@@ -907,3 +893,62 @@ def rescale_intensity(
     image = image.astype(out_dtype)
     image[image_null_mask] = out_nodata
     return image
+
+
+def reproject_array_to_array(
+    src_image: numpy.ndarray,
+    src_transform: Affine,
+    src_crs: CRS,
+    dst_transform: Affine,
+    dst_crs: CRS,
+    dst_shape: Tuple[int, int],
+    resampling: Resampling.nearest,
+    src_nodata: Optional[float] = None,
+    dst_nodata: Optional[float] = None,
+) -> numpy.ndarray:
+    """
+    Reproject image to a destination Affine transform and CRS. This
+    function is useful for reprojecting the MNDWI to different
+    spatial resolutions, prior to masking.
+
+    Parameters
+    ----------
+    src_image: numpy.ndarray
+        a two-dimensional image [nRows x nCols] that will be resampled
+    src_transform: Affine
+        Affine transformation matrix of src_image
+    src_crs: CRS
+        projection of src_image
+    dst_transform: Affine
+        Affine transformation matrix of destination image
+    dst_crs: CRS
+        projection of dst image
+    dst_shape: tuple
+        shape tuple of destination image
+    resampling: Resampling
+        rasterio's resampling method
+    src_nodata: float or None
+        value of no data pixels in src_image
+    dst_nodata: float or None
+        value of no data pixels in destination image
+    
+    Returns
+    -------
+    dst_image: numpy.ndarray
+        a two-dimensional image
+    """
+    dst_image = numpy.zeros(dst_shape, order="C", dtype=src_image.dtype)
+    # reproject the mndwi array to data array
+    reproject(
+        src_image,
+        dst_image,
+        src_transform=src_transform,
+        src_crs=src_crs,
+        src_nodata=src_nodata,
+        dst_transform=dst_transform,
+        dst_crs=dst_crs,
+        dst_nodata=dst_nodata,
+        resampling=resampling,
+    )
+
+    return dst_image
