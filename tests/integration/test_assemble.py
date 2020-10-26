@@ -54,9 +54,11 @@ def test_dea_style_package(
         # Write a thumbnail using the given bands as r/g/b.
         p.write_thumbnail("ones", "ones", "blue")
         # Write a singleband thumbnail using a bit flag
-        p.write_thumbnail_singleband("blue", bit=1, kind='singleband')
+        p.write_thumbnail_singleband("blue", bit=1, kind="singleband")
         # Write a singleband thumbnail using a lookuptable
-        p.write_thumbnail_singleband("blue", lookup_table= {1: [0, 0, 255]}, kind='singleband_lut')
+        p.write_thumbnail_singleband(
+            "blue", lookup_table={1: [0, 0, 255]}, kind="singleband_lut"
+        )
 
         # Note any software versions important to this created data.
         p.note_software_version(
