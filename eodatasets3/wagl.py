@@ -168,11 +168,7 @@ def write_measurement_h5(
     p.write_measurement_numpy(
         name=name,
         array=data,
-        grid_spec=images.GridSpec(
-            shape=g.shape,
-            transform=dst_trans,
-            crs=dst_crs,
-        ),
+        grid_spec=images.GridSpec(shape=g.shape, transform=dst_trans, crs=dst_crs,),
         nodata=(dst_nodata),
         overviews=overviews,
         overview_resampling=overview_resampling,
@@ -648,10 +644,7 @@ def package(
             if include_oa:
                 with do("Starting OA", heading=True):
                     _unpack_observation_attributes(
-                        p,
-                        included_products,
-                        granule_group,
-                        infer_datetime_range=None,
+                        p, included_products, granule_group, infer_datetime_range=None,
                     )
                     #    infer_datetime_range=level1.platform.startswith("landsat"),
                 if granule.fmask_image:
