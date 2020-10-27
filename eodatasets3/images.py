@@ -718,9 +718,7 @@ class FileWrite:
                 with rasterio.open(temp_file, "w", **meta) as tmpdataset:
                     tmpdataset.write(out_data)
                 self.create_thumbnail(
-                    [temp_file, temp_file, temp_file],
-                    out_file,
-                    static_stretch=stretch,
+                    [temp_file, temp_file, temp_file], out_file, static_stretch=stretch,
                 )
             else:
                 # Use three different files
