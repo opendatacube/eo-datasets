@@ -151,10 +151,7 @@ def add_odc_links(explorer_base_url: str, dataset: DatasetDoc) -> List:
     nargs=-1,
 )
 def run(
-    odc_metadata_files: Iterable[Path],
-    stac_base_url,
-    explorer_base_url,
-    validate,
+    odc_metadata_files: Iterable[Path], stac_base_url, explorer_base_url, validate,
 ):
     for input_metadata in odc_metadata_files:
         dataset = serialise.from_path(input_metadata)
