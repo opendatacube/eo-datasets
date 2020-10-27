@@ -874,7 +874,7 @@ class DatasetAssembler(EoFields):
         self,
         measurement: str,
         bit: int = None,
-        lookup_table: Dict[str, Tuple[int, int, int]] = None,
+        lookup_table: Dict[int, Tuple[int, int, int]] = None,
         kind: str = None,
     ):
         """
