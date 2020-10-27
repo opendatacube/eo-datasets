@@ -60,7 +60,7 @@ def test_whole_wagl_package(
         raise AssertionError(
             f"Warnings were produced during wagl package:\n {messages}"
         )
-    #expected_folder = out / "ga_ls8c_ard_3/092/084/2016/06/28"
+    # expected_folder = out / "ga_ls8c_ard_3/092/084/2016/06/28"
     expected_folder = out / "ga_ls8c_aard_3/092/084/2016/06/28"
     assert_file_structure(
         expected_folder,
@@ -224,19 +224,19 @@ def test_whole_wagl_package(
             "measurements": {
                 "lambertian_blue": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band02.tif"
+                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band02.tif",
                 },
                 "lambertian_coastal_aerosol": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band01.tif"
+                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band01.tif",
                 },
                 "lambertian_green": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band03.tif"
+                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band03.tif",
                 },
                 "lambertian_nir": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band05.tif"
+                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band05.tif",
                 },
                 "lambertian_panchromatic": {
                     "grid": "RES_1490m",
@@ -244,71 +244,71 @@ def test_whole_wagl_package(
                 },
                 "lambertian_red": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band04.tif"
+                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band04.tif",
                 },
                 "lambertian_swir_1": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band06.tif"
+                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band06.tif",
                 },
                 "lambertian_swir_2": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band07.tif"
+                    "path": "ga_ls8c_lambertian_3-2-0_092084_2016-06-28_final_band07.tif",
                 },
                 "oa_azimuthal_exiting": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_azimuthal-exiting.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_azimuthal-exiting.tif",
                 },
                 "oa_azimuthal_incident": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_azimuthal-incident.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_azimuthal-incident.tif",
                 },
                 "oa_combined_terrain_shadow": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_combined-terrain-shadow.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_combined-terrain-shadow.tif",
                 },
                 "oa_exiting_angle": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_exiting-angle.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_exiting-angle.tif",
                 },
                 "oa_fmask": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_fmask.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_fmask.tif",
                 },
                 "oa_incident_angle": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_incident-angle.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_incident-angle.tif",
                 },
                 "oa_lambertian_contiguity": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_lambertian-contiguity.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_lambertian-contiguity.tif",
                 },
                 "oa_relative_azimuth": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_relative-azimuth.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_relative-azimuth.tif",
                 },
                 "oa_relative_slope": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_relative-slope.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_relative-slope.tif",
                 },
                 "oa_satellite_azimuth": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_satellite-azimuth.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_satellite-azimuth.tif",
                 },
                 "oa_satellite_view": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_satellite-view.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_satellite-view.tif",
                 },
                 "oa_solar_azimuth": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_solar-azimuth.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_solar-azimuth.tif",
                 },
                 "oa_solar_zenith": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_solar-zenith.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_solar-zenith.tif",
                 },
                 "oa_time_delta": {
                     "grid": "RES_2981m",
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_time-delta.tif"
+                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_time-delta.tif",
                 },
             },
             "accessories": {
@@ -420,8 +420,8 @@ def test_whole_wagl_package(
     # Check we didn't get height/width mixed up again :)
     # (The small size of our test data makes this slightly silly, though...)
     # At this current stage, the thumbnail hasn't been created.
-    #[thumb_path] = expected_folder.rglob("*_nbar_*.jpg")
-    #assert_image(thumb_path, bands=3, shape=(7, 8))
+    # [thumb_path] = expected_folder.rglob("*_nbar_*.jpg")
+    # assert_image(thumb_path, bands=3, shape=(7, 8))
 
 
 def test_maturity_calculation():
