@@ -52,7 +52,7 @@ def run(
     if products:
         products = set(p.lower() for p in products)
     else:
-        #products = wagl.DEFAULT_PRODUCTS
+        # products = wagl.DEFAULT_PRODUCTS
         products = "lambertian"
     with rasterio.Env():
         for granule in wagl.Granule.for_path(h5_file, level1_metadata_path=level1):
