@@ -57,7 +57,7 @@ def test_dea_style_package(
         p.write_thumbnail_singleband("blue", bit=1, kind="singleband")
         # Write a singleband thumbnail using a lookuptable
         p.write_thumbnail_singleband(
-            "blue", lookup_table={1: [0, 0, 255]}, kind="singleband_lut"
+            "blue", lookup_table={1: (0, 0, 255)}, kind="singleband_lut"
         )
 
         # Note any software versions important to this created data.
@@ -83,6 +83,8 @@ def test_dea_style_package(
             "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_thumbnail.jpg": "",
             "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.proc-info.yaml": "",
             "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.sha1": "",
+            "ga_ls8c_singleband_3-0-0_090084_2016-01-21_final_thumbnail.jpg": "",
+            "ga_ls8c_singleband_lut_3-0-0_090084_2016-01-21_final_thumbnail.jpg": "",
         },
     )
 
@@ -166,9 +168,15 @@ def test_dea_style_package(
                 "metadata:processor": {
                     "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.proc-info.yaml"
                 },
-                # The thumbnail we made.
+                # The thumbnails we made.
                 "thumbnail": {
                     "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_thumbnail.jpg"
+                },
+                "thumbnail:singleband": {
+                    "path": "ga_ls8c_singleband_3-0-0_090084_2016-01-21_final_thumbnail.jpg"
+                },
+                "thumbnail:singleband_lut": {
+                    "path": "ga_ls8c_singleband_lut_3-0-0_090084_2016-01-21_final_thumbnail.jpg"
                 },
             },
             "lineage": {"level1": ["a780754e-a884-58a7-9ac0-df518a67f59d"]},
