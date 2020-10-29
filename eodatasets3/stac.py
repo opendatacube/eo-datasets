@@ -1,15 +1,15 @@
 """
-Convert a new-style ODC metadata doc to a Stac Item. (BETA/Incomplete)
+Convert an EO3 metadata doc to a Stac Item. (BETA/Incomplete)
 """
 import json
 import math
 import mimetypes
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 from urllib.parse import urljoin
 
+import jsonschema
 from datacube.utils.geometry import Geometry, CRS
-from jsonschema import validate
 from requests_cache.core import CachedSession
 
 from eodatasets3.model import DatasetDoc, GridDoc
@@ -151,13 +151,20 @@ def _odc_links(explorer_base_url: str, dataset: DatasetDoc) -> List:
 
 def to_stac_item(
     dataset: DatasetDoc,
-    input_metadata_url: str,
-    output_url: str,
-    explorer_base_url: str,
-    do_validate: bool = False,
+    stac_item_destination_url: str,
+    odc_dataset_metadata_url: Optional[str] = None,
+    explorer_base_url: Optional[str] = None,
 ) -> dict:
     """
-    Convert the given ODC Dataset into a Stac Item document
+    Convert the given ODC Dataset into a Stac Item document.
+
+    Note: You may want to call `validate_stac(item_doc)` on the outputs to find any
+    incomplete properties.
+
+    :param stac_item_destination_url: Public 'self' URL for the stac document
+    :param odc_dataset_metadata_url: Public URL for the original ODC dataset yaml document
+    :param explorer_base_url: An Explorer URL that includes this dataset. Optinoal, but useful
+                              URLs will be included.
     """
 
     geom = Geometry(dataset.geometry, CRS(dataset.crs))
@@ -177,7 +184,28 @@ def to_stac_item(
         properties["title"] = dataset.label
 
     # TODO: choose remote if there's multiple locations?
-    dataset_location = dataset.locations[0] if dataset.locations else output_url
+    # Without a dataset location, all paths will be relative.
+    dataset_location = dataset.locations[0] if dataset.locations else None
+
+    links = []
+    if stac_item_destination_url:
+        links.append(
+            {
+                "rel": "self",
+                "type": "application/json",
+                "href": stac_item_destination_url,
+            }
+        )
+    if odc_dataset_metadata_url:
+        links.append(
+            {
+                "title": "ODC Dataset YAML",
+                "rel": "odc_yaml",
+                "type": "text/yaml",
+                "href": odc_dataset_metadata_url,
+            }
+        )
+    links.extend(_odc_links(explorer_base_url, dataset))
 
     item_doc = dict(
         stac_version="1.0.0-beta.2",
@@ -224,28 +252,13 @@ def to_stac_item(
                 for name, m in dataset.accessories.items()
             },
         },
-        links=[
-            {
-                "rel": "self",
-                "type": "application/json",
-                "href": output_url,
-            },
-            {
-                "title": "ODC Dataset YAML",
-                "rel": "odc_yaml",
-                "type": "text/yaml",
-                "href": input_metadata_url,
-            },
-            *_odc_links(explorer_base_url, dataset),
-        ],
+        links=links,
     )
 
     # To pass validation, only add 'view' extension when we're using it somewhere.
     if any(k.startswith("view:") for k in item_doc["properties"].keys()):
         item_doc["stac_extensions"].append("view")
 
-    if do_validate:
-        validate_stac(item_doc)
     return item_doc
 
 
@@ -272,4 +285,4 @@ def validate_stac(item_doc: Dict):
         )
         r = requests.get(schema_url)
         schema_json = r.json()
-        validate(stac_content, schema_json)
+        jsonschema.validate(stac_content, schema_json)

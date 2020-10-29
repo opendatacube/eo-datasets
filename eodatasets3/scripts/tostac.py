@@ -12,7 +12,7 @@ import click
 
 from eodatasets3 import serialise
 from eodatasets3.model import DatasetDoc
-from eodatasets3.stac import to_stac_item
+import eodatasets3.stac as eo3stac
 from eodatasets3.ui import PathPath
 
 
@@ -83,13 +83,20 @@ def dc_to_stac(
 
     It's better to call eodatasets3.stac.dataset_as_stac_item() directly.
     """
-    return to_stac_item(
+    doc = eo3stac.to_stac_item(
         dataset,
-        input_metadata_url=urljoin(stac_base_url, input_metadata.name),
-        output_url=urljoin(stac_base_url, output_path.name),
+        stac_item_destination_url=urljoin(stac_base_url, output_path.name),
+        # This is potentially surprising.
+        #     We just assume that they're uploading the odc document to the
+        #     same public folder (and with the same name.)
+        #     But we need to keep it for backwards compatibility.
+        odc_dataset_metadata_url=urljoin(stac_base_url, input_metadata.name),
         explorer_base_url=explorer_base_url,
-        do_validate=do_validate,
     )
+    if do_validate:
+        eo3stac.validate_stac(doc)
+
+    return doc
 
 
 if __name__ == "__main__":
