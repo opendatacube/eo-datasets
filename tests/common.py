@@ -41,9 +41,7 @@ def assert_same_as_file(expected_doc: Dict, generated_file: Path, ignore_fields=
     expected_doc = dump_roundtrip(expected_doc)
     generated_doc = dump_roundtrip(generated_doc)
 
-    assert expected_doc == generated_doc, "\n".join(
-        format_doc_diffs(expected_doc, generated_doc)
-    )
+    assert_same(expected_doc, generated_doc)
 
 
 def run_prepare_cli(invoke_script, *args, expect_success=True) -> Result:
