@@ -1,13 +1,11 @@
+from pathlib import Path
+from pprint import pformat
+from typing import Dict, Iterable
+
 import rapidjson
 from click.testing import CliRunner, Result
 from deepdiff import DeepDiff
-from functools import partial
-from pathlib import Path
-from pprint import pformat, pprint
 from ruamel import yaml
-from typing import Dict
-
-diff = partial(DeepDiff, significant_digits=6)
 
 
 def check_prepare_outputs(
@@ -21,12 +19,16 @@ def check_prepare_outputs(
 
 
 def assert_same(expected_doc: Dict, generated_doc: Dict):
+    """
+    Assert two documents are the same, ignoring trivial float differences
+    """
     __tracebackhide__ = True
-    doc_diffs = diff(expected_doc, generated_doc)
-    assert doc_diffs == {}, pformat(doc_diffs)
+    doc_diffs = DeepDiff(expected_doc, generated_doc, significant_digits=6)
+    assert doc_diffs == {}, "\n".join(format_doc_diffs(expected_doc, generated_doc))
 
 
 def assert_same_as_file(expected_doc: Dict, generated_file: Path, ignore_fields=()):
+    """Assert a file contains the given document content (after normalisation etc)"""
     __tracebackhide__ = True
 
     assert generated_file.exists(), f"Expected file to exist {generated_file.name}"
@@ -36,12 +38,12 @@ def assert_same_as_file(expected_doc: Dict, generated_file: Path, ignore_fields=
     for field in ignore_fields:
         del generated_doc[field]
 
-    doc_diffs = diff(dump_roundtrip(expected_doc), dump_roundtrip(generated_doc))
-    try:
-        assert doc_diffs == {}, pformat(doc_diffs)
-    except AssertionError:
-        pprint(generated_doc)
-        raise
+    expected_doc = dump_roundtrip(expected_doc)
+    generated_doc = dump_roundtrip(generated_doc)
+
+    assert expected_doc == generated_doc, "\n".join(
+        format_doc_diffs(expected_doc, generated_doc)
+    )
 
 
 def run_prepare_cli(invoke_script, *args, expect_success=True) -> Result:
@@ -55,6 +57,36 @@ def run_prepare_cli(invoke_script, *args, expect_success=True) -> Result:
         assert res.exit_code == 0, res.output
 
     return res
+
+
+def format_doc_diffs(left: Dict, right: Dict) -> Iterable[str]:
+    """
+    Get a human-readable list of differences in the given documents.
+
+    Returns a list of lines to print.
+    """
+    doc_diffs = DeepDiff(left, right, significant_digits=6)
+    out = []
+    if doc_diffs:
+        out.append("Documents differ:")
+    else:
+        out.append("Doc differs in minor float precision:")
+        doc_diffs = DeepDiff(left, right)
+    if "values_changed" not in doc_diffs:
+        # Shouldn't happen?
+        return [pformat(doc_diffs)]
+
+    for offset, change in doc_diffs["values_changed"].items():
+        if offset.startswith("root"):
+            offset: str = offset[len("root") :]
+        out.extend(
+            (
+                f"   {offset}: ",
+                f'          {change["old_value"]!r}',
+                f'       != {change["new_value"]!r}',
+            )
+        )
+    return out
 
 
 def dump_roundtrip(generated_doc):

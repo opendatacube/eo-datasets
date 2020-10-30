@@ -7,7 +7,7 @@ from ruamel import yaml
 from deepdiff import DeepDiff
 
 from eodatasets3.prepare import noaa_c_c_prwtreatm_1_prepare
-from tests.integration.common import run_prepare_cli
+from tests.common import run_prepare_cli
 
 NCEP_PR_WTR_FILE: Path = (
     Path(__file__).parent.parent

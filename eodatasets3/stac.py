@@ -151,6 +151,7 @@ def _odc_links(explorer_base_url: str, dataset: DatasetDoc) -> List:
 def to_stac_item(
     dataset: DatasetDoc,
     stac_item_destination_url: str,
+    dataset_location: Optional[str] = None,
     odc_dataset_metadata_url: Optional[str] = None,
     explorer_base_url: Optional[str] = None,
 ) -> dict:
@@ -164,6 +165,8 @@ def to_stac_item(
     :param odc_dataset_metadata_url: Public URL for the original ODC dataset yaml document
     :param explorer_base_url: An Explorer URL that includes this dataset. Optinoal, but useful
                               URLs will be included.
+    :param dataset_location: Use this location instead of picking from dataset.locations
+                             (for calculating relative band paths)
     """
 
     geom = Geometry(dataset.geometry, CRS(dataset.crs))
@@ -184,7 +187,9 @@ def to_stac_item(
 
     # TODO: choose remote if there's multiple locations?
     # Without a dataset location, all paths will be relative.
-    dataset_location = dataset.locations[0] if dataset.locations else None
+    dataset_location = dataset_location or (
+        dataset.locations[0] if dataset.locations else None
+    )
 
     links = []
     if stac_item_destination_url:
