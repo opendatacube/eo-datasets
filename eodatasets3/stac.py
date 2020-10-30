@@ -1,21 +1,20 @@
 """
 Convert an EO3 metadata doc to a Stac Item. (BETA/Incomplete)
 """
-import json
 import math
 import mimetypes
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Callable
 from urllib.parse import urljoin
 
 import jsonschema
+import rapidjson
 from datacube.utils.geometry import Geometry, CRS
 from requests_cache.core import CachedSession
 
 from eodatasets3.model import DatasetDoc, GridDoc
 
 # Mapping between EO3 field names and STAC properties object field names
-
 MAPPING_EO3_TO_STAC = {
     "dtr:end_datetime": "end_datetime",
     "dtr:start_datetime": "start_datetime",
@@ -262,27 +261,89 @@ def to_stac_item(
     return item_doc
 
 
-def validate_stac(item_doc: Dict):
-    # Validates STAC content against schema of STAC item and STAC extensions
-    stac_content = json.loads(json.dumps(item_doc))
-    schema_urls = [
-        f"https://schemas.stacspec.org/"
-        f"v{item_doc.get('stac_version')}"
-        f"/item-spec/json-schema/item.json#"
+def validate_item(
+    item_doc: Dict,
+    allow_cached_specs: bool = True,
+    disallow_network_access: bool = False,
+    log: Callable[[str], None] = lambda line: None,
+    schema_host="https://schemas.stacspec.org",
+):
+    """
+    Validate a document against the Stac Item schema and its declared extensions
+
+    Requires an internet connection to fetch the relevant spec version,
+    but will cache it locally for repeated requests.
+
+    :param item_doc:
+    :param allow_cached_specs: Allow using a cached spec.
+                              Disable to force-download the spec again.
+
+    :param schema_host: The host for stac schema download
+    :param disallow_network_access: Only allow validation using cached specs.
+    :param log: Report human-readable progress/status to this function.
+
+    :raises NoAvailableSchemaError If cannot find a spec for the given Stac version+extentions
+    """
+    item_doc = _normalise_doc(item_doc)
+
+    stac_version = item_doc.get("stac_version")
+
+    one_day = 60 * 60 * 24
+    max_cache_time = one_day if "beta" in stac_version else one_day * 365
+
+    schemas = [
+        (
+            "Item",
+            f"{schema_host}/v{stac_version}/item-spec/json-schema/item.json#",
+        )
     ]
     for extension in item_doc.get("stac_extensions", []):
-        schema_urls.append(
-            f"https://schemas.stacspec.org/"
-            f"v{item_doc.get('stac_version')}"
-            f"/extensions/{extension}"
-            f"/json-schema/schema.json#"
+        schemas.append(
+            (
+                f"extension {extension!r}",
+                f"{schema_host}/v{stac_version}/extensions/{extension}/json-schema/schema.json#",
+            )
         )
 
-    for schema_url in schema_urls:
-        # Caching downloaded Schemas which expires every 1 hour
-        requests = CachedSession(
-            "stac_schema_cache", backend="sqlite", expire_after=3600
-        )
-        r = requests.get(schema_url)
-        schema_json = r.json()
-        jsonschema.validate(stac_content, schema_json)
+    log(f"Stac version {stac_version}. Schema cache: {max_cache_time/60//60}hrs.")
+
+    with CachedSession(
+        "stac_schema_cache",
+        backend="sqlite",
+        expire_after=max_cache_time,
+        old_data_on_error=True,
+    ) as session:
+        if not allow_cached_specs:
+            session.cache.clear()
+
+        for schema_label, schema_url in schemas:
+            if not session.cache.has_url(schema_url):
+                if disallow_network_access:
+                    raise NoAvailableSchemaError(
+                        f"{schema_label} schema is not cached, and network access is disabled: {schema_url}"
+                    )
+
+                log(f"{schema_url}")
+            r = session.get(schema_url, timeout=60)
+            if r.status_code == 404:
+                raise NoAvailableSchemaError(
+                    f"No schema found for Stac {stac_version} {schema_label}: "
+                    f"{schema_url!r}"
+                )
+            r.raise_for_status()
+            schema_json = r.json()
+            log(f"Validating {schema_label}...")
+            jsonschema.validate(item_doc, schema_json)
+
+
+class NoAvailableSchemaError(Exception):
+    pass
+
+
+def _normalise_doc(doc: Dict) -> Dict:
+    """
+    Normalise all the embedded values to simple json types.
+
+    (needed for jsonschema validation.)
+    """
+    return rapidjson.loads(rapidjson.dumps(doc, datetime_mode=True, uuid_mode=True))
