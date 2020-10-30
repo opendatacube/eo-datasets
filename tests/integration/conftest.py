@@ -131,7 +131,7 @@ def example_metadata(
         return l1_ls7_tarball_md_expected
     elif which == "ls8":
         return l1_ls8_folder_md_expected
-    assert False
+    raise AssertionError
 
 
 def expected_l1_ls8_folder(

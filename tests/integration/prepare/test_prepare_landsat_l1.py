@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Dict
 
 from eodatasets3.prepare import landsat_l1_prepare
-from tests.integration.common import check_prepare_outputs
-from tests.integration.common import run_prepare_cli
+from tests.common import check_prepare_outputs
+from tests.common import run_prepare_cli
 
 
 def test_prepare_l5_l1_usgs_tarball(

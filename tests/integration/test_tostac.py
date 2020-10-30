@@ -1,14 +1,11 @@
 import json
 import shutil
-from functools import partial
 from pathlib import Path
-from pprint import pformat
 
 import pytest
-from deepdiff import DeepDiff
 from eodatasets3 import serialise
 from eodatasets3.scripts import tostac
-from tests.integration.common import run_prepare_cli
+from tests.common import run_prepare_cli, assert_same
 
 TO_STAC_DATA: Path = Path(__file__).parent.joinpath("data/tostac")
 ODC_METADATA_FILE: str = "ga_ls8c_ard_3-1-0_088080_2020-05-25_final.odc-metadata.yaml"
@@ -16,8 +13,6 @@ STAC_TEMPLATE_FILE: str = "ga_ls_ard_3_stac_item.json"
 STAC_EXPECTED_FILE: str = (
     "ga_ls8c_ard_3-1-0_088080_2020-05-25_final.stac-item_expected.json"
 )
-
-deep_diff = partial(DeepDiff, significant_digits=6)
 
 
 def test_tostac(input_doc_folder: Path):
@@ -35,8 +30,7 @@ def test_tostac(input_doc_folder: Path):
 
     actual_doc = json.load(actual_stac_path.open())
     expected_doc = json.load(expected_stac_path.open())
-    doc_diff = deep_diff(expected_doc, actual_doc)
-    assert doc_diff == {}, pformat(doc_diff)
+    assert_same(expected_doc, actual_doc)
 
 
 def test_add_property(input_doc_folder: Path):
