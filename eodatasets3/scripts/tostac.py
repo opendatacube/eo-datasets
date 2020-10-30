@@ -1,5 +1,5 @@
 """
-Convert a new-style ODC metadata doc to a Stac Item.
+Convert an EO3 metadata doc to a Stac Item.
 """
 import json
 from datetime import datetime
@@ -9,14 +9,16 @@ from urllib.parse import urljoin
 from uuid import UUID
 
 import click
+from click import echo, style
 
+import eodatasets3.stac as eo3stac
 from eodatasets3 import serialise
 from eodatasets3.model import DatasetDoc
-import eodatasets3.stac as eo3stac
 from eodatasets3.ui import PathPath
 
 
 @click.command(help=__doc__)
+@click.option("-v", "--verbose", is_flag=True)
 @click.option("--stac-base-url", "-u", help="Base URL of the STAC file")
 @click.option("--explorer-base-url", "-e", help="Base URL of the ODC Explorer")
 @click.option(
@@ -30,6 +32,7 @@ from eodatasets3.ui import PathPath
     nargs=-1,
 )
 def run(
+    verbose: bool,
     odc_metadata_files: Iterable[Path],
     stac_base_url: str,
     explorer_base_url: str,
@@ -48,25 +51,17 @@ def run(
             output_path,
             stac_base_url,
             explorer_base_url,
-            validate,
+            do_validate=False,
         )
+
+        if validate:
+            eo3stac.validate_item(item_doc, log=echo if verbose else lambda line: None)
 
         with output_path.open("w") as f:
             json.dump(item_doc, f, indent=4, default=json_fallback)
 
-
-def json_fallback(o):
-    if isinstance(o, datetime):
-        return f"{o.isoformat()}" if o.tzinfo else f"{o.isoformat()}Z"
-
-    if isinstance(o, UUID):
-        return str(o)
-
-    raise TypeError(
-        f"Unhandled type for json conversion: "
-        f"{o.__class__.__name__!r} "
-        f"(object {o!r})"
-    )
+        if verbose:
+            echo(f'Wrote {style(output_path.as_posix(), "green")}')
 
 
 def dc_to_stac(
@@ -94,9 +89,28 @@ def dc_to_stac(
         explorer_base_url=explorer_base_url,
     )
     if do_validate:
-        eo3stac.validate_stac(doc)
+        eo3stac.validate_item(doc)
 
     return doc
+
+
+def json_fallback(o):
+    """
+    This function is needed here for backwards compatibility.
+
+    Some users try to import it from this script.
+    """
+    if isinstance(o, datetime):
+        return f"{o.isoformat()}" if o.tzinfo else f"{o.isoformat()}Z"
+
+    if isinstance(o, UUID):
+        return str(o)
+
+    raise TypeError(
+        f"Unhandled type for json conversion: "
+        f"{o.__class__.__name__!r} "
+        f"(object {o!r})"
+    )
 
 
 if __name__ == "__main__":
