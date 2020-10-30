@@ -76,7 +76,7 @@ def dc_to_stac(
     Backwards compatibility wrapper as some other projects started using this
     method of the script.
 
-    It's better to call eodatasets3.stac.dataset_as_stac_item() directly.
+    It's better to call eodatasets3.stac.to_stac_item() directly.
     """
 
     stac_destination_url = urljoin(stac_base_url, output_path.name)
