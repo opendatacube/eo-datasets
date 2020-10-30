@@ -158,15 +158,16 @@ def to_stac_item(
     """
     Convert the given ODC Dataset into a Stac Item document.
 
-    Note: You may want to call `validate_stac(item_doc)` on the outputs to find any
+    Note: You may want to call `validate_item(doc)` on the outputs to find any
     incomplete properties.
 
-    :param stac_item_destination_url: Public 'self' URL for the stac document
-    :param odc_dataset_metadata_url: Public URL for the original ODC dataset yaml document
-    :param explorer_base_url: An Explorer URL that includes this dataset. Optinoal, but useful
-                              URLs will be included.
+    :param stac_item_destination_url: Public 'self' URL where the stac document will be findable.
     :param dataset_location: Use this location instead of picking from dataset.locations
                              (for calculating relative band paths)
+    :param odc_dataset_metadata_url: Public URL for the original ODC dataset yaml document
+    :param explorer_base_url: An Explorer instance that contains this dataset.
+                              Will allow links to things such as the product definition.
+
     """
 
     geom = Geometry(dataset.geometry, CRS(dataset.crs))
@@ -276,18 +277,17 @@ def validate_item(
     """
     Validate a document against the Stac Item schema and its declared extensions
 
-    Requires an internet connection to fetch the relevant spec version,
-    but will cache it locally for repeated requests.
+    Requires an internet connection the first time to fetch the relevant specs,
+    but will cache them locally for repeated requests.
 
     :param item_doc:
     :param allow_cached_specs: Allow using a cached spec.
                               Disable to force-download the spec again.
-
-    :param schema_host: The host for stac schema download
     :param disallow_network_access: Only allow validation using cached specs.
-    :param log: Report human-readable progress/status to this function.
+    :param log: Callback for human-readable progress/status (eg: 'print').
+    :param schema_host: The host to download stac schemas from.
 
-    :raises NoAvailableSchemaError If cannot find a spec for the given Stac version+extentions
+    :raises NoAvailableSchemaError: When cannot find a spec for the given Stac version+extentions
     """
     item_doc = _normalise_doc(item_doc)
 
