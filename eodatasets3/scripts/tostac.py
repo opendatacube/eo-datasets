@@ -78,15 +78,24 @@ def dc_to_stac(
 
     It's better to call eodatasets3.stac.dataset_as_stac_item() directly.
     """
+
+    stac_destination_url = urljoin(stac_base_url, output_path.name)
+
+    # Following previous behaviour -- fallback to the stac destination path.
+    dataset_location = (
+        dataset.locations[0] if dataset.locations else stac_destination_url
+    )
+
     doc = eo3stac.to_stac_item(
         dataset,
-        stac_item_destination_url=urljoin(stac_base_url, output_path.name),
+        stac_item_destination_url=stac_destination_url,
         # This is potentially surprising.
         #     We just assume that they're uploading the odc document to the
         #     same public folder (and with the same name.)
         #     But we need to keep it for backwards compatibility.
         odc_dataset_metadata_url=urljoin(stac_base_url, input_metadata.name),
         explorer_base_url=explorer_base_url,
+        dataset_location=dataset_location,
     )
     if do_validate:
         eo3stac.validate_item(doc)

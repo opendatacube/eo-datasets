@@ -11,7 +11,7 @@ from eodatasets3 import DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
 from tests import assert_file_structure
-from tests.integration.common import assert_same_as_file
+from tests.common import assert_same_as_file
 
 
 def test_dea_style_package(

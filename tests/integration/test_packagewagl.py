@@ -13,7 +13,7 @@ from rio_cogeo import cogeo
 import eodatasets3
 from eodatasets3.model import DatasetDoc
 from tests import assert_file_structure
-from tests.integration.common import assert_same_as_file
+from tests.common import assert_same_as_file
 
 from . import assert_image
 

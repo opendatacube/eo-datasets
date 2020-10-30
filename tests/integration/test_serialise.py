@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Dict
 
 from eodatasets3 import serialise
-from .common import assert_same, dump_roundtrip
+from tests.common import dump_roundtrip
 
 
 def test_valid_document_works(tmp_path: Path, example_metadata: Dict):
@@ -13,6 +13,6 @@ def test_valid_document_works(tmp_path: Path, example_metadata: Dict):
         serialise.to_doc(serialise.from_doc(generated_doc))
     )
 
-    assert_same(generated_doc, reserialised_doc)
+    assert generated_doc == reserialised_doc
 
     assert serialise.from_doc(generated_doc) == serialise.from_doc(reserialised_doc)
