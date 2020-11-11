@@ -14,6 +14,7 @@ README = (HERE / "README.md").read_text()
 
 
 tests_require = [
+    "sh",
     "black",
     "deepdiff",
     "flake8",
