@@ -25,6 +25,8 @@ from typing import Dict, Generator, Iterable, List, Optional, Sequence, Tuple, U
 from eodatasets3.model import DatasetDoc, GridDoc, MeasurementDoc
 from eodatasets3.properties import FileFormat
 
+from pprint import pprint  # RG ADD
+
 DEFAULT_OVERVIEWS = (8, 16, 32)
 
 try:
@@ -55,6 +57,8 @@ class GridSpec:
 
     @classmethod
     def from_dataset_doc(cls, ds: DatasetDoc, grid="default") -> "GridSpec":
+
+        print(list(ds.grids))
         g = ds.grids[grid]
 
         if ds.crs.startswith("epsg:"):
@@ -272,8 +276,15 @@ class MeasurementRecord:
                     f"\t{grid.crs.to_string()!r}\n"
                 )
 
-            # create a simple name for the each resolution groups
-            grid_name = "RES_{0}m".format(int(grid.transform.a))
+            if i == 0:
+                # as stated above, grids have been ordered from most
+                # (i=0) to fewest (i>0) measurements. The grid with
+                # the most measurements will be set as "default"
+                grid_name = "default"
+
+            else:
+                # create a simple name for the each resolution groups
+                grid_name = "RES_{0}m".format(int(grid.transform.a))
 
             grid_docs[grid_name] = GridDoc(grid.shape, grid.transform)
 
