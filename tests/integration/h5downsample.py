@@ -28,6 +28,7 @@ except ImportError:
         "with h5tools and gdal-bin"
     )
 
+
 def find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> List[str]:
     """
     Find all objects in a h5 of the given class, returning their path.
@@ -60,7 +61,11 @@ def downsample(input: Path, factor: int, anti_alias: bool):
     # list of dataset names excluded from the downsampling
     wagl_excl_dnames = ["NBAR", "NBART"]
     mndwi_excl_dnames = [
-        "mndwi_image_LAMBERTIAN", "mndwi_image_LMBSKYG", "blue", "green", "red"
+        "mndwi_image_LAMBERTIAN",
+        "mndwi_image_LMBSKYG",
+        "blue",
+        "green",
+        "red",
     ]
 
     # list required dataset names
@@ -69,7 +74,9 @@ def downsample(input: Path, factor: int, anti_alias: bool):
 
     # downsample mndwi.h5
     secho(f"Scaling mndwi {mndwi_image}")
-    req_size = _downsample_h5_datasets(mndwi_image, factor, mndwi_excl_dnames, mndwi_req_dnames)
+    req_size = _downsample_h5_datasets(
+        mndwi_image, factor, mndwi_excl_dnames, mndwi_req_dnames
+    )
 
     # downsample wagl.h5
     secho(f"Scaling wagl {input}")
