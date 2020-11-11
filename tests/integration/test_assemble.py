@@ -117,17 +117,13 @@ def test_dea_style_package(
                         -3_714_585.0,
                         0.0,
                         0.0,
-                        1.0
+                        1.0,
                     ],
                 }
             },
             "measurements": {
-                "blue": {
-                    "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif"
-                },
-                "ones": {
-                    "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_ones.tif"
-                },
+                "blue": {"path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif"},
+                "ones": {"path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_ones.tif"},
             },
             "properties": {
                 "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
