@@ -227,7 +227,8 @@ def test_prepare_s2a_l1c_safe(tmpdir):
         "processing_level": "Level-1C",
         "product_format": {"name": "s2_aws_pds"},
         "product_type": "level1",
-        "size_bytes": 1292575,
+        # "size_bytes": 1292575,
+        "size_bytes": 1329439,
         "tile_id": "S2B_OPER_MSI_L1C_TL_EPAE_20180617T013729_A006677_T55JGF_N02.06",
     }
 
