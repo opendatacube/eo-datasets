@@ -204,21 +204,7 @@ def expected_l1_ls8_folder(
             "type": "Polygon",
         },
         "grids": {
-            "default": {
-                "shape": (60, 60),
-                "transform": (
-                    3955.5,
-                    0.0,
-                    641_985.0,
-                    0.0,
-                    -3975.500_000_000_000_5,
-                    -3_714_585.0,
-                    0.0,
-                    0.0,
-                    1.0,
-                ),
-            },
-            "panchromatic": {
+            "RES_3955m": {
                 "shape": (60, 60),
                 "transform": (
                     3955.25,
@@ -232,6 +218,20 @@ def expected_l1_ls8_folder(
                     1.0,
                 ),
             },
+            "default": {
+                "shape": (60, 60),
+                "transform": (
+                    3955.5,
+                    0.0,
+                    641_985.0,
+                    0.0,
+                    -3975.500_000_000_000_5,
+                    -3_714_585.0,
+                    0.0,
+                    0.0,
+                    1.0
+                )
+            }
         },
         "measurements": {
             "coastal_aerosol": {
@@ -270,7 +270,7 @@ def expected_l1_ls8_folder(
                 )
             },
             "panchromatic": {
-                "grid": "panchromatic",
+                "grid": "RES_3955m",
                 "path": offset(
                     l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B8.TIF"
                 ),
@@ -384,8 +384,8 @@ def l1_ls7_tarball_md_expected(
         },
         "grids": {
             "default": {
-                "shape": (60, 60),
-                "transform": (
+                "shape": [60, 60],
+                "transform": [
                     4080.500_000_000_000_5,
                     0.0,
                     525_285.0,
@@ -395,9 +395,9 @@ def l1_ls7_tarball_md_expected(
                     0.0,
                     0.0,
                     1.0,
-                ),
+                ],
             },
-            "panchromatic": {
+            "RES_4080m": {
                 "shape": [60, 60],
                 "transform": [
                     4080.25,
@@ -448,13 +448,17 @@ def l1_ls7_tarball_md_expected(
                     l1_ls7_tarball, "LE07_L1TP_104078_20130429_20161124_01_T1_B7.TIF"
                 )
             },
-            "tir_1": {"path": "LE07_L1TP_104078_20130429_20161124_01_T1_B6_VCID_1.TIF"},
-            "tir_2": {"path": "LE07_L1TP_104078_20130429_20161124_01_T1_B6_VCID_2.TIF"},
+            "tir_1": {
+                "path": "LE07_L1TP_104078_20130429_20161124_01_T1_B6_VCID_1.TIF"
+            },
+            "tir_2": {
+                "path": "LE07_L1TP_104078_20130429_20161124_01_T1_B6_VCID_2.TIF"
+            },
             "panchromatic": {
+                "grid": "RES_4080m",
                 "path": offset(
                     l1_ls7_tarball, "LE07_L1TP_104078_20130429_20161124_01_T1_B8.TIF"
                 ),
-                "grid": "panchromatic",
             },
         },
         "accessories": {
