@@ -1,0 +1,4 @@
+software_versions:
+  tesp:
+    repo_url: https://github.com/OpenDataCubePipelines/tesp
+    version: 0.6.6.dev18+g9d22761.d20201007
