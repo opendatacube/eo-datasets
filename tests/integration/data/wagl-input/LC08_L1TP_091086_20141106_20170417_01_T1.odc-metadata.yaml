@@ -1,0 +1,95 @@
+---
+# Dataset
+$schema: https://schemas.opendatacube.org/dataset
+id: d0a5afde-4d8d-5938-aa42-55b6c84a14fe
+
+label: usgs_ls8c_level1_1-0-20170417_091086_2014-11-06
+product:
+  name: usgs_ls8c_level1_1
+  href: https://collections.dea.ga.gov.au/product/usgs_ls8c_level1_1
+
+crs: epsg:32655
+geometry:
+  type: Polygon
+  coordinates: [[[423966.88444548927, -4220008.969437153], [423693.86196562444, -4219942.0521375025],
+      [423652.5, -4219912.5], [424897.9268860624, -4214718.946923845], [466552.9268860624,
+        -4043868.946923845], [469432.9478624978, -4032153.8619656246], [469837.9938819411,
+        -4030533.682600511], [469912.9938819411, -4030248.682600511], [469942.5, -4030207.5],
+      [470013.8649797343, -4030224.9045128296], [470025.0, -4030215.0], [575458.2935165806,
+        -4055940.7236180454], [655076.0563394912, -4075357.927682085], [657596.0563394912,
+        -4075972.927682085], [657637.5, -4076002.5], [611827.0787294387, -4265246.029964299],
+      [611737.0521375022, -4265606.138034375], [611707.5, -4265647.5], [611504.8503935302,
+        -4265598.239928442], [611108.254214799, -4265534.231735871], [606787.9128648278,
+        -4264484.150857879], [424657.9123697058, -4220204.150737501], [423966.88444548927,
+        -4220008.969437153]]]
+grids:
+  default:
+    shape: [7861, 7821]
+    transform: [30.0, 0.0, 423285.0, 0.0, -30.0, -4029885.0, 0.0, 0.0, 1.0]
+  panchromatic:
+    shape: [15721, 15641]
+    transform: [15.0, 0.0, 423292.5, 0.0, -15.0, -4029892.5, 0.0, 0.0, 1.0]
+
+properties:
+  datetime: 2014-11-06 23:57:30.326870Z
+  eo:cloud_cover: 0.45
+  eo:gsd: 15.0  # Ground sample distance (m)
+  eo:instrument: OLI_TIRS
+  eo:platform: landsat-8
+  eo:sun_azimuth: 58.19197227
+  eo:sun_elevation: 56.6866517
+  landsat:collection_category: T1
+  landsat:collection_number: 1
+  landsat:data_type: L1TP
+  landsat:geometric_rmse_model_x: 4.304
+  landsat:geometric_rmse_model_y: 4.718
+  landsat:geometric_rmse_verify: 4.652
+  landsat:ground_control_points_model: 427
+  landsat:ground_control_points_verify: 146
+  landsat:ground_control_points_version: 4
+  landsat:landsat_product_id: LC08_L1TP_091086_20141106_20170417_01_T1
+  landsat:landsat_scene_id: LC80910862014310LGN01
+  landsat:processing_software_version: LPGS_2.7.0
+  landsat:station_id: LGN
+  landsat:wrs_path: 91
+  landsat:wrs_row: 86
+  odc:dataset_version: 1.0.20170417
+  odc:file_format: GeoTIFF
+  odc:processing_datetime: 2017-04-17 21:31:22Z
+  odc:producer: usgs.gov
+  odc:product_family: level1
+  odc:region_code: '091086'
+
+measurements:
+  blue:
+    path: LC08_L1TP_091086_20141106_20170417_01_T1_B2.TIF
+  cirrus:
+    path: LC08_L1TP_091086_20141106_20170417_01_T1_B9.TIF
+  coastal_aerosol:
+    path: LC08_L1TP_091086_20141106_20170417_01_T1_B1.TIF
+  green:
+    path: LC08_L1TP_091086_20141106_20170417_01_T1_B3.TIF
+  lwir_1:
+    path: LC08_L1TP_091086_20141106_20170417_01_T1_B10.TIF
+  lwir_2:
+    path: LC08_L1TP_091086_20141106_20170417_01_T1_B11.TIF
+  nir:
+    path: LC08_L1TP_091086_20141106_20170417_01_T1_B5.TIF
+  panchromatic:
+    path: LC08_L1TP_091086_20141106_20170417_01_T1_B8.TIF
+    grid: panchromatic
+  quality:
+    path: LC08_L1TP_091086_20141106_20170417_01_T1_BQA.TIF
+  red:
+    path: LC08_L1TP_091086_20141106_20170417_01_T1_B4.TIF
+  swir_1:
+    path: LC08_L1TP_091086_20141106_20170417_01_T1_B6.TIF
+  swir_2:
+    path: LC08_L1TP_091086_20141106_20170417_01_T1_B7.TIF
+
+accessories:
+  metadata:landsat_mtl:
+    path: LC08_L1TP_091086_20141106_20170417_01_T1_MTL.txt
+
+lineage: {}
+...
