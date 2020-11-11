@@ -106,7 +106,6 @@ def test_dea_style_package(
                 "type": "Polygon",
             },
             "grids": {
-                # Note that the two bands had identical grid specs, so it combined them into one grid.
                 "default": {
                     "shape": [60, 60],
                     "transform": [
@@ -118,13 +117,17 @@ def test_dea_style_package(
                         -3_714_585.0,
                         0.0,
                         0.0,
-                        1.0,
+                        1.0
                     ],
                 }
             },
             "measurements": {
-                "blue": {"path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif"},
-                "ones": {"path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_ones.tif"},
+                "blue": {
+                    "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif"
+                },
+                "ones": {
+                    "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_ones.tif"
+                },
             },
             "properties": {
                 "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
@@ -264,7 +267,7 @@ def test_minimal_s2_dataset_normal(tmp_path: Path):
         # A custom label too.
         p.platform = "sentinel-2a"
         p.instrument = "msi"
-        p.datetime = datetime(2018, 11, 4)
+        p.datetime = datetime(2018, 11, 4, 1, 11, 11)
         p.product_family = "blueberries"
         p.processed = "2018-11-05T12:23:23"
         p.properties[
@@ -278,7 +281,7 @@ def test_minimal_s2_dataset_normal(tmp_path: Path):
 
     metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
     assert metadata_path_offset == (
-        "s2am_blueberries/2018/11/04/s2am_blueberries_2018-11-04.odc-metadata.yaml"
+        "s2am_blueberries/2018/11/04/011111/s2am_blueberries_2018-11-04.odc-metadata.yaml"
     )
 
     assert doc["label"] == "s2am_blueberries_2018-11-04", "Unexpected dataset label"
@@ -289,7 +292,7 @@ def test_s2_naming_conventions(tmp_path: Path):
     p = DatasetAssembler(tmp_path, naming_conventions="dea_s2")
     p.platform = "sentinel-2a"
     p.instrument = "msi"
-    p.datetime = datetime(2018, 11, 4)
+    p.datetime = datetime(2018, 11, 4, 1, 11, 11)
     p.product_family = "blueberries"
     p.processed = "2018-11-05T12:23:23"
     p.producer = "ga.gov.au"
@@ -311,7 +314,7 @@ def test_s2_naming_conventions(tmp_path: Path):
     metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
 
     assert metadata_path_offset == (
-        "ga_s2am_blueberries_1/Oz/2018/11/04/20170822T015626/"
+        "ga_s2am_blueberries_1/Oz/2018/11/04/011111/20170822T015626/"
         "ga_s2am_blueberries_1-0-0_Oz_2018-11-04.odc-metadata.yaml"
     )
 
@@ -334,7 +337,7 @@ def test_s2_naming_conventions(tmp_path: Path):
                 "name": "ga_s2am_blueberries_1",
             },
             "properties": {
-                "datetime": datetime(2018, 11, 4, 0, 0),
+                "datetime": datetime(2018, 11, 4, 1, 11, 11),
                 "eo:instrument": "msi",
                 "eo:platform": "sentinel-2a",
                 "odc:dataset_version": "1.0.0",
