@@ -25,8 +25,6 @@ from typing import Dict, Generator, Iterable, List, Optional, Sequence, Tuple, U
 from eodatasets3.model import DatasetDoc, GridDoc, MeasurementDoc
 from eodatasets3.properties import FileFormat
 
-from pprint import pprint  # RG ADD
-
 DEFAULT_OVERVIEWS = (8, 16, 32)
 
 try:
