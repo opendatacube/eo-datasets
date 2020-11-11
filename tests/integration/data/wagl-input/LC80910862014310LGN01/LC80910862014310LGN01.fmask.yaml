@@ -1,0 +1,17 @@
+parameters:
+    cloud_buffer_distance_metres: 0.0
+    cloud_shadow_buffer_distance_metres: 0.0
+    frantz_parallax_sentinel_2: false
+percent_class_distribution:
+    clear: 79.06773496852651
+    cloud: 5.88089322211954
+    cloud_shadow: 0.6848850487897276
+    snow: 0.0
+    water: 14.366486760564232
+software_versions:
+    eugl:
+        repo_url: https://github.com/OpenDataCubePipelines/eugl
+        version: 0.2.2.dev24+g6c2a9e5
+    fmask:
+        repo_url: https://bitbucket.org/chchrsc/python-fmask
+        version: 0.5.4
