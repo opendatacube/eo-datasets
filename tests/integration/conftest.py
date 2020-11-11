@@ -229,9 +229,9 @@ def expected_l1_ls8_folder(
                     -3_714_585.0,
                     0.0,
                     0.0,
-                    1.0
-                )
-            }
+                    1.0,
+                ),
+            },
         },
         "measurements": {
             "coastal_aerosol": {
@@ -448,12 +448,8 @@ def l1_ls7_tarball_md_expected(
                     l1_ls7_tarball, "LE07_L1TP_104078_20130429_20161124_01_T1_B7.TIF"
                 )
             },
-            "tir_1": {
-                "path": "LE07_L1TP_104078_20130429_20161124_01_T1_B6_VCID_1.TIF"
-            },
-            "tir_2": {
-                "path": "LE07_L1TP_104078_20130429_20161124_01_T1_B6_VCID_2.TIF"
-            },
+            "tir_1": {"path": "LE07_L1TP_104078_20130429_20161124_01_T1_B6_VCID_1.TIF"},
+            "tir_2": {"path": "LE07_L1TP_104078_20130429_20161124_01_T1_B6_VCID_2.TIF"},
             "panchromatic": {
                 "grid": "RES_4080m",
                 "path": offset(
