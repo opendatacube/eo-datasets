@@ -62,6 +62,7 @@ def test_whole_wagl_package(
         raise AssertionError(
             f"Warnings were produced during wagl package:\n {messages}"
         )
+
     expected_folder = out / "ga_ls8c_aard_3/091/086/2014/11/06"
     assert_file_structure(
         expected_folder,
@@ -493,6 +494,12 @@ def test_maturity_calculation():
         )
         == "nrt"
     )
+Conflicting files
+eodatasets3/images.py
+eodatasets3/scripts/packagewagl.py
+eodatasets3/wagl.py
+tests/integration/test_packagewagl.py
+
 
     # Before 2001: final if water vapour is definitive.
     assert (
