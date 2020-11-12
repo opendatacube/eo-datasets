@@ -494,12 +494,6 @@ def test_maturity_calculation():
         )
         == "nrt"
     )
-Conflicting files
-eodatasets3/images.py
-eodatasets3/scripts/packagewagl.py
-eodatasets3/wagl.py
-tests/integration/test_packagewagl.py
-
 
     # Before 2001: final if water vapour is definitive.
     assert (
