@@ -14,6 +14,7 @@ README = (HERE / "README.md").read_text()
 
 
 tests_require = [
+    "sh",
     "black",
     "deepdiff",
     "flake8",
@@ -23,7 +24,6 @@ tests_require = [
     "pytest",
     "pytest-flake8",
     "pytest-cov",
-    "python-rapidjson",
     "rio_cogeo",
     "sphinx-autodoc-typehints",
     "sphinx_rtd_theme",
@@ -75,6 +75,7 @@ setup(
         "xarray",
         "requests-cache",
         "datacube",
+        "python-rapidjson",
     ],
     tests_require=tests_require,
     extras_require=EXTRAS_REQUIRE,

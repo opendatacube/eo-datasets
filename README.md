@@ -189,3 +189,23 @@ Some preparers need the ancillary dependencies: `pip install .[ancillary]`
       --with-oa / --no-oa             Include observation attributes (default:
                                       true)
       --help                          Show this message and exit.
+
+
+## Creating Releases
+
+```
+git fetch origin
+
+# Create a tag for the new version
+git tag eodatasets3-<version> origin/eodatasets3
+
+# Push it to main repository
+git push origin --tags
+
+# Create a wheel locally
+python3 setup.py sdist bdist_wheel
+
+# Upload it (Jeremy, Damien, Kirill have pypi ownership) 
+python3 -m twine upload  dist/*
+
+```

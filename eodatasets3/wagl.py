@@ -299,7 +299,7 @@ def _create_contiguity(
     p: DatasetAssembler,
     product_list: Iterable[str],
     resolution_yx: Tuple[float, float],
-    timedelta_product: str = "nbar",
+    timedelta_product: List = ["lambertian", "lmbskyg"],
     timedelta_data: numpy.ndarray = None,
 ):
     """
@@ -349,7 +349,7 @@ def _create_contiguity(
 
         # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
         # footprint for Landsat sensor. For Sentinel sensor, it inherits from level 1 yaml file
-        if timedelta_data is not None and product.lower() == timedelta_product:
+        if timedelta_data is not None and product.lower() in timedelta_product:
             valid_timedelta_data = numpy.ma.masked_where(
                 contiguity == 0, timedelta_data
             )
@@ -651,7 +651,7 @@ def package(
                         p,
                         included_products,
                         granule_group,
-                        infer_datetime_range=None,
+                        infer_datetime_range=True,
                     )
                     #    infer_datetime_range=level1.platform.startswith("landsat"),
                 if granule.fmask_image:

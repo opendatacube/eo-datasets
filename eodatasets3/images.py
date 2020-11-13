@@ -55,6 +55,8 @@ class GridSpec:
 
     @classmethod
     def from_dataset_doc(cls, ds: DatasetDoc, grid="default") -> "GridSpec":
+
+        print(list(ds.grids))
         g = ds.grids[grid]
 
         if ds.crs.startswith("epsg:"):
@@ -272,8 +274,15 @@ class MeasurementRecord:
                     f"\t{grid.crs.to_string()!r}\n"
                 )
 
-            # create a simple name for the each resolution groups
-            grid_name = "RES_{0}m".format(int(grid.transform.a))
+            if i == 0:
+                # as stated above, grids have been ordered from most
+                # (i=0) to fewest (i>0) measurements. The grid with
+                # the most measurements will be set as "default"
+                grid_name = "default"
+
+            else:
+                # create a simple name for the each resolution groups
+                grid_name = "RES_{0}m".format(int(grid.transform.a))
 
             grid_docs[grid_name] = GridDoc(grid.shape, grid.transform)
 
@@ -548,7 +557,7 @@ class FileWrite:
             """
             with rasterio.open(unstructured_image, "w", **rio_args) as outds:
                 if bands == 1:
-                    if isinstance(array, h5py.Dataset):
+                    if h5py is not None and isinstance(array, h5py.Dataset):
                         for tile in tiles:
                             idx = (
                                 slice(tile[0][0], tile[0][1]),
@@ -558,7 +567,7 @@ class FileWrite:
                     else:
                         outds.write(array, 1)
                 else:
-                    if isinstance(array, h5py.Dataset):
+                    if h5py is not None and isinstance(array, h5py.Dataset):
                         for tile in tiles:
                             idx = (
                                 slice(tile[0][0], tile[0][1]),
@@ -686,6 +695,10 @@ class FileWrite:
         if bit is not None and lookup_table is not None:
             raise ValueError(
                 "Please set either bit or lookup_table, and not both of them"
+            )
+        if bit is None and lookup_table is None:
+            raise ValueError(
+                "Please set either bit or lookup_table, you haven't set either of them"
             )
 
         with rasterio.open(in_file) as dataset:

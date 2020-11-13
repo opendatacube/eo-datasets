@@ -2,7 +2,7 @@ import zipfile
 from pathlib import Path
 
 from eodatasets3.prepare import s2_l1c_aws_pds_prepare
-from tests.integration.common import check_prepare_outputs
+from tests.common import check_prepare_outputs
 
 L1_ZIPFILE_PATH: Path = (
     Path(__file__).parent.parent
@@ -227,6 +227,7 @@ def test_prepare_s2a_l1c_safe(tmpdir):
         "processing_level": "Level-1C",
         "product_format": {"name": "s2_aws_pds"},
         "product_type": "level1",
+        # "size_bytes": 1292575 -> travis ci build; 1329439 -> GADI
         "size_bytes": 1292575,
         "tile_id": "S2B_OPER_MSI_L1C_TL_EPAE_20180617T013729_A006677_T55JGF_N02.06",
     }
