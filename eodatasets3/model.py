@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Tuple, Dict, Optional, List, Sequence, Union
 from uuid import UUID
-
+from abc import ABCMeta, abstractmethod
 import affine
 import attr
 from ruamel.yaml.comments import CommentedMap
@@ -62,13 +62,7 @@ class AccessoryDoc:
     name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
 
 
-class ComplicatedNamingConventions:
-    """
-    Naming conventions based on the DEA standard.
-
-    Unlike the DEA standard, almost every field is optional by default.
-    """
-
+class NamingConventions(metaclass=ABCMeta):
     _ABSOLUTE_MINIMAL_PROPERTIES = {
         "odc:product_family",
         # Required by Stac regardless.
@@ -86,11 +80,51 @@ class ComplicatedNamingConventions:
     def __init__(
         self,
         dataset: EoFields,
+    ) -> None:
+        self.dataset = dataset
+
+    @abstractmethod
+    def measurement_file_path(self, work_path, name, file_type, file_id):
+        pass
+
+    @abstractmethod
+    def metadata_path(self):
+        pass
+
+    @abstractmethod
+    def checksum_path(self):
+        pass
+
+    @abstractmethod
+    def destination_folder(self, base: Path):
+        pass
+
+    @property
+    @abstractmethod
+    def product_name(self):
+        pass
+
+    @property
+    @abstractmethod
+    def product_uri(self):
+        pass
+
+
+class ComplicatedNamingConventions(NamingConventions):
+    """
+    Naming conventions based on the DEA standard.
+
+    Unlike the DEA standard, almost every field is optional by default.
+    """
+
+    def __init__(
+        self,
+        dataset: EoFields,
         base_product_uri: str = None,
         required_fields: Sequence[str] = (),
         dataset_separator_field: Optional[str] = None,
     ) -> None:
-        self.dataset = dataset
+        super().__init__(dataset)
         self.base_product_uri = base_product_uri
         self.required_fields = self._ABSOLUTE_MINIMAL_PROPERTIES.union(required_fields)
 
