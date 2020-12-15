@@ -95,9 +95,6 @@ def test_whole_wagl_package(
         },
     )
     [output_metadata] = expected_folder.rglob("*.odc-metadata.yaml")
-    from pprint import pprint
-
-    pprint(output_metadata)
 
     assert reported_metadata == str(
         output_metadata

@@ -225,9 +225,7 @@ class ComplicatedNamingConventions:
     def destination_folder(self, base: Path):
         self._check_enough_properties_to_name()
         # DEA naming conventions folder hierarchy.
-        # Examples:
-        # For L8:    "ga_ls8c_aard_3/092/084/2016/06/28"
-        # For S2A/B: "ga_s2bm_aard_2/55/KDT/2016/06/28/003241"
+        # Example: "ga_ls8c_ard_3/092/084/2016/06/28"
 
         parts = [self.product_name]
 
@@ -236,16 +234,7 @@ class ComplicatedNamingConventions:
         if region_code:
             parts.extend(utils.subfolderise(region_code))
 
-        if self.dataset.platform:
-            # added to pass test_assemble.py, where self.dataset.platform = None
-            if self.dataset.platform.startswith("sentinel-2"):
-                # modified output dir so to include HHMMSS to account for
-                # multiple acquisitions per day
-                parts.extend(f"{self.dataset.datetime:%Y/%m/%d/%H%M%S}".split("/"))
-            else:
-                parts.extend(f"{self.dataset.datetime:%Y/%m/%d}".split("/"))
-        else:
-            parts.extend(f"{self.dataset.datetime:%Y/%m/%d}".split("/"))
+        parts.extend(f"{self.dataset.datetime:%Y/%m/%d}".split("/"))
 
         # If it's not a final product, append the maturity to the folder.
         maturity: str = self.dataset.properties.get("dea:dataset_maturity")
