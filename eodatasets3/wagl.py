@@ -595,11 +595,15 @@ def package(
     with h5py.File(granule.wagl_hdf5, "r") as fid:
         granule_group = fid[granule.name]
 
+        [md] = loads_yaml(fid[granule.name + "/METADATA/CURRENT"][()])
+        s2_platform = "sentinel" in md["source_datasets"]["platform_id"].lower()
+        naming_convention = "dea_s2" if s2_platform else "dea"
+
         with DatasetAssembler(
             out_directory,
             # WAGL stamps a good, random ID already.
             dataset_id=granule.wagl_metadata.get("id"),
-            naming_conventions="dea",
+            naming_conventions=naming_convention,
         ) as p:
             level1 = granule.source_level1_metadata
 
@@ -617,6 +621,9 @@ def package(
             # It's a GA ARD product.
             p.producer = "ga.gov.au"
             p.product_family = "aard"
+
+            if s2_platform:
+                p.properties["sentinel:sentinel_tile_id"] = granule.name
 
             _read_wagl_metadata(p, granule_group)
 
