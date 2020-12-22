@@ -1061,6 +1061,10 @@
             "href": "http://dea-public-data-dev.s3-ap-southeast-2.amazonaws.com/analysis-ready-data/ga_ls8c_ard_3/088/080/2020/05/25/ga_ls8c_ard_3-1-0_088080_2020-05-25_final.odc-metadata.yaml"
         },
         {
+            "rel": "collection",
+            "href": "https://explorer.dev.dea.ga.gov.au/stac/collections/ga_ls8c_ard_3"
+        },
+        {
             "title": "ODC Product Overview",
             "rel": "product_overview",
             "type": "text/html",
@@ -1071,10 +1075,6 @@
             "rel": "alternative",
             "type": "text/html",
             "href": "https://explorer.dev.dea.ga.gov.au/dataset/2aa69fcf-aa55-4747-9d95-3652f9fe79b0"
-        },
-        {
-            "rel": "parent",
-            "href": "https://explorer.dev.dea.ga.gov.au/stac/collections/ga_ls8c_ard_3"
         }
     ]
 }

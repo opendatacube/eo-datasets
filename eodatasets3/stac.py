@@ -3,8 +3,9 @@ Convert an EO3 metadata doc to a Stac Item. (BETA/Incomplete)
 """
 import math
 import mimetypes
+import warnings
 from pathlib import Path
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Optional, Callable, Mapping
 from urllib.parse import urljoin
 
 import jsonschema
@@ -119,33 +120,68 @@ def _lineage_fields(lineage: Dict) -> Dict:
         return {}
 
 
-def _odc_links(explorer_base_url: str, dataset: DatasetDoc) -> List:
+def _odc_links(
+    explorer_base_url: str,
+    dataset: DatasetDoc,
+    collection_url: Optional[str],
+) -> List:
     """
     Add links for ODC product into a STAC Item
     """
+
+    if collection_url:
+        yield {
+            "rel": "collection",
+            "href": collection_url,
+        }
     if explorer_base_url:
-        return [
-            {
-                "title": "ODC Product Overview",
-                "rel": "product_overview",
-                "type": "text/html",
-                "href": urljoin(explorer_base_url, f"product/{dataset.product.name}"),
-            },
-            {
-                "title": "ODC Dataset Overview",
-                "rel": "alternative",
-                "type": "text/html",
-                "href": urljoin(explorer_base_url, f"dataset/{dataset.id}"),
-            },
-            {
-                "rel": "parent",
+        if not collection_url:
+            yield {
+                "rel": "collection",
                 "href": urljoin(
                     explorer_base_url, f"/stac/collections/{dataset.product.name}"
                 ),
-            },
-        ]
+            }
+        yield {
+            "title": "ODC Product Overview",
+            "rel": "product_overview",
+            "type": "text/html",
+            "href": urljoin(explorer_base_url, f"product/{dataset.product.name}"),
+        }
+        yield {
+            "title": "ODC Dataset Overview",
+            "rel": "alternative",
+            "type": "text/html",
+            "href": urljoin(explorer_base_url, f"dataset/{dataset.id}"),
+        }
+
+    if not collection_url and not explorer_base_url:
+        warnings.warn("No collection provided for Stac Item.")
+
+
+def eo3_to_stac_properties(
+    properties: Mapping, crs: Optional[str] = None, title: str = None
+) -> Dict:
+    """
+    Convert EO3 properties dictionary to the Stac equivalent.
+    """
+    properties = {
+        # Put the title at the top for document readability.
+        **(dict(title=title) if title else {}),
+        **{
+            MAPPING_EO3_TO_STAC.get(key, key): _convert_value_to_stac_type(key, val)
+            for key, val in properties.items()
+        },
+        # This field is required to be present, even if null.
+        "proj:epsg": None,
+    }
+    crs_l = crs.lower()
+    if crs_l.startswith("epsg:"):
+        properties["proj:epsg"] = int(crs_l.lstrip("epsg:"))
     else:
-        return []
+        properties["proj:wkt2"] = crs
+
+    return properties
 
 
 def to_stac_item(
@@ -154,6 +190,7 @@ def to_stac_item(
     dataset_location: Optional[str] = None,
     odc_dataset_metadata_url: Optional[str] = None,
     explorer_base_url: Optional[str] = None,
+    collection_url: Optional[str] = None,
 ) -> dict:
     """
     Convert the given ODC Dataset into a Stac Item document.
@@ -161,30 +198,22 @@ def to_stac_item(
     Note: You may want to call `validate_item(doc)` on the outputs to find any
     incomplete properties.
 
+    :param collection_url: URL to the Stac Collection. Either this or an explorer_base_url
+                           should be specified for Stac compliance.
     :param stac_item_destination_url: Public 'self' URL where the stac document will be findable.
     :param dataset_location: Use this location instead of picking from dataset.locations
                              (for calculating relative band paths)
     :param odc_dataset_metadata_url: Public URL for the original ODC dataset yaml document
     :param explorer_base_url: An Explorer instance that contains this dataset.
                               Will allow links to things such as the product definition.
-
     """
 
     geom = Geometry(dataset.geometry, CRS(dataset.crs))
     wgs84_geometry = geom.to_crs(CRS("epsg:4326"), math.inf)
 
-    properties = {
-        # This field is required to be present, even if null.
-        "proj:epsg": None,
-    }
-    crs = dataset.crs.lower()
-    if crs.startswith("epsg:"):
-        properties["proj:epsg"] = int(crs.lstrip("epsg:"))
-    else:
-        properties["proj:wkt2"] = dataset.crs
-
-    if dataset.label:
-        properties["title"] = dataset.label
+    properties = eo3_to_stac_properties(
+        dataset.properties, dataset.crs, title=dataset.label
+    )
 
     # TODO: choose remote if there's multiple locations?
     # Without a dataset location, all paths will be relative.
@@ -210,7 +239,7 @@ def to_stac_item(
                 "href": odc_dataset_metadata_url,
             }
         )
-    links.extend(_odc_links(explorer_base_url, dataset))
+    links.extend(_odc_links(explorer_base_url, dataset, collection_url))
 
     item_doc = dict(
         stac_version="1.0.0-beta.2",
@@ -220,14 +249,10 @@ def to_stac_item(
         bbox=wgs84_geometry.boundingbox,
         geometry=wgs84_geometry.json,
         properties={
-            **{
-                MAPPING_EO3_TO_STAC.get(key, key): _convert_value_to_stac_type(key, val)
-                for key, val in dataset.properties.items()
-            },
-            "odc:product": dataset.product.name,
-            **_lineage_fields(dataset.lineage),
             **properties,
+            "odc:product": dataset.product.name,
             **(_proj_fields(dataset.grids) if dataset.grids else {}),
+            **_lineage_fields(dataset.lineage),
         },
         # TODO: Currently assuming no name collisions.
         assets={
