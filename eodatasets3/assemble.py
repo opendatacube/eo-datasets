@@ -171,6 +171,8 @@ class DatasetAssembler(EoFields):
             self.names = ComplicatedNamingConventions.for_standard_dea(self)
         elif naming_conventions == "dea_s2":
             self.names = ComplicatedNamingConventions.for_standard_dea_s2(self)
+        elif naming_conventions == "dea_s2_derivative":
+            self.names = ComplicatedNamingConventionsDerivatives.for_s2_derivatives(self)
         elif naming_conventions == "dea_c3":
             self.names = ComplicatedNamingConventionsDerivatives.for_c3_derivatives(
                 self
