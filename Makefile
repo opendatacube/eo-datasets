@@ -9,12 +9,16 @@ build:
 check:
 	docker run -it --rm --volume "${PWD}":/tests -w /tests eodatasets:test ./check-code.sh
 
-docker-tests: build
+test-docker:
 	docker run -it --rm --volume "${PWD}":/tests -w /tests eodatasets:test pytest --cov eodatasets --durations=5
 
-docker-lint: build
+lint-docker:
 	docker run -it --rm --volume "${PWD}":/tests -w /tests eodatasets:test pre-commit run -a
 
 # Interactive shell ready for test running
-docker-shell: build
+shell:
 	docker run -it --rm --volume "${PWD}:/tests" -w /tests eodatasets:test /bin/bash
+
+# Old method.
+docker-tests: test-docker
+	pwd
