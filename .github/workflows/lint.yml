@@ -1,0 +1,29 @@
+---
+name: Linting
+
+on:
+  pull_request:
+    paths:
+      - '**'
+
+  push:
+    paths:
+      - '**'
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Build Docker
+        run: |
+          make build
+
+      - name: Run linting
+        run: |
+          make lint-docker
+

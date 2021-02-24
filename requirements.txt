@@ -12,3 +12,4 @@ shapely
 structlog
 requests-cache
 click
+h5py

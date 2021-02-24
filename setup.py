@@ -67,7 +67,7 @@ setup(
         "jsonschema>=3",  # We want a Draft6Validator
         "numpy>=1.15.4",
         "pyproj",
-        "rasterio",
+        "rasterio>=1.1.8",  # Seems needed for rio cogeo
         "ruamel.yaml",
         "shapely",
         "structlog",

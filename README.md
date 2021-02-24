@@ -1,8 +1,7 @@
 ## EO Datasets
 
-[![Build Status](
-https://travis-ci.org/GeoscienceAustralia/eo-datasets.svg?branch=eodatasets3
-)](https://travis-ci.org/GeoscienceAustralia/eo-datasets)
+[![Linting](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/lint.yml/badge.svg)](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/lint.yml)
+[![Tests](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/test.yml/badge.svg)](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/test.yml)
 [![Coverage Status](
 https://coveralls.io/repos/GeoscienceAustralia/eo-datasets/badge.svg?branch=eodatasets3
 )](https://coveralls.io/r/GeoscienceAustralia/eo-datasets?branch=eodatasets3)
