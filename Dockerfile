@@ -19,6 +19,9 @@ ADD . /code
 
 RUN pip install --use-feature=2020-resolver .
 
+# Make sure it's working first
+RUN eo3-validate --help
+
 # Build the production runner stage from here
 FROM opendatacube/geobase:runner
 
@@ -28,6 +31,11 @@ ENV LC_ALL=C.UTF-8 \
 
 COPY --from=env_builder /env /env
 ENV PATH=/env/bin:$PATH
+
+RUN apt-get update \
+    # Git is needed for pre-commit linting
+    && apt-get install -y git vim \
+    && rm -rf /var/lib/apt/lists/*
 
 #  # Environment can be whatever is supported by setup.py
 #  # so, either deployment, test
