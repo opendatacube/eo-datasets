@@ -65,6 +65,8 @@ class DatasetAssembler(EoFields):
     # Properties that can be inherited from a source dataset. (when auto_inherit_properties=True)
     INHERITABLE_PROPERTIES = {
         "datetime",
+        "dtr:end_datetime",
+        "dtr:start_datetime",
         "eo:cloud_cover",
         "eo:gsd",
         "eo:instrument",
@@ -78,6 +80,7 @@ class DatasetAssembler(EoFields):
         "landsat:wrs_path",
         "landsat:wrs_row",
         "odc:region_code",
+        "sentinel:datatake_start_datetime",
         "sentinel:sentinel_tile_id",
     }
 
