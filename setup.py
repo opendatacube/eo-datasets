@@ -17,6 +17,7 @@ tests_require = [
     "black",
     "deepdiff",
     "flake8",
+    "gdal",
     "hypothesis",
     "mock",
     "pep8-naming",
@@ -33,7 +34,7 @@ EXTRAS_REQUIRE = {
     # If packaging ard/wagl.
     "wagl": ["h5py"],
     # The (legacy) prepare scripts
-    "ancillary": ["scipy", "checksumdir", "netCDF4", "gdal"],
+    "ancillary": ["scipy", "checksumdir", "netCDF4"],
 }
 EXTRAS_REQUIRE["all"] = list(chain(EXTRAS_REQUIRE.values()))
 # Tests need all those optionals too.

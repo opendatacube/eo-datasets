@@ -1,9 +1,11 @@
-import pytest
-import rasterio
 from binascii import crc32
-from click.testing import CliRunner
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+import gdal
+import pytest
+import rasterio
+from click.testing import CliRunner
 from rasterio import DatasetReader
 from rasterio.enums import Compression
 from rio_cogeo import cogeo
@@ -12,7 +14,6 @@ import eodatasets3
 from eodatasets3.model import DatasetDoc
 from tests import assert_file_structure
 from tests.common import assert_same_as_file
-
 from . import assert_image
 
 h5py = pytest.importorskip(
@@ -445,6 +446,13 @@ def test_whole_wagl_package(
 
         # The reduced resolution makes it hard to test the chosen block size...
         assert d.block_shapes == [(26, 156)]
+
+    # Check the overviews use default 512 block size.
+    #     (Rasterio doesn't seem to have an api for this?)
+    assert gdal.Open(str(image)).GetRasterBand(1).GetOverview(1).GetBlockSize() == [
+        512,
+        512,
+    ], "Expected overviews to have a larger block size."
 
     # OA data should have no overviews.
     [*oa_images] = expected_folder.rglob("*_oa_*.tif")
