@@ -399,9 +399,14 @@ class FileWrite:
         "float64": 3,
     }
 
-    def __init__(self, gdal_options: Dict = None) -> None:
+    def __init__(
+        self,
+        gdal_options: Dict = None,
+        overview_blocksize: Optional[int] = None,
+    ) -> None:
         super().__init__()
         self.options = gdal_options or {}
+        self.overview_blocksize = overview_blocksize
 
     @classmethod
     def from_existing(
@@ -409,6 +414,7 @@ class FileWrite:
         shape: Tuple[int, int],
         overviews: bool = True,
         blocksize_yx: Optional[Tuple[int, int]] = None,
+        overview_blocksize: Optional[int] = None,
         compress="deflate",
         zlevel=4,
     ) -> "FileWrite":
@@ -435,7 +441,7 @@ class FileWrite:
         if overviews:
             options["copy_src_overviews"] = "yes"
 
-        return FileWrite(options)
+        return FileWrite(options, overview_blocksize=overview_blocksize)
 
     def write_from_ndarray(
         self,
@@ -591,11 +597,14 @@ class FileWrite:
 
             if overviews:
                 # Move the overviews to the start of the file, as required to be COG-compliant.
-                rio_copy(
-                    unstructured_image,
-                    out_filename,
-                    **{"copy_src_overviews": True, **rio_args},
-                )
+                with rasterio.Env(
+                    GDAL_TIFF_OVR_BLOCKSIZE=self.overview_blocksize or 512
+                ):
+                    rio_copy(
+                        unstructured_image,
+                        out_filename,
+                        **{"copy_src_overviews": True, **rio_args},
+                    )
             else:
                 unstructured_image.rename(out_filename)
 
