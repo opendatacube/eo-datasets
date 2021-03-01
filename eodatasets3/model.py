@@ -368,7 +368,7 @@ class ComplicatedNamingConventions:
         """Abbreviated form of a producer, as used in dea product names. eg. 'ga', 'usgs'."""
         if not self.dataset.producer:
             return None
-        producer_domains = {"ga.gov.au": "ga", "usgs.gov": "usgs"}
+        producer_domains = {"ga.gov.au": "ga", "usgs.gov": "usgs", "sinergise.com": "sin"}
         try:
             return producer_domains[self.dataset.producer]
         except KeyError:
