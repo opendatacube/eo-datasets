@@ -5,6 +5,7 @@ ARG ENVIRONMENT=test
 COPY requirements*.txt /tmp/
 # RUN env-build-tool new /tmp/requirements.txt ${py_env_path}
 RUN if [ "$ENVIRONMENT" = "test" ] ; then \
+        rm /wheels/rasterio*whl ; \
         env-build-tool new /tmp/requirements-test.txt ${py_env_path} ; \
     else \
         env-build-tool new /tmp/requirements.txt ${py_env_path} ; \
