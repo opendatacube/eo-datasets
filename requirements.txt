@@ -2,7 +2,8 @@ numpy
 pyproj
 xarray
 datacube
-rasterio
+# Min needed for rio-cogeo (tests fail on import without it):
+rasterio==1.1.8
 cattrs
 boltons
 jsonschema>=3
