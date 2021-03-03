@@ -205,12 +205,23 @@ def _find_a_common_name(
     >>> _find_a_common_name(['nbar_blue', 'nbar_red', 'nbar_green'], all_possible_names=all_names)
     'nbar'
     """
+    options = []
+
+    non_group_names = (all_possible_names or set()).difference(group_of_names)
 
     # If all measurements have a common prefix (like 'nbar_') it makes a nice grid name.
-    options = [
-        s.strip("_:")
-        for s in (os.path.commonprefix(group_of_names), _common_suffix(group_of_names))
-    ]
+    prefix = os.path.commonprefix(group_of_names)
+    if not any(name.startswith(prefix) for name in non_group_names):
+        options.append(prefix)
+
+    suffix = _common_suffix(group_of_names)
+    if not any(name.endswith(suffix) for name in non_group_names):
+        options.append(suffix)
+
+    if not options:
+        return None
+
+    options = [s.strip("_:") for s in options]
     # Pick the longest candidate.
     options.sort(key=len, reverse=True)
     return options[0] or None
@@ -297,6 +308,9 @@ class MeasurementRecord:
                 grid_name = _find_a_common_name(
                     list(measurements.keys()), all_possible_names=all_measurement_names
                 )
+                if not grid_name:
+                    # Nothing useful found!
+                    break
 
             if grid_name in named_grids:
                 # Clash of names! This strategy wont work.
@@ -437,9 +451,6 @@ class MeasurementRecord:
         for grid, measurements in self._measurements_per_grid.items():
             for band_name, meas_path in measurements.items():
                 yield grid, band_name, meas_path.path
-
-    def find_grid_names(self, grids: Dict[GridSpec, _Measurements]):
-        ...
 
 
 @attr.s(auto_attribs=True)
