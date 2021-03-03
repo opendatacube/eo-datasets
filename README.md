@@ -28,13 +28,20 @@ The assembler api aims to make it easy to write datasets.
     with DatasetAssembler(
             Path('/some/output/collection/path'), 
             naming_conventions='default') as p:
+        
+        # Add some common metadata fields.
         p.platform = 'landsat-7'
-        p.instrument = 'etm'
+        p.instrument = 'ETM'
         p.datetime = datetime(2019, 7, 4, 13, 7, 5)
         p.processed_now()
         
         # Support for custom metadata fields
         p.properties['fmask:cloud_shadow'] = 42.0
+        
+        # If you have a source dataset, you can include it as provenance.
+        # Assembler can also copy common metadata properties from it.
+        # (... so we didn't need to set the "platform" above!)
+        p.add_source_path(source_dataset, auto_inherit_properties=True)
 
         # Write measurements. They can be from numpy arrays, open rasterio datasets,
         # file paths, ODC Datasets...
@@ -51,7 +58,7 @@ The assembler api aims to make it easy to write datasets.
 The Assembler will write a folder of [COG](https://www.cogeo.org/) imagery, an [eo3](#open-data-cube-compatibility) 
 metadata doc for Open Data Cube, and create appropriate file and folder structures for the chosen naming conventions. 
 
-If you already have imagery, you can use it to add a matching metadata document. 
+If you already have existing imagery, you can use DatasetAssembler to create a matching metadata document. 
 
 Many other uses and fields are available, see [the docs](https://eodatasets.readthedocs.io/en/latest/). 
 
