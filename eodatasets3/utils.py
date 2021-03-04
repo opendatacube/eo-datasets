@@ -109,8 +109,14 @@ def normalise_band_name(band_name: str) -> str:
     return band_name.lower().replace("-", "_")
 
 
-def get_collection_number(producer: str, usgs_collection_number: int) -> int:
+def get_collection_number(
+    platform: str, producer: str, usgs_collection_number: int
+) -> int:
     # This logic is in one place as it's not very future-proof...
+
+    # We didn't do sentinel before now...
+    if platform.startswith("sentinel"):
+        return 3
 
     if producer == "usgs.gov":
         return usgs_collection_number

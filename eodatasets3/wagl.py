@@ -171,17 +171,12 @@ def _unpack_observation_attributes(
     """
     resolution_groups = sorted(g for g in h5group.keys() if g.startswith("RES-GROUP-"))
     # Use the highest resolution as the ground sample distance.
-    del p.properties["eo:gsd"]
+    if "eo:gsd" in p.properties:
+        del p.properties["eo:gsd"]
     p.properties["eo:gsd"] = min(
         min(h5group[grp].attrs["resolution"]) for grp in resolution_groups
     )
 
-    if len(resolution_groups) not in (1, 2):
-        raise NotImplementedError(
-            f"Unexpected set of res-groups. "
-            f"Expected either two (with pan) or one (without pan), "
-            f"got {resolution_groups!r}"
-        )
     # Res groups are ordered in descending resolution, so res-group-0 is the highest resolution.
     # (ie. res-group-0 in landsat 7/8 is Panchromatic)
     # We only care about packaging OA data for the "common" bands: not panchromatic.
@@ -350,7 +345,7 @@ class Granule:
     name: str
     wagl_hdf5: Path
     wagl_metadata: Dict
-    source_level1_metadata: DatasetDoc
+    source_level1_metadata: Optional[DatasetDoc]
 
     fmask_doc: Optional[Dict] = None
     fmask_image: Optional[Path] = None
@@ -399,15 +394,20 @@ class Granule:
                     level1_tar_path = Path(
                         get_path(wagl_doc, ("source_datasets", "source_level1"))
                     )
-                    level1_metadata_path = level1_tar_path.with_suffix(
-                        ".odc-metadata.yaml"
-                    )
-                if not level1_metadata_path.exists():
+                    if level1_tar_path.exists():
+                        level1_metadata_path = level1_tar_path.with_suffix(
+                            ".odc-metadata.yaml"
+                        )
+                if level1_metadata_path and not level1_metadata_path.exists():
                     raise ValueError(
                         f"No level1 metadata found at {level1_metadata_path}"
                     )
 
-                level1 = serialise.from_path(level1_metadata_path)
+                level1 = (
+                    serialise.from_path(level1_metadata_path)
+                    if level1_metadata_path
+                    else None
+                )
 
                 fmask_image_path = fmask_image_path or wagl_hdf5.with_name(
                     f"{granule_name}.fmask.img"
@@ -512,32 +512,32 @@ def package(
         granule_group = fid[granule.name]
 
         with DatasetAssembler(
-            out_directory,
+            out_directory.absolute(),
             # WAGL stamps a good, random ID already.
             dataset_id=granule.wagl_metadata.get("id"),
+            # naming_conventions="dea_s2" if ('sentinel' in p.platform) else "dea",
             naming_conventions="dea",
         ) as p:
-            level1 = granule.source_level1_metadata
-            p.add_source_dataset(level1, auto_inherit_properties=True)
+            wagl_doc = _apply_wagl_metadata(p, granule_group)
 
             # It's a GA ARD product.
             p.producer = "ga.gov.au"
             p.product_family = "ard"
-
-            wagl_doc = _apply_wagl_metadata(p, granule_group)
-            p.maturity = (
-                # When level 1 is NRT, ARD is always NRT.
-                "nrt"
-                if level1.maturity == "nrt"
-                else _determine_maturity(
-                    acq_date=p.datetime,
-                    processed=p.processed,
-                    wagl_doc=wagl_doc,
-                )
+            p.maturity = _determine_maturity(
+                acq_date=p.datetime,
+                processed=p.processed,
+                wagl_doc=wagl_doc,
             )
+            if granule.source_level1_metadata is not None:
+                p.add_source_dataset(
+                    granule.source_level1_metadata, auto_inherit_properties=True
+                )
+                # When level 1 is NRT, ARD is always NRT.
+                if granule.source_level1_metadata.maturity == "nrt":
+                    p.maturity = "nrt"
 
             org_collection_number = utils.get_collection_number(
-                p.producer, p.properties["landsat:collection_number"]
+                p.platform, p.producer, p.properties.get("landsat:collection_number")
             )
 
             p.dataset_version = f"{org_collection_number}.2.0"
@@ -556,7 +556,7 @@ def package(
                         p,
                         included_products,
                         granule_group,
-                        infer_datetime_range=level1.platform.startswith("landsat"),
+                        infer_datetime_range=p.platform.startswith("landsat"),
                     )
                 if granule.fmask_image:
                     with do(f"Writing fmask from {granule.fmask_image} "):
@@ -599,7 +599,8 @@ def _read_fmask_doc(p: DatasetAssembler, doc: Dict):
     for name, value in doc["percent_class_distribution"].items():
         # From Josh: fmask cloud cover trumps the L1 cloud cover.
         if name == "cloud":
-            del p.properties["eo:cloud_cover"]
+            if "eo:cloud_cover" in p.properties:
+                del p.properties["eo:cloud_cover"]
             p.properties["eo:cloud_cover"] = value
 
         p.properties[f"fmask:{name}"] = value
@@ -645,6 +646,11 @@ def _apply_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group) -> Dict
         raise ValueError("No nbar metadata found in granule")
 
     [wagl_doc] = loads_yaml(granule_group[wagl_path][()])
+
+    source = wagl_doc["source_datasets"]
+    p.datetime = source["acquisition_datetime"]
+    p.platform = source["platform_id"]
+    p.instrument = source["sensor_id"]
 
     try:
         p.processed = get_path(wagl_doc, ("system_information", "time_processed"))
