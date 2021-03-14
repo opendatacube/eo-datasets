@@ -28,8 +28,9 @@ The assembler api aims to make it easy to write datasets.
     with DatasetAssembler(
             Path('/some/output/collection/path'), 
             naming_conventions='default') as p:
+        p.platform = 'landsat-7'
+        p.instrument = 'etm'
         p.datetime = datetime(2019, 7, 4, 13, 7, 5)
-        p.product_family = "level1"
         p.processed_now()
         
         # Support for custom metadata fields
@@ -47,10 +48,12 @@ The assembler api aims to make it easy to write datasets.
         p.done()
 ```
 
-The assembler will write a folder of [COG](https://www.cogeo.org/) imagery, an [eo3](#open-data-cube-compatibility) 
+The Assembler will write a folder of [COG](https://www.cogeo.org/) imagery, an [eo3](#open-data-cube-compatibility) 
 metadata doc for Open Data Cube, and create appropriate file and folder structures for the chosen naming conventions. 
 
-Many other fields are available, see [the docs](https://eodatasets.readthedocs.io/en/latest/).
+If you already have imagery, you can use it to add a matching metadata document. 
+
+Many other uses and fields are available, see [the docs](https://eodatasets.readthedocs.io/en/latest/). 
 
 Further examples can be seen in the tests [tests/integration/test_assemble.py](tests/integration/test_assemble.py),
 [L1](eodatasets3/prepare/landsat_l1_prepare.py) or [ARD](eodatasets3/wagl.py) packagers.

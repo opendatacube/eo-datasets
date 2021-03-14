@@ -98,12 +98,13 @@ class DatasetAssembler(EoFields):
         """
         Assemble a dataset with ODC metadata, writing metadata and (optionally) its imagery as COGs.
 
-        There are three optional paths that can be specified. At least one must be.
+        There are three optional paths that can be specified. At least one must be specified. Collection,
+        dataset or metadata path.
 
         - A *collection path* is the root folder where datasets will live (in sub-[sub]-folders).
         - Each dataset has its own *dataset location*, as stored in an Open Data Cube index.
-          All paths inside the metadata are relative to this location.
-        - An output metadata document location.
+          All paths inside the metadata document are relative to this location.
+        - An output *metadata document location*.
 
         If you're writing data, you typically only need to specify the collection path, and the others
         will be automatically generated using the naming conventions.
@@ -123,7 +124,7 @@ class DatasetAssembler(EoFields):
             Optional metadata document output path. Otherwise it will be generated according to the collection path
             and naming conventions.
         :param dataset_id:
-            Optional UUID for this dataset, otherwise a random only will be created. Use this if you have a stable
+            Optional UUID for this dataset, otherwise a random one will be created. Use this if you have a stable
             way of generating your own IDs.
         :param if_exists:
             What to do if the output dataset already exists? By default, throw an error.
@@ -434,7 +435,7 @@ class DatasetAssembler(EoFields):
         file_id=None,
     ):
         """
-        Write a measurement by reading it an open rasterio dataset
+        Write a measurement by reading it from an open rasterio dataset
 
         :param ds: An open rasterio dataset
 
@@ -803,6 +804,9 @@ class DatasetAssembler(EoFields):
         return dataset.id, target_metadata_path
 
     def _crs_str(self, crs: CRS) -> str:
+        # TODO: We should support more authorities here.
+        #       if rasterio>=1.1.7, can use crs.to_authority(), but almost
+        #       everyone is currently on 1.1.6
         return f"epsg:{crs.to_epsg()}" if crs.is_epsg_code else crs.to_wkt()
 
     def _document_thumbnail(self, thumb_path, kind=None):
@@ -922,11 +926,16 @@ class DatasetAssembler(EoFields):
 
     def add_accessory_file(self, name: str, path: Path):
         """
-        Record a reference to an additional file. Such as native metadata, thumbnails,
-        checksums, etc. Anything other than ODC measurements.
+        Record a reference to an additional file that's part of the dataset, but is
+        not a band/measurement.
+
+        Such as non-ODC metadata, thumbnails, checksums, etc. Any included file that
+        is not recorded in the measurements.
 
         By convention, the name should have prefixes with their category, such as
-        'metadata:' or 'thumbnail:'
+        'metadata:' or 'thumbnail:'.
+
+        eg. 'metadata:landsat_processor', 'checksum:sha1', 'thumbnail:full'.
 
         :param name: identifying name, eg 'metadata:mtl'
         :param path: local path to file.
