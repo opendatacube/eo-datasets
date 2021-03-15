@@ -85,7 +85,7 @@ def expected_dataset_document():
                 ],
             },
         },
-        "label": "sin_s2am_level1_1-0-0_55HFA_2020-10-11",
+        "label": "sinergise_s2am_level1_1-0-0_55HFA_2020-10-11",
         "lineage": {},
         "measurements": {
             "blue": {"grid": "green_nir_1_blue_red", "path": "B02.jp2"},
@@ -111,7 +111,7 @@ def expected_dataset_document():
                 "path": "B09.jp2",
             },
         },
-        "product": {"name": "sin_s2am_level1_1"},
+        "product": {"name": "sinergise_s2am_level1_1"},
         "properties": {
             "datetime": datetime.datetime(
                 2020, 10, 11, 0, 6, 49, 882000, tzinfo=datetime.timezone.utc
