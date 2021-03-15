@@ -8,6 +8,11 @@ import click
 from typing import Dict, Tuple
 from eodatasets3 import DatasetAssembler
 
+"""
+Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise.
+"""
+
+
 SENTINEL_MSI_BAND_ALIASES = {
     "01": "coastal_aerosol",
     "02": "blue",
@@ -26,23 +31,23 @@ SENTINEL_MSI_BAND_ALIASES = {
 
 
 def extract_metadata_from_product_info(product_path: Path) -> Dict:
-    fp = open(product_path)
-    product = json.loads(fp.read())
+    with open(product_path) as fp:
+        product = json.loads(fp.read())
 
-    synergise_product_name = product["name"]
-    synergise_product_id = product["id"]
-    timestamp = product["tiles"][0]["timestamp"]
-    utm_zone = product["tiles"][0]["utmZone"]
-    latitude_band = product["tiles"][0]["latitudeBand"]
-    grid_square = product["tiles"][0]["gridSquare"]
-    region_code = "%s%s%s" % (utm_zone, latitude_band, grid_square)
+        synergise_product_name = product["name"]
+        synergise_product_id = product["id"]
+        timestamp = product["tiles"][0]["timestamp"]
+        utm_zone = product["tiles"][0]["utmZone"]
+        latitude_band = product["tiles"][0]["latitudeBand"]
+        grid_square = product["tiles"][0]["gridSquare"]
+        region_code = "%s%s%s" % (utm_zone, latitude_band, grid_square)
 
-    return {
-        "synergise_product_name": synergise_product_name,
-        "synergise_product_id": synergise_product_id,
-        "timestamp": timestamp,
-        "region_code": region_code,
-    }
+        return {
+            "synergise_product_name": synergise_product_name,
+            "synergise_product_id": synergise_product_id,
+            "timestamp": timestamp,
+            "region_code": region_code,
+        }
 
 
 def extract_metadata_from_metadata_xml(metadata_xml_path: str) -> Dict:
@@ -154,25 +159,35 @@ def prepare_and_write(
 
 
 @click.command(help=__doc__)
-@click.argument(
-    "product_path",
+@click.option(
+    "--product",
     type=str,
+    required=True,
+    help="Path to productInfo.json in sinergise dataset",
 )
-@click.argument(
-    "metadata_xml_path",
+@click.option(
+    "--metadata-xml",
     type=str,
+    required=True,
+    help="Path to metadata.xml in sinergise dataset",
 )
-@click.argument(
-    "format_correctness_path",
+@click.option(
+    "--format-correctness",
     type=str,
+    required=True,
+    help="Path to FORMAT_CORRECTNESS.xml in sinergise dataset",
 )
-@click.argument(
-    "output_yaml_path",
+@click.option(
+    "--dataset-document",
     type=str,
+    required=True,
+    help="Path to output dataset document (yaml)",
 )
-@click.argument(
-    "ds_path",
+@click.option(
+    "--dataset",
     type=str,
+    required=True,
+    help="Path to sinergise dataset",
 )
 def main(
     product_path: str,
@@ -195,30 +210,6 @@ def main(
         format_correctness,
     )
     return path
-
-
-def run(
-    product_path, 
-    metadata_xml_path, 
-    format_correctness_path, 
-    output_yaml_path, 
-    ds_path
-):
-
-    product_info = extract_metadata_from_product_info(Path(product_path))
-    metadata_xml = extract_metadata_from_metadata_xml(metadata_xml_path)
-    format_correctness = extract_metadata_from_format_correctness(
-        format_correctness_path
-    )
-    uuid, path = prepare_and_write(
-        Path(output_yaml_path),
-        Path(ds_path),
-        product_info,
-        metadata_xml,
-        format_correctness,
-    )
-    return path
-
 
 if __name__ == "__main__":
     main()
