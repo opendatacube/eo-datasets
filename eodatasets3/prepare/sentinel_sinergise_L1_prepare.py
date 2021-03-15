@@ -1,17 +1,12 @@
-from datetime import datetime
 from pathlib import Path
 from xml.dom import minidom
 import json
 from os import listdir
 from os.path import isfile, join
-import sys
 import uuid
 import click
 from typing import Dict, Tuple
 from eodatasets3 import DatasetAssembler
-from eodatasets3.ui import PathPath
-
-# python sentinel_sinergise_L1_prepare.py "/home/547/awo547/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446/productInfo.json" "/home/547/awo547/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446/metadata.xml" "/home/547/awo547/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446/qi/FORMAT_CORRECTNESS.xml" "/home/547/awo547/sin_s2am_level1_1-0-0_55HFA_2020-10-11.yaml" "/home/547/awo547/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446/"
 
 SENTINEL_MSI_BAND_ALIASES = {
     "01": "coastal_aerosol",
@@ -203,7 +198,11 @@ def main(
 
 
 def run(
-    product_path, metadata_xml_path, format_correctness_path, output_yaml_path, ds_path
+    product_path, 
+    metadata_xml_path, 
+    format_correctness_path, 
+    output_yaml_path, 
+    ds_path
 ):
 
     product_info = extract_metadata_from_product_info(Path(product_path))

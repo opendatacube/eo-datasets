@@ -1,25 +1,10 @@
-# from eodatasets3.prepare import sentinel_sinergise_L1_prepare
 from pathlib import Path
-from pprint import pprint
 import pytest
 import shutil
 import yaml
 import datetime
-
-import sys
-
-sys.path.append("/g/data/up71/projects/index-testing-wagl/repo/eo-datasets/tests")
-sys.path.append("/g/data/up71/projects/index-testing-wagl/repo/eo-datasets/eodatasets3")
-sys.path.append(
-    "/g/data/up71/projects/index-testing-wagl/repo/eo-datasets/eodatasets3/prepare"
-)
-
-from common import check_prepare_outputs  # Change to tests.common
-from common import run_prepare_cli  # Change to tests.common
-
-from prepare import sentinel_sinergise_L1_prepare  # eodatasets3.prepare
-
-# from sentinel_sinergise_L1_prepare import run
+from tests.common import run_prepare_cli
+from eodatasets3.prepare import sentinel_sinergise_L1_prepare
 
 path = (
     "data/sinergise_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446"
@@ -162,8 +147,6 @@ def test_run(tmp_path, expected_dataset_document):
 
     # GIVEN:
     #     A folder of imagery
-    # (write code: set up a tmp folder of imagery)
-    # Set up pretend test stuff
     outdir = tmp_path / DATASET_DIR.name
     indir = DATASET_DIR
 
@@ -173,7 +156,7 @@ def test_run(tmp_path, expected_dataset_document):
         shutil.copytree(indir, outdir)
 
     # WHEN:
-    #     I run prepare on that folder
+    #    Run prepare on that folder
     output_yaml_path = outdir / "test.yaml"
 
     run_prepare_cli(
