@@ -617,7 +617,7 @@ class DatasetAssembler(EoFields):
                 name,
                 images.GridSpec.from_rio(ds),
                 path,
-                ds.read(1),
+                ds.read(1) if expand_valid_data else None,
                 nodata=ds.nodata,
                 expand_valid_data=expand_valid_data,
             )
