@@ -7,6 +7,7 @@ import uuid
 import click
 from typing import Dict, Tuple
 from eodatasets3 import DatasetAssembler
+from eodatasets3.ui import PathPath
 
 """
 Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise.
@@ -36,6 +37,8 @@ def extract_metadata_from_product_info(product_path: Path) -> Dict:
 
         synergise_product_name = product["name"]
         synergise_product_id = product["id"]
+        if len(product["tiles"]) > 1:
+            raise NotImplementedError("No support for multi-tiled products yet")
         timestamp = product["tiles"][0]["timestamp"]
         utm_zone = product["tiles"][0]["utmZone"]
         latitude_band = product["tiles"][0]["latitudeBand"]
@@ -116,12 +119,12 @@ def prepare_and_write(
         p.datetime = product_info["timestamp"]
         p.properties["eo:instrument"] = "MSI"
         p.properties["eo:platform"] = "sentinel-2a"
-        p.properties["odc:dataset_version"] = "1.0.0"
-        p.properties["odc:producer"] = "sinergise.com"
-        p.properties["odc:product_family"] = "level1"
         p.properties["odc:processing_datetime"] = (
             format_correctness["creation_date"].split("=")[1].replace("T", " ")
         )
+        p.properties["odc:dataset_version"] = "1.0.{p.processed:%Y%m%d}"
+        p.properties["odc:producer"] = "sinergise.com"
+        p.properties["odc:product_family"] = "level1"
         p.properties["eo:sun_elevation"] = metadata_xml["solar_zenith"]
         p.properties["eo:sun_azimuth"] = metadata_xml["solar_azimuth"]
         p.properties["eo:gsd"] = metadata_xml["resolution"]
@@ -161,7 +164,7 @@ def prepare_and_write(
 @click.command(help=__doc__)
 @click.option(
     "--product",
-    type=str,
+    type=PathPath(),
     required=True,
     help="Path to productInfo.json in sinergise dataset",
 )
@@ -180,31 +183,31 @@ def prepare_and_write(
 @click.option(
     "--dataset-document",
     type=str,
-    required=True,
+    required=PathPath(),
     help="Path to output dataset document (yaml)",
 )
 @click.option(
     "--dataset",
     type=str,
-    required=True,
+    required=PathPath(),
     help="Path to sinergise dataset",
 )
 def main(
-    product_path: str,
+    product_path: Path,
     metadata_xml_path: str,
     format_correctness_path: str,
-    output_yaml_path: str,
-    ds_path: str,
+    output_yaml_path: Path,
+    ds_path: Path,
 ):
-    product_info = extract_metadata_from_product_info(Path(product_path))
+    product_info = extract_metadata_from_product_info(product_path)
     metadata_xml = extract_metadata_from_metadata_xml(metadata_xml_path)
     format_correctness = extract_metadata_from_format_correctness(
         format_correctness_path
     )
 
     uuid, path = prepare_and_write(
-        Path(output_yaml_path),
-        Path(ds_path),
+        output_yaml_path,
+        ds_path,
         product_info,
         metadata_xml,
         format_correctness,
