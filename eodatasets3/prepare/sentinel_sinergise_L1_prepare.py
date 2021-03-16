@@ -201,7 +201,9 @@ def main(
 ):
     product_info = extract_metadata_from_product_info(product)
     metadata_xml_dict = extract_metadata_from_metadata_xml(metadata_xml)
-    format_correctness_dict = extract_metadata_from_format_correctness(format_correctness)
+    format_correctness_dict = extract_metadata_from_format_correctness(
+        format_correctness
+    )
 
     uuid, path = prepare_and_write(
         dataset_document,
