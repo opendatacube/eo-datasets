@@ -162,15 +162,15 @@ def test_run(tmp_path, expected_dataset_document):
     run_prepare_cli(
         sentinel_sinergise_L1_prepare.main,
         "--product",
-        str(PRODUCT_INFO_PATH),
+        PRODUCT_INFO_PATH,
         "--metadata_xml",
-        str(METADATA_XML_PATH),
+        METADATA_XML_PATH,
         "--format_correctness",
-        str(FORMAT_CORRECTNESS_PATH),
+        FORMAT_CORRECTNESS_PATH,
         "--dataset_document",
-        str(output_yaml_path),
+        output_yaml_path,
         "--dataset",
-        str(outdir),
+        outdir,
     )
 
     # THEN
