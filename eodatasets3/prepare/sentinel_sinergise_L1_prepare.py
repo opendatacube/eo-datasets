@@ -169,19 +169,19 @@ def prepare_and_write(
     help="Path to productInfo.json in sinergise dataset",
 )
 @click.option(
-    "--metadata-xml",
+    "--metadata_xml",
     type=str,
     required=True,
     help="Path to metadata.xml in sinergise dataset",
 )
 @click.option(
-    "--format-correctness",
+    "--format_correctness",
     type=str,
     required=True,
     help="Path to FORMAT_CORRECTNESS.xml in sinergise dataset",
 )
 @click.option(
-    "--dataset-document",
+    "--dataset_document",
     type=str,
     required=PathPath(),
     help="Path to output dataset document (yaml)",
@@ -193,21 +193,21 @@ def prepare_and_write(
     help="Path to sinergise dataset",
 )
 def main(
-    product_path: Path,
-    metadata_xml_path: str,
-    format_correctness_path: str,
-    output_yaml_path: Path,
-    ds_path: Path,
+    product: Path,
+    metadata_xml: str,
+    format_correctness: str,
+    dataset_document: Path,
+    dataset: Path,
 ):
-    product_info = extract_metadata_from_product_info(product_path)
-    metadata_xml = extract_metadata_from_metadata_xml(metadata_xml_path)
+    product_info = extract_metadata_from_product_info(product)
+    metadata_xml = extract_metadata_from_metadata_xml(metadata_xml)
     format_correctness = extract_metadata_from_format_correctness(
-        format_correctness_path
+        format_correctness
     )
 
     uuid, path = prepare_and_write(
-        output_yaml_path,
-        ds_path,
+        dataset_document,
+        dataset,
         product_info,
         metadata_xml,
         format_correctness,
