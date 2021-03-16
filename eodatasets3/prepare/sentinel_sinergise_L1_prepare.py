@@ -155,7 +155,7 @@ def prepare_and_write(
             if ".jp2" in dataset and "preview" not in dataset and "TCI" not in dataset:
                 band = dataset.replace(".jp2", "").replace("B", "")
                 name = SENTINEL_MSI_BAND_ALIASES[band]
-                path = ds_path / dataset
+                path = Path(ds_path) / dataset
                 p.note_measurement(path=path, name=name)
 
         return p.done()
@@ -201,9 +201,7 @@ def main(
 ):
     product_info = extract_metadata_from_product_info(product)
     metadata_xml = extract_metadata_from_metadata_xml(metadata_xml)
-    format_correctness = extract_metadata_from_format_correctness(
-        format_correctness
-    )
+    format_correctness = extract_metadata_from_format_correctness(format_correctness)
 
     uuid, path = prepare_and_write(
         dataset_document,
@@ -213,6 +211,7 @@ def main(
         format_correctness,
     )
     return path
+
 
 if __name__ == "__main__":
     main()
