@@ -179,4 +179,6 @@ def test_run(tmp_path, expected_dataset_document):
     with output_yaml_path.open("r") as f:
         generated_doc = yaml.safe_load(f)
         del generated_doc["id"]
+    from pprint import pprint
+    pprint(generated_doc)
     assert expected_dataset_document == generated_doc
