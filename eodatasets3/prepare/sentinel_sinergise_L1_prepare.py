@@ -122,7 +122,7 @@ def prepare_and_write(
         p.properties["odc:processing_datetime"] = (
             format_correctness["creation_date"].split("=")[1].replace("T", " ")
         )
-        p.properties["odc:dataset_version"] = "1.0.{p.processed:%Y%m%d}"
+        p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
         p.properties["odc:producer"] = "sinergise.com"
         p.properties["odc:product_family"] = "level1"
         p.properties["eo:sun_elevation"] = metadata_xml["solar_zenith"]
