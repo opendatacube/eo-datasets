@@ -85,7 +85,7 @@ def expected_dataset_document():
                 ],
             },
         },
-        "label": "sinergise_s2am_level1_1-0-0_55HFA_2020-10-11",
+        "label": "sinergise_s2am_level1_1-0-20201011_55HFA_2020-10-11",
         "lineage": {},
         "measurements": {
             "blue": {"grid": "green_nir_1_blue_red", "path": "B02.jp2"},
@@ -122,7 +122,7 @@ def expected_dataset_document():
             "eo:platform": "sentinel-2a",
             "eo:sun_azimuth": 37.3713908882192,
             "eo:sun_elevation": 46.3307328858312,
-            "odc:dataset_version": "1.0.0",
+            "odc:dataset_version": "1.0.20201011",
             "odc:file_format": "JPEG2000",
             "odc:processing_datetime": datetime.datetime(
                 2020, 10, 11, 1, 47, 21, tzinfo=datetime.timezone.utc
