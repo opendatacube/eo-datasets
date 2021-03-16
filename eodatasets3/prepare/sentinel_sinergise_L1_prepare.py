@@ -182,14 +182,14 @@ def prepare_and_write(
 )
 @click.option(
     "--dataset_document",
-    type=str,
-    required=PathPath(),
+    type=PathPath(),
+    required=True,
     help="Path to output dataset document (yaml)",
 )
 @click.option(
     "--dataset",
-    type=str,
-    required=PathPath(),
+    type=PathPath(),
+    required=True,
     help="Path to sinergise dataset",
 )
 def main(
