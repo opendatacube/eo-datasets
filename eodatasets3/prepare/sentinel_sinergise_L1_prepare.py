@@ -1,3 +1,7 @@
+"""
+Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise.
+"""
+
 from pathlib import Path
 from xml.dom import minidom
 import json
@@ -8,10 +12,6 @@ import click
 from typing import Dict, Tuple
 from eodatasets3 import DatasetAssembler
 from eodatasets3.ui import PathPath
-
-"""
-Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise.
-"""
 
 
 SENTINEL_MSI_BAND_ALIASES = {
@@ -169,19 +169,19 @@ def prepare_and_write(
     help="Path to productInfo.json in sinergise dataset",
 )
 @click.option(
-    "--metadata_xml",
+    "--metadata-xml",
     type=str,
     required=True,
     help="Path to metadata.xml in sinergise dataset",
 )
 @click.option(
-    "--format_correctness",
+    "--format-correctness",
     type=str,
     required=True,
     help="Path to FORMAT_CORRECTNESS.xml in sinergise dataset",
 )
 @click.option(
-    "--dataset_document",
+    "--dataset-document",
     type=PathPath(),
     required=True,
     help="Path to output dataset document (yaml)",
