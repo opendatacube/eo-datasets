@@ -169,19 +169,28 @@ def _unpack_observation_attributes(
     Unpack the angles + other supplementary datasets produced by wagl.
     Currently only the mode resolution group gets extracted.
     """
-    resolution_groups = sorted(g for g in h5group.keys() if g.startswith("RES-GROUP-"))
+    resolution_groups = {
+        tuple(h5group[k].attrs["resolution"]): h5group[k]
+        for k in h5group.keys()
+        if k.startswith("RES-GROUP-")
+    }
+
     # Use the highest resolution as the ground sample distance.
     if "eo:gsd" in p.properties:
         del p.properties["eo:gsd"]
-    p.properties["eo:gsd"] = min(
-        min(h5group[grp].attrs["resolution"]) for grp in resolution_groups
-    )
+    p.properties["eo:gsd"] = min(min(resolution_groups.keys()))
 
-    # Res groups are ordered in descending resolution, so res-group-0 is the highest resolution.
-    # (ie. res-group-0 in landsat 7/8 is Panchromatic)
-    # We only care about packaging OA data for the "common" bands: not panchromatic.
-    # So we always pick the lowest resolution: the last (or only) group.
-    res_grp = h5group[resolution_groups[-1]]
+    if p.platform.startswith("landsat"):
+        # For Landsat, we only cared about packaging OA data for the "common"
+        # bands (not panchromatic). So we always pick the higher resolution.
+        oa_resolution = max(resolution_groups.keys())
+    elif p.platform.startswith("sentinel"):
+        oa_resolution = (20.0, 20.0)
+    else:
+        raise NotImplementedError(
+            f"Don't know how to choose OA resolution for platform {p.platform!r}"
+        )
+    res_grp = resolution_groups[oa_resolution]
 
     def _write(section: str, dataset_names: Sequence[str]):
         """
