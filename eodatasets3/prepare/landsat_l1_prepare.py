@@ -367,7 +367,7 @@ def prepare_and_write(
 
         p.region_code = f"{p.properties['landsat:wrs_path']:03d}{p.properties['landsat:wrs_row']:03d}"
         org_collection_number = utils.get_collection_number(
-            p.producer, p.properties["landsat:collection_number"]
+            p.platform, p.producer, p.properties["landsat:collection_number"]
         )
         p.dataset_version = f"{org_collection_number}.0.{p.processed:%Y%m%d}"
 
