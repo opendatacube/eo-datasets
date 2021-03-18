@@ -529,6 +529,18 @@ def package(
                 wagl_doc=wagl_doc,
             )
             if granule.source_level1_metadata is not None:
+                # For historical consistency: we want to use the instrument that the source L1 product
+                # came from, not the instruments reported from the WAGL doc.
+                #
+                # Eg.
+                #     Level 1 will say "OLI_TIRS", while wagl doc will say "OLI".
+                #     Our current C3 products say "OLI_TIRS" so we need to stay consistent.
+                #     (even though WAGL only *used* the OLI bands, it came from an OLI_TIRS observation)
+                #
+                # So delete our current wagl one, since we're adding a source dataset:
+                if p.instrument is not None:
+                    del p.properties["eo:instrument"]
+
                 p.add_source_dataset(
                     granule.source_level1_metadata, auto_inherit_properties=True
                 )
