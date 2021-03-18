@@ -1,10 +1,13 @@
 """
-Make a HDF5 file much smaller by shrinking all embedded images.
+Alter a HDF5 file, making it much smaller by shrinking all embedded images.
+
+It modifies the file in-place!
 
 (Intended for creating test datasets where the pixels don't
 matter much but the structure does. The downsampling is dirty.)
 """
 import re
+import shutil
 from pathlib import Path
 from typing import List, Optional
 
@@ -48,63 +51,78 @@ def downsample(input: Path, factor: int, anti_alias: bool):
     fmask_image = input.with_name(f"{granule_name}.fmask.img")
 
     nbar_size = None
-    with h5py.File(input) as f:
-        image_paths = find_h5_paths(f, "IMAGE")
 
-        for i, image_path in enumerate(image_paths):
-            old_image: Optional[h5py.Dataset] = f[image_path]
+    # Create temporary directory
+    original = input.with_suffix(".original.h5")
+    secho(f"Creating backup to {original.name}")
+    shutil.copy(input, original)
 
-            def info(msg: str):
-                secho(
-                    f"{i: 4}/{len(image_paths)} {style(repr(image_path), fg='blue')}: {msg}"
-                )
+    try:
+        with h5py.File(input, "r+") as f:
+            image_paths = find_h5_paths(f, "IMAGE")
+            secho(f"Found {len(image_paths)} images")
+            for i, image_path in enumerate(image_paths):
+                old_image: Optional[h5py.Dataset] = f[image_path]
 
-            old_shape = old_image.shape
-            if all(dim_size < factor for dim_size in old_shape):
-                info("Skipping")
-                continue
+                def info(msg: str):
+                    secho(
+                        f"{i: 4}/{len(image_paths)} {style(repr(image_path), fg='blue')}: {msg}"
+                    )
 
-            attrs = dict(old_image.attrs.items())
-            old_geotransform = attrs["geotransform"]
+                old_shape = old_image.shape
+                if all(dim_size < factor for dim_size in old_shape):
+                    info("Skipping")
+                    continue
 
-            new_data = old_image[()][::factor, ::factor]
-            new_shape = new_data.shape
-            info(f"New shape: {new_shape!r}")
-            del old_image
-            del f[str(image_path)]
+                attrs = dict(old_image.attrs.items())
+                old_geotransform = attrs["geotransform"]
 
-            folder, name = image_path.rsplit("/", 1)
-            parent: h5py.Group = f[str(folder)]
+                new_data = old_image[()][::factor, ::factor]
+                new_shape = new_data.shape
+                info(f"New shape: {new_shape!r}")
+                del old_image
+                del f[str(image_path)]
 
-            image = parent.create_dataset(name, new_shape, data=new_data)
-            new_geotransform = list(old_geotransform)
-            new_geotransform[1] *= old_shape[1] / new_shape[1]
-            new_geotransform[5] *= old_shape[0] / new_shape[0]
-            attrs["geotransform"] = new_geotransform
-            image.attrs.update(attrs)
+                folder, name = image_path.rsplit("/", 1)
+                parent: h5py.Group = f[str(folder)]
 
-            # Update any res group with the new resolution.
-            res_group_path = _get_res_group_path(image_path)
-            if res_group_path:
-                res_group = f[res_group_path]
-                res_group.attrs["resolution"] = [
-                    abs(new_geotransform[5]),
-                    abs(new_geotransform[1]),
-                ]
+                image = parent.create_dataset(name, new_shape, data=new_data)
+                new_geotransform = list(old_geotransform)
+                new_geotransform[1] *= old_shape[1] / new_shape[1]
+                new_geotransform[5] *= old_shape[0] / new_shape[0]
+                attrs["geotransform"] = new_geotransform
+                image.attrs.update(attrs)
 
-            if "/NBAR/" in image_path:
-                nbar_size = new_shape
+                # Update any res group with the new resolution.
+                res_group_path = _get_res_group_path(image_path)
+                if res_group_path:
+                    res_group = f[res_group_path]
+                    res_group.attrs["resolution"] = [
+                        abs(new_geotransform[5]),
+                        abs(new_geotransform[1]),
+                    ]
 
-    if nbar_size is None:
-        raise ValueError("No nbar image found?")
+                if "/NBAR/" in image_path:
+                    nbar_size = new_shape
 
-    # We need to repack the file to actually free up the space.
-    repacked = input.with_suffix(".repacked.h5")
-    h5repack("-f", "GZIP=5", input, repacked)
-    repacked.rename(input)
+        if nbar_size is None:
+            raise ValueError("No nbar image found?")
+
+        # We need to repack the file to actually free up the space.
+        repacked = input.with_suffix(".repacked.h5")
+        h5repack("-f", "GZIP=5", input, repacked)
+        repacked.rename(input)
+    except Exception:
+        secho("Restoring backup")
+        original.rename(input)
+        raise
 
     if fmask_image.exists():
+        original = fmask_image.with_suffix(f".original{fmask_image.suffix}")
+        secho(f"Creating fmask backup to {original.name}")
+        shutil.copy(fmask_image, original)
         secho(f"Scaling fmask {fmask_image}")
+
         tmp = fmask_image.with_suffix(f".tmp.{fmask_image.suffix}")
         gdal_translate("-outsize", nbar_size[1], nbar_size[0], fmask_image, tmp)
         tmp.rename(fmask_image)
