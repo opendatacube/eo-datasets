@@ -12,9 +12,14 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable
 
-import eodatasets3
 import numpy
 import rasterio
+from rasterio import DatasetReader
+from rasterio.crs import CRS
+from rasterio.enums import Resampling
+from xarray import Dataset
+
+import eodatasets3
 from eodatasets3 import serialise, validate, images, documents
 from eodatasets3.documents import find_and_read_documents
 from eodatasets3.images import FileWrite, GridSpec, MeasurementRecord
@@ -30,10 +35,6 @@ from eodatasets3.model import (
 from eodatasets3.properties import EoFields
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
-from rasterio import DatasetReader
-from rasterio.crs import CRS
-from rasterio.enums import Resampling
-from xarray import Dataset
 
 
 class IfExists(Enum):
@@ -388,18 +389,19 @@ class DatasetAssembler(EoFields):
         for name in self.INHERITABLE_PROPERTIES:
             if name not in source_dataset.properties:
                 continue
-            new_val = source_dataset.properties[name]
+            new_value = source_dataset.properties[name]
 
-            existing_val = self.properties.get(name)
-            if existing_val is None:
-                self.properties[name] = new_val
-            else:
-                # Already set. Do nothing.
-                if new_val != existing_val:
-                    warnings.warn(
-                        f"Inheritable property {name!r} is different from current value: "
-                        f"{existing_val!r} != {new_val!r}"
-                    )
+            try:
+                self.properties.normalise_and_set(
+                    name,
+                    new_value,
+                    # If already set, do nothing.
+                    allow_override=False,
+                )
+            except KeyError as k:
+                warnings.warn(
+                    f"Inheritable property {name!r} is different from current value {k.args}"
+                )
 
     def write_measurement(
         self,
