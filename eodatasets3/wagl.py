@@ -164,6 +164,7 @@ def _unpack_observation_attributes(
     product_list: Iterable[str],
     h5group: h5py.Group,
     infer_datetime_range=False,
+    oa_resolution: Optional[Tuple[float, float]] = None,
 ):
     """
     Unpack the angles + other supplementary datasets produced by wagl.
@@ -180,17 +181,7 @@ def _unpack_observation_attributes(
         del p.properties["eo:gsd"]
     p.properties["eo:gsd"] = min(min(resolution_groups.keys()))
 
-    if p.platform.startswith("landsat"):
-        # For Landsat, we only cared about packaging OA data for the "common"
-        # bands (not panchromatic). So we always pick the higher resolution.
-        oa_resolution = max(resolution_groups.keys())
-    elif p.platform.startswith("sentinel"):
-        oa_resolution = (20.0, 20.0)
-    else:
-        raise NotImplementedError(
-            f"Don't know how to choose OA resolution for platform {p.platform!r}"
-        )
-    res_grp = resolution_groups[oa_resolution]
+    res_grp = choose_resolution_group(resolution_groups, p.platform, oa_resolution)
 
     def _write(section: str, dataset_names: Sequence[str]):
         """
@@ -236,6 +227,36 @@ def _unpack_observation_attributes(
             resolution_yx=tuple(res_grp.attrs["resolution"]),
             timedelta_data=timedelta_data,
         )
+
+
+def choose_resolution_group(
+    resolution_groups: Dict[tuple, h5py.Group],
+    platform: str,
+    oa_resolution=Optional[Tuple[float, float]],
+) -> h5py.Group:
+
+    # None specified? Figure out a default.
+
+    if oa_resolution is None:
+        # For Landsat, we only cared about packaging OA data for the "common"
+        # bands (not panchromatic). So we always pick the higher resolution.
+        if platform.startswith("landsat"):
+            oa_resolution = max(resolution_groups.keys())
+        elif platform.startswith("sentinel"):
+            oa_resolution = (20.0, 20.0)
+        else:
+            raise NotImplementedError(
+                f"Don't know how to choose a default OA resolution for platform {platform !r}"
+            )
+
+    res_grp = resolution_groups.get(oa_resolution)
+    if res_grp is None:
+        raise RuntimeError(
+            f"Resolution {oa_resolution} not found in input. "
+            f"Have resolutions {tuple(resolution_groups.keys())}"
+        )
+
+    return res_grp
 
 
 def _create_contiguity(
@@ -495,6 +516,7 @@ def package(
     granule: Granule,
     included_products: Iterable[str] = DEFAULT_PRODUCTS,
     include_oa: bool = True,
+    oa_resolution=Optional[Tuple[float, float]],
 ) -> Tuple[UUID, Path]:
     """
     Package an L2 product.
@@ -578,6 +600,7 @@ def package(
                         included_products,
                         granule_group,
                         infer_datetime_range=p.platform.startswith("landsat"),
+                        oa_resolution=oa_resolution,
                     )
                 if granule.fmask_image:
                     with do(f"Writing fmask from {granule.fmask_image} "):
@@ -643,17 +666,19 @@ def find_a_granule_name(wagl_hdf5: Path) -> str:
 
     >>> find_a_granule_name(Path('LT50910841993188ASA00.wagl.h5'))
     'LT50910841993188ASA00'
+    >>> find_a_granule_name(Path('S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09.wagl.h5'))
+    'S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09'
     >>> find_a_granule_name(Path('my-test-granule.h5'))
     Traceback (most recent call last):
     ...
-    ValueError: No granule specified, and cannot find it on input filename 'my-test-granule'.
+    ValueError: Does not appear to be a wagl output filename? 'my-test-granule.h5'.
     """
-    granule_name = wagl_hdf5.stem.split(".")[0]
-    if not granule_name.startswith("L"):
+    if not wagl_hdf5.name.endswith(".wagl.h5"):
         raise ValueError(
-            f"No granule specified, and cannot find it on input filename {wagl_hdf5.stem!r}."
+            f"Does not appear to be a wagl output filename? {wagl_hdf5.name!r}."
         )
-    return granule_name
+
+    return wagl_hdf5.name[: -len(".wagl.h5")]
 
 
 def _apply_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group) -> Dict:
