@@ -37,17 +37,23 @@ SENTINEL_MSI_BAND_ALIASES = {
     "10": "swir_1_cirrus",
     "11": "swir_2",
     "12": "swir_3",
- }
+}
 
 
 def process_MTD_DS(MTD_DS_zip_path, zip_object):
     xmldoc = minidom.parseString(zip_object.read(MTD_DS_zip_path))
 
-    reception_station = xmldoc.getElementsByTagName('RECEPTION_STATION')[0].firstChild.data
-    downlink_orbit_number = xmldoc.getElementsByTagName('DOWNLINK_ORBIT_NUMBER')[0].firstChild.data
-    processing_center = xmldoc.getElementsByTagName('PROCESSING_CENTER')[0].firstChild.data
-    
-    resolutions = xmldoc.getElementsByTagName('RESOLUTION')
+    reception_station = xmldoc.getElementsByTagName("RECEPTION_STATION")[
+        0
+    ].firstChild.data
+    downlink_orbit_number = xmldoc.getElementsByTagName("DOWNLINK_ORBIT_NUMBER")[
+        0
+    ].firstChild.data
+    processing_center = xmldoc.getElementsByTagName("PROCESSING_CENTER")[
+        0
+    ].firstChild.data
+
+    resolutions = xmldoc.getElementsByTagName("RESOLUTION")
     r_list = []
     for i in resolutions:
         r_list.append(int(i.firstChild.data))
@@ -63,19 +69,20 @@ def process_MTD_DS(MTD_DS_zip_path, zip_object):
 def process_MTD_TL(MTD_TL_zip_path, zip_object):
     xmldoc = minidom.parseString(zip_object.read(MTD_TL_zip_path))
 
-    sun_azimuth = xmldoc.getElementsByTagName('AZIMUTH_ANGLE')[0].firstChild.data
-    sun_elevation = xmldoc.getElementsByTagName('ZENITH_ANGLE')[0].firstChild.data
+    sun_azimuth = xmldoc.getElementsByTagName("AZIMUTH_ANGLE")[0].firstChild.data
+    sun_elevation = xmldoc.getElementsByTagName("ZENITH_ANGLE")[0].firstChild.data
 
     return {
         "sun_azimuth": sun_azimuth,
         "sun_elevation": sun_elevation,
     }
 
+
 def process_format_correctness(FORMAT_CORRECTNESS_zip_path, zip_object):
     xmldoc = minidom.parseString(zip_object.read(FORMAT_CORRECTNESS_zip_path))
 
-    source_system = xmldoc.getElementsByTagName('System')[0].firstChild.data
-    software_version = xmldoc.getElementsByTagName('Creator_Version')[0].firstChild.data
+    source_system = xmldoc.getElementsByTagName("System")[0].firstChild.data
+    software_version = xmldoc.getElementsByTagName("Creator_Version")[0].firstChild.data
 
     return {
         "source_system": source_system,
@@ -86,18 +93,26 @@ def process_format_correctness(FORMAT_CORRECTNESS_zip_path, zip_object):
 def process_MTD_MSIL1C(MTD_MSIL1C_zip_path, zip_object):
     xmldoc = minidom.parseString(zip_object.read(MTD_MSIL1C_zip_path))
 
-    data_type = xmldoc.getElementsByTagName('PROCESSING_LEVEL')[0].firstChild.data
-    datastrip_id = xmldoc.getElementsByTagName('PRODUCT_URI')[0].firstChild.data
-    product_type = xmldoc.getElementsByTagName('PRODUCT_TYPE')[0].firstChild.data
-    platform = xmldoc.getElementsByTagName('SPACECRAFT_NAME')[0].firstChild.data
-    orbit = xmldoc.getElementsByTagName('SENSING_ORBIT_NUMBER')[0].firstChild.data
-    orbit_direction = xmldoc.getElementsByTagName('SENSING_ORBIT_DIRECTION')[0].firstChild.data
-    datatake_type = xmldoc.getElementsByTagName('DATATAKE_TYPE')[0].firstChild.data
-    processing_datetime = xmldoc.getElementsByTagName('GENERATION_TIME')[0].firstChild.data
-    processing_baseline = xmldoc.getElementsByTagName('PROCESSING_BASELINE')[0].firstChild.data
-    datetime = xmldoc.getElementsByTagName('PRODUCT_START_TIME')[0].firstChild.data
-    cloud_cover = xmldoc.getElementsByTagName('Cloud_Coverage_Assessment')[0].firstChild.data
-    region_code = datastrip_id.split('_')[5][1:]
+    data_type = xmldoc.getElementsByTagName("PROCESSING_LEVEL")[0].firstChild.data
+    datastrip_id = xmldoc.getElementsByTagName("PRODUCT_URI")[0].firstChild.data
+    product_type = xmldoc.getElementsByTagName("PRODUCT_TYPE")[0].firstChild.data
+    platform = xmldoc.getElementsByTagName("SPACECRAFT_NAME")[0].firstChild.data
+    orbit = xmldoc.getElementsByTagName("SENSING_ORBIT_NUMBER")[0].firstChild.data
+    orbit_direction = xmldoc.getElementsByTagName("SENSING_ORBIT_DIRECTION")[
+        0
+    ].firstChild.data
+    datatake_type = xmldoc.getElementsByTagName("DATATAKE_TYPE")[0].firstChild.data
+    processing_datetime = xmldoc.getElementsByTagName("GENERATION_TIME")[
+        0
+    ].firstChild.data
+    processing_baseline = xmldoc.getElementsByTagName("PROCESSING_BASELINE")[
+        0
+    ].firstChild.data
+    datetime = xmldoc.getElementsByTagName("PRODUCT_START_TIME")[0].firstChild.data
+    cloud_cover = xmldoc.getElementsByTagName("Cloud_Coverage_Assessment")[
+        0
+    ].firstChild.data
+    region_code = datastrip_id.split("_")[5][1:]
 
     return {
         "data_type": data_type,
@@ -116,15 +131,17 @@ def process_MTD_MSIL1C(MTD_MSIL1C_zip_path, zip_object):
 
 
 def prepare_and_write(
-        dataset: Path,
-        dataset_document: Path,
-    ) -> Tuple[uuid.UUID, Path]:
+    dataset: Path,
+    dataset_document: Path,
+) -> Tuple[uuid.UUID, Path]:
 
-    with zipfile.ZipFile(str(dataset), 'r') as z:
-        MTD_DS_zip_path = [s for s in z.namelist() if 'MTD_DS.xml' in s][0]
-        MTD_TL_zip_path = [s for s in z.namelist() if 'MTD_TL.xml' in s][0]
-        MTD_MSIL1C_zip_path = [s for s in z.namelist() if 'MTD_MSIL1C.xml' in s][0]
-        FORMAT_CORRECTNESS_zip_path = [s for s in z.namelist() if 'FORMAT_CORRECTNESS.xml' in s][0]    
+    with zipfile.ZipFile(str(dataset), "r") as z:
+        MTD_DS_zip_path = [s for s in z.namelist() if "MTD_DS.xml" in s][0]
+        MTD_TL_zip_path = [s for s in z.namelist() if "MTD_TL.xml" in s][0]
+        MTD_MSIL1C_zip_path = [s for s in z.namelist() if "MTD_MSIL1C.xml" in s][0]
+        FORMAT_CORRECTNESS_zip_path = [
+            s for s in z.namelist() if "FORMAT_CORRECTNESS.xml" in s
+        ][0]
 
         MTD_DS = process_MTD_DS(MTD_DS_zip_path, z)
         MTD_TL = process_MTD_TL(MTD_TL_zip_path, z)
@@ -132,13 +149,13 @@ def prepare_and_write(
         MTD_MSIL1C = process_MTD_MSIL1C(MTD_MSIL1C_zip_path, z)
 
         with DatasetAssembler(
-            metadata_path=dataset_document, 
-            dataset_location=Path('zip:'+str(dataset)+'!'),
-            allow_absolute_paths=False
+            metadata_path=dataset_document,
+            dataset_location=Path("zip:" + str(dataset) + "!"),
+            allow_absolute_paths=False,
         ) as p:
             p.datetime = MTD_MSIL1C["datetime"]
             p.properties["eo:instrument"] = HARDCODED["instrument"]
-            p.properties["eo:platform"] = MTD_MSIL1C["platform"] 
+            p.properties["eo:platform"] = MTD_MSIL1C["platform"]
             p.properties["odc:processing_datetime"] = MTD_MSIL1C["processing_datetime"]
             p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
             p.properties["odc:producer"] = HARDCODED["producer"]
@@ -151,25 +168,37 @@ def prepare_and_write(
             p.properties["odc:region_code"] = MTD_MSIL1C["region_code"]
             p.properties["sentinel:data_type"] = MTD_MSIL1C["data_type"]
             p.properties["sentinel:product_type"] = MTD_MSIL1C["product_type"]
-            p.properties["sentinel:software_version"] = FORMAT_CORRECTNESS["software_version"]
+            p.properties["sentinel:software_version"] = FORMAT_CORRECTNESS[
+                "software_version"
+            ]
             p.properties["sentinel:source_system"] = FORMAT_CORRECTNESS["source_system"]
             p.properties["sentinel:datastrip_id"] = MTD_MSIL1C["datastrip_id"]
-            p.properties["sentinel:downlink_orbit_number"] = MTD_DS["downlink_orbit_number"]
+            p.properties["sentinel:downlink_orbit_number"] = MTD_DS[
+                "downlink_orbit_number"
+            ]
             p.properties["sentinel:reception_station"] = MTD_DS["reception_station"]
             p.properties["sentinel:processing_center"] = MTD_DS["processing_center"]
             p.properties["sentinel:orbit"] = MTD_MSIL1C["orbit"]
             p.properties["sentinel:orbit_direction"] = MTD_MSIL1C["orbit_direction"]
             p.properties["sentinel:datatake_type"] = MTD_MSIL1C["datatake_type"]
-            p.properties["sentinel:processing_baseline"] = MTD_MSIL1C["processing_baseline"]
+            p.properties["sentinel:processing_baseline"] = MTD_MSIL1C[
+                "processing_baseline"
+            ]
 
             for file in z.namelist():
                 # T55HFA_20201011T000249_B01.jp2
                 if ".jp2" in file and "TCI" not in file:
-                    band = file.split("_")[len(file.split("_"))-1].replace(".jp2", "").replace("B", "")
+                    band = (
+                        file.split("_")[len(file.split("_")) - 1]
+                        .replace(".jp2", "")
+                        .replace("B", "")
+                    )
                     name = SENTINEL_MSI_BAND_ALIASES[band]
-                    #path = 'zip:%s!%s' % (str(dataset), str(file))
-                    p.note_measurement(path=file, name=name, relative_to_dataset_location=True)
-   
+                    # path = 'zip:%s!%s' % (str(dataset), str(file))
+                    p.note_measurement(
+                        path=file, name=name, relative_to_dataset_location=True
+                    )
+
             return p.done()
 
 
@@ -196,6 +225,7 @@ def main(
         dataset_document,
     )
     return path
+
 
 if __name__ == "__main__":
     main()
