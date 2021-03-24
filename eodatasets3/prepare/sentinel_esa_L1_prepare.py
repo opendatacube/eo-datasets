@@ -2,19 +2,16 @@
 Prepare eo3 metadata for Sentinel-2 Level 1C data produced by ESA
 """
 
-import os
-import zipfile
-
-from pathlib import Path
-from xml.dom import minidom
-from os import listdir
-from os.path import isfile, join
 import uuid
+import zipfile
+from pathlib import Path
+from typing import Tuple
+from xml.dom import minidom
+
 import click
-from typing import Dict, Tuple
+
 from eodatasets3 import DatasetAssembler
 from eodatasets3.ui import PathPath
-
 
 HARDCODED = {
     "file_format": "JPEG2000",
@@ -135,7 +132,7 @@ def prepare_and_write(
     dataset_document: Path,
 ) -> Tuple[uuid.UUID, Path]:
 
-    with zipfile.ZipFile(str(dataset), "r") as z:
+    with zipfile.ZipFile(dataset, "r") as z:
         MTD_DS_zip_path = [s for s in z.namelist() if "MTD_DS.xml" in s][0]
         MTD_TL_zip_path = [s for s in z.namelist() if "MTD_TL.xml" in s][0]
         MTD_MSIL1C_zip_path = [s for s in z.namelist() if "MTD_MSIL1C.xml" in s][0]
@@ -150,7 +147,7 @@ def prepare_and_write(
 
         with DatasetAssembler(
             metadata_path=dataset_document,
-            dataset_location=Path("zip:" + str(dataset) + "!"),
+            dataset_location=dataset,
             allow_absolute_paths=False,
         ) as p:
             p.datetime = MTD_MSIL1C["datetime"]

@@ -269,6 +269,11 @@ def resolve_absolute_offset(
     ... )
     'tar:/tmp/great_test_dataset.tar!band/my_great_band.jpg'
     >>> resolve_absolute_offset(
+    ...     Path('/tmp/great_test_dataset.zip'),
+    ...     'band/other/my_great_band.jpg',
+    ... )
+    'zip:/tmp/great_test_dataset.zip!band/other/my_great_band.jpg'
+    >>> resolve_absolute_offset(
     ...     Path('/tmp/MY_DATASET'),
     ...     'band/my_great_band.jpg',
     ...     Path('/tmp/MY_DATASET/ga-metadata.yaml'),
@@ -285,5 +290,7 @@ def resolve_absolute_offset(
 
     if ".tar" in dataset_path.suffixes:
         return "tar:{}!{}".format(dataset_path, offset)
+    elif ".zip" in dataset_path.suffixes:
+        return "zip:{}!{}".format(dataset_path, offset)
     else:
         return str(dataset_path / offset)
