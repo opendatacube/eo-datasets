@@ -7,7 +7,6 @@ import pathlib
 import shutil
 import sys
 import tempfile
-import unittest
 from pathlib import Path
 
 
@@ -95,30 +94,6 @@ def assert_file_structure(folder, expected_structure, root=""):
             ), "Only strings and dicts expected when defining a folder structure."
 
 
-class TestCase(unittest.TestCase):
-    def assert_values_equal(self, a, b, msg=None):
-        """
-        Assert sequences of values are equal.
-
-        This is like assertSeqEqual, but doesn't require len() or indexing.
-        (ie. it works with generators and general iterables)
-        """
-        self.assertListEqual(list(a), list(b), msg=msg)
-
-    def assert_items_equal(self, a, b, msg=None):
-        """
-        Assert the two contain the same items, in any order.
-
-        (python 2 contained something similar, but appears to be removed in python 3?)
-        """
-        la, lb = list(a), list(b)
-        self.assertEqual(len(la), len(lb), msg=msg)
-        self.assertSetEqual(set(la), set(lb), msg=msg)
-
-    def assert_same(self, a, b, msg=None):
-        return assert_same(a, b)
-
-
 def write_files(file_dict):
     """
     Convenience method for writing a bunch of files to a temporary directory.
@@ -198,7 +173,7 @@ def file_of_size(path, size_mb):
     """
     with open(path, "wb") as f:
         f.seek(size_mb * 1024 * 1024 - 1)
-        f.write("\0")
+        f.write(b"\0")
 
 
 def as_file_list(path):
