@@ -194,6 +194,7 @@ _LANDSAT_EXTENDED_PROPS = {
     "landsat:processing_software_version": None,
     "landsat:scan_gap_interpolation": float,
     "landsat:station_id": None,
+    "landsat:scene_id": None,
 }
 
 _SENTINEL_EXTENDED_PROPS = {
