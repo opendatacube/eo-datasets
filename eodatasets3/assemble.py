@@ -77,6 +77,7 @@ class DatasetAssembler(EoFields):
         "landsat:collection_number",
         "landsat:landsat_product_id",
         "landsat:landsat_scene_id",
+        "landsat:scene_id",
         "landsat:wrs_path",
         "landsat:wrs_row",
         "odc:region_code",
