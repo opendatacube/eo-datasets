@@ -363,7 +363,8 @@ class ComplicatedNamingConventions:
         # landsat:landsat_scene_id: LC80910752016348LGN01
         landsat_id: str = self.dataset.properties.get(
             "landsat:landsat_product_id"
-        ) or self.dataset.properties.get("landsat:landsat_scene_id")
+        ) or self.dataset.properties.get("landsat:landsat_scene_id"
+        ) or self.dataset.properties.get("landsat:scene_id")
         if not landsat_id:
             raise NotImplementedError(
                 "TODO: Can only currently abbreviate instruments from Landsat references."
