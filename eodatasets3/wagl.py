@@ -524,7 +524,17 @@ def package(
             p.producer = "ga.gov.au"
             p.product_family = "ard"
 
-            _read_wagl_metadata(p, granule_group)
+            wagl_doc = _apply_wagl_metadata(p, granule_group)
+            p.maturity = (
+                # When level 1 is NRT, ARD is always NRT.
+                "nrt"
+                if level1.maturity == "nrt"
+                else _determine_maturity(
+                    acq_date=p.datetime,
+                    processed=p.processed,
+                    wagl_doc=wagl_doc,
+                )
+            )
 
             org_collection_number = utils.get_collection_number(
                 p.producer, p.properties["landsat:collection_number"]
@@ -624,7 +634,7 @@ def find_a_granule_name(wagl_hdf5: Path) -> str:
     return granule_name
 
 
-def _read_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group):
+def _apply_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group) -> Dict:
     try:
         wagl_path, *ancil_paths = [
             pth
@@ -646,12 +656,9 @@ def _read_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group):
             list(loads_yaml(granule_group[path][()]))[0]["ancillary"]
         )
 
-    p.properties["dea:dataset_maturity"] = _determine_maturity(
-        p.datetime, p.processed, wagl_doc
-    )
-
     _take_software_versions(p, wagl_doc)
     p.extend_user_metadata("wagl", wagl_doc)
+    return wagl_doc
 
 
 def _determine_maturity(acq_date: datetime, processed: datetime, wagl_doc: Dict):
@@ -660,6 +667,7 @@ def _determine_maturity(acq_date: datetime, processed: datetime, wagl_doc: Dict)
 
     Based on the fallback logic in nbar pages of CMI, eg: https://cmi.ga.gov.au/ga_ls5t_nbart_3
     """
+
     ancillary_tiers = {
         key.lower(): o["tier"]
         for key, o in wagl_doc["ancillary"].items()
