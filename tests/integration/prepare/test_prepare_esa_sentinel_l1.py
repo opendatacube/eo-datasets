@@ -5,7 +5,7 @@ import shutil
 import yaml
 
 from tests.common import run_prepare_cli
-from eodatasets3.prepare import sentinel_esa_L1_prepare
+from eodatasets3.prepare import sentinel_L1C_prepare
 
 
 dataset = (
@@ -191,7 +191,7 @@ def test_run(tmp_path, expected_dataset_document):
     output_yaml_path = outdir / (dataset_id + ".yaml")
 
     run_prepare_cli(
-        sentinel_esa_L1_prepare.main,
+        sentinel_L1C_prepare.main,
         "--dataset",
         outdir / DATASET_PATH.name,
         "--dataset-document",
