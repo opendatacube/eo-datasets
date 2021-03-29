@@ -4,18 +4,10 @@ import shutil
 import yaml
 import datetime
 from tests.common import run_prepare_cli
-from eodatasets3.prepare import sentinel_sinergise_L1_prepare
+from eodatasets3.prepare import sentinel_L1C_prepare
 
 path = (
     "data/sinergise_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446"
-)
-
-METADATA_XML_PATH: Path = Path(__file__).parent.parent / path / "metadata.xml"
-
-PRODUCT_INFO_PATH: Path = Path(__file__).parent.parent / path / "productInfo.json"
-
-FORMAT_CORRECTNESS_PATH: Path = (
-    Path(__file__).parent.parent / path / "qi/FORMAT_CORRECTNESS.xml"
 )
 
 DATASET_DIR: Path = Path(__file__).parent.parent / path
@@ -30,13 +22,13 @@ def expected_dataset_document():
         "geometry": {
             "coordinates": [
                 [
-                    [600000.0, 5990200.0],
-                    [600000.0, 6099500.909090909],
-                    [600000.0, 6100000.0],
                     [600332.7272727273, 6100000.0],
                     [709800.0, 6100000.0],
                     [709800.0, 5990200.0],
                     [600000.0, 5990200.0],
+                    [600000.0, 6099500.909090909],
+                    [600000.0, 6100000.0],
+                    [600332.7272727273, 6100000.0],
                 ]
             ],
             "type": "Polygon",
@@ -157,20 +149,15 @@ def test_sinergise_sentinel_l1(tmp_path, expected_dataset_document):
 
     # WHEN:
     #    Run prepare on that folder
+
     output_yaml_path = outdir / "test.yaml"
 
     run_prepare_cli(
-        sentinel_sinergise_L1_prepare.main,
-        "--product",
-        PRODUCT_INFO_PATH,
-        "--metadata-xml",
-        METADATA_XML_PATH,
-        "--format-correctness",
-        FORMAT_CORRECTNESS_PATH,
-        "--dataset-document",
-        output_yaml_path,
+        sentinel_L1C_prepare.main,
         "--dataset",
         outdir,
+        "--dataset-document",
+        output_yaml_path,
     )
 
     # THEN
