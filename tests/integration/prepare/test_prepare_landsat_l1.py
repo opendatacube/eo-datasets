@@ -48,6 +48,36 @@ def test_prepare_l8_l1_usgs_tarball(l1_ls8_folder, l1_ls8_folder_md_expected):
     )
 
 
+def test_prepare_l8_l1_c2_with_source(
+    tmp_path: Path, l1_ls8_c2_folder: Path, ls8_telemetry_path, l1_ls8_ga_expected: Dict
+):
+    """Run prepare script with a source telemetry data and unique producer."""
+    assert l1_ls8_folder.exists(), "Test data missing(?)"
+
+    output_path = tmp_path
+    expected_metadata_path = (
+        output_path
+        / "090"
+        / "084"
+        / "LC08_L1TP_090084_20160121_20170405_01_T1.odc-metadata.yaml"
+    )
+
+    check_prepare_outputs(
+        invoke_script=landsat_l1_prepare.main,
+        run_args=[
+            "--output-base",
+            output_path,
+            "--producer",
+            "ga.gov.au",
+            "--source",
+            ls8_telemetry_path,
+            l1_ls8_folder,
+        ],
+        expected_doc=l1_ls8_ga_expected,
+        expected_metadata_path=expected_metadata_path,
+    )
+
+
 def test_prepare_l8_l1_tarball_with_source(
     tmp_path: Path, l1_ls8_folder: Path, ls8_telemetry_path, l1_ls8_ga_expected: Dict
 ):
