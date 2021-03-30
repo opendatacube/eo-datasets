@@ -21,6 +21,13 @@ L8_INPUT_PATH: Path = (
     Path(__file__).parent / "data" / "LC08_L1TP_090084_20160121_20170405_01_T1"
 )
 
+# Initially have this as L8_INPUT_PATH, so
+# I can see if the test structure is ok
+# Though maybe it
+L8_C2_INPUT_PATH: Path = (
+    Path(__file__).parent / "data" / "LC08_L1TP_090084_20160121_20170405_01_T1"
+)
+
 LS8_TELEMETRY_PATH: Path = (
     Path(__file__).parent
     / "data"
@@ -46,6 +53,10 @@ def relative_offset(base, offset):
 def l1_ls8_folder(tmp_path: Path) -> Path:
     return _make_copy(L8_INPUT_PATH, tmp_path)
 
+
+@pytest.fixture
+def l1_c2_ls8_folder(tmp_path: Path) -> Path:
+    return _make_copy(L8_C2_INPUT_PATH, tmp_path)
 
 @pytest.fixture
 def l1_ls8_metadata_path(l1_ls8_folder: Path, l1_ls8_dataset: DatasetDoc) -> Path:
@@ -98,6 +109,18 @@ def l1_ls8_ga_expected(l1_ls8_folder) -> Dict:
         relative_offset,
         organisation="ga.gov.au",
         collection="3",
+        # the id in the ls8_telemetry_path fixture
+        lineage={"satellite_telemetry_data": ["30841328-89c2-4693-8802-a3560a6cf67a"]},
+    )
+
+
+@pytest.fixture
+def l1_c2_ls8_usgs_expected(l1_ls8_folder) -> Dict:
+    return expected_l1_ls8_folder(
+        l1_ls8_folder,
+        relative_offset,
+        organisation="USGS",
+        collection="2",
         # the id in the ls8_telemetry_path fixture
         lineage={"satellite_telemetry_data": ["30841328-89c2-4693-8802-a3560a6cf67a"]},
     )

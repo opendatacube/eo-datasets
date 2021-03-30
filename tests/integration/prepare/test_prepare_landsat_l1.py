@@ -48,8 +48,8 @@ def test_prepare_l8_l1_usgs_tarball(l1_ls8_folder, l1_ls8_folder_md_expected):
     )
 
 
-def test_prepare_l8_l1_c2_with_source(
-    tmp_path: Path, l1_ls8_c2_folder: Path, ls8_telemetry_path, l1_ls8_ga_expected: Dict
+def test_prepare_l8_l1_with_source(
+    tmp_path: Path, l1_ls8_folder: Path, ls8_telemetry_path, l1_ls8_ga_expected: Dict
 ):
     """Run prepare script with a source telemetry data and unique producer."""
     assert l1_ls8_folder.exists(), "Test data missing(?)"
