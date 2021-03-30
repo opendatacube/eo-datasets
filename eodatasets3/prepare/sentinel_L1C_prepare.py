@@ -284,7 +284,7 @@ def prepare_and_write(
 
                 for file in z.namelist():
                     # T55HFA_20201011T000249_B01.jp2
-                    if ".jp2" in file and "TCI" not in file:
+                    if ".jp2" in file and "TCI" not in file and "PVI" not in file:
                         band = (
                             file.split("_")[len(file.split("_")) - 1]
                             .replace(".jp2", "")
