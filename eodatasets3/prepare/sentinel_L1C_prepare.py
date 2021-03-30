@@ -293,7 +293,10 @@ def prepare_and_write(
                         name = SENTINEL_MSI_BAND_ALIASES[band]
                         # path = 'zip:%s!%s' % (str(dataset), str(file))
                         p.note_measurement(
-                            path=file, name=name, relative_to_dataset_location=True
+                            path=file,
+                            name=name,
+                            relative_to_dataset_location=True
+                            # path=path, name=name
                         )
 
                 return p.done()
