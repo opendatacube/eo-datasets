@@ -123,14 +123,13 @@ def get_band_alias_mappings(sat: str, instrument: str) -> Dict[str, str]:
 
 
 def get_mtl_content(
-    acquisition_path: Path, root_element="l1_metadata_file"
-) -> Tuple[Dict, str]:
+    acquisition_path: Path, root_element=None
+) -> Tuple[Dict, str, str]:
     """
     Find MTL file for the given path. It could be a directory or a tar file.
 
     It will return the MTL parsed as a dict and its filename.
     """
-
     def iter_tar_members(tp: tarfile.TarFile) -> Generator[tarfile.TarInfo, None, None]:
         """
         This is a lazy alternative to TarInfo.getmembers() that only reads one tar item at a time.
@@ -151,7 +150,8 @@ def get_mtl_content(
             for member in iter_tar_members(tp):
                 if "_MTL" in member.name:
                     with tp.extractfile(member) as fp:
-                        return read_mtl(fp), member.name
+                        mtl_doc, file_root_element = read_mtl(fp)
+                        return mtl_doc, file_root_element, member.name
             else:
                 raise RuntimeError(
                     "MTL file not found in {}".format(str(acquisition_path))
@@ -167,10 +167,11 @@ def get_mtl_content(
             )
         [path] = paths
         with path.open("r") as fp:
-            return read_mtl(fp, root_element), path.name
+            mtl_doc, file_root_element = read_mtl(fp, root_element)
+            return mtl_doc, file_root_element, path.name
 
 
-def read_mtl(fp: Iterable[Union[str, bytes]], root_element="l1_metadata_file") -> Dict:
+def read_mtl(fp: Iterable[Union[str, bytes]], root_element=None) -> Tuple[Dict, str]:
     def _parse_value(s: str) -> Union[int, float, str]:
         """
         >>> _parse_value("asdf")
@@ -211,7 +212,9 @@ def read_mtl(fp: Iterable[Union[str, bytes]], root_element="l1_metadata_file") -
         return tree
 
     tree = _parse_group(fp)
-    return tree[root_element]
+    if root_element is None:
+        root_element = list(tree.keys())[0]
+    return tree[root_element], root_element
 
 
 def _iter_bands_paths(mtl_doc: Dict) -> Generator[Tuple[str, str], None, None]:
@@ -235,7 +238,7 @@ def prepare_and_write(
 
     Input dataset path can be a folder or a tar file.
     """
-    mtl_doc, mtl_filename = get_mtl_content(ds_path)
+    mtl_doc, root_element, mtl_filename = get_mtl_content(ds_path)
     if not mtl_doc:
         raise ValueError(f"No MTL file found for {ds_path}")
 

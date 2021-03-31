@@ -67,7 +67,7 @@ def test_prepare_l8_l1_c2(
             "--output-base",
             output_path,
             "--producer",
-            "ga.gov.au",
+            "usgs.gov",
             l1_c2_ls8_folder,
         ],
         expected_doc=l1_c2_ls8_usgs_expected,
@@ -88,8 +88,6 @@ def test_prepare_l8_l1_tarball_with_source(
         / "084"
         / "LC08_L1TP_090084_20160121_20170405_01_T1.odc-metadata.yaml"
     )
-    print("*** test_prepare_l8_l1_tarball_with_source")
-    print(expected_metadata_path)
     check_prepare_outputs(
         invoke_script=landsat_l1_prepare.main,
         run_args=[

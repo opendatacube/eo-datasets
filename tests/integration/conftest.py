@@ -25,7 +25,7 @@ L8_INPUT_PATH: Path = (
 # I can see if the test structure is ok
 # Though maybe it
 L8_C2_INPUT_PATH: Path = (
-    Path(__file__).parent / "data" / "LC08_L1TP_090084_20160121_20170405_01_T1_dump"
+    Path(__file__).parent / "data" / "LC81060632021051LGN00__C2_RT"
 )
 
 LS8_TELEMETRY_PATH: Path = (
@@ -34,12 +34,6 @@ LS8_TELEMETRY_PATH: Path = (
     / "LS8_OLITIRS_STD-MD_P00_LC80840720742017365LGN00_084_072-074_20180101T004644Z20180101T004824_1"
 )
 
-
-LS8_C2_TELEMETRY_PATH: Path = (
-    Path(__file__).parent
-    / "data"
-    / "LS8_OLITIRS_STD-MD_P00_LC80840720742017365LGN00_084_072-074_20180101T004644Z20180101T004824_1"
-)
 
 WOFS_PATH: Path = Path(__file__).parent / "data" / "wofs"
 
@@ -126,8 +120,8 @@ def l1_c2_ls8_usgs_expected(l1_ls8_folder) -> Dict:
     return expected_l1_ls8_folder(
         l1_ls8_folder,
         relative_offset,
-        organisation="ga.gov.au",   # "USGS",
-        collection="3",
+        organisation="USGS",
+        collection="2",
     )
 
 
@@ -141,10 +135,6 @@ def ls8_telemetry_path(tmp_path: Path) -> Path:
     """Telemetry data with old-style ODC metadata"""
     return _make_copy(LS8_TELEMETRY_PATH, tmp_path)
 
-@pytest.fixture
-def ls8_c2_telemetry_path(tmp_path: Path) -> Path:
-    """Telemetry data with old-style ODC metadata"""
-    return _make_copy(LS8_C2_TELEMETRY_PATH, tmp_path)
 
 @pytest.fixture(params=("ls5", "ls7", "ls8"))
 def example_metadata(
