@@ -11,7 +11,7 @@ from ruamel import yaml
 def check_prepare_outputs(
     invoke_script, run_args, expected_doc, expected_metadata_path
 ):
-    __tracebackhide__ = True
+    #__tracebackhide__ = True
     run_prepare_cli(invoke_script, *run_args)
 
     assert expected_metadata_path.exists()
