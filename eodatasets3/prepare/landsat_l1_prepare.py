@@ -82,6 +82,23 @@ LANDSAT_xTM_BAND_ALIASES = {
 
 MTL_PAIRS_RE = re.compile(r"(\w+)\s=\s(.*)")
 
+LANDSATMTLMAP = {
+    "C1": {
+        "PRODUCT_CONTENTS": "PRODUCT_METADATA",
+        "PRODUCT_METADATA": "PRODUCT_METADATA",
+        "MIN_MAX_RADIANCE": "MIN_MAX_RADIANCE",
+        "MIN_MAX_PIXEL_VALUE": "MIN_MAX_PIXEL_VALUE",
+        "RADIOMETRIC_RESCALING": "RADIOMETRIC_RESCALING",
+    },
+    "C2": {
+        "PRODUCT_CONTENTS": "PRODUCT_CONTENTS",
+        "PRODUCT_METADATA": "IMAGE_ATTRIBUTES",
+        "MIN_MAX_RADIANCE": "LEVEL1_MIN_MAX_RADIANCE",
+        "MIN_MAX_PIXEL_VALUE": "LEVEL1_MIN_MAX_PIXEL_VALUE",
+        "RADIOMETRIC_RESCALING": "LEVEL1_RADIOMETRIC_RESCALING",
+    },
+}
+
 
 def get_band_alias_mappings(sat: str, instrument: str) -> Dict[str, str]:
     """
@@ -241,7 +258,15 @@ def prepare_and_write(
     mtl_doc, root_element, mtl_filename = get_mtl_content(ds_path)
     if not mtl_doc:
         raise ValueError(f"No MTL file found for {ds_path}")
-
+    print ("root_element")
+    print (root_element)
+    coll = "C2" if root_element == "PRODUCT_METADATA" else "C2"
+    coll_map = LANDSATMTLMAP[coll]
+    import pprint
+    print("***************************************************************************")
+    print ("mtl_doc")
+    print("***************************************************************************")
+    pprint.pprint (mtl_doc)
     usgs_collection_number = mtl_doc["metadata_file_info"].get("collection_number")
     if usgs_collection_number is None:
         raise NotImplementedError(
