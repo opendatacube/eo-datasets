@@ -286,7 +286,7 @@ class MeasurementRecord:
                 # There was no common prefix. Just concat all band names.
                 # Perhaps we just fallback to enumeration in these weird cases. grid a, grid b etc....
                 if not grid_name:
-                    grid_name = "_".join(measurements.keys())
+                    grid_name = "_".join(sorted(measurements.keys()))
 
             grid_docs[grid_name] = GridDoc(grid.shape, grid.transform)
 
