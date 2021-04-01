@@ -56,7 +56,7 @@ def expected_dataset_document():
                     1.0,
                 ],
             },
-            "nir_1_blue_red_green": {
+            "blue_green_nir_1_red": {
                 "shape": [110, 110],
                 "transform": [
                     998.1818181818181,
@@ -70,7 +70,7 @@ def expected_dataset_document():
                     1.0,
                 ],
             },
-            "water_vapour_swir_1_cirrus_coastal_aerosol": {
+            "coastal_aerosol_swir_1_cirrus_water_vapour": {
                 "shape": [19, 19],
                 "transform": [
                     5778.9473684210525,
@@ -88,26 +88,26 @@ def expected_dataset_document():
         "label": "sinergise_s2am_level1_1-0-20201011_55HFA_2020-10-11",
         "lineage": {},
         "measurements": {
-            "blue": {"grid": "nir_1_blue_red_green", "path": "B02.jp2"},
+            "blue": {"grid": "blue_green_nir_1_red", "path": "B02.jp2"},
             "coastal_aerosol": {
-                "grid": "water_vapour_swir_1_cirrus_coastal_aerosol",
+                "grid": "coastal_aerosol_swir_1_cirrus_water_vapour",
                 "path": "B01.jp2",
             },
-            "green": {"grid": "nir_1_blue_red_green", "path": "B03.jp2"},
-            "nir_1": {"grid": "nir_1_blue_red_green", "path": "B08.jp2"},
+            "green": {"grid": "blue_green_nir_1_red", "path": "B03.jp2"},
+            "nir_1": {"grid": "blue_green_nir_1_red", "path": "B08.jp2"},
             "nir_2": {"path": "B8A.jp2"},
-            "red": {"grid": "nir_1_blue_red_green", "path": "B04.jp2"},
+            "red": {"grid": "blue_green_nir_1_red", "path": "B04.jp2"},
             "red_edge_1": {"path": "B05.jp2"},
             "red_edge_2": {"path": "B06.jp2"},
             "red_edge_3": {"path": "B07.jp2"},
             "swir_1_cirrus": {
-                "grid": "water_vapour_swir_1_cirrus_coastal_aerosol",
+                "grid": "coastal_aerosol_swir_1_cirrus_water_vapour",
                 "path": "B10.jp2",
             },
             "swir_2": {"path": "B11.jp2"},
             "swir_3": {"path": "B12.jp2"},
             "water_vapour": {
-                "grid": "water_vapour_swir_1_cirrus_coastal_aerosol",
+                "grid": "coastal_aerosol_swir_1_cirrus_water_vapour",
                 "path": "B09.jp2",
             },
         },
@@ -143,7 +143,7 @@ def expected_dataset_document():
     }
 
 
-def test_run(tmp_path, expected_dataset_document):
+def test_sinergise_sentinel_l1(tmp_path, expected_dataset_document):
 
     # GIVEN:
     #     A folder of imagery
