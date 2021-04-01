@@ -84,18 +84,16 @@ MTL_PAIRS_RE = re.compile(r"(\w+)\s=\s(.*)")
 
 LANDSATMTLMAP = {
     "C1": {
-        "PRODUCT_CONTENTS": "PRODUCT_METADATA",
-        "PRODUCT_METADATA": "PRODUCT_METADATA",
-        "MIN_MAX_RADIANCE": "MIN_MAX_RADIANCE",
-        "MIN_MAX_PIXEL_VALUE": "MIN_MAX_PIXEL_VALUE",
-        "RADIOMETRIC_RESCALING": "RADIOMETRIC_RESCALING",
+        "product_contents_cn": "metadata_file_info",
+        "level1_processing_record": "metadata_file_info",
+        "product_contents_of": "product_metadata",
+        "image_attributes": "product_metadata",
     },
     "C2": {
-        "PRODUCT_CONTENTS": "PRODUCT_CONTENTS",
-        "PRODUCT_METADATA": "IMAGE_ATTRIBUTES",
-        "MIN_MAX_RADIANCE": "LEVEL1_MIN_MAX_RADIANCE",
-        "MIN_MAX_PIXEL_VALUE": "LEVEL1_MIN_MAX_PIXEL_VALUE",
-        "RADIOMETRIC_RESCALING": "LEVEL1_RADIOMETRIC_RESCALING",
+        "product_contents_cn": "level1_processing_record",
+        "level1_processing_record": "level1_processing_record",
+        "product_contents_of": "product_contents",
+        "image_attributes": "image_attributes",
     },
 }
 
@@ -260,14 +258,15 @@ def prepare_and_write(
         raise ValueError(f"No MTL file found for {ds_path}")
     print ("root_element")
     print (root_element)
-    coll = "C2" if root_element == "PRODUCT_METADATA" else "C2"
+    coll = "C2" if root_element == "landsat_metadata_file" else "C1"
+    print (coll)
     coll_map = LANDSATMTLMAP[coll]
     import pprint
     print("***************************************************************************")
-    print ("mtl_doc")
-    print("***************************************************************************")
-    pprint.pprint (mtl_doc)
-    usgs_collection_number = mtl_doc["metadata_file_info"].get("collection_number")
+    #print ("mtl_doc")
+    #print("***************************************************************************")
+    #pprint.pprint (mtl_doc)
+    usgs_collection_number = mtl_doc[coll_map["product_contents_cn"]].get("collection_number")
     if usgs_collection_number is None:
         raise NotImplementedError(
             "Dataset has no collection number: pre-collection data is not supported."
