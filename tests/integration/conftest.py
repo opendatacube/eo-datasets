@@ -25,7 +25,7 @@ L8_INPUT_PATH: Path = (
 # I can see if the test structure is ok
 # Though maybe it
 L8_C2_INPUT_PATH: Path = (
-    Path(__file__).parent / "data" / "LC81060632021051LGN00__C2_RT"
+    Path(__file__).parent / "data" / "LC08_L1TP_090084_20160121_20200907_02_T1"
 )
 
 LS8_TELEMETRY_PATH: Path = (
@@ -120,8 +120,9 @@ def l1_c2_ls8_usgs_expected(l1_ls8_folder) -> Dict:
     return expected_l1_ls8_folder(
         l1_ls8_folder,
         relative_offset,
-        organisation="USGS",
+        organisation="usgs.gov",
         collection="2",
+        landsat_collection="2",
     )
 
 
@@ -161,14 +162,36 @@ def expected_l1_ls8_folder(
     offset: Callable[[Path, str], str] = relative_offset,
     organisation="usgs.gov",
     collection="1",
+    landsat_collection="1",
     lineage=None,
 ):
     org_code = organisation.split(".")[0]
     product_name = f"{org_code}_ls8c_level1_{collection}"
+    if collection == "2":
+        processing_datetime = datetime(2020, 9, 7, 19, 30, 5)
+        cloud_cover = 93.28
+        points_model = 125
+        points_version = 5
+        rmse_model_x = 4.525
+        rmse_model_y = 5.917
+        software_version = "LPGS_15.3.1c"
+        uuid = "d9221c40-24c3-5356-ab22-4dcac2bf2d70"
+        quality_tag = "QA_PIXEL"
+    else:
+        processing_datetime = datetime(2017, 4, 5, 11, 17, 36)
+        cloud_cover = 93.22
+        points_model = 66
+        points_version = 4
+        rmse_model_x = 4.593
+        rmse_model_y = 5.817
+        software_version = "LPGS_2.7.0"
+        uuid = "a780754e-a884-58a7-9ac0-df518a67f59d"
+        quality_tag = "BQA"
+    processing_date = processing_datetime.strftime("%Y%m%d")
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
-        "id": "a780754e-a884-58a7-9ac0-df518a67f59d",
-        "label": f"{product_name}-0-20170405_090084_2016-01-21",
+        "id": uuid,
+        "label": f"{product_name}-0-{processing_date}_090084_2016-01-21",
         "product": {
             "name": product_name,
             "href": f"https://collections.dea.ga.gov.au/product/{product_name}",
@@ -176,28 +199,28 @@ def expected_l1_ls8_folder(
         "properties": {
             "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
             # The minor version comes from the processing date (as used in filenames to distinguish reprocesses).
-            "odc:dataset_version": f"{collection}.0.20170405",
+            "odc:dataset_version": f"{collection}.0.{processing_date}",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": datetime(2017, 4, 5, 11, 17, 36),
+            "odc:processing_datetime": processing_datetime,
             "odc:producer": organisation,
             "odc:product_family": "level1",
             "odc:region_code": "090084",
-            "eo:cloud_cover": 93.22,
+            "eo:cloud_cover": cloud_cover,
             "eo:gsd": 15.0,
             "eo:instrument": "OLI_TIRS",
             "eo:platform": "landsat-8",
             "eo:sun_azimuth": 74.007_443_8,
             "eo:sun_elevation": 55.486_483,
             "landsat:collection_category": "T1",
-            "landsat:collection_number": 1,
+            "landsat:collection_number": int(landsat_collection),
             "landsat:data_type": "L1TP",
-            "landsat:geometric_rmse_model_x": 4.593,
-            "landsat:geometric_rmse_model_y": 5.817,
-            "landsat:ground_control_points_model": 66,
-            "landsat:ground_control_points_version": 4,
-            "landsat:landsat_product_id": "LC08_L1TP_090084_20160121_20170405_01_T1",
+            "landsat:geometric_rmse_model_x": rmse_model_x,
+            "landsat:geometric_rmse_model_y": rmse_model_y,
+            "landsat:ground_control_points_model": points_model,
+            "landsat:ground_control_points_version": points_version,
+            "landsat:landsat_product_id": f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1",
             "landsat:landsat_scene_id": "LC80900842016021LGN02",
-            "landsat:processing_software_version": "LPGS_2.7.0",
+            "landsat:processing_software_version": software_version,
             "landsat:station_id": "LGN",
             "landsat:wrs_path": 90,
             "landsat:wrs_row": 84,
@@ -258,69 +281,69 @@ def expected_l1_ls8_folder(
         "measurements": {
             "coastal_aerosol": {
                 "path": offset(
-                    l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B1.TIF"
+                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B1.TIF"
                 )
             },
             "blue": {
                 "path": offset(
-                    l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B2.TIF"
+                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B2.TIF"
                 )
             },
             "green": {
                 "path": offset(
-                    l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B3.TIF"
+                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B3.TIF"
                 )
             },
             "red": {
                 "path": offset(
-                    l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B4.TIF"
+                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B4.TIF"
                 )
             },
             "nir": {
                 "path": offset(
-                    l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B5.TIF"
+                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B5.TIF"
                 )
             },
             "swir_1": {
                 "path": offset(
-                    l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B6.TIF"
+                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B6.TIF"
                 )
             },
             "swir_2": {
                 "path": offset(
-                    l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B7.TIF"
+                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B7.TIF"
                 )
             },
             "panchromatic": {
                 "grid": "panchromatic",
                 "path": offset(
-                    l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B8.TIF"
+                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B8.TIF"
                 ),
             },
             "cirrus": {
                 "path": offset(
-                    l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B9.TIF"
+                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B9.TIF"
                 )
             },
             "lwir_1": {
                 "path": offset(
-                    l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B10.TIF"
+                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B10.TIF"
                 )
             },
             "lwir_2": {
                 "path": offset(
-                    l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_B11.TIF"
+                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B11.TIF"
                 )
             },
             "quality": {
                 "path": offset(
-                    l1_ls8_folder, "LC08_L1TP_090084_20160121_20170405_01_T1_BQA.TIF"
+                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_{quality_tag}.TIF"
                 )
             },
         },
         "accessories": {
             "metadata:landsat_mtl": {
-                "path": "LC08_L1TP_090084_20160121_20170405_01_T1_MTL.txt"
+                "path": f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_MTL.txt"
             }
         },
         "lineage": lineage or {},

@@ -59,7 +59,7 @@ def test_prepare_l8_l1_c2(
         output_path
         / "090"
         / "084"
-        / "LC08_L1TP_090084_20160121_20170405_01_T1_dump.odc-metadata.yaml"
+        / "LC08_L1TP_090084_20160121_20200907_02_T1.odc-metadata.yaml"
     )
     check_prepare_outputs(
         invoke_script=landsat_l1_prepare.main,

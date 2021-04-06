@@ -20,7 +20,8 @@ from eodatasets3 import serialise, utils, DatasetAssembler, IfExists
 from eodatasets3.properties import FileFormat
 from eodatasets3.ui import PathPath
 
-_COPYABLE_MTL_FIELDS = [
+_COPYABLE_MTL_FIELDS = {}
+_COPYABLE_MTL_FIELDS["C1"] = [
     (
         "metadata_file_info",
         (
@@ -46,6 +47,33 @@ _COPYABLE_MTL_FIELDS = [
         ),
     ),
     ("projection_parameters", ("scan_gap_interpolation",)),
+]
+_COPYABLE_MTL_FIELDS["C2"] = [
+    (
+        "level1_processing_record",
+        (
+            "landsat_scene_id",
+            "landsat_product_id",
+            "processing_software_version",
+            "collection_category",
+            "ground_control_points_version",
+            "ground_control_points_model",
+            "geometric_rmse_model_x",
+            "geometric_rmse_model_y",
+        ),
+    ),
+    (
+        "image_attributes",
+        (
+            "station_id",
+            "wrs_path",
+            "wrs_row",
+            #"ground_control_points_verify",  # not in the test data for C1 or C2
+            #"geometric_rmse_verify",   # not in the test data for C1 or C2
+        ),
+    ),
+    # not in the test data for C1 or C2
+    # ("level1_projection_parameters", ("scan_gap_interpolation",)),
 ]
 
 # Static namespace to generate uuids for datacube indexing
@@ -85,15 +113,19 @@ MTL_PAIRS_RE = re.compile(r"(\w+)\s=\s(.*)")
 LANDSATMTLMAP = {
     "C1": {
         "product_contents_cn": "metadata_file_info",
-        "level1_processing_record": "metadata_file_info",
         "product_contents_of": "product_metadata",
+        "product_contents_fn": "product_metadata",
         "image_attributes": "product_metadata",
+        "level1_processing_record": "metadata_file_info",
+        "level1_projection_parameters": "projection_parameters",
     },
     "C2": {
-        "product_contents_cn": "level1_processing_record",
-        "level1_processing_record": "level1_processing_record",
-        "product_contents_of": "product_contents",
+        "product_contents_cn": "product_contents",
+        "product_contents_of": "level1_processing_record",
+        "product_contents_fn": "product_contents",
         "image_attributes": "image_attributes",
+        "level1_processing_record": "level1_processing_record",
+        "level1_projection_parameters": "level1_projection_parameters",
     },
 }
 
@@ -232,9 +264,9 @@ def read_mtl(fp: Iterable[Union[str, bytes]], root_element=None) -> Tuple[Dict, 
     return tree[root_element], root_element
 
 
-def _iter_bands_paths(mtl_doc: Dict) -> Generator[Tuple[str, str], None, None]:
+def _iter_bands_paths(product_doc: Dict) -> Generator[Tuple[str, str], None, None]:
     prefix = "file_name_band_"
-    for name, filepath in mtl_doc["product_metadata"].items():
+    for name, filepath in product_doc.items():
         if not name.startswith(prefix):
             continue
         usgs_band_id = name[len(prefix) :]
@@ -256,29 +288,21 @@ def prepare_and_write(
     mtl_doc, root_element, mtl_filename = get_mtl_content(ds_path)
     if not mtl_doc:
         raise ValueError(f"No MTL file found for {ds_path}")
-    print ("root_element")
-    print (root_element)
     coll = "C2" if root_element == "landsat_metadata_file" else "C1"
-    print (coll)
     coll_map = LANDSATMTLMAP[coll]
-    import pprint
-    print("***************************************************************************")
-    #print ("mtl_doc")
-    #print("***************************************************************************")
-    #pprint.pprint (mtl_doc)
     usgs_collection_number = mtl_doc[coll_map["product_contents_cn"]].get("collection_number")
     if usgs_collection_number is None:
         raise NotImplementedError(
             "Dataset has no collection number: pre-collection data is not supported."
         )
 
-    data_format = mtl_doc["product_metadata"]["output_format"]
+    data_format = mtl_doc[coll_map["product_contents_of"]]["output_format"]
     if data_format.upper() != "GEOTIFF":
         raise NotImplementedError(f"Only GTiff currently supported, got {data_format}")
     file_format = FileFormat.GeoTIFF
 
     # Assumed below.
-    projection_params = mtl_doc["projection_parameters"]
+    projection_params = mtl_doc[coll_map["level1_projection_parameters"]]
     if (
         "grid_cell_size_thermal" in projection_params
         and "grid_cell_size_reflective" in projection_params
@@ -299,7 +323,7 @@ def prepare_and_write(
         dataset_location=ds_path,
         # Detministic ID based on USGS's product id (which changes when the scene is reprocessed by them)
         dataset_id=uuid.uuid5(
-            USGS_UUID_NAMESPACE, mtl_doc["metadata_file_info"]["landsat_product_id"]
+            USGS_UUID_NAMESPACE, mtl_doc[coll_map["level1_processing_record"]]["landsat_product_id"]
         ),
         naming_conventions="dea",
         if_exists=IfExists.Overwrite,
@@ -309,15 +333,19 @@ def prepare_and_write(
             assert producer == "ga.gov.au"
             p.add_source_path(source_telemetry)
 
-        p.platform = mtl_doc["product_metadata"]["spacecraft_id"]
-        p.instrument = mtl_doc["product_metadata"]["sensor_id"]
+        p.platform = mtl_doc[coll_map["image_attributes"]]["spacecraft_id"]
+        p.instrument = mtl_doc[coll_map["image_attributes"]]["sensor_id"]
         p.product_family = "level1"
         p.producer = producer
         p.datetime = "{}T{}".format(
-            mtl_doc["product_metadata"]["date_acquired"],
-            mtl_doc["product_metadata"]["scene_center_time"],
+            mtl_doc[coll_map["image_attributes"]]["date_acquired"],
+            mtl_doc[coll_map["image_attributes"]]["scene_center_time"],
         )
-        p.processed = mtl_doc["metadata_file_info"]["file_date"]
+        if coll == "C2":
+            p.processed = mtl_doc["level1_processing_record"]["date_product_generated"]
+            p.properties["landsat:data_type"] = mtl_doc["level1_processing_record"]["processing_level"]
+        else:
+            p.processed = mtl_doc["metadata_file_info"]["file_date"]
         p.properties["odc:file_format"] = file_format
         p.properties["eo:gsd"] = ground_sample_distance
         cloud_cover = mtl_doc["image_attributes"]["cloud_cover"]
@@ -327,7 +355,7 @@ def prepare_and_write(
         p.properties["eo:sun_azimuth"] = mtl_doc["image_attributes"]["sun_azimuth"]
         p.properties["eo:sun_elevation"] = mtl_doc["image_attributes"]["sun_elevation"]
         p.properties["landsat:collection_number"] = usgs_collection_number
-        for section, fields in _COPYABLE_MTL_FIELDS:
+        for section, fields in _COPYABLE_MTL_FIELDS[coll]:
             for field in fields:
                 value = mtl_doc[section].get(field)
                 if value is not None:
@@ -345,14 +373,20 @@ def prepare_and_write(
             p.properties["odc:dataset_maturity"] = "nrt"
 
         band_aliases = get_band_alias_mappings(p.platform, p.instrument)
-        for usgs_band_id, file_location in _iter_bands_paths(mtl_doc):
+        for usgs_band_id, file_location in _iter_bands_paths(mtl_doc[coll_map["product_contents_fn"]]):
             p.note_measurement(
                 band_aliases[usgs_band_id],
                 file_location,
                 relative_to_dataset_location=True,
                 expand_valid_data=usgs_band_id != "quality",
             )
-
+        if coll == "C2":
+            p.note_measurement(
+                band_aliases["quality"],
+                mtl_doc[coll_map["product_contents_fn"]]["file_name_quality_l1_pixel"],
+                relative_to_dataset_location=True,
+                expand_valid_data=False,
+            )
         p.add_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
 
         return p.done()
