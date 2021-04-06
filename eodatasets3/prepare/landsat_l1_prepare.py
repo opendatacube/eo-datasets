@@ -68,8 +68,8 @@ _COPYABLE_MTL_FIELDS["C2"] = [
             "station_id",
             "wrs_path",
             "wrs_row",
-            #"ground_control_points_verify",  # not in the test data for C1 or C2
-            #"geometric_rmse_verify",   # not in the test data for C1 or C2
+            # "ground_control_points_verify",  # not in the test data for C1 or C2
+            # "geometric_rmse_verify",   # not in the test data for C1 or C2
         ),
     ),
     # not in the test data for C1 or C2
@@ -169,14 +169,13 @@ def get_band_alias_mappings(sat: str, instrument: str) -> Dict[str, str]:
     )
 
 
-def get_mtl_content(
-    acquisition_path: Path, root_element=None
-) -> Tuple[Dict, str, str]:
+def get_mtl_content(acquisition_path: Path, root_element=None) -> Tuple[Dict, str, str]:
     """
     Find MTL file for the given path. It could be a directory or a tar file.
 
     It will return the MTL parsed as a dict and its filename.
     """
+
     def iter_tar_members(tp: tarfile.TarFile) -> Generator[tarfile.TarInfo, None, None]:
         """
         This is a lazy alternative to TarInfo.getmembers() that only reads one tar item at a time.
@@ -290,7 +289,9 @@ def prepare_and_write(
         raise ValueError(f"No MTL file found for {ds_path}")
     coll = "C2" if root_element == "landsat_metadata_file" else "C1"
     coll_map = LANDSATMTLMAP[coll]
-    usgs_collection_number = mtl_doc[coll_map["product_contents_cn"]].get("collection_number")
+    usgs_collection_number = mtl_doc[coll_map["product_contents_cn"]].get(
+        "collection_number"
+    )
     if usgs_collection_number is None:
         raise NotImplementedError(
             "Dataset has no collection number: pre-collection data is not supported."
@@ -323,7 +324,8 @@ def prepare_and_write(
         dataset_location=ds_path,
         # Detministic ID based on USGS's product id (which changes when the scene is reprocessed by them)
         dataset_id=uuid.uuid5(
-            USGS_UUID_NAMESPACE, mtl_doc[coll_map["level1_processing_record"]]["landsat_product_id"]
+            USGS_UUID_NAMESPACE,
+            mtl_doc[coll_map["level1_processing_record"]]["landsat_product_id"],
         ),
         naming_conventions="dea",
         if_exists=IfExists.Overwrite,
@@ -343,7 +345,9 @@ def prepare_and_write(
         )
         if coll == "C2":
             p.processed = mtl_doc["level1_processing_record"]["date_product_generated"]
-            p.properties["landsat:data_type"] = mtl_doc["level1_processing_record"]["processing_level"]
+            p.properties["landsat:data_type"] = mtl_doc["level1_processing_record"][
+                "processing_level"
+            ]
         else:
             p.processed = mtl_doc["metadata_file_info"]["file_date"]
         p.properties["odc:file_format"] = file_format
@@ -373,7 +377,9 @@ def prepare_and_write(
             p.properties["odc:dataset_maturity"] = "nrt"
 
         band_aliases = get_band_alias_mappings(p.platform, p.instrument)
-        for usgs_band_id, file_location in _iter_bands_paths(mtl_doc[coll_map["product_contents_fn"]]):
+        for usgs_band_id, file_location in _iter_bands_paths(
+            mtl_doc[coll_map["product_contents_fn"]]
+        ):
             p.note_measurement(
                 band_aliases[usgs_band_id],
                 file_location,

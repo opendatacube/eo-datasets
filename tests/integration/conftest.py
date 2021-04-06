@@ -59,6 +59,7 @@ def l1_ls8_folder(tmp_path: Path) -> Path:
 def l1_c2_ls8_folder(tmp_path: Path) -> Path:
     return _make_copy(L8_C2_INPUT_PATH, tmp_path)
 
+
 @pytest.fixture
 def l1_ls8_metadata_path(l1_ls8_folder: Path, l1_ls8_dataset: DatasetDoc) -> Path:
     path = l1_ls8_folder / f"{l1_ls8_dataset.label}.odc-metadata.yaml"
@@ -281,63 +282,75 @@ def expected_l1_ls8_folder(
         "measurements": {
             "coastal_aerosol": {
                 "path": offset(
-                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B1.TIF"
+                    l1_ls8_folder,
+                    f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B1.TIF",
                 )
             },
             "blue": {
                 "path": offset(
-                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B2.TIF"
+                    l1_ls8_folder,
+                    f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B2.TIF",
                 )
             },
             "green": {
                 "path": offset(
-                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B3.TIF"
+                    l1_ls8_folder,
+                    f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B3.TIF",
                 )
             },
             "red": {
                 "path": offset(
-                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B4.TIF"
+                    l1_ls8_folder,
+                    f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B4.TIF",
                 )
             },
             "nir": {
                 "path": offset(
-                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B5.TIF"
+                    l1_ls8_folder,
+                    f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B5.TIF",
                 )
             },
             "swir_1": {
                 "path": offset(
-                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B6.TIF"
+                    l1_ls8_folder,
+                    f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B6.TIF",
                 )
             },
             "swir_2": {
                 "path": offset(
-                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B7.TIF"
+                    l1_ls8_folder,
+                    f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B7.TIF",
                 )
             },
             "panchromatic": {
                 "grid": "panchromatic",
                 "path": offset(
-                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B8.TIF"
+                    l1_ls8_folder,
+                    f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B8.TIF",
                 ),
             },
             "cirrus": {
                 "path": offset(
-                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B9.TIF"
+                    l1_ls8_folder,
+                    f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B9.TIF",
                 )
             },
             "lwir_1": {
                 "path": offset(
-                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B10.TIF"
+                    l1_ls8_folder,
+                    f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B10.TIF",
                 )
             },
             "lwir_2": {
                 "path": offset(
-                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B11.TIF"
+                    l1_ls8_folder,
+                    f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_B11.TIF",
                 )
             },
             "quality": {
                 "path": offset(
-                    l1_ls8_folder, f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_{quality_tag}.TIF"
+                    l1_ls8_folder,
+                    f"LC08_L1TP_090084_20160121_{processing_date}_0{landsat_collection}_T1_{quality_tag}.TIF",
                 )
             },
         },
