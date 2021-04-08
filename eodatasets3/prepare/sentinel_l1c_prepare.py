@@ -223,7 +223,7 @@ def prepare_and_write(
     dataset_document: Path,
 ) -> Tuple[uuid.UUID, Path]:
     # Process esa dataset
-    if "zip" in str(dataset):
+    if "S2A_MSIL1C_" in str(dataset) or "S2B_MSIL1C_" in str(dataset):
         with zipfile.ZipFile(dataset, "r") as z:
             # Get file paths for esa metadata files
             mtd_ds_zip_path = [s for s in z.namelist() if "MTD_DS.xml" in s][0]
