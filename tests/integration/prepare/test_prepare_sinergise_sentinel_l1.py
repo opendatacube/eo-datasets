@@ -4,7 +4,7 @@ import shutil
 import yaml
 import datetime
 from tests.common import run_prepare_cli
-from eodatasets3.prepare import sentinel_L1C_prepare
+from eodatasets3.prepare import sentinel_l1c_prepare
 
 path = (
     "data/sinergise_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446"
@@ -153,7 +153,7 @@ def test_sinergise_sentinel_l1(tmp_path, expected_dataset_document):
     output_yaml_path = outdir / "test.yaml"
 
     run_prepare_cli(
-        sentinel_L1C_prepare.main,
+        sentinel_l1c_prepare.main,
         "--dataset",
         outdir,
         "--dataset-document",
