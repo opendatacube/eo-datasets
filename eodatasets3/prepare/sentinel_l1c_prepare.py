@@ -10,7 +10,7 @@ from os import listdir
 from os.path import isfile, join
 import uuid
 import click
-from typing import Tuple
+from typing import Tuple, Dict
 from eodatasets3 import DatasetAssembler
 from eodatasets3.ui import PathPath
 import zipfile
@@ -69,7 +69,7 @@ def process_product_info(product_path):
         }
 
 
-def process_metadata_xml(metadata_xml_path):
+def process_metadata_xml(metadata_xml_path: str) -> Dict:
     xmldoc = minidom.parse(metadata_xml_path)
 
     cloud = float(
@@ -106,7 +106,7 @@ def process_metadata_xml(metadata_xml_path):
     }
 
 
-def process_mtd_ds(mtd_ds_zip_path, zip_object):
+def process_mtd_ds(mtd_ds_zip_path: str, zip_object: object) -> Dict:
     xmldoc = minidom.parseString(zip_object.read(mtd_ds_zip_path))
 
     reception_station = xmldoc.getElementsByTagName("RECEPTION_STATION")[
@@ -132,7 +132,7 @@ def process_mtd_ds(mtd_ds_zip_path, zip_object):
     }
 
 
-def process_mtd_tl(mtd_tl_zip_path, zip_object):
+def process_mtd_tl(mtd_tl_zip_path: str, zip_object: object) -> Dict:
     xmldoc = minidom.parseString(zip_object.read(mtd_tl_zip_path))
 
     sun_azimuth = xmldoc.getElementsByTagName("AZIMUTH_ANGLE")[0].firstChild.data
@@ -144,7 +144,7 @@ def process_mtd_tl(mtd_tl_zip_path, zip_object):
     }
 
 
-def process_mtd_msil1c(mtd_msil1c_zip_path, zip_object):
+def process_mtd_msil1c(mtd_msil1c_zip_path: str, zip_object: object) -> Dict:
     xmldoc = minidom.parseString(zip_object.read(mtd_msil1c_zip_path))
 
     data_type = xmldoc.getElementsByTagName("PROCESSING_LEVEL")[0].firstChild.data
@@ -185,9 +185,9 @@ def process_mtd_msil1c(mtd_msil1c_zip_path, zip_object):
 
 
 def process_format_correctness(
-    format_correctness_path,
-    zip_object,
-):
+    format_correctness_path: str,
+    zip_object: object,
+) -> Dict:
     if zip_object is not None:
         xmldoc = minidom.parseString(zip_object.read(format_correctness_path))
 
