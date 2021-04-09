@@ -70,10 +70,9 @@ def process_metadata_xml(metadata_xml_path: str) -> Dict:
     cloud = float(
         xmldoc.getElementsByTagName("CLOUDY_PIXEL_PERCENTAGE")[0].firstChild.data
     )
-    downlink_priority = xmldoc.getElementsByTagName("DOWNLINK_PRIORITY")[
-        0
-    ].firstChild.data
+
     datastrip_id = xmldoc.getElementsByTagName("DATASTRIP_ID")[0].firstChild.data
+    tile_id = xmldoc.getElementsByTagName("TILE_ID")[0].firstChild.data
     solar_azimuth = float(
         xmldoc.getElementsByTagName("Mean_Sun_Angle")[0]
         .getElementsByTagName("ZENITH_ANGLE")[0]
@@ -85,6 +84,8 @@ def process_metadata_xml(metadata_xml_path: str) -> Dict:
         .firstChild.data
     )
 
+    processed_time = xmldoc.getElementsByTagName("ARCHIVING_TIME")[0].firstChild.data
+
     resolutions = xmldoc.getElementsByTagName("Size")
     r_list = []
     for i in resolutions:
@@ -92,11 +93,12 @@ def process_metadata_xml(metadata_xml_path: str) -> Dict:
     resolution = min(r_list)
     return {
         "eo:cloud_cover": cloud,
-        "sentinel:downlink_priority": downlink_priority,
         "sentinel:datastrip_id": datastrip_id,
+        "sentinel:sentinel_tile_id": tile_id,
         "eo:sun_azimuth": solar_azimuth,
         "eo:sun_elevation": solar_zenith,
         "eo:gsd": resolution,
+        "odc:processing_datetime": processed_time,
     }
 
 
@@ -104,9 +106,6 @@ def process_mtd_ds(mtd_ds_zip_path: str, zip_object: object) -> Dict:
     xmldoc = minidom.parseString(zip_object.read(mtd_ds_zip_path))
 
     reception_station = xmldoc.getElementsByTagName("RECEPTION_STATION")[
-        0
-    ].firstChild.data
-    downlink_orbit_number = xmldoc.getElementsByTagName("DOWNLINK_ORBIT_NUMBER")[
         0
     ].firstChild.data
     processing_center = xmldoc.getElementsByTagName("PROCESSING_CENTER")[
@@ -121,7 +120,6 @@ def process_mtd_ds(mtd_ds_zip_path: str, zip_object: object) -> Dict:
 
     return {
         "sentinel:reception_station": reception_station,
-        "sentinel:downlink_orbit_number": int(downlink_orbit_number),
         "sentinel:processing_center": processing_center,
         "eo:gsd": resolution,
     }
@@ -132,17 +130,19 @@ def process_mtd_tl(mtd_tl_zip_path: str, zip_object: object) -> Dict:
 
     sun_azimuth = xmldoc.getElementsByTagName("AZIMUTH_ANGLE")[0].firstChild.data
     sun_elevation = xmldoc.getElementsByTagName("ZENITH_ANGLE")[0].firstChild.data
+    datastrip_id = xmldoc.getElementsByTagName("DATASTRIP_ID")[0].firstChild.data
 
     return {
         "eo:sun_azimuth": sun_azimuth,
         "eo:sun_elevation": sun_elevation,
+        "sentinel:datastrip_id": datastrip_id,
     }
 
 
 def process_mtd_msil1c(mtd_msil1c_zip_path: str, zip_object: object) -> Dict:
     xmldoc = minidom.parseString(zip_object.read(mtd_msil1c_zip_path))
 
-    datastrip_id = xmldoc.getElementsByTagName("PRODUCT_URI")[0].firstChild.data
+    product_uri = xmldoc.getElementsByTagName("PRODUCT_URI")[0].firstChild.data
     platform = xmldoc.getElementsByTagName("SPACECRAFT_NAME")[0].firstChild.data
     orbit = xmldoc.getElementsByTagName("SENSING_ORBIT_NUMBER")[0].firstChild.data
     orbit_direction = xmldoc.getElementsByTagName("SENSING_ORBIT_DIRECTION")[
@@ -159,10 +159,9 @@ def process_mtd_msil1c(mtd_msil1c_zip_path: str, zip_object: object) -> Dict:
     cloud_cover = xmldoc.getElementsByTagName("Cloud_Coverage_Assessment")[
         0
     ].firstChild.data
-    region_code = datastrip_id.split("_")[5][1:]
+    region_code = product_uri.split("_")[5][1:]
 
     return {
-        "sentinel:datastrip_id": datastrip_id,
         "eo:platform": platform,
         "sat:relative_orbit": int(orbit),
         "sat:orbit_state": orbit_direction.lower(),
@@ -173,47 +172,6 @@ def process_mtd_msil1c(mtd_msil1c_zip_path: str, zip_object: object) -> Dict:
         "eo:cloud_cover": cloud_cover,
         "odc:region_code": region_code,
     }
-
-
-def process_format_correctness(
-    format_correctness_path: str,
-    zip_object: object,
-) -> Dict:
-    if zip_object is not None:
-        xmldoc = minidom.parseString(zip_object.read(format_correctness_path))
-
-        source_system = xmldoc.getElementsByTagName("System")[0].firstChild.data
-        software_version = xmldoc.getElementsByTagName("Creator_Version")[
-            0
-        ].firstChild.data
-
-        return {
-            "sentinel:source_system": source_system,
-            "sentinel:source_creator_version": software_version,
-        }
-    else:
-        xmldoc = minidom.parse(format_correctness_path)
-
-        source_system = xmldoc.getElementsByTagName("System")[0].firstChild.data
-        creator_version = xmldoc.getElementsByTagName("Creator_Version")[
-            0
-        ].firstChild.data
-
-        datastrip_metadata = xmldoc.getElementsByTagName("File_Name")[0].firstChild.data
-
-        # Example: <Creation_Date>UTC=2020-10-11T01:47:21</Creation_Date>
-        time_zone, creation_datetime = xmldoc.getElementsByTagName("Creation_Date")[
-            0
-        ].firstChild.data.split("=")
-        if not time_zone.upper() == "UTC":
-            raise NotImplementedError("Expected only UTC dates: TODO: Implement")
-
-        return {
-            "sentinel:source_system": source_system,
-            "sentinel:source_creator_version": creator_version,
-            "sentinel:datastrip_metadata": datastrip_metadata,
-            "odc:processing_datetime": creation_datetime,
-        }
 
 
 def prepare_and_write(
@@ -227,16 +185,11 @@ def prepare_and_write(
             mtd_ds_zip_path = [s for s in z.namelist() if "MTD_DS.xml" in s][0]
             mtd_tl_zip_path = [s for s in z.namelist() if "MTD_TL.xml" in s][0]
             mtd_msil1c_zip_path = [s for s in z.namelist() if "MTD_MSIL1C.xml" in s][0]
-            format_correctness_zip_path = [
-                s for s in z.namelist() if "FORMAT_CORRECTNESS.xml" in s
-            ][0]
 
             # Crawl through metadata files and return a dict of useful information
             mtd_ds = process_mtd_ds(mtd_ds_zip_path, z)
             mtd_tl = process_mtd_tl(mtd_tl_zip_path, z)
-            format_correctness = process_format_correctness(
-                format_correctness_zip_path, z
-            )
+
             mtd_msil1c = process_mtd_msil1c(mtd_msil1c_zip_path, z)
 
             with DatasetAssembler(
@@ -249,7 +202,6 @@ def prepare_and_write(
                 p.properties["odc:product_family"] = "level1"
                 p.properties["odc:file_format"] = "JPEG2000"
 
-                p.properties.update(format_correctness)
                 p.properties.update(mtd_ds)
                 p.properties.update(mtd_tl)
                 p.properties.update(mtd_msil1c)
@@ -282,12 +234,10 @@ def prepare_and_write(
         # Get file paths for sinergise metadata files
         product_info_path = find_metadata_path("productInfo.json", dataset)
         metadata_xml_path = find_metadata_path("metadata.xml", dataset)
-        format_correctness_path = find_metadata_path("FORMAT_CORRECTNESS.xml", dataset)
 
         # Crawl through metadata files and return a dict of useful information
         product_info = process_product_info(product_info_path)
         metadata_xml = process_metadata_xml(metadata_xml_path)
-        format_correctness = process_format_correctness(format_correctness_path, None)
 
         with DatasetAssembler(
             metadata_path=dataset_document,
@@ -299,7 +249,6 @@ def prepare_and_write(
             p.properties["odc:product_family"] = "level1"
             p.properties["odc:producer"] = "sinergise.com"
 
-            p.properties.update(format_correctness)
             p.properties.update(metadata_xml)
             p.properties.update(product_info)
 

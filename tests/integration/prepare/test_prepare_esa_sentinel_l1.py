@@ -157,16 +157,13 @@ def expected_dataset_document():
             "odc:producer": "esa.int",
             "odc:product_family": "level1",
             "odc:region_code": "55HFA",
-            "sentinel:datastrip_id": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE",
+            "sentinel:datastrip_id": "S2B_OPER_MSI_L1C_DS_EPAE_20201011T011446_S20201011T000244_N02.09",
             "sentinel:datatake_type": "INS-NOBS",
-            "sentinel:downlink_orbit_number": 18789,
             "sat:orbit_state": "descending",
             "sat:relative_orbit": 30,
             "sentinel:processing_baseline": "02.09",
             "sentinel:processing_center": "EPAE",
             "sentinel:reception_station": "EDRS",
-            "sentinel:source_creator_version": "01.06.04",
-            "sentinel:source_system": "OLQC-SC",
         },
     }
 
