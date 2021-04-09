@@ -173,7 +173,7 @@ def prepare_and_write(
     dataset_document: Path,
 ) -> Tuple[uuid.UUID, Path]:
     # Process esa dataset
-    if "zip" in str(dataset):
+    if dataset.suffix == ".zip":
         with zipfile.ZipFile(dataset, "r") as z:
             # Get file paths for esa metadata files
             mtd_ds_zip_path = [s for s in z.namelist() if "MTD_DS.xml" in s][0]
@@ -225,12 +225,18 @@ def prepare_and_write(
                 return p.done()
 
     # process sinergise dataset
-    else:
+    elif dataset.is_dir():
         directory = [f for f in listdir(dataset) if isfile(join(dataset, f))]
 
         # Get file paths for sinergise metadata files
         product_info_path = dataset / "productInfo.json"
         metadata_xml_path = dataset / "metadata.xml"
+
+        if not product_info_path.exists():
+            raise ValueError(
+                "No productInfo.json file found. "
+                "Are you sure the input is a sinergise dataset folder?"
+            )
 
         # Crawl through metadata files and return a dict of useful information
         product_info = process_product_info(product_info_path)
@@ -261,6 +267,8 @@ def prepare_and_write(
             p.add_accessory_file("metadata:product_info", product_info_path)
             p.add_accessory_file("metadata:sinergise_metadata", metadata_xml_path)
             return p.done()
+    else:
+        raise NotImplementedError("Unknown input file type?")
 
 
 @click.command(help=__doc__)
