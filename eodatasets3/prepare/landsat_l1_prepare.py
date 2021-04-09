@@ -287,8 +287,8 @@ def prepare_and_write(
     mtl_doc, root_element, mtl_filename = get_mtl_content(ds_path)
     if not mtl_doc:
         raise ValueError(f"No MTL file found for {ds_path}")
-    coll = "C2" if root_element == "landsat_metadata_file" else "C1"
-    coll_map = LANDSAT_MTL_MAP[coll]
+    collection_key = "C2" if root_element == "landsat_metadata_file" else "C1"
+    coll_map = LANDSAT_MTL_MAP[collection_key]
     usgs_collection_number = mtl_doc[coll_map["product_contents_cn"]].get(
         "collection_number"
     )
@@ -343,7 +343,7 @@ def prepare_and_write(
             mtl_doc[coll_map["image_attributes"]]["date_acquired"],
             mtl_doc[coll_map["image_attributes"]]["scene_center_time"],
         )
-        if coll == "C2":
+        if collection_key == "C2":
             p.processed = mtl_doc["level1_processing_record"]["date_product_generated"]
             p.properties["landsat:data_type"] = mtl_doc["level1_processing_record"][
                 "processing_level"
@@ -359,7 +359,7 @@ def prepare_and_write(
         p.properties["eo:sun_azimuth"] = mtl_doc["image_attributes"]["sun_azimuth"]
         p.properties["eo:sun_elevation"] = mtl_doc["image_attributes"]["sun_elevation"]
         p.properties["landsat:collection_number"] = usgs_collection_number
-        for section, fields in _COPYABLE_MTL_FIELDS[coll]:
+        for section, fields in _COPYABLE_MTL_FIELDS[collection_key]:
             for field in fields:
                 value = mtl_doc[section].get(field)
                 if value is not None:
@@ -386,7 +386,7 @@ def prepare_and_write(
                 relative_to_dataset_location=True,
                 expand_valid_data=usgs_band_id != "quality",
             )
-        if coll == "C2":
+        if collection_key == "C2":
             p.note_measurement(
                 band_aliases["quality"],
                 mtl_doc[coll_map["product_contents_fn"]]["file_name_quality_l1_pixel"],
