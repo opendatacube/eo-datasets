@@ -518,10 +518,8 @@ def _normalise_dataset_path(input_path: Path) -> Path:
             return input_path
         input_path = input_path.parent
 
-    mtl_files = list(input_path.rglob("*_MTL*"))
+    mtl_files = list(input_path.rglob("*_MTL.txt"))
 
-    if len(mtl_files) > 1:
-        mtl_files = list(input_path.rglob("*_MTL.txt"))
     if not mtl_files:
         raise ValueError(
             "No MTL files within input path '{}'. Not a dataset?".format(input_path)
