@@ -64,7 +64,7 @@ def expected_dataset_document():
                     1.0,
                 ],
             },
-            "nir_1_green_red_blue": {
+            "blue_green_nir_1_red": {
                 "shape": [2196, 2196],
                 "transform": [
                     50.0,
@@ -83,7 +83,7 @@ def expected_dataset_document():
         "lineage": {},
         "measurements": {
             "blue": {
-                "grid": "nir_1_green_red_blue",
+                "grid": "blue_green_nir_1_red",
                 "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
                 "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B02.jp2",
             },
@@ -93,17 +93,17 @@ def expected_dataset_document():
                 "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B01.jp2",
             },
             "green": {
-                "grid": "nir_1_green_red_blue",
+                "grid": "blue_green_nir_1_red",
                 "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
                 "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B03.jp2",
             },
             "nir_1": {
-                "grid": "nir_1_green_red_blue",
+                "grid": "blue_green_nir_1_red",
                 "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
                 "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B08.jp2",
             },
             "red": {
-                "grid": "nir_1_green_red_blue",
+                "grid": "blue_green_nir_1_red",
                 "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
                 "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B04.jp2",
             },
