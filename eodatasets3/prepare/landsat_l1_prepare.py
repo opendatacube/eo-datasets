@@ -110,7 +110,7 @@ LANDSAT_xTM_BAND_ALIASES = {
 
 MTL_PAIRS_RE = re.compile(r"(\w+)\s=\s(.*)")
 
-LANDSATMTLMAP = {
+LANDSAT_MTL_MAP = {
     "C1": {
         "product_contents_cn": "metadata_file_info",
         "product_contents_of": "product_metadata",
@@ -288,7 +288,7 @@ def prepare_and_write(
     if not mtl_doc:
         raise ValueError(f"No MTL file found for {ds_path}")
     coll = "C2" if root_element == "landsat_metadata_file" else "C1"
-    coll_map = LANDSATMTLMAP[coll]
+    coll_map = LANDSAT_MTL_MAP[coll]
     usgs_collection_number = mtl_doc[coll_map["product_contents_cn"]].get(
         "collection_number"
     )
