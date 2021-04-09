@@ -5,8 +5,6 @@ Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise or esa.
 import json
 import uuid
 import zipfile
-from os import listdir
-from os.path import isfile, join
 from pathlib import Path
 from typing import Tuple, Dict
 from xml.dom import minidom
@@ -204,16 +202,18 @@ def prepare_and_write(
                 for file in z.namelist():
                     # T55HFA_20201011T000249_B01.jp2
                     if ".jp2" in file and "TCI" not in file and "PVI" not in file:
-                        band = (
-                            file.split("_")[len(file.split("_")) - 1]
-                            .replace(".jp2", "")
-                            .replace("B", "")
-                        )
-                        name = SENTINEL_MSI_BAND_ALIASES[band]
                         # path = 'zip:%s!%s' % (str(dataset), str(file))
                         p.note_measurement(
                             path=file,
-                            name=name,
+                            name=(
+                                SENTINEL_MSI_BAND_ALIASES[
+                                    (
+                                        file.split("_")[len(file.split("_")) - 1]
+                                        .replace(".jp2", "")
+                                        .replace("B", "")
+                                    )
+                                ]
+                            ),
                             relative_to_dataset_location=True
                             # path=path, name=name
                         )
@@ -226,7 +226,6 @@ def prepare_and_write(
 
     # process sinergise dataset
     elif dataset.is_dir():
-        directory = [f for f in listdir(dataset) if isfile(join(dataset, f))]
 
         # Get file paths for sinergise metadata files
         product_info_path = dataset / "productInfo.json"
@@ -257,12 +256,12 @@ def prepare_and_write(
 
             p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
 
-            for ds in directory:
-                if ".jp2" in ds and "preview" not in ds and "TCI" not in ds:
-                    band = ds.replace(".jp2", "").replace("B", "")
-                    name = SENTINEL_MSI_BAND_ALIASES[band]
-                    path = Path(dataset) / ds
-                    p.note_measurement(path=path, name=name)
+            for path in dataset.rglob("*.jp2"):
+                if "preview" not in path.stem and "TCI" not in path.stem:
+                    p.note_measurement(
+                        path=path,
+                        name=SENTINEL_MSI_BAND_ALIASES[path.stem.replace("B", "")],
+                    )
 
             p.add_accessory_file("metadata:product_info", product_info_path)
             p.add_accessory_file("metadata:sinergise_metadata", metadata_xml_path)
