@@ -164,7 +164,7 @@ def expected_l1_ls8_folder(
     lineage=None,
 ):
     """
-    :param collection:  The collection of the current scene 
+    :param collection: The collection of the current scene
     :param l1_collection: The collection of the original landsat l1 scene
     :return: 
     """
