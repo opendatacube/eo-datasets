@@ -19,7 +19,6 @@ DATASET_PATH: Path = Path(__file__).parent.parent / dataset
 def expected_dataset_document():
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
-        "accessories": {},
         "crs": "epsg:32755",
         "geometry": {
             "coordinates": [
@@ -164,6 +163,19 @@ def expected_dataset_document():
             "sentinel:processing_baseline": "02.09",
             "sentinel:processing_center": "EPAE",
             "sentinel:reception_station": "EDRS",
+        },
+        "accessories": {
+            "metadata:mtd_ds": {
+                "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/DATASTRIP/"
+                "DS_EPAE_20201011T011446_S20201011T000244/MTD_DS.xml"
+            },
+            "metadata:mtd_msil1c": {
+                "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/MTD_MSIL1C.xml"
+            },
+            "metadata:mtd_tl": {
+                "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
+                "L1C_T55HFA_A018789_20201011T000244/MTD_TL.xml"
+            },
         },
     }
 

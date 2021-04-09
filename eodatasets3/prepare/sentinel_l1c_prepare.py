@@ -2,19 +2,19 @@
 Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise or esa.
 """
 
-from pathlib import Path
-from xml.dom import minidom
 import json
-import os
+import uuid
+import zipfile
 from os import listdir
 from os.path import isfile, join
-import uuid
-import click
+from pathlib import Path
 from typing import Tuple, Dict
+from xml.dom import minidom
+
+import click
+
 from eodatasets3 import DatasetAssembler
 from eodatasets3.ui import PathPath
-import zipfile
-
 
 SENTINEL_MSI_BAND_ALIASES = {
     "01": "coastal_aerosol",
@@ -33,39 +33,33 @@ SENTINEL_MSI_BAND_ALIASES = {
 }
 
 
-def find_metadata_path(find_filename, dataset_dir):
-    for root, dir, fn in os.walk(dataset_dir):
-        if find_filename in fn:
-            return os.path.join(root, fn[fn.index(find_filename)])
-
-
-def process_product_info(product_path):
-    with open(product_path) as fp:
+def process_product_info(product_path: Path) -> Dict:
+    with product_path.open() as fp:
         product = json.loads(fp.read())
 
-        synergise_product_name = product["name"]
-        synergise_product_id = product["id"]
-        if len(product["tiles"]) > 1:
-            raise NotImplementedError("No support for multi-tiled products yet")
-        timestamp = product["tiles"][0]["timestamp"]
-        utm_zone = product["tiles"][0]["utmZone"]
-        latitude_band = product["tiles"][0]["latitudeBand"]
-        grid_square = product["tiles"][0]["gridSquare"]
-        region_code = "%s%s%s" % (utm_zone, latitude_band, grid_square)
+    synergise_product_name = product["name"]
+    synergise_product_id = product["id"]
+    if len(product["tiles"]) > 1:
+        raise NotImplementedError("No support for multi-tiled products yet")
+    timestamp = product["tiles"][0]["timestamp"]
+    utm_zone = product["tiles"][0]["utmZone"]
+    latitude_band = product["tiles"][0]["latitudeBand"]
+    grid_square = product["tiles"][0]["gridSquare"]
+    region_code = "%s%s%s" % (utm_zone, latitude_band, grid_square)
 
-        return {
-            "sinergise_product_name": synergise_product_name,
-            "sinergise_product_id": synergise_product_id,
-            "datetime": timestamp,
-            "odc:region_code": region_code,
-            "sentinel:utm_zone": utm_zone,
-            "sentinel:latitude_band": latitude_band,
-            "sentinel:grid_square": grid_square,
-        }
+    return {
+        "sinergise_product_name": synergise_product_name,
+        "sinergise_product_id": synergise_product_id,
+        "datetime": timestamp,
+        "odc:region_code": region_code,
+        "sentinel:utm_zone": utm_zone,
+        "sentinel:latitude_band": latitude_band,
+        "sentinel:grid_square": grid_square,
+    }
 
 
-def process_metadata_xml(metadata_xml_path: str) -> Dict:
-    xmldoc = minidom.parse(metadata_xml_path)
+def process_metadata_xml(metadata_xml_path: Path) -> Dict:
+    xmldoc = minidom.parse(str(metadata_xml_path))
 
     cloud = float(
         xmldoc.getElementsByTagName("CLOUDY_PIXEL_PERCENTAGE")[0].firstChild.data
@@ -102,8 +96,8 @@ def process_metadata_xml(metadata_xml_path: str) -> Dict:
     }
 
 
-def process_mtd_ds(mtd_ds_zip_path: str, zip_object: object) -> Dict:
-    xmldoc = minidom.parseString(zip_object.read(mtd_ds_zip_path))
+def process_mtd_ds(contents: str) -> Dict:
+    xmldoc = minidom.parseString(contents)
 
     reception_station = xmldoc.getElementsByTagName("RECEPTION_STATION")[
         0
@@ -125,8 +119,8 @@ def process_mtd_ds(mtd_ds_zip_path: str, zip_object: object) -> Dict:
     }
 
 
-def process_mtd_tl(mtd_tl_zip_path: str, zip_object: object) -> Dict:
-    xmldoc = minidom.parseString(zip_object.read(mtd_tl_zip_path))
+def process_mtd_tl(contents: str) -> Dict:
+    xmldoc = minidom.parseString(contents)
 
     sun_azimuth = xmldoc.getElementsByTagName("AZIMUTH_ANGLE")[0].firstChild.data
     sun_elevation = xmldoc.getElementsByTagName("ZENITH_ANGLE")[0].firstChild.data
@@ -139,8 +133,8 @@ def process_mtd_tl(mtd_tl_zip_path: str, zip_object: object) -> Dict:
     }
 
 
-def process_mtd_msil1c(mtd_msil1c_zip_path: str, zip_object: object) -> Dict:
-    xmldoc = minidom.parseString(zip_object.read(mtd_msil1c_zip_path))
+def process_mtd_msil1c(contents: str) -> Dict:
+    xmldoc = minidom.parseString(contents)
 
     product_uri = xmldoc.getElementsByTagName("PRODUCT_URI")[0].firstChild.data
     platform = xmldoc.getElementsByTagName("SPACECRAFT_NAME")[0].firstChild.data
@@ -187,10 +181,9 @@ def prepare_and_write(
             mtd_msil1c_zip_path = [s for s in z.namelist() if "MTD_MSIL1C.xml" in s][0]
 
             # Crawl through metadata files and return a dict of useful information
-            mtd_ds = process_mtd_ds(mtd_ds_zip_path, z)
-            mtd_tl = process_mtd_tl(mtd_tl_zip_path, z)
-
-            mtd_msil1c = process_mtd_msil1c(mtd_msil1c_zip_path, z)
+            mtd_ds = process_mtd_ds(z.read(mtd_ds_zip_path).decode("utf-8"))
+            mtd_tl = process_mtd_tl(z.read(mtd_tl_zip_path).decode("utf-8"))
+            mtd_msil1c = process_mtd_msil1c(z.read(mtd_msil1c_zip_path).decode("utf-8"))
 
             with DatasetAssembler(
                 metadata_path=dataset_document,
@@ -225,6 +218,10 @@ def prepare_and_write(
                             # path=path, name=name
                         )
 
+                p.add_accessory_file("metadata:mtd_ds", mtd_ds_zip_path)
+                p.add_accessory_file("metadata:mtd_tl", mtd_tl_zip_path)
+                p.add_accessory_file("metadata:mtd_msil1c", mtd_msil1c_zip_path)
+
                 return p.done()
 
     # process sinergise dataset
@@ -232,8 +229,8 @@ def prepare_and_write(
         directory = [f for f in listdir(dataset) if isfile(join(dataset, f))]
 
         # Get file paths for sinergise metadata files
-        product_info_path = find_metadata_path("productInfo.json", dataset)
-        metadata_xml_path = find_metadata_path("metadata.xml", dataset)
+        product_info_path = dataset / "productInfo.json"
+        metadata_xml_path = dataset / "metadata.xml"
 
         # Crawl through metadata files and return a dict of useful information
         product_info = process_product_info(product_info_path)
@@ -261,6 +258,8 @@ def prepare_and_write(
                     path = Path(dataset) / ds
                     p.note_measurement(path=path, name=name)
 
+            p.add_accessory_file("metadata:product_info", product_info_path)
+            p.add_accessory_file("metadata:sinergise_metadata", metadata_xml_path)
             return p.done()
 
 
