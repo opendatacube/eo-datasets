@@ -82,18 +82,6 @@ class DatasetAssembler(EoFields):
         "odc:region_code",
         "sentinel:datatake_start_datetime",
         "sentinel:sentinel_tile_id",
-        "sentinel:data_type",
-        "sentinel:datastrip_id",
-        "sentinel:datatake_type",
-        "sentinel:downlink_orbit_number",
-        "sentinel:orbit",
-        "sentinel:orbit_direction",
-        "sentinel:processing_baseline",
-        "sentinel:processing_center",
-        "sentinel:product_type",
-        "sentinel:reception_station",
-        "sentinel:software_version",
-        "sentinel:source_system",
     }
 
     def __init__(
