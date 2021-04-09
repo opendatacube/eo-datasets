@@ -374,7 +374,7 @@ def prepare_and_write(
         # NRT product?
         # Category is one of: T1, T2 or RT ('real time')
         if p.properties["landsat:collection_category"] == "RT":
-            p.properties["odc:dataset_maturity"] = "nrt"
+            p.properties["dea:dataset_maturity"] = "nrt"
 
         band_aliases = get_band_alias_mappings(p.platform, p.instrument)
         for usgs_band_id, file_location in _iter_bands_paths(
