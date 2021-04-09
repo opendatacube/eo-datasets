@@ -17,7 +17,6 @@ DATASET_DIR: Path = Path(__file__).parent.parent / path
 def expected_dataset_document():
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
-        "accessories": {},
         "crs": "epsg:32755",
         "geometry": {
             "coordinates": [
@@ -132,6 +131,10 @@ def expected_dataset_document():
                 2020, 10, 11, 1, 14, 46, tzinfo=datetime.timezone.utc
             ),
             "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09",
+        },
+        "accessories": {
+            "metadata:product_info": {"path": "productInfo.json"},
+            "metadata:sinergise_metadata": {"path": "metadata.xml"},
         },
     }
 
