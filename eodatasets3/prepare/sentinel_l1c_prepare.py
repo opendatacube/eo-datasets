@@ -62,10 +62,10 @@ def process_product_info(product_path):
         region_code = "%s%s%s" % (utm_zone, latitude_band, grid_square)
 
         return {
-            "synergise_product_name": synergise_product_name,
-            "synergise_product_id": synergise_product_id,
-            "timestamp": timestamp,
-            "region_code": region_code,
+            "sentinel:sinergise_product_name": synergise_product_name,
+            "sentinel:sinergise_product_id": synergise_product_id,
+            "datetime": timestamp,
+            "odc:region_code": region_code,
         }
 
 
@@ -95,14 +95,13 @@ def process_metadata_xml(metadata_xml_path: str) -> Dict:
     for i in resolutions:
         r_list.append(int(i.attributes["resolution"].value))
     resolution = min(r_list)
-
     return {
-        "cloud": cloud,
-        "downlink_priority": downlink_priority,
-        "datastrip_id": datastrip_id,
-        "solar_azimuth": solar_azimuth,
-        "solar_zenith": solar_zenith,
-        "resolution": resolution,
+        "eo:cloud_cover": cloud,
+        "sentinel:downlink_priority": downlink_priority,
+        "sentinel:datastrip_id": datastrip_id,
+        "eo:sun_azimuth": solar_azimuth,
+        "eo:sun_elevation": solar_zenith,
+        "eo:gsd": resolution,
     }
 
 
@@ -124,11 +123,12 @@ def process_mtd_ds(mtd_ds_zip_path: str, zip_object: object) -> Dict:
     for i in resolutions:
         r_list.append(int(i.firstChild.data))
     resolution = min(r_list)
+
     return {
-        "reception_station": reception_station,
-        "downlink_orbit_number": downlink_orbit_number,
-        "processing_center": processing_center,
-        "resolution": resolution,
+        "sentinel:reception_station": reception_station,
+        "sentinel:downlink_orbit_number": downlink_orbit_number,
+        "sentinel:processing_center": processing_center,
+        "eo:gsd": resolution,
     }
 
 
@@ -139,8 +139,8 @@ def process_mtd_tl(mtd_tl_zip_path: str, zip_object: object) -> Dict:
     sun_elevation = xmldoc.getElementsByTagName("ZENITH_ANGLE")[0].firstChild.data
 
     return {
-        "sun_azimuth": sun_azimuth,
-        "sun_elevation": sun_elevation,
+        "eo:sun_azimuth": sun_azimuth,
+        "eo:sun_elevation": sun_elevation,
     }
 
 
@@ -169,18 +169,18 @@ def process_mtd_msil1c(mtd_msil1c_zip_path: str, zip_object: object) -> Dict:
     region_code = datastrip_id.split("_")[5][1:]
 
     return {
-        "data_type": data_type,
-        "datastrip_id": datastrip_id,
-        "product_type": product_type,
-        "platform": platform,
-        "orbit": orbit,
-        "orbit_direction": orbit_direction,
-        "datatake_type": datatake_type,
-        "processing_datetime": processing_datetime,
-        "processing_baseline": processing_baseline,
+        "sentinel:data_type": data_type,
+        "sentinel:datastrip_id": datastrip_id,
+        "sentinel:product_type": product_type,
+        "eo:platform": platform,
+        "sentinel:orbit": orbit,
+        "sentinel:orbit_direction": orbit_direction,
+        "sentinel:datatake_type": datatake_type,
+        "odc:processing_datetime": processing_datetime,
+        "sentinel:processing_baseline": processing_baseline,
         "datetime": datetime,
-        "cloud_cover": cloud_cover,
-        "region_code": region_code,
+        "eo:cloud_cover": cloud_cover,
+        "odc:region_code": region_code,
     }
 
 
@@ -197,8 +197,8 @@ def process_format_correctness(
         ].firstChild.data
 
         return {
-            "source_system": source_system,
-            "software_version": software_version,
+            "sentinel:source_system": source_system,
+            "sentinel:software_version": software_version,
         }
     else:
         xmldoc = minidom.parse(format_correctness_path)
@@ -211,10 +211,10 @@ def process_format_correctness(
         datastrip_metadata = xmldoc.getElementsByTagName("File_Name")[0].firstChild.data
 
         return {
-            "source_system": source_system,
-            "creator_version": creator_version,
-            "creation_date": creation_date,
-            "datastrip_metadata": datastrip_metadata,
+            "sentinel:source_system": source_system,
+            "sentinel:software_version": creator_version,
+            "sentinel:datastrip_metadata": datastrip_metadata,
+            "odc:processing_datetime": creation_date.split("=")[1],
         }
 
 
@@ -223,7 +223,7 @@ def prepare_and_write(
     dataset_document: Path,
 ) -> Tuple[uuid.UUID, Path]:
     # Process esa dataset
-    if "S2A_MSIL1C_" in str(dataset) or "S2B_MSIL1C_" in str(dataset):
+    if "zip" in str(dataset):
         with zipfile.ZipFile(dataset, "r") as z:
             # Get file paths for esa metadata files
             mtd_ds_zip_path = [s for s in z.namelist() if "MTD_DS.xml" in s][0]
@@ -246,41 +246,17 @@ def prepare_and_write(
                 dataset_location=dataset,
             ) as p:
 
-                p.datetime = mtd_msil1c["datetime"]
                 p.properties["eo:instrument"] = HARDCODED["instrument"]
-                p.properties["eo:platform"] = mtd_msil1c["platform"]
-                p.properties["odc:processing_datetime"] = mtd_msil1c[
-                    "processing_datetime"
-                ]
-                p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
                 p.properties["odc:producer"] = "esa.int"
                 p.properties["odc:product_family"] = HARDCODED["product_family"]
-                p.properties["eo:sun_elevation"] = mtd_tl["sun_elevation"]
-                p.properties["eo:sun_azimuth"] = mtd_tl["sun_azimuth"]
-                p.properties["eo:gsd"] = mtd_ds["resolution"]
-                p.properties["eo:cloud_cover"] = mtd_msil1c["cloud_cover"]
                 p.properties["odc:file_format"] = HARDCODED["file_format"]
-                p.properties["odc:region_code"] = mtd_msil1c["region_code"]
-                p.properties["sentinel:data_type"] = mtd_msil1c["data_type"]
-                p.properties["sentinel:product_type"] = mtd_msil1c["product_type"]
-                p.properties["sentinel:software_version"] = format_correctness[
-                    "software_version"
-                ]
-                p.properties["sentinel:source_system"] = format_correctness[
-                    "source_system"
-                ]
-                p.properties["sentinel:datastrip_id"] = mtd_msil1c["datastrip_id"]
-                p.properties["sentinel:downlink_orbit_number"] = mtd_ds[
-                    "downlink_orbit_number"
-                ]
-                p.properties["sentinel:reception_station"] = mtd_ds["reception_station"]
-                p.properties["sentinel:processing_center"] = mtd_ds["processing_center"]
-                p.properties["sentinel:orbit"] = mtd_msil1c["orbit"]
-                p.properties["sentinel:orbit_direction"] = mtd_msil1c["orbit_direction"]
-                p.properties["sentinel:datatake_type"] = mtd_msil1c["datatake_type"]
-                p.properties["sentinel:processing_baseline"] = mtd_msil1c[
-                    "processing_baseline"
-                ]
+
+                p.properties.update(format_correctness)
+                p.properties.update(mtd_ds)
+                p.properties.update(mtd_tl)
+                p.properties.update(mtd_msil1c)
+
+                p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
 
                 for file in z.namelist():
                     # T55HFA_20201011T000249_B01.jp2
@@ -319,40 +295,19 @@ def prepare_and_write(
             metadata_path=dataset_document,
             dataset_location=dataset,
         ) as p:
-            p.datetime = product_info["timestamp"]
-            p.properties["eo:instrument"] = HARDCODED["instrument"]
             p.properties["eo:platform"] = "sentinel-2a"
-            p.properties["odc:processing_datetime"] = (
-                format_correctness["creation_date"].split("=")[1].replace("T", " ")
-            )
-            p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
-            p.properties["odc:producer"] = "sinergise.com"
-            p.properties["odc:product_family"] = HARDCODED["product_family"]
-            p.properties["eo:sun_elevation"] = metadata_xml["solar_zenith"]
-            p.properties["eo:sun_azimuth"] = metadata_xml["solar_azimuth"]
-            p.properties["eo:gsd"] = metadata_xml["resolution"]
-            p.properties["eo:cloud_cover"] = metadata_xml["cloud"]
-            p.properties["sentinel:sinergise_product_name"] = product_info[
-                "synergise_product_name"
-            ]
-            p.properties["sentinel:sinergise_product_id"] = product_info[
-                "synergise_product_id"
-            ]
+            p.properties["eo:instrument"] = HARDCODED["instrument"]
             p.properties["odc:file_format"] = HARDCODED["file_format"]
-            p.properties["odc:region_code"] = product_info["region_code"]
+            p.properties["odc:product_family"] = HARDCODED["product_family"]
+            p.properties["odc:producer"] = "sinergise.com"
             p.properties["sentinel:data_type"] = HARDCODED["data_type"]
             p.properties["sentinel:product_type"] = HARDCODED["product_type"]
-            p.properties["sentinel:software_version"] = format_correctness[
-                "creator_version"
-            ]
-            p.properties["sentinel:source_system"] = format_correctness["source_system"]
-            p.properties["sentinel:datastrip_metadata"] = format_correctness[
-                "datastrip_metadata"
-            ]
-            p.properties["sentinel:downlink_priority"] = metadata_xml[
-                "downlink_priority"
-            ]
-            p.properties["sentinel:datastrip_id"] = metadata_xml["datastrip_id"]
+
+            p.properties.update(format_correctness)
+            p.properties.update(metadata_xml)
+            p.properties.update(product_info)
+
+            p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
 
             for ds in directory:
                 if ".jp2" in ds and "preview" not in ds and "TCI" not in ds:
