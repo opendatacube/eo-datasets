@@ -117,7 +117,7 @@ def expected_dataset_document():
             "odc:dataset_version": "1.0.20201011",
             "odc:file_format": "JPEG2000",
             "odc:processing_datetime": datetime.datetime(
-                2020, 10, 11, 1, 47, 21, tzinfo=datetime.timezone.utc
+                2020, 10, 11, 1, 47, 4, 112949, tzinfo=datetime.timezone.utc
             ),
             "odc:producer": "sinergise.com",
             "odc:product_family": "level1",
@@ -128,10 +128,10 @@ def expected_dataset_document():
             "sinergise_product_id": "73e1a409-595d-4fbf-8fe0-01e0ee26bf00",
             "sinergise_product_name": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446",
             "sentinel:datastrip_id": "S2B_OPER_MSI_L1C_DS_EPAE_20201011T011446_S20201011T000244_N02.09",
-            "sentinel:datastrip_metadata": "GRANULE/L1C_T55HFA_A018789_20201011T000244/QI_DATA/FORMAT_CORRECTNESS.xml",
-            "sentinel:downlink_priority": "NOMINAL",
-            "sentinel:source_system": "OLQC-SC",
-            "sentinel:source_creator_version": "01.06.04",
+            "sentinel:datatake_start_datetime": datetime.datetime(
+                2020, 10, 11, 1, 14, 46, tzinfo=datetime.timezone.utc
+            ),
+            "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09",
         },
     }
 
