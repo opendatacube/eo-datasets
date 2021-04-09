@@ -15,14 +15,6 @@ from eodatasets3 import DatasetAssembler
 from eodatasets3.ui import PathPath
 import zipfile
 
-HARDCODED = {
-    "file_format": "JPEG2000",
-    "instrument": "MSI",
-    "product_family": "level1",
-    "data_type": "Level-1C",
-    "product_type": "S2MSI1C",
-}
-
 
 SENTINEL_MSI_BAND_ALIASES = {
     "01": "coastal_aerosol",
@@ -62,10 +54,13 @@ def process_product_info(product_path):
         region_code = "%s%s%s" % (utm_zone, latitude_band, grid_square)
 
         return {
-            "sentinel:sinergise_product_name": synergise_product_name,
-            "sentinel:sinergise_product_id": synergise_product_id,
+            "sinergise_product_name": synergise_product_name,
+            "sinergise_product_id": synergise_product_id,
             "datetime": timestamp,
             "odc:region_code": region_code,
+            "sentinel:utm_zone": utm_zone,
+            "sentinel:latitude_band": latitude_band,
+            "sentinel:grid_square": grid_square,
         }
 
 
@@ -126,7 +121,7 @@ def process_mtd_ds(mtd_ds_zip_path: str, zip_object: object) -> Dict:
 
     return {
         "sentinel:reception_station": reception_station,
-        "sentinel:downlink_orbit_number": downlink_orbit_number,
+        "sentinel:downlink_orbit_number": int(downlink_orbit_number),
         "sentinel:processing_center": processing_center,
         "eo:gsd": resolution,
     }
@@ -147,9 +142,7 @@ def process_mtd_tl(mtd_tl_zip_path: str, zip_object: object) -> Dict:
 def process_mtd_msil1c(mtd_msil1c_zip_path: str, zip_object: object) -> Dict:
     xmldoc = minidom.parseString(zip_object.read(mtd_msil1c_zip_path))
 
-    data_type = xmldoc.getElementsByTagName("PROCESSING_LEVEL")[0].firstChild.data
     datastrip_id = xmldoc.getElementsByTagName("PRODUCT_URI")[0].firstChild.data
-    product_type = xmldoc.getElementsByTagName("PRODUCT_TYPE")[0].firstChild.data
     platform = xmldoc.getElementsByTagName("SPACECRAFT_NAME")[0].firstChild.data
     orbit = xmldoc.getElementsByTagName("SENSING_ORBIT_NUMBER")[0].firstChild.data
     orbit_direction = xmldoc.getElementsByTagName("SENSING_ORBIT_DIRECTION")[
@@ -169,12 +162,10 @@ def process_mtd_msil1c(mtd_msil1c_zip_path: str, zip_object: object) -> Dict:
     region_code = datastrip_id.split("_")[5][1:]
 
     return {
-        "sentinel:data_type": data_type,
         "sentinel:datastrip_id": datastrip_id,
-        "sentinel:product_type": product_type,
         "eo:platform": platform,
-        "sentinel:orbit": orbit,
-        "sentinel:orbit_direction": orbit_direction,
+        "sat:relative_orbit": int(orbit),
+        "sat:orbit_state": orbit_direction.lower(),
         "sentinel:datatake_type": datatake_type,
         "odc:processing_datetime": processing_datetime,
         "sentinel:processing_baseline": processing_baseline,
@@ -198,7 +189,7 @@ def process_format_correctness(
 
         return {
             "sentinel:source_system": source_system,
-            "sentinel:software_version": software_version,
+            "sentinel:source_creator_version": software_version,
         }
     else:
         xmldoc = minidom.parse(format_correctness_path)
@@ -207,14 +198,21 @@ def process_format_correctness(
         creator_version = xmldoc.getElementsByTagName("Creator_Version")[
             0
         ].firstChild.data
-        creation_date = xmldoc.getElementsByTagName("Creation_Date")[0].firstChild.data
+
         datastrip_metadata = xmldoc.getElementsByTagName("File_Name")[0].firstChild.data
+
+        # Example: <Creation_Date>UTC=2020-10-11T01:47:21</Creation_Date>
+        time_zone, creation_datetime = xmldoc.getElementsByTagName("Creation_Date")[
+            0
+        ].firstChild.data.split("=")
+        if not time_zone.upper() == "UTC":
+            raise NotImplementedError("Expected only UTC dates: TODO: Implement")
 
         return {
             "sentinel:source_system": source_system,
-            "sentinel:software_version": creator_version,
+            "sentinel:source_creator_version": creator_version,
             "sentinel:datastrip_metadata": datastrip_metadata,
-            "odc:processing_datetime": creation_date.split("=")[1],
+            "odc:processing_datetime": creation_datetime,
         }
 
 
@@ -246,10 +244,10 @@ def prepare_and_write(
                 dataset_location=dataset,
             ) as p:
 
-                p.properties["eo:instrument"] = HARDCODED["instrument"]
+                p.properties["eo:instrument"] = "MSI"
                 p.properties["odc:producer"] = "esa.int"
-                p.properties["odc:product_family"] = HARDCODED["product_family"]
-                p.properties["odc:file_format"] = HARDCODED["file_format"]
+                p.properties["odc:product_family"] = "level1"
+                p.properties["odc:file_format"] = "JPEG2000"
 
                 p.properties.update(format_correctness)
                 p.properties.update(mtd_ds)
@@ -296,12 +294,10 @@ def prepare_and_write(
             dataset_location=dataset,
         ) as p:
             p.properties["eo:platform"] = "sentinel-2a"
-            p.properties["eo:instrument"] = HARDCODED["instrument"]
-            p.properties["odc:file_format"] = HARDCODED["file_format"]
-            p.properties["odc:product_family"] = HARDCODED["product_family"]
+            p.properties["eo:instrument"] = "MSI"
+            p.properties["odc:file_format"] = "JPEG2000"
+            p.properties["odc:product_family"] = "level1"
             p.properties["odc:producer"] = "sinergise.com"
-            p.properties["sentinel:data_type"] = HARDCODED["data_type"]
-            p.properties["sentinel:product_type"] = HARDCODED["product_type"]
 
             p.properties.update(format_correctness)
             p.properties.update(metadata_xml)
