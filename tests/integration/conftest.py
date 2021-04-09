@@ -166,7 +166,7 @@ def expected_l1_ls8_folder(
     """
     :param collection: The collection of the current scene
     :param l1_collection: The collection of the original landsat l1 scene
-    :return: 
+    :return:
     """
     org_code = organisation.split(".")[0]
     product_name = f"{org_code}_ls8c_level1_{collection}"
