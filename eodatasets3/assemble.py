@@ -80,8 +80,12 @@ class DatasetAssembler(EoFields):
         "landsat:wrs_path",
         "landsat:wrs_row",
         "odc:region_code",
+        "sentinel:datastrip_id",
         "sentinel:datatake_start_datetime",
+        "sentinel:grid_square",
+        "sentinel:latitude_band",
         "sentinel:sentinel_tile_id",
+        "sentinel:utm_zone",
     }
 
     def __init__(
