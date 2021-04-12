@@ -65,6 +65,7 @@ setup(
         "cattrs",
         "ciso8601",
         "click",
+        "defusedxml",
         "jsonschema>=3",  # We want a Draft6Validator
         "numpy>=1.15.4",
         "pyproj",

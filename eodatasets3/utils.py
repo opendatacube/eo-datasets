@@ -53,7 +53,7 @@ def read_paths_from_file(listing: Path) -> Iterable[Path]:
             path = Path(loc.strip())
             if not path.exists():
                 raise FileNotFoundError(
-                    "No such file or directory: %s" % (os.path.abspath(loc),)
+                    f"No such file or directory: {os.path.abspath(loc)}"
                 )
 
             yield path.absolute()

@@ -7,7 +7,7 @@ import uuid
 import zipfile
 from pathlib import Path
 from typing import Tuple, Dict
-from xml.dom import minidom
+from defusedxml import minidom
 import click
 
 from eodatasets3 import DatasetAssembler
@@ -45,7 +45,7 @@ def process_product_info(product_path: Path) -> Dict:
         "sinergise_product_name": product["name"],
         "sinergise_product_id": product["id"],
         "datetime": tile["timestamp"],
-        "odc:region_code": "%s%s%s" % (utm_zone, latitude_band, grid_square),
+        "odc:region_code": f"{utm_zone}{latitude_band}{grid_square}",
         "sentinel:utm_zone": utm_zone,
         "sentinel:latitude_band": latitude_band,
         "sentinel:grid_square": grid_square,

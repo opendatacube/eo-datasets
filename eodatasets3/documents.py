@@ -99,7 +99,7 @@ def new_metadata_path(dataset_path):
     if dataset_path.is_file():
         return dataset_path.parent.joinpath("{}.ga-md.yaml".format(dataset_path.name))
 
-    raise ValueError("Unhandled path type for %r" % dataset_path)
+    raise ValueError(f"Unhandled path type for {dataset_path!r}")
 
 
 def _find_any_metadata_suffix(path):
