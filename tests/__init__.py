@@ -150,23 +150,6 @@ def temp_dir():
     return write_files({})
 
 
-def temp_file(suffix=""):
-    """
-    Get a temporary file path that will be cleaned up on exit.
-
-    Simpler than NamedTemporaryFile--- just a file path, no open mode or anything.
-    :return:
-    """
-    f = tempfile.mktemp(suffix=suffix)
-
-    def permissive_ignore(file_):
-        if os.path.exists(file_):
-            os.remove(file_)
-
-    atexit.register(permissive_ignore, f)
-    return f
-
-
 def file_of_size(path, size_mb):
     """
     Create a blank file of the given size.

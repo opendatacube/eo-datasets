@@ -28,7 +28,7 @@ from eodatasets3.properties import FileFormat
 
 
 def _format_representer(dumper, data: FileFormat):
-    return dumper.represent_scalar("tag:yaml.org,2002:str", "%s" % data.name)
+    return dumper.represent_scalar("tag:yaml.org,2002:str", f"{data.name}")
 
 
 def _uuid_representer(dumper, data):
@@ -37,7 +37,7 @@ def _uuid_representer(dumper, data):
     :type data: uuid.UUID
     :rtype: yaml.nodes.Node
     """
-    return dumper.represent_scalar("tag:yaml.org,2002:str", "%s" % data)
+    return dumper.represent_scalar("tag:yaml.org,2002:str", f"{data}")
 
 
 def represent_datetime(self, data: datetime):
