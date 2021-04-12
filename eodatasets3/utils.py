@@ -124,6 +124,8 @@ def get_collection_number(
         # GA's collection 3 processes USGS Collection 1
         if usgs_collection_number == 1:
             return 3
+        elif usgs_collection_number == 2:
+            return 4
         else:
             raise NotImplementedError("Unsupported GA collection number.")
     raise NotImplementedError(
