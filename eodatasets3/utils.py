@@ -121,11 +121,9 @@ def get_collection_number(
     if producer == "usgs.gov":
         return usgs_collection_number
     elif producer == "ga.gov.au":
-        # GA's collection 3 processes USGS Collection 1
-        if usgs_collection_number == 1:
+        # GA's collection 3 processes USGS Collection 1 and 2
+        if usgs_collection_number == 1 or usgs_collection_number == 2:
             return 3
-        elif usgs_collection_number == 2:
-            return 4
         else:
             raise NotImplementedError("Unsupported GA collection number.")
     raise NotImplementedError(
