@@ -47,7 +47,7 @@ def expected_dataset_document():
                     1.0,
                 ],
             },
-            "blue_green_nir_1_red": {
+            "998": {
                 "shape": [110, 110],
                 "transform": [
                     998.1818181818181,
@@ -61,7 +61,7 @@ def expected_dataset_document():
                     1.0,
                 ],
             },
-            "coastal_aerosol_swir_1_cirrus_water_vapour": {
+            "5778": {
                 "shape": [19, 19],
                 "transform": [
                     5778.9473684210525,
@@ -79,26 +79,26 @@ def expected_dataset_document():
         "label": "sinergise_s2am_level1_1-0-20201011_55HFA_2020-10-11",
         "lineage": {},
         "measurements": {
-            "blue": {"grid": "blue_green_nir_1_red", "path": "B02.jp2"},
+            "blue": {"grid": "998", "path": "B02.jp2"},
             "coastal_aerosol": {
-                "grid": "coastal_aerosol_swir_1_cirrus_water_vapour",
+                "grid": "5778",
                 "path": "B01.jp2",
             },
-            "green": {"grid": "blue_green_nir_1_red", "path": "B03.jp2"},
-            "nir_1": {"grid": "blue_green_nir_1_red", "path": "B08.jp2"},
+            "green": {"grid": "998", "path": "B03.jp2"},
+            "nir_1": {"grid": "998", "path": "B08.jp2"},
             "nir_2": {"path": "B8A.jp2"},
-            "red": {"grid": "blue_green_nir_1_red", "path": "B04.jp2"},
+            "red": {"grid": "998", "path": "B04.jp2"},
             "red_edge_1": {"path": "B05.jp2"},
             "red_edge_2": {"path": "B06.jp2"},
             "red_edge_3": {"path": "B07.jp2"},
             "swir_1_cirrus": {
-                "grid": "coastal_aerosol_swir_1_cirrus_water_vapour",
+                "grid": "5778",
                 "path": "B10.jp2",
             },
             "swir_2": {"path": "B11.jp2"},
             "swir_3": {"path": "B12.jp2"},
             "water_vapour": {
-                "grid": "coastal_aerosol_swir_1_cirrus_water_vapour",
+                "grid": "5778",
                 "path": "B09.jp2",
             },
         },
