@@ -10,7 +10,7 @@ from copy import deepcopy
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable
+from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable, Union
 
 import numpy
 import rasterio
@@ -384,6 +384,43 @@ class DatasetAssembler(EoFields):
             self._inherit_properties_from(dataset)
         if inherit_geometry:
             self._inherited_geometry = dataset.geometry
+
+    def note_source_datasets(
+        self,
+        classifier: str,
+        *dataset_ids: Union[str, uuid.UUID],
+    ):
+        """
+        Expand the lineage with raw source dataset ids.
+
+        Note: If you have direct access to the datasets, you probably want to use :func:`add_source_path`
+        or :func:`add_source_dataset`, so that fields can be inherited from them automatically.
+
+        :param classifier:
+                How to classify the source dataset.
+
+                By convention, this is usually the family of the source dataset
+                (properties->odc:product_family). Such as "level1".
+
+                A classifier is used to distinguish source datasets of the same product
+                that are used differently.
+
+                Such as a normal source level1 dataset (classifier: "level1"), and a
+                second source level1 that was used only for QA (classifier: "qa").
+
+        :param dataset_ids: The UUIDs of the source datasets
+
+        """
+        for dataset_id in dataset_ids:
+            if not isinstance(dataset_id, uuid.UUID):
+                try:
+                    dataset_id = uuid.UUID(dataset_id)
+                except ValueError as v:
+                    # The default parse error doesn't tell you anything useful to track down which one broke.
+                    raise ValueError(
+                        f"Not a valid UUID for source {classifier!r} dataset: {dataset_id!r}"
+                    ) from v
+            self._lineage[classifier].append(dataset_id)
 
     def _inherit_properties_from(self, source_dataset: DatasetDoc):
         for name in self.INHERITABLE_PROPERTIES:
