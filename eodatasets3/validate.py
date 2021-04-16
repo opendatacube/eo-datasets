@@ -62,18 +62,24 @@ ValidationMessages = Generator[ValidationMessage, None, None]
 
 def validate_dataset(
     doc: Dict,
-    # Optionally check that the dataset mathces this product definition.
     product_definition: Optional[Dict] = None,
-    # A thorough validation will try to open the data itself.
     thorough: bool = False,
-    # Dataset location to use, if not the metadata path.
     readable_location: Union[str, Path] = None,
+    expect_extra_measurements: bool = False,
 ) -> ValidationMessages:
     """
     Validate a a dataset document, optionally against the given product.
 
     By default this will only look at the metadata, run with thorough=True to
     open the data files too.
+
+    :param product_definition: Optionally check that the dataset matches this product definition.
+    :param thorough: Open the imagery too, to check that data types etc match.
+    :param readable_location: Dataset location to use, if not the metadata path.
+    :param expect_extra_measurements:
+            Allow some dataset measurements to be missing from the product definition.
+            This is (deliberately) allowed by ODC, but often a mistake.
+            This flag disables the warning.
     """
     schema = doc.get("$schema")
     if schema is None:
@@ -160,6 +166,16 @@ def validate_dataset(
                     "missing_measurement",
                     f"Product {product_name} expects a measurement {name!r})",
                 )
+        measurements_not_in_product = set(dataset.measurements.keys()).difference(
+            set(m["name"] for m in product_definition.get("measurements") or ())
+        )
+        if (not expect_extra_measurements) and measurements_not_in_product:
+            things = ", ".join(sorted(measurements_not_in_product))
+            yield _warning(
+                "extra_measurements",
+                f"Dataset has measurements not present in product definition for {product_name!r}: {things}",
+                hint="This may be valid, as it's allowed by ODC. Set `expect_extra_measurements` to mute this.",
+            )
 
     # If we have a location:
     # For each measurement, try to load it.
@@ -241,6 +257,7 @@ def validate_product(doc: Dict) -> ValidationMessages:
             f"(Found a {type(measurements).__name__!r}).",
         )
     else:
+        seen_names_and_aliases = collections.defaultdict(list)
         for measurement in measurements:
             name = measurement.get("name")
             dtype = measurement.get("dtype")
@@ -250,6 +267,16 @@ def validate_product(doc: Dict) -> ValidationMessages:
                     "unsuitable_nodata",
                     f"Measurement {name!r} nodata {nodata!r} does not fit a {dtype!r}",
                 )
+
+            for new_field in (name, *measurement.get("aliases", ())):
+                if new_field in seen_names_and_aliases:
+                    seen_in = ", ".join({name, *seen_names_and_aliases[new_field]})
+                    yield _error(
+                        "duplicate_measurement_name",
+                        f"Name {new_field!r} is used more than once in a measurement name or alias.",
+                        hint=f"Seen in {seen_in}",
+                    )
+                seen_names_and_aliases[new_field].append(name)
 
 
 def numpy_value_fits_dtype(value, dtype):
@@ -294,7 +321,9 @@ class ExpectedMeasurement:
 
 
 def validate_paths(
-    paths: List[Path], thorough: bool = False
+    paths: List[Path],
+    thorough: bool = False,
+    expect_extra_measurements: bool = False,
 ) -> Generator[Tuple[Path, List[ValidationMessage]], None, None]:
     """Validate the list of paths. Product documents can be specified before their datasets."""
     products: Dict[str, Dict] = {}
@@ -346,6 +375,7 @@ def validate_paths(
                 product_definition=product,
                 readable_location=path,
                 thorough=thorough,
+                expect_extra_measurements=expect_extra_measurements,
             )
         )
         yield path, messages
@@ -488,13 +518,26 @@ its datasets to be matched against it.
     help="Attempt to read the data/measurements, and check their properties match",
 )
 @click.option(
+    "--expect-extra-measurements/--warn-extra-measurements",
+    is_flag=True,
+    default=False,
+    help="Allow some dataset measurements to be missing from the product definition. "
+    "This is (deliberately) allowed by ODC, but often a mistake. This flag disables the warning.",
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
     default=False,
     help="Only print problems, one per line",
 )
-def run(paths: List[Path], strict_warnings, quiet, thorough: bool):
+def run(
+    paths: List[Path],
+    strict_warnings,
+    quiet,
+    thorough: bool,
+    expect_extra_measurements: bool,
+):
     validation_counts: Counter[Level] = collections.Counter()
     invalid_paths = 0
 
@@ -503,7 +546,9 @@ def run(paths: List[Path], strict_warnings, quiet, thorough: bool):
         Level.warning: dict(fg="yellow"),
         Level.error: dict(fg="red"),
     }
-    for path, messages in validate_paths(paths, thorough=thorough):
+    for path, messages in validate_paths(
+        paths, thorough=thorough, expect_extra_measurements=expect_extra_measurements
+    ):
         levels = collections.Counter(m.level for m in messages)
         is_invalid = levels[Level.error] > 0
         if strict_warnings:
