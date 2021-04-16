@@ -54,7 +54,7 @@ class ValidateRunner:
         if codes is not None:
             assert sorted(codes) == sorted(self.messages.keys())
 
-    def run_validate(self, docs: Sequence[Doc]):
+    def run_validate(self, docs: Sequence[Doc], allow_extra_measurements=True):
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
 
         args = ()
@@ -65,6 +65,8 @@ class ValidateRunner:
             args += ("-W",)
         if self.thorough:
             args += ("--thorough",)
+        if allow_extra_measurements:
+            args += ("--expect-extra-measurements",)
 
         for i, doc in enumerate(docs):
             if isinstance(doc, Mapping):
@@ -226,11 +228,53 @@ def test_valid_with_product_doc(
 
     # It contains all measurements in the product, so will be valid when not thorough.
     product = dict(
-        name="wrong_product",
+        name="our_product",
         metadata_type="eo3",
         measurements=[dict(name="blue", dtype="uint8", nodata=255)],
     )
     eo_validator.assert_valid(product, l1_ls8_metadata_path)
+
+
+def test_warn_duplicate_measurement_name(
+    eo_validator: ValidateRunner,
+    l1_ls8_dataset: DatasetDoc,
+):
+    """When a product is specified, it will validate that names are not repeated between measurements and aliases."""
+
+    # We have the "blue" measurement twice.
+    product = dict(
+        name="our_product",
+        metadata_type="eo3",
+        measurements=[
+            *_copy_measurements(l1_ls8_dataset),
+            dict(name="blue", dtype="uint8", nodata=255),
+        ],
+    )
+    eo_validator.assert_invalid(product)
+    assert eo_validator.messages == {
+        "duplicate_measurement_name": "Name 'blue' is used more than once in a measurement name or alias."
+    }
+
+    # An *alias* clashes with the *name* of a measurement.
+    product = dict(
+        name="our_product",
+        metadata_type="eo3",
+        measurements=[
+            *_copy_measurements(l1_ls8_dataset),
+            dict(
+                name="azul",
+                aliases=[
+                    "icecream",
+                    # Clashes with the *name* of a measurement.
+                    "blue",
+                ],
+                dtype="uint8",
+                nodata=255,
+            ),
+        ],
+    )
+    eo_validator.assert_invalid(product)
+    assert "duplicate_measurement_name" in eo_validator.messages
 
 
 def test_dtype_compare_with_product_doc(
@@ -263,7 +307,7 @@ def test_nodata_compare_with_product_doc(
         name="usgs_ls8c_level1_1",
         metadata_type="eo3",
         measurements=[
-            *_copy_measurements(l1_ls8_dataset),
+            *_copy_measurements(l1_ls8_dataset, without=["blue"]),
             # Override blue with our invalid one.
             dict(name="blue", dtype="uint16", nodata=255),
         ],
@@ -279,8 +323,12 @@ def test_nodata_compare_with_product_doc(
     }
 
 
-def _copy_measurements(dataset: DatasetDoc, dtype="uint16") -> List:
-    return [dict(name=name, dtype=dtype) for name, m in dataset.measurements.items()]
+def _copy_measurements(dataset: DatasetDoc, dtype="uint16", without=()) -> List:
+    return [
+        dict(name=name, dtype=dtype)
+        for name, m in dataset.measurements.items()
+        if name not in without
+    ]
 
 
 def test_measurements_compare_with_nans(
@@ -296,7 +344,7 @@ def test_measurements_compare_with_nans(
         name="usgs_ls8c_level1_1",
         metadata_type="eo3",
         measurements=[
-            *_copy_measurements(l1_ls8_dataset),
+            *_copy_measurements(l1_ls8_dataset, without=["blue"]),
             dict(name="blue", dtype="float32", nodata=float("NaN")),
         ],
     )
