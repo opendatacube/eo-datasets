@@ -34,3 +34,8 @@ def test_get_level1_metadata_path_yaml_alongside_tar():
     wagl_doc = {"source_datasets": {"source_level1": L1_C2_METADATA_TAR}}
     result = Path(_get_level1_metadata_path(wagl_doc))
     assert result == L1_C2_METADATA_TAR_YAML
+
+
+def test_get_level1_metadata_no_source():
+    wagl_doc = {"source_datasets": {"source_level1": "/no/where/good"}}
+    assert _get_level1_metadata_path(wagl_doc) is None

@@ -359,6 +359,8 @@ def _get_level1_metadata_path(wagl_doc):
         if not level1_metadata_path.exists():
             # Assume the yaml is in the source level1 dir
             [level1_metadata_path] = source_level1.rglob("*.odc-metadata.yaml")
+    else:
+        level1_metadata_path = None
     return level1_metadata_path
 
 
