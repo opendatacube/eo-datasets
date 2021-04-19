@@ -350,6 +350,18 @@ def do(name: str, heading=False, **fields):
         secho("(done)")
 
 
+def _get_level1_metadata_path(wagl_doc):
+    source_level1 = Path(get_path(wagl_doc, ("source_datasets", "source_level1")))
+    # The odc-meta data can be in the source-level or alongside it.
+    if source_level1.exists():
+        # if source_level1.isdir():
+        level1_metadata_path = source_level1.with_suffix(".odc-metadata.yaml")
+        if not level1_metadata_path.exists():
+            # Assume the yaml is in the source level1 dir
+            [level1_metadata_path] = source_level1.rglob("*.odc-metadata.yaml")
+    return level1_metadata_path
+
+
 def _extract_reference_code(p: DatasetAssembler, granule: str) -> Optional[str]:
     matches = None
     if p.platform.startswith("landsat"):
@@ -421,13 +433,7 @@ class Granule:
                 [wagl_doc] = loads_yaml(wagl_doc_field[()])
 
                 if not level1_metadata_path:
-                    level1_tar_path = Path(
-                        get_path(wagl_doc, ("source_datasets", "source_level1"))
-                    )
-                    if level1_tar_path.exists():
-                        level1_metadata_path = level1_tar_path.with_suffix(
-                            ".odc-metadata.yaml"
-                        )
+                    level1_metadata_path = _get_level1_metadata_path(wagl_doc)
                 if level1_metadata_path and not level1_metadata_path.exists():
                     raise ValueError(
                         f"No level1 metadata found at {level1_metadata_path}"
