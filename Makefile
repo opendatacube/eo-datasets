@@ -32,7 +32,6 @@ docker-tests: test-docker
 # This should be run using the same python interpreter we are deploying with.
 # ie. Use "docker-update" instead!
 internal-update:
-	pip install pip-tools
 	pip-compile requirements/dev.in
 	pip-compile --extra ancillary --extra wagl -o requirements/main.txt
 	pip-compile --extra test -o requirements/test.txt
