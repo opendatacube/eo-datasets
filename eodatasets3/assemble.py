@@ -91,6 +91,14 @@ class DatasetAssembler(EoFields):
         "sentinel:latitude_band",
         "sentinel:sentinel_tile_id",
         "sentinel:utm_zone",
+        "sentinel:product_id",
+        "sentinel:datatake_type",
+        "sentinel:processing_center",
+        "sentinel:reception_station",
+        "processing:level",
+        "processing:facility",
+        "processing:software",
+        "processing_baseline",
     }
 
     def __init__(

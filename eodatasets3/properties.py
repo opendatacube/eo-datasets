@@ -207,6 +207,10 @@ _SENTINEL_EXTENDED_PROPS = {
     "sentinel:utm_zone": int,
     "sentinel:latitude_band": None,
     "sentinel:grid_square": None,
+    "sentinel:product_id": None,
+    "sentinel:datatake_type": None,
+    "sentinel:processing_center": None,
+    "sentinel:reception_station": None,
 }
 
 
@@ -245,6 +249,10 @@ class StacPropertyView(collections.abc.MutableMapping):
         "odc:producer": producer_check,
         "odc:product_family": None,
         "odc:region_code": None,
+        "processing:level": None,
+        "processing:facility": None,
+        "processing:software": None,
+        "processing_baseline": None,
         **_LANDSAT_EXTENDED_PROPS,
         **_GQA_FMASK_PROPS,
         **_SENTINEL_EXTENDED_PROPS,

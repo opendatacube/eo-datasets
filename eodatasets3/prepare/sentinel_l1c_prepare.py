@@ -121,7 +121,7 @@ def process_mtd_ds(contents: str) -> Dict:
     )
     return {
         "sentinel:reception_station": _value(root, "RECEPTION_STATION"),
-        "sentinel:processing_center": _value(root, "PROCESSING_CENTER"),
+        "processing:facility": _value(root, "PROCESSING_CENTER"),
         "eo:gsd": resolution,
     }
 
@@ -146,7 +146,7 @@ def process_mtd_msil1c(contents: str) -> Dict:
         "sat:orbit_state": _value(root, "SENSING_ORBIT_DIRECTION").lower(),
         "sentinel:datatake_type": _value(root, "DATATAKE_TYPE"),
         "odc:processing_datetime": _value(root, "GENERATION_TIME"),
-        "sentinel:processing_baseline": _value(root, "PROCESSING_BASELINE"),
+        "processing_baseline": _value(root, "PROCESSING_BASELINE"),
         "datetime": _value(root, "PRODUCT_START_TIME"),
         "eo:cloud_cover": _value(root, "Cloud_Coverage_Assessment"),
         "odc:region_code": region_code,
