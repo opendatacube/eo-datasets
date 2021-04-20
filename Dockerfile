@@ -23,17 +23,17 @@ ENV LC_ALL=C.UTF-8 \
     SHELL=bash \
     PYTHONFAULTHANDLER=1
 
+RUN useradd --create-home runner
+
 COPY --from=env_builder /env /env
 ENV PATH=/env/bin:$PATH
 
 RUN if [ "$ENVIRONMENT" = "test" ] ; then \
 	apt-get update \
-	    # Git is needed for pre-commit linting
-	    && apt-get install --no-install-recommends -y git vim \
+	    # Git for pre-commit linting, make+libpq for pip-tools dependency calc.
+	    && apt-get install --no-install-recommends -y git vim make libpq-dev \
 	    && rm -rf /var/lib/apt/lists/* ; \
     fi
-
-RUN useradd --create-home runner
 
 # For dev: run pre-commit once, so its environment is built and cached.
 #    We make a little tmp repo rather than using our real repo, as we only

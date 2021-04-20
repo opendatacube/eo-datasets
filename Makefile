@@ -38,4 +38,4 @@ internal-update:
 	pip-compile --extra test -o requirements/test.txt
 
 dependency-update:
-	docker run --rm --volume "${PWD}":/tests --user root -w /tests eodatasets:test bash -c 'apt-get update && apt-get install -y make libpq-dev && make internal-update'
+	docker run --rm --volume "${PWD}":/tests --user root -w /tests eodatasets:test bash -c 'make internal-update'
