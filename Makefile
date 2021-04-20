@@ -17,8 +17,8 @@ test-docker:
 
 lint-docker:
 	docker run --volume "${PWD}":/tests -w /tests eodatasets:test pre-commit run -a
-	# Check the Dockerfile itself
-	docker run --rm -i hadolint/hadolint < Dockerfile
+	# Check the Dockerfile itself?
+	# docker run --rm -i hadolint/hadolint < Dockerfile
 
 # Interactive shell ready for test running
 shell:
