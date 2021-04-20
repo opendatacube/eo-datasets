@@ -35,12 +35,26 @@ RUN if [ "$ENVIRONMENT" = "test" ] ; then \
 
 RUN useradd --create-home runner
 
+# For dev: run pre-commit once, so its environment is built and cached.
+#    We make a little tmp repo rather than using our real repo, as we only
+#    want Docker's caching to rebuild it when pre-commit-config.yaml changes.
+COPY .pre-commit-config.yaml /tmp/
+USER runner
+RUN if [ "$ENVIRONMENT" = "test" ] ; then \
+       mkdir -p ~/pre-commit \
+       && cp /tmp/.pre-commit-config.yaml ~/pre-commit \
+       && cd ~/pre-commit \
+       && git init \
+       && pre-commit run \
+       && rm -rf ~/pre-commit ; \
+    fi
+
 # Copy source code and install it
 WORKDIR /code
 COPY . .
 
+USER root
 RUN pip install --no-cache-dir --disable-pip-version-check --use-feature=2020-resolver .
-
 USER runner
 
 # Is it working?
