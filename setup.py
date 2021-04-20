@@ -14,16 +14,11 @@ README = (HERE / "README.md").read_text()
 
 
 tests_require = [
-    "black",
     "deepdiff",
-    "flake8",
     "gdal",
-    "hypothesis",
     "mock",
     "pep8-naming",
     "pytest",
-    "pytest-flake8",
-    "pytest-cov",
     "rio_cogeo",
     "sphinx-autodoc-typehints",
     "sphinx_rtd_theme",

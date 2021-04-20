@@ -1,0 +1,4 @@
+dev/*
+**/.pyc
+dist
+build
