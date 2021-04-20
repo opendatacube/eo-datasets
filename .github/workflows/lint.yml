@@ -25,5 +25,5 @@ jobs:
 
       - name: Run linting
         run: |
-          make lint-docker
+          make lint
 
