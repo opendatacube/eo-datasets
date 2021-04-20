@@ -79,45 +79,56 @@ with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec
 
 `eo3-validate` a lint-like checker to check eo3 metadata.
 
-     $ eo3-validate --help
-    Usage: eo3-validate [OPTIONS] [PATHS]...
-    
-      Validate ODC dataset documents
-    
-      Paths can be both product and dataset documents, but each product must
-      come before its datasets to be matched against it.
-    
-    Options:
-      -W, --warnings-as-errors  Fail if any warnings are produced
-      --thorough                Attempt to read the data/measurements, and check
-                                their properties match the product
-      -q, --quiet               Only print problems, one per line
-      --help                    Show this message and exit.
+	❯ eo3-validate --help
+	Usage: eo3-validate [OPTIONS] [PATHS]...
+
+	  Validate ODC dataset documents
+
+	  Paths can be both product and dataset documents, but each product must
+	  come before its datasets to be matched against it.
+
+	Options:
+	  --version                       Show the version and exit.
+	  -W, --warnings-as-errors        Fail if any warnings are produced
+	  --thorough                      Attempt to read the data/measurements, and
+					  check their properties match
+
+	  --expect-extra-measurements / --warn-extra-measurements
+					  Allow some dataset measurements to be
+					  missing from the product definition. This is
+					  (deliberately) allowed by ODC, but often a
+					  mistake. This flag disables the warning.
+
+	  -q, --quiet                     Only print problems, one per line
+	  --help                          Show this message and exit.
+
+
 
 ## Conversion to Stac metadata
 
 `eo3-to-stac`: Convert an ODC metadata to a Stac Item json file
 
-     $ eo3-to-stac --help
-    Usage: eo3-to-stac [OPTIONS] [ODC_METADATA_FILES]...
-    
-      Convert a new-style ODC metadata doc to a Stac Item.
-    
-    Options:
-      -u, --stac-base-url TEXT      Base URL of the STAC file
-      -e, --explorer-base-url TEXT  Base URL of the ODC Explorer
-      --validate / --no-validate    Flag it for stac document validation. By
-                                    default flagged
-      --help  Show this message and exit.
+	❯ eo3-to-stac --help
+	Usage: eo3-to-stac [OPTIONS] [ODC_METADATA_FILES]...
 
-eg.
+	  Convert an EO3 metadata doc to a Stac Item.
 
-```
+	Options:
+	  -v, --verbose
+	  -u, --stac-base-url TEXT      Base URL of the STAC file
+	  -e, --explorer-base-url TEXT  Base URL of the ODC Explorer
+	  --validate / --no-validate    Validate output STAC Item against online
+					schemas
+
+	  --help                        Show this message and exit.
+
+
+Example usage:
+
 	❯ eo3-to-stac LT05_L1TP_113081_19880330_20170209_01_T1.odc-metadata.yaml
 	❯ ls
 	LT05_L1TP_113081_19880330_20170209_01_T1.odc-metadata.yaml
 	LT05_L1TP_113081_19880330_20170209_01_T1.stac-item.json
-```
 
 
 # Development
