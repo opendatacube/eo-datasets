@@ -162,45 +162,55 @@ Some included scripts to prepare existing DEA products.
 
 Some preparers need the ancillary dependencies: `pip install .[ancillary]`
 
-     $ eo3-prepare --help
-    Usage: eo3-prepare [OPTIONS] COMMAND [ARGS]...
-    
-    Options:
-      --version  Show the version and exit.
-      --help     Show this message and exit.
-    
-    Commands:
-      landsat-l1     Prepare eo3 metadata for USGS Landsat Level 1 data.
-      modis-mcd43a1  Prepare MODIS MCD43A1 tiles for indexing into a Data...
-      noaa-prwtr     Prepare NCEP/NCAR reanalysis 1 water pressure datasets...
-      s2-awspds      Preparation code for Sentinel-2 L1C AWS PDS Generates...
-      s2-cophub      Preparation code for Sentinel-2 L1C SCIHUB ZIP Generates...
+	❯ eo3-prepare --help
+	Usage: eo3-prepare [OPTIONS] COMMAND [ARGS]...
+
+	Options:
+	  --version  Show the version and exit.
+	  --help     Show this message and exit.
+
+	Commands:
+	  landsat-l1     Prepare eo3 metadata for USGS Landsat Level 1 data.
+	  modis-mcd43a1  Prepare MODIS MCD43A1 tiles for indexing into a Data...
+	  noaa-prwtr     Prepare NCEP/NCAR reanalysis 1 water pressure datasets...
+	  sentinel-l1C   Prepare eo3 metadata for Sentinel-2 Level 1C data produced...
 
 `eo3-package-wagl`: Convert and package WAGL HDF5 outputs.
 
  Needs the wagl dependencies group: `pip install .[wagl]`
-     
-     $ eo3-package-wagl --help
-    Usage: eo3-package-wagl [OPTIONS] H5_FILE
-    
-      Package WAGL HDF5 Outputs
-    
-      This will convert the HDF5 file (and sibling fmask/gqa files) into
-      GeoTIFFS (COGs) with datacube metadata using the DEA naming conventions
-      for files.
-    
-    Options:
-      --level1 FILE                   Optional path to the input level1 metadata
-                                      doc (otherwise it will be loaded from the
-                                      level1 path in the HDF5)
-      --output DIRECTORY              Put the output package into this directory
-                                      [required]
-      -p, --product [nbar|nbart|lambertian|sbt]
-                                      Package only the given products (can specify
-                                      multiple times)
-      --with-oa / --no-oa             Include observation attributes (default:
-                                      true)
-      --help                          Show this message and exit.
+
+	❯ eo3-package-wagl --help
+	Usage: eo3-package-wagl [OPTIONS] H5_FILE
+
+	  Package WAGL HDF5 Outputs
+
+	  This will convert the HDF5 file (and sibling fmask/gqa files) into
+	  GeoTIFFS (COGs) with datacube metadata using the DEA naming conventions
+	  for files.
+
+	Options:
+	  --level1 FILE                   Optional path to the input level1 metadata
+					  doc (otherwise it will be loaded from the
+					  level1 path in the HDF5)
+
+	  --output DIRECTORY              Put the output package into this directory
+					  [required]
+
+	  -p, --product [nbar|nbart|lambertian|sbt]
+					  Package only the given products (can specify
+					  multiple times)
+
+	  --with-oa / --no-oa             Include observation attributes (default:
+					  true)
+
+	  --with-oa / --no-oa             Include observation attributes (default:
+					  true)
+
+	  --oa-resolution FLOAT           Resolution choice for observation attributes
+					  (default: automatic based on sensor)
+
+	  --help                          Show this message and exit.
+
 
 
 ## Creating Releases
