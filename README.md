@@ -96,7 +96,7 @@ with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec
 
 ## Conversion to Stac metadata
 
-`eo3-to-stac`: Convert an ODC metadata to a Stac Item json file (BETA/Incomplete)
+`eo3-to-stac`: Convert an ODC metadata to a Stac Item json file
 
      $ eo3-to-stac --help
     Usage: eo3-to-stac [OPTIONS] [ODC_METADATA_FILES]...
@@ -110,46 +110,49 @@ with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec
                                     default flagged
       --help  Show this message and exit.
 
+eg.
+
+```
+	❯ eo3-to-stac LT05_L1TP_113081_19880330_20170209_01_T1.odc-metadata.yaml
+	❯ ls
+	LT05_L1TP_113081_19880330_20170209_01_T1.odc-metadata.yaml
+	LT05_L1TP_113081_19880330_20170209_01_T1.stac-item.json
+```
+
 
 # Development
+
 
 Run the tests using [pytest](http://pytest.org/).
 
     pytest
 
-All code is formatted using [black](https://github.com/ambv/black), and checked
-with [pyflakes](https://github.com/PyCQA/pyflakes).
-
-They are included when installing the test dependencies:
+You may need to install test dependencies first:
 
     pip install -e .[test]
 
-You may want to configure your editor to run black automatically on file save
-(see the Black page for directions), or install the pre-commit hook within Git:
+Dependencies such as gdal can be tricky to install on some systems. You
+may prefer to use the included Docker file for development: run `make
+build` to create a container, and `make test` to run tests.
+
+We have strict linting and formatting checks on this reposistory, so
+please run pre-commit (below) after checkout.
 
 ## Pre-commit setup
 
-A [pre-commit](https://pre-commit.com/) config is provided to automatically format
-and check your code changes. This allows you to immediately catch and fix
-issues before you raise a failing pull request (which run the same checks under
-Travis).
+```
+pip install pre-commit
+pre-commit install
+```
+(if you are using Conda, you need to `conda install pre_commit` instead of using pip)
 
-If you don't use Conda, install pre-commit from pip:
+Your code will now be formatted and validated before each commit. You can also invoke it manually by running `pre-commit run`
 
-    pip install pre-commit
+This allows you to immediately catch and fix issues before you raise a pull request that fails.
 
-If you do use Conda, install from conda-forge (*required* because the pip
-version uses virtualenvs which are incompatible with Conda's environments)
-
-    conda install pre_commit
-
-Now install the pre-commit hook to the current repository:
-
-    pre-commit install
-
-Your code will now be formatted and validated before each commit. You can also
-invoke it manually by running `pre-commit run`
-
+Most notably, all code is formatted using
+[black](https://github.com/ambv/black), and checked with
+[pyflakes](https://github.com/PyCQA/pyflakes).
 
 # DEA Prep
 
