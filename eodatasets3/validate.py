@@ -504,6 +504,7 @@ documents, but each product must come before
 its datasets to be matched against it.
 """
 )
+@click.version_option()
 @click.argument("paths", nargs=-1, type=PathPath(exists=True, readable=True))
 @click.option(
     "--warnings-as-errors",
