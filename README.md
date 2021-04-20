@@ -136,11 +136,11 @@ Example usage:
 
 Run the tests using [pytest](http://pytest.org/).
 
-    pytest
+	❯ pytest
 
 You may need to install test dependencies first:
 
-    pip install -e .[test]
+	❯ pip install -e .[test]
 
 Dependencies such as gdal can be tricky to install on some systems. You
 may prefer to use the included Docker file for development: run `make
@@ -151,10 +151,9 @@ please run pre-commit (below) after checkout.
 
 ## Pre-commit setup
 
-```
-pip install pre-commit
-pre-commit install
-```
+	❯ pip install pre-commit
+	❯ pre-commit install
+
 (if you are using Conda, you need to `conda install pre_commit` instead of using pip)
 
 Your code will now be formatted and validated before each commit. You can also invoke it manually by running `pre-commit run`
