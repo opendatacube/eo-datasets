@@ -590,7 +590,7 @@ def package(
                 p.platform, p.producer, p.properties.get("landsat:collection_number")
             )
 
-            p.dataset_version = f"{org_collection_number}.2.0"
+            p.dataset_version = f"{org_collection_number}.2.1"
             p.region_code = _extract_reference_code(p, granule.name)
 
             _read_gqa_doc(p, granule.gqa_doc)
