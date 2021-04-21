@@ -13,7 +13,7 @@ def run():
 
 
 run.add_command(landsat_l1, name="landsat-l1")
-run.add_command(sentinel_l1c, name="sentinel-l1C")
+run.add_command(sentinel_l1c, name="sentinel-l1")
 run.add_command(mcd43a1, name="modis-mcd43a1")
 run.add_command(prwtr, name="noaa-prwtr")
 
