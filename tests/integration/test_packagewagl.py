@@ -69,42 +69,42 @@ def test_whole_landsat_wagl_package(
     assert_file_structure(
         expected_folder,
         {
-            "ga_ls8c_ard_3-2-0_092084_2016-06-28_final.odc-metadata.yaml": "",
-            "ga_ls8c_ard_3-2-0_092084_2016-06-28_final.proc-info.yaml": "",
-            "ga_ls8c_ard_3-2-0_092084_2016-06-28_final.sha1": "",
-            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band01.tif": "",
-            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band02.tif": "",
-            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band03.tif": "",
-            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band04.tif": "",
-            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band05.tif": "",
-            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band06.tif": "",
-            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band07.tif": "",
-            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band08.tif": "",
-            "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_thumbnail.jpg": "",
-            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band01.tif": "",
-            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band02.tif": "",
-            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band03.tif": "",
-            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band04.tif": "",
-            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band05.tif": "",
-            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band06.tif": "",
-            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band07.tif": "",
-            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band08.tif": "",
-            "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_thumbnail.jpg": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_azimuthal-exiting.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_azimuthal-incident.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_combined-terrain-shadow.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_exiting-angle.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_fmask.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_incident-angle.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_nbar-contiguity.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_nbart-contiguity.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_relative-azimuth.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_relative-slope.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_satellite-azimuth.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_satellite-view.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_solar-azimuth.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_solar-zenith.tif": "",
-            "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_time-delta.tif": "",
+            "ga_ls8c_ard_3-2-1_092084_2016-06-28_final.odc-metadata.yaml": "",
+            "ga_ls8c_ard_3-2-1_092084_2016-06-28_final.proc-info.yaml": "",
+            "ga_ls8c_ard_3-2-1_092084_2016-06-28_final.sha1": "",
+            "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band01.tif": "",
+            "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band02.tif": "",
+            "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band03.tif": "",
+            "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band04.tif": "",
+            "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band05.tif": "",
+            "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band06.tif": "",
+            "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band07.tif": "",
+            "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band08.tif": "",
+            "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_thumbnail.jpg": "",
+            "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band01.tif": "",
+            "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band02.tif": "",
+            "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band03.tif": "",
+            "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band04.tif": "",
+            "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band05.tif": "",
+            "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band06.tif": "",
+            "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band07.tif": "",
+            "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band08.tif": "",
+            "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_thumbnail.jpg": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_azimuthal-exiting.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_azimuthal-incident.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_combined-terrain-shadow.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_exiting-angle.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_fmask.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_incident-angle.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_nbar-contiguity.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_nbart-contiguity.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_relative-azimuth.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_relative-slope.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_satellite-azimuth.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_satellite-view.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_solar-azimuth.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_solar-zenith.tif": "",
+            "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_time-delta.tif": "",
         },
     )
     [output_metadata] = expected_folder.rglob("*.odc-metadata.yaml")
@@ -137,7 +137,7 @@ def test_whole_landsat_wagl_package(
             "$schema": "https://schemas.opendatacube.org/dataset",
             # A stable ID is taken from the WAGL doc.
             "id": "787eb74c-e7df-43d6-b562-b796137330ae",
-            "label": "ga_ls8c_ard_3-2-0_092084_2016-06-28_final",
+            "label": "ga_ls8c_ard_3-2-1_092084_2016-06-28_final",
             "product": {
                 "href": "https://collections.dea.ga.gov.au/product/ga_ls8c_ard_3",
                 "name": "ga_ls8c_ard_3",
@@ -247,7 +247,7 @@ def test_whole_landsat_wagl_package(
                 "landsat:landsat_scene_id": "LC80920842016180LGN01",
                 "landsat:wrs_path": 92,
                 "landsat:wrs_row": 84,
-                "odc:dataset_version": "3.2.0",
+                "odc:dataset_version": "3.2.1",
                 "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": datetime(2019, 7, 11, 23, 29, 29, 21245),
                 "odc:producer": "ga.gov.au",
@@ -256,113 +256,113 @@ def test_whole_landsat_wagl_package(
             },
             "measurements": {
                 "nbar_blue": {
-                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band02.tif"
+                    "path": "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band02.tif"
                 },
                 "nbar_coastal_aerosol": {
-                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band01.tif"
+                    "path": "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band01.tif"
                 },
                 "nbar_green": {
-                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band03.tif"
+                    "path": "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band03.tif"
                 },
                 "nbar_nir": {
-                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band05.tif"
+                    "path": "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band05.tif"
                 },
                 "nbar_panchromatic": {
                     "grid": "panchromatic",
-                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band08.tif",
+                    "path": "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band08.tif",
                 },
                 "nbar_red": {
-                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band04.tif"
+                    "path": "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band04.tif"
                 },
                 "nbar_swir_1": {
-                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band06.tif"
+                    "path": "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band06.tif"
                 },
                 "nbar_swir_2": {
-                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_band07.tif"
+                    "path": "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_band07.tif"
                 },
                 "nbart_blue": {
-                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band02.tif"
+                    "path": "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band02.tif"
                 },
                 "nbart_coastal_aerosol": {
-                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band01.tif"
+                    "path": "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band01.tif"
                 },
                 "nbart_green": {
-                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band03.tif"
+                    "path": "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band03.tif"
                 },
                 "nbart_nir": {
-                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band05.tif"
+                    "path": "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band05.tif"
                 },
                 "nbart_panchromatic": {
                     "grid": "panchromatic",
-                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band08.tif",
+                    "path": "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band08.tif",
                 },
                 "nbart_red": {
-                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band04.tif"
+                    "path": "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band04.tif"
                 },
                 "nbart_swir_1": {
-                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band06.tif"
+                    "path": "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band06.tif"
                 },
                 "nbart_swir_2": {
-                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_band07.tif"
+                    "path": "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_band07.tif"
                 },
                 "oa_azimuthal_exiting": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_azimuthal-exiting.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_azimuthal-exiting.tif"
                 },
                 "oa_azimuthal_incident": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_azimuthal-incident.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_azimuthal-incident.tif"
                 },
                 "oa_combined_terrain_shadow": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_combined-terrain-shadow.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_combined-terrain-shadow.tif"
                 },
                 "oa_exiting_angle": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_exiting-angle.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_exiting-angle.tif"
                 },
                 "oa_fmask": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_fmask.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_fmask.tif"
                 },
                 "oa_incident_angle": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_incident-angle.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_incident-angle.tif"
                 },
                 "oa_nbar_contiguity": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_nbar-contiguity.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_nbar-contiguity.tif"
                 },
                 "oa_nbart_contiguity": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_nbart-contiguity.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_nbart-contiguity.tif"
                 },
                 "oa_relative_azimuth": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_relative-azimuth.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_relative-azimuth.tif"
                 },
                 "oa_relative_slope": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_relative-slope.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_relative-slope.tif"
                 },
                 "oa_satellite_azimuth": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_satellite-azimuth.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_satellite-azimuth.tif"
                 },
                 "oa_satellite_view": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_satellite-view.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_satellite-view.tif"
                 },
                 "oa_solar_azimuth": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_solar-azimuth.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_solar-azimuth.tif"
                 },
                 "oa_solar_zenith": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_solar-zenith.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_solar-zenith.tif"
                 },
                 "oa_time_delta": {
-                    "path": "ga_ls8c_oa_3-2-0_092084_2016-06-28_final_time-delta.tif"
+                    "path": "ga_ls8c_oa_3-2-1_092084_2016-06-28_final_time-delta.tif"
                 },
             },
             "accessories": {
                 "checksum:sha1": {
-                    "path": "ga_ls8c_ard_3-2-0_092084_2016-06-28_final.sha1"
+                    "path": "ga_ls8c_ard_3-2-1_092084_2016-06-28_final.sha1"
                 },
                 "metadata:processor": {
-                    "path": "ga_ls8c_ard_3-2-0_092084_2016-06-28_final.proc-info.yaml"
+                    "path": "ga_ls8c_ard_3-2-1_092084_2016-06-28_final.proc-info.yaml"
                 },
                 "thumbnail:nbar": {
-                    "path": "ga_ls8c_nbar_3-2-0_092084_2016-06-28_final_thumbnail.jpg"
+                    "path": "ga_ls8c_nbar_3-2-1_092084_2016-06-28_final_thumbnail.jpg"
                 },
                 "thumbnail:nbart": {
-                    "path": "ga_ls8c_nbart_3-2-0_092084_2016-06-28_final_thumbnail.jpg"
+                    "path": "ga_ls8c_nbart_3-2-1_092084_2016-06-28_final_thumbnail.jpg"
                 },
             },
             "lineage": {"level1": ["fb1c622e-90aa-50e8-9d5e-ad69db82d0f6"]},
@@ -632,46 +632,46 @@ def test_sentinel_wagl_package(tmp_path: Path):
     assert_file_structure(
         expected_folder,
         {
-            "ga_s2am_ard_3-2-0_53JQJ_2020-10-31_final.odc-metadata.yaml": "",
-            "ga_s2am_ard_3-2-0_53JQJ_2020-10-31_final.proc-info.yaml": "",
-            "ga_s2am_ard_3-2-0_53JQJ_2020-10-31_final.sha1": "",
-            "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_8a.tif": "",
-            "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band01.tif": "",
-            "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band02.tif": "",
-            "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band03.tif": "",
-            "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band04.tif": "",
-            "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band05.tif": "",
-            "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band06.tif": "",
-            "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band07.tif": "",
-            "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band08.tif": "",
-            "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band11.tif": "",
-            "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band12.tif": "",
-            "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_8a.tif": "",
-            "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band01.tif": "",
-            "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band02.tif": "",
-            "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band03.tif": "",
-            "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band04.tif": "",
-            "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band05.tif": "",
-            "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band06.tif": "",
-            "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band07.tif": "",
-            "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band08.tif": "",
-            "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band11.tif": "",
-            "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band12.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_azimuthal-exiting.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_azimuthal-incident.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_combined-terrain-shadow.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_exiting-angle.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_fmask.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_incident-angle.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_nbar-contiguity.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_nbart-contiguity.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_relative-azimuth.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_relative-slope.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_satellite-azimuth.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_satellite-view.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_solar-azimuth.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_solar-zenith.tif": "",
-            "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_time-delta.tif": "",
+            "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.odc-metadata.yaml": "",
+            "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.proc-info.yaml": "",
+            "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.sha1": "",
+            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_8a.tif": "",
+            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band01.tif": "",
+            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band02.tif": "",
+            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band03.tif": "",
+            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band04.tif": "",
+            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band05.tif": "",
+            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band06.tif": "",
+            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band07.tif": "",
+            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band08.tif": "",
+            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band11.tif": "",
+            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band12.tif": "",
+            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_8a.tif": "",
+            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band01.tif": "",
+            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band02.tif": "",
+            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band03.tif": "",
+            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band04.tif": "",
+            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band05.tif": "",
+            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band06.tif": "",
+            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band07.tif": "",
+            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band08.tif": "",
+            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band11.tif": "",
+            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band12.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_azimuthal-exiting.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_azimuthal-incident.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_combined-terrain-shadow.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_exiting-angle.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_fmask.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_incident-angle.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_nbar-contiguity.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_nbart-contiguity.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_relative-azimuth.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_relative-slope.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_satellite-azimuth.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_satellite-view.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_solar-azimuth.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_solar-zenith.tif": "",
+            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_time-delta.tif": "",
         },
     )
     [output_metadata] = expected_folder.rglob("*.odc-metadata.yaml")
@@ -699,7 +699,7 @@ def test_sentinel_wagl_package(tmp_path: Path):
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             "id": "14cfa990-7e2f-4f0c-bd5e-b4cb28c27e8d",
-            "label": "ga_s2am_ard_3-2-0_53JQJ_2020-10-31_final",
+            "label": "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final",
             "product": {
                 "name": "ga_s2am_ard_3",
                 "href": "https://collections.dea.ga.gov.au/product/ga_s2am_ard_3",
@@ -811,7 +811,7 @@ def test_sentinel_wagl_package(tmp_path: Path):
                 "gqa:stddev_x": 1.18,
                 "gqa:stddev_xy": 2.24,
                 "gqa:stddev_y": 1.9,
-                "odc:dataset_version": "3.2.0",
+                "odc:dataset_version": "3.2.1",
                 "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": "2021-02-10T03:25:22.635668",
                 "odc:producer": "ga.gov.au",
@@ -820,138 +820,138 @@ def test_sentinel_wagl_package(tmp_path: Path):
             },
             "measurements": {
                 "nbar_blue": {
-                    "path": "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band02.tif"
+                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band02.tif"
                 },
                 "nbar_coastal_aerosol": {
-                    "path": "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band01.tif",
+                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band01.tif",
                     "grid": "b",
                 },
                 "nbar_green": {
-                    "path": "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band03.tif"
+                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band03.tif"
                 },
                 "nbar_nir_1": {
-                    "path": "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band08.tif"
+                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band08.tif"
                 },
                 "nbar_nir_2": {
-                    "path": "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_8a.tif",
+                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_8a.tif",
                     "grid": "a",
                 },
                 "nbar_red": {
-                    "path": "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band04.tif"
+                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band04.tif"
                 },
                 "nbar_red_edge_1": {
-                    "path": "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band05.tif",
+                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band05.tif",
                     "grid": "a",
                 },
                 "nbar_red_edge_2": {
-                    "path": "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band06.tif",
+                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band06.tif",
                     "grid": "a",
                 },
                 "nbar_red_edge_3": {
-                    "path": "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band07.tif",
+                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band07.tif",
                     "grid": "a",
                 },
                 "nbar_swir_2": {
-                    "path": "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band11.tif",
+                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band11.tif",
                     "grid": "a",
                 },
                 "nbar_swir_3": {
-                    "path": "ga_s2am_nbar_3-2-0_53JQJ_2020-10-31_final_band12.tif",
+                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band12.tif",
                     "grid": "a",
                 },
                 "nbart_blue": {
-                    "path": "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band02.tif"
+                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band02.tif"
                 },
                 "nbart_coastal_aerosol": {
-                    "path": "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band01.tif",
+                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band01.tif",
                     "grid": "b",
                 },
                 "nbart_green": {
-                    "path": "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band03.tif"
+                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band03.tif"
                 },
                 "nbart_nir_1": {
-                    "path": "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band08.tif"
+                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band08.tif"
                 },
                 "nbart_nir_2": {
-                    "path": "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_8a.tif",
+                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_8a.tif",
                     "grid": "a",
                 },
                 "nbart_red": {
-                    "path": "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band04.tif"
+                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band04.tif"
                 },
                 "nbart_red_edge_1": {
-                    "path": "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band05.tif",
+                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band05.tif",
                     "grid": "a",
                 },
                 "nbart_red_edge_2": {
-                    "path": "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band06.tif",
+                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band06.tif",
                     "grid": "a",
                 },
                 "nbart_red_edge_3": {
-                    "path": "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band07.tif",
+                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band07.tif",
                     "grid": "a",
                 },
                 "nbart_swir_2": {
-                    "path": "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band11.tif",
+                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band11.tif",
                     "grid": "a",
                 },
                 "nbart_swir_3": {
-                    "path": "ga_s2am_nbart_3-2-0_53JQJ_2020-10-31_final_band12.tif",
+                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band12.tif",
                     "grid": "a",
                 },
                 "oa_azimuthal_exiting": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_azimuthal-exiting.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_azimuthal-exiting.tif"
                 },
                 "oa_azimuthal_incident": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_azimuthal-incident.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_azimuthal-incident.tif"
                 },
                 "oa_combined_terrain_shadow": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_combined-terrain-shadow.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_combined-terrain-shadow.tif"
                 },
                 "oa_exiting_angle": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_exiting-angle.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_exiting-angle.tif"
                 },
                 "oa_fmask": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_fmask.tif",
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_fmask.tif",
                     "grid": "c",
                 },
                 "oa_incident_angle": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_incident-angle.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_incident-angle.tif"
                 },
                 "oa_nbar_contiguity": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_nbar-contiguity.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_nbar-contiguity.tif"
                 },
                 "oa_nbart_contiguity": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_nbart-contiguity.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_nbart-contiguity.tif"
                 },
                 "oa_relative_azimuth": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_relative-azimuth.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_relative-azimuth.tif"
                 },
                 "oa_relative_slope": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_relative-slope.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_relative-slope.tif"
                 },
                 "oa_satellite_azimuth": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_satellite-azimuth.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_satellite-azimuth.tif"
                 },
                 "oa_satellite_view": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_satellite-view.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_satellite-view.tif"
                 },
                 "oa_solar_azimuth": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_solar-azimuth.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_solar-azimuth.tif"
                 },
                 "oa_solar_zenith": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_solar-zenith.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_solar-zenith.tif"
                 },
                 "oa_time_delta": {
-                    "path": "ga_s2am_oa_3-2-0_53JQJ_2020-10-31_final_time-delta.tif"
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_time-delta.tif"
                 },
             },
             "accessories": {
                 "checksum:sha1": {
-                    "path": "ga_s2am_ard_3-2-0_53JQJ_2020-10-31_final.sha1"
+                    "path": "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.sha1"
                 },
                 "metadata:processor": {
-                    "path": "ga_s2am_ard_3-2-0_53JQJ_2020-10-31_final.proc-info.yaml"
+                    "path": "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.proc-info.yaml"
                 },
             },
             "lineage": {},
