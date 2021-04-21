@@ -1,12 +1,11 @@
-import pytest
-from pathlib import Path
 import datetime
 import shutil
-import yaml
+from pathlib import Path
 
-from tests.common import run_prepare_cli
+import pytest
+
 from eodatasets3.prepare import sentinel_l1c_prepare
-
+from tests.common import check_prepare_outputs
 
 dataset = (
     "data/esa_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.zip"
@@ -139,9 +138,7 @@ def expected_dataset_document():
         },
         "product": {"name": "esa_s2bm_level1_1"},
         "properties": {
-            "datetime": datetime.datetime(
-                2020, 10, 11, 0, 2, 49, 24000, tzinfo=datetime.timezone.utc
-            ),
+            "datetime": datetime.datetime(2020, 10, 11, 0, 6, 49, 882566),
             "eo:cloud_cover": 24.9912,
             "eo:gsd": 10,
             "eo:instrument": "MSI",
@@ -150,9 +147,7 @@ def expected_dataset_document():
             "eo:sun_elevation": 37.3713908882192,
             "odc:dataset_version": "1.0.20201011",
             "odc:file_format": "JPEG2000",
-            "odc:processing_datetime": datetime.datetime(
-                2020, 10, 11, 1, 14, 46, tzinfo=datetime.timezone.utc
-            ),
+            "odc:processing_datetime": datetime.datetime(2020, 10, 11, 1, 14, 46),
             "odc:producer": "esa.int",
             "odc:product_family": "level1",
             "odc:region_code": "55HFA",
@@ -160,6 +155,9 @@ def expected_dataset_document():
             "sentinel:datatake_type": "INS-NOBS",
             "sat:orbit_state": "descending",
             "sat:relative_orbit": 30,
+            "sentinel:datatake_start_datetime": datetime.datetime(
+                2020, 10, 11, 1, 14, 46
+            ),
             "sentinel:processing_baseline": "02.09",
             "sentinel:processing_center": "EPAE",
             "sentinel:reception_station": "EDRS",
@@ -197,18 +195,18 @@ def test_run(tmp_path, expected_dataset_document):
     #    Run prepare on that folder
     output_yaml_path = outdir / (dataset_id + ".yaml")
 
-    run_prepare_cli(
-        sentinel_l1c_prepare.main,
-        "--dataset",
-        outdir / DATASET_PATH.name,
-        "--dataset-document",
-        output_yaml_path,
-    )
-
     # THEN
     #     A metadata file is added to it, with valid properties
     #     Assert doc is expected doc
-    with output_yaml_path.open("r") as f:
-        generated_doc = yaml.safe_load(f)
-        del generated_doc["id"]
-    assert expected_dataset_document == generated_doc
+    check_prepare_outputs(
+        invoke_script=sentinel_l1c_prepare.main,
+        run_args=[
+            "--dataset",
+            outdir / DATASET_PATH.name,
+            "--dataset-document",
+            output_yaml_path,
+        ],
+        expected_doc=expected_dataset_document,
+        expected_metadata_path=output_yaml_path,
+        ignore_fields=["id"],
+    )

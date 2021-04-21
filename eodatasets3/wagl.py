@@ -552,14 +552,17 @@ def package(
     with h5py.File(granule.wagl_hdf5, "r") as fid:
         granule_group = fid[granule.name]
 
+        wagl_doc = _read_wagl_metadata(granule_group)
+
         with DatasetAssembler(
             out_directory.absolute(),
             # WAGL stamps a good, random ID already.
             dataset_id=granule.wagl_metadata.get("id"),
-            # naming_conventions="dea_s2" if ('sentinel' in p.platform) else "dea",
-            naming_conventions="dea",
+            naming_conventions="dea_s2"
+            if ("sentinel" in wagl_doc["source_datasets"]["platform_id"].lower())
+            else "dea",
         ) as p:
-            wagl_doc = _apply_wagl_metadata(p, granule_group)
+            _apply_wagl_metadata(p, wagl_doc)
 
             # It's a GA ARD product.
             p.producer = "ga.gov.au"
@@ -691,7 +694,7 @@ def find_a_granule_name(wagl_hdf5: Path) -> str:
     return wagl_hdf5.name[: -len(".wagl.h5")]
 
 
-def _apply_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group) -> Dict:
+def _read_wagl_metadata(granule_group: h5py.Group):
     try:
         wagl_path, *ancil_paths = [
             pth
@@ -703,6 +706,14 @@ def _apply_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group) -> Dict
 
     [wagl_doc] = loads_yaml(granule_group[wagl_path][()])
 
+    for i, path in enumerate(ancil_paths, start=2):
+        wagl_doc.setdefault(f"wagl_{i}", {}).update(
+            list(loads_yaml(granule_group[path][()]))[0]["ancillary"]
+        )
+    return wagl_doc
+
+
+def _apply_wagl_metadata(p: DatasetAssembler, wagl_doc: Dict):
     source = wagl_doc["source_datasets"]
     p.datetime = source["acquisition_datetime"]
     p.platform = source["platform_id"]
@@ -711,16 +722,10 @@ def _apply_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group) -> Dict
     try:
         p.processed = get_path(wagl_doc, ("system_information", "time_processed"))
     except PathAccessError:
-        raise ValueError(f"WAGL dataset contains no time processed. Path {wagl_path}")
-
-    for i, path in enumerate(ancil_paths, start=2):
-        wagl_doc.setdefault(f"wagl_{i}", {}).update(
-            list(loads_yaml(granule_group[path][()]))[0]["ancillary"]
-        )
+        raise RuntimeError("WAGL dataset contains no processed time.")
 
     _take_software_versions(p, wagl_doc)
     p.extend_user_metadata("wagl", wagl_doc)
-    return wagl_doc
 
 
 def _determine_maturity(acq_date: datetime, processed: datetime, wagl_doc: Dict):

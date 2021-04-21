@@ -1,10 +1,11 @@
-from pathlib import Path
-import pytest
-import shutil
-import yaml
 import datetime
-from tests.common import run_prepare_cli
+import shutil
+from pathlib import Path
+
+import pytest
+
 from eodatasets3.prepare import sentinel_l1c_prepare
+from tests.common import check_prepare_outputs
 
 path = (
     "data/sinergise_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446"
@@ -104,9 +105,7 @@ def expected_dataset_document():
         },
         "product": {"name": "sinergise_s2am_level1_1"},
         "properties": {
-            "datetime": datetime.datetime(
-                2020, 10, 11, 0, 6, 49, 882000, tzinfo=datetime.timezone.utc
-            ),
+            "datetime": datetime.datetime(2020, 10, 11, 0, 6, 49, 882000),
             "eo:cloud_cover": 24.9912,
             "eo:gsd": 10,
             "eo:instrument": "MSI",
@@ -116,7 +115,7 @@ def expected_dataset_document():
             "odc:dataset_version": "1.0.20201011",
             "odc:file_format": "JPEG2000",
             "odc:processing_datetime": datetime.datetime(
-                2020, 10, 11, 1, 47, 4, 112949, tzinfo=datetime.timezone.utc
+                2020, 10, 11, 1, 47, 4, 112949
             ),
             "odc:producer": "sinergise.com",
             "odc:product_family": "level1",
@@ -128,7 +127,7 @@ def expected_dataset_document():
             "sinergise_product_name": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446",
             "sentinel:datastrip_id": "S2B_OPER_MSI_L1C_DS_EPAE_20201011T011446_S20201011T000244_N02.09",
             "sentinel:datatake_start_datetime": datetime.datetime(
-                2020, 10, 11, 1, 14, 46, tzinfo=datetime.timezone.utc
+                2020, 10, 11, 1, 14, 46
             ),
             "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09",
         },
@@ -156,21 +155,18 @@ def test_sinergise_sentinel_l1(tmp_path, expected_dataset_document):
 
     output_yaml_path = outdir / "test.yaml"
 
-    run_prepare_cli(
-        sentinel_l1c_prepare.main,
-        "--dataset",
-        outdir,
-        "--dataset-document",
-        output_yaml_path,
-    )
-
     # THEN
     #     A metadata file is added to it, with valid properties
     #     Assert doc is expected doc
-    with output_yaml_path.open("r") as f:
-        generated_doc = yaml.safe_load(f)
-        del generated_doc["id"]
-        from pprint import pprint
-
-        pprint(generated_doc)
-    assert expected_dataset_document == generated_doc
+    check_prepare_outputs(
+        invoke_script=sentinel_l1c_prepare.main,
+        run_args=[
+            "--dataset",
+            outdir,
+            "--dataset-document",
+            output_yaml_path,
+        ],
+        expected_doc=expected_dataset_document,
+        expected_metadata_path=output_yaml_path,
+        ignore_fields=["id"],
+    )
