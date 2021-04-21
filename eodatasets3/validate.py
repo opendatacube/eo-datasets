@@ -396,6 +396,9 @@ def _validate_stac_properties(dataset: DatasetDoc):
             if normaliser and value is not None:
                 try:
                     normalised_value = normaliser(value)
+                    # A normaliser can return two values, the latter adding extra extracted fields.
+                    if isinstance(normalised_value, tuple):
+                        normalised_value = normalised_value[0]
 
                     # Special case for dates, as "no timezone" and "utc timezone" are treated identical.
                     if isinstance(value, datetime):

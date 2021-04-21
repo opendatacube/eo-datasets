@@ -42,6 +42,11 @@ L1_METADATA_PATH: Path = (
     / "data/wagl-input/LC08_L1TP_092084_20160628_20170323_01_T1.yaml"
 )
 
+S2_L1_METADATA_PATH: Path = (
+    Path(__file__).parent
+    / "data/wagl-input/S2A_MSIL1C_20201031T004711_N0209_R102_T53JQJ_20201031T022859.odc-metadata.yaml"
+)
+
 
 def test_whole_landsat_wagl_package(
     l1_ls8_dataset: DatasetDoc, l1_ls8_folder: Path, tmp_path: Path
@@ -616,6 +621,8 @@ def test_sentinel_wagl_package(tmp_path: Path):
                 str,
                 (
                     WAGL_SENTINEL_OUTPUT,
+                    "--level1",
+                    S2_L1_METADATA_PATH,
                     "--output",
                     out,
                     # Our weird scaled test dataset resolution
@@ -632,46 +639,48 @@ def test_sentinel_wagl_package(tmp_path: Path):
     assert_file_structure(
         expected_folder,
         {
-            "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.odc-metadata.yaml": "",
-            "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.proc-info.yaml": "",
-            "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.sha1": "",
-            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_8a.tif": "",
-            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band01.tif": "",
-            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band02.tif": "",
-            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band03.tif": "",
-            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band04.tif": "",
-            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band05.tif": "",
-            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band06.tif": "",
-            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band07.tif": "",
-            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band08.tif": "",
-            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band11.tif": "",
-            "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band12.tif": "",
-            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_8a.tif": "",
-            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band01.tif": "",
-            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band02.tif": "",
-            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band03.tif": "",
-            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band04.tif": "",
-            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band05.tif": "",
-            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band06.tif": "",
-            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band07.tif": "",
-            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band08.tif": "",
-            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band11.tif": "",
-            "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band12.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_azimuthal-exiting.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_azimuthal-incident.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_combined-terrain-shadow.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_exiting-angle.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_fmask.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_incident-angle.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_nbar-contiguity.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_nbart-contiguity.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_relative-azimuth.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_relative-slope.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_satellite-azimuth.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_satellite-view.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_solar-azimuth.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_solar-zenith.tif": "",
-            "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_time-delta.tif": "",
+            "20201031T022859": {
+                "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.odc-metadata.yaml": "",
+                "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.proc-info.yaml": "",
+                "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.sha1": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_8a.tif": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band01.tif": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band02.tif": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band03.tif": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band04.tif": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band05.tif": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band06.tif": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band07.tif": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band08.tif": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band11.tif": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band12.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_8a.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band01.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band02.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band03.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band04.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band05.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band06.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band07.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band08.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band11.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band12.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_azimuthal-exiting.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_azimuthal-incident.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_combined-terrain-shadow.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_exiting-angle.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_fmask.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_incident-angle.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_nbar-contiguity.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_nbart-contiguity.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_relative-azimuth.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_relative-slope.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_satellite-azimuth.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_satellite-view.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_solar-azimuth.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_solar-zenith.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_time-delta.tif": "",
+            }
         },
     )
     [output_metadata] = expected_folder.rglob("*.odc-metadata.yaml")
@@ -681,7 +690,7 @@ def test_sentinel_wagl_package(tmp_path: Path):
     all_output_files = set(
         p.relative_to(checksum_file.parent)
         for p in expected_folder.rglob("*")
-        if p != checksum_file
+        if p != checksum_file and not p.is_dir()
     )
     files_in_checksum = {
         Path(line.split("\t")[1]) for line in checksum_file.read_text().splitlines()
@@ -787,6 +796,8 @@ def test_sentinel_wagl_package(tmp_path: Path):
                 "eo:gsd": 998.1818181818181,
                 "eo:instrument": "MSI",
                 "eo:platform": "sentinel-2a",
+                "eo:sun_azimuth": 62.9424764928076,
+                "eo:sun_elevation": 26.8398246645449,
                 "fmask:clear": 73.65382838133374,
                 "fmask:cloud": 11.063428320692061,
                 "fmask:cloud_shadow": 0.6983135097842945,
@@ -817,6 +828,10 @@ def test_sentinel_wagl_package(tmp_path: Path):
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ard",
                 "odc:region_code": "53JQJ",
+                "sat:orbit_state": "descending",
+                "sat:relative_orbit": 102,
+                "sentinel:datastrip_id": "S2A_OPER_MSI_L1C_DS_EPAE_20201031T022859_S20201031T004711_N02.09",
+                "sentinel:datatake_start_datetime": "2020-10-31T02:28:59",
             },
             "measurements": {
                 "nbar_blue": {
@@ -954,7 +969,7 @@ def test_sentinel_wagl_package(tmp_path: Path):
                     "path": "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.proc-info.yaml"
                 },
             },
-            "lineage": {},
+            "lineage": {"level1": ["8f1cd4a8-666d-4b07-916b-343f8d4d8aa0"]},
         },
         output_metadata,
     )

@@ -132,6 +132,7 @@ def process_mtd_tl(contents: str) -> Dict:
         "eo:sun_azimuth": _value(root, "Mean_Sun_Angle", "AZIMUTH_ANGLE"),
         "eo:sun_elevation": _value(root, "Mean_Sun_Angle", "ZENITH_ANGLE"),
         "sentinel:datastrip_id": _value(root, "DATASTRIP_ID"),
+        "datetime": _value(root, "SENSING_TIME"),
     }
 
 
@@ -147,7 +148,6 @@ def process_mtd_msil1c(contents: str) -> Dict:
         "sentinel:datatake_type": _value(root, "DATATAKE_TYPE"),
         "odc:processing_datetime": _value(root, "GENERATION_TIME"),
         "sentinel:processing_baseline": _value(root, "PROCESSING_BASELINE"),
-        "datetime": _value(root, "PRODUCT_START_TIME"),
         "eo:cloud_cover": _value(root, "Cloud_Coverage_Assessment"),
         "odc:region_code": region_code,
     }

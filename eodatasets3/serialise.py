@@ -121,11 +121,11 @@ def loads_yaml(stream: Union[Text, IO]) -> Iterable[Dict]:
     return YAML(typ="safe").load_all(stream)
 
 
-def from_path(path: Path) -> DatasetDoc:
+def from_path(path: Path, skip_validation=False) -> DatasetDoc:
     if path.suffix.lower() not in (".yaml", ".yml"):
         raise ValueError(f"Unexpected file type {path.suffix}. Expected yaml")
 
-    return from_doc(load_yaml(path))
+    return from_doc(load_yaml(path), skip_validation=skip_validation)
 
 
 class InvalidDataset(Exception):
