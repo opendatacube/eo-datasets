@@ -106,7 +106,7 @@ with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec
 
 ## Conversion to Stac metadata
 
-`eo3-to-stac`: Convert an ODC metadata to a Stac Item json file
+`eo3-to-stac`: Convert an EO3 metadata doc to a Stac Item
 
 	❯ eo3-to-stac --help
 	Usage: eo3-to-stac [OPTIONS] [ODC_METADATA_FILES]...
@@ -183,7 +183,7 @@ Some preparers need the ancillary dependencies: `pip install .[ancillary]`
 	  landsat-l1     Prepare eo3 metadata for USGS Landsat Level 1 data.
 	  modis-mcd43a1  Prepare MODIS MCD43A1 tiles for indexing into a Data...
 	  noaa-prwtr     Prepare NCEP/NCAR reanalysis 1 water pressure datasets...
-	  sentinel-l1C   Prepare eo3 metadata for Sentinel-2 Level 1C data produced...
+	  sentinel-l1   Prepare eo3 metadata for Sentinel-2 Level 1C data produced...
 
 `eo3-package-wagl`: Convert and package WAGL HDF5 outputs.
 
