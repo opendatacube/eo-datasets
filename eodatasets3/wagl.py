@@ -350,18 +350,20 @@ def do(name: str, heading=False, **fields):
         secho("(done)")
 
 
-def _get_level1_metadata_path(wagl_doc):
+def _get_level1_metadata_path(wagl_doc: Dict) -> Optional[Path]:
+    """
+    Find the expected matching metadata file for the source dataset
+    """
     source_level1 = Path(get_path(wagl_doc, ("source_datasets", "source_level1")))
-    # The odc-metadata can be in the source directory or alongside it.
-    if source_level1.exists():
-        level1_metadata_path = source_level1.with_suffix(".odc-metadata.yaml")
-        if not level1_metadata_path.exists():
-            # Assume the yaml is in the source level1 dir
-            metadata_yaml = source_level1.name + ".odc-metadata.yaml"
-            level1_metadata_path = source_level1 / metadata_yaml
+    if not source_level1.exists():
+        return None
+
+    # If a directory, assume "<dirname>.odc-metadata.yaml"
+    if source_level1.is_dir():
+        return source_level1 / (source_level1.name + ".odc-metadata.yaml")
+    # Otherwise it's a sibling file with ".odc-metadata.yaml" suffix
     else:
-        level1_metadata_path = None
-    return level1_metadata_path
+        return source_level1.with_suffix(".odc-metadata.yaml")
 
 
 def _extract_reference_code(p: DatasetAssembler, granule: str) -> Optional[str]:
