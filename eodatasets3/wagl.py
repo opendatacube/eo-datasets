@@ -232,7 +232,7 @@ def _unpack_observation_attributes(
 def choose_resolution_group(
     resolution_groups: Dict[tuple, h5py.Group],
     platform: str,
-    oa_resolution=Optional[Tuple[float, float]],
+    oa_resolution: Optional[Tuple[float, float]],
 ) -> h5py.Group:
 
     # None specified? Figure out a default.
@@ -526,7 +526,7 @@ def package(
     granule: Granule,
     included_products: Iterable[str] = DEFAULT_PRODUCTS,
     include_oa: bool = True,
-    oa_resolution=Optional[Tuple[float, float]],
+    oa_resolution: Optional[Tuple[float, float]] = None,
 ) -> Tuple[UUID, Path]:
     """
     Package an L2 product.
