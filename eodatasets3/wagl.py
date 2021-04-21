@@ -1,7 +1,7 @@
 """
 Package WAGL HDF5 Outputs
 
-This will convert the HDF5 file (and sibling fmask/gqa files) into
+This converts the HDF5 file (and sibling fmask/gqa files) into
 GeoTIFFS (COGs) with datacube metadata using the DEA naming conventions
 for files.
 """
