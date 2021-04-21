@@ -243,7 +243,7 @@ def choose_resolution_group(
         if platform.startswith("landsat"):
             oa_resolution = max(resolution_groups.keys())
         elif platform.startswith("sentinel"):
-            oa_resolution = (20.0, 20.0)
+            oa_resolution = (10.0, 10.0)
         else:
             raise NotImplementedError(
                 f"Don't know how to choose a default OA resolution for platform {platform !r}"
