@@ -35,9 +35,9 @@ RUN if [ "$ENVIRONMENT" = "test" ] ; then \
 	    && rm -rf /var/lib/apt/lists/* ; \
     fi
 
-# For dev: run pre-commit once, so its environment is built and cached.
-#    We make a little tmp repo rather than using our real repo, as we only
-#    want Docker's caching to rebuild it when pre-commit-config.yaml changes.
+# Dev setup: run pre-commit once, so its virtualenv is built and cached.
+#    We do this in a tmp repository, before copying our real code, as we
+#    want this cached by Docker and not rebuilt every time code changes
 COPY .pre-commit-config.yaml /tmp/
 USER runner
 RUN if [ "$ENVIRONMENT" = "test" ] ; then \
