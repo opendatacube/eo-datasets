@@ -153,7 +153,10 @@ def test_sinergise_sentinel_l1(tmp_path, expected_dataset_document):
     # WHEN:
     #    Run prepare on that folder
 
-    output_yaml_path = outdir / "test.yaml"
+    output_yaml_path = (
+        outdir
+        / "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.odc-metadata.yaml"
+    )
 
     # THEN
     #     A metadata file is added to it, with valid properties
@@ -161,10 +164,7 @@ def test_sinergise_sentinel_l1(tmp_path, expected_dataset_document):
     check_prepare_outputs(
         invoke_script=sentinel_l1c_prepare.main,
         run_args=[
-            "--dataset",
             outdir,
-            "--dataset-document",
-            output_yaml_path,
         ],
         expected_doc=expected_dataset_document,
         expected_metadata_path=output_yaml_path,
