@@ -352,9 +352,8 @@ def do(name: str, heading=False, **fields):
 
 def _get_level1_metadata_path(wagl_doc):
     source_level1 = Path(get_path(wagl_doc, ("source_datasets", "source_level1")))
-    # The odc-meta data can be in the source-level or alongside it.
+    # The odc-metadata can be in the source directory or alongside it.
     if source_level1.exists():
-        # if source_level1.isdir():
         level1_metadata_path = source_level1.with_suffix(".odc-metadata.yaml")
         if not level1_metadata_path.exists():
             # Assume the yaml is in the source level1 dir
