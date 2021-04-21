@@ -1,12 +1,17 @@
 """
 Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise or esa.
+
+Takes ESA zipped datasets or Sinergise dataset directories
 """
 
 import json
+import sys
 import uuid
 import zipfile
 from pathlib import Path
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List, Optional
+
+from click import echo
 from defusedxml import minidom
 import click
 
@@ -258,28 +263,49 @@ def prepare_and_write(
 
 
 @click.command(help=__doc__)
-@click.option(
-    "--dataset",
-    type=PathPath(),
-    required=True,
-    help="Path to ESA zipped dataset or Sinergise dataset directory",
+@click.argument(
+    "datasets",
+    type=PathPath(exists=True, readable=True, writable=False),
+    nargs=-1,
 )
 @click.option(
-    "--dataset-document",
-    type=PathPath(),
-    required=True,
-    help="Location to output the L1C dataset document (yaml)",
+    "--overwrite-existing/--skip-existing",
+    is_flag=True,
+    default=False,
+    help="Overwrite if exists (otherwise skip)",
+)
+@click.option(
+    "--output-base",
+    help="Write metadata files into a directory instead of alongside each dataset",
+    required=False,
+    type=PathPath(exists=True, writable=True, dir_okay=True, file_okay=False),
 )
 def main(
-    dataset: Path,
-    dataset_document: Path,
+    output_base: Optional[Path],
+    datasets: List[Path],
+    overwrite_existing: bool,
 ):
+    for dataset in datasets:
 
-    uuid, path = prepare_and_write(
-        dataset,
-        dataset_document,
-    )
-    return path
+        if dataset.is_dir():
+            output_path = dataset / f"{dataset.stem}.odc-metadata.yaml"
+        else:
+            output_path = dataset.with_suffix(".odc-metadata.yaml")
+
+        if output_base:
+            output_path = output_base / output_path.name
+
+        if output_path.exists() and not overwrite_existing:
+            echo(f"Output exists. Skipping {output_path.name}")
+            continue
+
+        uuid, path = prepare_and_write(
+            dataset,
+            output_path,
+        )
+        echo(f"Wrote {path}")
+
+        sys.exit(0)
 
 
 if __name__ == "__main__":
