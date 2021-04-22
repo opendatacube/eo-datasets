@@ -1,3 +1,4 @@
+import math
 import string
 
 import attr
@@ -255,7 +256,7 @@ class MeasurementRecord:
         path: Union[Path, str],
         img: numpy.ndarray,
         layer: Optional[str] = None,
-        nodata=None,
+        nodata: Optional[Union[float, int]] = None,
         expand_valid_data=True,
     ):
         for measurements in self._measurements_per_grid.values():
@@ -269,15 +270,22 @@ class MeasurementRecord:
         if expand_valid_data:
             self._expand_valid_data_mask(grid, img, nodata)
 
-    def _expand_valid_data_mask(self, grid: GridSpec, img: numpy.ndarray, nodata):
+    def _expand_valid_data_mask(
+        self, grid: GridSpec, img: numpy.ndarray, nodata: Union[float, int]
+    ):
         if nodata is None:
-            nodata = 0
+            nodata = float("nan") if numpy.issubdtype(img.dtype, numpy.floating) else 0
+
+        if math.isnan(nodata):
+            valid_values = numpy.isfinite(img)
+        else:
+            valid_values = img != nodata
 
         mask = self.mask_by_grid.get(grid)
         if mask is None:
-            mask = img != nodata
+            mask = valid_values
         else:
-            mask |= img != nodata
+            mask |= valid_values
         self.mask_by_grid[grid] = mask
 
     def _as_named_grids(self) -> Dict[str, Tuple[GridSpec, _Measurements]]:
