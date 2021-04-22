@@ -44,12 +44,8 @@ POSSIBLE_PRODUCTS = ("nbar", "nbart", "lambertian", "sbt")
 DEFAULT_PRODUCTS = ("nbar", "nbart")
 
 _THUMBNAILS = {
-    ("landsat-5", "nbar"): ("nbar:red", "nbar:green", "nbar:blue"),
-    ("landsat-5", "nbart"): ("nbart:red", "nbart:green", "nbart:blue"),
-    ("landsat-7", "nbar"): ("nbar:red", "nbar:green", "nbar:blue"),
-    ("landsat-7", "nbart"): ("nbart:red", "nbart:green", "nbart:blue"),
-    ("landsat-8", "nbar"): ("nbar:red", "nbar:green", "nbar:blue"),
-    ("landsat-8", "nbart"): ("nbart:red", "nbart:green", "nbart:blue"),
+    "nbar": ("nbar:red", "nbar:green", "nbar:blue"),
+    "nbart": ("nbart:red", "nbart:green", "nbart:blue"),
 }
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
@@ -102,8 +98,8 @@ def _unpack_products(
                         file_id=_file_id(dataset),
                     )
 
-            if (p.platform, product) in _THUMBNAILS:
-                red, green, blue = _THUMBNAILS[(p.platform, product)]
+            if product in _THUMBNAILS:
+                red, green, blue = _THUMBNAILS[product]
                 with do(f"Thumbnailing {product}"):
                     p.write_thumbnail(
                         red, green, blue, kind=product, static_stretch=(1, 3000)
