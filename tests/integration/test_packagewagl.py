@@ -1,4 +1,5 @@
 from binascii import crc32
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -6,7 +7,6 @@ import gdal
 import pytest
 import rasterio
 from click.testing import CliRunner
-from contextlib import contextmanager
 from rasterio import DatasetReader
 from rasterio.enums import Compression
 from rio_cogeo import cogeo
@@ -643,7 +643,6 @@ def test_sentinel_wagl_package(tmp_path: Path):
                 "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.odc-metadata.yaml": "",
                 "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.proc-info.yaml": "",
                 "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.sha1": "",
-                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band08a.tif": "",
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band01.tif": "",
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band02.tif": "",
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band03.tif": "",
@@ -651,10 +650,11 @@ def test_sentinel_wagl_package(tmp_path: Path):
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band05.tif": "",
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band06.tif": "",
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band07.tif": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band08a.tif": "",
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band08.tif": "",
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band11.tif": "",
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band12.tif": "",
-                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band08a.tif": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_thumbnail.jpg": "",
                 "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band01.tif": "",
                 "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band02.tif": "",
                 "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band03.tif": "",
@@ -662,9 +662,11 @@ def test_sentinel_wagl_package(tmp_path: Path):
                 "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band05.tif": "",
                 "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band06.tif": "",
                 "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band07.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band08a.tif": "",
                 "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band08.tif": "",
                 "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band11.tif": "",
                 "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band12.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_thumbnail.jpg": "",
                 "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_azimuthal-exiting.tif": "",
                 "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_azimuthal-incident.tif": "",
                 "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_combined-terrain-shadow.tif": "",
@@ -967,6 +969,12 @@ def test_sentinel_wagl_package(tmp_path: Path):
                 },
                 "metadata:processor": {
                     "path": "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.proc-info.yaml"
+                },
+                "thumbnail:nbar": {
+                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_thumbnail.jpg"
+                },
+                "thumbnail:nbart": {
+                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_thumbnail.jpg"
                 },
             },
             "lineage": {"level1": ["8f1cd4a8-666d-4b07-916b-343f8d4d8aa0"]},
