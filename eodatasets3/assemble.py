@@ -536,7 +536,7 @@ class DatasetAssembler(EoFields):
         name: str,
         array: numpy.ndarray,
         grid_spec: GridSpec,
-        nodata=None,
+        nodata: Optional[Union[float, int]] = None,
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.average,
         expand_valid_data=True,
@@ -579,7 +579,7 @@ class DatasetAssembler(EoFields):
     def write_measurements_odc_xarray(
         self,
         dataset: Dataset,
-        nodata: int,
+        nodata: Optional[Union[float, int]] = None,
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.average,
         expand_valid_data=True,
@@ -618,7 +618,7 @@ class DatasetAssembler(EoFields):
         grid: GridSpec,
         out_path: Path,
         expand_valid_data: bool,
-        nodata: int,
+        nodata: Optional[Union[float, int]],
         overview_resampling: Resampling,
         overviews: Tuple[int, ...],
     ):
