@@ -643,7 +643,7 @@ def test_sentinel_wagl_package(tmp_path: Path):
                 "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.odc-metadata.yaml": "",
                 "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.proc-info.yaml": "",
                 "ga_s2am_ard_3-2-1_53JQJ_2020-10-31_final.sha1": "",
-                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_8a.tif": "",
+                "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band08a.tif": "",
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band01.tif": "",
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band02.tif": "",
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band03.tif": "",
@@ -654,7 +654,7 @@ def test_sentinel_wagl_package(tmp_path: Path):
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band08.tif": "",
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band11.tif": "",
                 "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band12.tif": "",
-                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_8a.tif": "",
+                "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band08a.tif": "",
                 "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band01.tif": "",
                 "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band02.tif": "",
                 "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band03.tif": "",
@@ -848,7 +848,7 @@ def test_sentinel_wagl_package(tmp_path: Path):
                     "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band08.tif"
                 },
                 "nbar_nir_2": {
-                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_8a.tif",
+                    "path": "ga_s2am_nbar_3-2-1_53JQJ_2020-10-31_final_band08a.tif",
                     "grid": "a",
                 },
                 "nbar_red": {
@@ -888,7 +888,7 @@ def test_sentinel_wagl_package(tmp_path: Path):
                     "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band08.tif"
                 },
                 "nbart_nir_2": {
-                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_8a.tif",
+                    "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_band08a.tif",
                     "grid": "a",
                 },
                 "nbart_red": {

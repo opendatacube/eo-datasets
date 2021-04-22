@@ -1,5 +1,6 @@
 import enum
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Tuple, Dict, Any
@@ -88,6 +89,9 @@ def subfolderise(code: str) -> Tuple[str, ...]:
     return (code,)
 
 
+_NUMERIC_BAND_NAME = re.compile(r"(?P<number>\d+)(?P<suffix>[a-zA-Z]?)", re.IGNORECASE)
+
+
 def normalise_band_name(band_name: str) -> str:
     """
     Normalise band names by our norms.
@@ -96,16 +100,22 @@ def normalise_band_name(band_name: str) -> str:
 
     >>> normalise_band_name('4')
     'band04'
+    >>> normalise_band_name('8a')
+    'band08a'
+    >>> normalise_band_name('8A')
+    'band08a'
     >>> normalise_band_name('QUALITY')
     'quality'
     >>> normalise_band_name('Azimuthal-Angles')
     'azimuthal_angles'
     """
-    try:
-        number = int(band_name)
-        band_name = f"band{number:02}"
-    except ValueError:
-        pass
+
+    match = _NUMERIC_BAND_NAME.match(band_name)
+    if match:
+        number = int(match.group("number"))
+        suffix = match.group("suffix")
+        band_name = f"band{number:02}{suffix}"
+
     return band_name.lower().replace("-", "_")
 
 
