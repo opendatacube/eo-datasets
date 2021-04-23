@@ -106,6 +106,29 @@ def test_valid_document_works(eo_validator: ValidateRunner, example_metadata: Di
     eo_validator.assert_valid(example_metadata)
 
 
+def test_multi_document_works(
+    tmp_path: Path,
+    eo_validator: ValidateRunner,
+    l1_ls5_tarball_md_expected: Dict,
+    l1_ls7_tarball_md_expected: Dict,
+):
+    """We should support multiple documents in one yaml file, and validate all of them"""
+
+    # Two valid documents in one file, should succeed.
+    md_path = tmp_path / "multi-doc.yaml"
+    with md_path.open("w") as f:
+        serialise.dumps_yaml(f, l1_ls5_tarball_md_expected, l1_ls7_tarball_md_expected)
+
+    eo_validator.assert_valid(md_path)
+
+    # When the second document is invalid, we should see a validation error.
+    with md_path.open("w") as f:
+        e2 = dict(l1_ls5_tarball_md_expected)
+        del e2["id"]
+        serialise.dumps_yaml(f, l1_ls7_tarball_md_expected, e2)
+    eo_validator.assert_invalid(md_path)
+
+
 def test_missing_field(eo_validator: ValidateRunner, example_metadata: Dict):
     """when a required field (id) is missing, validation should fail"""
     del example_metadata["id"]
