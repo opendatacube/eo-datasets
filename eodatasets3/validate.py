@@ -324,61 +324,73 @@ def validate_paths(
     paths: List[Path],
     thorough: bool = False,
     expect_extra_measurements: bool = False,
-) -> Generator[Tuple[Path, List[ValidationMessage]], None, None]:
+) -> Generator[Tuple[Path, int, List[ValidationMessage]], None, None]:
     """Validate the list of paths. Product documents can be specified before their datasets."""
     products: Dict[str, Dict] = {}
 
     for path in paths:
-        # Load yaml. If product, add to products.
-        # Otherwise validate.
-        doc = serialise.load_yaml(path)
-        messages = []
-
-        if is_product(doc):
-            messages.extend(validate_product(doc))
-            products[doc["name"]] = doc
-            yield path, messages
-            continue
-
-        # TODO: follow ODC's match rules?
-        product = None
-        product_name = get_path(doc, ("product", "name"), default=None)
-
-        if products:
-            if len(products) == 1:
-                [product] = products.values()
-            elif product_name is not None:
-                product = products.get(product_name)
-
-            if product is None:
-                messages.append(
-                    _warning(
-                        "unknown_product",
-                        "Cannot match dataset to product",
-                        hint=f"Nothing matches {product_name!r}"
-                        if product_name
-                        else "No product name in dataset (TODO: field matching)",
+        with path.open("r") as f:
+            inner_docs = serialise.loads_yaml(f)
+            for i, doc in enumerate(inner_docs):
+                if is_product(doc):
+                    products[doc["name"]] = doc
+                    messages = list(validate_product(doc))
+                else:
+                    messages = validate_eo3_doc(
+                        doc, path, products, thorough, expect_extra_measurements
                     )
-                )
-        else:
+                if messages:
+                    yield path, i, messages
+
+
+def validate_eo3_doc(
+    doc: Dict,
+    location: Union[str, Path],
+    products: Dict[str, Dict],
+    thorough: bool = False,
+    expect_extra_measurements=False,
+) -> List[ValidationMessage]:
+    messages = []
+
+    # TODO: follow ODC's match rules?
+    product = None
+    product_name = get_path(doc, ("product", "name"), default=None)
+
+    if products:
+        if len(products) == 1:
+            [product] = products.values()
+        elif product_name is not None:
+            product = products.get(product_name)
+
+        if product is None:
             messages.append(
-                ValidationMessage(
-                    Level.error if thorough else Level.info,
-                    "no_product",
-                    "No product provided: validating dataset information alone",
+                _warning(
+                    "unknown_product",
+                    "Cannot match dataset to product",
+                    hint=f"Nothing matches {product_name!r}"
+                    if product_name
+                    else "No product name in dataset (TODO: field matching)",
                 )
             )
-
-        messages.extend(
-            validate_dataset(
-                doc,
-                product_definition=product,
-                readable_location=path,
-                thorough=thorough,
-                expect_extra_measurements=expect_extra_measurements,
+    else:
+        messages.append(
+            ValidationMessage(
+                Level.error if thorough else Level.info,
+                "no_product",
+                "No product provided: validating dataset information alone",
             )
         )
-        yield path, messages
+
+    messages.extend(
+        validate_dataset(
+            doc,
+            product_definition=product,
+            readable_location=location,
+            thorough=thorough,
+            expect_extra_measurements=expect_extra_measurements,
+        )
+    )
+    return messages
 
 
 def is_product(doc: Dict) -> bool:
@@ -550,7 +562,7 @@ def run(
         Level.warning: dict(fg="yellow"),
         Level.error: dict(fg="red"),
     }
-    for path, messages in validate_paths(
+    for path, path_index, messages in validate_paths(
         paths, thorough=thorough, expect_extra_measurements=expect_extra_measurements
     ):
         levels = collections.Counter(m.level for m in messages)
@@ -563,7 +575,8 @@ def run(
             messages = [m for m in messages if m.level != Level.info]
 
         if messages or not quiet:
-            secho(f"{bool_style(not is_invalid)} {path.stem}")
+            path_suffix = f" document {path_index+1}" if path_index else ""
+            secho(f"{bool_style(not is_invalid)} {path.stem}{path_suffix}")
 
         if not messages:
             continue
