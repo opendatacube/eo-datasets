@@ -265,7 +265,7 @@ def prepare_and_write(
 @click.command(help=__doc__)
 @click.argument(
     "datasets",
-    type=PathPath(exists=True, readable=True, writable=False),
+    type=PathPath(exists=True, readable=True, writable=False, resolve_path=True),
     nargs=-1,
 )
 @click.option(
@@ -278,7 +278,9 @@ def prepare_and_write(
     "--output-base",
     help="Write metadata files into a directory instead of alongside each dataset",
     required=False,
-    type=PathPath(exists=True, writable=True, dir_okay=True, file_okay=False),
+    type=PathPath(
+        exists=True, writable=True, dir_okay=True, file_okay=False, resolve_path=True
+    ),
 )
 def main(
     output_base: Optional[Path],
@@ -286,7 +288,6 @@ def main(
     overwrite_existing: bool,
 ):
     for dataset in datasets:
-
         if dataset.is_dir():
             output_path = dataset / f"{dataset.stem}.odc-metadata.yaml"
         else:
