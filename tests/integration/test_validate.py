@@ -1,7 +1,7 @@
 import operator
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, Union, Mapping, Sequence, Optional, List
+from typing import Dict, Union, Mapping, Sequence, Optional, List, Tuple
 
 import numpy as np
 import pytest
@@ -80,6 +80,27 @@ class ValidateRunner:
         )
 
     @property
+    def messages_with_severity(self) -> Dict[Tuple[str, str], str]:
+        """
+        Get all messages produced by the validation tool with their severity.
+
+        This issimilar to ".messages", but includes all messages (including informational),
+        and the user can filter by severity themselves.
+
+        Returned as a dict of (severity, error_code) -> human_message.
+        """
+
+        def _read_message(line: str):
+            severity, code, *message = line.split()
+            return (severity, code), " ".join(message)
+
+        return dict(
+            _read_message(line)
+            for line in self.result.stdout.split("\n")
+            if line and line.startswith("\t")
+        )
+
+    @property
     def messages(self) -> Dict[str, str]:
         """Read the messages/warnings for validation tool stdout.
 
@@ -87,18 +108,11 @@ class ValidateRunner:
 
         (Note: this will swallow duplicates when the same error code is output multiple times.)
         """
-
-        def _read_message(line: str):
-            severity, code, *message = line.split()
-            return code, " ".join(message)
-
-        return dict(
-            _read_message(line)
-            for line in self.result.stdout.split("\n")
-            if line
-            and line.startswith("\t")
-            and (self.record_informational_messages or not line.startswith("\tI "))
-        )
+        return {
+            code: message
+            for (severity, code), message in self.messages_with_severity.items()
+            if (self.record_informational_messages or not severity == "I")
+        }
 
 
 def test_valid_document_works(eo_validator: ValidateRunner, example_metadata: Dict):
@@ -275,7 +289,7 @@ def test_warn_duplicate_measurement_name(
     )
     eo_validator.assert_invalid(product)
     assert eo_validator.messages == {
-        "duplicate_measurement_name": "Name 'blue' is used more than once in a measurement name or alias."
+        "duplicate_measurement_name": "Name 'blue' is used by multiple measurements"
     }
 
     # An *alias* clashes with the *name* of a measurement.
@@ -297,7 +311,33 @@ def test_warn_duplicate_measurement_name(
         ],
     )
     eo_validator.assert_invalid(product)
-    assert "duplicate_measurement_name" in eo_validator.messages
+    assert eo_validator.messages == {
+        "duplicate_measurement_name": "Name 'blue' is used by multiple measurements"
+    }
+
+    # An alias is duplicated on the same measurement. Not an error, just a message!
+    product = dict(
+        name="our_product",
+        metadata_type="eo3",
+        measurements=[
+            dict(
+                name="blue",
+                aliases=[
+                    "icecream",
+                    "blue",
+                ],
+                dtype="uint8",
+                nodata=255,
+            ),
+        ],
+    )
+    eo_validator.assert_valid(product)
+    assert eo_validator.messages_with_severity == {
+        (
+            "I",
+            "duplicate_alias_name",
+        ): "Measurement 'blue' has a duplicate alias named 'blue'"
+    }
 
 
 def test_dtype_compare_with_product_doc(
