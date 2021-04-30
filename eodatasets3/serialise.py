@@ -14,7 +14,7 @@ import shapely
 import shapely.affinity
 import shapely.ops
 from affine import Affine
-from ruamel.yaml import YAML, ruamel, Representer
+from ruamel.yaml import YAML, Representer
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
@@ -113,12 +113,16 @@ def dumps_yaml(stream, *docs: Mapping) -> None:
 
 def load_yaml(p: Path) -> Dict:
     with p.open() as f:
-        return YAML(typ="safe").load(f)
+        return _yaml().load(f)
+
+
+def _yaml():
+    return YAML(typ="safe")
 
 
 def loads_yaml(stream: Union[Text, IO]) -> Iterable[Dict]:
     """Dump yaml through a stream, using the default deserialisation settings."""
-    return YAML(typ="safe").load_all(stream)
+    return _yaml().load_all(stream)
 
 
 def from_path(path: Path, skip_validation=False) -> DatasetDoc:
@@ -137,7 +141,7 @@ class InvalidDataset(Exception):
 
 def _get_schema_validator(p: Path) -> jsonschema.Draft6Validator:
     with p.open() as f:
-        schema = ruamel.yaml.safe_load(f)
+        schema = _yaml().load(f)
     klass = jsonschema.validators.validator_for(schema)
     klass.check_schema(schema)
     return klass(schema, types=dict(array=(list, tuple)))

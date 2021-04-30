@@ -250,7 +250,7 @@ def test_dataset_no_measurements(tmp_path: Path):
         dataset_id, metadata_path = p.done()
 
     with metadata_path.open("r") as f:
-        doc = yaml.safe_load(f)
+        doc = yaml.YAML(typ="safe").load(f)
 
     assert doc["label"] == "chipmonk_sightings_2019", "Couldn't override label field"
 
@@ -268,7 +268,7 @@ def test_minimal_s1_dataset(tmp_path: Path):
         dataset_id, metadata_path = p.done()
 
     with metadata_path.open("r") as f:
-        doc = yaml.safe_load(f)
+        doc = yaml.YAML(typ="safe").load(f)
 
     assert doc["label"] == "s1ac_bck_2018-11-04", "Unexpected dataset label"
 
@@ -289,7 +289,7 @@ def test_minimal_s2_dataset_normal(tmp_path: Path):
         dataset_id, metadata_path = p.done()
 
     with metadata_path.open("r") as f:
-        doc = yaml.safe_load(f)
+        doc = yaml.YAML(typ="safe").load(f)
 
     metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
     assert metadata_path_offset == (
