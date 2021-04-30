@@ -7,11 +7,9 @@ import pytest
 from eodatasets3.prepare import sentinel_l1c_prepare
 from tests.common import check_prepare_outputs
 
-dataset = (
+DATASET_PATH: Path = Path(__file__).parent.parent / (
     "data/esa_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.zip"
 )
-
-DATASET_PATH: Path = Path(__file__).parent.parent / dataset
 
 
 @pytest.fixture()
@@ -179,30 +177,17 @@ def expected_dataset_document():
 
 
 def test_run(tmp_path, expected_dataset_document):
-
-    # GIVEN:
-    #     A folder of imagery
-    outdir = tmp_path
-    indir = DATASET_PATH
-
-    if indir.is_file():
-        shutil.copy(indir, outdir)
-    else:
-        shutil.copytree(indir, outdir)
-
-    # WHEN:
-    #    Run prepare on that folder
-    expected_metadata_path = outdir / (
+    """
+    Run prepare on our test input scene, and check the created metadata matches expected.
+    """
+    shutil.copy(DATASET_PATH, tmp_path)
+    expected_metadata_path = tmp_path / (
         "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.odc-metadata.yaml"
     )
-
-    # THEN
-    #     A metadata file is added to it, with valid properties
-    #     Assert doc is expected doc
     check_prepare_outputs(
         invoke_script=sentinel_l1c_prepare.main,
         run_args=[
-            outdir / DATASET_PATH.name,
+            tmp_path / DATASET_PATH.name,
         ],
         expected_doc=expected_dataset_document,
         expected_metadata_path=expected_metadata_path,
