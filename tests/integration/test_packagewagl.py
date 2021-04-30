@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import gdal
+from osgeo import gdal
 import pytest
 import rasterio
 from click.testing import CliRunner

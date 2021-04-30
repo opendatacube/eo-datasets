@@ -70,7 +70,7 @@ def assert_same_as_file(expected_doc: Dict, generated_file: Path, ignore_fields=
     assert generated_file.exists(), f"Expected file to exist {generated_file.name}"
 
     with generated_file.open("r") as f:
-        generated_doc = yaml.safe_load(f)
+        generated_doc = yaml.YAML(typ="safe").load(f)
 
     expected_doc = dict(expected_doc)
     for field in ignore_fields:
