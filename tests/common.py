@@ -74,7 +74,8 @@ def assert_same_as_file(expected_doc: Dict, generated_file: Path, ignore_fields=
 
     expected_doc = dict(expected_doc)
     for field in ignore_fields:
-        del generated_doc[field]
+        if field in generated_doc:
+            del generated_doc[field]
         if field in expected_doc:
             del expected_doc[field]
 
