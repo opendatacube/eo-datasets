@@ -3,17 +3,18 @@ Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise or esa.
 
 Takes ESA zipped datasets or Sinergise dataset directories
 """
-
+import fnmatch
 import json
+import logging
 import sys
 import uuid
 import zipfile
 from pathlib import Path
-from typing import Tuple, Dict, List, Optional
+from typing import Tuple, Dict, List, Optional, Iterable
 
+import click
 from click import echo
 from defusedxml import minidom
-import click
 
 from eodatasets3 import DatasetAssembler
 from eodatasets3.ui import PathPath
@@ -159,107 +160,124 @@ def process_mtd_msil1c(contents: str) -> Dict:
 
 
 def prepare_and_write(
-    dataset: Path,
-    dataset_document: Path,
+    ds_path: Path,
+    output_yaml: Path,
+    producer: str,
 ) -> Tuple[uuid.UUID, Path]:
-    # Process esa dataset
-    if dataset.suffix == ".zip":
-        with zipfile.ZipFile(dataset, "r") as z:
-            # Get file paths for esa metadata files
-            mtd_ds_zip_path = [s for s in z.namelist() if "MTD_DS.xml" in s][0]
-            mtd_tl_zip_path = [s for s in z.namelist() if "MTD_TL.xml" in s][0]
-            mtd_msil1c_zip_path = [s for s in z.namelist() if "MTD_MSIL1C.xml" in s][0]
+    with DatasetAssembler(
+        metadata_path=output_yaml,
+        dataset_location=ds_path,
+    ) as p:
+        p.properties["odc:producer"] = producer
 
-            # Crawl through metadata files and return a dict of useful information
-            mtd_ds = process_mtd_ds(z.read(mtd_ds_zip_path).decode("utf-8"))
-            mtd_tl = process_mtd_tl(z.read(mtd_tl_zip_path).decode("utf-8"))
-            mtd_msil1c = process_mtd_msil1c(z.read(mtd_msil1c_zip_path).decode("utf-8"))
-
-            with DatasetAssembler(
-                metadata_path=dataset_document,
-                dataset_location=dataset,
-            ) as p:
-
-                p.properties["eo:instrument"] = "MSI"
-                p.properties["odc:producer"] = "esa.int"
-                p.properties["odc:product_family"] = "level1"
-                p.properties["odc:file_format"] = "JPEG2000"
-
-                p.properties.update(mtd_ds)
-                p.properties.update(mtd_tl)
-                p.properties.update(mtd_msil1c)
-
-                p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
-
-                for file in z.namelist():
-                    # T55HFA_20201011T000249_B01.jp2
-                    if ".jp2" in file and "TCI" not in file and "PVI" not in file:
-                        # path = 'zip:%s!%s' % (str(dataset), str(file))
-                        p.note_measurement(
-                            path=file,
-                            name=(
-                                SENTINEL_MSI_BAND_ALIASES[
-                                    (
-                                        file.split("_")[len(file.split("_")) - 1]
-                                        .replace(".jp2", "")
-                                        .replace("B", "")
-                                    )
-                                ]
-                            ),
-                            relative_to_dataset_location=True
-                            # path=path, name=name
-                        )
-
-                p.add_accessory_file("metadata:mtd_ds", mtd_ds_zip_path)
-                p.add_accessory_file("metadata:mtd_tl", mtd_tl_zip_path)
-                p.add_accessory_file("metadata:mtd_msil1c", mtd_msil1c_zip_path)
-
-                return p.done()
-
-    # process sinergise dataset
-    elif dataset.is_dir():
-
-        # Get file paths for sinergise metadata files
-        product_info_path = dataset / "productInfo.json"
-        metadata_xml_path = dataset / "metadata.xml"
-
-        if not product_info_path.exists():
-            raise ValueError(
-                "No productInfo.json file found. "
-                "Are you sure the input is a sinergise dataset folder?"
+        if producer == "esa.int":
+            jp2_offsets = _extract_esa_fields(ds_path, p)
+        elif producer == "sinergise.com":
+            jp2_offsets = _extract_sinergise_fields(ds_path, p)
+        else:
+            raise NotImplementedError(
+                f"Unknown s2 producer {producer}. Expected 'sinergise.com' or 'esa.int'"
             )
 
-        # Crawl through metadata files and return a dict of useful information
-        product_info = process_product_info(product_info_path)
-        metadata_xml = process_metadata_xml(metadata_xml_path)
+        # Grab information from the datastrip id.
+        datastrip_id: str = p.properties.get("sentinel:datastrip_id")
+        if not datastrip_id:
+            raise ValueError(
+                "Could not find a sentinel datastrip ID after reading all metadata documents"
+            )
+        if not datastrip_id.lower().startswith("s2"):
+            raise RuntimeError("Expected sentinel datastrip-id to start with 's2'!")
 
-        with DatasetAssembler(
-            metadata_path=dataset_document,
-            dataset_location=dataset,
-        ) as p:
-            p.properties["eo:platform"] = "sentinel-2a"
-            p.properties["eo:instrument"] = "MSI"
-            p.properties["odc:file_format"] = "JPEG2000"
-            p.properties["odc:product_family"] = "level1"
-            p.properties["odc:producer"] = "sinergise.com"
+        platform_variant = datastrip_id[2].lower()
 
-            p.properties.update(metadata_xml)
-            p.properties.update(product_info)
+        p.properties["eo:platform"] = f"sentinel-2{platform_variant}"
+        p.properties["eo:instrument"] = "MSI"
+        p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
 
-            p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
+        p.properties["odc:file_format"] = "JPEG2000"
+        p.properties["odc:product_family"] = "level1"
 
-            for path in dataset.rglob("*.jp2"):
-                if "preview" not in path.stem and "TCI" not in path.stem:
-                    p.note_measurement(
-                        path=path,
-                        name=SENTINEL_MSI_BAND_ALIASES[path.stem.replace("B", "")],
-                    )
+        for path in jp2_offsets:
+            band_number = _extract_band_number(path.stem)
+            if band_number in ("TCI", "PVI"):
+                continue
+            if band_number not in SENTINEL_MSI_BAND_ALIASES:
+                raise RuntimeError(f"Unknown band number {band_number} in image {path}")
 
-            p.add_accessory_file("metadata:product_info", product_info_path)
-            p.add_accessory_file("metadata:sinergise_metadata", metadata_xml_path)
-            return p.done()
-    else:
-        raise NotImplementedError("Unknown input file type?")
+            p.note_measurement(
+                path=path,
+                name=SENTINEL_MSI_BAND_ALIASES[band_number],
+                relative_to_dataset_location=True,
+            )
+
+        return p.done()
+
+
+def _extract_sinergise_fields(path: Path, p: DatasetAssembler) -> Iterable[Path]:
+    """Extract Sinergise metadata and return list of image offsets"""
+    product_info_path = path / "productInfo.json"
+    metadata_xml_path = path / "metadata.xml"
+
+    if not product_info_path.exists():
+        raise ValueError(
+            "No productInfo.json file found. "
+            "Are you sure the input is a sinergise dataset folder?"
+        )
+
+    p.properties.update(process_product_info(product_info_path))
+    p.add_accessory_file("metadata:product_info", product_info_path)
+
+    p.properties.update(process_metadata_xml(metadata_xml_path))
+    p.add_accessory_file("metadata:sinergise_metadata", metadata_xml_path)
+
+    return path.glob("*.jp2")
+
+
+def _extract_esa_fields(dataset, p) -> Iterable[Path]:
+    """Extract ESA metadata and return list of image offsets"""
+    with zipfile.ZipFile(dataset, "r") as z:
+
+        def one(suffix: str) -> str:
+            """Find one path ending in the given name"""
+            matches = [s for s in z.namelist() if s.endswith(suffix)]
+            if len(matches) != 1:
+                raise ValueError(
+                    f"Expected exactly one file called {suffix} in {dataset}, found {len(matches)}"
+                )
+            return matches[0]
+
+        mtd_ds_zip_path = one("MTD_DS.xml")
+        p.properties.update(process_mtd_ds(z.read(mtd_ds_zip_path).decode("utf-8")))
+        p.add_accessory_file("metadata:mtd_ds", mtd_ds_zip_path)
+
+        mtd_tl_zip_path = one("MTD_TL.xml")
+        p.properties.update(process_mtd_tl(z.read(mtd_tl_zip_path).decode("utf-8")))
+        p.add_accessory_file("metadata:mtd_tl", mtd_tl_zip_path)
+
+        mtd_msil1c_zip_path = one("MTD_MSIL1C.xml")
+        p.properties.update(
+            process_mtd_msil1c(z.read(mtd_msil1c_zip_path).decode("utf-8"))
+        )
+        p.add_accessory_file("metadata:mtd_msil1c", mtd_msil1c_zip_path)
+
+        return [Path(p) for p in z.namelist() if "IMG_DATA" in p and p.endswith(".jp2")]
+
+
+def _extract_band_number(name: str) -> str:
+    """
+    >>> _extract_band_number('B03')
+    '03'
+    >>> _extract_band_number('T55HFA_20201011T000249_B01')
+    '01'
+    """
+    return name.split("_")[-1].replace("B", "")
+
+
+def _rglob_with_self(path: Path, pattern: str) -> Iterable[Path]:
+    if fnmatch.fnmatch(path.name, pattern):
+        yield path
+        return
+    yield from path.rglob(pattern)
 
 
 @click.command(help=__doc__)
@@ -287,24 +305,45 @@ def main(
     datasets: List[Path],
     overwrite_existing: bool,
 ):
-    for dataset in datasets:
-        if dataset.is_dir():
-            output_path = dataset / f"{dataset.stem}.odc-metadata.yaml"
-        else:
-            output_path = dataset.with_suffix(".odc-metadata.yaml")
+    for input_path in datasets:
+        in_out_paths = [
+            *(
+                (
+                    "sinergise.com",
+                    # Input is the folder
+                    p.parent,
+                    # Output is an inner metadata file, with the same name as the folder (usually S2A....).
+                    (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
+                )
+                for p in _rglob_with_self(input_path, "productInfo.json")
+            ),
+            *(
+                (
+                    "esa.int",
+                    # Input is zip file
+                    p,
+                    # Output is a sibling file with metadata suffix.
+                    p.with_suffix(".odc-metadata.yaml"),
+                )
+                for p in _rglob_with_self(input_path, "*.zip")
+            ),
+        ]
+        if not in_out_paths:
+            raise ValueError(
+                f"No S2 datasets found in given path {input_path}. "
+                f"Expected either Sinergise (productInfo.json) files or ESA zip files to be contained in it."
+            )
 
-        if output_base:
-            output_path = output_base / output_path.name
+        for producer, ds_path, output_yaml in in_out_paths:
+            if output_base:
+                output_yaml = output_base / output_yaml.name
 
-        if output_path.exists() and not overwrite_existing:
-            echo(f"Output exists. Skipping {output_path.name}")
-            continue
+            if output_yaml.exists() and not overwrite_existing:
+                echo(f"Output exists. Skipping {output_yaml.name}")
+                continue
 
-        uuid, path = prepare_and_write(
-            dataset,
-            output_path,
-        )
-        echo(f"Wrote {path}")
+            uuid, path = prepare_and_write(ds_path, output_yaml, producer)
+            logging.info("Wrote dataset %s to %s", uuid, path)
 
         sys.exit(0)
 
