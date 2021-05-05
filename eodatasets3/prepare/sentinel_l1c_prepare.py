@@ -10,7 +10,7 @@ import sys
 import uuid
 import zipfile
 from pathlib import Path
-from typing import Tuple, Dict, List, Optional, Iterable
+from typing import Tuple, Dict, List, Optional, Iterable, Mapping
 
 import click
 from defusedxml import minidom
@@ -174,19 +174,7 @@ def prepare_and_write(
             raise NotImplementedError(
                 f"Unknown s2 producer {producer}. Expected 'sinergise.com' or 'esa.int'"
             )
-
-        # Grab information from the datastrip id.
-        datastrip_id: str = p.properties.get("sentinel:datastrip_id")
-        if not datastrip_id:
-            raise ValueError(
-                "Could not find a sentinel datastrip ID after reading all metadata documents"
-            )
-        if not datastrip_id.lower().startswith("s2"):
-            raise RuntimeError("Expected sentinel datastrip-id to start with 's2'!")
-
-        platform_variant = datastrip_id[2].lower()
-
-        p.properties["eo:platform"] = f"sentinel-2{platform_variant}"
+        p.properties["eo:platform"] = _get_platform_name(p.properties)
         p.properties["eo:instrument"] = "MSI"
         p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
 
@@ -209,6 +197,22 @@ def prepare_and_write(
             )
 
         return p.done()
+
+
+def _get_platform_name(p: Mapping) -> str:
+    # Grab it from the datastrip id,
+    # Eg. S2B_OPER_MSI_L1C_DS_VGS4_20210426T010904_S20210425T235239_N03
+
+    datastrip_id: str = p.get("sentinel:datastrip_id")
+    if not datastrip_id:
+        raise ValueError(
+            "Could not find a sentinel datastrip ID after reading all metadata documents"
+        )
+    if not datastrip_id.lower().startswith("s2"):
+        raise RuntimeError("Expected sentinel datastrip-id to start with 's2'!")
+    platform_variant = datastrip_id[1:3].lower()
+    platform_name = f"sentinel-{platform_variant}"
+    return platform_name
 
 
 def _extract_sinergise_fields(path: Path, p: DatasetAssembler) -> Iterable[Path]:
