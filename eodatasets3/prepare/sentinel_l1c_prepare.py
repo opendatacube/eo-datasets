@@ -18,6 +18,10 @@ from defusedxml import minidom
 from eodatasets3 import DatasetAssembler
 from eodatasets3.ui import PathPath
 
+# Static namespace to generate uuids for datacube indexing
+S2_UUID_NAMESPACE = uuid.UUID("9df23adf-fc90-4ec7-9299-57bd536c7590")
+
+
 SENTINEL_MSI_BAND_ALIASES = {
     "01": "coastal_aerosol",
     "02": "blue",
@@ -155,6 +159,17 @@ def process_user_product_metadata(contents: str) -> Dict:
     }
 
 
+def _get_stable_id(p: DatasetAssembler) -> uuid.UUID:
+    # These should have been extracted from our metadata files!
+    producer = p.producer
+    product_name = p.properties["sentinel:product_name"]
+    tile_id = p.properties["sentinel:sentinel_tile_id"]
+    return uuid.uuid5(
+        S2_UUID_NAMESPACE,
+        ":".join((producer, product_name, tile_id)),
+    )
+
+
 def prepare_and_write(
     ds_path: Path,
     output_yaml: Path,
@@ -174,6 +189,8 @@ def prepare_and_write(
             raise NotImplementedError(
                 f"Unknown s2 producer {producer}. Expected 'sinergise.com' or 'esa.int'"
             )
+
+        p.dataset_id = _get_stable_id(p)
         p.properties["eo:platform"] = _get_platform_name(p.properties)
         p.properties["eo:instrument"] = "MSI"
         p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"

@@ -16,6 +16,7 @@ DATASET_PATH: Path = Path(__file__).parent.parent / (
 def expected_dataset_document():
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
+        "id": "7c1df12c-e580-5fa2-b51b-c30a59e73bbf",
         "crs": "epsg:32755",
         "geometry": {
             "coordinates": [
@@ -195,5 +196,4 @@ def test_run(tmp_path, expected_dataset_document):
         ],
         expected_doc=expected_dataset_document,
         expected_metadata_path=expected_metadata_path,
-        ignore_fields=["id"],
     )
