@@ -130,7 +130,7 @@ def expected_dataset_document():
             "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09",
         },
         "accessories": {
-            "metadata:product_info": {"path": "productInfo.json"},
+            "metadata:sinergise_product_info": {"path": "productInfo.json"},
             "metadata:s2_tile": {"path": "metadata.xml"},
         },
     }

@@ -162,11 +162,11 @@ def expected_dataset_document():
             "sentinel:reception_station": "EDRS",
         },
         "accessories": {
-            "metadata:mtd_ds": {
+            "metadata:s2_datastrip": {
                 "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/DATASTRIP/"
                 "DS_EPAE_20201011T011446_S20201011T000244/MTD_DS.xml"
             },
-            "metadata:mtd_msil1c": {
+            "metadata:s2_user_product": {
                 "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/MTD_MSIL1C.xml"
             },
             "metadata:s2_tile": {
