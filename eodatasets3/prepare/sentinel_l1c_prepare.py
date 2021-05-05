@@ -50,7 +50,6 @@ def process_sinergise_product_info(product_path: Path) -> Dict:
     return {
         "sinergise_product_name": product["name"],
         "sinergise_product_id": product["id"],
-        "datetime": tile["timestamp"],
         "odc:region_code": f"{utm_zone}{latitude_band}{grid_square}",
         "sentinel:utm_zone": utm_zone,
         "sentinel:latitude_band": latitude_band,
@@ -196,10 +195,12 @@ def prepare_and_write(
 
         for path in jp2_offsets:
             band_number = _extract_band_number(path.stem)
-            if band_number in ("TCI", "PVI"):
+            if band_number.lower() in ("tci", "pvi", "preview"):
                 continue
             if band_number not in SENTINEL_MSI_BAND_ALIASES:
-                raise RuntimeError(f"Unknown band number {band_number} in image {path}")
+                raise RuntimeError(
+                    f"Unknown band number {band_number!r} in image {path}"
+                )
 
             p.note_measurement(
                 path=path,
