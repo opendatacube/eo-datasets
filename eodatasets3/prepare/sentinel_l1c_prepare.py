@@ -36,7 +36,7 @@ SENTINEL_MSI_BAND_ALIASES = {
 }
 
 
-def process_product_info(product_path: Path) -> Dict:
+def process_sinergise_product_info(product_path: Path) -> Dict:
     with product_path.open() as fp:
         product = json.load(fp)
 
@@ -150,7 +150,6 @@ def process_user_product_metadata(contents: str) -> Dict:
         "sat:relative_orbit": _value(root, "SENSING_ORBIT_NUMBER", type_=int),
         "sat:orbit_state": _value(root, "SENSING_ORBIT_DIRECTION").lower(),
         "sentinel:datatake_type": _value(root, "DATATAKE_TYPE"),
-        "odc:processing_datetime": _value(root, "GENERATION_TIME"),
         "sentinel:processing_baseline": _value(root, "PROCESSING_BASELINE"),
         "eo:cloud_cover": _value(root, "Cloud_Coverage_Assessment"),
         "odc:region_code": region_code,
@@ -222,7 +221,7 @@ def _extract_sinergise_fields(path: Path, p: DatasetAssembler) -> Iterable[Path]
             "Are you sure the input is a sinergise dataset folder?"
         )
 
-    p.properties.update(process_product_info(product_info_path))
+    p.properties.update(process_sinergise_product_info(product_info_path))
     p.add_accessory_file("metadata:sinergise_product_info", product_info_path)
 
     p.properties.update(process_tile_metadata(metadata_xml_path.read_text()))

@@ -145,7 +145,9 @@ def expected_dataset_document():
             "eo:sun_elevation": 37.3713908882192,
             "odc:dataset_version": "1.0.20201011",
             "odc:file_format": "JPEG2000",
-            "odc:processing_datetime": datetime.datetime(2020, 10, 11, 1, 14, 46),
+            "odc:processing_datetime": datetime.datetime(
+                2020, 10, 11, 1, 47, 4, 112949
+            ),
             "odc:producer": "esa.int",
             "odc:product_family": "level1",
             "odc:region_code": "55HFA",
