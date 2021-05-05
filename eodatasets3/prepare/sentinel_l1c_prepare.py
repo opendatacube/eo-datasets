@@ -122,7 +122,12 @@ def process_tile_metadata(contents: str) -> Dict:
     }
 
 
-def process_mtd_ds(contents: str) -> Dict:
+def process_datastrip_metadata(contents: str) -> Dict:
+    """
+    Datastrip metadata format, as described by
+    xmlns https://psd-14.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Datastrip_Metadata.xsd
+
+    """
     root = minidom.parseString(contents)
 
     resolution = min(
@@ -135,7 +140,7 @@ def process_mtd_ds(contents: str) -> Dict:
     }
 
 
-def process_mtd_msil1c(contents: str) -> Dict:
+def process_user_product_metadata(contents: str) -> Dict:
     root = minidom.parseString(contents)
 
     product_uri = _value(root, "PRODUCT_URI")
@@ -218,10 +223,12 @@ def _extract_sinergise_fields(path: Path, p: DatasetAssembler) -> Iterable[Path]
         )
 
     p.properties.update(process_product_info(product_info_path))
-    p.add_accessory_file("metadata:product_info", product_info_path)
+    p.add_accessory_file("metadata:sinergise_product_info", product_info_path)
 
     p.properties.update(process_tile_metadata(metadata_xml_path.read_text()))
     p.add_accessory_file("metadata:s2_tile", metadata_xml_path)
+
+    # TODO: sinergise folders could `process_datastrip_metadata()` in an outer directory?
 
     return path.glob("*.jp2")
 
@@ -239,21 +246,21 @@ def _extract_esa_fields(dataset, p) -> Iterable[Path]:
                 )
             return matches[0]
 
-        mtd_ds_zip_path = one("MTD_DS.xml")
-        p.properties.update(process_mtd_ds(z.read(mtd_ds_zip_path).decode("utf-8")))
-        p.add_accessory_file("metadata:mtd_ds", mtd_ds_zip_path)
-
-        mtd_tl_zip_path = one("MTD_TL.xml")
+        datastrip_md = one("MTD_DS.xml")
         p.properties.update(
-            process_tile_metadata(z.read(mtd_tl_zip_path).decode("utf-8"))
+            process_datastrip_metadata(z.read(datastrip_md).decode("utf-8"))
         )
-        p.add_accessory_file("metadata:s2_tile", mtd_tl_zip_path)
+        p.add_accessory_file("metadata:s2_datastrip", datastrip_md)
 
-        mtd_msil1c_zip_path = one("MTD_MSIL1C.xml")
+        tile_md = one("MTD_TL.xml")
+        p.properties.update(process_tile_metadata(z.read(tile_md).decode("utf-8")))
+        p.add_accessory_file("metadata:s2_tile", tile_md)
+
+        user_product_md = one("MTD_MSIL1C.xml")
         p.properties.update(
-            process_mtd_msil1c(z.read(mtd_msil1c_zip_path).decode("utf-8"))
+            process_user_product_metadata(z.read(user_product_md).decode("utf-8"))
         )
-        p.add_accessory_file("metadata:mtd_msil1c", mtd_msil1c_zip_path)
+        p.add_accessory_file("metadata:s2_user_product", user_product_md)
 
         return [Path(p) for p in z.namelist() if "IMG_DATA" in p and p.endswith(".jp2")]
 
@@ -310,7 +317,7 @@ def main(
                     # Output is an inner metadata file, with the same name as the folder (usually S2A....).
                     (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
                 )
-                for p in _rglob_with_self(input_path, "productInfo.json")
+                for p in _rglob_with_self(input_path, "tileInfo.json")
             ),
             *(
                 (
