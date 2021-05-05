@@ -103,13 +103,13 @@ def expected_dataset_document():
         },
         "product": {"name": "sinergise_s2bm_level1_1"},
         "properties": {
-            "datetime": datetime.datetime(2020, 10, 11, 0, 6, 49, 882000),
+            "datetime": datetime.datetime(2020, 10, 11, 0, 6, 49, 882566),
             "eo:cloud_cover": 24.9912,
             "eo:gsd": 10,
             "eo:instrument": "MSI",
             "eo:platform": "sentinel-2b",
-            "eo:sun_azimuth": 37.3713908882192,
-            "eo:sun_elevation": 46.3307328858312,
+            "eo:sun_azimuth": 46.3307328858312,
+            "eo:sun_elevation": 37.3713908882192,
             "odc:dataset_version": "1.0.20201011",
             "odc:file_format": "JPEG2000",
             "odc:processing_datetime": datetime.datetime(
@@ -131,7 +131,7 @@ def expected_dataset_document():
         },
         "accessories": {
             "metadata:product_info": {"path": "productInfo.json"},
-            "metadata:sinergise_metadata": {"path": "metadata.xml"},
+            "metadata:s2_tile": {"path": "metadata.xml"},
         },
     }
 

@@ -150,6 +150,7 @@ def expected_dataset_document():
             "odc:product_family": "level1",
             "odc:region_code": "55HFA",
             "sentinel:datastrip_id": "S2B_OPER_MSI_L1C_DS_EPAE_20201011T011446_S20201011T000244_N02.09",
+            "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09",
             "sentinel:datatake_type": "INS-NOBS",
             "sat:orbit_state": "descending",
             "sat:relative_orbit": 30,
@@ -168,7 +169,7 @@ def expected_dataset_document():
             "metadata:mtd_msil1c": {
                 "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/MTD_MSIL1C.xml"
             },
-            "metadata:mtd_tl": {
+            "metadata:s2_tile": {
                 "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
                 "L1C_T55HFA_A018789_20201011T000244/MTD_TL.xml"
             },

@@ -100,22 +100,25 @@ def _value(root, *tags: str, type_=None):
     return value
 
 
-def process_metadata_xml(metadata_xml_path: Path) -> Dict:
-    root = minidom.parse(str(metadata_xml_path))
+def process_tile_metadata(contents: str) -> Dict:
+    """
+    Tile xml metadata format, as described by
+    xmlns https://psd-14.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd
+    """
+    root = minidom.parseString(contents)
 
     resolution = min(
         int(i.attributes["resolution"].value) for i in root.getElementsByTagName("Size")
     )
     return {
+        "datetime": _value(root, "SENSING_TIME"),
         "eo:cloud_cover": _value(root, "CLOUDY_PIXEL_PERCENTAGE", type_=float),
+        "eo:gsd": resolution,
+        "eo:sun_azimuth": _value(root, "Mean_Sun_Angle", "AZIMUTH_ANGLE", type_=float),
+        "eo:sun_elevation": _value(root, "Mean_Sun_Angle", "ZENITH_ANGLE", type_=float),
+        "odc:processing_datetime": _value(root, "ARCHIVING_TIME"),
         "sentinel:datastrip_id": _value(root, "DATASTRIP_ID"),
         "sentinel:sentinel_tile_id": _value(root, "TILE_ID"),
-        "eo:sun_azimuth": _value(root, "Mean_Sun_Angle", "ZENITH_ANGLE", type_=float),
-        "eo:sun_elevation": _value(
-            root, "Mean_Sun_Angle", "AZIMUTH_ANGLE", type_=float
-        ),
-        "eo:gsd": resolution,
-        "odc:processing_datetime": _value(root, "ARCHIVING_TIME"),
     }
 
 
@@ -129,16 +132,6 @@ def process_mtd_ds(contents: str) -> Dict:
         "sentinel:reception_station": _value(root, "RECEPTION_STATION"),
         "sentinel:processing_center": _value(root, "PROCESSING_CENTER"),
         "eo:gsd": resolution,
-    }
-
-
-def process_mtd_tl(contents: str) -> Dict:
-    root = minidom.parseString(contents)
-    return {
-        "eo:sun_azimuth": _value(root, "Mean_Sun_Angle", "AZIMUTH_ANGLE"),
-        "eo:sun_elevation": _value(root, "Mean_Sun_Angle", "ZENITH_ANGLE"),
-        "sentinel:datastrip_id": _value(root, "DATASTRIP_ID"),
-        "datetime": _value(root, "SENSING_TIME"),
     }
 
 
@@ -227,8 +220,8 @@ def _extract_sinergise_fields(path: Path, p: DatasetAssembler) -> Iterable[Path]
     p.properties.update(process_product_info(product_info_path))
     p.add_accessory_file("metadata:product_info", product_info_path)
 
-    p.properties.update(process_metadata_xml(metadata_xml_path))
-    p.add_accessory_file("metadata:sinergise_metadata", metadata_xml_path)
+    p.properties.update(process_tile_metadata(metadata_xml_path.read_text()))
+    p.add_accessory_file("metadata:s2_tile", metadata_xml_path)
 
     return path.glob("*.jp2")
 
@@ -251,8 +244,10 @@ def _extract_esa_fields(dataset, p) -> Iterable[Path]:
         p.add_accessory_file("metadata:mtd_ds", mtd_ds_zip_path)
 
         mtd_tl_zip_path = one("MTD_TL.xml")
-        p.properties.update(process_mtd_tl(z.read(mtd_tl_zip_path).decode("utf-8")))
-        p.add_accessory_file("metadata:mtd_tl", mtd_tl_zip_path)
+        p.properties.update(
+            process_tile_metadata(z.read(mtd_tl_zip_path).decode("utf-8"))
+        )
+        p.add_accessory_file("metadata:s2_tile", mtd_tl_zip_path)
 
         mtd_msil1c_zip_path = one("MTD_MSIL1C.xml")
         p.properties.update(
