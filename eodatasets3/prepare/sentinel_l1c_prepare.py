@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Tuple, Dict, List, Optional, Iterable
 
 import click
-from click import echo
 from defusedxml import minidom
 
 from eodatasets3 import DatasetAssembler
@@ -308,6 +307,10 @@ def main(
     datasets: List[Path],
     overwrite_existing: bool,
 ):
+
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
+    )
     for input_path in datasets:
         in_out_paths = [
             *(
@@ -341,9 +344,12 @@ def main(
             if output_base:
                 output_yaml = output_base / output_yaml.name
 
-            if output_yaml.exists() and not overwrite_existing:
-                echo(f"Output exists. Skipping {output_yaml.name}")
-                continue
+            if output_yaml.exists():
+                if not overwrite_existing:
+                    logging.info("Output exists: skipping. %s", output_yaml)
+                    continue
+
+                logging.info("Output exists: overwriting %s", output_yaml)
 
             uuid, path = prepare_and_write(ds_path, output_yaml, producer)
             logging.info("Wrote dataset %s to %s", uuid, path)
