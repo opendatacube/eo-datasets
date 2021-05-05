@@ -48,7 +48,7 @@ def process_sinergise_product_info(product_path: Path) -> Dict:
     latitude_band = tile["latitudeBand"]
     grid_square = tile["gridSquare"]
     return {
-        "sinergise_product_name": product["name"],
+        "sentinel:product_name": product["name"],
         "sinergise_product_id": product["id"],
         "odc:region_code": f"{utm_zone}{latitude_band}{grid_square}",
         "sentinel:utm_zone": utm_zone,
@@ -142,7 +142,7 @@ def process_datastrip_metadata(contents: str) -> Dict:
 def process_user_product_metadata(contents: str) -> Dict:
     root = minidom.parseString(contents)
 
-    product_uri = _value(root, "PRODUCT_URI")
+    product_uri = _value(root, "PRODUCT_URI").split(".")[0]
     region_code = product_uri.split("_")[5][1:]
     return {
         "eo:platform": _value(root, "SPACECRAFT_NAME"),
@@ -150,6 +150,7 @@ def process_user_product_metadata(contents: str) -> Dict:
         "sat:orbit_state": _value(root, "SENSING_ORBIT_DIRECTION").lower(),
         "sentinel:datatake_type": _value(root, "DATATAKE_TYPE"),
         "sentinel:processing_baseline": _value(root, "PROCESSING_BASELINE"),
+        "sentinel:product_name": product_uri,
         "eo:cloud_cover": _value(root, "Cloud_Coverage_Assessment"),
         "odc:region_code": region_code,
     }

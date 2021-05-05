@@ -122,7 +122,7 @@ def expected_dataset_document():
             "sentinel:latitude_band": "H",
             "sentinel:utm_zone": 55,
             "sinergise_product_id": "73e1a409-595d-4fbf-8fe0-01e0ee26bf00",
-            "sinergise_product_name": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446",
+            "sentinel:product_name": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446",
             "sentinel:datastrip_id": "S2B_OPER_MSI_L1C_DS_EPAE_20201011T011446_S20201011T000244_N02.09",
             "sentinel:datatake_start_datetime": datetime.datetime(
                 2020, 10, 11, 1, 14, 46
