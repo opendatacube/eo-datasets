@@ -10,6 +10,7 @@ import re
 import tarfile
 import tempfile
 import uuid
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Union, Iterable, Dict, Tuple, Callable, Generator
@@ -50,7 +51,7 @@ _COPYABLE_MTL_FIELDS["C1"] = [
 ]
 _COPYABLE_MTL_FIELDS["C2"] = [
     (
-        "level2_processing_record",
+        "level1_processing_record",
         (
             "landsat_scene_id",
             "landsat_product_id",
@@ -73,7 +74,7 @@ _COPYABLE_MTL_FIELDS["C2"] = [
         ),
     ),
     # not in the test data for C1 or C2
-    # ("level2_projection_parameters", ("scan_gap_interpolation",)),
+    # ("level1_projection_parameters", ("scan_gap_interpolation",)),
 ]
 
 # Static namespace to generate uuids for datacube indexing
@@ -119,18 +120,24 @@ LANDSAT_MTL_MAP = {
         "image_attributes": "product_metadata",
         "level1_processing_record": "metadata_file_info",
         "level1_projection_parameters": "projection_parameters",
-        "level2_processing_record": "metadata_file_info",
-        "level2_projection_parameters": "projection_parameters",
     },
     "C2": {
         "product_contents_cn": "product_contents",
-        "product_contents_of": "level2_processing_record",
+        "product_contents_of": [
+            "level2_processing_record",
+            "level1_processing_record",
+        ],
         "product_contents_fn": "product_contents",
         "image_attributes": "image_attributes",
-        "level1_processing_record": "level1_processing_record",
-        "level1_projection_parameters": "level1_projection_parameters",
-        "level2_processing_record": "level2_processing_record",
-        "level2_projection_parameters": "level2_projection_parameters",
+        "leveln_processing_record": [
+            "level2_processing_record",
+            "level1_processing_record",
+        ],
+        "leveln_projection_parameters": [
+            "projection_attributes",
+            "level2_projection_parameters",
+            "level1_projection_parameters",
+        ],
     },
 }
 
@@ -290,6 +297,10 @@ def prepare_and_write(
     Input dataset path can be a folder or a tar file.
     """
     mtl_doc, root_element, mtl_filename = get_mtl_content(ds_path)
+    filled_properties = {}
+
+    with open('test.json', 'w') as file:
+        file.write(json.dumps(mtl_doc))
     if not mtl_doc:
         raise ValueError(f"No MTL file found for {ds_path}")
     collection_key = "C2" if root_element == "landsat_metadata_file" else "C1"
@@ -302,13 +313,27 @@ def prepare_and_write(
             "Dataset has no collection number: pre-collection data is not supported."
         )
 
-    data_format = mtl_doc[coll_map["product_contents_of"]]["output_format"]
-    if data_format.upper() != "GEOTIFF":
-        raise NotImplementedError(f"Only GTiff currently supported, got {data_format}")
+    for leveln in coll_map["product_contents_of"]:
+        if leveln in mtl_doc:
+            data_format = mtl_doc[leveln]["output_format"]
+            if data_format.upper() != "GEOTIFF":
+                raise NotImplementedError(f"Only GTiff currently supported, got {data_format}")
+            break
     file_format = FileFormat.GeoTIFF
 
     # Assumed below.
-    projection_params = mtl_doc[coll_map["level2_projection_parameters"]]
+    #print(coll_map)
+    #print(mtl_doc)
+    #projection_parameters = None
+    #if coll_map["level1_projection_parameters"] and mtl_doc[coll_map["level1_projection_parameters"]]:
+    #    projection_params = mtl_doc[coll_map["level1_projection_parameters"]]
+    #else:
+    projection_params = None
+    for leveln in coll_map["leveln_projection_parameters"]:
+        if leveln in mtl_doc:
+            projection_params = mtl_doc[leveln]
+            break
+
     if (
         "grid_cell_size_thermal" in projection_params
         and "grid_cell_size_reflective" in projection_params
@@ -324,14 +349,21 @@ def prepare_and_write(
         if name.startswith("grid_cell_size_")
     )
 
+    leveln_product_id = None
+    leveln_processed = None
+    leveln_landsat_data_type = None
+    for leveln in coll_map["leveln_processing_record"]:
+        if leveln in mtl_doc:
+            leveln_product_id = mtl_doc[leveln]["landsat_product_id"]
+            leveln_processed = mtl_doc[leveln]["date_product_generated"]
+            leveln_landsat_data_type = mtl_doc[leveln]["processing_level"]
+            break
+
     with DatasetAssembler(
         metadata_path=output_yaml_path,
         dataset_location=ds_path,
         # Detministic ID based on USGS's product id (which changes when the scene is reprocessed by them)
-        dataset_id=uuid.uuid5(
-            USGS_UUID_NAMESPACE,
-            mtl_doc[coll_map["level2_processing_record"]]["landsat_product_id"],
-        ),
+        dataset_id=uuid.uuid5(USGS_UUID_NAMESPACE, leveln_product_id),
         naming_conventions="dea",
         if_exists=IfExists.Overwrite,
     ) as p:
@@ -349,10 +381,8 @@ def prepare_and_write(
             mtl_doc[coll_map["image_attributes"]]["scene_center_time"],
         )
         if collection_key == "C2":
-            p.processed = mtl_doc["level2_processing_record"]["date_product_generated"]
-            p.properties["landsat:data_type"] = mtl_doc["level2_processing_record"][
-                "processing_level"
-            ]
+            p.processed = leveln_processed
+            p.properties["landsat:data_type"] = leveln_landsat_data_type
         else:
             p.processed = mtl_doc["metadata_file_info"]["file_date"]
         p.properties["odc:file_format"] = file_format
