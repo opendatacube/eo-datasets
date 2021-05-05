@@ -16,6 +16,7 @@ DATASET_DIR: Path = Path(__file__).parent.parent / (
 def expected_dataset_document():
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
+        "id": "f3e0eee1-573c-5035-870e-8d8392df8e33",
         "crs": "epsg:32755",
         "geometry": {
             "coordinates": [
@@ -154,5 +155,4 @@ def test_sinergise_sentinel_l1(tmp_path, expected_dataset_document):
         ],
         expected_doc=expected_dataset_document,
         expected_metadata_path=output_yaml_path,
-        ignore_fields=["id"],
     )
