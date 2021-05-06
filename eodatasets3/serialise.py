@@ -78,10 +78,8 @@ def _init_yaml() -> YAML:
     yaml.representer.add_representer(numpy.uint16, Representer.represent_int)
     yaml.representer.add_representer(numpy.int32, Representer.represent_int)
     yaml.representer.add_representer(numpy.uint32, Representer.represent_int)
-    yaml.representer.add_representer(numpy.int, Representer.represent_int)
     yaml.representer.add_representer(numpy.int64, Representer.represent_int)
     yaml.representer.add_representer(numpy.uint64, Representer.represent_int)
-    yaml.representer.add_representer(numpy.float, Representer.represent_float)
     yaml.representer.add_representer(numpy.float32, Representer.represent_float)
     yaml.representer.add_representer(numpy.float64, Representer.represent_float)
     yaml.representer.add_representer(numpy.ndarray, Representer.represent_list)
@@ -139,12 +137,24 @@ class InvalidDataset(Exception):
         self.reason = reason
 
 
+def _is_json_array(checker, instance) -> bool:
+    """
+    By default, jsonschema only allows a json array to be a Python list.
+    Let's allow it to be a tuple too.
+    """
+    return isinstance(instance, (list, tuple))
+
+
 def _get_schema_validator(p: Path) -> jsonschema.Draft6Validator:
     with p.open() as f:
         schema = _yaml().load(f)
-    klass = jsonschema.validators.validator_for(schema)
-    klass.check_schema(schema)
-    return klass(schema, types=dict(array=(list, tuple)))
+    validator = jsonschema.validators.validator_for(schema)
+    validator.check_schema(schema)
+
+    custom_validator = jsonschema.validators.extend(
+        validator, type_checker=validator.TYPE_CHECKER.redefine("array", _is_json_array)
+    )
+    return custom_validator(schema)
 
 
 DATASET_SCHEMA = _get_schema_validator(Path(__file__).parent / "dataset.schema.yaml")
