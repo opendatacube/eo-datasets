@@ -224,6 +224,11 @@ def prepare_dataset(path):
             mtd_xml = z.read(xmlzipfiles[0])
             root = ElementTree.XML(mtd_xml)
             img_data_path = str(path) + '!/'
+            # The older zip format version (before baseline 03.00) included 
+            # the SAFE directory name as a separate entry.
+            # subbranch, _ = os.path.split(str(z.namelist()[0]))
+            # img_data_path = 'zip://' + img_data_path + subbranch
+
             img_data_path = 'zip://' + img_data_path + str(z.namelist()[0])
             # for earlier versions of zip archive - use GRANULES
             if single_granule_archive is False:
