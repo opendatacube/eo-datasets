@@ -226,10 +226,8 @@ def prepare_dataset(path):
             img_data_path = str(path) + '!/'
             # The older zip format version (before baseline 03.00) included 
             # the SAFE directory name as a separate entry.
-            # subbranch, _ = os.path.split(str(z.namelist()[0]))
-            # img_data_path = 'zip://' + img_data_path + subbranch
-
-            img_data_path = 'zip://' + img_data_path + str(z.namelist()[0])
+            subbranch, _ = os.path.split(str(z.namelist()[0]))
+            img_data_path = 'zip://' + img_data_path + subbranch
             # for earlier versions of zip archive - use GRANULES
             if single_granule_archive is False:
                 img_data_path = img_data_path + str(Path('GRANULE').joinpath(granule_id, 'IMG_DATA'))
