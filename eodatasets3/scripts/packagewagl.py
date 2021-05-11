@@ -6,7 +6,7 @@ GeoTIFFS (COGs) with datacube metadata using the DEA naming conventions
 for files.
 """
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, Optional
 
 import click
 import rasterio
@@ -45,16 +45,51 @@ from eodatasets3.ui import PathPath
     is_flag=True,
     default=True,
 )
+@click.option(
+    "--with-oa/--no-oa",
+    "with_oa",
+    help="Include observation attributes (default: true)",
+    is_flag=True,
+    default=True,
+)
+@click.option(
+    "--allow-missing-provenance/--require-provenance",
+    "allow_missing_provenance",
+    help="Allow there to be no Level 1 provenance. (default: false)",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--oa-resolution",
+    help="Resolution choice for observation attributes "
+    "(default: automatic based on sensor)",
+    type=float,
+    default=None,
+)
 @click.argument("h5_file", type=PathPath(exists=True, readable=True, writable=False))
 def run(
-    level1: Path, output: Path, h5_file: Path, products: Sequence[str], with_oa: bool
+    level1: Path,
+    output: Path,
+    h5_file: Path,
+    products: Sequence[str],
+    with_oa: bool,
+    allow_missing_provenance: bool,
+    oa_resolution: Optional[float],
 ):
     if products:
         products = set(p.lower() for p in products)
     else:
         products = wagl.DEFAULT_PRODUCTS
+
+    if oa_resolution is not None:
+        oa_resolution = (oa_resolution, oa_resolution)
+
     with rasterio.Env():
-        for granule in wagl.Granule.for_path(h5_file, level1_metadata_path=level1):
+        for granule in wagl.Granule.for_path(
+            h5_file,
+            level1_metadata_path=level1,
+            allow_missing_provenance=allow_missing_provenance,
+        ):
             with wagl.do(
                 f"Packaging {granule.name}. (products: {', '.join(products)})",
                 heading=True,
@@ -68,6 +103,7 @@ def run(
                     granule=granule,
                     included_products=products,
                     include_oa=with_oa,
+                    oa_resolution=oa_resolution,
                 )
                 secho(f"Created folder {click.style(str(dataset_path), fg='green')}")
 

@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from textwrap import dedent
@@ -249,7 +250,7 @@ def test_dataset_no_measurements(tmp_path: Path):
         dataset_id, metadata_path = p.done()
 
     with metadata_path.open("r") as f:
-        doc = yaml.safe_load(f)
+        doc = yaml.YAML(typ="safe").load(f)
 
     assert doc["label"] == "chipmonk_sightings_2019", "Couldn't override label field"
 
@@ -267,7 +268,7 @@ def test_minimal_s1_dataset(tmp_path: Path):
         dataset_id, metadata_path = p.done()
 
     with metadata_path.open("r") as f:
-        doc = yaml.safe_load(f)
+        doc = yaml.YAML(typ="safe").load(f)
 
     assert doc["label"] == "s1ac_bck_2018-11-04", "Unexpected dataset label"
 
@@ -288,7 +289,7 @@ def test_minimal_s2_dataset_normal(tmp_path: Path):
         dataset_id, metadata_path = p.done()
 
     with metadata_path.open("r") as f:
-        doc = yaml.safe_load(f)
+        doc = yaml.YAML(typ="safe").load(f)
 
     metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
     assert metadata_path_offset == (
@@ -313,6 +314,13 @@ def test_s2_naming_conventions(tmp_path: Path):
     p.properties[
         "sentinel:sentinel_tile_id"
     ] = "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05"
+
+    p.note_source_datasets(
+        "telemetry",
+        # Accepts multiple, and they can be strings or UUIDs:
+        "ca705033-0fc4-4f38-a47e-f425dfb4d0c7",
+        uuid.UUID("3781e90f-b677-40af-9439-b40f6e4dfadd"),
+    )
 
     # The property normaliser should have extracted inner fields
     assert p.properties["sentinel:datatake_start_datetime"] == datetime(
@@ -342,7 +350,6 @@ def test_s2_naming_conventions(tmp_path: Path):
             },
             "id": dataset_id,
             "label": "ga_s2am_blueberries_1-0-0_Oz_2018-11-04",
-            "lineage": {},
             "product": {
                 "href": "https://collections.dea.ga.gov.au/product/ga_s2am_blueberries_1",
                 "name": "ga_s2am_blueberries_1",
@@ -359,6 +366,12 @@ def test_s2_naming_conventions(tmp_path: Path):
                 "odc:region_code": "Oz",
                 "sentinel:datatake_start_datetime": datetime(2017, 8, 22, 1, 56, 26),
                 "sentinel:sentinel_tile_id": "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05",
+            },
+            "lineage": {
+                "telemetry": [
+                    "ca705033-0fc4-4f38-a47e-f425dfb4d0c7",
+                    "3781e90f-b677-40af-9439-b40f6e4dfadd",
+                ]
             },
         },
         generated_file=metadata_path,

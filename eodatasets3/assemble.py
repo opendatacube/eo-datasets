@@ -10,11 +10,16 @@ from copy import deepcopy
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable
+from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable, Union
 
-import eodatasets3
 import numpy
 import rasterio
+from rasterio import DatasetReader
+from rasterio.crs import CRS
+from rasterio.enums import Resampling
+from xarray import Dataset
+
+import eodatasets3
 from eodatasets3 import serialise, validate, images, documents
 from eodatasets3.documents import find_and_read_documents
 from eodatasets3.images import FileWrite, GridSpec, MeasurementRecord
@@ -30,10 +35,6 @@ from eodatasets3.model import (
 from eodatasets3.properties import EoFields
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
-from rasterio import DatasetReader
-from rasterio.crs import CRS
-from rasterio.enums import Resampling
-from xarray import Dataset
 
 
 class IfExists(Enum):
@@ -73,6 +74,30 @@ class DatasetAssembler(EoFields):
         "eo:platform",
         "eo:sun_azimuth",
         "eo:sun_elevation",
+        "fmask:clear",
+        "fmask:cloud",
+        "fmask:cloud_shadow",
+        "fmask:snow",
+        "fmask:water",
+        "gqa:abs_iterative_mean_x",
+        "gqa:abs_iterative_mean_xy",
+        "gqa:abs_iterative_mean_y",
+        "gqa:abs_x",
+        "gqa:abs_xy",
+        "gqa:abs_y",
+        "gqa:cep90",
+        "gqa:iterative_mean_x",
+        "gqa:iterative_mean_xy",
+        "gqa:iterative_mean_y",
+        "gqa:iterative_stddev_x",
+        "gqa:iterative_stddev_xy",
+        "gqa:iterative_stddev_y",
+        "gqa:mean_x",
+        "gqa:mean_xy",
+        "gqa:mean_y",
+        "gqa:stddev_x",
+        "gqa:stddev_xy",
+        "gqa:stddev_y",
         "landsat:collection_category",
         "landsat:collection_number",
         "landsat:landsat_product_id",
@@ -81,8 +106,17 @@ class DatasetAssembler(EoFields):
         "landsat:wrs_path",
         "landsat:wrs_row",
         "odc:region_code",
+        "sat:absolute_orbit",
+        "sat:anx_datetime",
+        "sat:orbit_state",
+        "sat:platform_international_designator",
+        "sat:relative_orbit",
+        "sentinel:datastrip_id",
         "sentinel:datatake_start_datetime",
+        "sentinel:grid_square",
+        "sentinel:latitude_band",
         "sentinel:sentinel_tile_id",
+        "sentinel:utm_zone",
     }
 
     def __init__(
@@ -162,7 +196,7 @@ class DatasetAssembler(EoFields):
         self._metadata_path = metadata_path
         self._allow_absolute_paths = allow_absolute_paths
 
-        self._accessories: Dict[str, Path] = {}
+        self._accessories: Dict[str, Location] = {}
         self._measurements = MeasurementRecord()
 
         self._user_metadata = dict()
@@ -376,22 +410,60 @@ class DatasetAssembler(EoFields):
         if inherit_geometry:
             self._inherited_geometry = dataset.geometry
 
+    def note_source_datasets(
+        self,
+        classifier: str,
+        *dataset_ids: Union[str, uuid.UUID],
+    ):
+        """
+        Expand the lineage with raw source dataset ids.
+
+        Note: If you have direct access to the datasets, you probably want to use :func:`add_source_path`
+        or :func:`add_source_dataset`, so that fields can be inherited from them automatically.
+
+        :param classifier:
+                How to classify the source dataset.
+
+                By convention, this is usually the family of the source dataset
+                (properties->odc:product_family). Such as "level1".
+
+                A classifier is used to distinguish source datasets of the same product
+                that are used differently.
+
+                Such as a normal source level1 dataset (classifier: "level1"), and a
+                second source level1 that was used only for QA (classifier: "qa").
+
+        :param dataset_ids: The UUIDs of the source datasets
+
+        """
+        for dataset_id in dataset_ids:
+            if not isinstance(dataset_id, uuid.UUID):
+                try:
+                    dataset_id = uuid.UUID(dataset_id)
+                except ValueError as v:
+                    # The default parse error doesn't tell you anything useful to track down which one broke.
+                    raise ValueError(
+                        f"Not a valid UUID for source {classifier!r} dataset: {dataset_id!r}"
+                    ) from v
+            self._lineage[classifier].append(dataset_id)
+
     def _inherit_properties_from(self, source_dataset: DatasetDoc):
         for name in self.INHERITABLE_PROPERTIES:
             if name not in source_dataset.properties:
                 continue
-            new_val = source_dataset.properties[name]
+            new_value = source_dataset.properties[name]
 
-            existing_val = self.properties.get(name)
-            if existing_val is None:
-                self.properties[name] = new_val
-            else:
-                # Already set. Do nothing.
-                if new_val != existing_val:
-                    warnings.warn(
-                        f"Inheritable property {name!r} is different from current value: "
-                        f"{existing_val!r} != {new_val!r}"
-                    )
+            try:
+                self.properties.normalise_and_set(
+                    name,
+                    new_value,
+                    # If already set, do nothing.
+                    allow_override=False,
+                )
+            except KeyError as k:
+                warnings.warn(
+                    f"Inheritable property {name!r} is different from current value {k.args}"
+                )
 
     def write_measurement(
         self,
@@ -465,7 +537,7 @@ class DatasetAssembler(EoFields):
         name: str,
         array: numpy.ndarray,
         grid_spec: GridSpec,
-        nodata=None,
+        nodata: Optional[Union[float, int]] = None,
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.average,
         expand_valid_data=True,
@@ -508,7 +580,7 @@ class DatasetAssembler(EoFields):
     def write_measurements_odc_xarray(
         self,
         dataset: Dataset,
-        nodata: int,
+        nodata: Optional[Union[float, int]] = None,
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.average,
         expand_valid_data=True,
@@ -547,7 +619,7 @@ class DatasetAssembler(EoFields):
         grid: GridSpec,
         out_path: Path,
         expand_valid_data: bool,
-        nodata: int,
+        nodata: Optional[Union[float, int]],
         overview_resampling: Resampling,
         overviews: Tuple[int, ...],
     ):
@@ -925,7 +997,7 @@ class DatasetAssembler(EoFields):
 
         self._document_thumbnail(thumb_path, kind)
 
-    def add_accessory_file(self, name: str, path: Path):
+    def add_accessory_file(self, name: str, path: Location):
         """
         Record a reference to an additional file that's part of the dataset, but is
         not a band/measurement.

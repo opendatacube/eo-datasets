@@ -26,6 +26,14 @@ def _dea_uri(product_name, base_uri):
 
 @attr.s(auto_attribs=True, slots=True)
 class ProductDoc:
+    """
+    The product that this dataset belongs to.
+
+    "name" is the local name in ODC.
+
+    href is intended as a more global unique "identifier" uri for the product.
+    """
+
     name: str = None
     href: str = None
 
@@ -36,6 +44,8 @@ class ProductDoc:
 
 @attr.s(auto_attribs=True, slots=True, hash=True)
 class GridDoc:
+    """The grid describing a measurement/band's pixels"""
+
     shape: Tuple[int, int]
     transform: affine.Affine
 
@@ -57,6 +67,13 @@ class MeasurementDoc:
 
 @attr.s(auto_attribs=True, slots=True)
 class AccessoryDoc:
+    """
+    An accessory is an extra file included in the dataset that is not
+    a measurement/band.
+
+    For example: thumbnails, alternative metadata documents, or checksum files.
+    """
+
     path: str
     type: str = None
     name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
@@ -88,6 +105,7 @@ class ComplicatedNamingConventions:
         "usgs.gov": "usgs",
         "sinergise.com": "sinergise",
         "digitalearthafrica.org": "deafrica",
+        "esa.int": "esa",
         # Is there another organisation you want to use? Pull requests very welcome!
     }
 
@@ -150,7 +168,6 @@ class ComplicatedNamingConventions:
                 "odc:producer",
                 "odc:product_family",
                 "odc:region_code",
-                "sentinel:sentinel_tile_id",
             ),
             dataset_separator_field="sentinel:datatake_start_datetime",
         )
@@ -230,7 +247,7 @@ class ComplicatedNamingConventions:
         self._check_enough_properties_to_name()
         return self._dataset_label()
 
-    def destination_folder(self, base: Path):
+    def destination_folder(self, base: Path) -> Path:
         self._check_enough_properties_to_name()
         # DEA naming conventions folder hierarchy.
         # Example: "ga_ls8c_ard_3/092/084/2016/06/28"
@@ -431,7 +448,6 @@ class ComplicatedNamingConventionsDerivatives(ComplicatedNamingConventions):
                 "odc:producer",
                 "odc:product_family",
                 "odc:region_code",
-                "sentinel:sentinel_tile_id",
                 "dea:dataset_maturity",
             ),
             dataset_separator_field="sentinel:datatake_start_datetime",
@@ -443,7 +459,7 @@ class ComplicatedNamingConventionsDerivatives(ComplicatedNamingConventions):
         return int(self.dataset.collection_number)
 
     def _product_group(self, subname=None) -> str:
-        # Computues product group, e.g "ga_ls_wo_3"
+        # Computes product group, e.g "ga_ls_wo_3"
         # Deliberately fail if any of these attributes not found.
         parts = [
             self.producer_abbreviated,
@@ -452,11 +468,19 @@ class ComplicatedNamingConventionsDerivatives(ComplicatedNamingConventions):
         ]
         return "_".join(parts)
 
-    def destination_folder(self, base: Path):
+    def destination_folder(self, base: Path) -> Path:
         self._check_enough_properties_to_name()
         parts = [self.product_name, self.dataset.dataset_version.replace(".", "-")]
         parts.extend(utils.subfolderise(self.dataset.region_code))
         parts.extend(f"{self.dataset.datetime:%Y/%m/%d}".split("/"))
+
+        if self.dataset_separator_field is not None:
+            val = self.dataset.properties[self.dataset_separator_field]
+            # TODO: choosable formatter?
+            if isinstance(val, datetime):
+                val = f"{val:%Y%m%dT%H%M%S}"
+            parts.append(val)
+
         return base.joinpath(*parts)
 
     def _dataset_label(self, sub_name: str = None):

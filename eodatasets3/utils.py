@@ -1,5 +1,6 @@
 import enum
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Tuple, Dict, Any
@@ -53,7 +54,7 @@ def read_paths_from_file(listing: Path) -> Iterable[Path]:
             path = Path(loc.strip())
             if not path.exists():
                 raise FileNotFoundError(
-                    "No such file or directory: %s" % (os.path.abspath(loc),)
+                    f"No such file or directory: {os.path.abspath(loc)}"
                 )
 
             yield path.absolute()
@@ -88,6 +89,9 @@ def subfolderise(code: str) -> Tuple[str, ...]:
     return (code,)
 
 
+_NUMERIC_BAND_NAME = re.compile(r"(?P<number>\d+)(?P<suffix>[a-zA-Z]?)", re.IGNORECASE)
+
+
 def normalise_band_name(band_name: str) -> str:
     """
     Normalise band names by our norms.
@@ -96,27 +100,39 @@ def normalise_band_name(band_name: str) -> str:
 
     >>> normalise_band_name('4')
     'band04'
+    >>> normalise_band_name('8a')
+    'band08a'
+    >>> normalise_band_name('8A')
+    'band08a'
     >>> normalise_band_name('QUALITY')
     'quality'
     >>> normalise_band_name('Azimuthal-Angles')
     'azimuthal_angles'
     """
-    try:
-        number = int(band_name)
-        band_name = f"band{number:02}"
-    except ValueError:
-        pass
+
+    match = _NUMERIC_BAND_NAME.match(band_name)
+    if match:
+        number = int(match.group("number"))
+        suffix = match.group("suffix")
+        band_name = f"band{number:02}{suffix}"
+
     return band_name.lower().replace("-", "_")
 
 
-def get_collection_number(producer: str, usgs_collection_number: int) -> int:
+def get_collection_number(
+    platform: str, producer: str, usgs_collection_number: int
+) -> int:
     # This logic is in one place as it's not very future-proof...
+
+    # We didn't do sentinel before now...
+    if platform.startswith("sentinel"):
+        return 3
 
     if producer == "usgs.gov":
         return usgs_collection_number
     elif producer == "ga.gov.au":
-        # GA's collection 3 processes USGS Collection 1
-        if usgs_collection_number == 1:
+        # GA's collection 3 processes USGS Collection 1 and 2
+        if usgs_collection_number == 1 or usgs_collection_number == 2:
             return 3
         else:
             raise NotImplementedError("Unsupported GA collection number.")

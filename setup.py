@@ -14,16 +14,11 @@ README = (HERE / "README.md").read_text()
 
 
 tests_require = [
-    "black",
     "deepdiff",
-    "flake8",
     "gdal",
-    "hypothesis",
     "mock",
     "pep8-naming",
     "pytest",
-    "pytest-flake8",
-    "pytest-cov",
     "rio_cogeo",
     "sphinx-autodoc-typehints",
     "sphinx_rtd_theme",
@@ -65,6 +60,7 @@ setup(
         "cattrs",
         "ciso8601",
         "click",
+        "defusedxml",
         "jsonschema>=3",  # We want a Draft6Validator
         "numpy>=1.15.4",
         "pyproj",

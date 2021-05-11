@@ -7,7 +7,17 @@ import math
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Counter, Dict, Generator, Optional, Union, Tuple, Sequence
+from typing import (
+    List,
+    Counter,
+    Dict,
+    Generator,
+    Optional,
+    Union,
+    Tuple,
+    Sequence,
+    Iterable,
+)
 
 import attr
 import click
@@ -62,18 +72,24 @@ ValidationMessages = Generator[ValidationMessage, None, None]
 
 def validate_dataset(
     doc: Dict,
-    # Optionally check that the dataset mathces this product definition.
     product_definition: Optional[Dict] = None,
-    # A thorough validation will try to open the data itself.
     thorough: bool = False,
-    # Dataset location to use, if not the metadata path.
     readable_location: Union[str, Path] = None,
+    expect_extra_measurements: bool = False,
 ) -> ValidationMessages:
     """
     Validate a a dataset document, optionally against the given product.
 
     By default this will only look at the metadata, run with thorough=True to
     open the data files too.
+
+    :param product_definition: Optionally check that the dataset matches this product definition.
+    :param thorough: Open the imagery too, to check that data types etc match.
+    :param readable_location: Dataset location to use, if not the metadata path.
+    :param expect_extra_measurements:
+            Allow some dataset measurements to be missing from the product definition.
+            This is (deliberately) allowed by ODC, but often a mistake.
+            This flag disables the warning.
     """
     schema = doc.get("$schema")
     if schema is None:
@@ -160,6 +176,16 @@ def validate_dataset(
                     "missing_measurement",
                     f"Product {product_name} expects a measurement {name!r})",
                 )
+        measurements_not_in_product = set(dataset.measurements.keys()).difference(
+            set(m["name"] for m in product_definition.get("measurements") or ())
+        )
+        if (not expect_extra_measurements) and measurements_not_in_product:
+            things = ", ".join(sorted(measurements_not_in_product))
+            yield _warning(
+                "extra_measurements",
+                f"Dataset has measurements not present in product definition for {product_name!r}: {things}",
+                hint="This may be valid, as it's allowed by ODC. Set `expect_extra_measurements` to mute this.",
+            )
 
     # If we have a location:
     # For each measurement, try to load it.
@@ -241,15 +267,58 @@ def validate_product(doc: Dict) -> ValidationMessages:
             f"(Found a {type(measurements).__name__!r}).",
         )
     else:
+        seen_names_and_aliases = collections.defaultdict(list)
         for measurement in measurements:
-            name = measurement.get("name")
+            measurement_name = measurement.get("name")
             dtype = measurement.get("dtype")
             nodata = measurement.get("nodata")
             if not numpy_value_fits_dtype(nodata, dtype):
                 yield _error(
                     "unsuitable_nodata",
-                    f"Measurement {name!r} nodata {nodata!r} does not fit a {dtype!r}",
+                    f"Measurement {measurement_name!r} nodata {nodata!r} does not fit a {dtype!r}",
                 )
+
+            # Were any of the names seen in other measurements?
+            these_names = measurement_name, *measurement.get("aliases", ())
+            for new_field_name in these_names:
+                measurements_with_this_name = seen_names_and_aliases[new_field_name]
+                if measurements_with_this_name:
+                    seen_in = " and ".join(repr(s) for s in measurements_with_this_name)
+
+                    # If the same name is used by different measurements, its a hard error.
+                    yield _error(
+                        "duplicate_measurement_name",
+                        f"Name {new_field_name!r} is used by multiple measurements",
+                        hint=f"It's duplicated in an alias. "
+                        f"Seen in measurement(s) {seen_in}",
+                    )
+
+            # Are any names duplicated within the one measurement? (not an error, but info)
+            for duplicate_name in _find_duplicates(these_names):
+                yield _info(
+                    "duplicate_alias_name",
+                    f"Measurement {measurement_name!r} has a duplicate alias named {duplicate_name!r}",
+                )
+
+            for field in these_names:
+                seen_names_and_aliases[field].append(measurement_name)
+
+
+def _find_duplicates(values: Iterable[str]) -> Generator[str, None, None]:
+    """Return any duplicate values in the given sequence
+
+    >>> list(_find_duplicates(('a', 'b', 'c')))
+    []
+    >>> list(_find_duplicates(('a', 'b', 'b')))
+    ['b']
+    >>> list(_find_duplicates(('a', 'b', 'b', 'a')))
+    ['a', 'b']
+    """
+    previous = None
+    for v in sorted(values):
+        if v == previous:
+            yield v
+        previous = v
 
 
 def numpy_value_fits_dtype(value, dtype):
@@ -294,61 +363,76 @@ class ExpectedMeasurement:
 
 
 def validate_paths(
-    paths: List[Path], thorough: bool = False
-) -> Generator[Tuple[Path, List[ValidationMessage]], None, None]:
+    paths: List[Path],
+    thorough: bool = False,
+    expect_extra_measurements: bool = False,
+) -> Generator[Tuple[Path, int, List[ValidationMessage]], None, None]:
     """Validate the list of paths. Product documents can be specified before their datasets."""
     products: Dict[str, Dict] = {}
 
     for path in paths:
-        # Load yaml. If product, add to products.
-        # Otherwise validate.
-        doc = serialise.load_yaml(path)
-        messages = []
-
-        if is_product(doc):
-            messages.extend(validate_product(doc))
-            products[doc["name"]] = doc
-            yield path, messages
-            continue
-
-        # TODO: follow ODC's match rules?
-        product = None
-        product_name = get_path(doc, ("product", "name"), default=None)
-
-        if products:
-            if len(products) == 1:
-                [product] = products.values()
-            elif product_name is not None:
-                product = products.get(product_name)
-
-            if product is None:
-                messages.append(
-                    _warning(
-                        "unknown_product",
-                        "Cannot match dataset to product",
-                        hint=f"Nothing matches {product_name!r}"
-                        if product_name
-                        else "No product name in dataset (TODO: field matching)",
+        with path.open("r") as f:
+            inner_docs = serialise.loads_yaml(f)
+            for i, doc in enumerate(inner_docs):
+                if is_product(doc):
+                    products[doc["name"]] = doc
+                    messages = list(validate_product(doc))
+                else:
+                    messages = validate_eo3_doc(
+                        doc, path, products, thorough, expect_extra_measurements
                     )
-                )
-        else:
+                if messages:
+                    yield path, i, messages
+
+
+def validate_eo3_doc(
+    doc: Dict,
+    location: Union[str, Path],
+    products: Dict[str, Dict],
+    thorough: bool = False,
+    expect_extra_measurements=False,
+) -> List[ValidationMessage]:
+    messages = []
+
+    # TODO: follow ODC's match rules?
+    product = None
+    product_name = get_path(doc, ("product", "name"), default=None)
+
+    if products:
+        if len(products) == 1:
+            [product] = products.values()
+        elif product_name is not None:
+            product = products.get(product_name)
+
+        if product is None:
             messages.append(
-                ValidationMessage(
-                    Level.error if thorough else Level.info,
-                    "no_product",
-                    "No product provided: validating dataset information alone",
+                _warning(
+                    "unknown_product",
+                    "Cannot match dataset to product",
+                    hint=f"Nothing matches {product_name!r}"
+                    if product_name
+                    else "No product name in dataset (TODO: field matching)",
                 )
             )
-
-        messages.extend(
-            validate_dataset(
-                doc,
-                product_definition=product,
-                readable_location=path,
-                thorough=thorough,
+    else:
+        messages.append(
+            ValidationMessage(
+                Level.error if thorough else Level.info,
+                "no_product",
+                "No product provided: validating dataset information alone",
             )
         )
-        yield path, messages
+
+    messages.extend(
+        validate_dataset(
+            doc,
+            product_definition=product,
+            readable_location=location,
+            thorough=thorough,
+            expect_extra_measurements=expect_extra_measurements,
+        )
+    )
+    return messages
 
 
 def is_product(doc: Dict) -> bool:
@@ -366,6 +450,9 @@ def _validate_stac_properties(dataset: DatasetDoc):
             if normaliser and value is not None:
                 try:
                     normalised_value = normaliser(value)
+                    # A normaliser can return two values, the latter adding extra extracted fields.
+                    if isinstance(normalised_value, tuple):
+                        normalised_value = normalised_value[0]
 
                     # Special case for dates, as "no timezone" and "utc timezone" are treated identical.
                     if isinstance(value, datetime):
@@ -474,6 +561,7 @@ documents, but each product must come before
 its datasets to be matched against it.
 """
 )
+@click.version_option()
 @click.argument("paths", nargs=-1, type=PathPath(exists=True, readable=True))
 @click.option(
     "--warnings-as-errors",
@@ -488,13 +576,26 @@ its datasets to be matched against it.
     help="Attempt to read the data/measurements, and check their properties match",
 )
 @click.option(
+    "--expect-extra-measurements/--warn-extra-measurements",
+    is_flag=True,
+    default=False,
+    help="Allow some dataset measurements to be missing from the product definition. "
+    "This is (deliberately) allowed by ODC, but often a mistake. This flag disables the warning.",
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
     default=False,
     help="Only print problems, one per line",
 )
-def run(paths: List[Path], strict_warnings, quiet, thorough: bool):
+def run(
+    paths: List[Path],
+    strict_warnings,
+    quiet,
+    thorough: bool,
+    expect_extra_measurements: bool,
+):
     validation_counts: Counter[Level] = collections.Counter()
     invalid_paths = 0
 
@@ -503,7 +604,9 @@ def run(paths: List[Path], strict_warnings, quiet, thorough: bool):
         Level.warning: dict(fg="yellow"),
         Level.error: dict(fg="red"),
     }
-    for path, messages in validate_paths(paths, thorough=thorough):
+    for path, path_index, messages in validate_paths(
+        paths, thorough=thorough, expect_extra_measurements=expect_extra_measurements
+    ):
         levels = collections.Counter(m.level for m in messages)
         is_invalid = levels[Level.error] > 0
         if strict_warnings:
@@ -514,7 +617,8 @@ def run(paths: List[Path], strict_warnings, quiet, thorough: bool):
             messages = [m for m in messages if m.level != Level.info]
 
         if messages or not quiet:
-            secho(f"{bool_style(not is_invalid)} {path.stem}")
+            path_suffix = f" document {path_index+1}" if path_index else ""
+            secho(f"{bool_style(not is_invalid)} {path.stem}{path_suffix}")
 
         if not messages:
             continue

@@ -1,3 +1,6 @@
+import math
+import string
+
 import attr
 import numpy
 import os
@@ -20,10 +23,21 @@ from rasterio.io import DatasetWriter
 from rasterio.shutil import copy as rio_copy
 from rasterio.warp import calculate_default_transform, reproject
 from shapely.geometry.base import CAP_STYLE, JOIN_STYLE, BaseGeometry
-from typing import Dict, Generator, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import (
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    Set,
+)
 
 from eodatasets3.model import DatasetDoc, GridDoc, MeasurementDoc
 from eodatasets3.properties import FileFormat
+
 
 DEFAULT_OVERVIEWS = (8, 16, 32)
 
@@ -164,7 +178,9 @@ def _common_suffix(names: Iterable[str]) -> str:
     return os.path.commonprefix([s[::-1] for s in names])[::-1]
 
 
-def _find_a_common_name(names: Sequence[str]) -> Optional[str]:
+def _find_a_common_name(
+    group_of_names: Sequence[str], all_possible_names: Set[str] = None
+) -> Optional[str]:
     """
     If we have a list of band names, can we find a nice name for the group of them?
 
@@ -183,21 +199,42 @@ def _find_a_common_name(names: Sequence[str]) -> Optional[str]:
     >>> # It's ok to find nothing.
     >>> _find_a_common_name(['nbar_blue', 'nbar_red', 'qa'])
     >>> _find_a_common_name(['a', 'b'])
+    >>> # If a name is taken by non-group memebers, it shouldn't be chosen
+    >>> # (There's an 'nbar' prefix outside of the group, so shouldn't be found)
+    >>> all_names = {'nbar_blue', 'nbar_red', 'nbar_green', 'nbart_blue'}
+    >>> _find_a_common_name(['nbar_blue', 'nbar_red'], all_possible_names=all_names)
+    >>> _find_a_common_name(['nbar_blue', 'nbar_red', 'nbar_green'], all_possible_names=all_names)
+    'nbar'
     """
+    options = []
+
+    non_group_names = (all_possible_names or set()).difference(group_of_names)
 
     # If all measurements have a common prefix (like 'nbar_') it makes a nice grid name.
-    options = [
-        s.strip("_:") for s in (os.path.commonprefix(names), _common_suffix(names))
-    ]
+    prefix = os.path.commonprefix(group_of_names)
+    if not any(name.startswith(prefix) for name in non_group_names):
+        options.append(prefix)
+
+    suffix = _common_suffix(group_of_names)
+    if not any(name.endswith(suffix) for name in non_group_names):
+        options.append(suffix)
+
+    if not options:
+        return None
+
+    options = [s.strip("_:") for s in options]
     # Pick the longest candidate.
     options.sort(key=len, reverse=True)
     return options[0] or None
 
 
 @attr.s(auto_attribs=True, slots=True)
-class MeasPath:
+class _MeasurementLocation:
     path: Path
     layer: str = None
+
+
+_Measurements = Dict[str, _MeasurementLocation]
 
 
 class MeasurementRecord:
@@ -208,9 +245,7 @@ class MeasurementRecord:
     def __init__(self):
         # The measurements grouped by their grid.
         # (value is band_name->Path)
-        self._measurements_per_grid: Dict[GridSpec, Dict[str, MeasPath]] = defaultdict(
-            dict
-        )
+        self._measurements_per_grid: Dict[GridSpec, _Measurements] = defaultdict(dict)
         # Valid data mask per grid, in pixel coordinates.
         self.mask_by_grid: Dict[GridSpec, numpy.ndarray] = {}
 
@@ -221,7 +256,7 @@ class MeasurementRecord:
         path: Union[Path, str],
         img: numpy.ndarray,
         layer: Optional[str] = None,
-        nodata=None,
+        nodata: Optional[Union[float, int]] = None,
         expand_valid_data=True,
     ):
         for measurements in self._measurements_per_grid.values():
@@ -231,62 +266,122 @@ class MeasurementRecord:
                     f"Original at {measurements[name]} and now {path}"
                 )
 
-        self._measurements_per_grid[grid][name] = MeasPath(path, layer)
+        self._measurements_per_grid[grid][name] = _MeasurementLocation(path, layer)
         if expand_valid_data:
             self._expand_valid_data_mask(grid, img, nodata)
 
-    def _expand_valid_data_mask(self, grid: GridSpec, img: numpy.ndarray, nodata):
+    def _expand_valid_data_mask(
+        self, grid: GridSpec, img: numpy.ndarray, nodata: Union[float, int]
+    ):
         if nodata is None:
-            nodata = 0
+            nodata = float("nan") if numpy.issubdtype(img.dtype, numpy.floating) else 0
+
+        if math.isnan(nodata):
+            valid_values = numpy.isfinite(img)
+        else:
+            valid_values = img != nodata
 
         mask = self.mask_by_grid.get(grid)
         if mask is None:
-            mask = img != nodata
+            mask = valid_values
         else:
-            mask |= img != nodata
+            mask |= valid_values
         self.mask_by_grid[grid] = mask
+
+    def _as_named_grids(self) -> Dict[str, Tuple[GridSpec, _Measurements]]:
+        """Get our grids with sensible (hopefully!), names."""
+
+        # Order grids from most to fewest measurements.
+        # PyCharm's typing seems to get confused by the sorted() call.
+        # noinspection PyTypeChecker
+        grids_by_frequency: List[Tuple[GridSpec, _Measurements]] = sorted(
+            self._measurements_per_grid.items(), key=lambda k: len(k[1]), reverse=True
+        )
+
+        # The largest group is the default.
+        default_grid = grids_by_frequency.pop(0)
+
+        named_grids = {"default": default_grid}
+
+        # No other grids? Nothing to do!
+        if not grids_by_frequency:
+            return named_grids
+
+        # First try to name them via common prefixes, suffixes etc.
+        all_measurement_names = set(self.iter_names())
+        for grid, measurements in grids_by_frequency:
+            if len(measurements) == 1:
+                grid_name = "_".join(measurements.keys())
+            else:
+                grid_name = _find_a_common_name(
+                    list(measurements.keys()), all_possible_names=all_measurement_names
+                )
+                if not grid_name:
+                    # Nothing useful found!
+                    break
+
+            if grid_name in named_grids:
+                # Clash of names! This strategy wont work.
+                break
+
+            named_grids[grid_name] = (grid, measurements)
+        else:
+            # We finished without a clash.
+            return named_grids
+
+        # Otherwise, try resolution names:
+        named_grids = {"default": default_grid}
+        for grid, measurements in grids_by_frequency:
+            res_y, res_x = grid.resolution_yx
+            if res_x > 1:
+                res_x = int(res_x)
+            grid_name = f"{res_x}"
+            if grid_name in named_grids:
+                # Clash of names! This strategy wont work.
+                break
+
+            named_grids[grid_name] = (grid, measurements)
+        else:
+            # We finished without a clash.
+            return named_grids
+
+        # No strategies worked!
+        # Enumerated, alphabetical letter names. Grid 'a', Grid 'b', etc...
+        grid_names = list(string.ascii_letters)
+        if len(grids_by_frequency) > len(grid_names):
+            raise NotImplementedError(
+                f"More than {len(grid_names)} grids that cannot be named!"
+            )
+        return {
+            "default": default_grid,
+            **{
+                grid_names[i]: (grid, measurements)
+                for i, (grid, measurements) in enumerate(grids_by_frequency)
+            },
+        }
 
     def as_geo_docs(self) -> Tuple[CRS, Dict[str, GridDoc], Dict[str, MeasurementDoc]]:
         """Calculate combined geo information for metadata docs"""
 
         if not self._measurements_per_grid:
             return None, None, None
-        # Order grids from most to fewest measurements.
-        # PyCharm's typing seems to get confused by the sorted() call.
-        # noinspection PyTypeChecker
-        grids_by_frequency: List[Tuple[GridSpec, Dict[str, MeasPath]]] = sorted(
-            self._measurements_per_grid.items(), key=lambda k: len(k[1]), reverse=True
-        )
 
         grid_docs: Dict[str, GridDoc] = {}
         measurement_docs: Dict[str, MeasurementDoc] = {}
-        crs = grids_by_frequency[0][0].crs
-        for i, (grid, measurements) in enumerate(grids_by_frequency):
+        crs = None
+        for grid_name, (grid, measurements) in self._as_named_grids().items():
+            # Validate assumption: All grids should have same CRS
+            if crs is None:
+                crs = grid.crs
             # TODO: CRS equality is tricky. This may not work.
             #       We're assuming a group of measurements specify their CRS
             #       the same way if they are the same.
-            if grid.crs != crs:
+            elif grid.crs != crs:
                 raise ValueError(
                     f"Measurements have different CRSes in the same dataset:\n"
                     f"\t{crs.to_string()!r}\n"
                     f"\t{grid.crs.to_string()!r}\n"
                 )
-
-            # The grid with the most measurements.
-            if i == 0:
-                grid_name = "default"
-            else:
-                grid_name = _find_a_common_name(list(measurements.keys()))
-                # If another grid already has this name: TODO: make both grid names more specific?
-                if grid_name in grid_docs:
-                    raise NotImplementedError(
-                        f"Clashing grid names. Needs a recalculation. "
-                        f"Name {grid_name!r}, but have {tuple(grid_docs.keys())!r}"
-                    )
-                # There was no common prefix. Just concat all band names.
-                # Perhaps we just fallback to enumeration in these weird cases. grid a, grid b etc....
-                if not grid_name:
-                    grid_name = "_".join(measurements.keys())
 
             grid_docs[grid_name] = GridDoc(grid.shape, grid.transform)
 
@@ -357,7 +452,8 @@ class MeasurementRecord:
 
         return shapely.ops.unary_union(geoms)
 
-    def iter_names(self):
+    def iter_names(self) -> Generator[str, None, None]:
+        """All known measurement names"""
         for grid, measurements in self._measurements_per_grid.items():
             for band_name, _ in measurements.items():
                 yield band_name

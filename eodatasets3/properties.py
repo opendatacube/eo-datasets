@@ -4,7 +4,9 @@ from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum, EnumMeta
+from textwrap import dedent
 from typing import Tuple, Dict, Optional, Any, Mapping, Callable, Union
+from urllib.parse import urlencode
 
 import ciso8601
 from ruamel.yaml.timestamp import TimeStamp as RuamelTimeStamp
@@ -16,6 +18,7 @@ class FileFormat(Enum):
     GeoTIFF = 1
     NetCDF = 2
     Zarr = 3
+    JPEG2000 = 4
 
 
 def nest_properties(d: Mapping[str, Any], separator=":") -> Dict[str, Any]:
@@ -105,7 +108,7 @@ def degrees_type(value):
     value = float(value)
 
     if not (-360.0 <= value <= 360.0):
-        raise ValueError("Expected percent between 0,100")
+        raise ValueError("Expected degrees between -360,+360")
 
     return value
 
@@ -120,11 +123,40 @@ def producer_check(value):
 
 
 def parsed_sentinel_tile_id(tile_id) -> Tuple[str, Dict]:
-    """Extract useful extra fields from a sentinel tile id"""
+    """Extract useful extra fields from a sentinel tile id
+
+    >>> val, props = parsed_sentinel_tile_id("S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09")
+    >>> val
+    'S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09'
+    >>> props
+    {'sentinel:datatake_start_datetime': datetime.datetime(2020, 10, 11, 1, 14, 46, tzinfo=datetime.timezone.utc)}
+    """
     extras = {}
     split_tile_id = tile_id.split("_")
     try:
         datatake_sensing_time = datetime_type(split_tile_id[-4])
+        extras["sentinel:datatake_start_datetime"] = datatake_sensing_time
+    except IndexError:
+        pass
+
+    # TODO: we could extract other useful fields?
+
+    return tile_id, extras
+
+
+def parsed_sentinel_datastrip_id(tile_id) -> Tuple[str, Dict]:
+    """Extract useful extra fields from a sentinel datastrip id
+
+    >>> val, props = parsed_sentinel_datastrip_id("S2B_OPER_MSI_L1C_DS_EPAE_20201011T011446_S20201011T000244_N02.09")
+    >>> val
+    'S2B_OPER_MSI_L1C_DS_EPAE_20201011T011446_S20201011T000244_N02.09'
+    >>> props
+    {'sentinel:datatake_start_datetime': datetime.datetime(2020, 10, 11, 1, 14, 46, tzinfo=datetime.timezone.utc)}
+    """
+    extras = {}
+    split_tile_id = tile_id.split("_")
+    try:
+        datatake_sensing_time = datetime_type(split_tile_id[-3])
         extras["sentinel:datatake_start_datetime"] = datatake_sensing_time
     except IndexError:
         pass
@@ -200,10 +232,20 @@ _LANDSAT_EXTENDED_PROPS = {
 _SENTINEL_EXTENDED_PROPS = {
     "sentinel:sentinel_tile_id": parsed_sentinel_tile_id,
     "sentinel:datatake_start_datetime": datetime_type,
+    "sentinel:datastrip_id": parsed_sentinel_datastrip_id,
+    "sentinel:datatake_type": None,
+    "sentinel:processing_baseline": None,
+    "sentinel:processing_center": None,
+    "sentinel:product_name": None,
+    "sentinel:reception_station": None,
+    "sentinel:utm_zone": int,
+    "sentinel:latitude_band": None,
+    "sentinel:grid_square": None,
+    "sinergise_product_id": None,
 }
 
 
-class StacPropertyView(collections.abc.Mapping):
+class StacPropertyView(collections.abc.MutableMapping):
     # Every property we've seen or dealt with so far. Feel free to expand with abandon...
     # This is to minimise minor typos, case differences, etc, which plagued previous systems.
     # Keep sorted.
@@ -222,6 +264,9 @@ class StacPropertyView(collections.abc.Mapping):
         "eo:constellation": None,
         "eo:sun_azimuth": degrees_type,
         "eo:sun_elevation": degrees_type,
+        "sat:orbit_state": None,
+        "sat:relative_orbit": int,
+        "sat:absolute_orbit": int,
         "landsat:landsat_product_id": None,
         "landsat:landsat_scene_id": None,
         "landsat:wrs_path": int,
@@ -269,13 +314,24 @@ class StacPropertyView(collections.abc.Mapping):
         del self._props[name]
 
     def __setitem__(self, key, value):
-        if key in self._props and value != self[key]:
-            warnings.warn(
-                f"Overriding property {key!r} " f"(from {self[key]!r} to {value!r})"
-            )
+        self.normalise_and_set(
+            key,
+            value,
+            # They can override properties but will receive a warning.
+            allow_override=True,
+        )
 
+    def normalise_and_set(self, key, value, allow_override=True):
+        """
+        Normalise the given value if it's a known key (eg. dates should be dates),
+        and set it on the given dictionary.
+        """
         if key not in self.KNOWN_STAC_PROPERTIES:
-            warnings.warn(f"Unknown stac property {key!r}")
+            warnings.warn(
+                f"Unknown Stac property {key!r}. "
+                f"If this is valid property, please tell us on Github here so we can add it: "
+                f"\n\t{_github_suggest_new_property_url(key, value)}"
+            )
 
         if value is not None:
             normalise = self.KNOWN_STAC_PROPERTIES.get(key)
@@ -289,7 +345,16 @@ class StacPropertyView(collections.abc.Mapping):
                             raise RuntimeError(
                                 f"Infinite loop: writing key {k!r} from itself"
                             )
-                        self[k] = v
+                        self.normalise_and_set(k, v, allow_override=allow_override)
+
+        if key in self._props and value != self[key]:
+            message = (
+                f"Overriding property {key!r} " f"(from {self[key]!r} to {value!r})"
+            )
+            if allow_override:
+                warnings.warn(message)
+            else:
+                raise KeyError(message)
 
         self._props[key] = value
 
@@ -499,3 +564,24 @@ class EoFields(metaclass=ABCMeta):
     @maturity.setter
     def maturity(self, value):
         self.properties["dea:dataset_maturity"] = value
+
+
+def _github_suggest_new_property_url(key: str, value: object) -> str:
+    """Get a URL to create a Github issue suggesting new properties to be added."""
+    issue_parameters = urlencode(
+        dict(
+            title=f"Include property {key!r}",
+            labels="known-properties",
+            body=dedent(
+                f"""\
+                   Hello! The property {key!r} does not appear to be in the KNOWN_STAC_PROPERTIES list,
+                   but I believe it to be valid.
+
+                   An example value of this property is: {value!r}
+
+                   Thank you!
+                   """
+            ),
+        )
+    )
+    return f"https://github.com/GeoscienceAustralia/eo-datasets/issues/new?{issue_parameters}"

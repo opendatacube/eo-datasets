@@ -13,7 +13,7 @@ from pathlib import Path
 _LOG = logging.getLogger(__name__)
 
 
-def find_exe(name):
+def find_exe(name: str):
     """
     Find the location of the given executable.
 
@@ -22,7 +22,7 @@ def find_exe(name):
     """
     executable = spawn.find_executable(name)
     if not executable:
-        raise Exception("No %s command found." % (name,))
+        raise Exception(f"No {name!r} command found.")
 
     return executable
 
@@ -77,7 +77,7 @@ def calculate_file_crc32(filename, block_size=1024 * 16):
                 break
             m = binascii.crc32(d, m)
 
-    return "%08x" % (m & 0xFFFFFFFF)
+    return f"{m & 0xFFFFFFFF:08x}"
 
 
 class PackageChecksum(object):

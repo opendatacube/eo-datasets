@@ -1,7 +1,7 @@
 import operator
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, Union, Mapping, Sequence, Optional, List
+from typing import Dict, Union, Mapping, Sequence, Optional, List, Tuple
 
 import numpy as np
 import pytest
@@ -54,7 +54,7 @@ class ValidateRunner:
         if codes is not None:
             assert sorted(codes) == sorted(self.messages.keys())
 
-    def run_validate(self, docs: Sequence[Doc]):
+    def run_validate(self, docs: Sequence[Doc], allow_extra_measurements=True):
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
 
         args = ()
@@ -65,6 +65,8 @@ class ValidateRunner:
             args += ("-W",)
         if self.thorough:
             args += ("--thorough",)
+        if allow_extra_measurements:
+            args += ("--expect-extra-measurements",)
 
         for i, doc in enumerate(docs):
             if isinstance(doc, Mapping):
@@ -78,6 +80,27 @@ class ValidateRunner:
         )
 
     @property
+    def messages_with_severity(self) -> Dict[Tuple[str, str], str]:
+        """
+        Get all messages produced by the validation tool with their severity.
+
+        This issimilar to ".messages", but includes all messages (including informational),
+        and the user can filter by severity themselves.
+
+        Returned as a dict of (severity, error_code) -> human_message.
+        """
+
+        def _read_message(line: str):
+            severity, code, *message = line.split()
+            return (severity, code), " ".join(message)
+
+        return dict(
+            _read_message(line)
+            for line in self.result.stdout.split("\n")
+            if line and line.startswith("\t")
+        )
+
+    @property
     def messages(self) -> Dict[str, str]:
         """Read the messages/warnings for validation tool stdout.
 
@@ -85,23 +108,39 @@ class ValidateRunner:
 
         (Note: this will swallow duplicates when the same error code is output multiple times.)
         """
-
-        def _read_message(line: str):
-            severity, code, *message = line.split()
-            return code, " ".join(message)
-
-        return dict(
-            _read_message(line)
-            for line in self.result.stdout.split("\n")
-            if line
-            and line.startswith("\t")
-            and (self.record_informational_messages or not line.startswith("\tI "))
-        )
+        return {
+            code: message
+            for (severity, code), message in self.messages_with_severity.items()
+            if (self.record_informational_messages or not severity == "I")
+        }
 
 
 def test_valid_document_works(eo_validator: ValidateRunner, example_metadata: Dict):
     """All of our example metadata files should validate"""
     eo_validator.assert_valid(example_metadata)
+
+
+def test_multi_document_works(
+    tmp_path: Path,
+    eo_validator: ValidateRunner,
+    l1_ls5_tarball_md_expected: Dict,
+    l1_ls7_tarball_md_expected: Dict,
+):
+    """We should support multiple documents in one yaml file, and validate all of them"""
+
+    # Two valid documents in one file, should succeed.
+    md_path = tmp_path / "multi-doc.yaml"
+    with md_path.open("w") as f:
+        serialise.dumps_yaml(f, l1_ls5_tarball_md_expected, l1_ls7_tarball_md_expected)
+
+    eo_validator.assert_valid(md_path)
+
+    # When the second document is invalid, we should see a validation error.
+    with md_path.open("w") as f:
+        e2 = dict(l1_ls5_tarball_md_expected)
+        del e2["id"]
+        serialise.dumps_yaml(f, l1_ls7_tarball_md_expected, e2)
+    eo_validator.assert_invalid(md_path)
 
 
 def test_missing_field(eo_validator: ValidateRunner, example_metadata: Dict):
@@ -226,11 +265,79 @@ def test_valid_with_product_doc(
 
     # It contains all measurements in the product, so will be valid when not thorough.
     product = dict(
-        name="wrong_product",
+        name="our_product",
         metadata_type="eo3",
         measurements=[dict(name="blue", dtype="uint8", nodata=255)],
     )
     eo_validator.assert_valid(product, l1_ls8_metadata_path)
+
+
+def test_warn_duplicate_measurement_name(
+    eo_validator: ValidateRunner,
+    l1_ls8_dataset: DatasetDoc,
+):
+    """When a product is specified, it will validate that names are not repeated between measurements and aliases."""
+
+    # We have the "blue" measurement twice.
+    product = dict(
+        name="our_product",
+        metadata_type="eo3",
+        measurements=[
+            *_copy_measurements(l1_ls8_dataset),
+            dict(name="blue", dtype="uint8", nodata=255),
+        ],
+    )
+    eo_validator.assert_invalid(product)
+    assert eo_validator.messages == {
+        "duplicate_measurement_name": "Name 'blue' is used by multiple measurements"
+    }
+
+    # An *alias* clashes with the *name* of a measurement.
+    product = dict(
+        name="our_product",
+        metadata_type="eo3",
+        measurements=[
+            *_copy_measurements(l1_ls8_dataset),
+            dict(
+                name="azul",
+                aliases=[
+                    "icecream",
+                    # Clashes with the *name* of a measurement.
+                    "blue",
+                ],
+                dtype="uint8",
+                nodata=255,
+            ),
+        ],
+    )
+    eo_validator.assert_invalid(product)
+    assert eo_validator.messages == {
+        "duplicate_measurement_name": "Name 'blue' is used by multiple measurements"
+    }
+
+    # An alias is duplicated on the same measurement. Not an error, just a message!
+    product = dict(
+        name="our_product",
+        metadata_type="eo3",
+        measurements=[
+            dict(
+                name="blue",
+                aliases=[
+                    "icecream",
+                    "blue",
+                ],
+                dtype="uint8",
+                nodata=255,
+            ),
+        ],
+    )
+    eo_validator.assert_valid(product)
+    assert eo_validator.messages_with_severity == {
+        (
+            "I",
+            "duplicate_alias_name",
+        ): "Measurement 'blue' has a duplicate alias named 'blue'"
+    }
 
 
 def test_dtype_compare_with_product_doc(
@@ -263,7 +370,7 @@ def test_nodata_compare_with_product_doc(
         name="usgs_ls8c_level1_1",
         metadata_type="eo3",
         measurements=[
-            *_copy_measurements(l1_ls8_dataset),
+            *_copy_measurements(l1_ls8_dataset, without=["blue"]),
             # Override blue with our invalid one.
             dict(name="blue", dtype="uint16", nodata=255),
         ],
@@ -279,8 +386,12 @@ def test_nodata_compare_with_product_doc(
     }
 
 
-def _copy_measurements(dataset: DatasetDoc, dtype="uint16") -> List:
-    return [dict(name=name, dtype=dtype) for name, m in dataset.measurements.items()]
+def _copy_measurements(dataset: DatasetDoc, dtype="uint16", without=()) -> List:
+    return [
+        dict(name=name, dtype=dtype)
+        for name, m in dataset.measurements.items()
+        if name not in without
+    ]
 
 
 def test_measurements_compare_with_nans(
@@ -296,7 +407,7 @@ def test_measurements_compare_with_nans(
         name="usgs_ls8c_level1_1",
         metadata_type="eo3",
         measurements=[
-            *_copy_measurements(l1_ls8_dataset),
+            *_copy_measurements(l1_ls8_dataset, without=["blue"]),
             dict(name="blue", dtype="float32", nodata=float("NaN")),
         ],
     )

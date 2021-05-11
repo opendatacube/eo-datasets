@@ -1,7 +1,7 @@
 """
 Package WAGL HDF5 Outputs
 
-This will convert the HDF5 file (and sibling fmask/gqa files) into
+This converts the HDF5 file (and sibling fmask/gqa files) into
 GeoTIFFS (COGs) with datacube metadata using the DEA naming conventions
 for files.
 """
@@ -44,12 +44,8 @@ POSSIBLE_PRODUCTS = ("nbar", "nbart", "lambertian", "sbt")
 DEFAULT_PRODUCTS = ("nbar", "nbart")
 
 _THUMBNAILS = {
-    ("landsat-5", "nbar"): ("nbar:red", "nbar:green", "nbar:blue"),
-    ("landsat-5", "nbart"): ("nbart:red", "nbart:green", "nbart:blue"),
-    ("landsat-7", "nbar"): ("nbar:red", "nbar:green", "nbar:blue"),
-    ("landsat-7", "nbart"): ("nbart:red", "nbart:green", "nbart:blue"),
-    ("landsat-8", "nbar"): ("nbar:red", "nbar:green", "nbar:blue"),
-    ("landsat-8", "nbart"): ("nbart:red", "nbart:green", "nbart:blue"),
+    "nbar": ("nbar:red", "nbar:green", "nbar:blue"),
+    "nbart": ("nbart:red", "nbart:green", "nbart:blue"),
 }
 
 os.environ["CPL_ZIP_ENCODING"] = "UTF-8"
@@ -102,8 +98,8 @@ def _unpack_products(
                         file_id=_file_id(dataset),
                     )
 
-            if (p.platform, product) in _THUMBNAILS:
-                red, green, blue = _THUMBNAILS[(p.platform, product)]
+            if product in _THUMBNAILS:
+                red, green, blue = _THUMBNAILS[product]
                 with do(f"Thumbnailing {product}"):
                     p.write_thumbnail(
                         red, green, blue, kind=product, static_stretch=(1, 3000)
@@ -164,29 +160,24 @@ def _unpack_observation_attributes(
     product_list: Iterable[str],
     h5group: h5py.Group,
     infer_datetime_range=False,
+    oa_resolution: Optional[Tuple[float, float]] = None,
 ):
     """
     Unpack the angles + other supplementary datasets produced by wagl.
     Currently only the mode resolution group gets extracted.
     """
-    resolution_groups = sorted(g for g in h5group.keys() if g.startswith("RES-GROUP-"))
-    # Use the highest resolution as the ground sample distance.
-    del p.properties["eo:gsd"]
-    p.properties["eo:gsd"] = min(
-        min(h5group[grp].attrs["resolution"]) for grp in resolution_groups
-    )
+    resolution_groups = {
+        tuple(h5group[k].attrs["resolution"]): h5group[k]
+        for k in h5group.keys()
+        if k.startswith("RES-GROUP-")
+    }
 
-    if len(resolution_groups) not in (1, 2):
-        raise NotImplementedError(
-            f"Unexpected set of res-groups. "
-            f"Expected either two (with pan) or one (without pan), "
-            f"got {resolution_groups!r}"
-        )
-    # Res groups are ordered in descending resolution, so res-group-0 is the highest resolution.
-    # (ie. res-group-0 in landsat 7/8 is Panchromatic)
-    # We only care about packaging OA data for the "common" bands: not panchromatic.
-    # So we always pick the lowest resolution: the last (or only) group.
-    res_grp = h5group[resolution_groups[-1]]
+    # Use the highest resolution as the ground sample distance.
+    if "eo:gsd" in p.properties:
+        del p.properties["eo:gsd"]
+    p.properties["eo:gsd"] = min(min(resolution_groups.keys()))
+
+    res_grp = choose_resolution_group(resolution_groups, p.platform, oa_resolution)
 
     def _write(section: str, dataset_names: Sequence[str]):
         """
@@ -232,6 +223,36 @@ def _unpack_observation_attributes(
             resolution_yx=tuple(res_grp.attrs["resolution"]),
             timedelta_data=timedelta_data,
         )
+
+
+def choose_resolution_group(
+    resolution_groups: Dict[tuple, h5py.Group],
+    platform: str,
+    oa_resolution: Optional[Tuple[float, float]],
+) -> h5py.Group:
+
+    # None specified? Figure out a default.
+
+    if oa_resolution is None:
+        # For Landsat, we only cared about packaging OA data for the "common"
+        # bands (not panchromatic). So we always pick the higher resolution.
+        if platform.startswith("landsat"):
+            oa_resolution = max(resolution_groups.keys())
+        elif platform.startswith("sentinel"):
+            oa_resolution = (10.0, 10.0)
+        else:
+            raise NotImplementedError(
+                f"Don't know how to choose a default OA resolution for platform {platform !r}"
+            )
+
+    res_grp = resolution_groups.get(oa_resolution)
+    if res_grp is None:
+        raise RuntimeError(
+            f"Resolution {oa_resolution} not found in input. "
+            f"Have resolutions {tuple(resolution_groups.keys())}"
+        )
+
+    return res_grp
 
 
 def _create_contiguity(
@@ -325,6 +346,22 @@ def do(name: str, heading=False, **fields):
         secho("(done)")
 
 
+def _get_level1_metadata_path(wagl_doc: Dict) -> Optional[Path]:
+    """
+    Find the expected matching metadata file for the source dataset
+    """
+    source_level1 = Path(get_path(wagl_doc, ("source_datasets", "source_level1")))
+    if not source_level1.exists():
+        return None
+
+    # If a directory, assume "<dirname>.odc-metadata.yaml"
+    if source_level1.is_dir():
+        return source_level1 / (source_level1.name + ".odc-metadata.yaml")
+    # Otherwise it's a sibling file with ".odc-metadata.yaml" suffix
+    else:
+        return source_level1.with_suffix(".odc-metadata.yaml")
+
+
 def _extract_reference_code(p: DatasetAssembler, granule: str) -> Optional[str]:
     matches = None
     if p.platform.startswith("landsat"):
@@ -350,7 +387,7 @@ class Granule:
     name: str
     wagl_hdf5: Path
     wagl_metadata: Dict
-    source_level1_metadata: DatasetDoc
+    source_level1_metadata: Optional[DatasetDoc]
 
     fmask_doc: Optional[Dict] = None
     fmask_image: Optional[Path] = None
@@ -367,6 +404,7 @@ class Granule:
         fmask_doc_path: Optional[Path] = None,
         gqa_doc_path: Optional[Path] = None,
         tesp_doc_path: Optional[Path] = None,
+        allow_missing_provenance: bool = False,
     ):
         """
         Create granules by scanning the given hdf5 file.
@@ -374,6 +412,7 @@ class Granule:
         Optionally specify additional files and level1 path.
 
         If they are not specified it look for them using WAGL's output naming conventions.
+        :param allow_missing_provenance:
         """
         if not wagl_hdf5.exists():
             raise ValueError(f"Input hdf5 doesn't exist {wagl_hdf5}")
@@ -396,18 +435,24 @@ class Granule:
                 [wagl_doc] = loads_yaml(wagl_doc_field[()])
 
                 if not level1_metadata_path:
-                    level1_tar_path = Path(
-                        get_path(wagl_doc, ("source_datasets", "source_level1"))
-                    )
-                    level1_metadata_path = level1_tar_path.with_suffix(
-                        ".odc-metadata.yaml"
-                    )
-                if not level1_metadata_path.exists():
+                    level1_metadata_path = _get_level1_metadata_path(wagl_doc)
+                if level1_metadata_path and not level1_metadata_path.exists():
                     raise ValueError(
                         f"No level1 metadata found at {level1_metadata_path}"
                     )
 
-                level1 = serialise.from_path(level1_metadata_path)
+                level1 = (
+                    serialise.from_path(level1_metadata_path)
+                    if level1_metadata_path
+                    else None
+                )
+                if (not level1_metadata_path) and (not allow_missing_provenance):
+                    raise ValueError(
+                        "No level1 found or provided. "
+                        f"WAGL said it was at path {str(level1_metadata_path)!r}. "
+                        "It's not, and you didn't specify an alternative. "
+                        f"(allow_missing_provenance={allow_missing_provenance})"
+                    )
 
                 fmask_image_path = fmask_image_path or wagl_hdf5.with_name(
                     f"{granule_name}.fmask.img"
@@ -486,6 +531,7 @@ def package(
     granule: Granule,
     included_products: Iterable[str] = DEFAULT_PRODUCTS,
     include_oa: bool = True,
+    oa_resolution: Optional[Tuple[float, float]] = None,
 ) -> Tuple[UUID, Path]:
     """
     Package an L2 product.
@@ -511,26 +557,51 @@ def package(
     with h5py.File(granule.wagl_hdf5, "r") as fid:
         granule_group = fid[granule.name]
 
+        wagl_doc = _read_wagl_metadata(granule_group)
+
         with DatasetAssembler(
-            out_directory,
+            out_directory.absolute(),
             # WAGL stamps a good, random ID already.
             dataset_id=granule.wagl_metadata.get("id"),
-            naming_conventions="dea",
+            naming_conventions="dea_s2"
+            if ("sentinel" in wagl_doc["source_datasets"]["platform_id"].lower())
+            else "dea",
         ) as p:
-            level1 = granule.source_level1_metadata
-            p.add_source_dataset(level1, auto_inherit_properties=True)
+            _apply_wagl_metadata(p, wagl_doc)
 
             # It's a GA ARD product.
             p.producer = "ga.gov.au"
             p.product_family = "ard"
+            p.maturity = _determine_maturity(
+                acq_date=p.datetime,
+                processed=p.processed,
+                wagl_doc=wagl_doc,
+            )
+            if granule.source_level1_metadata is not None:
+                # For historical consistency: we want to use the instrument that the source L1 product
+                # came from, not the instruments reported from the WAGL doc.
+                #
+                # Eg.
+                #     Level 1 will say "OLI_TIRS", while wagl doc will say "OLI".
+                #     Our current C3 products say "OLI_TIRS" so we need to stay consistent.
+                #     (even though WAGL only *used* the OLI bands, it came from an OLI_TIRS observation)
+                #
+                # So delete our current wagl one, since we're adding a source dataset:
+                if p.instrument is not None:
+                    del p.properties["eo:instrument"]
 
-            _read_wagl_metadata(p, granule_group)
+                p.add_source_dataset(
+                    granule.source_level1_metadata, auto_inherit_properties=True
+                )
+                # When level 1 is NRT, ARD is always NRT.
+                if granule.source_level1_metadata.maturity == "nrt":
+                    p.maturity = "nrt"
 
             org_collection_number = utils.get_collection_number(
-                p.producer, p.properties["landsat:collection_number"]
+                p.platform, p.producer, p.properties.get("landsat:collection_number")
             )
 
-            p.dataset_version = f"{org_collection_number}.2.0"
+            p.dataset_version = f"{org_collection_number}.2.1"
             p.region_code = _extract_reference_code(p, granule.name)
 
             _read_gqa_doc(p, granule.gqa_doc)
@@ -546,7 +617,8 @@ def package(
                         p,
                         included_products,
                         granule_group,
-                        infer_datetime_range=level1.platform.startswith("landsat"),
+                        infer_datetime_range=p.platform.startswith("landsat"),
+                        oa_resolution=oa_resolution,
                     )
                 if granule.fmask_image:
                     with do(f"Writing fmask from {granule.fmask_image} "):
@@ -589,7 +661,8 @@ def _read_fmask_doc(p: DatasetAssembler, doc: Dict):
     for name, value in doc["percent_class_distribution"].items():
         # From Josh: fmask cloud cover trumps the L1 cloud cover.
         if name == "cloud":
-            del p.properties["eo:cloud_cover"]
+            if "eo:cloud_cover" in p.properties:
+                del p.properties["eo:cloud_cover"]
             p.properties["eo:cloud_cover"] = value
 
         p.properties[f"fmask:{name}"] = value
@@ -611,20 +684,22 @@ def find_a_granule_name(wagl_hdf5: Path) -> str:
 
     >>> find_a_granule_name(Path('LT50910841993188ASA00.wagl.h5'))
     'LT50910841993188ASA00'
+    >>> find_a_granule_name(Path('S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09.wagl.h5'))
+    'S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09'
     >>> find_a_granule_name(Path('my-test-granule.h5'))
     Traceback (most recent call last):
     ...
-    ValueError: No granule specified, and cannot find it on input filename 'my-test-granule'.
+    ValueError: Does not appear to be a wagl output filename? 'my-test-granule.h5'.
     """
-    granule_name = wagl_hdf5.stem.split(".")[0]
-    if not granule_name.startswith("L"):
+    if not wagl_hdf5.name.endswith(".wagl.h5"):
         raise ValueError(
-            f"No granule specified, and cannot find it on input filename {wagl_hdf5.stem!r}."
+            f"Does not appear to be a wagl output filename? {wagl_hdf5.name!r}."
         )
-    return granule_name
+
+    return wagl_hdf5.name[: -len(".wagl.h5")]
 
 
-def _read_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group):
+def _read_wagl_metadata(granule_group: h5py.Group):
     try:
         wagl_path, *ancil_paths = [
             pth
@@ -636,19 +711,23 @@ def _read_wagl_metadata(p: DatasetAssembler, granule_group: h5py.Group):
 
     [wagl_doc] = loads_yaml(granule_group[wagl_path][()])
 
-    try:
-        p.processed = get_path(wagl_doc, ("system_information", "time_processed"))
-    except PathAccessError:
-        raise ValueError(f"WAGL dataset contains no time processed. Path {wagl_path}")
-
     for i, path in enumerate(ancil_paths, start=2):
         wagl_doc.setdefault(f"wagl_{i}", {}).update(
             list(loads_yaml(granule_group[path][()]))[0]["ancillary"]
         )
+    return wagl_doc
 
-    p.properties["dea:dataset_maturity"] = _determine_maturity(
-        p.datetime, p.processed, wagl_doc
-    )
+
+def _apply_wagl_metadata(p: DatasetAssembler, wagl_doc: Dict):
+    source = wagl_doc["source_datasets"]
+    p.datetime = source["acquisition_datetime"]
+    p.platform = source["platform_id"]
+    p.instrument = source["sensor_id"]
+
+    try:
+        p.processed = get_path(wagl_doc, ("system_information", "time_processed"))
+    except PathAccessError:
+        raise RuntimeError("WAGL dataset contains no processed time.")
 
     _take_software_versions(p, wagl_doc)
     p.extend_user_metadata("wagl", wagl_doc)
@@ -660,6 +739,7 @@ def _determine_maturity(acq_date: datetime, processed: datetime, wagl_doc: Dict)
 
     Based on the fallback logic in nbar pages of CMI, eg: https://cmi.ga.gov.au/ga_ls5t_nbart_3
     """
+
     ancillary_tiers = {
         key.lower(): o["tier"]
         for key, o in wagl_doc["ancillary"].items()
