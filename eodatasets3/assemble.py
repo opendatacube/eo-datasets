@@ -195,7 +195,7 @@ class DatasetAssembler(EoFields):
         self._metadata_path = metadata_path
         self._allow_absolute_paths = allow_absolute_paths
 
-        self._accessories: Dict[str, Path] = {}
+        self._accessories: Dict[str, Location] = {}
         self._measurements = MeasurementRecord()
 
         self._user_metadata = dict()
@@ -996,7 +996,7 @@ class DatasetAssembler(EoFields):
 
         self._document_thumbnail(thumb_path, kind)
 
-    def add_accessory_file(self, name: str, path: Path):
+    def add_accessory_file(self, name: str, path: Location):
         """
         Record a reference to an additional file that's part of the dataset, but is
         not a band/measurement.

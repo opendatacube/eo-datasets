@@ -53,6 +53,13 @@ from eodatasets3.ui import PathPath
     default=True,
 )
 @click.option(
+    "--allow-missing-provenance/--require-provenance",
+    "allow_missing_provenance",
+    help="Allow there to be no Level 1 provenance. (default: false)",
+    is_flag=True,
+    default=False,
+)
+@click.option(
     "--oa-resolution",
     help="Resolution choice for observation attributes "
     "(default: automatic based on sensor)",
@@ -66,6 +73,7 @@ def run(
     h5_file: Path,
     products: Sequence[str],
     with_oa: bool,
+    allow_missing_provenance: bool,
     oa_resolution: Optional[float],
 ):
     if products:
@@ -77,7 +85,11 @@ def run(
         oa_resolution = (oa_resolution, oa_resolution)
 
     with rasterio.Env():
-        for granule in wagl.Granule.for_path(h5_file, level1_metadata_path=level1):
+        for granule in wagl.Granule.for_path(
+            h5_file,
+            level1_metadata_path=level1,
+            allow_missing_provenance=allow_missing_provenance,
+        ):
             with wagl.do(
                 f"Packaging {granule.name}. (products: {', '.join(products)})",
                 heading=True,
