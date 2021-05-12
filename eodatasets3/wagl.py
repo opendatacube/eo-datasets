@@ -404,6 +404,7 @@ class Granule:
         fmask_doc_path: Optional[Path] = None,
         gqa_doc_path: Optional[Path] = None,
         tesp_doc_path: Optional[Path] = None,
+        allow_missing_provenance: bool = False,
     ):
         """
         Create granules by scanning the given hdf5 file.
@@ -411,6 +412,7 @@ class Granule:
         Optionally specify additional files and level1 path.
 
         If they are not specified it look for them using WAGL's output naming conventions.
+        :param allow_missing_provenance:
         """
         if not wagl_hdf5.exists():
             raise ValueError(f"Input hdf5 doesn't exist {wagl_hdf5}")
@@ -444,6 +446,13 @@ class Granule:
                     if level1_metadata_path
                     else None
                 )
+                if (not level1_metadata_path) and (not allow_missing_provenance):
+                    raise ValueError(
+                        "No level1 found or provided. "
+                        f"WAGL said it was at path {str(level1_metadata_path)!r}. "
+                        "It's not, and you didn't specify an alternative. "
+                        f"(allow_missing_provenance={allow_missing_provenance})"
+                    )
 
                 fmask_image_path = fmask_image_path or wagl_hdf5.with_name(
                     f"{granule_name}.fmask.img"

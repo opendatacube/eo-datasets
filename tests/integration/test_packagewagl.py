@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import gdal
+from osgeo import gdal
 import pytest
 import rasterio
 from click.testing import CliRunner
@@ -833,6 +833,7 @@ def test_sentinel_wagl_package(tmp_path: Path):
                 "sat:orbit_state": "descending",
                 "sat:relative_orbit": 102,
                 "sentinel:datastrip_id": "S2A_OPER_MSI_L1C_DS_EPAE_20201031T022859_S20201031T004711_N02.09",
+                "sentinel:sentinel_tile_id": "S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09",
                 "sentinel:datatake_start_datetime": "2020-10-31T02:28:59",
             },
             "measurements": {
@@ -977,7 +978,7 @@ def test_sentinel_wagl_package(tmp_path: Path):
                     "path": "ga_s2am_nbart_3-2-1_53JQJ_2020-10-31_final_thumbnail.jpg"
                 },
             },
-            "lineage": {"level1": ["8f1cd4a8-666d-4b07-916b-343f8d4d8aa0"]},
+            "lineage": {"level1": ["e27200c1-0a9c-5e24-bfe1-bbbb3f3bdedc"]},
         },
         output_metadata,
     )

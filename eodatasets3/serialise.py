@@ -14,7 +14,7 @@ import shapely
 import shapely.affinity
 import shapely.ops
 from affine import Affine
-from ruamel.yaml import YAML, ruamel, Representer
+from ruamel.yaml import YAML, Representer
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
@@ -78,10 +78,8 @@ def _init_yaml() -> YAML:
     yaml.representer.add_representer(numpy.uint16, Representer.represent_int)
     yaml.representer.add_representer(numpy.int32, Representer.represent_int)
     yaml.representer.add_representer(numpy.uint32, Representer.represent_int)
-    yaml.representer.add_representer(numpy.int, Representer.represent_int)
     yaml.representer.add_representer(numpy.int64, Representer.represent_int)
     yaml.representer.add_representer(numpy.uint64, Representer.represent_int)
-    yaml.representer.add_representer(numpy.float, Representer.represent_float)
     yaml.representer.add_representer(numpy.float32, Representer.represent_float)
     yaml.representer.add_representer(numpy.float64, Representer.represent_float)
     yaml.representer.add_representer(numpy.ndarray, Representer.represent_list)
@@ -113,12 +111,16 @@ def dumps_yaml(stream, *docs: Mapping) -> None:
 
 def load_yaml(p: Path) -> Dict:
     with p.open() as f:
-        return YAML(typ="safe").load(f)
+        return _yaml().load(f)
+
+
+def _yaml():
+    return YAML(typ="safe")
 
 
 def loads_yaml(stream: Union[Text, IO]) -> Iterable[Dict]:
     """Dump yaml through a stream, using the default deserialisation settings."""
-    return YAML(typ="safe").load_all(stream)
+    return _yaml().load_all(stream)
 
 
 def from_path(path: Path, skip_validation=False) -> DatasetDoc:
@@ -135,12 +137,24 @@ class InvalidDataset(Exception):
         self.reason = reason
 
 
+def _is_json_array(checker, instance) -> bool:
+    """
+    By default, jsonschema only allows a json array to be a Python list.
+    Let's allow it to be a tuple too.
+    """
+    return isinstance(instance, (list, tuple))
+
+
 def _get_schema_validator(p: Path) -> jsonschema.Draft6Validator:
     with p.open() as f:
-        schema = ruamel.yaml.safe_load(f)
-    klass = jsonschema.validators.validator_for(schema)
-    klass.check_schema(schema)
-    return klass(schema, types=dict(array=(list, tuple)))
+        schema = _yaml().load(f)
+    validator = jsonschema.validators.validator_for(schema)
+    validator.check_schema(schema)
+
+    custom_validator = jsonschema.validators.extend(
+        validator, type_checker=validator.TYPE_CHECKER.redefine("array", _is_json_array)
+    )
+    return custom_validator(schema)
 
 
 DATASET_SCHEMA = _get_schema_validator(Path(__file__).parent / "dataset.schema.yaml")

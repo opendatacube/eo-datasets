@@ -3,20 +3,24 @@ Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise or esa.
 
 Takes ESA zipped datasets or Sinergise dataset directories
 """
-
+import fnmatch
 import json
+import logging
 import sys
 import uuid
 import zipfile
 from pathlib import Path
-from typing import Tuple, Dict, List, Optional
+from typing import Tuple, Dict, List, Optional, Iterable, Mapping
 
-from click import echo
-from defusedxml import minidom
 import click
+from defusedxml import minidom
 
 from eodatasets3 import DatasetAssembler
 from eodatasets3.ui import PathPath
+
+# Static namespace to generate uuids for datacube indexing
+S2_UUID_NAMESPACE = uuid.UUID("9df23adf-fc90-4ec7-9299-57bd536c7590")
+
 
 SENTINEL_MSI_BAND_ALIASES = {
     "01": "coastal_aerosol",
@@ -35,7 +39,7 @@ SENTINEL_MSI_BAND_ALIASES = {
 }
 
 
-def process_product_info(product_path: Path) -> Dict:
+def process_sinergise_product_info(product_path: Path) -> Dict:
     with product_path.open() as fp:
         product = json.load(fp)
 
@@ -47,9 +51,8 @@ def process_product_info(product_path: Path) -> Dict:
     latitude_band = tile["latitudeBand"]
     grid_square = tile["gridSquare"]
     return {
-        "sinergise_product_name": product["name"],
+        "sentinel:product_name": product["name"],
         "sinergise_product_id": product["id"],
-        "datetime": tile["timestamp"],
         "odc:region_code": f"{utm_zone}{latitude_band}{grid_square}",
         "sentinel:utm_zone": utm_zone,
         "sentinel:latitude_band": latitude_band,
@@ -99,26 +102,34 @@ def _value(root, *tags: str, type_=None):
     return value
 
 
-def process_metadata_xml(metadata_xml_path: Path) -> Dict:
-    root = minidom.parse(str(metadata_xml_path))
+def process_tile_metadata(contents: str) -> Dict:
+    """
+    Tile xml metadata format, as described by
+    xmlns https://psd-14.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd
+    """
+    root = minidom.parseString(contents)
 
     resolution = min(
         int(i.attributes["resolution"].value) for i in root.getElementsByTagName("Size")
     )
     return {
+        "datetime": _value(root, "SENSING_TIME"),
         "eo:cloud_cover": _value(root, "CLOUDY_PIXEL_PERCENTAGE", type_=float),
+        "eo:gsd": resolution,
+        "eo:sun_azimuth": _value(root, "Mean_Sun_Angle", "AZIMUTH_ANGLE", type_=float),
+        "eo:sun_elevation": _value(root, "Mean_Sun_Angle", "ZENITH_ANGLE", type_=float),
+        "odc:processing_datetime": _value(root, "ARCHIVING_TIME"),
         "sentinel:datastrip_id": _value(root, "DATASTRIP_ID"),
         "sentinel:sentinel_tile_id": _value(root, "TILE_ID"),
-        "eo:sun_azimuth": _value(root, "Mean_Sun_Angle", "ZENITH_ANGLE", type_=float),
-        "eo:sun_elevation": _value(
-            root, "Mean_Sun_Angle", "AZIMUTH_ANGLE", type_=float
-        ),
-        "eo:gsd": resolution,
-        "odc:processing_datetime": _value(root, "ARCHIVING_TIME"),
     }
 
 
-def process_mtd_ds(contents: str) -> Dict:
+def process_datastrip_metadata(contents: str) -> Dict:
+    """
+    Datastrip metadata format, as described by
+    xmlns https://psd-14.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Datastrip_Metadata.xsd
+
+    """
     root = minidom.parseString(contents)
 
     resolution = min(
@@ -131,141 +142,171 @@ def process_mtd_ds(contents: str) -> Dict:
     }
 
 
-def process_mtd_tl(contents: str) -> Dict:
-    root = minidom.parseString(contents)
-    return {
-        "eo:sun_azimuth": _value(root, "Mean_Sun_Angle", "AZIMUTH_ANGLE"),
-        "eo:sun_elevation": _value(root, "Mean_Sun_Angle", "ZENITH_ANGLE"),
-        "sentinel:datastrip_id": _value(root, "DATASTRIP_ID"),
-        "datetime": _value(root, "SENSING_TIME"),
-    }
-
-
-def process_mtd_msil1c(contents: str) -> Dict:
+def process_user_product_metadata(contents: str) -> Dict:
     root = minidom.parseString(contents)
 
-    product_uri = _value(root, "PRODUCT_URI")
+    product_uri = _value(root, "PRODUCT_URI").split(".")[0]
     region_code = product_uri.split("_")[5][1:]
     return {
         "eo:platform": _value(root, "SPACECRAFT_NAME"),
         "sat:relative_orbit": _value(root, "SENSING_ORBIT_NUMBER", type_=int),
         "sat:orbit_state": _value(root, "SENSING_ORBIT_DIRECTION").lower(),
         "sentinel:datatake_type": _value(root, "DATATAKE_TYPE"),
-        "odc:processing_datetime": _value(root, "GENERATION_TIME"),
         "sentinel:processing_baseline": _value(root, "PROCESSING_BASELINE"),
+        "sentinel:product_name": product_uri,
         "eo:cloud_cover": _value(root, "Cloud_Coverage_Assessment"),
         "odc:region_code": region_code,
     }
 
 
+def _get_stable_id(p: DatasetAssembler) -> uuid.UUID:
+    # These should have been extracted from our metadata files!
+    producer = p.producer
+    product_name = p.properties["sentinel:product_name"]
+    tile_id = p.properties["sentinel:sentinel_tile_id"]
+    return uuid.uuid5(
+        S2_UUID_NAMESPACE,
+        ":".join((producer, product_name, tile_id)),
+    )
+
+
 def prepare_and_write(
-    dataset: Path,
-    dataset_document: Path,
+    ds_path: Path,
+    output_yaml: Path,
+    producer: str,
 ) -> Tuple[uuid.UUID, Path]:
-    # Process esa dataset
-    if dataset.suffix == ".zip":
-        with zipfile.ZipFile(dataset, "r") as z:
-            # Get file paths for esa metadata files
-            mtd_ds_zip_path = [s for s in z.namelist() if "MTD_DS.xml" in s][0]
-            mtd_tl_zip_path = [s for s in z.namelist() if "MTD_TL.xml" in s][0]
-            mtd_msil1c_zip_path = [s for s in z.namelist() if "MTD_MSIL1C.xml" in s][0]
+    with DatasetAssembler(
+        metadata_path=output_yaml,
+        dataset_location=ds_path,
+    ) as p:
+        p.properties["odc:producer"] = producer
 
-            # Crawl through metadata files and return a dict of useful information
-            mtd_ds = process_mtd_ds(z.read(mtd_ds_zip_path).decode("utf-8"))
-            mtd_tl = process_mtd_tl(z.read(mtd_tl_zip_path).decode("utf-8"))
-            mtd_msil1c = process_mtd_msil1c(z.read(mtd_msil1c_zip_path).decode("utf-8"))
-
-            with DatasetAssembler(
-                metadata_path=dataset_document,
-                dataset_location=dataset,
-            ) as p:
-
-                p.properties["eo:instrument"] = "MSI"
-                p.properties["odc:producer"] = "esa.int"
-                p.properties["odc:product_family"] = "level1"
-                p.properties["odc:file_format"] = "JPEG2000"
-
-                p.properties.update(mtd_ds)
-                p.properties.update(mtd_tl)
-                p.properties.update(mtd_msil1c)
-
-                p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
-
-                for file in z.namelist():
-                    # T55HFA_20201011T000249_B01.jp2
-                    if ".jp2" in file and "TCI" not in file and "PVI" not in file:
-                        # path = 'zip:%s!%s' % (str(dataset), str(file))
-                        p.note_measurement(
-                            path=file,
-                            name=(
-                                SENTINEL_MSI_BAND_ALIASES[
-                                    (
-                                        file.split("_")[len(file.split("_")) - 1]
-                                        .replace(".jp2", "")
-                                        .replace("B", "")
-                                    )
-                                ]
-                            ),
-                            relative_to_dataset_location=True
-                            # path=path, name=name
-                        )
-
-                p.add_accessory_file("metadata:mtd_ds", mtd_ds_zip_path)
-                p.add_accessory_file("metadata:mtd_tl", mtd_tl_zip_path)
-                p.add_accessory_file("metadata:mtd_msil1c", mtd_msil1c_zip_path)
-
-                return p.done()
-
-    # process sinergise dataset
-    elif dataset.is_dir():
-
-        # Get file paths for sinergise metadata files
-        product_info_path = dataset / "productInfo.json"
-        metadata_xml_path = dataset / "metadata.xml"
-
-        if not product_info_path.exists():
-            raise ValueError(
-                "No productInfo.json file found. "
-                "Are you sure the input is a sinergise dataset folder?"
+        if producer == "esa.int":
+            jp2_offsets = _extract_esa_fields(ds_path, p)
+        elif producer == "sinergise.com":
+            jp2_offsets = _extract_sinergise_fields(ds_path, p)
+        else:
+            raise NotImplementedError(
+                f"Unknown s2 producer {producer}. Expected 'sinergise.com' or 'esa.int'"
             )
 
-        # Crawl through metadata files and return a dict of useful information
-        product_info = process_product_info(product_info_path)
-        metadata_xml = process_metadata_xml(metadata_xml_path)
+        p.dataset_id = _get_stable_id(p)
+        p.properties["eo:platform"] = _get_platform_name(p.properties)
+        p.properties["eo:instrument"] = "MSI"
+        p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
 
-        with DatasetAssembler(
-            metadata_path=dataset_document,
-            dataset_location=dataset,
-        ) as p:
-            p.properties["eo:platform"] = "sentinel-2a"
-            p.properties["eo:instrument"] = "MSI"
-            p.properties["odc:file_format"] = "JPEG2000"
-            p.properties["odc:product_family"] = "level1"
-            p.properties["odc:producer"] = "sinergise.com"
+        p.properties["odc:file_format"] = "JPEG2000"
+        p.properties["odc:product_family"] = "level1"
 
-            p.properties.update(metadata_xml)
-            p.properties.update(product_info)
+        for path in jp2_offsets:
+            band_number = _extract_band_number(path.stem)
+            if band_number.lower() in ("tci", "pvi", "preview"):
+                continue
+            if band_number not in SENTINEL_MSI_BAND_ALIASES:
+                raise RuntimeError(
+                    f"Unknown band number {band_number!r} in image {path}"
+                )
 
-            p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
+            p.note_measurement(
+                path=path,
+                name=SENTINEL_MSI_BAND_ALIASES[band_number],
+                relative_to_dataset_location=True,
+            )
 
-            for path in dataset.rglob("*.jp2"):
-                if "preview" not in path.stem and "TCI" not in path.stem:
-                    p.note_measurement(
-                        path=path,
-                        name=SENTINEL_MSI_BAND_ALIASES[path.stem.replace("B", "")],
-                    )
+        return p.done()
 
-            p.add_accessory_file("metadata:product_info", product_info_path)
-            p.add_accessory_file("metadata:sinergise_metadata", metadata_xml_path)
-            return p.done()
-    else:
-        raise NotImplementedError("Unknown input file type?")
+
+def _get_platform_name(p: Mapping) -> str:
+    # Grab it from the datastrip id,
+    # Eg. S2B_OPER_MSI_L1C_DS_VGS4_20210426T010904_S20210425T235239_N03
+
+    datastrip_id: str = p.get("sentinel:datastrip_id")
+    if not datastrip_id:
+        raise ValueError(
+            "Could not find a sentinel datastrip ID after reading all metadata documents"
+        )
+    if not datastrip_id.lower().startswith("s2"):
+        raise RuntimeError("Expected sentinel datastrip-id to start with 's2'!")
+    platform_variant = datastrip_id[1:3].lower()
+    platform_name = f"sentinel-{platform_variant}"
+    return platform_name
+
+
+def _extract_sinergise_fields(path: Path, p: DatasetAssembler) -> Iterable[Path]:
+    """Extract Sinergise metadata and return list of image offsets"""
+    product_info_path = path / "productInfo.json"
+    metadata_xml_path = path / "metadata.xml"
+
+    if not product_info_path.exists():
+        raise ValueError(
+            "No productInfo.json file found. "
+            "Are you sure the input is a sinergise dataset folder?"
+        )
+
+    p.properties.update(process_sinergise_product_info(product_info_path))
+    p.add_accessory_file("metadata:sinergise_product_info", product_info_path)
+
+    p.properties.update(process_tile_metadata(metadata_xml_path.read_text()))
+    p.add_accessory_file("metadata:s2_tile", metadata_xml_path)
+
+    # TODO: sinergise folders could `process_datastrip_metadata()` in an outer directory?
+
+    return path.glob("*.jp2")
+
+
+def _extract_esa_fields(dataset, p) -> Iterable[Path]:
+    """Extract ESA metadata and return list of image offsets"""
+    with zipfile.ZipFile(dataset, "r") as z:
+
+        def one(suffix: str) -> str:
+            """Find one path ending in the given name"""
+            matches = [s for s in z.namelist() if s.endswith(suffix)]
+            if len(matches) != 1:
+                raise ValueError(
+                    f"Expected exactly one file called {suffix} in {dataset}, found {len(matches)}"
+                )
+            return matches[0]
+
+        datastrip_md = one("MTD_DS.xml")
+        p.properties.update(
+            process_datastrip_metadata(z.read(datastrip_md).decode("utf-8"))
+        )
+        p.add_accessory_file("metadata:s2_datastrip", datastrip_md)
+
+        tile_md = one("MTD_TL.xml")
+        p.properties.update(process_tile_metadata(z.read(tile_md).decode("utf-8")))
+        p.add_accessory_file("metadata:s2_tile", tile_md)
+
+        user_product_md = one("MTD_MSIL1C.xml")
+        p.properties.update(
+            process_user_product_metadata(z.read(user_product_md).decode("utf-8"))
+        )
+        p.add_accessory_file("metadata:s2_user_product", user_product_md)
+
+        return [Path(p) for p in z.namelist() if "IMG_DATA" in p and p.endswith(".jp2")]
+
+
+def _extract_band_number(name: str) -> str:
+    """
+    >>> _extract_band_number('B03')
+    '03'
+    >>> _extract_band_number('T55HFA_20201011T000249_B01')
+    '01'
+    """
+    return name.split("_")[-1].replace("B", "")
+
+
+def _rglob_with_self(path: Path, pattern: str) -> Iterable[Path]:
+    if fnmatch.fnmatch(path.name, pattern):
+        yield path
+        return
+    yield from path.rglob(pattern)
 
 
 @click.command(help=__doc__)
 @click.argument(
     "datasets",
-    type=PathPath(exists=True, readable=True, writable=False),
+    type=PathPath(exists=True, readable=True, writable=False, resolve_path=True),
     nargs=-1,
 )
 @click.option(
@@ -278,32 +319,61 @@ def prepare_and_write(
     "--output-base",
     help="Write metadata files into a directory instead of alongside each dataset",
     required=False,
-    type=PathPath(exists=True, writable=True, dir_okay=True, file_okay=False),
+    type=PathPath(
+        exists=True, writable=True, dir_okay=True, file_okay=False, resolve_path=True
+    ),
 )
 def main(
     output_base: Optional[Path],
     datasets: List[Path],
     overwrite_existing: bool,
 ):
-    for dataset in datasets:
 
-        if dataset.is_dir():
-            output_path = dataset / f"{dataset.stem}.odc-metadata.yaml"
-        else:
-            output_path = dataset.with_suffix(".odc-metadata.yaml")
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
+    )
+    for input_path in datasets:
+        in_out_paths = [
+            *(
+                (
+                    "sinergise.com",
+                    # Input is the folder
+                    p.parent,
+                    # Output is an inner metadata file, with the same name as the folder (usually S2A....).
+                    (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
+                )
+                for p in _rglob_with_self(input_path, "tileInfo.json")
+            ),
+            *(
+                (
+                    "esa.int",
+                    # Input is zip file
+                    p,
+                    # Output is a sibling file with metadata suffix.
+                    p.with_suffix(".odc-metadata.yaml"),
+                )
+                for p in _rglob_with_self(input_path, "*.zip")
+            ),
+        ]
+        if not in_out_paths:
+            raise ValueError(
+                f"No S2 datasets found in given path {input_path}. "
+                f"Expected either Sinergise (productInfo.json) files or ESA zip files to be contained in it."
+            )
 
-        if output_base:
-            output_path = output_base / output_path.name
+        for producer, ds_path, output_yaml in in_out_paths:
+            if output_base:
+                output_yaml = output_base / output_yaml.name
 
-        if output_path.exists() and not overwrite_existing:
-            echo(f"Output exists. Skipping {output_path.name}")
-            continue
+            if output_yaml.exists():
+                if not overwrite_existing:
+                    logging.info("Output exists: skipping. %s", output_yaml)
+                    continue
 
-        uuid, path = prepare_and_write(
-            dataset,
-            output_path,
-        )
-        echo(f"Wrote {path}")
+                logging.info("Output exists: overwriting %s", output_yaml)
+
+            uuid, path = prepare_and_write(ds_path, output_yaml, producer)
+            logging.info("Wrote dataset %s to %s", uuid, path)
 
         sys.exit(0)
 

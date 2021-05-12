@@ -7,7 +7,17 @@ import math
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Counter, Dict, Generator, Optional, Union, Tuple, Sequence
+from typing import (
+    List,
+    Counter,
+    Dict,
+    Generator,
+    Optional,
+    Union,
+    Tuple,
+    Sequence,
+    Iterable,
+)
 
 import attr
 import click
@@ -259,24 +269,56 @@ def validate_product(doc: Dict) -> ValidationMessages:
     else:
         seen_names_and_aliases = collections.defaultdict(list)
         for measurement in measurements:
-            name = measurement.get("name")
+            measurement_name = measurement.get("name")
             dtype = measurement.get("dtype")
             nodata = measurement.get("nodata")
             if not numpy_value_fits_dtype(nodata, dtype):
                 yield _error(
                     "unsuitable_nodata",
-                    f"Measurement {name!r} nodata {nodata!r} does not fit a {dtype!r}",
+                    f"Measurement {measurement_name!r} nodata {nodata!r} does not fit a {dtype!r}",
                 )
 
-            for new_field in (name, *measurement.get("aliases", ())):
-                if new_field in seen_names_and_aliases:
-                    seen_in = ", ".join({name, *seen_names_and_aliases[new_field]})
+            # Were any of the names seen in other measurements?
+            these_names = measurement_name, *measurement.get("aliases", ())
+            for new_field_name in these_names:
+                measurements_with_this_name = seen_names_and_aliases[new_field_name]
+                if measurements_with_this_name:
+                    seen_in = " and ".join(repr(s) for s in measurements_with_this_name)
+
+                    # If the same name is used by different measurements, its a hard error.
                     yield _error(
                         "duplicate_measurement_name",
-                        f"Name {new_field!r} is used more than once in a measurement name or alias.",
-                        hint=f"Seen in {seen_in}",
+                        f"Name {new_field_name!r} is used by multiple measurements",
+                        hint=f"It's duplicated in an alias. "
+                        f"Seen in measurement(s) {seen_in}",
                     )
-                seen_names_and_aliases[new_field].append(name)
+
+            # Are any names duplicated within the one measurement? (not an error, but info)
+            for duplicate_name in _find_duplicates(these_names):
+                yield _info(
+                    "duplicate_alias_name",
+                    f"Measurement {measurement_name!r} has a duplicate alias named {duplicate_name!r}",
+                )
+
+            for field in these_names:
+                seen_names_and_aliases[field].append(measurement_name)
+
+
+def _find_duplicates(values: Iterable[str]) -> Generator[str, None, None]:
+    """Return any duplicate values in the given sequence
+
+    >>> list(_find_duplicates(('a', 'b', 'c')))
+    []
+    >>> list(_find_duplicates(('a', 'b', 'b')))
+    ['b']
+    >>> list(_find_duplicates(('a', 'b', 'b', 'a')))
+    ['a', 'b']
+    """
+    previous = None
+    for v in sorted(values):
+        if v == previous:
+            yield v
+        previous = v
 
 
 def numpy_value_fits_dtype(value, dtype):

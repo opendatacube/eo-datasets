@@ -3,7 +3,7 @@ from functools import partial
 from pathlib import Path
 from pprint import pformat
 
-from ruamel import yaml
+from eodatasets3 import serialise
 from deepdiff import DeepDiff
 
 from eodatasets3.prepare import noaa_c_c_prwtreatm_1_prepare
@@ -123,7 +123,9 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
     )
 
     assert expected_metadata_path.exists()
-    docs = list(yaml.safe_load_all(expected_metadata_path.open()))
+
+    with expected_metadata_path.open("r") as f:
+        docs = list(serialise.loads_yaml(f))
 
     for idx in range(len(expected_doc)):
         doc_diff = _diff(

@@ -7,17 +7,16 @@ import pytest
 from eodatasets3.prepare import sentinel_l1c_prepare
 from tests.common import check_prepare_outputs
 
-dataset = (
+DATASET_PATH: Path = Path(__file__).parent.parent / (
     "data/esa_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.zip"
 )
-
-DATASET_PATH: Path = Path(__file__).parent.parent / dataset
 
 
 @pytest.fixture()
 def expected_dataset_document():
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
+        "id": "7c1df12c-e580-5fa2-b51b-c30a59e73bbf",
         "crs": "epsg:32755",
         "geometry": {
             "coordinates": [
@@ -147,11 +146,15 @@ def expected_dataset_document():
             "eo:sun_elevation": 37.3713908882192,
             "odc:dataset_version": "1.0.20201011",
             "odc:file_format": "JPEG2000",
-            "odc:processing_datetime": datetime.datetime(2020, 10, 11, 1, 14, 46),
+            "odc:processing_datetime": datetime.datetime(
+                2020, 10, 11, 1, 47, 4, 112949
+            ),
             "odc:producer": "esa.int",
             "odc:product_family": "level1",
             "odc:region_code": "55HFA",
             "sentinel:datastrip_id": "S2B_OPER_MSI_L1C_DS_EPAE_20201011T011446_S20201011T000244_N02.09",
+            "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09",
+            "sentinel:product_name": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446",
             "sentinel:datatake_type": "INS-NOBS",
             "sat:orbit_state": "descending",
             "sat:relative_orbit": 30,
@@ -163,14 +166,14 @@ def expected_dataset_document():
             "sentinel:reception_station": "EDRS",
         },
         "accessories": {
-            "metadata:mtd_ds": {
+            "metadata:s2_datastrip": {
                 "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/DATASTRIP/"
                 "DS_EPAE_20201011T011446_S20201011T000244/MTD_DS.xml"
             },
-            "metadata:mtd_msil1c": {
+            "metadata:s2_user_product": {
                 "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/MTD_MSIL1C.xml"
             },
-            "metadata:mtd_tl": {
+            "metadata:s2_tile": {
                 "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
                 "L1C_T55HFA_A018789_20201011T000244/MTD_TL.xml"
             },
@@ -179,32 +182,18 @@ def expected_dataset_document():
 
 
 def test_run(tmp_path, expected_dataset_document):
-
-    # GIVEN:
-    #     A folder of imagery
-    outdir = tmp_path
-    indir = DATASET_PATH
-
-    if indir.is_file():
-        shutil.copy(indir, outdir)
-    else:
-        shutil.copytree(indir, outdir)
-
-    # WHEN:
-    #    Run prepare on that folder
-    expected_metadata_path = outdir / (
+    """
+    Run prepare on our test input scene, and check the created metadata matches expected.
+    """
+    shutil.copy(DATASET_PATH, tmp_path)
+    expected_metadata_path = tmp_path / (
         "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.odc-metadata.yaml"
     )
-
-    # THEN
-    #     A metadata file is added to it, with valid properties
-    #     Assert doc is expected doc
     check_prepare_outputs(
         invoke_script=sentinel_l1c_prepare.main,
         run_args=[
-            outdir / DATASET_PATH.name,
+            tmp_path / DATASET_PATH.name,
         ],
         expected_doc=expected_dataset_document,
         expected_metadata_path=expected_metadata_path,
-        ignore_fields=["id"],
     )
