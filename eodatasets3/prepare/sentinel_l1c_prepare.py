@@ -193,6 +193,7 @@ def prepare_and_write(
         p.dataset_id = _get_stable_id(p)
         p.properties["eo:platform"] = _get_platform_name(p.properties)
         p.properties["eo:instrument"] = "MSI"
+        p.properties["constellation"] = "sentinel-2"
         p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
 
         p.properties["odc:file_format"] = "JPEG2000"
