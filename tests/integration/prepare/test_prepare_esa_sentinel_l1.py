@@ -137,6 +137,7 @@ def expected_dataset_document():
         },
         "product": {"name": "esa_s2bm_level1_1"},
         "properties": {
+            "constellation": "sentinel-2",
             "datetime": datetime.datetime(2020, 10, 11, 0, 6, 49, 882566),
             "eo:cloud_cover": 24.9912,
             "eo:gsd": 10,
