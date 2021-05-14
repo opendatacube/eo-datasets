@@ -491,6 +491,52 @@ def test_dea_c3_naming_conventions(tmp_path: Path):
     )
 
 
+def test_dataset_multi_platform(tmp_path: Path):
+    """Can we make a dataset derived from multiple platforms?"""
+
+    # No platform is included in names when there's a mix.
+    with DatasetAssembler(tmp_path) as p:
+        p.platforms = ["Sentinel_2a", "landsat_7"]
+        assert p.platform == "landsat-7,sentinel-2a"
+
+        p.datetime = datetime(2019, 1, 1)
+        p.product_family = "peanuts"
+        p.processed_now()
+
+        dataset_id, metadata_path = p.done()
+
+    with metadata_path.open("r") as f:
+        doc = yaml.YAML(typ="safe").load(f)
+
+    assert doc["label"] == "peanuts_2019-01-01"
+    metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+    assert (
+        metadata_path_offset
+        == "peanuts/2019/01/01/peanuts_2019-01-01.odc-metadata.yaml"
+    )
+
+    # ... but show the platform abbreviation when there's a known group.
+    with DatasetAssembler(tmp_path) as p:
+        p.platforms = ["Sentinel_2a", "sentinel_2b"]
+        assert p.platform == "sentinel-2a,sentinel-2b"
+
+        p.datetime = datetime(2019, 1, 1)
+        p.product_family = "peanuts"
+        p.processed_now()
+
+        dataset_id, metadata_path = p.done()
+
+    with metadata_path.open("r") as f:
+        doc = yaml.YAML(typ="safe").load(f)
+
+    assert doc["label"] == "s2_peanuts_2019-01-01"
+    metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+    assert (
+        metadata_path_offset
+        == "s2_peanuts/2019/01/01/s2_peanuts_2019-01-01.odc-metadata.yaml"
+    )
+
+
 @pytest.mark.parametrize(
     "inherit_geom",
     [True, False],
