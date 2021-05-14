@@ -65,11 +65,11 @@ class DatasetCompletenessWarning(UserWarning):
 class DatasetAssembler(EoFields):
     # Properties that can be inherited from a source dataset. (when auto_inherit_properties=True)
     INHERITABLE_PROPERTIES = {
-        "constellation",
         "datetime",
         "dtr:end_datetime",
         "dtr:start_datetime",
         "eo:cloud_cover",
+        "eo:constellation",
         "eo:gsd",
         "eo:instrument",
         "eo:platform",
