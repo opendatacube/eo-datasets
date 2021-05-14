@@ -199,6 +199,7 @@ def test_minimal_package_with_product_name(tmp_path: Path, l1_ls8_folder: Path):
     with DatasetAssembler(out) as p:
         p.datetime = datetime(2019, 7, 4, 13, 7, 5)
         p.product_name = "loch_ness_sightings"
+        p.processed = datetime(2019, 7, 4, 13, 8, 7)
 
         p.write_measurement("blue", blue_geotiff_path)
 
