@@ -191,13 +191,15 @@ def prepare_and_write(
             )
 
         p.dataset_id = _get_stable_id(p)
-        p.properties["eo:platform"] = _get_platform_name(p.properties)
-        p.properties["eo:instrument"] = "MSI"
-        p.properties["constellation"] = "sentinel-2"
-        p.properties["odc:dataset_version"] = f"1.0.{p.processed:%Y%m%d}"
+
+        p.platform = _get_platform_name(p.properties)
+        p.instrument = "MSI"
+        p.constellation = "sentinel-2"
+
+        p.dataset_version = f"1.0.{p.processed:%Y%m%d}"
 
         p.properties["odc:file_format"] = "JPEG2000"
-        p.properties["odc:product_family"] = "level1"
+        p.product_family = "level1"
 
         for path in jp2_offsets:
             band_number = _extract_band_number(path.stem)
