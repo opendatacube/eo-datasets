@@ -187,9 +187,48 @@ def test_dea_style_package(
     )
 
 
-def test_minimal_package(tmp_path: Path, l1_ls8_folder: Path):
+def test_minimal_package_with_product_name(tmp_path: Path, l1_ls8_folder: Path):
     """
-    What's the minimum number of fields we can set and still produce a package?
+    You can specify an ODC product name manually to avoid most of the name generation.
+    """
+    out = tmp_path / "out"
+    out.mkdir()
+
+    [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
+
+    with DatasetAssembler(out) as p:
+        p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+        p.product_name = "loch_ness_sightings"
+
+        p.write_measurement("blue", blue_geotiff_path)
+
+        dataset_id, metadata_path = p.done()
+
+    assert dataset_id is not None
+    assert_file_structure(
+        out,
+        {
+            "loch_ness_sightings": {
+                "2019": {
+                    "07": {
+                        "04": {
+                            # Set a dataset version to get rid of 'beta' label.
+                            "loch_ness_sightings_2019-07-04.odc-metadata.yaml": "",
+                            "loch_ness_sightings_2019-07-04.proc-info.yaml": "",
+                            "loch_ness_sightings_2019-07-04_blue.tif": "",
+                            "loch_ness_sightings_2019-07-04.sha1": "",
+                        }
+                    }
+                }
+            }
+        },
+    )
+
+
+def test_minimal_generated_naming_package(tmp_path: Path, l1_ls8_folder: Path):
+    """
+    What's the minimum number of fields we can set and still generate file/product
+    names to produce a package?
     """
 
     out = tmp_path / "out"
