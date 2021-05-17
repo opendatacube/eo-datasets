@@ -26,7 +26,6 @@ nosetests.xml
 
 MANIFEST
 venv
-*_venv
 build
 
 .vscode
