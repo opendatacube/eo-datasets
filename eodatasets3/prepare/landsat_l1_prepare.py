@@ -428,10 +428,14 @@ def prepare_and_write(
         p.properties["eo:sun_elevation"] = mtl_doc["image_attributes"]["sun_elevation"]
         p.properties["landsat:collection_number"] = usgs_collection_number
         for section, fields in _COPYABLE_MTL_FIELDS[collection_key]:
-            for field in fields:
-                value = mtl_doc[section].get(field)
-                if value is not None and p.properties.get(f"landsat:{field}") is None:
-                    p.properties[f"landsat:{field}"] = value
+            if section in mtl_doc:
+                for field in fields:
+                    value = mtl_doc[section].get(field)
+                    if (
+                        value is not None
+                        and p.properties.get(f"landsat:{field}") is None
+                    ):
+                        p.properties[f"landsat:{field}"] = value
 
         p.region_code = f"{p.properties['landsat:wrs_path']:03d}{p.properties['landsat:wrs_row']:03d}"
         org_collection_number = utils.get_collection_number(
