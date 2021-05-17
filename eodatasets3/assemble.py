@@ -65,6 +65,7 @@ class DatasetCompletenessWarning(UserWarning):
 class DatasetAssembler(EoFields):
     # Properties that can be inherited from a source dataset. (when auto_inherit_properties=True)
     INHERITABLE_PROPERTIES = {
+        "constellation",
         "datetime",
         "dtr:end_datetime",
         "dtr:start_datetime",
@@ -104,6 +105,7 @@ class DatasetAssembler(EoFields):
         "landsat:landsat_scene_id",
         "landsat:wrs_path",
         "landsat:wrs_row",
+        "mission",
         "odc:region_code",
         "sat:absolute_orbit",
         "sat:anx_datetime",
