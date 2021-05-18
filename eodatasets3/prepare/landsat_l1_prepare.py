@@ -10,8 +10,6 @@ import re
 import tarfile
 import tempfile
 import uuid
-
-# import json
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Union, Iterable, Dict, Tuple, Callable, Generator
@@ -273,12 +271,10 @@ def read_mtl(fp: Iterable[Union[str, bytes]], root_element=None) -> Tuple[Dict, 
     ) -> dict:
 
         tree = {}
-        # print(lines)
         for line in lines:
             # If line is bytes-like convert to str
             if isinstance(line, bytes):
                 line = line.decode("utf-8")
-            # print(line)
             match = MTL_PAIRS_RE.findall(line)
             if match:
                 key, value = match[0]
@@ -290,10 +286,7 @@ def read_mtl(fp: Iterable[Union[str, bytes]], root_element=None) -> Tuple[Dict, 
                     tree[key_transform(key)] = _parse_value(value)
         return tree
 
-    # print(fp)
     tree = _parse_group(fp)
-    # print(tree)
-    # print(root_element)
     if root_element is None:
         root_element = list(tree.keys())[0]
     return tree[root_element], root_element
@@ -321,8 +314,6 @@ def prepare_and_write(
     Input dataset path can be a folder or a tar file.
     """
     mtl_doc, root_element, mtl_filename = get_mtl_content(ds_path)
-    # with open('test.json', 'w') as file:
-    #    file.write(json.dumps(mtl_doc))
     if not mtl_doc:
         raise ValueError(f"No MTL file found for {ds_path}")
     collection_key = "C2" if root_element == "landsat_metadata_file" else "C1"
@@ -388,7 +379,6 @@ def prepare_and_write(
         leveln_product_id = mtl_doc[coll_map[leveln_key_prefix + "_processing_record"]][
             "landsat_product_id"
         ]
-        # leveln_processed = mtl_doc[coll_map[leveln_key_prefix + "_processing_record"]]["date_product_generated"]
         leveln_processed = mtl_doc[coll_map[leveln_key_prefix + "_processing_record"]][
             "file_date"
         ]  # for C1 only
