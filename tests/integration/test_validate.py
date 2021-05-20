@@ -15,6 +15,18 @@ from rasterio.io import DatasetWriter
 Doc = Union[Dict, Path]
 
 
+@pytest.fixture()
+def simple_product():
+    return dict(
+        name="simple_test_product",
+        description="Our test product",
+        metadata={},
+        license="CC-BY-SA-4.0",
+        metadata_type="eo3",
+        measurements=[dict(name="blue", units="1", dtype="uint8", nodata=255)],
+    )
+
+
 class ValidateRunner:
     """
     Run the eo3 validator command-line interface and assert the results.
@@ -256,7 +268,7 @@ def test_crs_as_wkt(eo_validator: ValidateRunner, example_metadata: Dict):
 
 
 def test_valid_with_product_doc(
-    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path, simple_product: Dict
 ):
     """When a product is specified, it will validate that the measurements match the product"""
 
@@ -264,12 +276,35 @@ def test_valid_with_product_doc(
     eo_validator.assert_valid(l1_ls8_metadata_path)
 
     # It contains all measurements in the product, so will be valid when not thorough.
-    product = dict(
-        name="our_product",
-        metadata_type="eo3",
-        measurements=[dict(name="blue", dtype="uint8", nodata=255)],
-    )
-    eo_validator.assert_valid(product, l1_ls8_metadata_path)
+    eo_validator.assert_valid(simple_product, l1_ls8_metadata_path)
+
+
+def test_odc_product_schema(
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path, simple_product: Dict
+):
+    """
+    If a product fails against ODC's schema, it's an error.
+    """
+    # A missing field will fail the schema check from ODC.
+    # (these cannot be added to ODC so are a hard validation failure)
+    del simple_product["metadata"]
+    eo_validator.assert_invalid(simple_product, codes=["document_schema"])
+
+
+def test_warn_bad_product_license(
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path, simple_product: Dict
+):
+
+    # Missing license is a warning.
+    del simple_product["license"]
+    eo_validator.assert_valid(simple_product, expect_no_messages=False)
+    assert eo_validator.messages_with_severity == {
+        ("W", "no_license"): "Product 'simple_test_product' has no license field"
+    }
+
+    # Invalid license string (not SPDX format), error. Is caught by ODC schema.
+    simple_product["license"] = "Sorta Creative Commons"
+    eo_validator.assert_invalid(simple_product, codes=["document_schema"])
 
 
 def test_warn_duplicate_measurement_name(

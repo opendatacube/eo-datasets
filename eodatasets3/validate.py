@@ -25,14 +25,15 @@ import numpy as np
 import rasterio
 from boltons.iterutils import get_path
 from click import style, echo, secho
-from eodatasets3 import serialise, model
-from eodatasets3.model import DatasetDoc
-from eodatasets3.ui import PathPath, is_absolute, uri_resolve, bool_style
-from eodatasets3.utils import default_utc
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.errors import CRSError
 from shapely.validation import explain_validity
+
+from eodatasets3 import serialise, model
+from eodatasets3.model import DatasetDoc
+from eodatasets3.ui import PathPath, is_absolute, uri_resolve, bool_style
+from eodatasets3.utils import default_utc
 
 
 class Level(enum.Enum):
@@ -251,11 +252,28 @@ def validate_dataset(
 def validate_product(doc: Dict) -> ValidationMessages:
     """
     Check for common product mistakes
-
-    # TODO: validate against a schema. ODC core has one and does this already, but we don't currently depend on it.
     """
-    # We'll focus on the parts ODC doesn't yet do.
 
+    # Validate it against ODC's product schema.
+    has_doc_errors = False
+    for error in serialise.PRODUCT_SCHEMA.iter_errors(doc):
+        has_doc_errors = True
+        displayable_path = ".".join(map(str, error.absolute_path))
+        context = f"({displayable_path}) " if displayable_path else ""
+        yield _error("document_schema", f"{context}{error.message} ")
+
+    # There's no point checking further if the core doc structure is wrong.
+    if has_doc_errors:
+        return
+
+    if not doc.get("license", "").strip():
+        yield _warning(
+            "no_license",
+            f"Product {doc['name']!r} has no license field",
+            hint='Eg. "CC-BY-SA-4.0" (SPDX format), "various" or "proprietary"',
+        )
+
+    # Check measurement name clashes etc.
     measurements = doc.get("measurements")
     if measurements is None:
         # Products don't have to have measurements. (eg. provenance-only products)
