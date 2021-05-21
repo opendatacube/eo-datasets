@@ -173,13 +173,13 @@ def test_allow_optional_geo(eo_validator: ValidateRunner, example_metadata: Dict
 
 
 def test_missing_geo_fields(eo_validator: ValidateRunner, example_metadata: Dict):
-    """ If you have one gis field, you should have all of them"""
+    """If you have one gis field, you should have all of them"""
     del example_metadata["crs"]
     eo_validator.assert_invalid(example_metadata, codes=["incomplete_crs"])
 
 
 def test_warn_bad_formatting(eo_validator: ValidateRunner, example_metadata: Dict):
-    """ A warning if fields aren't formatted in standard manner."""
+    """A warning if fields aren't formatted in standard manner."""
     example_metadata["properties"]["eo:platform"] = example_metadata["properties"][
         "eo:platform"
     ].upper()
