@@ -99,12 +99,11 @@ LANDSAT_OLI_TIRS_BAND_ALIASES = {
     "3": "green",
     "4": "red",
     "5": "nir",
-    "st_b6": "st_b6",
     "6": "swir_1",
     "7": "swir_2",
     "8": "panchromatic",
     "9": "cirrus",
-    "st_b10": "st_b10",
+    "st_b10": "lwir",  # USGS only
     "10": "lwir_1",
     "11": "lwir_2",
     "quality": "quality",
@@ -117,15 +116,15 @@ LANDSAT_xTM_BAND_ALIASES = {
     "3": "red",
     "4": "nir",
     "5": "swir_1",
-    "st_b6": "st_b6",
     "6": "tir",
     "6_vcid_1": "tir_1",
     "6_vcid_2": "tir_2",
+    "st_b6": "lwir",  # USGS only
     "7": "swir_2",
     "8": "panchromatic",
-    "st_b10": "st_b10",
     "quality": "quality",
-    "qa_aerosol": "qa_aerosol",
+    "cloud_qa": "qa_cloud",
+    "atmos_opacity": "atmos_opacity",
 }
 
 MTL_PAIRS_RE = re.compile(r"(\w+)\s=\s(.*)")
@@ -463,6 +462,30 @@ def prepare_and_write(
                     band_aliases["qa_aerosol"],
                     mtl_doc[coll_map["product_contents_fn"]][
                         "file_name_quality_l2_aerosol"
+                    ],
+                    relative_to_dataset_location=True,
+                    expand_valid_data=False,
+                )
+            if (
+                "file_name_quality_l2_surface_reflectance_cloud"
+                in mtl_doc[coll_map["product_contents_fn"]]
+            ):
+                p.note_measurement(
+                    band_aliases["cloud_qa"],
+                    mtl_doc[coll_map["product_contents_fn"]][
+                        "file_name_quality_l2_surface_reflectance_cloud"
+                    ],
+                    relative_to_dataset_location=True,
+                    expand_valid_data=False,
+                )
+            if (
+                "file_name_atmospheric_opacity"
+                in mtl_doc[coll_map["product_contents_fn"]]
+            ):
+                p.note_measurement(
+                    band_aliases["atmos_opacity"],
+                    mtl_doc[coll_map["product_contents_fn"]][
+                        "file_name_atmospheric_opacity"
                     ],
                     relative_to_dataset_location=True,
                     expand_valid_data=False,
