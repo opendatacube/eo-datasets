@@ -1,0 +1,44 @@
+colors:
+    blue: 4.0
+    green: 617.0
+    red: 3.0
+    teal: 105.0
+    yellow: 1.0
+error_message: no errors
+final_qa_count: 675
+granule: S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00
+ref_date: '2013-09-18T00:00:00+00:00'
+ref_source: GQA_v3
+ref_source_path: /g/data/v10/eoancillarydata/GCP/GQA_v3/wrs2/089/079/LC80890792013261LGN00_B6.TIF
+residual:
+    abs:
+        x: 0.37
+        xy: 0.39
+        y: 0.14
+    abs_iterative_mean:
+        x: 0.34
+        xy: 0.36
+        y: 0.11
+    cep90: 0.51
+    iterative_mean:
+        x: 0.34
+        xy: 0.34
+        y: 0.06
+    iterative_stddev:
+        x: 0.11
+        xy: 0.17
+        y: 0.12
+    mean:
+        x: 0.34
+        xy: 0.35
+        y: 0.06
+    stddev:
+        x: 0.37
+        xy: 0.49
+        y: 0.32
+software_versions:
+    eugl:
+        repo_url: https://github.com/OpenDataCubePipelines/eugl
+        version: 0.3.1
+    gverify:
+        version: v0.25c
