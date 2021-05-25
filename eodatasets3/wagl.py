@@ -492,13 +492,15 @@ def _load_level1_doc(
         else:
             metadata_path = level1_path.with_suffix(".odc-metadata.yaml")
 
-    if not metadata_path.exists() and (not allow_missing_provenance):
-        raise ValueError(
-            "No level1 found or provided. "
-            f"WAGL said it was at path {str(level1_path)!r}. "
-            "Which has no metadata doc we can find, and you didn't specify an alternative. "
-            f"(allow_missing_provenance={allow_missing_provenance})"
-        )
+    if not metadata_path.exists():
+        if not allow_missing_provenance:
+            raise ValueError(
+                "No level1 found or provided. "
+                f"WAGL said it was at path {str(level1_path)!r}. "
+                "Which has no metadata doc we can find, and you didn't specify an alternative. "
+                f"(allow_missing_provenance={allow_missing_provenance})"
+            )
+        return None
     return serialise.from_path(metadata_path)
 
 
