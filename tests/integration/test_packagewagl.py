@@ -14,7 +14,7 @@ from rio_cogeo import cogeo
 import eodatasets3
 from eodatasets3.model import DatasetDoc
 from tests import assert_file_structure
-from tests.common import assert_same_as_file
+from tests.common import assert_same_as_file, assert_expected_eo3_doc
 from . import assert_image
 
 h5py = pytest.importorskip(
@@ -147,7 +147,7 @@ def test_whole_landsat_wagl_package(
     [image] = expected_folder.rglob("*_oa_*nbart-contiguity.tif")
     assert_image(image, nodata=255, unique_pixel_counts={0: 1979, 1: 4183})
 
-    assert_same_as_file(
+    assert_expected_eo3_doc(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             # A stable ID is taken from the WAGL doc.
@@ -712,7 +712,7 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
     [image] = expected_folder.rglob("*_oa_*nbart-contiguity.tif")
     assert_image(image, nodata=255, unique_pixel_counts={0: 5367, 1: 6733})
 
-    assert_same_as_file(
+    assert_expected_eo3_doc(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             "id": "14cfa990-7e2f-4f0c-bd5e-b4cb28c27e8d",
@@ -1125,7 +1125,7 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path):
     )
     [output_metadata] = expected_folder.rglob("*.odc-metadata.yaml")
 
-    assert_same_as_file(
+    assert_expected_eo3_doc(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             "id": "28f110b8-ee82-4fdd-87e1-3d126c32c5e4",
