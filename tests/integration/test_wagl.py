@@ -1,6 +1,8 @@
 from pathlib import Path
 from uuid import UUID
 
+import pytest
+
 from eodatasets3.wagl import _load_level1_doc
 
 # data/LC08_L1TP_090084_20160121_20200907_02_T1/LC08_L1TP_090084_20160121_20200907_02_T1.odc-metadata.yaml
@@ -38,6 +40,14 @@ def test_get_level1_metadata_path_yaml_alongside_tar():
 
 
 def test_get_level1_metadata_no_source():
+    # Complain when the embedded level1 reference doesn't exist.
     wagl_doc = {"source_datasets": {"source_level1": "/no/where/good"}}
-    doc = _load_level1_doc(wagl_doc)
+    with pytest.raises(
+        ValueError,
+        match="No level1 found or provided. WAGL said it was at path '/no/where/good'*",
+    ):
+        _load_level1_doc(wagl_doc)
+
+    # .... unless we allow missing provenance.
+    doc = _load_level1_doc(wagl_doc, allow_missing_provenance=True)
     assert doc is None
