@@ -1,0 +1,8 @@
+error_msg: ''
+executable: /g/data/v10/projects/geo_assess/tool/image-gverify_v0.25c
+granule: S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00
+ref_date: '2013-09-18T00:00:00+00:00'
+ref_resolution:
+- 25.0
+- 25.0
+ref_source_path: /g/data/v10/eoancillarydata/GCP/GQA_v3/wrs2/089/079/LC80890792013261LGN00_B6.TIF

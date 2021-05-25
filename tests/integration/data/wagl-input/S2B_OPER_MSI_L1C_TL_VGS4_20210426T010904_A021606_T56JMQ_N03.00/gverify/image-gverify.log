@@ -1,0 +1,118 @@
+2021-05-21T07:51:17 main.cpp 34: INFO: Arguments
+gridSize = '50'
+resampleType  = 'BI'
+nullValue = '0.000000000000000'
+mayContainNullValues = 'TRUE'
+chipGenType = 'EVEN'
+fixedChipLocationFile = '
+correlationThreshold = '0.750000000000000'
+referenceImage = 
+'	pathToImage = '/g/data/u46/users/dsg547/sandbox/processingDEA/l1rt_c2/workdir_sinergise/batchid-eb95a191cc/jobid-2e9058/0.ARD/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/gverify/reference.vrt'
+	proj4Str = '''
+inputImage = 
+'	pathToImage = '/g/data/u46/users/dsg547/sandbox/processingDEA/l1rt_c2/workdir_sinergise/batchid-eb95a191cc/jobid-2e9058/0.ARD/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/gverify/source-BAND-11.tif'
+	proj4Str = '''
+logPath = '/g/data/u46/users/dsg547/sandbox/processingDEA/l1rt_c2/workdir_sinergise/batchid-eb95a191cc/jobid-2e9058/0.ARD/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/gverify'
+outputPath = '/g/data/u46/users/dsg547/sandbox/processingDEA/l1rt_c2/workdir_sinergise/batchid-eb95a191cc/jobid-2e9058/0.ARD/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/gverify'
+threadCount = '4'
+usePhaseCorrelation = 'FALSE'
+workingDirectory = '/g/data/u46/users/dsg547/sandbox/processingDEA/l1rt_c2/workdir_sinergise/batchid-eb95a191cc/jobid-2e9058/0.ARD/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/gverify'
+chipSize = '25'
+amountOfPyramids = '5'
+saveTiff = 'FALSE'
+saveUnion = 'TRUE'
+
+
+2021-05-21T07:51:23 ul_Reproject.cpp 137: INFO: Projecting 100%   
+2021-05-21T07:51:27 ul_Reproject.cpp 180: INFO: Generate translation map 100%   
+2021-05-21T07:51:27 ul_Resampler.h 98: INFO: Resampler is bilinear
+2021-05-21T07:51:27 ul_Resampler.h 316: INFO: Resampling 100%     
+2021-05-21T07:51:28 ul_ImageOverlap.cpp 318: INFO: Save new overlapped image to '/g/data/u46/users/dsg547/sandbox/processingDEA/l1rt_c2/workdir_sinergise/batchid-eb95a191cc/jobid-2e9058/0.ARD/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/gverify/MinMaxBox/Input/warpedInput_source-BAND-11.tif'
+2021-05-21T07:51:29 ul_ImageOverlap.cpp 318: INFO: Save new overlapped image to '/g/data/u46/users/dsg547/sandbox/processingDEA/l1rt_c2/workdir_sinergise/batchid-eb95a191cc/jobid-2e9058/0.ARD/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/gverify/MinMaxBox/Reference/reference.vrt'
+2021-05-21T07:51:30 ul_ImageSaverGDAL.cpp 389: WARN: Cannot write 'VRT' defaulting to GEOTIFF
+2021-05-21T07:51:30 ul_PaddImage.cpp 144: INFO: Processing 100%     
+2021-05-21T07:51:31 ul_PaddImage.cpp 144: INFO: Processing 100%     
+2021-05-21T07:51:31 ul_PaddImage.cpp 144: INFO: Processing 100%     
+2021-05-21T07:51:32 ul_PaddImage.cpp 144: INFO: Processing 100%     
+2021-05-21T07:51:32 ul_TiledGaussianPyramidTiePointGenerator.cpp 535: INFO: <<----------------------------------------------------------->>
+2021-05-21T07:51:32 ul_TiledGaussianPyramidTiePointGenerator.cpp 536: INFO:  <----TILE LOOP (1/1)----------------->
+2021-05-21T07:51:32 ul_TiledGaussianPyramidTiePointGenerator.cpp 537: INFO: <<----------------------------------------------------------->>
+2021-05-21T07:51:32 ul_GaussianPyramidTiePointGenerator.cpp 90: INFO: Generating pyramid level '2' of '5' for image 'Input_1_1'
+2021-05-21T07:51:32 ul_GaussianPyramidTiePointGenerator.cpp 90: INFO: Generating pyramid level '3' of '5' for image 'Input_1_1'
+2021-05-21T07:51:32 ul_GaussianPyramidTiePointGenerator.cpp 90: INFO: Generating pyramid level '4' of '5' for image 'Input_1_1'
+2021-05-21T07:51:32 ul_GaussianPyramidTiePointGenerator.cpp 90: INFO: Generating pyramid level '5' of '5' for image 'Input_1_1'
+2021-05-21T07:51:33 ul_GaussianPyramidTiePointGenerator.cpp 90: INFO: Generating pyramid level '2' of '5' for image 'Reference_1_1'
+2021-05-21T07:51:33 ul_GaussianPyramidTiePointGenerator.cpp 90: INFO: Generating pyramid level '3' of '5' for image 'Reference_1_1'
+2021-05-21T07:51:34 ul_GaussianPyramidTiePointGenerator.cpp 90: INFO: Generating pyramid level '4' of '5' for image 'Reference_1_1'
+2021-05-21T07:51:34 ul_GaussianPyramidTiePointGenerator.cpp 90: INFO: Generating pyramid level '5' of '5' for image 'Reference_1_1'
+2021-05-21T07:51:34 ul_GaussianPyramidTiePointGeneratorProcessingLoop.cpp 132: INFO: <<----PYRAMID LOOP (1/5)----------------->>
+2021-05-21T07:51:34 ul_EvenChips.cpp 147: INFO: Processing 100%      
+2021-05-21T07:51:34 ul_EvenChips.cpp 149: INFO: Generated '25' chips
+2021-05-21T07:51:34 ul_TiePointGenerator.cpp 166: INFO: Correlating '25' chips of size '25x25' on a search window of size '42x42' using a 'CCOEFF_NORM' correlator
+2021-05-21T07:51:34 ul_CorrelationHandler.cpp 175: INFO: Starting chip correlation
+2021-05-21T07:51:34 ul_TiePointGenerator.cpp 195: INFO: Removing duplicate GCPs
+2021-05-21T07:51:34 ul_TiePointGenerator.cpp 219: INFO: Removed '0' duplicate GCPs
+2021-05-21T07:51:34 ul_TiePointGenerator.cpp 285: INFO: Obtained '25' chips
+2021-05-21T07:51:34 ul_TiePointGeneratorHullReject.cpp 29: INFO: Not going to reject GCPs based on the image outer hulls
+2021-05-21T07:51:34 ul_GaussianPyramidTiePointGeneratorProcessingLoop.cpp 191: INFO: Average shift for pyramid scene '1/5' is 'x = -2.333035240835670 y = 3.015013112188899' pixels
+2021-05-21T07:51:34 ul_GaussianPyramidTiePointGeneratorProcessingLoop.cpp 132: INFO: <<----PYRAMID LOOP (2/5)----------------->>
+2021-05-21T07:51:34 ul_EvenChips.cpp 147: INFO: Processing 100%      
+2021-05-21T07:51:34 ul_EvenChips.cpp 149: INFO: Generated '121' chips
+2021-05-21T07:51:34 ul_TiePointGenerator.cpp 166: INFO: Correlating '121' chips of size '25x25' on a search window of size '40x40' using a 'CCOEFF_NORM' correlator
+2021-05-21T07:51:34 ul_CorrelationHandler.cpp 175: INFO: Starting chip correlation
+2021-05-21T07:51:34 ul_TiePointGenerator.cpp 195: INFO: Removing duplicate GCPs
+2021-05-21T07:51:34 ul_TiePointGenerator.cpp 219: INFO: Removed '0' duplicate GCPs
+2021-05-21T07:51:34 ul_TiePointGenerator.cpp 285: INFO: Obtained '121' chips
+2021-05-21T07:51:34 ul_TiePointGeneratorHullReject.cpp 29: INFO: Not going to reject GCPs based on the image outer hulls
+2021-05-21T07:51:34 ul_GaussianPyramidTiePointGeneratorProcessingLoop.cpp 191: INFO: Average shift for pyramid scene '2/5' is 'x = 3.955494291007754 y = -6.008584648439534' pixels
+2021-05-21T07:51:34 ul_GaussianPyramidTiePointGeneratorProcessingLoop.cpp 132: INFO: <<----PYRAMID LOOP (3/5)----------------->>
+2021-05-21T07:51:34 ul_EvenChips.cpp 147: INFO: Processing 100%      
+2021-05-21T07:51:34 ul_EvenChips.cpp 149: INFO: Generated '484' chips
+2021-05-21T07:51:34 ul_TiePointGenerator.cpp 166: INFO: Correlating '484' chips of size '25x25' on a search window of size '40x40' using a 'CCOEFF_NORM' correlator
+2021-05-21T07:51:34 ul_CorrelationHandler.cpp 175: INFO: Starting chip correlation
+2021-05-21T07:51:34 ul_TiePointGenerator.cpp 195: INFO: Removing duplicate GCPs
+2021-05-21T07:51:34 ul_TiePointGenerator.cpp 219: INFO: Removed '0' duplicate GCPs
+2021-05-21T07:51:34 ul_TiePointGenerator.cpp 285: INFO: Obtained '484' chips
+2021-05-21T07:51:34 ul_TiePointGeneratorHullReject.cpp 29: INFO: Not going to reject GCPs based on the image outer hulls
+2021-05-21T07:51:34 ul_GaussianPyramidTiePointGeneratorProcessingLoop.cpp 191: INFO: Average shift for pyramid scene '3/5' is 'x = -0.088560077633674 y = 0.010043035392112' pixels
+2021-05-21T07:51:34 ul_GaussianPyramidTiePointGeneratorProcessingLoop.cpp 132: INFO: <<----PYRAMID LOOP (4/5)----------------->>
+2021-05-21T07:51:34 ul_EvenChips.cpp 147: INFO: Processing 100%      
+2021-05-21T07:51:35 ul_EvenChips.cpp 149: INFO: Generated '2025' chips
+2021-05-21T07:51:35 ul_TiePointGenerator.cpp 166: INFO: Correlating '2025' chips of size '25x25' on a search window of size '40x40' using a 'CCOEFF_NORM' correlator
+2021-05-21T07:51:35 ul_CorrelationHandler.cpp 175: INFO: Starting chip correlation
+2021-05-21T07:51:36 ul_TiePointGenerator.cpp 195: INFO: Removing duplicate GCPs
+2021-05-21T07:51:36 ul_TiePointGenerator.cpp 219: INFO: Removed '0' duplicate GCPs
+2021-05-21T07:51:36 ul_TiePointGenerator.cpp 285: INFO: Obtained '2025' chips
+2021-05-21T07:51:36 ul_TiePointGeneratorHullReject.cpp 29: INFO: Not going to reject GCPs based on the image outer hulls
+2021-05-21T07:51:36 ul_GaussianPyramidTiePointGeneratorProcessingLoop.cpp 191: INFO: Average shift for pyramid scene '4/5' is 'x = -0.169322215289877 y = 0.027854896463842' pixels
+2021-05-21T07:51:36 ul_GaussianPyramidTiePointGeneratorProcessingLoop.cpp 132: INFO: <<----PYRAMID LOOP (5/5)----------------->>
+2021-05-21T07:51:36 ul_EvenChips.cpp 147: INFO: Processing 100%      
+2021-05-21T07:51:36 ul_EvenChips.cpp 149: INFO: Generated '8100' chips
+2021-05-21T07:51:36 ul_TiePointGenerator.cpp 166: INFO: Correlating '8100' chips of size '25x25' on a search window of size '40x40' using a 'CCOEFF_NORM' correlator
+2021-05-21T07:51:36 ul_CorrelationHandler.cpp 175: INFO: Starting chip correlation
+2021-05-21T07:51:40 ul_TiePointGenerator.cpp 195: INFO: Removing duplicate GCPs
+2021-05-21T07:51:40 ul_TiePointGenerator.cpp 219: INFO: Removed '0' duplicate GCPs
+2021-05-21T07:51:40 ul_TiePointGenerator.cpp 285: INFO: Obtained '8100' chips
+2021-05-21T07:51:40 ul_GcpHullRejection.cpp 260: INFO: Hull trim size is '25'
+2021-05-21T07:51:41 ul_ConvKernelToImage.h 178: INFO: 100%   
+2021-05-21T07:51:41 ul_ConvKernelToImage.h 178: INFO: 100%   
+2021-05-21T07:51:41 ul_ConvexHull.cpp 142: INFO: Sorting '82472' data points
+2021-05-21T07:51:41 ul_ConvexHull.cpp 119: INFO: CConvexHull 100%      
+2021-05-21T07:51:41 ul_ConvexHull.cpp 142: INFO: Sorting '415641' data points
+2021-05-21T07:51:41 ul_ConvexHull.cpp 119: INFO: CConvexHull 100%      
+2021-05-21T07:51:42 ul_ConvexHull.cpp 119: INFO: CConvexHull 100%      
+2021-05-21T07:51:42 ul_ConvexHull.cpp 119: INFO: CConvexHull 100%      
+2021-05-21T07:51:42 ul_GcpOutlierTestingHullGenThread.cpp 235: INFO: TrimHullArea 100%     
+2021-05-21T07:51:43 ul_GcpOutlierTestingHullGenThread.cpp 235: INFO: TrimHullArea 100%     
+2021-05-21T07:51:43 ul_GcpHullRejection.cpp 151: INFO: RejectGcps 100%     
+2021-05-21T07:51:43 ul_GcpHullRejection.cpp 271: INFO: Rejected a total of '108' GCP on the outer hull edges
+2021-05-21T07:51:43 ul_GaussianPyramidTiePointGeneratorProcessingLoop.cpp 210: INFO: Average shift in pixels are 'x = -0.335765525909075 y = 0.065760001441056'
+2021-05-21T07:51:43 ul_TiledGaussianPyramidTiePointGenerator.cpp 458: INFO: Removing duplicate GCPs
+2021-05-21T07:51:43 ul_TiledGaussianPyramidTiePointGenerator.cpp 482: INFO: Removed '0' duplicate GCPs
+2021-05-21T07:51:46 GenerateResults.cpp 68: INFO: Residual X = 0.365903497696479 Y = 0.144721180586622
+2021-05-21T07:51:46 GenerateResults.cpp 92: INFO: Residual histogram
+	Green 617
+	Teal 105
+	Blue 4
+	Yellow 1
+	Red 3

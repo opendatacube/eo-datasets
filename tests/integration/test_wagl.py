@@ -1,5 +1,7 @@
 from pathlib import Path
-from eodatasets3.wagl import _get_level1_metadata_path
+from uuid import UUID
+
+from eodatasets3.wagl import _load_level1_doc
 
 # data/LC08_L1TP_090084_20160121_20200907_02_T1/LC08_L1TP_090084_20160121_20200907_02_T1.odc-metadata.yaml
 
@@ -25,17 +27,17 @@ L1_C2_METADATA_TAR_YAML: Path = (
 
 def test_get_level1_metadata_path_yaml_in_dir():
     wagl_doc = {"source_datasets": {"source_level1": L1_C2_METADATA_DIR}}
-    result = Path(_get_level1_metadata_path(wagl_doc))
-    assert result.name == "LC08_L1TP_090084_20160121_20200907_02_T1.odc-metadata.yaml"
-    assert result == L1_C2_METADATA_DIR_YAML
+    doc = _load_level1_doc(wagl_doc)
+    assert doc.id == UUID("d9221c40-24c3-5356-ab22-4dcac2bf2d70")
 
 
 def test_get_level1_metadata_path_yaml_alongside_tar():
     wagl_doc = {"source_datasets": {"source_level1": L1_C2_METADATA_TAR}}
-    result = Path(_get_level1_metadata_path(wagl_doc))
-    assert result == L1_C2_METADATA_TAR_YAML
+    doc = _load_level1_doc(wagl_doc)
+    assert doc.id == UUID("f23c5fa2-3321-5be9-9872-2be73fee12a6")
 
 
 def test_get_level1_metadata_no_source():
     wagl_doc = {"source_datasets": {"source_level1": "/no/where/good"}}
-    assert _get_level1_metadata_path(wagl_doc) is None
+    doc = _load_level1_doc(wagl_doc)
+    assert doc is None

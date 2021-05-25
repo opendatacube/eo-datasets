@@ -1,0 +1,32 @@
+<VRTDataset rasterXSize="15261" rasterYSize="15724">
+  <SRS dataAxisToSRSAxisMapping="1,2">PROJCS["GDA94 / MGA zone 56",GEOGCS["GDA94",DATUM["Geocentric_Datum_of_Australia_1994",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6283"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4283"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",153],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","28356"]]</SRS>
+  <GeoTransform>  2.6332500000000000e+05,  2.5000000000000000e+01,  0.0000000000000000e+00,  7.0824000000000000e+06,  0.0000000000000000e+00, -2.5000000000000000e+01</GeoTransform>
+  <VRTRasterBand dataType="UInt16" band="1">
+    <NoDataValue>0</NoDataValue>
+    <ColorInterp>Gray</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">/g/data/v10/eoancillarydata/GCP/GQA_v3/wrs2/089/079/LC80890792013261LGN00_B6.TIF</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="9247" RasterYSize="9359" DataType="UInt16" BlockXSize="9247" BlockYSize="1" />
+      <SrcRect xOff="0" yOff="0" xSize="9247" ySize="9359" />
+      <DstRect xOff="6014" yOff="0" xSize="9247" ySize="9359" />
+      <NODATA>0</NODATA>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">/g/data/v10/eoancillarydata/GCP/GQA_v3/wrs2/089/080/LC80890802013261LGN00_B6.TIF</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="9243" RasterYSize="9349" DataType="UInt16" BlockXSize="9243" BlockYSize="1" />
+      <SrcRect xOff="0" yOff="0" xSize="9243" ySize="9349" />
+      <DstRect xOff="4574" yOff="6375" xSize="9243" ySize="9349" />
+      <NODATA>0</NODATA>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">/g/data/v10/eoancillarydata/GCP/GQA_v3/wrs2/090/079/LC80900792013268LGN00_B6.TIF</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="9173" RasterYSize="9289" DataType="UInt16" BlockXSize="9173" BlockYSize="1" />
+      <SrcRect xOff="0" yOff="0" xSize="9173" ySize="9289" />
+      <DstRect xOff="0" yOff="56" xSize="9173" ySize="9289" />
+      <NODATA>0</NODATA>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>
