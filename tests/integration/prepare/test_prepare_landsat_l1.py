@@ -75,31 +75,31 @@ def test_prepare_l8_l1_c2(
     )
 
 
-# def test_prepare_l8_l2_c2(
-#     tmp_path: Path, l2_c2_ls8_folder: Path, l2_c2_ls8_usgs_expected: Dict
-# ):
-#     """Run prepare script with a source telemetry data and unique producer."""
-#     assert l2_c2_ls8_folder.exists(), "Test data missing(?)"
+def test_prepare_l8_l2_c2(
+    tmp_path: Path, l2_c2_ls8_folder: Path, l2_c2_ls8_usgs_expected: Dict
+):
+    """Run prepare script with a source telemetry data and unique producer."""
+    assert l2_c2_ls8_folder.exists(), "Test data missing(?)"
 
-#     output_path = tmp_path
-#     expected_metadata_path = (
-#         output_path
-#         / "098"
-#         / "084"
-#         / "LC08_L2SP_098084_20210503_20210508_02_T1.odc-metadata.yaml"
-#     )
-#     check_prepare_outputs(
-#         invoke_script=landsat_l1_prepare.main,
-#         run_args=[
-#             "--output-base",
-#             output_path,
-#             "--producer",
-#             "usgs.gov",
-#             l2_c2_ls8_folder,
-#         ],
-#         expected_doc=l2_c2_ls8_usgs_expected,
-#         expected_metadata_path=expected_metadata_path,
-#     )
+    output_path = tmp_path
+    expected_metadata_path = (
+        output_path
+        / "098"
+        / "084"
+        / "LC08_L2SP_098084_20210503_20210508_02_T1.odc-metadata.yaml"
+    )
+    check_prepare_outputs(
+        invoke_script=landsat_l1_prepare.main,
+        run_args=[
+            "--output-base",
+            output_path,
+            "--producer",
+            "usgs.gov",
+            l2_c2_ls8_folder,
+        ],
+        expected_doc=l2_c2_ls8_usgs_expected,
+        expected_metadata_path=expected_metadata_path,
+    )
 
 
 def test_prepare_l8_l1_tarball_with_source(

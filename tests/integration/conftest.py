@@ -21,8 +21,16 @@ L8_INPUT_PATH: Path = (
     Path(__file__).parent / "data" / "LC08_L1TP_090084_20160121_20170405_01_T1"
 )
 
+L8_L2_INPUT_PATH: Path = (
+    Path(__file__).parent / "data" / "LC08_L2SP_098084_20210503_20210508_02_T1"
+)
+
 L8_C2_INPUT_PATH: Path = (
     Path(__file__).parent / "data" / "LC08_L1TP_090084_20160121_20200907_02_T1"
+)
+
+L8_C2_L2_INPUT_PATH: Path = (
+    Path(__file__).parent / "data" / "LC08_L2SP_098084_20210503_20210508_02_T1" / "out"
 )
 
 LS8_TELEMETRY_PATH: Path = (
@@ -53,8 +61,18 @@ def l1_ls8_folder(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
+def l2_ls8_folder(tmp_path: Path) -> Path:
+    return _make_copy(L8_L2_INPUT_PATH, tmp_path)
+
+
+@pytest.fixture
 def l1_c2_ls8_folder(tmp_path: Path) -> Path:
     return _make_copy(L8_C2_INPUT_PATH, tmp_path)
+
+
+@pytest.fixture
+def l2_c2_ls8_folder(tmp_path: Path) -> Path:
+    return _make_copy(L8_C2_L2_INPUT_PATH, tmp_path)
 
 
 @pytest.fixture
@@ -102,6 +120,11 @@ def l1_ls8_folder_md_expected(l1_ls8_folder) -> Dict:
 
 
 @pytest.fixture
+def l2_ls8_folder_md_expected(l2_ls8_folder) -> Dict:
+    return expected_l1_ls8_folder(l2_ls8_folder, relative_offset)
+
+
+@pytest.fixture
 def l1_ls8_ga_expected(l1_ls8_folder) -> Dict:
     return expected_l1_ls8_folder(
         l1_ls8_folder,
@@ -124,9 +147,25 @@ def l1_c2_ls8_usgs_expected(l1_ls8_folder) -> Dict:
     )
 
 
+# @pytest.fixture
+# def l2_c2_ls8_usgs_expected(l2_ls8_folder) -> Dict:
+#     return expected_l2_ls8_folder(
+#         l2_ls8_folder,
+#         relative_offset,
+#         organisation="usgs.gov",
+#         collection="2",
+#         l1_collection="2",
+#     )
+
+
 @pytest.fixture
 def l1_ls8_folder_md_expected_absolute(l1_ls8_folder) -> Dict:
     return expected_l1_ls8_folder(l1_ls8_folder, path_offset)
+
+
+@pytest.fixture
+def l2_ls8_folder_md_expected_absolute(l2_ls8_folder) -> Dict:
+    return expected_l1_ls8_folder(l2_ls8_folder, path_offset)
 
 
 @pytest.fixture
