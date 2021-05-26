@@ -236,13 +236,19 @@ def validate_dataset(
                             f"product {expected_dtype!r} != dataset {band_dtype!r}",
                         )
 
-                    # TODO: the nodata can also be a fill value, as mentioned by Kirill.
-                    expected_nodata = expected_measurement.nodata
                     ds_nodata = ds.nodatavals[band - 1]
+
+                    # If the dataset is missing 'nodata', we can allow anything in product 'nodata'.
+                    # (In ODC, nodata might be a fill value for loading data.)
+                    if ds_nodata is None:
+                        continue
+
+                    # Otherwise check that nodata matches.
+                    expected_nodata = expected_measurement.nodata
                     if expected_nodata != ds_nodata and not (
                         _is_nan(expected_nodata) and _is_nan(ds_nodata)
                     ):
-                        yield _info(
+                        yield _error(
                             "different_nodata",
                             f"{name} nodata: "
                             f"product {expected_nodata !r} != dataset {ds_nodata !r}",
@@ -262,6 +268,15 @@ def validate_product(doc: Dict) -> ValidationMessages:
         context = f"({displayable_path}) " if displayable_path else ""
         yield _error("document_schema", f"{context}{error.message} ")
 
+    # The jsonschema error message for this (common error) is garbage. Make it clearer.
+    measurements = doc.get("measurements")
+    if (measurements is not None) and not isinstance(measurements, Sequence):
+        yield _error(
+            "measurements_list",
+            f"Product measurements should be a list/sequence "
+            f"(Found a {type(measurements).__name__!r}).",
+        )
+
     # There's no point checking further if the core doc structure is wrong.
     if has_doc_errors:
         return
@@ -274,16 +289,9 @@ def validate_product(doc: Dict) -> ValidationMessages:
         )
 
     # Check measurement name clashes etc.
-    measurements = doc.get("measurements")
     if measurements is None:
         # Products don't have to have measurements. (eg. provenance-only products)
         ...
-    elif not isinstance(measurements, Sequence):
-        yield _error(
-            "measurements_list",
-            f"Product measurements should be a list/sequence "
-            f"(Found a {type(measurements).__name__!r}).",
-        )
     else:
         seen_names_and_aliases = collections.defaultdict(list)
         for measurement in measurements:
