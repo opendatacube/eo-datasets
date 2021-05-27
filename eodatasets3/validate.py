@@ -766,7 +766,7 @@ def run(
                 f"\t{message.level.name[0].upper()} {displayable_code} {message.reason}"
             )
             if message.hint:
-                echo(f' ({style("Hint", fg="green")}: {message.hint})')
+                echo(f'\t\t({style("Hint")}: {message.hint})')
 
     if not quiet:
         result = (
