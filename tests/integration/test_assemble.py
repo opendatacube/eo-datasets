@@ -12,7 +12,7 @@ from eodatasets3 import DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
 from tests import assert_file_structure
-from tests.common import assert_same_as_file
+from tests.common import assert_same_as_file, assert_expected_eo3_doc
 
 
 def test_dea_style_package(
@@ -91,7 +91,7 @@ def test_dea_style_package(
 
     # TODO: check sha1 checksum list.
 
-    assert_same_as_file(
+    assert_expected_eo3_doc(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             "id": dataset_id,
@@ -183,7 +183,7 @@ def test_dea_style_package(
             },
             "lineage": {"level1": ["a780754e-a884-58a7-9ac0-df518a67f59d"]},
         },
-        generated_file=metadata_path,
+        metadata_path,
     )
 
 
