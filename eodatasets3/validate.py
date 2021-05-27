@@ -42,7 +42,7 @@ class Level(enum.Enum):
     error = 3
 
 
-class DocType(enum.Enum):
+class DocKind(enum.Enum):
     # EO3 datacube dataset.
     dataset = 1
     # Datacube product
@@ -53,64 +53,68 @@ class DocType(enum.Enum):
     stac_item = 4
     # Legacy datacube ("eo1") dataset
     legacy_dataset = 5
+    # Legacy product config for ingester
+    ingestion_config = 6
 
-    @classmethod
-    def from_standard_filename(cls, path: Path) -> Optional["DocType"]:
-        """
-        Get the expected file type for the given filename.
 
-        Returns None if it does not follow any naming conventions.
+# Example naming conventions:
+#   "my-test-dataset.odc-metadata.yaml"
+SUFFIX_KINDS = {
+    ".odc-metadata": DocKind.dataset,
+    ".odc-product": DocKind.product,
+    ".odc-type": DocKind.metadata_type,
+}
+# Inverse of above
+DOC_TYPE_SUFFIXES = {v: k for k, v in SUFFIX_KINDS.items()}
 
-        >>> DocType.from_standard_filename(Path('LC8_2014.odc-metadata.yaml')).name
-        'dataset'
-        >>> DocType.from_standard_filename(Path('/tmp/something/water_bodies.odc-metadata.yaml.gz')).name
-        'dataset'
-        >>> DocType.from_standard_filename(Path('/tmp/something/ls8_fc.odc-product.yaml')).name
-        'product'
-        >>> DocType.from_standard_filename(Path('/tmp/something/ls8_wo.odc-product.json.gz')).name
-        'product'
-        >>> DocType.from_standard_filename(Path('/tmp/something/eo3_gqa.odc-type.yaml')).name
-        'metadata_type'
-        >>> DocType.from_standard_filename(Path('/tmp/something/some_other_file.yaml'))
-        """
 
-        # Example naming conventions:
-        #   "*.odc-metadata.yaml"
-        standard_suffixes = {
-            ".odc-metadata": DocType.dataset,
-            ".odc-product": DocType.product,
-            ".odc-type": DocType.metadata_type,
-            # Used by ODC's converters... not common otherwise.
-            ".stac-item": DocType.stac_item,
-        }
+def filename_doc_kind(path: Path) -> Optional["DocKind"]:
+    """
+    Get the expected file type for the given filename.
 
-        for suffix in reversed(path.suffixes):
-            suffix = suffix.lower()
-            if suffix in standard_suffixes:
-                return standard_suffixes[suffix]
+    Returns None if it does not follow any naming conventions.
 
-        return None
+    >>> filename_doc_kind(Path('LC8_2014.odc-metadata.yaml')).name
+    'dataset'
+    >>> filename_doc_kind(Path('/tmp/something/water_bodies.odc-metadata.yaml.gz')).name
+    'dataset'
+    >>> filename_doc_kind(Path('/tmp/something/ls8_fc.odc-product.yaml')).name
+    'product'
+    >>> filename_doc_kind(Path('/tmp/something/ls8_wo.odc-product.json.gz')).name
+    'product'
+    >>> filename_doc_kind(Path('/tmp/something/eo3_gqa.odc-type.yaml')).name
+    'metadata_type'
+    >>> filename_doc_kind(Path('/tmp/something/some_other_file.yaml'))
+    """
 
-    @classmethod
-    def guess_filetype(cls, path: Path, doc: Dict):
-        kind = cls.from_standard_filename(path)
-        if kind is not None:
-            return kind
+    for suffix in reversed(path.suffixes):
+        suffix = suffix.lower()
+        if suffix in SUFFIX_KINDS:
+            return SUFFIX_KINDS[suffix]
 
-        if is_doc_eo3(doc):
-            return DocType.dataset
-        if "metadata_type" in doc:
-            return DocType.product
-        if ("dataset" in doc) and ("search_fields" in doc["dataset"]):
-            return DocType.metadata_type
-        if "id" in doc:
-            if ("lineage" in doc) and ("platform" in doc):
-                return DocType.legacy_dataset
+    return None
 
-            if ("properties" in doc) and ("datetime" in doc["properties"]):
-                return DocType.stac_item
 
-        return None
+def guess_kind_from_contents(doc: Dict):
+    """
+    What sort of document do the contents look like?
+    """
+    if is_doc_eo3(doc):
+        return DocKind.dataset
+    if "metadata_type" in doc:
+        if "source_type" in doc:
+            return DocKind.ingestion_config
+        return DocKind.product
+    if ("dataset" in doc) and ("search_fields" in doc["dataset"]):
+        return DocKind.metadata_type
+    if "id" in doc:
+        if ("lineage" in doc) and ("platform" in doc):
+            return DocKind.legacy_dataset
+
+        if ("properties" in doc) and ("datetime" in doc["properties"]):
+            return DocKind.stac_item
+
+    return None
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -482,16 +486,32 @@ def validate_paths(
     for path, was_specified_by_user in expand_directories(paths):
         with path.open("r") as f:
             for i, doc in enumerate(serialise.loads_yaml(f)):
-                kind = DocType.guess_filetype(path, doc)
-                if kind == DocType.product:
-                    products[doc["name"]] = doc
-                    yield path, i, list(validate_product(doc))
-                elif kind == DocType.dataset:
-                    yield path, i, validate_eo3_doc(
-                        doc, path, products, thorough, expect_extra_measurements
+                messages = []
+                kind = filename_doc_kind(path)
+                if kind is None:
+                    kind = guess_kind_from_contents(doc)
+                    if kind and (kind in DOC_TYPE_SUFFIXES):
+                        # It looks like an ODC doc but doesn't have the standard suffix.
+                        messages.append(
+                            _warning(
+                                "missing_suffix",
+                                f"Document looks like a {kind.name} but does not have "
+                                f'filename extension "{DOC_TYPE_SUFFIXES[kind]}{_readable_doc_extension(path)}"',
+                            )
+                        )
+
+                if kind == DocKind.product:
+                    messages.extend(validate_product(doc))
+                    if "name" in doc:
+                        products[doc["name"]] = doc
+                elif kind == DocKind.dataset:
+                    messages.extend(
+                        validate_eo3_doc(
+                            doc, path, products, thorough, expect_extra_measurements
+                        )
                     )
-                elif kind == DocType.metadata_type:
-                    yield path, i, list(validate_metadata_type(doc))
+                elif kind == DocKind.metadata_type:
+                    messages.extend(validate_metadata_type(doc))
                 # Otherwise it's a file we don't support.
                 # If the user gave us the path explicitly, it seems to be an error.
                 # (if they didn't -- it was found via scanning directories -- we don't care.)
@@ -502,6 +522,39 @@ def validate_paths(
                         raise NotImplementedError(
                             f"Cannot currently validate {kind.name} files"
                         )
+
+                yield path, i, messages
+
+
+def _readable_doc_extension(path: Path):
+    """
+    >>> _readable_doc_extension(Path('something.json.gz'))
+    '.json.gz'
+    >>> _readable_doc_extension(Path('something.yaml'))
+    '.yaml'
+    >>> _readable_doc_extension(Path('apple.odc-metadata.yaml.gz'))
+    '.yaml.gz'
+    >>> _readable_doc_extension(Path('/tmp/human.06.tall.yml'))
+    '.yml'
+    >>> # Not a doc, even though it's compressed.
+    >>> _readable_doc_extension(Path('db_dump.gz'))
+    >>> _readable_doc_extension(Path('/tmp/nothing'))
+    """
+    compression_formats = (".gz",)
+    doc_formats = (
+        ".yaml",
+        ".yml",
+        ".json",
+    )
+    suffix = "".join(
+        s.lower()
+        for s in path.suffixes
+        if s.lower() in doc_formats + compression_formats
+    )
+    # If it's only compression, no doc format, it's not valid.
+    if suffix in compression_formats:
+        return None
+    return suffix or None
 
 
 def expand_directories(
@@ -515,7 +568,7 @@ def expand_directories(
     for path in input_paths:
         if path.is_dir():
             for found_path in path.rglob("*"):
-                if DocType.from_standard_filename(found_path) is not None:
+                if _readable_doc_extension(found_path) is not None:
                     yield found_path, False
         else:
             yield path, True
@@ -750,7 +803,7 @@ def run(
 
         if messages or not quiet:
             path_suffix = f" document {path_index+1}" if path_index else ""
-            secho(f"{bool_style(not is_invalid)} {path.stem}{path_suffix}")
+            secho(f"{bool_style(not is_invalid)} {path}{path_suffix}")
 
         if not messages:
             continue
