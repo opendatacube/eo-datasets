@@ -13,7 +13,7 @@ from eodatasets3 import serialise, validate
 from eodatasets3.model import DatasetDoc
 
 # Either a dict or a path to a document
-from eodatasets3.validate import DocType
+from eodatasets3.validate import DocKind, guess_kind_from_contents, filename_doc_kind
 
 Doc = Union[Dict, Path]
 
@@ -179,13 +179,14 @@ class ValidateRunner:
         self.quiet = False
         self.warnings_are_errors = False
         self.record_informational_messages = False
+        self.ignore_message_codes = ["missing_suffix"]
         self.thorough: bool = False
 
         self.result: Optional[Result] = None
 
-    def assert_valid(self, *docs: Doc, expect_no_messages=True, suffix=".yaml"):
+    def assert_valid(self, *docs: Doc, expect_no_messages=True, suffix=None):
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
-        self.run_validate(docs)
+        self.run_validate(docs, suffix=suffix or ".yaml")
         was_successful = self.result.exit_code == 0
         assert (
             was_successful
@@ -253,13 +254,19 @@ class ValidateRunner:
 
         def _read_message(line: str):
             severity, code, *message = line.split()
+            if code in self.ignore_message_codes:
+                return None, None
             return (severity, code), " ".join(message)
 
-        return dict(
+        messages = dict(
             _read_message(line)
             for line in self.result.stdout.split("\n")
-            if line and line.startswith("\t")
+            # message codes start with exactly one tab....
+            if line and line.startswith("\t") and not line.startswith("\t\t")
         )
+        # Ignored messages have key none.
+        messages.pop(None, None)
+        return messages
 
     @property
     def messages(self) -> Dict[str, str]:
@@ -715,7 +722,7 @@ def test_is_product():
     product = dict(
         name="minimal_product", metadata_type="eo3", measurements=[dict(name="blue")]
     )
-    assert DocType.guess_filetype(Path("something.yaml"), product) == DocType.product
+    assert guess_kind_from_contents(product) == DocKind.product
 
 
 def test_dataset_is_not_a_product(example_metadata: Dict):
@@ -724,8 +731,8 @@ def test_dataset_is_not_a_product(example_metadata: Dict):
 
     (checks all example metadata files)
     """
-    assert DocType.guess_filetype(Path("asdf"), example_metadata) == DocType.dataset
-    assert DocType.guess_filetype(Path("asdf.odc-metadata.yaml"), {}) == DocType.dataset
+    assert guess_kind_from_contents(example_metadata) == DocKind.dataset
+    assert filename_doc_kind(Path("asdf.odc-metadata.yaml")) == DocKind.dataset
 
 
 @pytest.fixture
