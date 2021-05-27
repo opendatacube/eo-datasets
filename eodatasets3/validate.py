@@ -33,13 +33,84 @@ from shapely.validation import explain_validity
 from eodatasets3 import serialise, model
 from eodatasets3.model import DatasetDoc
 from eodatasets3.ui import PathPath, is_absolute, uri_resolve, bool_style
-from eodatasets3.utils import default_utc
+from eodatasets3.utils import default_utc, is_doc_eo3
 
 
 class Level(enum.Enum):
     info = 1
     warning = 2
     error = 3
+
+
+class DocType(enum.Enum):
+    # EO3 datacube dataset.
+    dataset = 1
+    # Datacube product
+    product = 2
+    # Datacube Metadata Type
+    metadata_type = 3
+    # Stac Item
+    stac_item = 4
+    # Legacy datacube ("eo1") dataset
+    legacy_dataset = 5
+
+    @classmethod
+    def from_standard_filename(cls, path: Path) -> Optional["DocType"]:
+        """
+        Get the expected file type for the given filename.
+
+        Returns None if it does not follow any naming conventions.
+
+        >>> DocType.from_standard_filename(Path('LC8_2014.odc-metadata.yaml')).name
+        'dataset'
+        >>> DocType.from_standard_filename(Path('/tmp/something/water_bodies.odc-metadata.yaml.gz')).name
+        'dataset'
+        >>> DocType.from_standard_filename(Path('/tmp/something/ls8_fc.odc-product.yaml')).name
+        'product'
+        >>> DocType.from_standard_filename(Path('/tmp/something/ls8_wo.odc-product.json.gz')).name
+        'product'
+        >>> DocType.from_standard_filename(Path('/tmp/something/eo3_gqa.odc-type.yaml')).name
+        'metadata_type'
+        >>> DocType.from_standard_filename(Path('/tmp/something/some_other_file.yaml'))
+        """
+
+        # Example naming conventions:
+        #   "*.odc-metadata.yaml"
+        standard_suffixes = {
+            ".odc-metadata": DocType.dataset,
+            ".odc-product": DocType.product,
+            ".odc-type": DocType.metadata_type,
+            # Used by ODC's converters... not common otherwise.
+            ".stac-item": DocType.stac_item,
+        }
+
+        for suffix in reversed(path.suffixes):
+            suffix = suffix.lower()
+            if suffix in standard_suffixes:
+                return standard_suffixes[suffix]
+
+        return None
+
+    @classmethod
+    def guess_filetype(cls, path: Path, doc: Dict):
+        kind = cls.from_standard_filename(path)
+        if kind is not None:
+            return kind
+
+        if is_doc_eo3(doc):
+            return DocType.dataset
+        if "metadata_type" in doc:
+            return DocType.product
+        if ("dataset" in doc) and ("search_fields" in doc["dataset"]):
+            return DocType.metadata_type
+        if "id" in doc:
+            if ("lineage" in doc) and ("platform" in doc):
+                return DocType.legacy_dataset
+
+            if ("properties" in doc) and ("datetime" in doc["properties"]):
+                return DocType.stac_item
+
+        return None
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -330,6 +401,18 @@ def validate_product(doc: Dict) -> ValidationMessages:
                 seen_names_and_aliases[field].append(measurement_name)
 
 
+def validate_metadata_type(doc: Dict) -> ValidationMessages:
+    """
+    Check for common metadata-type mistakes
+    """
+
+    # Validate it against ODC's schema (there will be refused by ODC otherwise)
+    for error in serialise.METADATA_TYPE_SCHEMA.iter_errors(doc):
+        displayable_path = ".".join(map(str, error.absolute_path))
+        context = f"({displayable_path}) " if displayable_path else ""
+        yield _error("document_schema", f"{context}{error.message} ")
+
+
 def _find_duplicates(values: Iterable[str]) -> Generator[str, None, None]:
     """Return any duplicate values in the given sequence
 
@@ -396,19 +479,46 @@ def validate_paths(
     """Validate the list of paths. Product documents can be specified before their datasets."""
     products: Dict[str, Dict] = {}
 
-    for path in paths:
+    for path, was_specified_by_user in expand_directories(paths):
         with path.open("r") as f:
-            inner_docs = serialise.loads_yaml(f)
-            for i, doc in enumerate(inner_docs):
-                if is_product(doc):
+            for i, doc in enumerate(serialise.loads_yaml(f)):
+                kind = DocType.guess_filetype(path, doc)
+                if kind == DocType.product:
                     products[doc["name"]] = doc
-                    messages = list(validate_product(doc))
-                else:
-                    messages = validate_eo3_doc(
+                    yield path, i, list(validate_product(doc))
+                elif kind == DocType.dataset:
+                    yield path, i, validate_eo3_doc(
                         doc, path, products, thorough, expect_extra_measurements
                     )
-                if messages:
-                    yield path, i, messages
+                elif kind == DocType.metadata_type:
+                    yield path, i, list(validate_metadata_type(doc))
+                # Otherwise it's a file we don't support.
+                # If the user gave us the path explicitly, it seems to be an error.
+                # (if they didn't -- it was found via scanning directories -- we don't care.)
+                elif was_specified_by_user:
+                    if kind is None:
+                        raise ValueError(f"Unknown document type for path {path}")
+                    else:
+                        raise NotImplementedError(
+                            f"Cannot currently validate {kind.name} files"
+                        )
+
+
+def expand_directories(
+    input_paths: Iterable[Path],
+) -> Generator[Tuple[Path, bool], None, None]:
+    """
+    For any paths that are directories, find inner documents that are known.
+
+    Returns Tuples: path, and whether it was specified explicitly by user.
+    """
+    for path in input_paths:
+        if path.is_dir():
+            for found_path in path.rglob("*"):
+                if DocType.from_standard_filename(found_path) is not None:
+                    yield found_path, False
+        else:
+            yield path, True
 
 
 def validate_eo3_doc(
@@ -459,11 +569,6 @@ def validate_eo3_doc(
         )
     )
     return messages
-
-
-def is_product(doc: Dict) -> bool:
-    """Is this a product document?"""
-    return "metadata_type" in doc
 
 
 def _validate_stac_properties(dataset: DatasetDoc):
@@ -582,9 +687,10 @@ def _has_some_geo(dataset):
 @click.command(
     help=__doc__
     + """
-Paths can be both product and dataset
-documents, but each product must come before
-its datasets to be matched against it.
+Paths can be products, dataset documents, or directories to scan (for files matching
+names '*.odc-metadata.yaml' etc).
+
+But each product must be specified before its datasets to be validated against them.
 """
 )
 @click.version_option()
