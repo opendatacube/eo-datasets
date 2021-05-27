@@ -314,7 +314,9 @@ def test_missing_field(eo_validator: ValidateRunner, example_metadata: Dict):
 def test_invalid_ls8_schema(eo_validator: ValidateRunner, example_metadata: Dict):
     """When there's no eo3 $schema defined"""
     del example_metadata["$schema"]
-    eo_validator.assert_invalid(example_metadata, codes=("no_schema",))
+    eo_validator.assert_invalid(
+        example_metadata, codes=("no_schema",), suffix=".odc-metadata.yaml"
+    )
 
 
 def test_allow_optional_geo(eo_validator: ValidateRunner, example_metadata: Dict):
