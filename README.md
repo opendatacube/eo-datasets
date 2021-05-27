@@ -77,31 +77,43 @@ with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec
 ## Validator
 
 
-`eo3-validate` a lint-like checker to check eo3 metadata.
+`eo3-validate` a lint-like checker to check ODC documents.
+
+Give it ODC documents for your products, types and/or datasets to have
+them validated.
+
+    eo3-validate my-product.odc-product.yaml /tmp/path/to/dataset.odc-metadata.yaml
+
+You can also run with `--thorough` to have it open imagery files too, checking
+their properties match the product (nodata, dtype etc)
+
 
 	❯ eo3-validate --help
-	Usage: eo3-validate [OPTIONS] [PATHS]...
-
-	  Validate ODC dataset documents
-
-	  Paths can be both product and dataset documents, but each product must
-	  come before its datasets to be matched against it.
-
-	Options:
-	  --version                       Show the version and exit.
-	  -W, --warnings-as-errors        Fail if any warnings are produced
-	  --thorough                      Attempt to read the data/measurements, and
-					  check their properties match
-
-	  --expect-extra-measurements / --warn-extra-measurements
-					  Allow some dataset measurements to be
-					  missing from the product definition. This is
-					  (deliberately) allowed by ODC, but often a
-					  mistake. This flag disables the warning.
-
-	  -q, --quiet                     Only print problems, one per line
-	  --help                          Show this message and exit.
-
+    Usage: eo3-validate [OPTIONS] [PATHS]...
+    
+      Validate ODC dataset documents
+    
+      Paths can be products, dataset documents, or directories to scan (for
+      files matching names '*.odc-metadata.yaml' etc).
+    
+      But each product must be specified before its datasets to be validated
+      against them.
+    
+    Options:
+      --version                       Show the version and exit.
+      -W, --warnings-as-errors        Fail if any warnings are produced
+      --thorough                      Attempt to read the data/measurements, and
+                                      check their properties match
+    
+      --expect-extra-measurements / --warn-extra-measurements
+                                      Allow some dataset measurements to be
+                                      missing from the product definition. This is
+                                      (deliberately) allowed by ODC, but often a
+                                      mistake. This flag disables the warning.
+    
+      -q, --quiet                     Only print problems, one per line
+      --help                          Show this message and exit.
+ 
 
 
 ## Conversion to Stac metadata

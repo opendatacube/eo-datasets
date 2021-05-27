@@ -179,6 +179,9 @@ DATASET_SCHEMA = _load_schema_validator(Path(__file__).parent / "dataset.schema.
 PRODUCT_SCHEMA = _load_schema_validator(
     DATACUBE_SCHEMAS_PATH / "dataset-type-schema.yaml"
 )
+METADATA_TYPE_SCHEMA = _load_schema_validator(
+    DATACUBE_SCHEMAS_PATH / "metadata-type-schema.yaml"
+)
 
 
 def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:

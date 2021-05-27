@@ -13,6 +13,8 @@ from eodatasets3 import serialise, validate
 from eodatasets3.model import DatasetDoc
 
 # Either a dict or a path to a document
+from eodatasets3.validate import DocType
+
 Doc = Union[Dict, Path]
 
 
@@ -26,6 +28,37 @@ def product():
         metadata_type="eo3",
         measurements=[dict(name="blue", units="1", dtype="uint8", nodata=255)],
     )
+
+
+@pytest.fixture()
+def metadata_type():
+    return {
+        "name": "eo3",
+        "description": "Minimal EO3-like",
+        "dataset": {
+            "id": ["id"],
+            "sources": ["lineage", "source_datasets"],
+            "grid_spatial": ["grid_spatial", "projection"],
+            "measurements": ["measurements"],
+            "creation_dt": ["properties", "odc:processing_datetime"],
+            "label": ["label"],
+            "format": ["properties", "odc:file_format"],
+            "search_fields": {
+                "time": {
+                    "description": "Acquisition time range",
+                    "type": "datetime-range",
+                    "min_offset": [
+                        ["properties", "dtr:start_datetime"],
+                        ["properties", "datetime"],
+                    ],
+                    "max_offset": [
+                        ["properties", "dtr:end_datetime"],
+                        ["properties", "datetime"],
+                    ],
+                }
+            },
+        },
+    }
 
 
 @pytest.fixture()
@@ -150,7 +183,7 @@ class ValidateRunner:
 
         self.result: Optional[Result] = None
 
-    def assert_valid(self, *docs: Doc, expect_no_messages=True):
+    def assert_valid(self, *docs: Doc, expect_no_messages=True, suffix=".yaml"):
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
         self.run_validate(docs)
         was_successful = self.result.exit_code == 0
@@ -164,9 +197,9 @@ class ValidateRunner:
                 + "\n".join(f"{k}: {v}" for k, v in self.messages.items())
             )
 
-    def assert_invalid(self, *docs: Doc, codes: Sequence[str] = None):
+    def assert_invalid(self, *docs: Doc, codes: Sequence[str] = None, suffix=".yaml"):
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
-        self.run_validate(docs)
+        self.run_validate(docs, suffix=suffix)
         assert (
             self.result.exit_code != 0
         ), f"Expected validation to fail.\n{self.result.output}"
@@ -180,7 +213,9 @@ class ValidateRunner:
                 self.result.exit_code == 1
             ), f"Expected error code 1 for 1 invalid path. Got {sorted(self.messages.items())}"
 
-    def run_validate(self, docs: Sequence[Doc], allow_extra_measurements=True):
+    def run_validate(
+        self, docs: Sequence[Doc], allow_extra_measurements=True, suffix=".yaml"
+    ):
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
 
         args = ()
@@ -196,7 +231,7 @@ class ValidateRunner:
 
         for i, doc in enumerate(docs):
             if isinstance(doc, Mapping):
-                md_path = self.tmp_path / f"doc-{i}.yaml"
+                md_path = self.tmp_path / f"doc-{i}{suffix}"
                 serialise.dump_yaml(md_path, doc)
                 doc = md_path
             args += (doc,)
@@ -664,12 +699,21 @@ def test_complains_when_no_product(
     eo_validator.assert_invalid(l1_ls8_metadata_path, codes=["no_product"])
 
 
+def test_validate_metadata_type(eo_validator: ValidateRunner, metadata_type: Doc):
+    eo_validator.assert_valid(metadata_type, suffix=".odc-type.yaml")
+    eo_validator.assert_valid(metadata_type)
+    del metadata_type["dataset"]["id"]
+    eo_validator.assert_invalid(
+        metadata_type, codes=["document_schema"], suffix=".odc-type.yaml"
+    )
+
+
 def test_is_product():
     """Product documents should be correctly identified as products"""
     product = dict(
         name="minimal_product", metadata_type="eo3", measurements=[dict(name="blue")]
     )
-    assert validate.is_product(product)
+    assert DocType.guess_filetype(Path("something.yaml"), product) == DocType.product
 
 
 def test_dataset_is_not_a_product(example_metadata: Dict):
@@ -678,7 +722,8 @@ def test_dataset_is_not_a_product(example_metadata: Dict):
 
     (checks all example metadata files)
     """
-    assert not validate.is_product(example_metadata)
+    assert DocType.guess_filetype(Path("asdf"), example_metadata) == DocType.dataset
+    assert DocType.guess_filetype(Path("asdf.odc-metadata.yaml"), {}) == DocType.dataset
 
 
 @pytest.fixture
