@@ -33,7 +33,7 @@ from shapely.validation import explain_validity
 from eodatasets3 import serialise, model
 from eodatasets3.model import DatasetDoc
 from eodatasets3.ui import PathPath, is_absolute, uri_resolve, bool_style
-from eodatasets3.utils import default_utc, is_doc_eo3
+from eodatasets3.utils import default_utc, EO3_SCHEMA
 
 
 class Level(enum.Enum):
@@ -57,8 +57,9 @@ class DocKind(enum.Enum):
     ingestion_config = 6
 
 
-# Example naming conventions:
-#   "my-test-dataset.odc-metadata.yaml"
+# What kind of document each suffix represents.
+# (full suffix will also have a doc type: .yaml, .json, .yaml.gz etc)
+# Example:  "my-test-dataset.odc-metadata.yaml"
 SUFFIX_KINDS = {
     ".odc-metadata": DocKind.dataset,
     ".odc-product": DocKind.product,
@@ -99,7 +100,7 @@ def guess_kind_from_contents(doc: Dict):
     """
     What sort of document do the contents look like?
     """
-    if is_doc_eo3(doc):
+    if "$schema" in doc and doc["$schema"] == EO3_SCHEMA:
         return DocKind.dataset
     if "metadata_type" in doc:
         if "source_type" in doc:
@@ -522,6 +523,9 @@ def validate_paths(
                         raise NotImplementedError(
                             f"Cannot currently validate {kind.name} files"
                         )
+                else:
+                    # Not a doc type we recognise, and the user didn't specify it. Skip it.
+                    continue
 
                 yield path, i, messages
 
@@ -658,7 +662,7 @@ def _validate_stac_properties(dataset: DatasetDoc):
                                 f"Property {value!r} expected to be {normalised_value!r}",
                             )
                 except ValueError as e:
-                    yield _error("invalid_property", e.args[0])
+                    yield _error("invalid_property", f"{name!r}: {e.args[0]}")
 
     if "odc:producer" in dataset.properties:
         producer = dataset.properties["odc:producer"]
