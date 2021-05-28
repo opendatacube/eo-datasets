@@ -385,7 +385,10 @@ def validate_product(doc: Dict) -> ValidationMessages:
             for new_field_name in these_names:
                 measurements_with_this_name = seen_names_and_aliases[new_field_name]
                 if measurements_with_this_name:
-                    seen_in = " and ".join(repr(s) for s in measurements_with_this_name)
+                    seen_in = " and ".join(
+                        repr(s)
+                        for s in ([measurement_name] + measurements_with_this_name)
+                    )
 
                     # If the same name is used by different measurements, its a hard error.
                     yield _error(
