@@ -103,6 +103,7 @@ class DatasetAssembler(EoFields):
         "landsat:collection_number",
         "landsat:landsat_product_id",
         "landsat:landsat_scene_id",
+        "landsat:scene_id",
         "landsat:wrs_path",
         "landsat:wrs_row",
         "mission",
@@ -217,6 +218,10 @@ class DatasetAssembler(EoFields):
             )
         elif naming_conventions == "dea_c3":
             self.names = ComplicatedNamingConventionsDerivatives.for_c3_derivatives(
+                self
+            )
+        elif naming_conventions == "deafrica_usgs_c2":
+            self.names = ComplicatedNamingConventionsDerivatives.for_deafrica_usgs_c2_derivatives(
                 self
             )
         else:
