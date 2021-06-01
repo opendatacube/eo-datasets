@@ -628,6 +628,7 @@ def test_africa_naming_conventions(tmp_path: Path):
         p.datetime = datetime(1998, 7, 30)
         p.region_code = "090081"
         p.product_family = "wofs"
+        p.platform = "LANDSAT_8"
         p.processed_now()
         p.dataset_version = "0.1.2"
 
@@ -646,6 +647,7 @@ def test_africa_naming_conventions(tmp_path: Path):
         p.datetime = datetime(1998, 7, 30)
         p.region_code = "090081"
         p.product_family = "fc"
+        p.platform = "LANDSAT_8"
         p.processed_now()
         p.dataset_version = "0.1.2"
 
