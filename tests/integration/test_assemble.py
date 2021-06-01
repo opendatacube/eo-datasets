@@ -615,3 +615,44 @@ def test_add_source_dataset(tmp_path: Path, inherit_geom):
         # POLYGON((684285 - 3439275, 684285 - 3444495, 689925 - 3444495, 689925 - 3439275, 684285 - 3439275))
         # Geometry is not set from the source dataset, but instead from the added wofs measurement
         assert output.geometry != source_dataset.geometry
+
+
+def test_africa_naming_conventions(tmp_path: Path):
+    """
+    Minimal fields needed for DEAfrica naming conventions
+    """
+    with DatasetAssembler(tmp_path, naming_conventions="deafrica") as p:
+
+        # Just the fields listed in required_fields.
+        p.producer = "digitalearthafrica.org"
+        p.datetime = datetime(1998, 7, 30)
+        p.region_code = "090081"
+        p.product_family = "wofs"
+        p.processed_now()
+        p.dataset_version = "0.1.2"
+
+        dataset_id, metadata_path = p.done()
+
+    metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+    assert (
+        metadata_path_offset
+        == "wofs_ls/0-1-2/090/081/1998/07/30/wofs_ls_090081_1998-07-30.odc-metadata.yaml"
+    )
+
+    with DatasetAssembler(tmp_path, naming_conventions="deafrica") as p:
+
+        # Just the fields listed in required_fields.
+        p.producer = "digitalearthafrica.org"
+        p.datetime = datetime(1998, 7, 30)
+        p.region_code = "090081"
+        p.product_family = "fc"
+        p.processed_now()
+        p.dataset_version = "0.1.2"
+
+        dataset_id, metadata_path = p.done()
+
+    metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+    assert (
+        metadata_path_offset
+        == "fc_ls/0-1-2/090/081/1998/07/30/fc_ls_090081_1998-07-30.odc-metadata.yaml"
+    )
