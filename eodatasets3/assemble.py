@@ -220,9 +220,9 @@ class DatasetAssembler(EoFields):
             self.names = ComplicatedNamingConventionsDerivatives.for_c3_derivatives(
                 self
             )
-        elif naming_conventions == "deafrica_usgs_c2":
-            self.names = ComplicatedNamingConventionsDerivatives.for_deafrica_usgs_c2_derivatives(
-                self
+        elif naming_conventions == "deafrica":
+            self.names = (
+                ComplicatedNamingConventionsDerivatives.for_deafrica_derivatives(self)
             )
         else:
             raise NotImplementedError("configurable naming conventions")
