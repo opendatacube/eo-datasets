@@ -177,7 +177,7 @@ typing-extensions==3.7.4.3
     #   structlog
 url-normalize==1.4.3
     # via requests-cache
-urllib3==1.26.4
+urllib3==1.26.5
     # via requests
 xarray==0.16.2
     # via
