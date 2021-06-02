@@ -237,19 +237,25 @@ Some preparers need the ancillary dependencies: `pip install .[ancillary]`
 
 ## Creating Releases
 
+First, draft [some release notes](https://github.com/GeoscienceAustralia/eo-datasets/releases)
+for users of the library.
+
+Now tag and upload:
+
 ```
+# Be up-to-date.
 git fetch origin
 
-# Create a tag for the new version
+# Create a tag for the new version 
+# (using semantic versioning https://semver.org/)
 git tag eodatasets3-<version> origin/eodatasets3
 
-# Push it to main repository
-git push origin --tags
-
-# Create a wheel locally
+# Create package
 python3 setup.py sdist bdist_wheel
 
 # Upload it (Jeremy, Damien, Kirill have pypi ownership) 
 python3 -m twine upload  dist/*
 
+# Push tag to main repository
+git push origin --tags
 ```
