@@ -50,9 +50,12 @@ def assert_expected_eo3_doc(
     # Compare geometry after parsing, rather than comparing the raw dict values.
     produced_dataset = serialise.from_path(expected_path)
     expected_dataset = serialise.from_doc(expected_doc, skip_validation=True)
-    assert_shapes_mostly_equal(
-        produced_dataset.geometry, expected_dataset.geometry, 0.00000001
-    )
+    if expected_dataset.geometry is None:
+        assert produced_dataset.geometry is None
+    else:
+        assert_shapes_mostly_equal(
+            produced_dataset.geometry, expected_dataset.geometry, 0.00000001
+        )
 
 
 def assert_shapes_mostly_equal(
