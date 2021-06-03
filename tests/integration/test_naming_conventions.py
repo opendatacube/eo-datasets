@@ -1,6 +1,8 @@
+import operator
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Mapping
 
 import pytest
 from ruamel import yaml
@@ -9,21 +11,72 @@ from eodatasets3 import DatasetAssembler
 from tests.common import assert_same_as_file
 
 
-def test_minimal_s1_dataset(tmp_path: Path):
-    """A minimal dataset with sentinel-1a/b platform/instrument"""
-    with DatasetAssembler(tmp_path) as p:
-        p.platform = "sentinel-1a"
-        p.instrument = "c-sar"
-        p.datetime = datetime(2018, 11, 4)
-        p.product_family = "bck"
-        p.processed = "2018-11-05T12:23:23"
+def assert_names_match(
+    tmp_path: Path,
+    # Given:
+    conventions,
+    properties: Mapping,
+    # Then expect:
+    expect_metadata_path: str = None,
+    expect_label: str = None,
+):
+    __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
+    """
+    Easily test a set of naming conventions: Do certain properties lead to expected file names?
+    """
+
+    with DatasetAssembler(tmp_path, naming_conventions=conventions) as p:
+        p.properties.update(properties)
 
         dataset_id, metadata_path = p.done()
+
+    if expect_metadata_path:
+        metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+        assert metadata_path_offset == expect_metadata_path
 
     with metadata_path.open("r") as f:
         doc = yaml.YAML(typ="safe").load(f)
 
-    assert doc["label"] == "s1ac_bck_2018-11-04", "Unexpected dataset label"
+    if expect_label:
+        assert doc["label"] == expect_label, "Unexpected dataset label"
+
+
+def test_minimal_s1_dataset(tmp_path: Path):
+    assert_names_match(
+        tmp_path,
+        conventions="default",
+        properties={
+            "eo:platform": "sentinel-1a",
+            "eo:instrument": "c-sar",
+            "datetime": datetime(2018, 11, 4),
+            "odc:product_family": "bck",
+            "odc:processing_datetime": "2018-11-05T12:23:23",
+        },
+        expect_label="s1ac_bck_2018-11-04",
+        expect_metadata_path="s1ac_bck/2018/11/04/s1ac_bck_2018-11-04.odc-metadata.yaml",
+    )
+
+
+def test_dea_s2_derivate_names(tmp_path: Path):
+    assert_names_match(
+        tmp_path,
+        conventions="dea_s2_derivative",
+        properties={
+            "eo:platform": "sentinel-2a",
+            "datetime": datetime(2018, 11, 4, 5, 23, 3),
+            "odc:product_family": "eucalyptus",
+            "odc:processing_datetime": "2018-11-05T12:23:23",
+            "odc:collection_number": 3,
+            "dea:dataset_maturity": "final",
+            "odc:dataset_version": "1.2.3",
+            "odc:producer": "esa.int",
+            "odc:region_code": "55HFA",
+            "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09",
+        },
+        expect_label="esa_s2_eucalyptus_3_55HFA_2018-11-04_final",
+        expect_metadata_path="esa_s2_eucalyptus_3/1-2-3/55/HFA/2018/11/04/20201011T011446/"
+        "esa_s2_eucalyptus_3_55HFA_2018-11-04_final.odc-metadata.yaml",
+    )
 
 
 def test_minimal_s2_dataset_normal(tmp_path: Path):
