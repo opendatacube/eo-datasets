@@ -30,7 +30,8 @@ from eodatasets3.model import (
     ComplicatedNamingConventions,
     AccessoryDoc,
     Location,
-    ComplicatedNamingConventionsDerivatives,
+    DerivativesNamingConventions,
+    DEAfricaNamingConventions,
 )
 from eodatasets3.properties import EoFields
 from eodatasets3.validate import Level, ValidationMessage
@@ -213,17 +214,11 @@ class DatasetAssembler(EoFields):
         elif naming_conventions == "dea_s2":
             self.names = ComplicatedNamingConventions.for_standard_dea_s2(self)
         elif naming_conventions == "dea_s2_derivative":
-            self.names = ComplicatedNamingConventionsDerivatives.for_s2_derivatives(
-                self
-            )
+            self.names = DerivativesNamingConventions.for_s2_derivatives(self)
         elif naming_conventions == "dea_c3":
-            self.names = ComplicatedNamingConventionsDerivatives.for_c3_derivatives(
-                self
-            )
+            self.names = DerivativesNamingConventions.for_c3_derivatives(self)
         elif naming_conventions == "deafrica":
-            self.names = (
-                ComplicatedNamingConventionsDerivatives.for_deafrica_derivatives(self)
-            )
+            self.names = DEAfricaNamingConventions.create(self)
         else:
             raise NotImplementedError("configurable naming conventions")
 
@@ -847,8 +842,8 @@ class DatasetAssembler(EoFields):
                 aux_file.unlink()
 
             if not self._dataset_location:
-                self._dataset_location = self.names.destination_folder(
-                    self.collection_location
+                self._dataset_location = (
+                    self.collection_location / self.names.destination_folder()
                 )
             # Now atomically move to final location.
             # Someone else may have created the output while we were working.
