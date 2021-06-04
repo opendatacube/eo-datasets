@@ -55,6 +55,7 @@ setup(
     ],
     url="https://github.com/GeoscienceAustralia/eo-datasets",
     install_requires=[
+        "affine",
         "attrs>=18.1",  # 18.1 adds 'factory' syntactic sugar
         "boltons",
         "cattrs",
