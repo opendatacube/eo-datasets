@@ -26,10 +26,12 @@ from eodatasets3.images import FileWrite, GridSpec, MeasurementRecord
 from eodatasets3.model import (
     DatasetDoc,
     ProductDoc,
-    StacPropertyView,
-    ComplicatedNamingConventions,
+    Eo3Properties,
     AccessoryDoc,
     Location,
+)
+from eodatasets3.names import (
+    ComplicatedNamingConventions,
     DerivativesNamingConventions,
     DEAfricaNamingConventions,
 )
@@ -192,7 +194,7 @@ class DatasetAssembler(EoFields):
         self._tmp_work_path: Optional[Path] = None
 
         self._label = None
-        self._props = StacPropertyView()
+        self._props = Eo3Properties()
 
         self.collection_location = collection_location
         self._dataset_location = dataset_location
@@ -253,7 +255,7 @@ class DatasetAssembler(EoFields):
         return self._tmp_work_path
 
     @property
-    def properties(self) -> StacPropertyView:
+    def properties(self) -> Eo3Properties:
         return self._props
 
     @property
