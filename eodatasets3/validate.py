@@ -633,11 +633,11 @@ def validate_eo3_doc(
 
 def _validate_stac_properties(dataset: DatasetDoc):
     for name, value in dataset.properties.items():
-        if name not in dataset.properties.KNOWN_STAC_PROPERTIES:
+        if name not in dataset.properties.KNOWN_PROPERTIES:
             yield _warning("unknown_property", f"Unknown stac property {name!r}")
 
         else:
-            normaliser = dataset.properties.KNOWN_STAC_PROPERTIES.get(name)
+            normaliser = dataset.properties.KNOWN_PROPERTIES.get(name)
             if normaliser and value is not None:
                 try:
                     normalised_value = normaliser(value)

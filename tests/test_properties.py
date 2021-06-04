@@ -3,7 +3,8 @@ from contextlib import contextmanager
 
 import pytest
 
-from eodatasets3.model import DatasetDoc, ComplicatedNamingConventions
+from eodatasets3.model import DatasetDoc
+from eodatasets3.names import ComplicatedNamingConventions
 from eodatasets3.properties import PropertyOverrideWarning
 
 
