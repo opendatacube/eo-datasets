@@ -75,11 +75,15 @@ def test_prepare_l8_l1_c2(
     )
 
 
-def test_prepare_l8_l2_c2(
-    tmp_path: Path, l2_c2_ls8_folder: Path, l2_c2_ls8_usgs_expected: Dict
+def test_prepare_lc08_l2_c2_post_20210507(
+    tmp_path: Path,
+    lc08_l2_c2_post_20210507_folder: Path,
+    lc08_l2_c2_post_20210507_usgs_expected: Dict,
 ):
-    """Run prepare script with a source telemetry data and unique producer."""
-    assert l2_c2_ls8_folder.exists(), "Test data missing(?)"
+    """Support a functionality baseline for the enhancements to expand landsat
+    prepare (YAML) logic to support USGS level 2 - PR#159:
+     LC08 C2 L2 post 7th May 2021."""
+    assert lc08_l2_c2_post_20210507_folder.exists(), "Test data missing(?)"
 
     output_path = tmp_path
     expected_metadata_path = (
@@ -95,9 +99,67 @@ def test_prepare_l8_l2_c2(
             output_path,
             "--producer",
             "usgs.gov",
-            l2_c2_ls8_folder,
+            lc08_l2_c2_post_20210507_folder,
         ],
-        expected_doc=l2_c2_ls8_usgs_expected,
+        expected_doc=lc08_l2_c2_post_20210507_usgs_expected,
+        expected_metadata_path=expected_metadata_path,
+    )
+
+
+def test_prepare_lt05_l2_c2(
+    tmp_path: Path, lt05_l2_c2_folder: Path, lt05_l2_c2_usgs_expected: Dict
+):
+    """Support a functionality baseline for the enhancements to expand landsat
+    prepare (YAML) logic to support USGS level 2 - PR#159:
+     LT05 C2 L2."""
+    assert lt05_l2_c2_folder.exists(), "Test data missing(?)"
+
+    output_path = tmp_path
+    expected_metadata_path = (
+        output_path
+        / "090"
+        / "084"
+        / "LT05_L2SP_090084_19980308_20200909_02_T1.odc-metadata.yaml"
+    )
+    check_prepare_outputs(
+        invoke_script=landsat_l1_prepare.main,
+        run_args=[
+            "--output-base",
+            output_path,
+            "--producer",
+            "usgs.gov",
+            lt05_l2_c2_folder,
+        ],
+        expected_doc=lt05_l2_c2_usgs_expected,
+        expected_metadata_path=expected_metadata_path,
+    )
+
+
+def test_prepare_le07_l2_c2(
+    tmp_path: Path, le07_l2_c2_folder: Path, le07_l2_c2_usgs_expected: Dict
+):
+    """Support a functionality baseline for the enhancements to expand landsat
+    prepare (YAML) logic to support USGS level 2 - PR#159:
+     LE07 C2 L2."""
+    assert le07_l2_c2_folder.exists(), "Test data missing(?)"
+
+    output_path = tmp_path
+    expected_metadata_path = (
+        output_path
+        / "090"
+        / "084"
+        / "LE07_L2SP_090084_20210331_20210426_02_T1.odc-metadata.yaml"
+    )
+    check_prepare_outputs(
+        invoke_script=landsat_l1_prepare.main,
+        run_args=[
+            "--output-base",
+            output_path,
+            "--producer",
+            "usgs.gov",
+            le07_l2_c2_folder,
+        ],
+        expected_doc=le07_l2_c2_usgs_expected,
         expected_metadata_path=expected_metadata_path,
     )
 
