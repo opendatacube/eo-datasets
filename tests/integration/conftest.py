@@ -21,16 +21,20 @@ L8_INPUT_PATH: Path = (
     Path(__file__).parent / "data" / "LC08_L1TP_090084_20160121_20170405_01_T1"
 )
 
-L8_L2_INPUT_PATH: Path = (
-    Path(__file__).parent / "data" / "LC08_L2SP_098084_20210503_20210508_02_T1" / "out"
-)
-
 L8_C2_INPUT_PATH: Path = (
     Path(__file__).parent / "data" / "LC08_L1TP_090084_20160121_20200907_02_T1"
 )
 
-L8_C2_L2_INPUT_PATH: Path = (
+LC08_L2_C2_POST_20210507_INPUT_PATH: Path = (
     Path(__file__).parent / "data" / "LC08_L2SP_098084_20210503_20210508_02_T1"
+)
+
+LT05_L2_C2_INPUT_PATH: Path = (
+    Path(__file__).parent / "data" / "LT05_L2SP_090084_19980308_20200909_02_T1"
+)
+
+LE07_L2_C2_INPUT_PATH: Path = (
+    Path(__file__).parent / "data" / "LE07_L2SP_090084_20210331_20210426_02_T1"
 )
 
 LS8_TELEMETRY_PATH: Path = (
@@ -61,18 +65,23 @@ def l1_ls8_folder(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def l2_ls8_folder(tmp_path: Path) -> Path:
-    return _make_copy(L8_L2_INPUT_PATH, tmp_path)
-
-
-@pytest.fixture
 def l1_c2_ls8_folder(tmp_path: Path) -> Path:
     return _make_copy(L8_C2_INPUT_PATH, tmp_path)
 
 
 @pytest.fixture
-def l2_c2_ls8_folder(tmp_path: Path) -> Path:
-    return _make_copy(L8_C2_L2_INPUT_PATH, tmp_path)
+def lc08_l2_c2_post_20210507_folder(tmp_path: Path) -> Path:
+    return _make_copy(LC08_L2_C2_POST_20210507_INPUT_PATH, tmp_path)
+
+
+@pytest.fixture
+def lt05_l2_c2_folder(tmp_path: Path) -> Path:
+    return _make_copy(LT05_L2_C2_INPUT_PATH, tmp_path)
+
+
+@pytest.fixture
+def le07_l2_c2_folder(tmp_path: Path) -> Path:
+    return _make_copy(LE07_L2_C2_INPUT_PATH, tmp_path)
 
 
 @pytest.fixture
@@ -119,11 +128,6 @@ def l1_ls8_folder_md_expected(l1_ls8_folder) -> Dict:
     return expected_l1_ls8_folder(l1_ls8_folder, relative_offset)
 
 
-# @pytest.fixture
-# def l2_ls8_folder_md_expected(l2_ls8_folder) -> Dict:
-#     return expected_l2_ls8_folder(l2_ls8_folder, relative_offset)
-
-
 @pytest.fixture
 def l1_ls8_ga_expected(l1_ls8_folder) -> Dict:
     return expected_l1_ls8_folder(
@@ -148,9 +152,31 @@ def l1_c2_ls8_usgs_expected(l1_ls8_folder) -> Dict:
 
 
 @pytest.fixture
-def l2_c2_ls8_usgs_expected(l2_ls8_folder) -> Dict:
-    return expected_l2_ls8_folder(
-        l2_ls8_folder,
+def lc08_l2_c2_post_20210507_usgs_expected(lc08_l2_c2_post_20210507_folder) -> Dict:
+    return expected_lc08_l2_c2_post_20210507_folder(
+        lc08_l2_c2_post_20210507_folder,
+        relative_offset,
+        organisation="usgs.gov",
+        collection="2",
+        leveln_collection="2",
+    )
+
+
+@pytest.fixture
+def lt05_l2_c2_usgs_expected(lt05_l2_c2_folder) -> Dict:
+    return expected_lt05_l2_c2_folder(
+        lt05_l2_c2_folder,
+        relative_offset,
+        organisation="usgs.gov",
+        collection="2",
+        leveln_collection="2",
+    )
+
+
+@pytest.fixture
+def le07_l2_c2_usgs_expected(le07_l2_c2_folder) -> Dict:
+    return expected_le07_l2_c2_folder(
+        le07_l2_c2_folder,
         relative_offset,
         organisation="usgs.gov",
         collection="2",
@@ -161,11 +187,6 @@ def l2_c2_ls8_usgs_expected(l2_ls8_folder) -> Dict:
 @pytest.fixture
 def l1_ls8_folder_md_expected_absolute(l1_ls8_folder) -> Dict:
     return expected_l1_ls8_folder(l1_ls8_folder, path_offset)
-
-
-# @pytest.fixture
-# def l2_ls8_folder_md_expected_absolute(l2_ls8_folder) -> Dict:
-#     return expected_l1_ls8_folder(l2_ls8_folder, path_offset)
 
 
 @pytest.fixture
@@ -404,8 +425,8 @@ def expected_l1_ls8_folder(
     }
 
 
-def expected_l2_ls8_folder(
-    l2_ls8_folder: Path,
+def expected_lc08_l2_c2_post_20210507_folder(
+    l2_c2_ls8_folder: Path,
     offset: Callable[[Path, str], str] = relative_offset,
     organisation="usgs.gov",
     collection="1",
@@ -468,44 +489,37 @@ def expected_l2_ls8_folder(
         "geometry": {
             "coordinates": [
                 [
-                    [660375.0, -3714555.0],
-                    [653805.9742606982, -3739597.416698741],
-                    [645645.9630709235, -3770977.4596585087],
-                    [611265.0, -3903705.0],
-                    [611347.4273430856, -3903764.028518172],
-                    [617587.4656880032, -3905384.038494154],
-                    [793717.4711352366, -3951074.039906945],
-                    [794085.0, -3951135.0],
-                    [829904.0465951371, -3812572.5030201213],
-                    [842264.0500902473, -3764692.489476392],
-                    [842955.0, -3761865.0],
-                    [842872.5726569144, -3761805.971481828],
-                    [842182.525359167, -3761625.9591844226],
-                    [664702.5251864375, -3715635.9591396637],
-                    [660532.5216136159, -3714555.958214094],
-                    [660375.0, -3714555.0],
-                ]
+                    [656390.7366486033, -3713985.0],
+                    [653137.3072645832, -3716864.7197616836],
+                    [609585.0, -3888976.9699604893],
+                    [609585.0, -3905841.19690461],
+                    [691402.3702754473, -3932222.5947522246],
+                    [777854.1421397077, -3952215.0],
+                    [796350.2575455576, -3952215.0],
+                    [818563.2799541968, -3885739.54955405],
+                    [846315.0, -3761631.0],
+                    [823680.1297245529, -3749859.4052477754],
+                    [677099.698619789, -3713985.0],
+                    [656390.7366486033, -3713985.0],
+                ],
             ],
             "type": "Polygon",
         },
         "grids": {
             "default": {
-                # "shape": (60, 60),
-                "shape": (7941, 7891),
+                "shape": (60, 60),
                 "transform": (
-                    # 3945.5000000000005,
-                    30.0,
+                    3945.5000000000005,
                     0.0,
                     609585.0,
                     0.0,
-                    # -3970.5,
-                    -30.0,
+                    -3970.5,
                     -3713985.0,
                     0.0,
                     0.0,
                     1.0,
                 ),
-            }
+            },
         },
         "measurements": {
             "blue": {
@@ -572,6 +586,335 @@ def expected_l2_ls8_folder(
         "accessories": {
             "metadata:landsat_mtl": {
                 "path": f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_MTL.txt"
+            }
+        },
+        "lineage": lineage or {},
+    }
+
+
+def expected_lt05_l2_c2_folder(
+    l2_c2_ls8_folder: Path,
+    offset: Callable[[Path, str], str] = relative_offset,
+    organisation="usgs.gov",
+    collection="1",
+    leveln_collection="1",
+    lineage=None,
+):
+    """ """
+    org_code = organisation.split(".")[0]
+    product_name = f"{org_code}_ls5t_level{leveln_collection}_{collection}"
+    processing_datetime = datetime(2020, 9, 9, 10, 36, 59)
+    cloud_cover = 12.0
+    points_model = 965
+    points_version = 5
+    rmse_model_x = 3.085
+    rmse_model_y = 2.977
+    software_version = "LPGS_15.3.1c"
+    uuid = "b08b3f9e-b00c-5a67-88d8-a889f0e79d00"
+    quality_tag = "QA_PIXEL"
+    processing_date = processing_datetime.strftime("%Y%m%d")
+    return {
+        "$schema": "https://schemas.opendatacube.org/dataset",
+        "id": uuid,
+        "label": f"{product_name}-0-{processing_date}_090084_1998-03-08",
+        "product": {
+            "name": product_name,
+            "href": f"https://collections.dea.ga.gov.au/product/{product_name}",
+        },
+        "properties": {
+            "datetime": datetime(1998, 3, 8, 23, 26, 47, 294081),
+            # The minor version comes from the processing date,
+            # as used in filenames to distinguish reprocesses.
+            "odc:dataset_version": f"{collection}.0.{processing_date}",
+            "odc:file_format": "GeoTIFF",
+            "odc:processing_datetime": processing_datetime,
+            "odc:producer": organisation,
+            "odc:product_family": "level2",
+            "odc:region_code": "090084",
+            "eo:cloud_cover": cloud_cover,
+            "eo:gsd": 30.0,
+            "eo:instrument": "TM",
+            "eo:platform": "landsat-5",
+            "eo:sun_azimuth": 61.298_799_16,
+            "eo:sun_elevation": 41.583_263_99,
+            "landsat:algorithm_source_surface_reflectance": "LEDAPS_3.4.0",
+            "landsat:collection_category": "T1",
+            "landsat:collection_number": int(leveln_collection),
+            "landsat:data_type": "L2SP",
+            "landsat:geometric_rmse_model_x": rmse_model_x,
+            "landsat:geometric_rmse_model_y": rmse_model_y,
+            "landsat:ground_control_points_model": points_model,
+            "landsat:ground_control_points_version": points_version,
+            "landsat:landsat_product_id": f"LT05_L2SP_090084_19980308_{processing_date}_0{leveln_collection}_T1",
+            "landsat:landsat_scene_id": "LT50900841998067ASA00",
+            "landsat:processing_software_version": software_version,
+            "landsat:station_id": "ASA",
+            "landsat:wrs_path": 90,
+            "landsat:wrs_row": 84,
+        },
+        "crs": "epsg:32655",
+        "geometry": {
+            "coordinates": [
+                [
+                    [686022.6472422444, -3724785],
+                    [682595.9899406636, -3727553.91102268],
+                    [638085, -3907560],
+                    [790642.5733366499, -3940388.512659988],
+                    [830607.0294154783, -3943044.328838627],
+                    [880215, -3761340],
+                    [707789.0909090909, -3724785],
+                    [686022.6472422444, -3724785],
+                ],
+            ],
+            "type": "Polygon",
+        },
+        "grids": {
+            "default": {
+                "shape": (60, 60),
+                "transform": (
+                    4035.5000000000005,
+                    0.0,
+                    638085.0,
+                    0.0,
+                    -3655.5,
+                    -3724785.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                ),
+            },
+        },
+        "measurements": {
+            "atmos_opacity": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LT05_L2SP_090084_19980308_{processing_date}_0{leveln_collection}_T1_SR_ATMOS_OPACITY.TIF",
+                )
+            },
+            "blue": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LT05_L2SP_090084_19980308_{processing_date}_0{leveln_collection}_T1_SR_B1.TIF",
+                )
+            },
+            "green": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LT05_L2SP_090084_19980308_{processing_date}_0{leveln_collection}_T1_SR_B2.TIF",
+                )
+            },
+            "lwir": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LT05_L2SP_090084_19980308_{processing_date}_0{leveln_collection}_T1_ST_B6.TIF",
+                )
+            },
+            "nir": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LT05_L2SP_090084_19980308_{processing_date}_0{leveln_collection}_T1_SR_B4.TIF",
+                )
+            },
+            "qa_cloud": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LT05_L2SP_090084_19980308_{processing_date}_0{leveln_collection}_T1_SR_CLOUD_QA.TIF",
+                )
+            },
+            "quality": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LT05_L2SP_090084_19980308_{processing_date}_0{leveln_collection}_T1_{quality_tag}.TIF",
+                )
+            },
+            "red": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LT05_L2SP_090084_19980308_{processing_date}_0{leveln_collection}_T1_SR_B3.TIF",
+                )
+            },
+            "swir_1": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LT05_L2SP_090084_19980308_{processing_date}_0{leveln_collection}_T1_SR_B5.TIF",
+                )
+            },
+            "swir_2": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LT05_L2SP_090084_19980308_{processing_date}_0{leveln_collection}_T1_SR_B7.TIF",
+                )
+            },
+        },
+        "accessories": {
+            "metadata:landsat_mtl": {
+                "path": f"LT05_L2SP_090084_19980308_{processing_date}_0{leveln_collection}_T1_MTL.txt"
+            }
+        },
+        "lineage": lineage or {},
+    }
+
+
+def expected_le07_l2_c2_folder(
+    l2_c2_ls8_folder: Path,
+    offset: Callable[[Path, str], str] = relative_offset,
+    organisation="usgs.gov",
+    collection="1",
+    leveln_collection="1",
+    lineage=None,
+):
+    """ """
+    org_code = organisation.split(".")[0]
+    product_name = f"{org_code}_ls7e_level{leveln_collection}_{collection}"
+    processing_datetime = datetime(2021, 4, 26, 10, 52, 29)
+    cloud_cover = 6.0
+    points_model = 1240
+    points_version = 5
+    rmse_model_x = 3.08
+    rmse_model_y = 3.663
+    software_version = "LPGS_15.4.0"
+    uuid = "2184a390-3bfc-5393-91fa-e9dae7c3fe39"
+    quality_tag = "QA_PIXEL"
+    processing_date = processing_datetime.strftime("%Y%m%d")
+    return {
+        "$schema": "https://schemas.opendatacube.org/dataset",
+        "id": uuid,
+        "label": f"{product_name}-0-{processing_date}_090084_2021-03-31",
+        "product": {
+            "name": product_name,
+            "href": f"https://collections.dea.ga.gov.au/product/{product_name}",
+        },
+        "properties": {
+            "datetime": datetime(2021, 3, 31, 23, 1, 59, 738020),
+            # The minor version comes from the processing date,
+            # as used in filenames to distinguish reprocesses.
+            "odc:dataset_version": f"{collection}.0.{processing_date}",
+            "odc:file_format": "GeoTIFF",
+            "odc:processing_datetime": processing_datetime,
+            "odc:producer": organisation,
+            "odc:product_family": "level2",
+            "odc:region_code": "090084",
+            "eo:cloud_cover": cloud_cover,
+            "eo:gsd": 30.0,
+            "eo:instrument": "ETM",
+            "eo:platform": "landsat-7",
+            "eo:sun_azimuth": 57.028_331_7,
+            "eo:sun_elevation": 31.970_873_9,
+            "landsat:algorithm_source_surface_reflectance": "LEDAPS_3.4.0",
+            "landsat:collection_category": "T1",
+            "landsat:collection_number": int(leveln_collection),
+            "landsat:data_type": "L2SP",
+            "landsat:geometric_rmse_model_x": rmse_model_x,
+            "landsat:geometric_rmse_model_y": rmse_model_y,
+            "landsat:ground_control_points_model": points_model,
+            "landsat:ground_control_points_version": points_version,
+            "landsat:landsat_product_id": f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1",
+            "landsat:landsat_scene_id": "LE70900842021090ASA00",
+            "landsat:processing_software_version": software_version,
+            "landsat:station_id": "ASA",
+            "landsat:wrs_path": 90,
+            "landsat:wrs_row": 84,
+        },
+        "crs": "epsg:32655",
+        "geometry": {
+            "coordinates": [
+                [
+                    [691984.3611711152, -3725685],
+                    [681093.954439248, -3750395.580266866],
+                    [643185, -3904314.5],
+                    [671569.7291070349, -3915142.15448428],
+                    [825623.8388946611, -3944415],
+                    [846655.2670137166, -3944415],
+                    [857285.0835718605, -3923426.16362107],
+                    [895215, -3765785.5],
+                    [870923.2163880672, -3754935.810072099],
+                    [713242.5838228005, -3725685],
+                    [691984.3611711152, -3725685],
+                ],
+            ],
+            "type": "Polygon",
+        },
+        "grids": {
+            "default": {
+                "shape": (60, 60),
+                "transform": (
+                    4200.5,
+                    0.0,
+                    643185.0,
+                    0.0,
+                    -3645.5,
+                    -3725685.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                ),
+            },
+        },
+        "measurements": {
+            "atmos_opacity": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_ATMOS_OPACITY.TIF",
+                )
+            },
+            "blue": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_B1.TIF",
+                )
+            },
+            "green": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_B2.TIF",
+                )
+            },
+            "lwir": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_ST_B6.TIF",
+                )
+            },
+            "nir": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_B4.TIF",
+                )
+            },
+            "qa_cloud": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_CLOUD_QA.TIF",
+                )
+            },
+            "quality": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_{quality_tag}.TIF",
+                )
+            },
+            "red": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_B3.TIF",
+                )
+            },
+            "swir_1": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_B5.TIF",
+                )
+            },
+            "swir_2": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_B7.TIF",
+                )
+            },
+        },
+        "accessories": {
+            "metadata:landsat_mtl": {
+                "path": f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_MTL.txt"
             }
         },
         "lineage": lineage or {},
