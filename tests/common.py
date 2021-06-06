@@ -30,9 +30,6 @@ def check_prepare_outputs(
         # We check the geometry below
         ignore_fields=("geometry",) + tuple(ignore_fields),
     )
-    # print(expected_metadata_path)
-    # print("\n")
-    # print(expected_doc)
     # Compare geometry after parsing, rather than comparing the raw dict values.
     produced_dataset = serialise.from_path(expected_metadata_path)
     expected_dataset = serialise.from_doc(expected_doc, skip_validation=True)
