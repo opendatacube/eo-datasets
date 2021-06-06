@@ -1,0 +1,98 @@
+---
+# Dataset
+$schema: https://schemas.opendatacube.org/dataset
+id: 60849584-7b87-5b18-8ca1-e1b80e8ef29a
+
+label: sinergise_s2bm_level1_1-0-20210426_56JMQ_2021-04-25
+product:
+  name: sinergise_s2bm_level1_1
+
+crs: epsg:32756
+geometry:
+  type: Polygon
+  coordinates: [[[503804.24015645677, 6998863.101178387], [503821.73208148277, 6998934.312570408],
+      [503896.37333958125, 6999232.878253594], [504087.50841278967, 7000000.0], [
+        504137.131431658, 7000000.0], [504165.7104772193, 7000000.0], [509760.0, 7000000.0],
+      [509760.0, 6890200.0], [477256.18002433097, 6890200.0], [477213.20959506644,
+        6890200.0], [477175.46566292853, 6890200.0], [477170.14969532844, 6890211.723803317],
+      [477240.14969532844, 6890611.723803317], [477320.2258583456, 6890982.113327925],
+      [477562.54418650124, 6891987.96818784], [477661.73208148277, 6892434.312570408],
+      [483696.5143438508, 6917002.520175232], [502700.28822662984, 6994432.383580921],
+      [503804.24015645677, 6998863.101178387]]]
+grids:
+  default:
+    shape: [5490, 5490]
+    transform: [20.0, 0.0, 399960.0, 0.0, -20.0, 7000000.0, 0.0, 0.0, 1.0]
+  '10':
+    shape: [10980, 10980]
+    transform: [10.0, 0.0, 399960.0, 0.0, -10.0, 7000000.0, 0.0, 0.0, 1.0]
+  '60':
+    shape: [1830, 1830]
+    transform: [60.0, 0.0, 399960.0, 0.0, -60.0, 7000000.0, 0.0, 0.0, 1.0]
+
+properties:
+  datetime: 2021-04-25 23:54:23.437224Z
+  eo:cloud_cover: 0.3192
+  eo:gsd: 10  # Ground sample distance (m)
+  eo:instrument: MSI
+  eo:platform: sentinel-2b
+  eo:sun_azimuth: 37.3808258881866
+  eo:sun_elevation: 49.4617763967352
+  odc:dataset_version: 1.0.20210426
+  odc:file_format: JPEG2000
+  odc:processing_datetime: 2021-04-26 01:36:15.694831Z
+  odc:producer: sinergise.com
+  odc:product_family: level1
+  odc:region_code: 56JMQ
+  sentinel:datastrip_id: S2B_OPER_MSI_L1C_DS_VGS4_20210426T010904_S20210425T235239_N03.00
+  sentinel:datatake_start_datetime: 2021-04-26 01:09:04Z
+  sentinel:grid_square: MQ
+  sentinel:latitude_band: J
+  sentinel:product_name: S2B_MSIL1C_20210425T235239_N0300_R130_T56JMQ_20210426T010904
+  sentinel:sentinel_tile_id: S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00
+  sentinel:utm_zone: 56
+  sinergise_product_id: e8914b10-9964-4587-bc13-64c284f22c77
+
+measurements:
+  blue:
+    path: B02.jp2
+    grid: '10'
+  coastal_aerosol:
+    path: B01.jp2
+    grid: '60'
+  green:
+    path: B03.jp2
+    grid: '10'
+  nir_1:
+    path: B08.jp2
+    grid: '10'
+  nir_2:
+    path: B8A.jp2
+  red:
+    path: B04.jp2
+    grid: '10'
+  red_edge_1:
+    path: B05.jp2
+  red_edge_2:
+    path: B06.jp2
+  red_edge_3:
+    path: B07.jp2
+  swir_1_cirrus:
+    path: B10.jp2
+    grid: '60'
+  swir_2:
+    path: B11.jp2
+  swir_3:
+    path: B12.jp2
+  water_vapour:
+    path: B09.jp2
+    grid: '60'
+
+accessories:
+  metadata:sinergise_product_info:
+    path: productInfo.json
+  metadata:s2_tile:
+    path: metadata.xml
+
+lineage: {}
+...

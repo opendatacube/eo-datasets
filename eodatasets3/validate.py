@@ -25,20 +25,97 @@ import numpy as np
 import rasterio
 from boltons.iterutils import get_path
 from click import style, echo, secho
-from eodatasets3 import serialise, model
-from eodatasets3.model import DatasetDoc
-from eodatasets3.ui import PathPath, is_absolute, uri_resolve, bool_style
-from eodatasets3.utils import default_utc
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.errors import CRSError
 from shapely.validation import explain_validity
+
+from eodatasets3 import serialise, model
+from eodatasets3.model import DatasetDoc
+from eodatasets3.ui import PathPath, is_absolute, uri_resolve, bool_style
+from eodatasets3.utils import default_utc, EO3_SCHEMA
 
 
 class Level(enum.Enum):
     info = 1
     warning = 2
     error = 3
+
+
+class DocKind(enum.Enum):
+    # EO3 datacube dataset.
+    dataset = 1
+    # Datacube product
+    product = 2
+    # Datacube Metadata Type
+    metadata_type = 3
+    # Stac Item
+    stac_item = 4
+    # Legacy datacube ("eo1") dataset
+    legacy_dataset = 5
+    # Legacy product config for ingester
+    ingestion_config = 6
+
+
+# What kind of document each suffix represents.
+# (full suffix will also have a doc type: .yaml, .json, .yaml.gz etc)
+# Example:  "my-test-dataset.odc-metadata.yaml"
+SUFFIX_KINDS = {
+    ".odc-metadata": DocKind.dataset,
+    ".odc-product": DocKind.product,
+    ".odc-type": DocKind.metadata_type,
+}
+# Inverse of above
+DOC_TYPE_SUFFIXES = {v: k for k, v in SUFFIX_KINDS.items()}
+
+
+def filename_doc_kind(path: Path) -> Optional["DocKind"]:
+    """
+    Get the expected file type for the given filename.
+
+    Returns None if it does not follow any naming conventions.
+
+    >>> filename_doc_kind(Path('LC8_2014.odc-metadata.yaml')).name
+    'dataset'
+    >>> filename_doc_kind(Path('/tmp/something/water_bodies.odc-metadata.yaml.gz')).name
+    'dataset'
+    >>> filename_doc_kind(Path('/tmp/something/ls8_fc.odc-product.yaml')).name
+    'product'
+    >>> filename_doc_kind(Path('/tmp/something/ls8_wo.odc-product.json.gz')).name
+    'product'
+    >>> filename_doc_kind(Path('/tmp/something/eo3_gqa.odc-type.yaml')).name
+    'metadata_type'
+    >>> filename_doc_kind(Path('/tmp/something/some_other_file.yaml'))
+    """
+
+    for suffix in reversed(path.suffixes):
+        suffix = suffix.lower()
+        if suffix in SUFFIX_KINDS:
+            return SUFFIX_KINDS[suffix]
+
+    return None
+
+
+def guess_kind_from_contents(doc: Dict):
+    """
+    What sort of document do the contents look like?
+    """
+    if "$schema" in doc and doc["$schema"] == EO3_SCHEMA:
+        return DocKind.dataset
+    if "metadata_type" in doc:
+        if "source_type" in doc:
+            return DocKind.ingestion_config
+        return DocKind.product
+    if ("dataset" in doc) and ("search_fields" in doc["dataset"]):
+        return DocKind.metadata_type
+    if "id" in doc:
+        if ("lineage" in doc) and ("platform" in doc):
+            return DocKind.legacy_dataset
+
+        if ("properties" in doc) and ("datetime" in doc["properties"]):
+            return DocKind.stac_item
+
+    return None
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -235,13 +312,19 @@ def validate_dataset(
                             f"product {expected_dtype!r} != dataset {band_dtype!r}",
                         )
 
-                    # TODO: the nodata can also be a fill value, as mentioned by Kirill.
-                    expected_nodata = expected_measurement.nodata
                     ds_nodata = ds.nodatavals[band - 1]
+
+                    # If the dataset is missing 'nodata', we can allow anything in product 'nodata'.
+                    # (In ODC, nodata might be a fill value for loading data.)
+                    if ds_nodata is None:
+                        continue
+
+                    # Otherwise check that nodata matches.
+                    expected_nodata = expected_measurement.nodata
                     if expected_nodata != ds_nodata and not (
                         _is_nan(expected_nodata) and _is_nan(ds_nodata)
                     ):
-                        yield _info(
+                        yield _error(
                             "different_nodata",
                             f"{name} nodata: "
                             f"product {expected_nodata !r} != dataset {ds_nodata !r}",
@@ -251,21 +334,40 @@ def validate_dataset(
 def validate_product(doc: Dict) -> ValidationMessages:
     """
     Check for common product mistakes
-
-    # TODO: validate against a schema. ODC core has one and does this already, but we don't currently depend on it.
     """
-    # We'll focus on the parts ODC doesn't yet do.
 
+    # Validate it against ODC's product schema.
+    has_doc_errors = False
+    for error in serialise.PRODUCT_SCHEMA.iter_errors(doc):
+        has_doc_errors = True
+        displayable_path = ".".join(map(str, error.absolute_path))
+        context = f"({displayable_path}) " if displayable_path else ""
+        yield _error("document_schema", f"{context}{error.message} ")
+
+    # The jsonschema error message for this (common error) is garbage. Make it clearer.
     measurements = doc.get("measurements")
-    if measurements is None:
-        # Products don't have to have measurements. (eg. provenance-only products)
-        ...
-    elif not isinstance(measurements, Sequence):
+    if (measurements is not None) and not isinstance(measurements, Sequence):
         yield _error(
             "measurements_list",
             f"Product measurements should be a list/sequence "
             f"(Found a {type(measurements).__name__!r}).",
         )
+
+    # There's no point checking further if the core doc structure is wrong.
+    if has_doc_errors:
+        return
+
+    if not doc.get("license", "").strip():
+        yield _warning(
+            "no_license",
+            f"Product {doc['name']!r} has no license field",
+            hint='Eg. "CC-BY-SA-4.0" (SPDX format), "various" or "proprietary"',
+        )
+
+    # Check measurement name clashes etc.
+    if measurements is None:
+        # Products don't have to have measurements. (eg. provenance-only products)
+        ...
     else:
         seen_names_and_aliases = collections.defaultdict(list)
         for measurement in measurements:
@@ -283,7 +385,10 @@ def validate_product(doc: Dict) -> ValidationMessages:
             for new_field_name in these_names:
                 measurements_with_this_name = seen_names_and_aliases[new_field_name]
                 if measurements_with_this_name:
-                    seen_in = " and ".join(repr(s) for s in measurements_with_this_name)
+                    seen_in = " and ".join(
+                        repr(s)
+                        for s in ([measurement_name] + measurements_with_this_name)
+                    )
 
                     # If the same name is used by different measurements, its a hard error.
                     yield _error(
@@ -302,6 +407,18 @@ def validate_product(doc: Dict) -> ValidationMessages:
 
             for field in these_names:
                 seen_names_and_aliases[field].append(measurement_name)
+
+
+def validate_metadata_type(doc: Dict) -> ValidationMessages:
+    """
+    Check for common metadata-type mistakes
+    """
+
+    # Validate it against ODC's schema (there will be refused by ODC otherwise)
+    for error in serialise.METADATA_TYPE_SCHEMA.iter_errors(doc):
+        displayable_path = ".".join(map(str, error.absolute_path))
+        context = f"({displayable_path}) " if displayable_path else ""
+        yield _error("document_schema", f"{context}{error.message} ")
 
 
 def _find_duplicates(values: Iterable[str]) -> Generator[str, None, None]:
@@ -370,19 +487,98 @@ def validate_paths(
     """Validate the list of paths. Product documents can be specified before their datasets."""
     products: Dict[str, Dict] = {}
 
-    for path in paths:
+    for path, was_specified_by_user in expand_directories(paths):
         with path.open("r") as f:
-            inner_docs = serialise.loads_yaml(f)
-            for i, doc in enumerate(inner_docs):
-                if is_product(doc):
-                    products[doc["name"]] = doc
-                    messages = list(validate_product(doc))
-                else:
-                    messages = validate_eo3_doc(
-                        doc, path, products, thorough, expect_extra_measurements
+            for i, doc in enumerate(serialise.loads_yaml(f)):
+                messages = []
+                kind = filename_doc_kind(path)
+                if kind is None:
+                    kind = guess_kind_from_contents(doc)
+                    if kind and (kind in DOC_TYPE_SUFFIXES):
+                        # It looks like an ODC doc but doesn't have the standard suffix.
+                        messages.append(
+                            _warning(
+                                "missing_suffix",
+                                f"Document looks like a {kind.name} but does not have "
+                                f'filename extension "{DOC_TYPE_SUFFIXES[kind]}{_readable_doc_extension(path)}"',
+                            )
+                        )
+
+                if kind == DocKind.product:
+                    messages.extend(validate_product(doc))
+                    if "name" in doc:
+                        products[doc["name"]] = doc
+                elif kind == DocKind.dataset:
+                    messages.extend(
+                        validate_eo3_doc(
+                            doc, path, products, thorough, expect_extra_measurements
+                        )
                     )
-                if messages:
-                    yield path, i, messages
+                elif kind == DocKind.metadata_type:
+                    messages.extend(validate_metadata_type(doc))
+                # Otherwise it's a file we don't support.
+                # If the user gave us the path explicitly, it seems to be an error.
+                # (if they didn't -- it was found via scanning directories -- we don't care.)
+                elif was_specified_by_user:
+                    if kind is None:
+                        raise ValueError(f"Unknown document type for path {path}")
+                    else:
+                        raise NotImplementedError(
+                            f"Cannot currently validate {kind.name} files"
+                        )
+                else:
+                    # Not a doc type we recognise, and the user didn't specify it. Skip it.
+                    continue
+
+                yield path, i, messages
+
+
+def _readable_doc_extension(path: Path):
+    """
+    >>> _readable_doc_extension(Path('something.json.gz'))
+    '.json.gz'
+    >>> _readable_doc_extension(Path('something.yaml'))
+    '.yaml'
+    >>> _readable_doc_extension(Path('apple.odc-metadata.yaml.gz'))
+    '.yaml.gz'
+    >>> _readable_doc_extension(Path('/tmp/human.06.tall.yml'))
+    '.yml'
+    >>> # Not a doc, even though it's compressed.
+    >>> _readable_doc_extension(Path('db_dump.gz'))
+    >>> _readable_doc_extension(Path('/tmp/nothing'))
+    """
+    compression_formats = (".gz",)
+    doc_formats = (
+        ".yaml",
+        ".yml",
+        ".json",
+    )
+    suffix = "".join(
+        s.lower()
+        for s in path.suffixes
+        if s.lower() in doc_formats + compression_formats
+    )
+    # If it's only compression, no doc format, it's not valid.
+    if suffix in compression_formats:
+        return None
+    return suffix or None
+
+
+def expand_directories(
+    input_paths: Iterable[Path],
+) -> Generator[Tuple[Path, bool], None, None]:
+    """
+    For any paths that are directories, find inner documents that are known.
+
+    Returns Tuples: path, and whether it was specified explicitly by user.
+    """
+    for path in input_paths:
+        if path.is_dir():
+            for found_path in path.rglob("*"):
+                if _readable_doc_extension(found_path) is not None:
+                    yield found_path, False
+        else:
+            yield path, True
 
 
 def validate_eo3_doc(
@@ -435,11 +631,6 @@ def validate_eo3_doc(
     return messages
 
 
-def is_product(doc: Dict) -> bool:
-    """Is this a product document?"""
-    return "metadata_type" in doc
-
-
 def _validate_stac_properties(dataset: DatasetDoc):
     for name, value in dataset.properties.items():
         if name not in dataset.properties.KNOWN_STAC_PROPERTIES:
@@ -474,7 +665,7 @@ def _validate_stac_properties(dataset: DatasetDoc):
                                 f"Property {value!r} expected to be {normalised_value!r}",
                             )
                 except ValueError as e:
-                    yield _error("invalid_property", e.args[0])
+                    yield _error("invalid_property", f"{name!r}: {e.args[0]}")
 
     if "odc:producer" in dataset.properties:
         producer = dataset.properties["odc:producer"]
@@ -556,9 +747,10 @@ def _has_some_geo(dataset):
 @click.command(
     help=__doc__
     + """
-Paths can be both product and dataset
-documents, but each product must come before
-its datasets to be matched against it.
+Paths can be products, dataset documents, or directories to scan (for files matching
+names '*.odc-metadata.yaml' etc).
+
+But each product must be specified before its datasets to be validated against them.
 """
 )
 @click.version_option()
@@ -618,7 +810,7 @@ def run(
 
         if messages or not quiet:
             path_suffix = f" document {path_index+1}" if path_index else ""
-            secho(f"{bool_style(not is_invalid)} {path.stem}{path_suffix}")
+            secho(f"{bool_style(not is_invalid)} {path}{path_suffix}")
 
         if not messages:
             continue
@@ -634,7 +826,7 @@ def run(
                 f"\t{message.level.name[0].upper()} {displayable_code} {message.reason}"
             )
             if message.hint:
-                echo(f' ({style("Hint", fg="green")}: {message.hint})')
+                echo(f'\t\t({style("Hint")}: {message.hint})')
 
     if not quiet:
         result = (

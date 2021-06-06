@@ -20,18 +20,35 @@ def check_prepare_outputs(
     expected_metadata_path: Path,
     ignore_fields=(),
 ):
+    """Call a prepare script and check for an expected output document."""
     __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
     run_prepare_cli(invoke_script, *run_args)
 
-    assert expected_metadata_path.exists()
+    assert_expected_eo3_doc(expected_doc, expected_metadata_path, ignore_fields)
+
+
+def assert_expected_eo3_doc(
+    expected_doc: Dict,
+    expected_path: Path,
+    ignore_fields=(),
+):
+    """
+    Check an output path of an EO3 dataset matches an expected document.
+
+    This is slightly smarter about doing geometry equality etc within the document.
+    """
+    __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
+    assert (
+        expected_path.exists()
+    ), f"Expected output EO3 path doesn't exist: {expected_path}"
     assert_same_as_file(
         expected_doc,
-        expected_metadata_path,
+        expected_path,
         # We check the geometry below
         ignore_fields=("geometry",) + tuple(ignore_fields),
     )
     # Compare geometry after parsing, rather than comparing the raw dict values.
-    produced_dataset = serialise.from_path(expected_metadata_path)
+    produced_dataset = serialise.from_path(expected_path)
     expected_dataset = serialise.from_doc(expected_doc, skip_validation=True)
     # print(produced_dataset.geometry)
     # print(expected_dataset.geometry)

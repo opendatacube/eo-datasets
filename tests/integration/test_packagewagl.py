@@ -14,7 +14,7 @@ from rio_cogeo import cogeo
 import eodatasets3
 from eodatasets3.model import DatasetDoc
 from tests import assert_file_structure
-from tests.common import assert_same_as_file
+from tests.common import assert_same_as_file, assert_expected_eo3_doc
 from . import assert_image
 
 h5py = pytest.importorskip(
@@ -29,10 +29,16 @@ WAGL_LANDSAT_OUTPUT: Path = (
     Path(__file__).parent
     / "data/wagl-input/LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
 )
-WAGL_SENTINEL_OUTPUT: Path = (
+WAGL_ESA_SENTINEL_OUTPUT: Path = (
     Path(__file__).parent
     / "data/wagl-input/S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09/"
     "S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09.wagl.h5"
+)
+
+WAGL_SINERGISE_SENTINEL_OUTPUT: Path = (
+    Path(__file__).parent
+    / "data/wagl-input/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/"
+    "S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00.wagl.h5"
 )
 
 
@@ -42,9 +48,13 @@ L1_METADATA_PATH: Path = (
     / "data/wagl-input/LC08_L1TP_092084_20160628_20170323_01_T1.yaml"
 )
 
-S2_L1_METADATA_PATH: Path = (
+S2_ESA_L1_METADATA_PATH: Path = (
     Path(__file__).parent
     / "data/wagl-input/S2A_MSIL1C_20201031T004711_N0209_R102_T53JQJ_20201031T022859.odc-metadata.yaml"
+)
+S2_SINERGISE_L1_METADATA_PATH: Path = (
+    Path(__file__).parent
+    / "data/wagl-input/S2B_MSIL1C_20210425T235239_N0300_R130_T56JMQ_20210426T010904.odc-metadata.yaml"
 )
 
 
@@ -137,7 +147,7 @@ def test_whole_landsat_wagl_package(
     [image] = expected_folder.rglob("*_oa_*nbart-contiguity.tif")
     assert_image(image, nodata=255, unique_pixel_counts={0: 1979, 1: 4183})
 
-    assert_same_as_file(
+    assert_expected_eo3_doc(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             # A stable ID is taken from the WAGL doc.
@@ -606,25 +616,23 @@ def expect_no_warnings():
         raise AssertionError(f"Expected no warnings to be produced, got:\n {messages}")
 
 
-def test_sentinel_wagl_package(tmp_path: Path):
-    out = tmp_path
-
+def test_esa_sentinel_wagl_package(tmp_path: Path):
     from eodatasets3.scripts import packagewagl
 
     # No warnings should have been logged during package.
     # We could tighten this to specific warnings if it proves too noisy, but it's
     # useful for catching things like unclosed files.
     with expect_no_warnings():
-        res = CliRunner().invoke(
+        CliRunner().invoke(
             packagewagl.run,
             map(
                 str,
                 (
-                    WAGL_SENTINEL_OUTPUT,
+                    WAGL_ESA_SENTINEL_OUTPUT,
                     "--level1",
-                    S2_L1_METADATA_PATH,
+                    S2_ESA_L1_METADATA_PATH,
                     "--output",
-                    out,
+                    tmp_path,
                     # Our weird scaled test dataset resolution
                     "--oa-resolution",
                     998.1818181818181,
@@ -632,10 +640,8 @@ def test_sentinel_wagl_package(tmp_path: Path):
             ),
             catch_exceptions=False,
         )
-        # The last line of output ends with the dataset path.
-        words, reported_metadata = res.output.splitlines()[-1].rsplit(" ", 1)
 
-    expected_folder = out / "ga_s2am_ard_3/53/JQJ/2020/10/31"
+    expected_folder = tmp_path / "ga_s2am_ard_3/53/JQJ/2020/10/31"
     assert_file_structure(
         expected_folder,
         {
@@ -706,7 +712,7 @@ def test_sentinel_wagl_package(tmp_path: Path):
     [image] = expected_folder.rglob("*_oa_*nbart-contiguity.tif")
     assert_image(image, nodata=255, unique_pixel_counts={0: 5367, 1: 6733})
 
-    assert_same_as_file(
+    assert_expected_eo3_doc(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             "id": "14cfa990-7e2f-4f0c-bd5e-b4cb28c27e8d",
@@ -1041,3 +1047,414 @@ def test_sentinel_wagl_package(tmp_path: Path):
     # All produced tifs should be valid COGs
     for image in expected_folder.rglob("*.tif"):
         assert cogeo.cog_validate(image), f"Failed COG validation: {image}"
+
+
+def test_sinergise_sentinel_wagl_package(tmp_path: Path):
+    from eodatasets3.scripts import packagewagl
+
+    # No warnings should have been logged during package.
+    # We could tighten this to specific warnings if it proves too noisy, but it's
+    # useful for catching things like unclosed files.
+    CliRunner().invoke(
+        packagewagl.run,
+        map(
+            str,
+            (
+                WAGL_SINERGISE_SENTINEL_OUTPUT,
+                "--level1",
+                S2_SINERGISE_L1_METADATA_PATH,
+                "--output",
+                tmp_path,
+                # Our weird scaled test dataset resolution
+                "--oa-resolution",
+                998.1818181818181,
+            ),
+        ),
+        catch_exceptions=False,
+    )
+
+    expected_folder = tmp_path / "ga_s2bm_ard_3/56/JMQ/2021/04/25/"
+    assert_file_structure(
+        expected_folder,
+        {
+            "20210426T010904": {
+                "ga_s2bm_ard_3-2-1_56JMQ_2021-04-25_final.odc-metadata.yaml": "",
+                "ga_s2bm_ard_3-2-1_56JMQ_2021-04-25_final.proc-info.yaml": "",
+                "ga_s2bm_ard_3-2-1_56JMQ_2021-04-25_final.sha1": "",
+                "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band01.tif": "",
+                "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band02.tif": "",
+                "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band03.tif": "",
+                "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band04.tif": "",
+                "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band05.tif": "",
+                "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band06.tif": "",
+                "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band07.tif": "",
+                "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band08.tif": "",
+                "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band08a.tif": "",
+                "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band11.tif": "",
+                "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band12.tif": "",
+                "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_thumbnail.jpg": "",
+                "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band01.tif": "",
+                "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band02.tif": "",
+                "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band03.tif": "",
+                "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band04.tif": "",
+                "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band05.tif": "",
+                "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band06.tif": "",
+                "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band07.tif": "",
+                "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band08.tif": "",
+                "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band08a.tif": "",
+                "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band11.tif": "",
+                "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band12.tif": "",
+                "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_thumbnail.jpg": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_azimuthal-exiting.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_azimuthal-incident.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_combined-terrain-shadow.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_exiting-angle.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_fmask.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_incident-angle.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_nbar-contiguity.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_nbart-contiguity.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_relative-azimuth.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_relative-slope.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_satellite-azimuth.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_satellite-view.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_solar-azimuth.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_solar-zenith.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_time-delta.tif": "",
+            }
+        },
+    )
+    [output_metadata] = expected_folder.rglob("*.odc-metadata.yaml")
+
+    assert_expected_eo3_doc(
+        {
+            "$schema": "https://schemas.opendatacube.org/dataset",
+            "id": "28f110b8-ee82-4fdd-87e1-3d126c32c5e4",
+            "label": "ga_s2bm_ard_3-2-1_56JMQ_2021-04-25_final",
+            "product": {
+                "name": "ga_s2bm_ard_3",
+                "href": "https://collections.dea.ga.gov.au/product/ga_s2bm_ard_3",
+            },
+            "crs": "epsg:32756",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [472586.2875243185, 6890200.0],
+                        [469479.9133412654, 6897380.547980473],
+                        [492595.7028149496, 6989843.7058752095],
+                        [499852.1326281141, 7000000.0],
+                        [503529.3207654721, 7000000.0],
+                        [503650.1149281906, 7000000.0],
+                        [509760.0, 7000000.0],
+                        [509760.0, 6890200.0],
+                        [477589.2345939791, 6890200.0],
+                        [476948.9859017613, 6890200.0],
+                        [472586.2875243185, 6890200.0],
+                    ]
+                ],
+            },
+            "grids": {
+                "default": {
+                    "shape": [110, 110],
+                    "transform": [
+                        998.1818181818181,
+                        0.0,
+                        399960.0,
+                        0.0,
+                        -998.1818181818181,
+                        7000000.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                    ],
+                },
+                "a": {
+                    "shape": [55, 55],
+                    "transform": [
+                        1996.3636363636363,
+                        0.0,
+                        399960.0,
+                        0.0,
+                        -1996.3636363636363,
+                        7000000.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                    ],
+                },
+                "b": {
+                    "shape": [19, 19],
+                    "transform": [
+                        5778.9473684210525,
+                        0.0,
+                        399960.0,
+                        0.0,
+                        -5778.9473684210525,
+                        7000000.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                    ],
+                },
+                "c": {
+                    "shape": [19, 19],
+                    "transform": [
+                        5778.947368421053,
+                        0.0,
+                        399960.0,
+                        0.0,
+                        -5778.947368421053,
+                        7000000.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                    ],
+                },
+            },
+            "properties": {
+                "datetime": "2021-04-25T23:54:23.437224",
+                "dea:dataset_maturity": "final",
+                "eo:cloud_cover": 2.7936189093810837,
+                "eo:gsd": 998.1818181818181,
+                "eo:instrument": "MSI",
+                "eo:platform": "sentinel-2b",
+                "eo:sun_azimuth": 37.3808258881866,
+                "eo:sun_elevation": 49.4617763967352,
+                "fmask:clear": 90.52820715079,
+                "fmask:cloud": 2.7936189093810837,
+                "fmask:cloud_shadow": 1.6774401648547776,
+                "fmask:snow": 0.2035270117090613,
+                "fmask:water": 4.797206763265085,
+                "gqa:abs_iterative_mean_x": 0.34,
+                "gqa:abs_iterative_mean_xy": 0.36,
+                "gqa:abs_iterative_mean_y": 0.11,
+                "gqa:abs_x": 0.37,
+                "gqa:abs_xy": 0.39,
+                "gqa:abs_y": 0.14,
+                "gqa:cep90": 0.51,
+                "gqa:iterative_mean_x": 0.34,
+                "gqa:iterative_mean_xy": 0.34,
+                "gqa:iterative_mean_y": 0.06,
+                "gqa:iterative_stddev_x": 0.11,
+                "gqa:iterative_stddev_xy": 0.17,
+                "gqa:iterative_stddev_y": 0.12,
+                "gqa:mean_x": 0.34,
+                "gqa:mean_xy": 0.35,
+                "gqa:mean_y": 0.06,
+                "gqa:stddev_x": 0.37,
+                "gqa:stddev_xy": 0.49,
+                "gqa:stddev_y": 0.32,
+                "odc:dataset_version": "3.2.1",
+                "odc:file_format": "GeoTIFF",
+                "odc:processing_datetime": "2021-05-21T07:51:09.439427",
+                "odc:producer": "ga.gov.au",
+                "odc:product_family": "ard",
+                "odc:region_code": "56JMQ",
+                "sentinel:datastrip_id": "S2B_OPER_MSI_L1C_DS_VGS4_20210426T010904_S20210425T235239_N03.00",
+                "sentinel:datatake_start_datetime": "2021-04-26T01:09:04",
+                "sentinel:grid_square": "MQ",
+                "sentinel:latitude_band": "J",
+                "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00",
+                "sentinel:utm_zone": 56,
+            },
+            "measurements": {
+                "nbar_blue": {
+                    "path": "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band02.tif"
+                },
+                "nbar_coastal_aerosol": {
+                    "path": "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band01.tif",
+                    "grid": "b",
+                },
+                "nbar_green": {
+                    "path": "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band03.tif"
+                },
+                "nbar_nir_1": {
+                    "path": "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band08.tif"
+                },
+                "nbar_nir_2": {
+                    "path": "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band08a.tif",
+                    "grid": "a",
+                },
+                "nbar_red": {
+                    "path": "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band04.tif"
+                },
+                "nbar_red_edge_1": {
+                    "path": "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band05.tif",
+                    "grid": "a",
+                },
+                "nbar_red_edge_2": {
+                    "path": "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band06.tif",
+                    "grid": "a",
+                },
+                "nbar_red_edge_3": {
+                    "path": "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band07.tif",
+                    "grid": "a",
+                },
+                "nbar_swir_2": {
+                    "path": "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band11.tif",
+                    "grid": "a",
+                },
+                "nbar_swir_3": {
+                    "path": "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_band12.tif",
+                    "grid": "a",
+                },
+                "nbart_blue": {
+                    "path": "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band02.tif"
+                },
+                "nbart_coastal_aerosol": {
+                    "path": "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band01.tif",
+                    "grid": "b",
+                },
+                "nbart_green": {
+                    "path": "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band03.tif"
+                },
+                "nbart_nir_1": {
+                    "path": "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band08.tif"
+                },
+                "nbart_nir_2": {
+                    "path": "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band08a.tif",
+                    "grid": "a",
+                },
+                "nbart_red": {
+                    "path": "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band04.tif"
+                },
+                "nbart_red_edge_1": {
+                    "path": "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band05.tif",
+                    "grid": "a",
+                },
+                "nbart_red_edge_2": {
+                    "path": "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band06.tif",
+                    "grid": "a",
+                },
+                "nbart_red_edge_3": {
+                    "path": "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band07.tif",
+                    "grid": "a",
+                },
+                "nbart_swir_2": {
+                    "path": "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band11.tif",
+                    "grid": "a",
+                },
+                "nbart_swir_3": {
+                    "path": "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_band12.tif",
+                    "grid": "a",
+                },
+                "oa_azimuthal_exiting": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_azimuthal-exiting.tif"
+                },
+                "oa_azimuthal_incident": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_azimuthal-incident.tif"
+                },
+                "oa_combined_terrain_shadow": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_combined-terrain-shadow.tif"
+                },
+                "oa_exiting_angle": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_exiting-angle.tif"
+                },
+                "oa_fmask": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_fmask.tif",
+                    "grid": "c",
+                },
+                "oa_incident_angle": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_incident-angle.tif"
+                },
+                "oa_nbar_contiguity": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_nbar-contiguity.tif"
+                },
+                "oa_nbart_contiguity": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_nbart-contiguity.tif"
+                },
+                "oa_relative_azimuth": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_relative-azimuth.tif"
+                },
+                "oa_relative_slope": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_relative-slope.tif"
+                },
+                "oa_satellite_azimuth": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_satellite-azimuth.tif"
+                },
+                "oa_satellite_view": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_satellite-view.tif"
+                },
+                "oa_solar_azimuth": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_solar-azimuth.tif"
+                },
+                "oa_solar_zenith": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_solar-zenith.tif"
+                },
+                "oa_time_delta": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_time-delta.tif"
+                },
+            },
+            "accessories": {
+                "thumbnail:nbar": {
+                    "path": "ga_s2bm_nbar_3-2-1_56JMQ_2021-04-25_final_thumbnail.jpg"
+                },
+                "thumbnail:nbart": {
+                    "path": "ga_s2bm_nbart_3-2-1_56JMQ_2021-04-25_final_thumbnail.jpg"
+                },
+                "checksum:sha1": {
+                    "path": "ga_s2bm_ard_3-2-1_56JMQ_2021-04-25_final.sha1"
+                },
+                "metadata:processor": {
+                    "path": "ga_s2bm_ard_3-2-1_56JMQ_2021-04-25_final.proc-info.yaml"
+                },
+            },
+            "lineage": {"level1": ["60849584-7b87-5b18-8ca1-e1b80e8ef29a"]},
+        },
+        output_metadata,
+    )
+
+    [proc_info] = expected_folder.rglob("*.proc-info.yaml")
+    assert_same_as_file(
+        {
+            "fmask": {
+                "parameters": {
+                    "cloud_buffer_distance_metres": 0.0,
+                    "cloud_shadow_buffer_distance_metres": 0.0,
+                    "frantz_parallax_sentinel_2": False,
+                },
+                "percent_class_distribution": {
+                    "clear": 90.52820715079,
+                    "cloud": 2.7936189093810837,
+                    "cloud_shadow": 1.6774401648547776,
+                    "snow": 0.2035270117090613,
+                    "water": 4.797206763265085,
+                },
+            },
+            "software_versions": [
+                {
+                    "name": "modtran",
+                    "url": "http://www.ontar.com/software/productdetails.aspx?item=modtran",
+                    "version": "6.0.1",
+                },
+                {
+                    "name": "wagl",
+                    "url": "https://github.com/GeoscienceAustralia/wagl",
+                    "version": "5.5.1",
+                },
+                {
+                    "name": "eugl",
+                    "url": "https://github.com/OpenDataCubePipelines/eugl",
+                    "version": "0.3.1",
+                },
+                {"name": "gverify", "url": None, "version": "v0.25c"},
+                {
+                    "name": "fmask",
+                    "url": "https://www.pythonfmask.org/",
+                    "version": "0.5.5",
+                },
+                {
+                    "name": "tesp",
+                    "url": "https://github.com/OpenDataCubePipelines/tesp",
+                    "version": "0.7.2.dev1+ga559f47",
+                },
+                {
+                    "name": "eodatasets3",
+                    "url": "https://github.com/GeoscienceAustralia/eo-datasets",
+                    "version": eodatasets3.__version__,
+                },
+            ],
+        },
+        proc_info,
+        ignore_fields=("gqa", "wagl"),
+    )

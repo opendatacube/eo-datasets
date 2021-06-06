@@ -1,18 +1,172 @@
 import operator
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, Union, Mapping, Sequence, Optional, List, Tuple
+from typing import Dict, Union, Mapping, Sequence, Optional, Tuple
 
 import numpy as np
 import pytest
 import rasterio
 from click.testing import CliRunner, Result
-from eodatasets3 import serialise, validate
-from eodatasets3.model import DatasetDoc
 from rasterio.io import DatasetWriter
 
+from eodatasets3 import serialise, validate
+from eodatasets3.model import DatasetDoc
+
 # Either a dict or a path to a document
+from eodatasets3.validate import DocKind, guess_kind_from_contents, filename_doc_kind
+
 Doc = Union[Dict, Path]
+
+
+@pytest.fixture()
+def product():
+    return dict(
+        name="simple_test_product",
+        description="Our test product",
+        metadata={},
+        license="CC-BY-SA-4.0",
+        metadata_type="eo3",
+        measurements=[dict(name="blue", units="1", dtype="uint8", nodata=255)],
+    )
+
+
+@pytest.fixture()
+def metadata_type():
+    return {
+        "name": "eo3",
+        "description": "Minimal EO3-like",
+        "dataset": {
+            "id": ["id"],
+            "sources": ["lineage", "source_datasets"],
+            "grid_spatial": ["grid_spatial", "projection"],
+            "measurements": ["measurements"],
+            "creation_dt": ["properties", "odc:processing_datetime"],
+            "label": ["label"],
+            "format": ["properties", "odc:file_format"],
+            "search_fields": {
+                "time": {
+                    "description": "Acquisition time range",
+                    "type": "datetime-range",
+                    "min_offset": [
+                        ["properties", "dtr:start_datetime"],
+                        ["properties", "datetime"],
+                    ],
+                    "max_offset": [
+                        ["properties", "dtr:end_datetime"],
+                        ["properties", "datetime"],
+                    ],
+                }
+            },
+        },
+    }
+
+
+@pytest.fixture()
+def l1_ls8_product():
+    """An example valid product definition, suiting the l1_ls8_dataset fixture."""
+    return {
+        "name": "usgs_ls8c_level1_1",
+        "description": "United States Geological Survey Landsat 8 "
+        "Operational Land Imager and Thermal Infra-Red Scanner Level 1 Collection 1",
+        "metadata_type": "eo3_landsat_l1",
+        "license": "CC-BY-4.0",
+        "metadata": {
+            "product": {"name": "usgs_ls8c_level1_1"},
+            "properties": {
+                "eo:platform": "landsat-8",
+                "eo:instrument": "OLI_TIRS",
+                "odc:product_family": "level1",
+                "odc:producer": "usgs.gov",
+                "landsat:collection_number": 1,
+            },
+        },
+        "measurements": [
+            {
+                "name": "coastal_aerosol",
+                "aliases": ["band01"],
+                "dtype": "uint16",
+                "nodata": 65535,
+                "units": "1",
+            },
+            {
+                "name": "blue",
+                "aliases": ["band02"],
+                "dtype": "uint16",
+                "nodata": 65535,
+                "units": "1",
+            },
+            {
+                "name": "green",
+                "aliases": ["band03"],
+                "dtype": "uint16",
+                "nodata": 65535,
+                "units": "1",
+            },
+            {
+                "name": "red",
+                "aliases": ["band04"],
+                "dtype": "uint16",
+                "nodata": 65535,
+                "units": "1",
+            },
+            {
+                "name": "nir",
+                "aliases": ["band05"],
+                "dtype": "uint16",
+                "nodata": 65535,
+                "units": "1",
+            },
+            {
+                "name": "swir_1",
+                "aliases": ["band06"],
+                "dtype": "uint16",
+                "nodata": 65535,
+                "units": "1",
+            },
+            {
+                "name": "swir_2",
+                "aliases": ["band07"],
+                "dtype": "uint16",
+                "nodata": 65535,
+                "units": "1",
+            },
+            {
+                "name": "panchromatic",
+                "aliases": ["band08"],
+                "dtype": "uint16",
+                "nodata": 65535,
+                "units": "1",
+            },
+            {
+                "name": "cirrus",
+                "aliases": ["band09"],
+                "dtype": "uint16",
+                "nodata": 65535,
+                "units": "1",
+            },
+            {
+                "name": "lwir_1",
+                "aliases": ["band10"],
+                "dtype": "uint16",
+                "nodata": 65535,
+                "units": "1",
+            },
+            {
+                "name": "lwir_2",
+                "aliases": ["band11"],
+                "dtype": "uint16",
+                "nodata": 65535,
+                "units": "1",
+            },
+            {
+                "name": "quality",
+                "aliases": ["bqa"],
+                "dtype": "uint16",
+                "nodata": 65535,
+                "units": "1",
+            },
+        ],
+    }
 
 
 class ValidateRunner:
@@ -25,13 +179,14 @@ class ValidateRunner:
         self.quiet = False
         self.warnings_are_errors = False
         self.record_informational_messages = False
+        self.ignore_message_codes = ["missing_suffix"]
         self.thorough: bool = False
 
         self.result: Optional[Result] = None
 
-    def assert_valid(self, *docs: Doc, expect_no_messages=True):
+    def assert_valid(self, *docs: Doc, expect_no_messages=True, suffix=None):
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
-        self.run_validate(docs)
+        self.run_validate(docs, suffix=suffix or ".yaml")
         was_successful = self.result.exit_code == 0
         assert (
             was_successful
@@ -43,18 +198,25 @@ class ValidateRunner:
                 + "\n".join(f"{k}: {v}" for k, v in self.messages.items())
             )
 
-    def assert_invalid(self, *docs: Doc, codes: Sequence[str] = None):
+    def assert_invalid(self, *docs: Doc, codes: Sequence[str] = None, suffix=".yaml"):
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
-        self.run_validate(docs)
+        self.run_validate(docs, suffix=suffix)
         assert (
             self.result.exit_code != 0
         ), f"Expected validation to fail.\n{self.result.output}"
-        assert self.result.exit_code == 1, "Expected error code 1 for 1 invalid path"
 
         if codes is not None:
-            assert sorted(codes) == sorted(self.messages.keys())
+            assert sorted(codes) == sorted(
+                self.messages.keys()
+            ), f"{sorted(codes)} != {sorted(self.messages.keys())}. Messages: {self.messages}"
+        else:
+            assert (
+                self.result.exit_code == 1
+            ), f"Expected error code 1 for 1 invalid path. Got {sorted(self.messages.items())}"
 
-    def run_validate(self, docs: Sequence[Doc], allow_extra_measurements=True):
+    def run_validate(
+        self, docs: Sequence[Doc], allow_extra_measurements=True, suffix=".yaml"
+    ):
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
 
         args = ()
@@ -70,7 +232,7 @@ class ValidateRunner:
 
         for i, doc in enumerate(docs):
             if isinstance(doc, Mapping):
-                md_path = self.tmp_path / f"doc-{i}.yaml"
+                md_path = self.tmp_path / f"doc-{i}{suffix}"
                 serialise.dump_yaml(md_path, doc)
                 doc = md_path
             args += (doc,)
@@ -92,13 +254,19 @@ class ValidateRunner:
 
         def _read_message(line: str):
             severity, code, *message = line.split()
+            if code in self.ignore_message_codes:
+                return None, None
             return (severity, code), " ".join(message)
 
-        return dict(
+        messages = dict(
             _read_message(line)
             for line in self.result.stdout.split("\n")
-            if line and line.startswith("\t")
+            # message codes start with exactly one tab....
+            if line and line.startswith("\t") and not line.startswith("\t\t")
         )
+        # Ignored messages have key none.
+        messages.pop(None, None)
+        return messages
 
     @property
     def messages(self) -> Dict[str, str]:
@@ -153,7 +321,9 @@ def test_missing_field(eo_validator: ValidateRunner, example_metadata: Dict):
 def test_invalid_ls8_schema(eo_validator: ValidateRunner, example_metadata: Dict):
     """When there's no eo3 $schema defined"""
     del example_metadata["$schema"]
-    eo_validator.assert_invalid(example_metadata, codes=("no_schema",))
+    eo_validator.assert_invalid(
+        example_metadata, codes=("no_schema",), suffix=".odc-metadata.yaml"
+    )
 
 
 def test_allow_optional_geo(eo_validator: ValidateRunner, example_metadata: Dict):
@@ -256,7 +426,7 @@ def test_crs_as_wkt(eo_validator: ValidateRunner, example_metadata: Dict):
 
 
 def test_valid_with_product_doc(
-    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path, product: Dict
 ):
     """When a product is specified, it will validate that the measurements match the product"""
 
@@ -264,51 +434,66 @@ def test_valid_with_product_doc(
     eo_validator.assert_valid(l1_ls8_metadata_path)
 
     # It contains all measurements in the product, so will be valid when not thorough.
-    product = dict(
-        name="our_product",
-        metadata_type="eo3",
-        measurements=[dict(name="blue", dtype="uint8", nodata=255)],
-    )
     eo_validator.assert_valid(product, l1_ls8_metadata_path)
+
+
+def test_odc_product_schema(
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path, product: Dict
+):
+    """
+    If a product fails against ODC's schema, it's an error.
+    """
+    # A missing field will fail the schema check from ODC.
+    # (these cannot be added to ODC so are a hard validation failure)
+    del product["metadata"]
+    eo_validator.assert_invalid(product, codes=["document_schema"])
+
+
+def test_warn_bad_product_license(
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path, product: Dict
+):
+
+    # Missing license is a warning.
+    del product["license"]
+    eo_validator.assert_valid(product, expect_no_messages=False)
+    assert eo_validator.messages_with_severity == {
+        ("W", "no_license"): "Product 'simple_test_product' has no license field"
+    }
+
+    # Invalid license string (not SPDX format), error. Is caught by ODC schema.
+    product["license"] = "Sorta Creative Commons"
+    eo_validator.assert_invalid(product, codes=["document_schema"])
 
 
 def test_warn_duplicate_measurement_name(
     eo_validator: ValidateRunner,
-    l1_ls8_dataset: DatasetDoc,
+    l1_ls8_product: Dict,
 ):
     """When a product is specified, it will validate that names are not repeated between measurements and aliases."""
-
+    product = l1_ls8_product
     # We have the "blue" measurement twice.
-    product = dict(
-        name="our_product",
-        metadata_type="eo3",
-        measurements=[
-            *_copy_measurements(l1_ls8_dataset),
-            dict(name="blue", dtype="uint8", nodata=255),
-        ],
+    product["measurements"].append(
+        dict(name="blue", dtype="uint8", units="1", nodata=255),
     )
+
     eo_validator.assert_invalid(product)
     assert eo_validator.messages == {
         "duplicate_measurement_name": "Name 'blue' is used by multiple measurements"
     }
 
     # An *alias* clashes with the *name* of a measurement.
-    product = dict(
-        name="our_product",
-        metadata_type="eo3",
-        measurements=[
-            *_copy_measurements(l1_ls8_dataset),
-            dict(
-                name="azul",
-                aliases=[
-                    "icecream",
-                    # Clashes with the *name* of a measurement.
-                    "blue",
-                ],
-                dtype="uint8",
-                nodata=255,
-            ),
-        ],
+    product["measurements"].append(
+        dict(
+            name="azul",
+            aliases=[
+                "icecream",
+                # Clashes with the *name* of a measurement.
+                "blue",
+            ],
+            units="1",
+            dtype="uint8",
+            nodata=255,
+        ),
     )
     eo_validator.assert_invalid(product)
     assert eo_validator.messages == {
@@ -316,21 +501,18 @@ def test_warn_duplicate_measurement_name(
     }
 
     # An alias is duplicated on the same measurement. Not an error, just a message!
-    product = dict(
-        name="our_product",
-        metadata_type="eo3",
-        measurements=[
-            dict(
-                name="blue",
-                aliases=[
-                    "icecream",
-                    "blue",
-                ],
-                dtype="uint8",
-                nodata=255,
-            ),
-        ],
-    )
+    product["measurements"] = [
+        dict(
+            name="blue",
+            aliases=[
+                "icecream",
+                "blue",
+            ],
+            dtype="uint8",
+            units="1",
+            nodata=255,
+        ),
+    ]
     eo_validator.assert_valid(product)
     assert eo_validator.messages_with_severity == {
         (
@@ -341,96 +523,89 @@ def test_warn_duplicate_measurement_name(
 
 
 def test_dtype_compare_with_product_doc(
-    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path, product: Dict
 ):
     """'thorough' validation should check the dtype of measurements against the product"""
 
-    product = dict(
-        name="wrong_product",
-        metadata_type="eo3",
-        measurements=[dict(name="blue", dtype="uint8", nodata=None)],
-    )
+    product["measurements"] = [dict(name="blue", dtype="uint8", units="1", nodata=255)]
 
     # When thorough, the dtype and nodata are wrong
     eo_validator.thorough = True
-    eo_validator.assert_invalid(product, l1_ls8_metadata_path)
+    eo_validator.assert_invalid(
+        product, l1_ls8_metadata_path, codes=["different_dtype"]
+    )
     assert eo_validator.messages == {
         "different_dtype": "blue dtype: product 'uint8' != dataset 'uint16'"
     }
 
 
 def test_nodata_compare_with_product_doc(
-    eo_validator: ValidateRunner, l1_ls8_dataset: DatasetDoc, l1_ls8_metadata_path: Path
+    eo_validator: ValidateRunner,
+    l1_ls8_dataset: DatasetDoc,
+    l1_ls8_metadata_path: Path,
+    l1_ls8_product: Dict,
 ):
     """'thorough' validation should check the nodata of measurements against the product"""
     eo_validator.thorough = True
     eo_validator.record_informational_messages = True
 
-    product = dict(
-        name="usgs_ls8c_level1_1",
-        metadata_type="eo3",
-        measurements=[
-            *_copy_measurements(l1_ls8_dataset, without=["blue"]),
-            # Override blue with our invalid one.
-            dict(name="blue", dtype="uint16", nodata=255),
-        ],
+    # Remake the tiff with a 'nodata' set.
+    blue_tif = l1_ls8_metadata_path.parent / l1_ls8_dataset.measurements["blue"].path
+    _create_dummy_tif(
+        blue_tif,
+        dtype="uint16",
+        nodata=65535,
+    )
+    eo_validator.assert_valid(
+        l1_ls8_product, l1_ls8_metadata_path, expect_no_messages=True
     )
 
-    # It is only an informational message, not an error, as the product can validly
-    #    have a different nodata:
-    # 1. When the product nodata is only a fill value for dc.load()
-    # 2. When the original images don't specify their no nodata ... Like USGS Level 1 tifs.
-    eo_validator.assert_valid(product, l1_ls8_metadata_path, expect_no_messages=False)
+    # Override blue definition with invalid nodata value.
+    _measurement(l1_ls8_product, "blue")["nodata"] = 255
+
+    eo_validator.assert_invalid(l1_ls8_product, l1_ls8_metadata_path)
     assert eo_validator.messages == {
-        "different_nodata": "blue nodata: product 255 != dataset None"
+        "different_nodata": "blue nodata: product 255 != dataset 65535.0"
     }
 
 
-def _copy_measurements(dataset: DatasetDoc, dtype="uint16", without=()) -> List:
-    return [
-        dict(name=name, dtype=dtype)
-        for name, m in dataset.measurements.items()
-        if name not in without
-    ]
-
-
 def test_measurements_compare_with_nans(
-    eo_validator: ValidateRunner, l1_ls8_dataset: DatasetDoc, l1_ls8_metadata_path: Path
+    eo_validator: ValidateRunner,
+    l1_ls8_dataset: DatasetDoc,
+    l1_ls8_metadata_path: Path,
+    l1_ls8_product: Dict,
 ):
     """When dataset and product have NaN nodata values, it should handle them correctly"""
+    product = l1_ls8_product
     eo_validator.thorough = True
     eo_validator.record_informational_messages = True
     blue_tif = l1_ls8_metadata_path.parent / l1_ls8_dataset.measurements["blue"].path
 
-    _create_dummy_tif(blue_tif, dtype="float32")
-    product = dict(
-        name="usgs_ls8c_level1_1",
-        metadata_type="eo3",
-        measurements=[
-            *_copy_measurements(l1_ls8_dataset, without=["blue"]),
-            dict(name="blue", dtype="float32", nodata=float("NaN")),
-        ],
-    )
-
-    # When product is NaN, dataset is None, they don't match
-    eo_validator.assert_valid(product, l1_ls8_metadata_path, expect_no_messages=False)
-    assert eo_validator.messages == {
-        "different_nodata": "blue nodata: product nan != dataset None"
-    }
-
     # When both are NaN, it should be valid
+    blue = _measurement(product, "blue")
+    blue["nodata"] = float("NaN")
+    blue["dtype"] = "float32"
     _create_dummy_tif(blue_tif, nodata=float("NaN"))
     eo_validator.assert_valid(product, l1_ls8_metadata_path, expect_no_messages=True)
+
     # ODC can also represent NaNs as strings due to json's lack of NaN
-    product["measurements"][-1]["nodata"] = "NaN"
+    blue["nodata"] = "NaN"
     eo_validator.assert_valid(product, l1_ls8_metadata_path, expect_no_messages=True)
 
-    # When product is None, dataset is NaN, they no longer match.
-    product["measurements"][-1]["nodata"] = None
-    eo_validator.assert_valid(product, l1_ls8_metadata_path, expect_no_messages=False)
+    # When product is set, dataset is NaN, they no longer match.
+    blue["nodata"] = 0
+    eo_validator.assert_invalid(product, l1_ls8_metadata_path)
     assert eo_validator.messages == {
-        "different_nodata": "blue nodata: product None != dataset nan"
+        "different_nodata": "blue nodata: product 0 != dataset nan"
     }
+
+
+def _measurement(product: Dict, name: str):
+    """Get a measurement by name"""
+    for m in product["measurements"]:
+        if m["name"] == name:
+            return m
+    raise ValueError(f"Measurement {name} not found?")
 
 
 def _create_dummy_tif(blue_tif, nodata=None, dtype="float32", **opts):
@@ -450,64 +625,72 @@ def _create_dummy_tif(blue_tif, nodata=None, dtype="float32", **opts):
 
 
 def test_missing_measurement_from_product(
-    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+    eo_validator: ValidateRunner,
+    l1_ls8_metadata_path: Path,
+    product: Dict,
 ):
     """Validator should notice a missing measurement from the product def"""
-    product = dict(
-        name="no_measurement",
-        metadata_type="eo3",
-        measurements=[dict(name="razzmatazz", dtype="int32", nodata=-999)],
-    )
+    product["name"] = "test_with_extra_measurement"
+    product["measurements"] = [
+        dict(name="razzmatazz", dtype="int32", units="1", nodata=-999)
+    ]
+
     eo_validator.assert_invalid(product, l1_ls8_metadata_path)
     assert eo_validator.messages == {
-        "missing_measurement": "Product no_measurement expects a measurement 'razzmatazz')"
+        "missing_measurement": "Product test_with_extra_measurement expects a measurement 'razzmatazz')"
     }
 
 
 def test_supports_measurementless_products(
-    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+    eo_validator: ValidateRunner,
+    l1_ls8_metadata_path: Path,
+    product: Dict,
 ):
     """
-    Validator should suport products without any measurements in the document.
+    Validator should support products without any measurements in the document.
 
-    These are valid for prodcuts which can't be dc.load()'ed but are
+    These are valid for products which can't be dc.load()'ed but are
     referred to for provenance, such as DEA's telemetry data or DEA's collection-2
     Level 1 products.
     """
-    product = dict(name="no_measurement", metadata_type="eo3", measurements=None)
+    product["measurements"] = []
     eo_validator.assert_valid(product, l1_ls8_metadata_path)
 
 
 def test_complains_about_measurement_lists(
-    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+    eo_validator: ValidateRunner,
+    l1_ls8_metadata_path: Path,
+    product: Dict,
 ):
-    """Complain when product measurements are a dict.
+    """
+    Complain when product measurements are a dict.
 
     datasets have measurements as a dict, products have them as a List, so this is a common error.
     """
 
-    product = dict(name="bad_nodata", metadata_type="eo3", measurements={"a": {}})
+    product["measurements"] = {"a": {}}
     eo_validator.assert_invalid(product)
-    assert eo_validator.messages == {
-        "measurements_list": "Product measurements should be a list/sequence (Found a 'dict')."
-    }
+    assert (
+        eo_validator.messages.get("measurements_list")
+        == "Product measurements should be a list/sequence (Found a 'dict')."
+    )
 
 
 def test_complains_about_impossible_nodata_vals(
-    eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
+    eo_validator: ValidateRunner,
+    l1_ls8_metadata_path: Path,
+    product: Dict,
 ):
     """Complain if a product nodata val cannot be represented in the dtype"""
-    product = dict(
-        name="bad_nodata",
-        metadata_type="eo3",
-        measurements=[
-            dict(
-                name="paradox",
-                dtype="uint8",
-                # Impossible for a uint6
-                nodata=-999,
-            )
-        ],
+
+    product["measurements"].append(
+        dict(
+            name="paradox",
+            dtype="uint8",
+            units="1",
+            # Impossible for a uint6
+            nodata=-999,
+        )
     )
     eo_validator.assert_invalid(product)
     assert eo_validator.messages == {
@@ -525,12 +708,21 @@ def test_complains_when_no_product(
     eo_validator.assert_invalid(l1_ls8_metadata_path, codes=["no_product"])
 
 
+def test_validate_metadata_type(eo_validator: ValidateRunner, metadata_type: Doc):
+    eo_validator.assert_valid(metadata_type, suffix=".odc-type.yaml")
+    eo_validator.assert_valid(metadata_type)
+    del metadata_type["dataset"]["id"]
+    eo_validator.assert_invalid(
+        metadata_type, codes=["document_schema"], suffix=".odc-type.yaml"
+    )
+
+
 def test_is_product():
     """Product documents should be correctly identified as products"""
     product = dict(
         name="minimal_product", metadata_type="eo3", measurements=[dict(name="blue")]
     )
-    assert validate.is_product(product)
+    assert guess_kind_from_contents(product) == DocKind.product
 
 
 def test_dataset_is_not_a_product(example_metadata: Dict):
@@ -539,7 +731,8 @@ def test_dataset_is_not_a_product(example_metadata: Dict):
 
     (checks all example metadata files)
     """
-    assert not validate.is_product(example_metadata)
+    assert guess_kind_from_contents(example_metadata) == DocKind.dataset
+    assert filename_doc_kind(Path("asdf.odc-metadata.yaml")) == DocKind.dataset
 
 
 @pytest.fixture

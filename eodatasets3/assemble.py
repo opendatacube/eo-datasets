@@ -65,11 +65,11 @@ class DatasetCompletenessWarning(UserWarning):
 class DatasetAssembler(EoFields):
     # Properties that can be inherited from a source dataset. (when auto_inherit_properties=True)
     INHERITABLE_PROPERTIES = {
-        "constellation",
         "datetime",
         "dtr:end_datetime",
         "dtr:start_datetime",
         "eo:cloud_cover",
+        "eo:constellation",
         "eo:gsd",
         "eo:instrument",
         "eo:platform",
@@ -103,6 +103,7 @@ class DatasetAssembler(EoFields):
         "landsat:collection_number",
         "landsat:landsat_product_id",
         "landsat:landsat_scene_id",
+        "landsat:scene_id",
         "landsat:wrs_path",
         "landsat:wrs_row",
         "mission",
@@ -218,6 +219,10 @@ class DatasetAssembler(EoFields):
         elif naming_conventions == "dea_c3":
             self.names = ComplicatedNamingConventionsDerivatives.for_c3_derivatives(
                 self
+            )
+        elif naming_conventions == "deafrica":
+            self.names = (
+                ComplicatedNamingConventionsDerivatives.for_deafrica_derivatives(self)
             )
         else:
             raise NotImplementedError("configurable naming conventions")

@@ -346,22 +346,6 @@ def do(name: str, heading=False, **fields):
         secho("(done)")
 
 
-def _get_level1_metadata_path(wagl_doc: Dict) -> Optional[Path]:
-    """
-    Find the expected matching metadata file for the source dataset
-    """
-    source_level1 = Path(get_path(wagl_doc, ("source_datasets", "source_level1")))
-    if not source_level1.exists():
-        return None
-
-    # If a directory, assume "<dirname>.odc-metadata.yaml"
-    if source_level1.is_dir():
-        return source_level1 / (source_level1.name + ".odc-metadata.yaml")
-    # Otherwise it's a sibling file with ".odc-metadata.yaml" suffix
-    else:
-        return source_level1.with_suffix(".odc-metadata.yaml")
-
-
 def _extract_reference_code(p: DatasetAssembler, granule: str) -> Optional[str]:
     matches = None
     if p.platform.startswith("landsat"):
@@ -434,25 +418,9 @@ class Granule:
 
                 [wagl_doc] = loads_yaml(wagl_doc_field[()])
 
-                if not level1_metadata_path:
-                    level1_metadata_path = _get_level1_metadata_path(wagl_doc)
-                if level1_metadata_path and not level1_metadata_path.exists():
-                    raise ValueError(
-                        f"No level1 metadata found at {level1_metadata_path}"
-                    )
-
-                level1 = (
-                    serialise.from_path(level1_metadata_path)
-                    if level1_metadata_path
-                    else None
+                level1 = _load_level1_doc(
+                    wagl_doc, level1_metadata_path, allow_missing_provenance
                 )
-                if (not level1_metadata_path) and (not allow_missing_provenance):
-                    raise ValueError(
-                        "No level1 found or provided. "
-                        f"WAGL said it was at path {str(level1_metadata_path)!r}. "
-                        "It's not, and you didn't specify an alternative. "
-                        f"(allow_missing_provenance={allow_missing_provenance})"
-                    )
 
                 fmask_image_path = fmask_image_path or wagl_hdf5.with_name(
                     f"{granule_name}.fmask.img"
@@ -497,6 +465,43 @@ class Granule:
                     gqa_doc=gqa_doc,
                     tesp_doc=tesp_doc,
                 )
+
+
+def _load_level1_doc(
+    wagl_doc: Dict,
+    user_specified_l1_path: Optional[Path] = None,
+    allow_missing_provenance=False,
+):
+
+    if user_specified_l1_path:
+        if not user_specified_l1_path.exists():
+            raise ValueError(
+                f"No level1 metadata found at given path {user_specified_l1_path}"
+            )
+        level1_path = user_specified_l1_path
+    else:
+        level1_path = Path(get_path(wagl_doc, ("source_datasets", "source_level1")))
+
+    # If a directory, assume "<dirname>.odc-metadata.yaml"
+    if level1_path.is_dir():
+        metadata_path = level1_path / (level1_path.name + ".odc-metadata.yaml")
+    # Otherwise it's a sibling file with ".odc-metadata.yaml" suffix
+    else:
+        if level1_path.suffix.lower() == ".yaml":
+            metadata_path = level1_path
+        else:
+            metadata_path = level1_path.with_suffix(".odc-metadata.yaml")
+
+    if not metadata_path.exists():
+        if not allow_missing_provenance:
+            raise ValueError(
+                "No level1 found or provided. "
+                f"WAGL said it was at path {str(level1_path)!r}. "
+                "Which has no metadata doc we can find, and you didn't specify an alternative. "
+                f"(allow_missing_provenance={allow_missing_provenance})"
+            )
+        return None
+    return serialise.from_path(metadata_path)
 
 
 def package_file(

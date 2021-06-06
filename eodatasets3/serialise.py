@@ -14,6 +14,8 @@ import shapely
 import shapely.affinity
 import shapely.ops
 from affine import Affine
+from datacube.model import SCHEMA_PATH as DATACUBE_SCHEMAS_PATH
+from datacube.utils import read_documents
 from ruamel.yaml import YAML, Representer
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
@@ -145,19 +147,41 @@ def _is_json_array(checker, instance) -> bool:
     return isinstance(instance, (list, tuple))
 
 
-def _get_schema_validator(p: Path) -> jsonschema.Draft6Validator:
+def _load_schema_validator(p: Path) -> jsonschema.Draft6Validator:
+    """
+    Create a schema instance for the file.
+
+    (Assumes they are trustworthy. Only local schemas!)
+    """
     with p.open() as f:
         schema = _yaml().load(f)
     validator = jsonschema.validators.validator_for(schema)
     validator.check_schema(schema)
 
+    # Allow schemas to reference other schemas relatively
+    def doc_reference(path):
+        path = p.parent.joinpath(path)
+        if not path.exists():
+            raise ValueError(f"Reference not found: {path}")
+        referenced_schema = next(iter(read_documents(path)))[1]
+        return referenced_schema
+
+    ref_resolver = jsonschema.RefResolver.from_schema(
+        schema, handlers={"": doc_reference}
+    )
     custom_validator = jsonschema.validators.extend(
         validator, type_checker=validator.TYPE_CHECKER.redefine("array", _is_json_array)
     )
-    return custom_validator(schema)
+    return custom_validator(schema, resolver=ref_resolver)
 
 
-DATASET_SCHEMA = _get_schema_validator(Path(__file__).parent / "dataset.schema.yaml")
+DATASET_SCHEMA = _load_schema_validator(Path(__file__).parent / "dataset.schema.yaml")
+PRODUCT_SCHEMA = _load_schema_validator(
+    DATACUBE_SCHEMAS_PATH / "dataset-type-schema.yaml"
+)
+METADATA_TYPE_SCHEMA = _load_schema_validator(
+    DATACUBE_SCHEMAS_PATH / "metadata-type-schema.yaml"
+)
 
 
 def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:

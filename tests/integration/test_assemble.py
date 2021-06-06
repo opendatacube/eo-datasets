@@ -12,7 +12,7 @@ from eodatasets3 import DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
 from tests import assert_file_structure
-from tests.common import assert_same_as_file
+from tests.common import assert_same_as_file, assert_expected_eo3_doc
 
 
 def test_dea_style_package(
@@ -91,7 +91,7 @@ def test_dea_style_package(
 
     # TODO: check sha1 checksum list.
 
-    assert_same_as_file(
+    assert_expected_eo3_doc(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             "id": dataset_id,
@@ -183,13 +183,53 @@ def test_dea_style_package(
             },
             "lineage": {"level1": ["a780754e-a884-58a7-9ac0-df518a67f59d"]},
         },
-        generated_file=metadata_path,
+        metadata_path,
     )
 
 
-def test_minimal_package(tmp_path: Path, l1_ls8_folder: Path):
+def test_minimal_package_with_product_name(tmp_path: Path, l1_ls8_folder: Path):
     """
-    What's the minimum number of fields we can set and still produce a package?
+    You can specify an ODC product name manually to avoid most of the name generation.
+    """
+    out = tmp_path / "out"
+    out.mkdir()
+
+    [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
+
+    with DatasetAssembler(out) as p:
+        p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+        p.product_name = "loch_ness_sightings"
+        p.processed = datetime(2019, 7, 4, 13, 8, 7)
+
+        p.write_measurement("blue", blue_geotiff_path)
+
+        dataset_id, metadata_path = p.done()
+
+    assert dataset_id is not None
+    assert_file_structure(
+        out,
+        {
+            "loch_ness_sightings": {
+                "2019": {
+                    "07": {
+                        "04": {
+                            # Set a dataset version to get rid of 'beta' label.
+                            "loch_ness_sightings_2019-07-04.odc-metadata.yaml": "",
+                            "loch_ness_sightings_2019-07-04.proc-info.yaml": "",
+                            "loch_ness_sightings_2019-07-04_blue.tif": "",
+                            "loch_ness_sightings_2019-07-04.sha1": "",
+                        }
+                    }
+                }
+            }
+        },
+    )
+
+
+def test_minimal_generated_naming_package(tmp_path: Path, l1_ls8_folder: Path):
+    """
+    What's the minimum number of fields we can set and still generate file/product
+    names to produce a package?
     """
 
     out = tmp_path / "out"
@@ -491,6 +531,52 @@ def test_dea_c3_naming_conventions(tmp_path: Path):
     )
 
 
+def test_dataset_multi_platform(tmp_path: Path):
+    """Can we make a dataset derived from multiple platforms?"""
+
+    # No platform is included in names when there's a mix.
+    with DatasetAssembler(tmp_path) as p:
+        p.platforms = ["Sentinel_2a", "landsat_7"]
+        assert p.platform == "landsat-7,sentinel-2a"
+
+        p.datetime = datetime(2019, 1, 1)
+        p.product_family = "peanuts"
+        p.processed_now()
+
+        dataset_id, metadata_path = p.done()
+
+    with metadata_path.open("r") as f:
+        doc = yaml.YAML(typ="safe").load(f)
+
+    assert doc["label"] == "peanuts_2019-01-01"
+    metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+    assert (
+        metadata_path_offset
+        == "peanuts/2019/01/01/peanuts_2019-01-01.odc-metadata.yaml"
+    )
+
+    # ... but show the platform abbreviation when there's a known group.
+    with DatasetAssembler(tmp_path) as p:
+        p.platforms = ["Sentinel_2a", "sentinel_2b"]
+        assert p.platform == "sentinel-2a,sentinel-2b"
+
+        p.datetime = datetime(2019, 1, 1)
+        p.product_family = "peanuts"
+        p.processed_now()
+
+        dataset_id, metadata_path = p.done()
+
+    with metadata_path.open("r") as f:
+        doc = yaml.YAML(typ="safe").load(f)
+
+    assert doc["label"] == "s2_peanuts_2019-01-01"
+    metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+    assert (
+        metadata_path_offset
+        == "s2_peanuts/2019/01/01/s2_peanuts_2019-01-01.odc-metadata.yaml"
+    )
+
+
 @pytest.mark.parametrize(
     "inherit_geom",
     [True, False],
@@ -529,3 +615,46 @@ def test_add_source_dataset(tmp_path: Path, inherit_geom):
         # POLYGON((684285 - 3439275, 684285 - 3444495, 689925 - 3444495, 689925 - 3439275, 684285 - 3439275))
         # Geometry is not set from the source dataset, but instead from the added wofs measurement
         assert output.geometry != source_dataset.geometry
+
+
+def test_africa_naming_conventions(tmp_path: Path):
+    """
+    Minimal fields needed for DEAfrica naming conventions
+    """
+    with DatasetAssembler(tmp_path, naming_conventions="deafrica") as p:
+
+        # Just the fields listed in required_fields.
+        p.producer = "digitalearthafrica.org"
+        p.datetime = datetime(1998, 7, 30)
+        p.region_code = "090081"
+        p.product_family = "wofs"
+        p.platform = "LANDSAT_8"
+        p.processed_now()
+        p.dataset_version = "0.1.2"
+
+        dataset_id, metadata_path = p.done()
+
+    metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+    assert (
+        metadata_path_offset
+        == "wofs_ls/0-1-2/090/081/1998/07/30/wofs_ls_090081_1998-07-30.odc-metadata.yaml"
+    )
+
+    with DatasetAssembler(tmp_path, naming_conventions="deafrica") as p:
+
+        # Just the fields listed in required_fields.
+        p.producer = "digitalearthafrica.org"
+        p.datetime = datetime(1998, 7, 30)
+        p.region_code = "090081"
+        p.product_family = "fc"
+        p.platform = "LANDSAT_8"
+        p.processed_now()
+        p.dataset_version = "0.1.2"
+
+        dataset_id, metadata_path = p.done()
+
+    metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+    assert (
+        metadata_path_offset
+        == "fc_ls/0-1-2/090/081/1998/07/30/fc_ls_090081_1998-07-30.odc-metadata.yaml"
+    )
