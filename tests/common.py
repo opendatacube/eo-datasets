@@ -50,8 +50,6 @@ def assert_expected_eo3_doc(
     # Compare geometry after parsing, rather than comparing the raw dict values.
     produced_dataset = serialise.from_path(expected_path)
     expected_dataset = serialise.from_doc(expected_doc, skip_validation=True)
-    # print(produced_dataset.geometry)
-    # print(expected_dataset.geometry)
     assert_shapes_mostly_equal(
         produced_dataset.geometry, expected_dataset.geometry, 0.00000001
     )
@@ -62,8 +60,6 @@ def assert_shapes_mostly_equal(
 ):
     __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
 
-    # print(shape1.area)
-    # print(shape2.area)
     # Check area first, as it's a nicer error message when they're wildly different.
     assert shape1.area == pytest.approx(
         shape2.area, abs=threshold
