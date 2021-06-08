@@ -21,20 +21,25 @@ LE07_L2_C2_INPUT_PATH: Path = (
     Path(__file__).parent.parent / "data" / "LE07_L2SP_090084_20210331_20210426_02_T1"
 )
 
+
 @pytest.fixture
 def lc08_l2_c2_post_20210507_folder(tmp_path: Path) -> Path:
     return _make_copy(LC08_L2_C2_POST_20210507_INPUT_PATH, tmp_path)
+
 
 @pytest.fixture
 def lt05_l2_c2_folder(tmp_path: Path) -> Path:
     return _make_copy(LT05_L2_C2_INPUT_PATH, tmp_path)
 
+
 @pytest.fixture
 def le07_l2_c2_folder(tmp_path: Path) -> Path:
     return _make_copy(LE07_L2_C2_INPUT_PATH, tmp_path)
 
+
 def relative_offset(base, offset):
     return offset
+
 
 def _make_copy(input_path, tmp_path):
     our_input = tmp_path / input_path.name
@@ -43,6 +48,7 @@ def _make_copy(input_path, tmp_path):
     else:
         shutil.copytree(input_path, our_input)
     return our_input
+
 
 def test_prepare_l5_l1_usgs_tarball(
     tmp_path: Path, l1_ls5_tarball_md_expected: Dict, l1_ls5_tarball: Path
@@ -282,7 +288,7 @@ def test_skips_old_datasets(l1_ls7_tarball):
 
 def expected_lc08_l2_c2_post_20210507_folder(
     l2_c2_ls8_folder=lc08_l2_c2_post_20210507_folder,
-    offset: Callable[[Path, str], str]=relative_offset,
+    offset: Callable[[Path, str], str] = relative_offset,
     organisation="usgs.gov",
     collection="2",
     leveln_collection="2",
@@ -449,7 +455,7 @@ def expected_lc08_l2_c2_post_20210507_folder(
 
 def expected_lt05_l2_c2_folder(
     l2_c2_ls8_folder=lt05_l2_c2_folder,
-    offset: Callable[[Path, str], str]=relative_offset,
+    offset: Callable[[Path, str], str] = relative_offset,
     organisation="usgs.gov",
     collection="2",
     leveln_collection="2",
@@ -612,7 +618,7 @@ def expected_lt05_l2_c2_folder(
 
 def expected_le07_l2_c2_folder(
     l2_c2_ls8_folder=le07_l2_c2_folder,
-    offset: Callable[[Path, str], str]=relative_offset,
+    offset: Callable[[Path, str], str] = relative_offset,
     organisation="usgs.gov",
     collection="2",
     leveln_collection="2",
