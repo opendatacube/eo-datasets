@@ -18,6 +18,9 @@ def expected_dataset_document():
         "$schema": "https://schemas.opendatacube.org/dataset",
         "id": "f3e0eee1-573c-5035-870e-8d8392df8e33",
         "crs": "epsg:32755",
+        "product": {
+            "name": "sinergise_s2bm_level1_1",
+        },
         "geometry": {
             "coordinates": [
                 [
@@ -102,7 +105,6 @@ def expected_dataset_document():
                 "path": "B09.jp2",
             },
         },
-        "product": {"name": "sinergise_s2bm_level1_1"},
         "properties": {
             "datetime": datetime.datetime(2020, 10, 11, 0, 6, 49, 882566),
             "eo:cloud_cover": 24.9912,

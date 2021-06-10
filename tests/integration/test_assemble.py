@@ -89,8 +89,8 @@ def test_dea_style_package(
             "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_thumbnail.jpg": "",
             "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.proc-info.yaml": "",
             "ga_ls8c_ones_3-0-0_090084_2016-01-21_final.sha1": "",
-            "ga_ls8c_singleband_3-0-0_090084_2016-01-21_final_thumbnail.jpg": "",
-            "ga_ls8c_singleband_lut_3-0-0_090084_2016-01-21_final_thumbnail.jpg": "",
+            "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_singleband-thumbnail.jpg": "",
+            "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_singleband-lut-thumbnail.jpg": "",
         },
     )
 
@@ -180,10 +180,10 @@ def test_dea_style_package(
                     "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_thumbnail.jpg"
                 },
                 "thumbnail:singleband": {
-                    "path": "ga_ls8c_singleband_3-0-0_090084_2016-01-21_final_thumbnail.jpg"
+                    "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_singleband-thumbnail.jpg"
                 },
                 "thumbnail:singleband_lut": {
-                    "path": "ga_ls8c_singleband_lut_3-0-0_090084_2016-01-21_final_thumbnail.jpg"
+                    "path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_singleband-lut-thumbnail.jpg"
                 },
             },
             "lineage": {"level1": ["a780754e-a884-58a7-9ac0-df518a67f59d"]},

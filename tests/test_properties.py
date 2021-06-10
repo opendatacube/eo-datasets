@@ -4,7 +4,7 @@ from contextlib import contextmanager
 import pytest
 
 from eodatasets3.model import DatasetDoc
-from eodatasets3.names import ComplicatedNamingConventions
+from eodatasets3.names import NamingConventions, dataset_blueprint
 from eodatasets3.properties import PropertyOverrideWarning
 
 
@@ -42,7 +42,7 @@ def ignore_property_overrides():
 
 def test_naming_abbreviations():
     d = DatasetDoc()
-    names = ComplicatedNamingConventions(d)
+    names = NamingConventions(d.properties)
 
     with ignore_property_overrides():
         assert names.platform_abbreviated is None
@@ -64,7 +64,7 @@ def test_naming_abbreviations():
 
 def test_unknown_abbreviations():
     d = DatasetDoc()
-    names = ComplicatedNamingConventions(d)
+    names = NamingConventions(d.properties)
 
     with ignore_property_overrides():
         # Unknown platforms are abbreviated by just removing dashes.
@@ -78,7 +78,7 @@ def test_unknown_abbreviations():
 
         # Unless unknown platforms aren't allowed
         # (DEA wants to be stricter and add real abbreviations for everything.)
-        names = ComplicatedNamingConventions.for_standard_dea(d)
+        names = dataset_blueprint("dea", d.properties)
         with pytest.raises(
             ValueError, match="don't know the DEA abbreviation for platform"
         ):
