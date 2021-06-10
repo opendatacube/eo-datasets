@@ -30,11 +30,7 @@ from eodatasets3.model import (
     AccessoryDoc,
     Location,
 )
-from eodatasets3.names import (
-    ComplicatedNamingConventions,
-    DerivativesNamingConventions,
-    DEAfricaNamingConventions,
-)
+from eodatasets3.names import dataset_blueprint
 from eodatasets3.properties import EoFields
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
@@ -209,21 +205,7 @@ class DatasetAssembler(EoFields):
         self._lineage: Dict[str, List[uuid.UUID]] = defaultdict(list)
         self._inherited_geometry = None
 
-        if naming_conventions == "default":
-            self.names = ComplicatedNamingConventions(self)
-        elif naming_conventions == "dea":
-            self.names = ComplicatedNamingConventions.for_standard_dea(self)
-        elif naming_conventions == "dea_s2":
-            self.names = ComplicatedNamingConventions.for_standard_dea_s2(self)
-        elif naming_conventions == "dea_s2_derivative":
-            self.names = DerivativesNamingConventions.for_s2_derivatives(self)
-        elif naming_conventions == "dea_c3":
-            self.names = DerivativesNamingConventions.for_c3_derivatives(self)
-        elif naming_conventions == "deafrica":
-            self.names = DEAfricaNamingConventions.create(self)
-        else:
-            raise NotImplementedError("configurable naming conventions")
-
+        self.names = dataset_blueprint(naming_conventions, self._props)
         self._is_completed = False
         self._finished_init_ = True
 
@@ -471,11 +453,12 @@ class DatasetAssembler(EoFields):
     def write_measurement(
         self,
         name: str,
-        path: Location,
+        input_path: Location,
         overviews: Iterable[int] = images.DEFAULT_OVERVIEWS,
         overview_resampling: Resampling = Resampling.average,
         expand_valid_data: bool = True,
         file_id: str = None,
+        path: Path = None,
     ):
         """
         Write a measurement by copying it from a file path.
@@ -483,7 +466,7 @@ class DatasetAssembler(EoFields):
         Assumes the file is gdal-readable.
 
         :param name: Identifier for the measurement eg ``'blue'``.
-        :param path:
+        :param input_path:
         :param overviews: Set of overview sizes to write
         :param overview_resampling: rasterio Resampling method to use
         :param expand_valid_data: Include this measurement in the valid-data geometry of the metadata.
@@ -491,7 +474,7 @@ class DatasetAssembler(EoFields):
                         (DEA has measurements called ``blue``, but their written filenames must be ``band04`` by
                         convention.)
         """
-        with rasterio.open(path) as ds:
+        with rasterio.open(input_path) as ds:
             self.write_measurement_rio(
                 name,
                 ds,
@@ -499,6 +482,7 @@ class DatasetAssembler(EoFields):
                 expand_valid_data=expand_valid_data,
                 overview_resampling=overview_resampling,
                 file_id=file_id,
+                path=path,
             )
 
     def write_measurement_rio(
@@ -509,6 +493,7 @@ class DatasetAssembler(EoFields):
         overview_resampling=Resampling.average,
         expand_valid_data=True,
         file_id=None,
+        path: Path = None,
     ):
         """
         Write a measurement by reading it from an open rasterio dataset
@@ -526,9 +511,8 @@ class DatasetAssembler(EoFields):
             name,
             ds.read(1),
             images.GridSpec.from_rio(ds),
-            self.names.measurement_file_path(
-                self._work_path, name, "tif", file_id=file_id
-            ),
+            self._work_path
+            / (path or self.names.measurement_file_path(name, "tif", file_id=file_id)),
             expand_valid_data=expand_valid_data,
             nodata=ds.nodata,
             overview_resampling=overview_resampling,
@@ -545,6 +529,7 @@ class DatasetAssembler(EoFields):
         overview_resampling=Resampling.average,
         expand_valid_data=True,
         file_id: str = None,
+        path: Path = None,
     ):
         """
         Write a measurement from a numpy array and grid spec.
@@ -571,9 +556,8 @@ class DatasetAssembler(EoFields):
             name,
             array,
             grid_spec,
-            self.names.measurement_file_path(
-                self._work_path, name, "tif", file_id=file_id
-            ),
+            self._work_path
+            / (path or self.names.measurement_file_path(name, "tif", file_id=file_id)),
             expand_valid_data=expand_valid_data,
             nodata=nodata,
             overview_resampling=overview_resampling,
@@ -606,8 +590,9 @@ class DatasetAssembler(EoFields):
                 name,
                 dataarray.data,
                 grid_spec,
-                self.names.measurement_file_path(
-                    self._work_path, name, "tif", file_id=file_id
+                (
+                    self._work_path
+                    / self.names.measurement_file_path(name, "tif", file_id=file_id)
                 ),
                 expand_valid_data=expand_valid_data,
                 overview_resampling=overview_resampling,
@@ -778,11 +763,11 @@ class DatasetAssembler(EoFields):
         if self._is_writing_files():
             # (the checksum isn't written yet -- it'll be the last file)
             self.add_accessory_file(
-                "checksum:sha1", self.names.checksum_path(self._work_path)
+                "checksum:sha1", self._work_path / self.names.checksum_path()
             )
 
-            processing_metadata = self.names.metadata_path(
-                self._work_path, suffix="proc-info.yaml"
+            processing_metadata = self._work_path / self.names.metadata_path(
+                suffix="proc-info.yaml"
             )
             self._write_yaml(
                 {**self._user_metadata, "software_versions": self._software_versions},
@@ -813,7 +798,7 @@ class DatasetAssembler(EoFields):
         self._write_yaml(
             doc,
             self._metadata_path
-            or self.names.metadata_path(self._work_path, suffix="odc-metadata.yaml"),
+            or self._work_path / self.names.metadata_path(suffix="odc-metadata.yaml"),
         )
 
         if validate_correctness:
@@ -845,7 +830,7 @@ class DatasetAssembler(EoFields):
 
             if not self._dataset_location:
                 self._dataset_location = (
-                    self.collection_location / self.names.destination_folder()
+                    self.collection_location / self.names.destination_folder
                 )
             # Now atomically move to final location.
             # Someone else may have created the output while we were working.
@@ -872,8 +857,10 @@ class DatasetAssembler(EoFields):
                         f"Unexpected exists behaviour: {self._exists_behaviour}"
                     )
 
-        target_metadata_path = self._metadata_path or self.names.metadata_path(
-            self._dataset_location, suffix="odc-metadata.yaml"
+        target_metadata_path = (
+            self._metadata_path
+            or self._dataset_location
+            / self.names.metadata_path(suffix="odc-metadata.yaml")
         )
         assert target_metadata_path.exists()
         self._is_completed = True
@@ -903,6 +890,7 @@ class DatasetAssembler(EoFields):
         percentile_stretch: Tuple[int, int] = (2, 98),
         scale_factor: int = 10,
         kind: str = None,
+        path: Optional[Path] = None,
     ):
         """
         Write a thumbnail for the dataset using the given measurements (specified by name) as r/g/b.
@@ -925,7 +913,7 @@ class DatasetAssembler(EoFields):
         :param resampling: rasterio :class:`rasterio.enums.Resampling` method to use.
         :param static_stretch: Use a static upper/lower value to stretch by instead of dynamic stretch.
         """
-        thumb_path = self.names.thumbnail_name(self._work_path, kind=kind)
+        thumb_path = self._work_path / (path or self.names.thumbnail_name(kind=kind))
 
         missing_measurements = {red, green, blue} - set(self.measurements)
         if missing_measurements:
@@ -977,7 +965,7 @@ class DatasetAssembler(EoFields):
         to make the image with.
         """
 
-        thumb_path = self.names.thumbnail_name(self._work_path, kind=kind)
+        thumb_path = self._work_path / self.names.thumbnail_name(kind=kind)
 
         _, image_path = self.measurements.get(measurement, (None, None))
 

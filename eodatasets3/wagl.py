@@ -27,6 +27,7 @@ from rasterio.enums import Resampling
 from eodatasets3 import serialise, utils, images, DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
+from eodatasets3.properties import EoFields
 from eodatasets3.serialise import loads_yaml
 from eodatasets3.ui import bool_style
 from eodatasets3.utils import default_utc
@@ -83,10 +84,11 @@ def _unpack_products(
     img_paths = _find_h5_paths(h5group, "IMAGE")
 
     for product in product_list:
-        with do(f"Starting {product}", heading=True):
+        with sub_product(product, p):
             for pathname in [
                 p for p in img_paths if "/{}/".format(product.upper()) in p
             ]:
+
                 with do(f"Path {pathname!r}"):
                     dataset = h5group[pathname]
                     band_name = utils.normalise_band_name(dataset.attrs["alias"])
@@ -102,13 +104,22 @@ def _unpack_products(
                 red, green, blue = _THUMBNAILS[product]
                 with do(f"Thumbnailing {product}"):
                     p.write_thumbnail(
-                        red, green, blue, kind=product, static_stretch=(1, 3000)
+                        red,
+                        green,
+                        blue,
+                        static_stretch=(1, 3000),
+                        # Because of our strange sub-products and filename standards, we want the
+                        # 'kind' to be included in the recorded thumbnail accessory metadata,
+                        # but not in the filename.
+                        # So we manually calculate a filename without the 'kind' field included.
+                        kind=product,
+                        path=p.names.thumbnail_name(),
                     )
 
 
 def write_measurement_h5(
     p: DatasetAssembler,
-    name: str,
+    full_name: str,
     g: h5py.Dataset,
     overviews=images.DEFAULT_OVERVIEWS,
     overview_resampling=Resampling.nearest,
@@ -123,8 +134,8 @@ def write_measurement_h5(
     else:
         data = g
 
+    product_name, band_name = full_name.split(":")
     p.write_measurement_numpy(
-        name=name,
         array=data,
         grid_spec=images.GridSpec(
             shape=g.shape,
@@ -136,6 +147,12 @@ def write_measurement_h5(
         overview_resampling=overview_resampling,
         expand_valid_data=expand_valid_data,
         file_id=file_id,
+        # Because of our strange sub-products and filename standards, we want the
+        # product_name to be included in the recorded band metadata,
+        # but not in its filename.
+        # So we manually calculate a filename without the extra product name prefix.
+        name=full_name,
+        path=p.names.measurement_file_path(band_name, "tif", file_id=file_id),
     )
 
 
@@ -301,6 +318,11 @@ def _create_contiguity(
             nodata=255,
             overviews=None,
             expand_valid_data=False,
+            # Because of our strange sub-products and filename standards, we want the
+            # 'oa_' prefix to be included in the recorded band metadata,
+            # but not in its filename.
+            # So we manually calculate a filename without the extra prefix.
+            path=p.names.measurement_file_path(f"{product.lower()}_contiguity", "tif"),
         )
 
         # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
@@ -344,6 +366,24 @@ def do(name: str, heading=False, **fields):
     yield
     if single_line:
         secho("(done)")
+
+
+@contextlib.contextmanager
+def sub_product(name: str, p: EoFields):
+    """
+    Set the product family temporarily within a block of code.
+
+    This is done for sub-products that WAGL contains, which have
+    a different 'family' in their filenames.
+    """
+    with do(f"Product {name}", heading=True):
+        original_family = p.product_family
+        # We delete first to show that we're deliberately changing the value (no 'overridding property" warning)
+        del p.product_family
+        p.product_family = name
+        yield
+        del p.product_family
+        p.product_family = original_family
 
 
 def _extract_reference_code(p: DatasetAssembler, granule: str) -> Optional[str]:
@@ -617,22 +657,28 @@ def package(
             _unpack_products(p, included_products, granule_group)
 
             if include_oa:
-                with do("Starting OA", heading=True):
-                    _unpack_observation_attributes(
-                        p,
-                        included_products,
-                        granule_group,
-                        infer_datetime_range=p.platform.startswith("landsat"),
-                        oa_resolution=oa_resolution,
-                    )
-                if granule.fmask_image:
-                    with do(f"Writing fmask from {granule.fmask_image} "):
-                        p.write_measurement(
-                            "oa:fmask",
-                            granule.fmask_image,
-                            expand_valid_data=False,
-                            overview_resampling=Resampling.mode,
+                with sub_product("oa", p):
+                    with do("Starting OA", heading=True):
+                        _unpack_observation_attributes(
+                            p,
+                            included_products,
+                            granule_group,
+                            infer_datetime_range=p.platform.startswith("landsat"),
+                            oa_resolution=oa_resolution,
                         )
+                    if granule.fmask_image:
+                        with do(f"Writing fmask from {granule.fmask_image} "):
+                            p.write_measurement(
+                                "oa:fmask",
+                                granule.fmask_image,
+                                expand_valid_data=False,
+                                overview_resampling=Resampling.mode,
+                                # Because of our strange sub-products and filename standards, we want the
+                                # 'oa_' prefix to be included in the recorded band metadata,
+                                # but not in its filename.
+                                # So we manually calculate a filename without the extra prefix.
+                                path=p.names.measurement_file_path("fmask", "tif"),
+                            )
 
             with do("Finishing package"):
                 return p.done()
