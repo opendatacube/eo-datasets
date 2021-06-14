@@ -123,6 +123,7 @@ class DatasetAssembler(EoFields):
     def __init__(
         self,
         collection_location: Optional[Path] = None,
+        *,
         dataset_location: Optional[Location] = None,
         metadata_path: Optional[Path] = None,
         dataset_id: Optional[uuid.UUID] = None,
