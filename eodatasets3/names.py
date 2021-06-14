@@ -1,6 +1,5 @@
 import re
 from datetime import datetime
-from enum import Enum, auto
 from pathlib import Path
 from typing import (
     Optional,
@@ -9,89 +8,31 @@ from typing import (
     Mapping,
     Set,
 )
-from uuid import UUID
-
-import attr
 
 from eodatasets3 import utils
-from eodatasets3.model import DEA_URI_PREFIX, Location
+from eodatasets3.model import DEA_URI_PREFIX
 from eodatasets3.properties import EoFields, Eo3Properties
 
 
-@attr.s(auto_attribs=True, slots=True)
-class DatasetBlueprint:
-    """"""
-
-    dataset_id: UUID
-    label: str
-
-    product_name: Optional[str]
-    product_uri: Optional[str]
-    product_definition: Optional[Dict]
-
-    # The output ODC metadata location
-    metadata_path: Location
-    # Optionally, the indexed dataset-location (if not using metadata path)
-    indexed_location: Optional[Location]
-
-    @property
-    def location(self) -> Location:
-        return self.indexed_location or self.metadata_path
-
-    # All are relative to location:
-
-    # String format args: file_id, suffix
-    accessory_offset_pattern: str
-    # format args: 'name', 'suffix'
-    measurement_offset_pattern: str
-
-    # For sub-products. They have an extra 'group' field.
-    grouped_measurement_offset_pattern: str
-    grouped_accessory_offset_pattern: str
-
-
-class Conventions(Enum):
-    default = auto()
+def convention(props: Mapping, kind: str):
     """
-    Strict mode to follow the full DEA naming conventions.
+    Get naming conventions for the given properties.
+    """
+    conventions = dict(
+        default=NamingConventions,
+        dea=DEANamingConventions,
+        dea_s2=DEAS2NamingConventions,
+        dea_s2_derivative=DEAS2DerivativesNamingConventions,
+        dea_c3=DEADerivativesNamingConventions,
+        deafrica=DEAfricaNamingConventions,
+    )
+    if kind not in conventions:
+        available = ", ".join(conventions.keys())
+        raise ValueError(
+            f"Unknown naming conventions: {kind}. Possibilities: {available}"
+        )
 
-    Only use the (default) DEA URI if you're making DEA products.
-
-    Example file structure (note version number in file):
-
-            ga_ls8c_ones_3/090/084/2016/01/21/ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml
-    """
-    dea = auto()
-    """
-    DEA naming conventions, but with an extra subfolder for each unique datatake.
-
-    It will figure out the datatake if you set a sentinel_tile_id or datastrip_id.
-    """
-    dea_s2 = auto()
-    """
-    Create naming conventions for common derived products.
-
-    Unlike plain 'DEA', they use an explicit collection number (odc:collection_number)
-    in the product name which may differ from the software's dataset version
-    (odc:dataset_version)
-
-    Example file structure (note version number in folder):
-
-        ga_ls_wo_3/1-6-0/090/081/1998/07/30/ga_ls_wo_3_090081_1998-07-30_interim.odc-metadata.yaml
-    """
-    dea_c3 = auto()
-    """
-    Sentinel-2-based DEA derivative naming conventions. Unlike regular
-    derivatives, there's an extra subfolder for each unique datatake.
-
-    It will figure out the datatake if you set a sentinel_tile_id
-    or datastrip_id.
-    """
-    dea_s2_derivative = auto()
-    """
-    DEAFRICA USGS C2 Naming Convention
-    """
-    deafrica = auto()
+    return conventions[kind](props)
 
 
 class LazyProductName:
@@ -377,90 +318,6 @@ class LazyDestinationFolder:
         return Path(*parts)
 
 
-def dataset_blueprint(kind: str, props: Mapping):
-    try:
-        naming_conventions = Conventions[kind]
-    except KeyError:
-        raise ValueError(f"Unknown naming conventions: {kind}")
-
-    if naming_conventions == Conventions.default:
-        return NamingConventions(props)
-    elif naming_conventions == Conventions.dea:
-        return DEANamingConventions(
-            props,
-            base_product_uri=DEA_URI_PREFIX,
-            # These fields are needed to fulfill official DEA naming conventions.
-            required_fields=(
-                "eo:platform",
-                "eo:instrument",
-                "odc:processing_datetime",
-                "odc:producer",
-                "odc:product_family",
-                "odc:region_code",
-                "odc:dataset_version",
-            ),
-            # DEA wants consistency via the naming-conventions doc.
-            allow_unknown_abbreviations=False,
-        )
-    elif naming_conventions == Conventions.dea_s2:
-        return DEANamingConventions(
-            props,
-            base_product_uri=DEA_URI_PREFIX,
-            # These fields are needed to fulfill official DEA naming conventions.
-            required_fields=(
-                "eo:instrument",
-                "eo:platform",
-                "odc:dataset_version",
-                "odc:processing_datetime",
-                "odc:producer",
-                "odc:product_family",
-                "odc:region_code",
-            ),
-            dataset_separator_field="sentinel:datatake_start_datetime",
-            # DEA wants consistency via the naming-conventions doc.
-            allow_unknown_abbreviations=False,
-        )
-    elif naming_conventions == Conventions.dea_s2_derivative:
-        return DerivativesNamingConventions(
-            props,
-            base_product_uri=DEA_URI_PREFIX,
-            # These fields are needed to fulfill official DEA naming conventions.
-            required_fields=(
-                "eo:platform",
-                "odc:dataset_version",
-                "odc:collection_number",
-                "odc:processing_datetime",
-                "odc:producer",
-                "odc:product_family",
-                "odc:region_code",
-                "dea:dataset_maturity",
-            ),
-            dataset_separator_field="sentinel:datatake_start_datetime",
-        )
-    elif naming_conventions == Conventions.dea_c3:
-        return DerivativesNamingConventions(
-            props,
-            base_product_uri=DEA_URI_PREFIX,
-            required_fields=(
-                "eo:platform",
-                "odc:dataset_version",
-                "odc:collection_number",
-                "odc:processing_datetime",
-                "odc:producer",
-                "odc:product_family",
-                "odc:region_code",
-                "odc:dataset_version",
-                "dea:dataset_maturity",
-            ),
-        )
-    elif naming_conventions == Conventions.deafrica:
-        return DEAfricaNamingConventions(props)
-    else:
-        raise RuntimeError(
-            f"Enum variant is not handled in codebase? {naming_conventions}"
-        )
-
-
 def _product_uri(product_name, base_uri):
     return f"{base_uri}/product/{product_name}"
 
@@ -633,6 +490,36 @@ class NamingConventions:
 
 
 class DEANamingConventions(NamingConventions):
+    """
+    Example file structure (note version number in file):
+
+            ga_ls8c_ones_3/090/084/2016/01/21/ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml
+    """
+
+    def __init__(
+        self,
+        properties: Mapping,
+        required_fields=(
+            "eo:platform",
+            "eo:instrument",
+            "odc:processing_datetime",
+            "odc:producer",
+            "odc:product_family",
+            "odc:region_code",
+            "odc:dataset_version",
+        ),
+        dataset_separator_field: Optional[str] = None,
+    ) -> None:
+        # DEA wants consistency via the naming-conventions doc.
+        allow_unknown_abbreviations = False
+        super().__init__(
+            properties,
+            DEA_URI_PREFIX,
+            required_fields,
+            dataset_separator_field,
+            allow_unknown_abbreviations,
+        )
+
     product_name: str = LazyProductName(include_collection=True)
     # Stricter: only allow pre-approved abbreviations.
     platform_abbreviated: str = LazyPlatformAbbreviation(
@@ -640,8 +527,44 @@ class DEANamingConventions(NamingConventions):
     )
 
 
-class DerivativesNamingConventions(NamingConventions):
+class DEAS2NamingConventions(DEANamingConventions):
     """
+    DEA naming conventions, but with an extra subfolder for each unique datatake.
+
+    It will figure out the datatake if you set a sentinel_tile_id or datastrip_id.
+    """
+
+    def __init__(
+        self,
+        properties: Mapping,
+        required_fields=(
+            "eo:instrument",
+            "eo:platform",
+            "odc:dataset_version",
+            "odc:processing_datetime",
+            "odc:producer",
+            "odc:product_family",
+            "odc:region_code",
+        ),
+        dataset_separator_field="sentinel:datatake_start_datetime",
+    ) -> None:
+        super().__init__(
+            properties, required_fields, dataset_separator_field=dataset_separator_field
+        )
+
+
+class DEADerivativesNamingConventions(DEANamingConventions):
+    """
+    Common derived products.
+
+    Unlike plain 'DEA', they use an explicit collection number (odc:collection_number)
+    in the product name which may differ from the software's dataset version
+    (odc:dataset_version)
+
+    Example file structure (note version number in folder):
+
+        ga_ls_wo_3/1-6-0/090/081/1998/07/30/ga_ls_wo_3_090081_1998-07-30_interim.odc-metadata.yaml
+
     Derivatives have a slightly different folder structure.
 
     And they only show constellations (eg. "ls_" or "s2_") rather than the specific
@@ -652,6 +575,27 @@ class DerivativesNamingConventions(NamingConventions):
     And version numbers may not match the collection number (`odc:collection_number` is
     mandatory).
     """
+
+    def __init__(
+        self,
+        properties: Mapping,
+        required_fields: Sequence[str] = (
+            "eo:platform",
+            "odc:dataset_version",
+            "odc:collection_number",
+            "odc:processing_datetime",
+            "odc:producer",
+            "odc:product_family",
+            "odc:region_code",
+            "dea:dataset_maturity",
+        ),
+        dataset_separator_field: Optional[str] = None,
+    ) -> None:
+        super().__init__(
+            properties,
+            required_fields=required_fields,
+            dataset_separator_field=dataset_separator_field,
+        )
 
     # Derivates put the version in the folder instead.
     dataset_label = LazyLabel(include_version=False)
@@ -668,6 +612,22 @@ class DerivativesNamingConventions(NamingConventions):
     )
 
 
+class DEAS2DerivativesNamingConventions(DEADerivativesNamingConventions):
+    """
+    Sentinel-2-based DEA derivative naming conventions. Unlike regular
+    derivatives, there's an extra subfolder for each unique datatake.
+
+    It will figure out the datatake if you set a sentinel_tile_id
+    or datastrip_id.
+    """
+
+    def __init__(self, properties: Mapping) -> None:
+        super().__init__(
+            properties,
+            dataset_separator_field="sentinel:datatake_start_datetime",
+        )
+
+
 class AfricaProductName:
     def __get__(self, c: "NamingConventions", owner) -> str:
         if c.dataset.product_name:
@@ -675,7 +635,7 @@ class AfricaProductName:
         return f"{c.dataset.product_family}_{c.platform_abbreviated}"
 
 
-class DEAfricaNamingConventions(DerivativesNamingConventions):
+class DEAfricaNamingConventions(NamingConventions):
     """
     DEAfrica avoids org names and uses simpler "{family}_{platform}" product names.
 
@@ -684,6 +644,15 @@ class DEAfricaNamingConventions(DerivativesNamingConventions):
     """
 
     product_name = AfricaProductName()
+    dataset_label = LazyLabel(include_version=False)
+    destination_folder = LazyDestinationFolder(
+        include_version=True,
+        include_non_final_maturity=False,
+    )
+    platform_abbreviated = LazyPlatformAbbreviation(
+        show_specific_platform=False,
+        allow_unknown_abbreviations=False,
+    )
 
     def __init__(
         self,
