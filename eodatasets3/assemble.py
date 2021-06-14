@@ -30,7 +30,7 @@ from eodatasets3.model import (
     AccessoryDoc,
     Location,
 )
-from eodatasets3.names import dataset_blueprint
+from eodatasets3 import names
 from eodatasets3.properties import EoFields
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
@@ -205,7 +205,7 @@ class DatasetAssembler(EoFields):
         self._lineage: Dict[str, List[uuid.UUID]] = defaultdict(list)
         self._inherited_geometry = None
 
-        self.names = dataset_blueprint(naming_conventions, self._props)
+        self.names = names.convention(self._props, kind=naming_conventions)
         self._is_completed = False
         self._finished_init_ = True
 
