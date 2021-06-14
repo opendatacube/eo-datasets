@@ -14,7 +14,7 @@ from eodatasets3.model import DEA_URI_PREFIX
 from eodatasets3.properties import EoFields, Eo3Properties
 
 
-def convention(props: Mapping, kind: str):
+def convention(kind: str, props: Mapping):
     """
     Get naming conventions for the given properties.
     """

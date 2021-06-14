@@ -206,7 +206,7 @@ class DatasetAssembler(EoFields):
         self._lineage: Dict[str, List[uuid.UUID]] = defaultdict(list)
         self._inherited_geometry = None
 
-        self.names = names.convention(self._props, kind=naming_conventions)
+        self.names = names.convention(kind=naming_conventions, props=self._props)
         self._is_completed = False
         self._finished_init_ = True
 

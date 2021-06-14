@@ -4,7 +4,8 @@ from contextlib import contextmanager
 import pytest
 
 from eodatasets3.model import DatasetDoc
-from eodatasets3.names import NamingConventions, dataset_blueprint
+from eodatasets3.names import NamingConventions, convention as name_convention
+
 from eodatasets3.properties import PropertyOverrideWarning
 
 
@@ -78,7 +79,7 @@ def test_unknown_abbreviations():
 
         # Unless unknown platforms aren't allowed
         # (DEA wants to be stricter and add real abbreviations for everything.)
-        names = dataset_blueprint("dea", d.properties)
+        names = name_convention("dea", d.properties)
         with pytest.raises(
             ValueError, match="don't know the DEA abbreviation for platform"
         ):
