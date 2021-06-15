@@ -7,7 +7,7 @@ from typing import Mapping
 import pytest
 from ruamel import yaml
 
-from eodatasets3 import DatasetAssembler, Eo3Properties, naming_convention
+from eodatasets3 import DatasetAssembler, Eo3Properties, namer
 from tests.common import assert_expected_eo3_doc
 
 
@@ -385,18 +385,9 @@ def test_africa_naming_conventions(tmp_path: Path):
     )
 
 
-def test_names_alone():
-    p = Eo3Properties()
-    p.platform = "sentinel-2a"
-    p.instrument = "MSI"
-    p.datetime = datetime(2013, 2, 3, 6, 5, 2)
-    p.region_code = "023543"
-    p.processed_now()
-    p.producer = "ga.gov.au"
-    p.dataset_version = "1.2.3"
-    p.product_family = "tester"
-
-    convention = naming_convention("dea", p)
+def test_names_alone(tmp_path: Path):
+    p = _basic_properties_set()
+    convention = namer("dea", p)
 
     assert convention.product_name == "ga_s2am_tester_1"
     assert convention.dataset_folder == Path("ga_s2am_tester_1/023/543/2013/02/03")
@@ -419,4 +410,35 @@ def test_names_alone():
     convention.product_name = "my_custom_product"
     assert convention.metadata_path == Path(
         "/tmp/custom_folder/my_custom_product-2-3_023543_2013-02-03.yaml"
+    )
+
+
+def _basic_properties_set() -> Eo3Properties:
+    p = Eo3Properties()
+    p.platform = "sentinel-2a"
+    p.instrument = "MSI"
+    p.datetime = datetime(2013, 2, 3, 6, 5, 2)
+    p.region_code = "023543"
+    p.processed_now()
+    p.producer = "ga.gov.au"
+    p.dataset_version = "1.2.3"
+    p.product_family = "tester"
+    return p
+
+
+def test_custom_naming(tmp_path: Path):
+    """
+    We can create naming conventions separately, and later give it to assembler.
+    """
+    p = _basic_properties_set()
+    convention = namer(props=p)
+    convention.dataset_folder = Path("my/custom/folder/")
+
+    with DatasetAssembler(tmp_path, names=convention) as a:
+        dataset_id, metadata_path = a.done()
+
+    metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
+    assert (
+        metadata_path_offset
+        == "my/custom/folder/ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
     )

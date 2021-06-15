@@ -20,7 +20,6 @@ from rasterio.enums import Resampling
 from xarray import Dataset
 
 import eodatasets3
-from eodatasets3 import names
 from eodatasets3 import serialise, validate, images, documents
 from eodatasets3.documents import find_and_read_documents
 from eodatasets3.images import FileWrite, GridSpec, MeasurementRecord
@@ -30,7 +29,8 @@ from eodatasets3.model import (
     AccessoryDoc,
     Location,
 )
-from eodatasets3.properties import Eo3Fields
+from eodatasets3.names import NamingConventions, namer
+from eodatasets3.properties import Eo3Fields, Eo3Dict
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
 
@@ -130,6 +130,7 @@ class DatasetAssembler(Eo3Fields):
         if_exists: IfExists = IfExists.ThrowError,
         allow_absolute_paths: bool = False,
         naming_conventions: str = "default",
+        names: NamingConventions = None,
     ) -> None:
         """
         Assemble a dataset with ODC metadata, writing metadata and (optionally) its imagery as COGs.
@@ -190,7 +191,6 @@ class DatasetAssembler(Eo3Fields):
         self._tmp_work_path: Optional[Path] = None
 
         self._label = None
-        self._props = Eo3Fields()
 
         self.collection_location = collection_location
         self._dataset_location = dataset_location
@@ -205,7 +205,15 @@ class DatasetAssembler(Eo3Fields):
         self._lineage: Dict[str, List[uuid.UUID]] = defaultdict(list)
         self._inherited_geometry = None
 
-        self.names = names.convention(kind=naming_conventions, props=self._props)
+        # They may have given us initialised naming conventions already:
+        if names is not None:
+            self._props = names.dataset.properties
+            self.names = names
+        else:
+            # Or create some:
+            self._props = Eo3Dict()
+            self.names = namer(kind=naming_conventions, props=self._props)
+
         self._is_completed = False
         self._finished_init_ = True
 
@@ -237,7 +245,7 @@ class DatasetAssembler(Eo3Fields):
         return self._tmp_work_path
 
     @property
-    def properties(self) -> Eo3Fields:
+    def properties(self) -> Eo3Dict:
         return self._props
 
     @property

@@ -3,7 +3,7 @@ from contextlib import contextmanager
 
 import pytest
 
-from eodatasets3 import naming_convention
+from eodatasets3 import namer
 from eodatasets3.model import DatasetDoc
 from eodatasets3.names import NamingConventions
 from eodatasets3.properties import (
@@ -74,14 +74,14 @@ def test_unknown_abbreviations():
         d.platform = "grover-1"
         assert names.platform_abbreviated == "grover1"
 
-        # Constellation can be used as a fallback grouping.
+        # Constellation can be us   ed as a fallback grouping.
         d.platforms = ["clippings-1a", "clippings-2b"]
         d.properties["constellation"] = "clippings"
         assert names.platform_abbreviated == "clippings"
 
         # Unless unknown platforms aren't allowed
         # (DEA wants to be stricter and add real abbreviations for everything.)
-        names = naming_convention("dea", d.properties)
+        names = namer("dea", d.properties)
         with pytest.raises(
             ValueError, match="don't know the DEA abbreviation for platform"
         ):
