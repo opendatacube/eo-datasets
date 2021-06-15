@@ -7,7 +7,7 @@ from typing import Mapping
 import pytest
 from ruamel import yaml
 
-from eodatasets3 import DatasetAssembler
+from eodatasets3 import DatasetAssembler, Eo3Properties, naming_convention
 from tests.common import assert_expected_eo3_doc
 
 
@@ -382,4 +382,41 @@ def test_africa_naming_conventions(tmp_path: Path):
     assert (
         metadata_path_offset
         == "fc_ls/0-1-2/090/081/1998/07/30/fc_ls_090081_1998-07-30.odc-metadata.yaml"
+    )
+
+
+def test_names_alone():
+    p = Eo3Properties()
+    p.platform = "sentinel-2a"
+    p.instrument = "MSI"
+    p.datetime = datetime(2013, 2, 3, 6, 5, 2)
+    p.region_code = "023543"
+    p.processed_now()
+    p.producer = "ga.gov.au"
+    p.dataset_version = "1.2.3"
+    p.product_family = "tester"
+
+    convention = naming_convention("dea", p)
+
+    assert convention.product_name == "ga_s2am_tester_1"
+    assert convention.dataset_folder == Path("ga_s2am_tester_1/023/543/2013/02/03")
+    assert convention.metadata_file() == Path(
+        "ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
+    )
+    assert convention.metadata_path == Path(
+        "ga_s2am_tester_1/023/543/2013/02/03/ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
+    )
+
+    # Can we override generated names?
+
+    convention.dataset_folder = Path("/tmp/custom_folder/")
+    # Now the generated metadata path will be inside it:
+    assert convention.metadata_path == Path(
+        "/tmp/custom_folder/ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
+    )
+
+    # Custom product name?
+    convention.product_name = "my_custom_product"
+    assert convention.metadata_path == Path(
+        "/tmp/custom_folder/my_custom_product-2-3_023543_2013-02-03.yaml"
     )

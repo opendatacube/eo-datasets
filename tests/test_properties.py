@@ -1,11 +1,9 @@
 import warnings
 from contextlib import contextmanager
-from datetime import datetime
-from pathlib import Path
 
 import pytest
 
-from eodatasets3 import naming_convention, Eo3Properties
+from eodatasets3 import naming_convention
 from eodatasets3.model import DatasetDoc
 from eodatasets3.names import NamingConventions
 from eodatasets3.properties import (
@@ -88,40 +86,3 @@ def test_unknown_abbreviations():
             ValueError, match="don't know the DEA abbreviation for platform"
         ):
             print(names.platform_abbreviated)
-
-
-def test_names_alone():
-    p = Eo3Properties()
-    p.platform = "sentinel-2a"
-    p.instrument = "MSI"
-    p.datetime = datetime(2013, 2, 3, 6, 5, 2)
-    p.region_code = "023543"
-    p.processed_now()
-    p.producer = "ga.gov.au"
-    p.dataset_version = "1.2.3"
-    p.product_family = "tester"
-
-    convention = naming_convention("dea", p)
-
-    assert convention.product_name == "ga_s2am_tester_1"
-    assert convention.dataset_folder == Path("ga_s2am_tester_1/023/543/2013/02/03")
-    assert convention.metadata_file() == Path(
-        "ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
-    )
-    assert convention.metadata_path == Path(
-        "ga_s2am_tester_1/023/543/2013/02/03/ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
-    )
-
-    # Can we override generated names?
-
-    convention.dataset_folder = Path("/tmp/custom_folder/")
-    # Now the generated metadata path will be inside it:
-    assert convention.metadata_path == Path(
-        "/tmp/custom_folder/ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
-    )
-
-    # Custom product name?
-    convention.product_name = "my_custom_product"
-    assert convention.metadata_path == Path(
-        "/tmp/custom_folder/my_custom_product-2-3_023543_2013-02-03.yaml"
-    )
