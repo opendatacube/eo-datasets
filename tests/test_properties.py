@@ -101,17 +101,27 @@ def test_names_alone():
     p.dataset_version = "1.2.3"
     p.product_family = "tester"
 
-    naming = naming_convention("dea", p)
+    convention = naming_convention("dea", p)
 
-    assert naming.product_name == "ga_s2am_tester_1"
-    assert naming.dataset_folder == Path("ga_s2am_tester_1/023/543/2013/02/03")
-    assert naming.metadata_file() == Path("ga_s2am_tester_1-2-3_023543_2013-02-03.yaml")
-    assert naming.metadata_path == Path(
+    assert convention.product_name == "ga_s2am_tester_1"
+    assert convention.dataset_folder == Path("ga_s2am_tester_1/023/543/2013/02/03")
+    assert convention.metadata_file() == Path(
+        "ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
+    )
+    assert convention.metadata_path == Path(
         "ga_s2am_tester_1/023/543/2013/02/03/ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
     )
 
-    # Can we override properties?
-    naming.dataset_folder = Path("/tmp/tester/")
-    assert naming.metadata_path == Path(
-        "/tmp/tester/ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
+    # Can we override generated names?
+
+    convention.dataset_folder = Path("/tmp/custom_folder/")
+    # Now the generated metadata path will be inside it:
+    assert convention.metadata_path == Path(
+        "/tmp/custom_folder/ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
+    )
+
+    # Custom product name?
+    convention.product_name = "my_custom_product"
+    assert convention.metadata_path == Path(
+        "/tmp/custom_folder/my_custom_product-2-3_023543_2013-02-03.yaml"
     )
