@@ -1,12 +1,16 @@
 import warnings
 from contextlib import contextmanager
+from datetime import datetime
+from pathlib import Path
 
 import pytest
 
+from eodatasets3 import naming_convention, Eo3Properties
 from eodatasets3.model import DatasetDoc
-from eodatasets3.names import NamingConventions, convention as name_convention
-
-from eodatasets3.properties import PropertyOverrideWarning
+from eodatasets3.names import NamingConventions
+from eodatasets3.properties import (
+    PropertyOverrideWarning,
+)
 
 
 def test_multi_platform_fields():
@@ -79,8 +83,35 @@ def test_unknown_abbreviations():
 
         # Unless unknown platforms aren't allowed
         # (DEA wants to be stricter and add real abbreviations for everything.)
-        names = name_convention("dea", d.properties)
+        names = naming_convention("dea", d.properties)
         with pytest.raises(
             ValueError, match="don't know the DEA abbreviation for platform"
         ):
             print(names.platform_abbreviated)
+
+
+def test_names_alone():
+    p = Eo3Properties()
+    p.platform = "sentinel-2a"
+    p.instrument = "MSI"
+    p.datetime = datetime(2013, 2, 3, 6, 5, 2)
+    p.region_code = "023543"
+    p.processed_now()
+    p.producer = "ga.gov.au"
+    p.dataset_version = "1.2.3"
+    p.product_family = "tester"
+
+    naming = naming_convention("dea", p)
+
+    assert naming.product_name == "ga_s2am_tester_1"
+    assert naming.dataset_folder == Path("ga_s2am_tester_1/023/543/2013/02/03")
+    assert naming.metadata_file() == Path("ga_s2am_tester_1-2-3_023543_2013-02-03.yaml")
+    assert naming.metadata_path == Path(
+        "ga_s2am_tester_1/023/543/2013/02/03/ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
+    )
+
+    # Can we override properties?
+    naming.dataset_folder = Path("/tmp/tester/")
+    assert naming.metadata_path == Path(
+        "/tmp/tester/ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
+    )

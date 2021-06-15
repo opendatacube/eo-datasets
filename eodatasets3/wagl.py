@@ -27,7 +27,7 @@ from rasterio.enums import Resampling
 from eodatasets3 import serialise, utils, images, DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
-from eodatasets3.properties import EoFields
+from eodatasets3.properties import Eo3Fields
 from eodatasets3.serialise import loads_yaml
 from eodatasets3.ui import bool_style
 from eodatasets3.utils import default_utc
@@ -113,7 +113,7 @@ def _unpack_products(
                         # but not in the filename.
                         # So we manually calculate a filename without the 'kind' field included.
                         kind=product,
-                        path=p.names.thumbnail_name(),
+                        path=p.names.thumbnail_file(),
                     )
 
 
@@ -152,7 +152,7 @@ def write_measurement_h5(
         # but not in its filename.
         # So we manually calculate a filename without the extra product name prefix.
         name=full_name,
-        path=p.names.measurement_file_path(band_name, "tif", file_id=file_id),
+        path=p.names.measurement_file(band_name, "tif", file_id=file_id),
     )
 
 
@@ -322,7 +322,7 @@ def _create_contiguity(
             # 'oa_' prefix to be included in the recorded band metadata,
             # but not in its filename.
             # So we manually calculate a filename without the extra prefix.
-            path=p.names.measurement_file_path(f"{product.lower()}_contiguity", "tif"),
+            path=p.names.measurement_file(f"{product.lower()}_contiguity", "tif"),
         )
 
         # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
@@ -369,7 +369,7 @@ def do(name: str, heading=False, **fields):
 
 
 @contextlib.contextmanager
-def sub_product(name: str, p: EoFields):
+def sub_product(name: str, p: Eo3Fields):
     """
     Set the product family temporarily within a block of code.
 
@@ -677,7 +677,7 @@ def package(
                                 # 'oa_' prefix to be included in the recorded band metadata,
                                 # but not in its filename.
                                 # So we manually calculate a filename without the extra prefix.
-                                path=p.names.measurement_file_path("fmask", "tif"),
+                                path=p.names.measurement_file("fmask", "tif"),
                             )
 
             with do("Finishing package"):

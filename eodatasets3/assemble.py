@@ -20,18 +20,17 @@ from rasterio.enums import Resampling
 from xarray import Dataset
 
 import eodatasets3
+from eodatasets3 import names
 from eodatasets3 import serialise, validate, images, documents
 from eodatasets3.documents import find_and_read_documents
 from eodatasets3.images import FileWrite, GridSpec, MeasurementRecord
 from eodatasets3.model import (
     DatasetDoc,
     ProductDoc,
-    Eo3Properties,
     AccessoryDoc,
     Location,
 )
-from eodatasets3 import names
-from eodatasets3.properties import EoFields
+from eodatasets3.properties import Eo3Fields
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
 
@@ -61,7 +60,7 @@ class DatasetCompletenessWarning(UserWarning):
         return str(self.validation)
 
 
-class DatasetAssembler(EoFields):
+class DatasetAssembler(Eo3Fields):
     # Properties that can be inherited from a source dataset. (when auto_inherit_properties=True)
     INHERITABLE_PROPERTIES = {
         "datetime",
@@ -191,7 +190,7 @@ class DatasetAssembler(EoFields):
         self._tmp_work_path: Optional[Path] = None
 
         self._label = None
-        self._props = Eo3Properties()
+        self._props = Eo3Fields()
 
         self.collection_location = collection_location
         self._dataset_location = dataset_location
@@ -238,7 +237,7 @@ class DatasetAssembler(EoFields):
         return self._tmp_work_path
 
     @property
-    def properties(self) -> Eo3Properties:
+    def properties(self) -> Eo3Fields:
         return self._props
 
     @property
@@ -513,7 +512,7 @@ class DatasetAssembler(EoFields):
             ds.read(1),
             images.GridSpec.from_rio(ds),
             self._work_path
-            / (path or self.names.measurement_file_path(name, "tif", file_id=file_id)),
+            / (path or self.names.measurement_file(name, "tif", file_id=file_id)),
             expand_valid_data=expand_valid_data,
             nodata=ds.nodata,
             overview_resampling=overview_resampling,
@@ -558,7 +557,7 @@ class DatasetAssembler(EoFields):
             array,
             grid_spec,
             self._work_path
-            / (path or self.names.measurement_file_path(name, "tif", file_id=file_id)),
+            / (path or self.names.measurement_file(name, "tif", file_id=file_id)),
             expand_valid_data=expand_valid_data,
             nodata=nodata,
             overview_resampling=overview_resampling,
@@ -593,7 +592,7 @@ class DatasetAssembler(EoFields):
                 grid_spec,
                 (
                     self._work_path
-                    / self.names.measurement_file_path(name, "tif", file_id=file_id)
+                    / self.names.measurement_file(name, "tif", file_id=file_id)
                 ),
                 expand_valid_data=expand_valid_data,
                 overview_resampling=overview_resampling,
@@ -764,10 +763,10 @@ class DatasetAssembler(EoFields):
         if self._is_writing_files():
             # (the checksum isn't written yet -- it'll be the last file)
             self.add_accessory_file(
-                "checksum:sha1", self._work_path / self.names.checksum_path()
+                "checksum:sha1", self._work_path / self.names.checksum_file()
             )
 
-            processing_metadata = self._work_path / self.names.metadata_path(
+            processing_metadata = self._work_path / self.names.metadata_file(
                 suffix="proc-info.yaml"
             )
             self._write_yaml(
@@ -799,7 +798,7 @@ class DatasetAssembler(EoFields):
         self._write_yaml(
             doc,
             self._metadata_path
-            or self._work_path / self.names.metadata_path(suffix="odc-metadata.yaml"),
+            or self._work_path / self.names.metadata_file(suffix="odc-metadata.yaml"),
         )
 
         if validate_correctness:
@@ -831,7 +830,7 @@ class DatasetAssembler(EoFields):
 
             if not self._dataset_location:
                 self._dataset_location = (
-                    self.collection_location / self.names.destination_folder
+                    self.collection_location / self.names.dataset_folder
                 )
             # Now atomically move to final location.
             # Someone else may have created the output while we were working.
@@ -846,9 +845,7 @@ class DatasetAssembler(EoFields):
 
                 if self._exists_behaviour == IfExists.Skip:
                     # Something else created it while we were busy.
-                    warnings.warn(
-                        f"Skipping -- exists: {self.names.destination_folder}"
-                    )
+                    warnings.warn(f"Skipping -- exists: {self.names.dataset_folder}")
                 elif self._exists_behaviour == IfExists.ThrowError:
                     raise
                 elif self._exists_behaviour == IfExists.Overwrite:
@@ -861,7 +858,7 @@ class DatasetAssembler(EoFields):
         target_metadata_path = (
             self._metadata_path
             or self._dataset_location
-            / self.names.metadata_path(suffix="odc-metadata.yaml")
+            / self.names.metadata_file(suffix="odc-metadata.yaml")
         )
         assert target_metadata_path.exists()
         self._is_completed = True
@@ -914,7 +911,7 @@ class DatasetAssembler(EoFields):
         :param resampling: rasterio :class:`rasterio.enums.Resampling` method to use.
         :param static_stretch: Use a static upper/lower value to stretch by instead of dynamic stretch.
         """
-        thumb_path = self._work_path / (path or self.names.thumbnail_name(kind=kind))
+        thumb_path = self._work_path / (path or self.names.thumbnail_file(kind=kind))
 
         missing_measurements = {red, green, blue} - set(self.measurements)
         if missing_measurements:
@@ -966,7 +963,7 @@ class DatasetAssembler(EoFields):
         to make the image with.
         """
 
-        thumb_path = self._work_path / self.names.thumbnail_name(kind=kind)
+        thumb_path = self._work_path / self.names.thumbnail_file(kind=kind)
 
         _, image_path = self.measurements.get(measurement, (None, None))
 

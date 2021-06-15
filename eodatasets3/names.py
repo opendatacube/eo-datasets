@@ -7,14 +7,15 @@ from typing import (
     Dict,
     Mapping,
     Set,
+    Union,
 )
 
 from eodatasets3 import utils
 from eodatasets3.model import DEA_URI_PREFIX
-from eodatasets3.properties import EoFields, Eo3Properties
+from eodatasets3.properties import Eo3Fields, Eo3Dict
 
 
-def convention(kind: str, props: Mapping):
+def convention(kind: str, props: Union[Mapping, Eo3Fields]):
     """
     Get naming conventions for the given properties.
     """
@@ -31,7 +32,8 @@ def convention(kind: str, props: Mapping):
         raise ValueError(
             f"Unknown naming conventions: {kind}. Possibilities: {available}"
         )
-
+    if isinstance(props, Eo3Fields):
+        props = props.properties
     return conventions[kind](props)
 
 
@@ -228,7 +230,7 @@ class LazyInstrumentAbbreviation:
 
             if not landsat_id:
                 raise NotImplementedError(
-                    "TODO: Can only currently abbreviate instruments from Landsat references."
+                    "No landsat scene or product id: cannot abbreviate Landsat instrument."
                 )
 
             return landsat_id[1].lower()
@@ -326,7 +328,16 @@ class MissingRequiredFields(ValueError):
     ...
 
 
-class EnforceRequiredProps(Eo3Properties):
+class RequiredPropertyDict(Eo3Dict):
+    """A wrapper for Eo3 Dict that throws a loud error if a required field is accessed
+     by not yet set.
+
+    - It gives a friendly error of what fields are required, rather than the user
+    seeing obtuse "None" errors sprinkled throughout their code.
+    - It will _only_ complain about the given required fields. Other fields behave
+      like a normal dictionary.
+
+    """
 
     # Displayed to user for friendlier errors.
     _REQUIRED_PROPERTY_HINTS = {
@@ -377,13 +388,30 @@ class EnforceRequiredProps(Eo3Properties):
             )
 
 
-class EnforceRequirementFields(EoFields):
+class EnforceRequirementProperties(Eo3Fields):
+    """
+    A wrapper for EO3 fields that throws a loud error if a field in required_properties isn't set.
+
+    Throws MissingRequiredFields error.
+    """
+
     @property
-    def properties(self) -> Eo3Properties:
+    def properties(self) -> Eo3Dict:
         return self._props
 
     def __init__(self, properties: Mapping, required_fields: Set[str]) -> None:
-        self._props = EnforceRequiredProps(required_fields, properties)
+        self._props = RequiredPropertyDict(required_fields, properties)
+
+
+class LazyFileName:
+    def __init__(self, file_id: str, suffix: str) -> None:
+        self.file_id = file_id
+        self.suffix = suffix
+
+    def __get__(self, c: "NamingConventions", owner):
+        return c.dataset_folder / c.make_filename(
+            file_id=self.file_id, suffix=self.suffix
+        )
 
 
 class NamingConventions:
@@ -391,6 +419,11 @@ class NamingConventions:
     Naming conventions based on the DEA standard.
 
     Unlike the DEA standard, almost every field is optional by default.
+
+    Includes product names, data labels, and file paths.
+
+    Note that a dataset has a directory (self.dataset_folder) and all relative file
+    paths are relative to that.
     """
 
     _ABSOLUTE_MINIMAL_PROPERTIES = {
@@ -416,7 +449,8 @@ class NamingConventions:
 
     file_pattern: str = LazyFilePattern()
 
-    destination_folder: Path = LazyDestinationFolder()
+    dataset_folder: Path = LazyDestinationFolder()
+    metadata_path = LazyFileName("", "yaml")
 
     def __init__(
         self,
@@ -437,7 +471,7 @@ class NamingConventions:
             self.required_fields.add(dataset_separator_field)
 
         self.allow_unknown_abbreviations = allow_unknown_abbreviations
-        self.dataset = EnforceRequirementFields(properties, self.required_fields)
+        self.dataset = EnforceRequirementProperties(properties, self.required_fields)
 
     @property
     def displayed_collection_number(self) -> Optional[int]:
@@ -457,13 +491,13 @@ class NamingConventions:
 
         return _product_uri(self.product_name, base_uri=self.base_product_uri)
 
-    def metadata_path(self, kind: str = "", suffix: str = "yaml") -> Path:
+    def metadata_file(self, kind: str = "", suffix: str = "yaml") -> Path:
         return self.make_filename(kind, suffix)
 
-    def checksum_path(self, suffix: str = "sha1") -> Path:
+    def checksum_file(self, suffix: str = "sha1") -> Path:
         return self.make_filename("", suffix)
 
-    def measurement_file_path(
+    def measurement_file(
         self, measurement_name: str, suffix: str, file_id: str = None
     ) -> Path:
         name = measurement_name.replace(":", "_")
@@ -474,19 +508,21 @@ class NamingConventions:
             suffix,
         )
 
-    def make_filename(
-        self, file_id: str, suffix: str, sub_package_name: str = None
-    ) -> Path:
-        file_id = "_" + file_id.replace("_", "-") if file_id else ""
+    def make_filename(self, file_id: str, suffix: str) -> Path:
+        """
+        Make a common filename according to the current naming conventions' file pattern.
 
+        All filenames have a file_id (eg. "odc-metadata" or "") and a suffix (eg. "yaml")
+        """
+        file_id = "_" + file_id.replace("_", "-") if file_id else ""
         return Path(self.file_pattern.format(file_id=file_id, suffix=suffix))
 
-    def thumbnail_name(self, kind: str = None, suffix: str = "jpg") -> Path:
+    def thumbnail_file(self, kind: str = None, suffix: str = "jpg") -> Path:
         if kind:
             name = f"{kind}:thumbnail"
         else:
             name = "thumbnail"
-        return self.measurement_file_path(name, suffix)
+        return self.measurement_file(name, suffix)
 
 
 class DEANamingConventions(NamingConventions):
@@ -601,7 +637,7 @@ class DEADerivativesNamingConventions(DEANamingConventions):
     dataset_label = LazyLabel(include_version=False)
     product_name = LazyProductName(include_instrument=False, include_collection=True)
 
-    destination_folder = LazyDestinationFolder(
+    dataset_folder = LazyDestinationFolder(
         include_version=True,
         include_non_final_maturity=False,
     )
@@ -645,7 +681,7 @@ class DEAfricaNamingConventions(NamingConventions):
 
     product_name = AfricaProductName()
     dataset_label = LazyLabel(include_version=False)
-    destination_folder = LazyDestinationFolder(
+    dataset_folder = LazyDestinationFolder(
         include_version=True,
         include_non_final_maturity=False,
     )

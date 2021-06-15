@@ -24,7 +24,7 @@ from shapely.geometry.base import BaseGeometry
 from eodatasets3.model import (
     DatasetDoc,
     ODC_DATASET_SCHEMA_URL,
-    Eo3Properties,
+    Eo3Dict,
 )
 from eodatasets3.properties import FileFormat
 
@@ -202,11 +202,11 @@ def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:
     c = cattr.Converter()
     c.register_structure_hook(uuid.UUID, _structure_as_uuid)
     c.register_structure_hook(BaseGeometry, _structure_as_shape)
-    c.register_structure_hook(Eo3Properties, _structure_as_stac_props)
+    c.register_structure_hook(Eo3Dict, _structure_as_stac_props)
 
     c.register_structure_hook(Affine, _structure_as_affine)
 
-    c.register_unstructure_hook(Eo3Properties, _unstructure_as_stac_props)
+    c.register_unstructure_hook(Eo3Dict, _unstructure_as_stac_props)
     return c.structure(doc, DatasetDoc)
 
 
@@ -215,7 +215,7 @@ def _structure_as_uuid(d, t):
 
 
 def _structure_as_stac_props(d, t):
-    return Eo3Properties(d)
+    return Eo3Dict(d)
 
 
 def _structure_as_affine(d: Tuple, t):
@@ -230,7 +230,7 @@ def _structure_as_affine(d: Tuple, t):
     return Affine(*d[:-3])
 
 
-def _unstructure_as_stac_props(v: Eo3Properties):
+def _unstructure_as_stac_props(v: Eo3Dict):
     return v._props
 
 
