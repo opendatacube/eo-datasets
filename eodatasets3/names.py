@@ -15,28 +15,6 @@ from eodatasets3.model import DEA_URI_PREFIX
 from eodatasets3.properties import Eo3Fields, Eo3Dict
 
 
-def convention(kind: str, props: Union[Mapping, Eo3Fields]):
-    """
-    Get naming conventions for the given properties.
-    """
-    conventions = dict(
-        default=NamingConventions,
-        dea=DEANamingConventions,
-        dea_s2=DEAS2NamingConventions,
-        dea_s2_derivative=DEAS2DerivativesNamingConventions,
-        dea_c3=DEADerivativesNamingConventions,
-        deafrica=DEAfricaNamingConventions,
-    )
-    if kind not in conventions:
-        available = ", ".join(conventions.keys())
-        raise ValueError(
-            f"Unknown naming conventions: {kind}. Possibilities: {available}"
-        )
-    if isinstance(props, Eo3Fields):
-        props = props.properties
-    return conventions[kind](props)
-
-
 class LazyProductName:
     def __init__(self, include_instrument=True, include_collection=False) -> None:
         super().__init__()
@@ -705,3 +683,31 @@ class DEAfricaNamingConventions(NamingConventions):
                 "odc:dataset_version",
             ),
         )
+
+
+KNOWN_CONVENTIONS = dict(
+    default=NamingConventions,
+    dea=DEANamingConventions,
+    dea_s2=DEAS2NamingConventions,
+    dea_s2_derivative=DEAS2DerivativesNamingConventions,
+    dea_c3=DEADerivativesNamingConventions,
+    deafrica=DEAfricaNamingConventions,
+)
+
+
+def namer(
+    kind: str = "default", props: Union[Mapping, Eo3Fields] = None
+) -> "NamingConventions":
+    """
+    Get a naming conventions instance of the given kind.
+    """
+    if kind not in KNOWN_CONVENTIONS:
+        available = ", ".join(KNOWN_CONVENTIONS.keys())
+        raise ValueError(
+            f"Unknown naming conventions: {kind}. Possibilities: {available}"
+        )
+    if isinstance(props, Eo3Fields):
+        props = props.properties
+    if props is None:
+        props = Eo3Dict()
+    return KNOWN_CONVENTIONS[kind](props)

@@ -215,7 +215,8 @@ def _structure_as_uuid(d, t):
 
 
 def _structure_as_stac_props(d, t):
-    return Eo3Dict(d)
+    # We don't normalise properties as we want it to reflect the original file.
+    return Eo3Dict(d, normalise_input=False)
 
 
 def _structure_as_affine(d: Tuple, t):

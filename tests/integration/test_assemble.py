@@ -4,7 +4,7 @@ Basic tests of DatasetAssembler.
 Some features are testsed in other sibling test files, such as alternative
 naming conventions.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from textwrap import dedent
 from uuid import UUID
@@ -13,7 +13,7 @@ import numpy
 import pytest
 from ruamel import yaml
 
-from eodatasets3 import DatasetAssembler
+from eodatasets3 import DatasetAssembler, namer
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
 from tests import assert_file_structure
@@ -298,6 +298,27 @@ def test_dataset_no_measurements(tmp_path: Path):
         doc = yaml.YAML(typ="safe").load(f)
 
     assert doc["label"] == "chipmonk_sightings_2019", "Couldn't override label field"
+
+
+def test_dataset_given_properties(tmp_path: Path):
+    """Can we give existing properties to the assembler?"""
+
+    properties = {
+        "datetime": datetime(2019, 1, 1),
+        "odc:product_family": "chipmonk_sightings",
+        "odc:processing_datetime": "2021-06-15T01:33:43.378850",
+    }
+    names = namer(props=properties)
+    with DatasetAssembler(tmp_path, names=names) as p:
+        # It should have normalised properties!
+        assert p.processed == datetime(2021, 6, 15, 1, 33, 43, 378850, timezone.utc)
+
+        dataset_id, metadata_path = p.done()
+
+    relative_path = metadata_path.relative_to(tmp_path)
+    assert relative_path == Path(
+        "chipmonk_sightings/2019/01/01/chipmonk_sightings_2019-01-01.odc-metadata.yaml"
+    )
 
 
 @pytest.mark.parametrize(
