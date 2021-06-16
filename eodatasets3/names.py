@@ -9,6 +9,7 @@ from typing import (
     Set,
     Union,
 )
+from urllib.parse import quote
 
 from eodatasets3 import utils
 from eodatasets3.model import DEA_URI_PREFIX
@@ -40,11 +41,6 @@ class LazyProductName:
             )
             if p
         )
-
-
-class LazyFilePattern:
-    def __get__(self, c: "NamingConventions", owner) -> str:
-        return c.dataset_label + "{file_id}.{suffix}"
 
 
 def _strip_major_version(version: str) -> str:
@@ -298,10 +294,6 @@ class LazyDestinationFolder:
         return Path(*parts)
 
 
-def _product_uri(product_name, base_uri):
-    return f"{base_uri}/product/{product_name}"
-
-
 class MissingRequiredFields(ValueError):
     ...
 
@@ -392,6 +384,14 @@ class LazyFileName:
         )
 
 
+class LazyProductURI:
+    def __get__(self, n: "NamingConventions", owner):
+        if not n.base_product_uri:
+            return None
+
+        return f"{n.base_product_uri}/product/{quote(n.product_name)}"
+
+
 class NamingConventions:
     """
     Naming conventions based on the DEA standard.
@@ -418,6 +418,8 @@ class NamingConventions:
     # These are lazily computed on read if not overridden by the user.
     # ie. User can set th names.product_name = 'blah'
     product_name: str = LazyProductName(include_collection=True)
+    product_uri: str = LazyProductURI()
+
     platform_abbreviated: str = LazyPlatformAbbreviation()
     instrument_abbreviated: str = LazyInstrumentAbbreviation()
     producer_abbreviated: str = LazyProducerAbbreviation()
@@ -425,7 +427,7 @@ class NamingConventions:
     # No major version, as the product name contains it (the collection version).
     dataset_label: str = LazyLabel(strip_major_version=True)
 
-    file_pattern: str = LazyFilePattern()
+    file_pattern: str = "{n.dataset_label}{file_id}.{suffix}"
 
     dataset_folder: Path = LazyDestinationFolder()
     metadata_path = LazyFileName("", "yaml")
@@ -462,13 +464,6 @@ class NamingConventions:
             return None
         return int(self.dataset.dataset_version.split(".")[0])
 
-    @property
-    def product_uri(self) -> Optional[str]:
-        if not self.base_product_uri:
-            return None
-
-        return _product_uri(self.product_name, base_uri=self.base_product_uri)
-
     def metadata_file(self, kind: str = "", suffix: str = "yaml") -> Path:
         return self.make_filename(kind, suffix)
 
@@ -493,7 +488,7 @@ class NamingConventions:
         All filenames have a file_id (eg. "odc-metadata" or "") and a suffix (eg. "yaml")
         """
         file_id = "_" + file_id.replace("_", "-") if file_id else ""
-        return Path(self.file_pattern.format(file_id=file_id, suffix=suffix))
+        return Path(self.file_pattern.format(file_id=file_id, suffix=suffix, n=self))
 
     def thumbnail_file(self, kind: str = None, suffix: str = "jpg") -> Path:
         if kind:

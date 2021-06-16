@@ -173,7 +173,7 @@ class DatasetAssembler(Eo3Fields):
             (try it and see -- it will tell your what's missing).
         """
 
-        # Optionally give a fixed dataset id.
+        #: The UUID for the dataset
         self.dataset_id = dataset_id or uuid.uuid4()
         self._exists_behaviour = if_exists
 
@@ -208,6 +208,55 @@ class DatasetAssembler(Eo3Fields):
         # They may have given us initialised naming conventions already:
         if names is not None:
             self._props = names.dataset.properties
+            #: The generated names for the dataset
+            #:
+            #: By default, all names will be generated based on metadata
+            #: fields and naming conventions. But you can set your own names here
+            #: to avoid the magic.
+            #:
+            #: (for the devious among you, this can also avoid metadata field requirements
+            #: for name generation).
+            #:
+            #: Examples:
+            #:
+            #: Set a product name::
+            #:
+            #:     p.names.product_name = 'my_product_name'
+            #:
+            #: Manually set the abbreviations used in name generation
+            #:
+            #: (By default, for example, landsat-7 will be abbreviated to "ls7". But maybe
+            #: you want "ls" in all your datasets)::
+            #:
+            #:     p.names.platform_abbreviated = "ls"
+            #:     # Other abbreviations:
+            #:     p.names.instrument_abbreviated = "e"
+            #:     p.names.producer_abbreviated = "usgs"
+            #:
+            #: Set your own label
+            #: (the human identifier for the dataset, and the default prefix of filenames)::
+            #:
+            #:     p.names.dataset_label = "landat-observations-12th-may-2021"
+            #:
+            #: Change the folder offset for each dataset. All generated files paths are relative
+            #:  to this folder (and it is relative to the collection path)::
+            #:
+            #:     p.names.dataset_folder = Path("datasets/january/2021")
+            #:
+            #: Set a different pattern used for generating filenames
+            #: All filenames have a file_id (eg. "odc-metadata" or "") and a suffix (eg. "yaml")
+            #: (Can contain folder separators. It will be relative to the dataset folder)::
+            #:
+            #:     p.names.file_pattern = "my-file.{file_id}.{suffix}"
+            #:
+            #: The path to the EO3 metadata doc (relative path to the dataset folder)::
+            #:
+            #:     p.names.metadata_path = Path("my-metadata.odc-metadata.yaml")
+            #:
+            #: The URI for the product::
+            #:
+            #:     p.names.product_uri = "https://collections.earth.test.example/product/my-product"
+            #:
             self.names = names
         else:
             # Or create some:
