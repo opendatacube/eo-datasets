@@ -6,7 +6,7 @@ from ._version import get_versions
 from .assemble import DatasetAssembler, IfExists
 from .properties import Eo3Properties, Eo3Dict
 
-from .names import namer
+from .names import namer, NameGenerator
 
 REPO_URL = "https://github.com/GeoscienceAustralia/eo-datasets.git"
 
@@ -18,6 +18,7 @@ __all__ = (
     "Eo3Dict",
     "Eo3Properties",
     "IfExists",
+    "NameGenerator",
     "namer",
     "REPO_URL",
     "__version__",

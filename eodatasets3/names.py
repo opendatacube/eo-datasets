@@ -22,7 +22,7 @@ class LazyProductName:
         self.include_instrument = include_instrument
         self.include_collection = include_collection
 
-    def __get__(self, c: "NamingConventions", owner) -> str:
+    def __get__(self, c: "NameGenerator", owner) -> str:
         if c.dataset.product_name:
             return c.dataset.product_name
 
@@ -63,7 +63,7 @@ class LazyLabel:
         self.strip_major_version = strip_major_version
         self.include_version = include_version
 
-    def __get__(self, c: "NamingConventions", owner):
+    def __get__(self, c: "NameGenerator", owner):
         d = c.dataset
 
         product_prefix = c.product_name
@@ -130,7 +130,7 @@ class LazyPlatformAbbreviation:
 
         self.allow_unknown_abbreviations = allow_unknown_abbreviations
 
-    def __get__(self, c: "NamingConventions", owner):
+    def __get__(self, c: "NameGenerator", owner):
         """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
 
         p = c.dataset.platforms
@@ -178,7 +178,7 @@ class LazyPlatformAbbreviation:
 
 
 class LazyInstrumentAbbreviation:
-    def __get__(self, c: "NamingConventions", owner):
+    def __get__(self, c: "NameGenerator", owner):
         """Abbreviated form of an instrument name, as used in dea product names. eg. 'c'."""
         platforms = c.dataset.platforms
         if not platforms or len(platforms) > 1:
@@ -232,7 +232,7 @@ class LazyProducerAbbreviation:
             known_abbreviations or self.KNOWN_PRODUCER_ABBREVIATIONS
         )
 
-    def __get__(self, c: "NamingConventions", owner):
+    def __get__(self, c: "NameGenerator", owner):
         """Abbreviated form of a producer, as used in dea product names. eg. 'ga', 'usgs'."""
         if not c.dataset.producer:
             return None
@@ -259,7 +259,7 @@ class LazyDestinationFolder:
         self.include_non_final_maturity = include_non_final_maturity
         self.date_folders_format = date_folders_format
 
-    def __get__(self, c: "NamingConventions", owner):
+    def __get__(self, c: "NameGenerator", owner):
         """The folder hierarchy the datasets files go into.
 
         This is returned as a relative path.
@@ -378,30 +378,61 @@ class LazyFileName:
         self.file_id = file_id
         self.suffix = suffix
 
-    def __get__(self, c: "NamingConventions", owner):
+    def __get__(self, c: "NameGenerator", owner):
         return c.dataset_folder / c.make_filename(
             file_id=self.file_id, suffix=self.suffix
         )
 
 
 class LazyProductURI:
-    def __get__(self, n: "NamingConventions", owner):
+    def __get__(self, n: "NameGenerator", owner):
         if not n.base_product_uri:
             return None
 
         return f"{n.base_product_uri}/product/{quote(n.product_name)}"
 
 
-class NamingConventions:
+class NameGenerator:
     """
-    Naming conventions based on the DEA standard.
+    A generator of names for products, data labels, file paths, etc.
 
-    Unlike the DEA standard, almost every field is optional by default.
+    These are generated based on a given set of naming conventions, but a user
+    can manually override any properties to avoid generation.
 
-    Includes product names, data labels, and file paths.
+    Create an instance by calling :meth:`eodatasets3.namer`::
 
-    Note that a dataset has a directory (self.dataset_folder) and all relative file
-    paths are relative to that.
+        properties = {
+            'eo:platform': 'landsat-7',
+            'eo:instrument': 'ETM',
+            ...
+        }
+        n = namer(conventions='default', properties)
+        print(n.product_name)
+
+    (You may want to use an :class:`eodatasets3.Eo3Properties` instance rather than a dict for
+    properties, to get convenience methods such as ``.platform = 'blah'``, `.properties`, automatic
+    property normalisation etc - it will behave like a DatasetAssembler instance)
+
+    Fields are lazily generated when accessed using the underlying metadata properties,
+    but you can manually set any field to avoid generation::
+
+        >>> p = {'eo:platform': 'landsat-7', 'odc:product_family': 'nbar'}
+        >>> n = namer(conventions='default', properties=p)
+        >>> n.instrument_abbreviated = 't'
+        >>> n.product_name
+        'ls7t_nbar'
+        >>> # Manually override the abbreviations:
+        >>> n.platform_abbreviated = 'ls'
+        >>> n.instrument_abbreviated = ''
+        >>> n.product_name
+        'ls_nbar'
+        >>> # Or manually set the entire product name to avoid generation:
+        >>> n.product_name = 'custom_nbar_albers'
+
+    All fields named ``*_file`` are filenames inside (relative to) the
+    ``self.dataset_folder``.
+
+    All ``*_path`` s include their folder offset already.
     """
 
     _ABSOLUTE_MINIMAL_PROPERTIES = {
@@ -417,20 +448,60 @@ class NamingConventions:
 
     # These are lazily computed on read if not overridden by the user.
     # ie. User can set th names.product_name = 'blah'
+
+    #: Product name for ODC
+    #:
     product_name: str = LazyProductName(include_collection=True)
+    #: Identifier URL for the product
+    #: (This is seen as a global id for the product, unlike the plain product
+    #   name. It doesn't have to resolve to a real path)
+    #:
+    #: Eg. ``https://collections.dea.ga.gov.au/product/ga_ls8c_ard_3``
+    #:
     product_uri: str = LazyProductURI()
 
+    #: Abbreviated form of the platform, used in most other
+    #  paths and names here.
+    #:
+    #: For example, ``landsat-7`` is usually abbreviated to ``ls7``
     platform_abbreviated: str = LazyPlatformAbbreviation()
+    #: Abbreviated form of the instrument, used in most other
+    #  paths and names here.
+    #:
+    #: For example, ``ETM+`` is usually abbreviated to ``e``
     instrument_abbreviated: str = LazyInstrumentAbbreviation()
+    #: Abbreviated form of the producer of the dataset
+    #: (the producing organisation)
+    #:
+    #: For example, "ga.gov.au" is abbreviated to "ga"
     producer_abbreviated: str = LazyProducerAbbreviation()
 
-    # No major version, as the product name contains it (the collection version).
+    #: The Label for the dataset. This is a human-readable alternative
+    #: to showing the UUID in most parts of ODC. It's used by default in filenames
+    #:
+    # No major version by default, as the product name contains it (the collection version).
     dataset_label: str = LazyLabel(strip_major_version=True)
 
+    #: The pattern for generating file names.
+    #:
+    #: The pattern is in python's ``str.format()`` syntax,
+    #: with fields ``{file_id}`` and ``{suffix}``
+    #:
     file_pattern: str = "{n.dataset_label}{file_id}.{suffix}"
 
+    #: The folder offset of the dataset. All generated files will be
+    #: relative to this.
+    #:
+    #: Example: ``Path('ga_ls8c_ones_3/090/084/2016/01/21')``
     dataset_folder: Path = LazyDestinationFolder()
-    metadata_path = LazyFileName("", "yaml")
+
+    #: The full path to the ODC metadata file.
+    #:
+    #: (this includes the folder offset from self.dataset_folder)
+    #:
+    #: Example: ``Path('ga_ls8c_ones_3/090/084/2016/01/21/
+    #: ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml')``
+    metadata_path: Path = LazyFileName("", "yaml")
 
     def __init__(
         self,
@@ -441,7 +512,11 @@ class NamingConventions:
         allow_unknown_abbreviations: bool = True,
     ) -> None:
 
+        #: The default base URI used in product URI generation
+        #:
+        #: Example: ``https://collections.dea.ga.gov.au/``
         self.base_product_uri = base_product_uri
+
         self.required_fields = self._ABSOLUTE_MINIMAL_PROPERTIES.union(required_fields)
 
         # An extra folder to put each dataset inside, using the value of the given property name.
@@ -451,7 +526,10 @@ class NamingConventions:
             self.required_fields.add(dataset_separator_field)
 
         self.allow_unknown_abbreviations = allow_unknown_abbreviations
-        self.dataset = EnforceRequirementProperties(properties, self.required_fields)
+        #: The underlying dataset properties used for generation.
+        self.dataset: Eo3Fields = EnforceRequirementProperties(
+            properties, self.required_fields
+        )
 
     @property
     def displayed_collection_number(self) -> Optional[int]:
@@ -473,6 +551,14 @@ class NamingConventions:
     def measurement_file(
         self, measurement_name: str, suffix: str, file_id: str = None
     ) -> Path:
+        """
+        Generate the path to a measurement for the current naming conventions.:::
+
+            >> p.names.measurement_file('blue', 'tif')
+            Path('ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif')
+
+        This is the filename inside the self.dataset_folder
+        """
         name = measurement_name.replace(":", "_")
 
         return self.make_filename(
@@ -483,14 +569,19 @@ class NamingConventions:
 
     def make_filename(self, file_id: str, suffix: str) -> Path:
         """
-        Make a common filename according to the current naming conventions' file pattern.
+        Make a file name according to the current naming conventions' file pattern.
 
         All filenames have a file_id (eg. "odc-metadata" or "") and a suffix (eg. "yaml")
+
+        Returned file paths are expected to be relative to the self.dataset_folder
         """
         file_id = "_" + file_id.replace("_", "-") if file_id else ""
         return Path(self.file_pattern.format(file_id=file_id, suffix=suffix, n=self))
 
     def thumbnail_file(self, kind: str = None, suffix: str = "jpg") -> Path:
+        """
+        Get a thumbnail file path (optionally with the given kind and/or suffix.)
+        """
         if kind:
             name = f"{kind}:thumbnail"
         else:
@@ -498,7 +589,7 @@ class NamingConventions:
         return self.measurement_file(name, suffix)
 
 
-class DEANamingConventions(NamingConventions):
+class DEANamingConventions(NameGenerator):
     """
     Example file structure (note version number in file):
 
@@ -638,13 +729,13 @@ class DEAS2DerivativesNamingConventions(DEADerivativesNamingConventions):
 
 
 class AfricaProductName:
-    def __get__(self, c: "NamingConventions", owner) -> str:
+    def __get__(self, c: "NameGenerator", owner) -> str:
         if c.dataset.product_name:
             return c.dataset.product_name
         return f"{c.dataset.product_family}_{c.platform_abbreviated}"
 
 
-class DEAfricaNamingConventions(NamingConventions):
+class DEAfricaNamingConventions(NameGenerator):
     """
     DEAfrica avoids org names and uses simpler "{family}_{platform}" product names.
 
@@ -681,7 +772,7 @@ class DEAfricaNamingConventions(NamingConventions):
 
 
 KNOWN_CONVENTIONS = dict(
-    default=NamingConventions,
+    default=NameGenerator,
     dea=DEANamingConventions,
     dea_s2=DEAS2NamingConventions,
     dea_s2_derivative=DEAS2DerivativesNamingConventions,
@@ -691,18 +782,24 @@ KNOWN_CONVENTIONS = dict(
 
 
 def namer(
-    kind: str = "default", props: Union[Mapping, Eo3Fields] = None
-) -> "NamingConventions":
+    conventions: str = "default", properties: Union[Mapping, Eo3Fields] = None
+) -> "NameGenerator":
     """
-    Get a naming conventions instance of the given kind.
+    Create a naming instance of the given kind.
+
+    Conventions: 'default', 'dea', 'deafrica', ...
+
+    You usually give it existing properties, but you can use the return value's
+    :attr:`eodatasets3.NameGenerator.dataset` field to set properties afterwards.
+
     """
-    if kind not in KNOWN_CONVENTIONS:
+    if conventions not in KNOWN_CONVENTIONS:
         available = ", ".join(KNOWN_CONVENTIONS.keys())
         raise ValueError(
-            f"Unknown naming conventions: {kind}. Possibilities: {available}"
+            f"Unknown naming conventions: {conventions}. Possibilities: {available}"
         )
-    if isinstance(props, Eo3Fields):
-        props = props.properties
-    if props is None:
-        props = Eo3Dict()
-    return KNOWN_CONVENTIONS[kind](props)
+    if isinstance(properties, Eo3Fields):
+        properties = properties.properties
+    if properties is None:
+        properties = Eo3Dict()
+    return KNOWN_CONVENTIONS[conventions](properties)

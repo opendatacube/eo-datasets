@@ -308,7 +308,7 @@ def test_dataset_given_properties(tmp_path: Path):
         "odc:product_family": "chipmonk_sightings",
         "odc:processing_datetime": "2021-06-15T01:33:43.378850",
     }
-    names = namer(props=properties)
+    names = namer(properties=properties)
     with DatasetAssembler(tmp_path, names=names) as p:
         # It should have normalised properties!
         assert p.processed == datetime(2021, 6, 15, 1, 33, 43, 378850, timezone.utc)

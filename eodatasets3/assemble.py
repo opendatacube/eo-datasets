@@ -7,7 +7,7 @@ import uuid
 import warnings
 from collections import defaultdict
 from copy import deepcopy
-from enum import Enum
+from enum import Enum, auto
 from pathlib import Path
 from textwrap import dedent
 from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable, Union
@@ -29,16 +29,23 @@ from eodatasets3.model import (
     AccessoryDoc,
     Location,
 )
-from eodatasets3.names import NamingConventions, namer
+from eodatasets3.names import NameGenerator, namer
 from eodatasets3.properties import Eo3Fields, Eo3Dict
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
 
 
 class IfExists(Enum):
-    Skip = 0
-    Overwrite = 1
-    ThrowError = 2
+    """
+    Enum: what to do when output already exists?
+    """
+
+    #: Skip the dataset
+    Skip = auto()
+    #: Overwrite the existing dataset
+    Overwrite = auto()
+    #: Throw an error
+    ThrowError = auto()
 
 
 class AssemblyError(Exception):
@@ -130,10 +137,13 @@ class DatasetAssembler(Eo3Fields):
         if_exists: IfExists = IfExists.ThrowError,
         allow_absolute_paths: bool = False,
         naming_conventions: str = "default",
-        names: NamingConventions = None,
+        names: NameGenerator = None,
     ) -> None:
         """
         Assemble a dataset with ODC metadata, writing metadata and (optionally) its imagery as COGs.
+
+        In addition to the below documented methods, all the metadata fields on :class:`Eo3Fields` are
+        available.
 
         There are three optional paths that can be specified. At least one must be specified. Collection,
         dataset or metadata path.
@@ -210,6 +220,8 @@ class DatasetAssembler(Eo3Fields):
             self._props = names.dataset.properties
             #: The generated names for the dataset
             #:
+            #: Instance of :class:`eodatasets3.NameGenerator`
+            #:
             #: By default, all names will be generated based on metadata
             #: fields and naming conventions. But you can set your own names here
             #: to avoid the magic.
@@ -261,7 +273,7 @@ class DatasetAssembler(Eo3Fields):
         else:
             # Or create some:
             self._props = Eo3Dict()
-            self.names = namer(kind=naming_conventions, props=self._props)
+            self.names = namer(conventions=naming_conventions, properties=self._props)
 
         self._is_completed = False
         self._finished_init_ = True
