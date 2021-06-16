@@ -51,45 +51,15 @@ And known properties are automatically normalised::
       p.properties["eo:off_nadir"] = "34"  # into a number
 
 
-Including provenance
-====================
-Most of our datasets are processed from an existing (input) dataset and
-have the same spatial information. We can add them as source datasets, to record
-the provenance, and the assembler can optionally copy any common metadata automatically::
-
-   collection = Path('/some/output/collection/path')
-   with DatasetAssembler(collection) as p:
-      # We add a source dataset, asking to inherit the common properties
-      # (eg. platform, instrument, datetime)
-      p.add_source_path(level1_ls8_dataset_path, auto_inherit_properties=True)
-
-      # Set our product information.
-      # It's a GA product of "numerus-unus" ("the number one").
-      p.producer = "ga.gov.au"
-      p.product_family = "numerus-unus"
-      p.dataset_version = "3.0.0"
-
-      ...
-
-In these situations, we often write our new pixels as a numpy array, inheriting the existing grid spatial information (*gridspec*)
-from our input dataset::
-
-      # Write a measurement from a numpy array, using the source dataset's grid spec.
-      p.write_measurement_numpy(
-         "ones",
-         numpy.ones((60, 60), numpy.int16),
-         GridSpec.from_dataset_doc(l1_ls8_dataset),
-         nodata=-999,
-      )
 
 Writing only metadata
 =====================
 
 The above examples copy the imagery, converting them to valid COG_ files in a new location. But sometimes you
 want to leave the imagery as-is and just generate a metadata file for Open Data Cube. We can
-do this by using :meth:`eodatasets3.DatasetAsssembler.note_measurement`
-instead of :meth:`eodatasets3.DatasetAsssembler.write_measurement`, to note the path
-of the current image::
+do this by using the functions named ``note_*`` (which note metadata) instead of functions named ``add_`` (which
+add them to the package). Such as :meth:`eodatasets3.DatasetAsssembler.note_measurement` instead
+of :meth:`eodatasets3.DatasetAsssembler.write_measurement`::
 
 
 
@@ -115,9 +85,9 @@ of the current image::
 
       ...
 
-Note that the assembler will throw an error if the path lives outside
-the dataset (location), as this will require absolute paths.
-Relative paths are considered best-practice for Open Data Cube.
+By default, the assembler will throw an error if a file lives outside the dataset (location),
+as this will require absolute paths. Relative paths are considered best-practice for Open Data Cube
+metadata.
 
 You can allow absolute paths with a field on assembler construction
 :meth:`eodatasets3.DatasetAssembler.__init__`::
@@ -129,6 +99,38 @@ You can allow absolute paths with a field on assembler construction
         ...
 
 .. _COG: https://www.cogeo.org/
+
+Including provenance
+====================
+Most of our datasets are processed from an existing (input) dataset and
+have the same spatial information as the input. We can record them as source datasets, and the
+assembler can optionally copy any common metadata automatically::
+
+   collection = Path('/some/output/collection/path')
+   with DatasetAssembler(collection) as p:
+      # We add a source dataset, asking to inherit the common properties
+      # (eg. platform, instrument, datetime)
+      p.add_source_path(level1_ls8_dataset_path, auto_inherit_properties=True)
+
+      # Set our product information.
+      # It's a GA product of "numerus-unus" ("the number one").
+      p.producer = "ga.gov.au"
+      p.product_family = "numerus-unus"
+      p.dataset_version = "3.0.0"
+
+      ...
+
+In these situations, we often write our new pixels as a numpy array, inheriting the existing grid spatial information (*gridspec*)
+from our input dataset::
+
+      # Write a measurement from a numpy array, using the source dataset's grid spec.
+      p.write_measurement_numpy(
+         "water",
+         my_computed_numpy_array,
+         GridSpec.from_dataset_doc(source_dataset),
+         nodata=-999,
+      )
+
 
 API / Class
 ===========
