@@ -5,7 +5,7 @@ import pytest
 
 from eodatasets3 import namer
 from eodatasets3.model import DatasetDoc
-from eodatasets3.names import NamingConventions
+from eodatasets3.names import NameGenerator
 from eodatasets3.properties import (
     PropertyOverrideWarning,
 )
@@ -45,7 +45,7 @@ def ignore_property_overrides():
 
 def test_naming_abbreviations():
     d = DatasetDoc()
-    names = NamingConventions(d.properties)
+    names = NameGenerator(d.properties)
 
     with ignore_property_overrides():
         assert names.platform_abbreviated is None
@@ -67,7 +67,7 @@ def test_naming_abbreviations():
 
 def test_unknown_abbreviations():
     d = DatasetDoc()
-    names = NamingConventions(d.properties)
+    names = NameGenerator(d.properties)
 
     with ignore_property_overrides():
         # Unknown platforms are abbreviated by just removing dashes.

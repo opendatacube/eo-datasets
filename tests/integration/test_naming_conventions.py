@@ -431,7 +431,7 @@ def test_custom_naming(tmp_path: Path):
     We can create naming conventions separately, and later give it to assembler.
     """
     p = _basic_properties_set()
-    convention = namer(props=p)
+    convention = namer(properties=p)
     convention.dataset_folder = Path("my/custom/folder/")
 
     with DatasetAssembler(tmp_path, names=convention) as a:

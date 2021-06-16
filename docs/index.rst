@@ -148,9 +148,41 @@ by setting names yourself::
 
 See the full list of options in the assembler ``.names`` property: :attr:`eodatasets3.DatasetAssembler.names`
 
-Assembler class API
-===================
+Dataset Assembler API
+=====================
 
 .. autoclass:: eodatasets3.DatasetAssembler
    :members:
    :special-members: __init__
+
+Name Generation
+===============
+
+.. autofunction:: eodatasets3.namer
+
+.. autoclass:: eodatasets3.NameGenerator
+   :members:
+   :inherited-members:
+
+Common Metadata Properties
+==========================
+
+These are convenience properties for common metadata fields. They are available
+on DatasetAssemblers and within other naming APIs.
+
+(This is abstract. If you want one of these of your own, create an :class:`eodatasets3.Eo3Properties`)
+
+.. autoclass:: eodatasets3.names.Eo3Fields
+   :members:
+
+
+Other Types
+===========
+
+..
+  Catch any types we didn't add explicitly above
+
+.. automodule:: eodatasets3
+   :members:
+   :exclude-members: DatasetAssembler, NameGenerator, namer
+
