@@ -51,9 +51,47 @@ And known properties are automatically normalised::
       p.properties["eo:off_nadir"] = "34"  # into a number
 
 
+Including provenance
+====================
+Most datasets are processed from an existing (input) dataset and have the same spatial information as the input.
+We can record them as source datasets, and the assembler can optionally copy any common metadata automatically::
 
-Writing only metadata
-=====================
+   collection = Path('/some/output/collection/path')
+   with DatasetAssembler(collection) as p:
+      # We add a source dataset, asking to inherit the common properties
+      # (eg. platform, instrument, datetime)
+      p.add_source_path(level1_ls8_dataset_path, auto_inherit_properties=True)
+
+      # Set our product information.
+      # It's a GA product of "numerus-unus" ("the number one").
+      p.producer = "ga.gov.au"
+      p.product_family = "numerus-unus"
+      p.dataset_version = "3.0.0"
+
+      ...
+
+In these situations, we often write our new pixels as a numpy array, inheriting the existing grid spatial information (*gridspec*)
+from our input dataset::
+
+      # Write a measurement from a numpy array, using the source dataset's grid spec.
+      p.write_measurement_numpy(
+         "water",
+         my_computed_numpy_array,
+         GridSpec.from_dataset_doc(source_dataset),
+         nodata=-999,
+      )
+
+
+"Less magic, please"
+====================
+
+In the above examples, the assembler is writing imagery and generating file and dataset names
+automatically, but you may want to do these parts yourself. The following sections tell you how.
+
+Writing only a metadata doc
+===========================
+
+(ie. I don't want to change my existing imagery)
 
 The above examples copy the imagery, converting them to valid COG_ files in a new location. But sometimes you
 want to leave the imagery as-is and just generate a metadata file for Open Data Cube. We can
@@ -100,40 +138,18 @@ You can allow absolute paths with a field on assembler construction
 
 .. _COG: https://www.cogeo.org/
 
-Including provenance
-====================
-Most of our datasets are processed from an existing (input) dataset and
-have the same spatial information as the input. We can record them as source datasets, and the
-assembler can optionally copy any common metadata automatically::
+Naming things yourself
+======================
 
-   collection = Path('/some/output/collection/path')
-   with DatasetAssembler(collection) as p:
-      # We add a source dataset, asking to inherit the common properties
-      # (eg. platform, instrument, datetime)
-      p.add_source_path(level1_ls8_dataset_path, auto_inherit_properties=True)
+You can avoid the automatic name generation of products, filenames, labels etc (and their finnicky metadata requirements)
+by setting names yourself::
 
-      # Set our product information.
-      # It's a GA product of "numerus-unus" ("the number one").
-      p.producer = "ga.gov.au"
-      p.product_family = "numerus-unus"
-      p.dataset_version = "3.0.0"
+   p.names.platform_abbreviated = "s2"
 
-      ...
+See the full list of options in the assembler ``.names`` property: :attr:`eodatasets3.DatasetAssembler.names`
 
-In these situations, we often write our new pixels as a numpy array, inheriting the existing grid spatial information (*gridspec*)
-from our input dataset::
-
-      # Write a measurement from a numpy array, using the source dataset's grid spec.
-      p.write_measurement_numpy(
-         "water",
-         my_computed_numpy_array,
-         GridSpec.from_dataset_doc(source_dataset),
-         nodata=-999,
-      )
-
-
-API / Class
-===========
+Assembler class API
+===================
 
 .. autoclass:: eodatasets3.DatasetAssembler
    :members:
