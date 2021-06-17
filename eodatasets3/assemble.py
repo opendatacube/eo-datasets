@@ -445,7 +445,7 @@ class DatasetAssembler(Eo3Fields):
 
         It can optionally copy common properties from the source dataset (platform, instrument etc)/
 
-        (see self.INHERITABLE_PROPERTIES for the list of fields that are inheritable)
+        (see :py:obj:`.INHERITABLE_PROPERTIES` for the list of fields that are inheritable)
 
         :param dataset:
         :param auto_inherit_properties: Whether to copy any common properties from the dataset
@@ -489,8 +489,9 @@ class DatasetAssembler(Eo3Fields):
         """
         Expand the lineage with raw source dataset ids.
 
-        Note: If you have direct access to the datasets, you probably want to use :func:`add_source_path`
-        or :func:`add_source_dataset`, so that fields can be inherited from them automatically.
+        .. note::
+           If you have direct access to the datasets, you probably want to use :func:`add_source_path`
+           or :func:`add_source_dataset`, so that fields can be inherited from them automatically.
 
         :param classifier:
                 How to classify the source dataset.
@@ -1041,13 +1042,27 @@ class DatasetAssembler(Eo3Fields):
         Write a singleband thumbnail out, taking in an input measurement and
         outputting a JPG with appropriate settings.
 
-        Options are to
-        EITHER
-        Use a bit (int) as the value to scale from black to white to
-        i.e., 0 will be BLACK and bit will be WHITE, with a linear scale between.
-        OR
-        Provide a lookuptable (dict) of int (key) [R, G, B] (value) fields
-        to make the image with.
+        :param measurement: Name of measurement
+        :param kind: If you have multiple thumbnails, you can specify the 'kind' name to distinguish
+                     them (it will be put in the filename).
+                     Eg. GA's ARD has two thumbnails, one of kind ``nbar`` and one of ``nbart``.
+
+        EITHER:
+
+        - Use a bit (int) as the value to scale from black to white to
+          i.e., 0 will be BLACK and bit will be WHITE, with a linear scale between,::
+
+             p.write_thumbnail_singleband("blue", bit=1)
+
+        OR:
+
+        - Provide a lookup_table (dict) of int (key) [R, G, B] (value) fields
+          to make the image with.::
+
+             p.write_thumbnail_singleband(
+                 "blue", lookup_table={1: (0, 0, 255)}
+             )
+
         """
 
         thumb_path = self._work_path / self.names.thumbnail_file(kind=kind)
@@ -1075,18 +1090,18 @@ class DatasetAssembler(Eo3Fields):
 
     def add_accessory_file(self, name: str, path: Location):
         """
-        Record a reference to an additional file that's part of the dataset, but is
+        Record a reference to an additional file that's included in the dataset, but is
         not a band/measurement.
 
         Such as non-ODC metadata, thumbnails, checksums, etc. Any included file that
         is not recorded in the measurements.
 
         By convention, the name should have prefixes with their category, such as
-        'metadata:' or 'thumbnail:'.
+        ``metadata:`` or ``thumbnail:``.
 
-        eg. 'metadata:landsat_processor', 'checksum:sha1', 'thumbnail:full'.
+        eg. ``metadata:landsat_processor``, ``checksum:sha1``, ``thumbnail:full``.
 
-        :param name: identifying name, eg 'metadata:mtl'
+        :param name: identifying name, eg ``metadata:mtl``
         :param path: local path to file.
         """
         existing_path = self._accessories.get(name)
@@ -1109,7 +1124,8 @@ class DatasetAssembler(Eo3Fields):
     ) -> Generator[Tuple[GridSpec, str, Path], None, None]:
         """
 
-        *not recommended* - will likely change soon.
+        .. warning::
+           *not recommended* for use - will likely change soon.
 
         Iterate through the list of measurement names that have been written, and their current (temporary) paths.
 
