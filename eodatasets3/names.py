@@ -13,7 +13,7 @@ from urllib.parse import quote
 
 from eodatasets3 import utils
 from eodatasets3.model import DEA_URI_PREFIX
-from eodatasets3.properties import Eo3Fields, Eo3Dict
+from eodatasets3.properties import Eo3Interface, Eo3Dict
 
 
 class LazyProductName:
@@ -23,8 +23,8 @@ class LazyProductName:
         self.include_collection = include_collection
 
     def __get__(self, c: "NameGenerator", owner) -> str:
-        if c.dataset.product_name:
-            return c.dataset.product_name
+        if c.metadata.product_name:
+            return c.metadata.product_name
 
         instrument = c.instrument_abbreviated if self.include_instrument else ""
         return "_".join(
@@ -32,7 +32,7 @@ class LazyProductName:
             for p in (
                 c.producer_abbreviated,
                 f"{c.platform_abbreviated or ''}{instrument or ''}",
-                c.dataset.product_family,
+                c.metadata.product_family,
                 (
                     f"{c.displayed_collection_number}"
                     if (self.include_collection and c.displayed_collection_number)
@@ -64,7 +64,7 @@ class LazyLabel:
         self.include_version = include_version
 
     def __get__(self, c: "NameGenerator", owner):
-        d = c.dataset
+        d = c.metadata
 
         product_prefix = c.product_name
 
@@ -133,7 +133,7 @@ class LazyPlatformAbbreviation:
     def __get__(self, c: "NameGenerator", owner):
         """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
 
-        p = c.dataset.platforms
+        p = c.metadata.platforms
         if not p:
             return None
 
@@ -162,7 +162,7 @@ class LazyPlatformAbbreviation:
         # Otherwise, there's a mix of platforms.
 
         # Is there a common constellation?
-        constellation = c.dataset.properties.get("constellation")
+        constellation = c.metadata.properties.get("constellation")
         if constellation:
             return constellation
 
@@ -180,27 +180,30 @@ class LazyPlatformAbbreviation:
 class LazyInstrumentAbbreviation:
     def __get__(self, c: "NameGenerator", owner):
         """Abbreviated form of an instrument name, as used in dea product names. eg. 'c'."""
-        platforms = c.dataset.platforms
+        if not c.metadata.instrument:
+            return None
+
+        platforms = c.metadata.platforms
         if not platforms or len(platforms) > 1:
             return None
 
         [p] = platforms
 
         if p.startswith("sentinel-1") or p.startswith("sentinel-2"):
-            return c.dataset.instrument[0].lower()
+            return c.metadata.instrument[0].lower()
 
         if p.startswith("landsat"):
             # Extract from usgs standard:
             # landsat:landsat_product_id: LC08_L1TP_091075_20161213_20170316_01_T2
             # landsat:landsat_scene_id: LC80910752016348LGN01
-            landsat_id = c.dataset.properties.get("landsat:landsat_product_id")
+            landsat_id = c.metadata.properties.get("landsat:landsat_product_id")
             if landsat_id is None:
-                landsat_id = c.dataset.properties.get("landsat:landsat_scene_id")
+                landsat_id = c.metadata.properties.get("landsat:landsat_scene_id")
 
             # from USGS STAC, label is LC08_L2SP_178079_20210417_20210424_02_T1_SR and
             # landsat:scene_id: LC81780792021107LGN00
             if landsat_id is None:
-                landsat_id = c.dataset.properties.get("landsat:scene_id")
+                landsat_id = c.metadata.properties.get("landsat:scene_id")
 
             if not landsat_id:
                 raise NotImplementedError(
@@ -234,14 +237,14 @@ class LazyProducerAbbreviation:
 
     def __get__(self, c: "NameGenerator", owner):
         """Abbreviated form of a producer, as used in dea product names. eg. 'ga', 'usgs'."""
-        if not c.dataset.producer:
+        if not c.metadata.producer:
             return None
 
         try:
-            return self.known_abbreviations[c.dataset.producer]
+            return self.known_abbreviations[c.metadata.producer]
         except KeyError:
             raise NotImplementedError(
-                f"We don't know how to abbreviate organisation domain name {c.dataset.producer!r}. "
+                f"We don't know how to abbreviate organisation domain name {c.metadata.producer!r}. "
                 f"We'd love to add more orgs! Raise an issue on Github: "
                 f"https://github.com/GeoscienceAustralia/eo-datasets/issues/new' "
             )
@@ -266,7 +269,7 @@ class LazyDestinationFolder:
 
         Example: Path("ga_ls8c_ard_3/092/084/2016/06/28")
         """
-        d = c.dataset
+        d = c.metadata
         parts = [c.product_name]
 
         if self.include_version:
@@ -358,7 +361,7 @@ class RequiredPropertyDict(Eo3Dict):
             )
 
 
-class EnforceRequirementProperties(Eo3Fields):
+class EnforceRequirementProperties(Eo3Interface):
     """
     A wrapper for EO3 fields that throws a loud error if a field in required_properties isn't set.
 
@@ -418,12 +421,10 @@ class NameGenerator:
 
         >>> p = {'eo:platform': 'landsat-7', 'odc:product_family': 'nbar'}
         >>> n = namer(conventions='default', properties=p)
-        >>> n.instrument_abbreviated = 't'
         >>> n.product_name
-        'ls7t_nbar'
-        >>> # Manually override the abbreviations:
+        'ls7_nbar'
+        >>> # Manually override the abbreviation:
         >>> n.platform_abbreviated = 'ls'
-        >>> n.instrument_abbreviated = ''
         >>> n.product_name
         'ls_nbar'
         >>> # Or manually set the entire product name to avoid generation:
@@ -501,7 +502,7 @@ class NameGenerator:
     #:
     #: Example: ``Path('ga_ls8c_ones_3/090/084/2016/01/21/
     #: ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml')``
-    metadata_path: Path = LazyFileName("", "yaml")
+    metadata_path: Path = LazyFileName("", "odc-metadata.yaml")
 
     def __init__(
         self,
@@ -527,20 +528,20 @@ class NameGenerator:
 
         self.allow_unknown_abbreviations = allow_unknown_abbreviations
         #: The underlying dataset properties used for generation.
-        self.dataset: Eo3Fields = EnforceRequirementProperties(
+        self.metadata: Eo3Interface = EnforceRequirementProperties(
             properties, self.required_fields
         )
 
     @property
     def displayed_collection_number(self) -> Optional[int]:
         # An explicit collection number trumps all.
-        if self.dataset.collection_number:
-            return int(self.dataset.collection_number)
+        if self.metadata.collection_number:
+            return int(self.metadata.collection_number)
 
         # Otherwise it's the first digit of the dataset version.
-        if not self.dataset.dataset_version:
+        if not self.metadata.dataset_version:
             return None
-        return int(self.dataset.dataset_version.split(".")[0])
+        return int(self.metadata.dataset_version.split(".")[0])
 
     def metadata_file(self, kind: str = "", suffix: str = "yaml") -> Path:
         return self.make_filename(kind, suffix)
@@ -730,9 +731,9 @@ class DEAS2DerivativesNamingConventions(DEADerivativesNamingConventions):
 
 class AfricaProductName:
     def __get__(self, c: "NameGenerator", owner) -> str:
-        if c.dataset.product_name:
-            return c.dataset.product_name
-        return f"{c.dataset.product_family}_{c.platform_abbreviated}"
+        if c.metadata.product_name:
+            return c.metadata.product_name
+        return f"{c.metadata.product_family}_{c.platform_abbreviated}"
 
 
 class DEAfricaNamingConventions(NameGenerator):
@@ -782,17 +783,15 @@ KNOWN_CONVENTIONS = dict(
 
 
 def namer(
-    conventions: str = "default", properties: Union[Mapping, Eo3Fields] = None
+    conventions: str = "default", properties: Union[Eo3Dict, Eo3Interface, dict] = None
 ) -> "NameGenerator":
     """
     Create a naming instance of the given conventions.
 
     Conventions: 'default', 'dea', 'deafrica', ...
 
-    >>> n = namer('deafrica')
-
     You usually give it existing properties, but you can use the return value's
-    :attr:`.dataset <eodatasets3.NameGenerator.dataset>` field to set properties afterwards.
+    :attr:`.metadata <eodatasets3.NameGenerator.metadata>` field to set properties afterwards.
 
     """
     if conventions not in KNOWN_CONVENTIONS:
@@ -800,7 +799,7 @@ def namer(
         raise ValueError(
             f"Unknown naming conventions: {conventions}. Possibilities: {available}"
         )
-    if isinstance(properties, Eo3Fields):
+    if isinstance(properties, Eo3Interface):
         properties = properties.properties
     if properties is None:
         properties = Eo3Dict()

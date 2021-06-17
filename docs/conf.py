@@ -28,6 +28,7 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.coverage",
     "sphinx.ext.viewcode",
+    "sphinx.ext.doctest",
 ]
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),

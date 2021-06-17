@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Convenience script for running CI-like checks
+# Convenience script for running all CI-like checks
 
 set -eu
 set -x
 
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+cd script_dir
+
 pre-commit run -a
 
-# Run tests, taking coverage.
-# Users can specify extra folders as arguments.
-pytest --cov eodatasets3 --durations=5 . $@
-
+./run-tests.sh $@

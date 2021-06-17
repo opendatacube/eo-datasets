@@ -391,11 +391,11 @@ def test_names_alone(tmp_path: Path):
 
     assert convention.product_name == "ga_s2am_tester_1"
     assert convention.dataset_folder == Path("ga_s2am_tester_1/023/543/2013/02/03")
-    assert convention.metadata_file() == Path(
-        "ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
+    assert convention.metadata_file(kind="sidecar") == Path(
+        "ga_s2am_tester_1-2-3_023543_2013-02-03_sidecar.yaml"
     )
     assert convention.metadata_path == Path(
-        "ga_s2am_tester_1/023/543/2013/02/03/ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
+        "ga_s2am_tester_1/023/543/2013/02/03/ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
     )
 
     # Can we override generated names?
@@ -403,13 +403,13 @@ def test_names_alone(tmp_path: Path):
     convention.dataset_folder = Path("/tmp/custom_folder/")
     # Now the generated metadata path will be inside it:
     assert convention.metadata_path == Path(
-        "/tmp/custom_folder/ga_s2am_tester_1-2-3_023543_2013-02-03.yaml"
+        "/tmp/custom_folder/ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
     )
 
     # Custom product name?
     convention.product_name = "my_custom_product"
     assert convention.metadata_path == Path(
-        "/tmp/custom_folder/my_custom_product-2-3_023543_2013-02-03.yaml"
+        "/tmp/custom_folder/my_custom_product-2-3_023543_2013-02-03.odc-metadata.yaml"
     )
 
 
