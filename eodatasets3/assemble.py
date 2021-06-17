@@ -53,11 +53,17 @@ class AssemblyError(Exception):
 
 
 class IncompleteDatasetError(Exception):
+    """
+    Raised when a dataset is missing essential things and so cannot be written.
+
+    (such as mandatory metadata)
+    """
+
     def __init__(self, validation: ValidationMessage) -> None:
         self.validation = validation
 
 
-class DatasetCompletenessWarning(UserWarning):
+class IncompleteDatasetWarning(UserWarning):
     """A non-critical warning for invalid or incomplete metadata"""
 
     def __init__(self, validation: ValidationMessage) -> None:
@@ -892,7 +898,7 @@ class DatasetAssembler(Eo3Fields):
         if validate_correctness:
             for m in validate.validate_dataset(doc):
                 if m.level in (Level.info, Level.warning):
-                    warnings.warn(DatasetCompletenessWarning(m))
+                    warnings.warn(IncompleteDatasetWarning(m))
                 elif m.level == Level.error:
                     raise IncompleteDatasetError(m)
                 else:
