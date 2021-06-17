@@ -16,7 +16,7 @@ check:
 
 # Run tests in Docker
 test:
-	docker run --rm --volume "${PWD}":/tests -w /tests eodatasets:test ./run-tests.sh
+	docker run --rm --volume "${PWD}":/tests -w /home/runner eodatasets:test /tests/run-tests.sh
 
 # Run linters in Docker
 lint:
