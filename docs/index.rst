@@ -1,7 +1,4 @@
-.. eodatasets3 documentation master file, created by
-   sphinx-quickstart on Mon Aug 26 14:33:29 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+
 
 EO Datasets 3
 =============
@@ -96,8 +93,8 @@ Writing only a metadata doc
 The above examples copy the imagery, converting them to valid COG_ files in a new location. But sometimes you
 want to leave the imagery as-is and just generate a metadata file for Open Data Cube. We can
 do this by using the functions named ``note_*`` (which note metadata) instead of functions named ``add_`` (which
-add them to the package). Such as :meth:`eodatasets3.DatasetAsssembler.note_measurement` instead
-of :meth:`eodatasets3.DatasetAsssembler.write_measurement`::
+add them to the package). Such as :meth:`eodatasets3.DatasetAssembler.note_measurement` instead
+of :meth:`eodatasets3.DatasetAssembler.write_measurement`::
 
 
 
@@ -172,7 +169,7 @@ on DatasetAssemblers and within other naming APIs.
 
 (This is abstract. If you want one of these of your own, create an :class:`eodatasets3.Eo3Properties`)
 
-.. autoclass:: eodatasets3.names.Eo3Fields
+.. autoclass:: eodatasets3.properties.Eo3Fields
    :members:
 
 

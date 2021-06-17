@@ -14,10 +14,10 @@ from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable, Union
 
 import numpy
 import rasterio
+import xarray
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
-from xarray import Dataset
 
 import eodatasets3
 from eodatasets3 import serialise, validate, images, documents
@@ -68,7 +68,11 @@ class DatasetCompletenessWarning(UserWarning):
 
 
 class DatasetAssembler(Eo3Fields):
-    # Properties that can be inherited from a source dataset. (when auto_inherit_properties=True)
+    #: The properties that will automatically be inherited from a source dataset
+    #: when :meth:`auto_inherit_properties=True <.add_source_path>`
+    #:
+    #: These are fields that are inherent to the underlying observation, and so will
+    #: still be relevant after most 1:1 processing.
     INHERITABLE_PROPERTIES = {
         "datetime",
         "dtr:end_datetime",
@@ -142,8 +146,8 @@ class DatasetAssembler(Eo3Fields):
         """
         Assemble a dataset with ODC metadata, writing metadata and (optionally) its imagery as COGs.
 
-        In addition to the below documented methods, all the metadata fields on :class:`Eo3Fields` are
-        available.
+        In addition to the below documented methods, metadata can read and set using
+        :class:`eodatasets3.properties.Eo3Fields`'s fields.
 
         There are three optional paths that can be specified. At least one must be specified. Collection,
         dataset or metadata path.
@@ -218,13 +222,12 @@ class DatasetAssembler(Eo3Fields):
         # They may have given us initialised naming conventions already:
         if names is not None:
             self._props = names.dataset.properties
-            #: The generated names for the dataset
-            #:
-            #: Instance of :class:`eodatasets3.NameGenerator`
+            #: The name generator  (an instance of :class:`eodatasets3.NameGenerator`)
             #:
             #: By default, all names will be generated based on metadata
-            #: fields and naming conventions. But you can set your own names here
-            #: to avoid the magic.
+            #: fields and the chosen naming conventions.
+            #:
+            #: But you can set your own names here manually to avoid the magic.
             #:
             #: (for the devious among you, this can also avoid metadata field requirements
             #: for name generation).
@@ -251,7 +254,7 @@ class DatasetAssembler(Eo3Fields):
             #:     p.names.dataset_label = "landat-observations-12th-may-2021"
             #:
             #: Change the folder offset for each dataset. All generated files paths are relative
-            #:  to this folder (and it is relative to the collection path)::
+            #: to this folder (and it is relative to the collection path)::
             #:
             #:     p.names.dataset_folder = Path("datasets/january/2021")
             #:
@@ -269,6 +272,7 @@ class DatasetAssembler(Eo3Fields):
             #:
             #:     p.names.product_uri = "https://collections.earth.test.example/product/my-product"
             #:
+            #: A full list of fields can be seen on :class:`eodatasets3.NameGenerator`
             self.names = names
         else:
             # Or create some:
@@ -385,13 +389,25 @@ class DatasetAssembler(Eo3Fields):
         *paths: Path,
         classifier: str = None,
         auto_inherit_properties: bool = False,
+        inherit_geometry: bool = False,
     ):
         """
         Record a source dataset using the path to its metadata document.
 
-        :param paths:
+        :param paths: Filesystem path(s) to source metadata documents
 
-        See other parameters in :func:`DatasetAssembler.add_source_dataset`
+        :param classifier: How to classify the kind of source dataset. This is will automatically
+                           be filled with the family of dataset if available (eg. "level1").
+
+                           You want to set this if you have two datasets of the same type that
+                           are used for different purposes. Such as having a second level1 dataset
+                           that was used for QA (but is not this same scene).
+        :param auto_inherit_properties: Whether to copy any common properties from the dataset
+        :param inherit_geometry: Instead of re-calculating the valid bounds geometry based on the
+                            data, which can be very computationally expensive e.g. Landsat 7
+                            striped data, use the valid data geometry from this source dataset.
+
+        See also :meth:`.add_source_dataset`
         """
         for _, doc in find_and_read_documents(*paths):
             # Newer documents declare a schema.
@@ -400,9 +416,10 @@ class DatasetAssembler(Eo3Fields):
                     serialise.from_doc(doc),
                     classifier=classifier,
                     auto_inherit_properties=auto_inherit_properties,
+                    inherit_geometry=inherit_geometry,
                 )
             else:
-                if auto_inherit_properties:
+                if auto_inherit_properties or inherit_geometry:
                     raise NotImplementedError(
                         "Can't (yet) inherit properties from old-style metadata"
                     )
@@ -444,7 +461,7 @@ class DatasetAssembler(Eo3Fields):
                             data, which can be very computationally expensive e.g. Landsat 7
                             striped data, use the valid data geometry from this source dataset.
 
-        See :func:`add_source_path` if you have a filepath reference instead of a document.
+        See :meth:`.add_source_path` if you have a filepath reference instead of a document.
 
         """
 
@@ -635,7 +652,7 @@ class DatasetAssembler(Eo3Fields):
 
     def write_measurements_odc_xarray(
         self,
-        dataset: Dataset,
+        dataset: xarray.Dataset,
         nodata: Optional[Union[float, int]] = None,
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.average,
@@ -643,15 +660,16 @@ class DatasetAssembler(Eo3Fields):
         file_id=None,
     ):
         """
-        Write measurements from an ODC xarray.Dataset
+        Write measurements from an ODC :class:`xarray.Dataset`
 
         The main requirement is that the Dataset contains a CRS attribute
         and X/Y or lat/long dimensions and coordinates. These are used to
         create an ODC GeoBox.
 
-        :param dataset: an xarray dataset (as returned by ``dc.load()`` and other methods)
+        :param xarray.Dataset dataset: an xarray dataset (as returned by
+                :meth:`datacube.Datacube.load` and other methods)
 
-        See :func:`write_measurement` for other parameters.
+        See :meth:`write_measurement` for other parameters.
         """
         grid_spec = images.GridSpec.from_odc_xarray(dataset)
         for name, dataarray in dataset.data_vars.items():

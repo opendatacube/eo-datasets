@@ -50,6 +50,8 @@ except ImportError:
 @attr.s(auto_attribs=True, slots=True, hash=True, frozen=True)
 class GridSpec:
     """
+    The coordinates/transform and size of stored pixels
+
     >>> g = GridSpec(shape=(7721, 7621),
     ...              transform=Affine(30.0, 0.0, 241485.0, 0.0, -30.0, -2281485.0),
     ...              crs=CRS.from_epsg(32656))

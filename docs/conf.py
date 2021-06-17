@@ -15,6 +15,10 @@ author = "Geoscience Australia"
 
 # Show __init__ docstring as the class docstring.
 autosummary_generate = True
+# Warn about broken references
+nitpicky = True
+# Show warnings on page so people want to fix them more.
+keep_warnings = True
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -27,10 +31,11 @@ extensions = [
 ]
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
-    "odc": ("https://datacube-core.readthedocs.io/en/stable/", None),
+    "datacube": ("https://datacube-core.readthedocs.io/en/stable/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "numpy": ("https://docs.scipy.org/doc/numpy/", None),
     "xarray": ("https://xarray.pydata.org/en/stable/", None),
+    "rasterio": ("https://rasterio.readthedocs.io/en/latest/", None),
 }
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -38,7 +43,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # Custom static files (such as style sheets)
 # They are copied after the builtin static files, so a file named "default.css" will
 # overwrite the builtin "default.css".
-html_static_path = ["_static"]
+# html_static_path = ["_static"]
 
 
 if is_on_readthedocs:
