@@ -170,15 +170,15 @@ Now create a namer instance with our properties:
 
 .. testcode::
 
-   namer = eodatasets3.namer(conventions="default", properties=p)
+   names = eodatasets3.namer(conventions="default", properties=p)
 
 And we can see some generated names:
 
 .. testcode::
 
-   print(namer.product_name)
-   print(namer.dataset_folder)
-   print(namer.metadata_path)
+   print(names.product_name)
+   print(names.dataset_folder)
+   print(names.metadata_path)
 
 Output:
 
@@ -211,7 +211,7 @@ parameters, and you can join it to one yourself to find your dataset:
 
 .. testcode::
 
-   absolute_metadata_path = collection_path / namer.metadata_path
+   absolute_metadata_path = collection_path / names.metadata_path
 
    if absolute_metadata_path.exists():
        print("Our dataset already exists!")
@@ -221,7 +221,7 @@ we start assembling a dataset:
 
 .. testcode::
 
-   with DatasetAssembler(collection_path, names=namer) as p:
+   with DatasetAssembler(collection_path, names=names) as p:
 
       # The properties are already set, thanks to our namer.
 
@@ -237,9 +237,9 @@ Naming things yourself
 ----------------------
 
 You can set properties yourself on the namer to avoid automatic generation.
-(or to avoid their finnicky metadata requirements)
+(or to avoid their finicky metadata requirements)
 
-.. testsetup:: asdf
+.. testsetup:: nametest
 
    from eodatasets3 import DatasetAssembler
    from pathlib import Path
@@ -251,7 +251,7 @@ You can set properties yourself on the namer to avoid automatic generation.
    p.platform = 'sentinel-2a'
    p.product_family = 'ard'
 
-.. doctest:: asdf
+.. doctest:: nametest
 
    >>> p.names.product_name
    's2a_ard'
