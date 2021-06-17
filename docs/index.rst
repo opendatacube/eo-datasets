@@ -189,7 +189,10 @@ Output:
    s2a_fires/2018/05/04/s2a_fires_2018-05-04.odc-metadata.yaml
 
 
-In reality, our paths go inside a folder somewhere (..or s3 bucket, etc.).
+In reality, our paths go inside a folder (..or s3 bucket, etc) somewhere.
+
+This folder is called the `collection_path` in :class:`DatasetAssembler <eodatasets3.DatasetAssembler>`'s
+parameters, and we can join it ourselves to find our dataset the same way:
 
 .. testcode::
 
@@ -206,8 +209,6 @@ In reality, our paths go inside a folder somewhere (..or s3 bucket, etc.).
    import tempfile
    collection_path = Path(tempfile.mkdtemp())
 
-This is called the `collection_path` in :class:`DatasetAssembler <eodatasets3.DatasetAssembler>`'s
-parameters, and you can join it to one yourself to find your dataset:
 
 .. testcode::
 
@@ -216,8 +217,8 @@ parameters, and you can join it to one yourself to find your dataset:
    if absolute_metadata_path.exists():
        print("Our dataset already exists!")
 
-Now that we've created our own properties and names, we can reuse it when
-we start assembling a dataset:
+Now that we've created our own properties and names, we could also reuse them
+if we later want to assemble a dataset:
 
 .. testcode::
 
@@ -229,7 +230,7 @@ we start assembling a dataset:
 
       p.done()
 
-   # Now it exists!
+   # Now it actually exists!
    assert absolute_metadata_path.exists()
 
 
