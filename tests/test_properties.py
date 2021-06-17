@@ -74,7 +74,7 @@ def test_unknown_abbreviations():
         d.platform = "grover-1"
         assert names.platform_abbreviated == "grover1"
 
-        # Constellation can be us   ed as a fallback grouping.
+        # Constellation can be used as a fallback grouping.
         d.platforms = ["clippings-1a", "clippings-2b"]
         d.properties["constellation"] = "clippings"
         assert names.platform_abbreviated == "clippings"
