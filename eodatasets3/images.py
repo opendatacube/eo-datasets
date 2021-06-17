@@ -52,6 +52,9 @@ class GridSpec:
     """
     The coordinates/transform and size of stored pixels
 
+    >>> from eodatasets3 import GridSpec
+    >>> from affine import Affine
+    >>> from rasterio.crs import CRS
     >>> g = GridSpec(shape=(7721, 7621),
     ...              transform=Affine(30.0, 0.0, 241485.0, 0.0, -30.0, -2281485.0),
     ...              crs=CRS.from_epsg(32656))

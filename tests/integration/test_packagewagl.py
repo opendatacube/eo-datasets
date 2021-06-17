@@ -3,10 +3,10 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from osgeo import gdal
 import pytest
 import rasterio
 from click.testing import CliRunner
+from osgeo import gdal
 from rasterio import DatasetReader
 from rasterio.enums import Compression
 from rio_cogeo import cogeo

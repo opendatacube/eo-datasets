@@ -27,7 +27,7 @@ from rasterio.enums import Resampling
 from eodatasets3 import serialise, utils, images, DatasetAssembler
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
-from eodatasets3.properties import Eo3Fields
+from eodatasets3.properties import Eo3Interface
 from eodatasets3.serialise import loads_yaml
 from eodatasets3.ui import bool_style
 from eodatasets3.utils import default_utc
@@ -369,7 +369,7 @@ def do(name: str, heading=False, **fields):
 
 
 @contextlib.contextmanager
-def sub_product(name: str, p: Eo3Fields):
+def sub_product(name: str, p: Eo3Interface):
     """
     Set the product family temporarily within a block of code.
 

@@ -1,7 +1,7 @@
 
 ..
   We avoid using bigger heading types as readthedocs annoyingly collapses all table-of-contents
-  otherwise, which is extremely annoying for small projects. 
+  otherwise, which is extremely annoying for small projects.
   (there's a mountain of empty vertical space on almost all projects! why collapse?)
 
 EO Datasets 3
@@ -134,13 +134,130 @@ You can allow absolute paths with a field on assembler construction
 
 .. _COG: https://www.cogeo.org/
 
+Generating names ahead of time
+------------------------------
+
+You can use the naming module alone to find file paths:
+
+..
+  Sorry future readers, but the error output of assertion failures is abysmal
+  in these tests:
+
+.. testcode::
+
+   import eodatasets3
+   from pathlib import Path
+   from eodatasets3 import Eo3Properties
+
+Create some properties.
+
+.. testcode::
+
+   p = Eo3Properties()
+   p.platform = "sentinel-2a"
+   p.product_family = "fires"
+   p.datetime = "2018-05-04T12:23:32"
+   p.processed_now()
+
+   # Arbitrarily set any properties.
+   p.properties["fmask:cloud_shadow"] = 42.0
+   p.properties.update({"odc:file_format": "GeoTIFF"})
+
+You can use a plain dict if you prefer. But we use an :class:`Eo3Properties() <eodatasets3.Eo3Properties>` here, which has
+convenience methods similar to :class:`DatasetAssembler <eodatasets3.DatasetAssembler>` for building properties.
+
+Now create a namer instance with our properties:
+
+.. testcode::
+
+   namer = eodatasets3.namer(conventions="default", properties=p)
+
+And we can see some generated names:
+
+.. testcode::
+
+   print(namer.product_name)
+   print(namer.dataset_folder)
+   print(namer.metadata_path)
+
+Output:
+
+.. testoutput::
+
+   s2a_fires
+   s2a_fires/2018/05/04
+   s2a_fires/2018/05/04/s2a_fires_2018-05-04.odc-metadata.yaml
+
+
+In reality, our paths go inside a folder somewhere (..or s3 bucket, etc.).
+
+.. testcode::
+
+   collection_path = Path('/datacube/collections')
+
+..
+   Let's override it quietly so we don't touch real paths on their system:
+
+.. testcode::
+   :hide:
+
+   from eodatasets3 import DatasetAssembler
+
+   import tempfile
+   collection_path = Path(tempfile.mkdtemp())
+
+This is called the `collection_path` in :class:`DatasetAssembler <eodatasets3.DatasetAssembler>`'s
+parameters, and you can join it to one yourself to find your dataset:
+
+.. testcode::
+
+   absolute_metadata_path = collection_path / namer.metadata_path
+
+   if absolute_metadata_path.exists():
+       print("Our dataset already exists!")
+
+Now that we've created our own properties and names, we can reuse it when
+we start assembling a dataset:
+
+.. testcode::
+
+   with DatasetAssembler(collection_path, names=namer) as p:
+
+      # The properties are already set, thanks to our namer.
+
+      ... # Write some measurements here, etc!
+
+      p.done()
+
+   # Now it exists!
+   assert absolute_metadata_path.exists()
+
+
 Naming things yourself
 ----------------------
 
-You can avoid the automatic name generation of products, filenames, labels etc (and their finnicky metadata requirements)
-by setting names yourself::
+You can set properties yourself on the namer to avoid automatic generation.
+(or to avoid their finnicky metadata requirements)
 
-   p.names.platform_abbreviated = "s2"
+.. testsetup:: asdf
+
+   from eodatasets3 import DatasetAssembler
+   from pathlib import Path
+   import tempfile
+
+   collection_path = Path(tempfile.mkdtemp())
+
+   p = DatasetAssembler(collection_path)
+   p.platform = 'sentinel-2a'
+   p.product_family = 'ard'
+
+.. doctest:: asdf
+
+   >>> p.names.product_name
+   's2a_ard'
+   >>> p.names.platform_abbreviated = "s2"
+   >>> p.names.product_name
+   's2_ard'
 
 See more examples in the assembler :attr:`.names <eodatasets3.DatasetAssembler.names>` property.
 
@@ -191,7 +308,7 @@ on DatasetAssemblers and within other naming APIs.
 
 (This is abstract. If you want one of these of your own, create an :class:`eodatasets3.Eo3Properties`)
 
-.. autoclass:: eodatasets3.properties.Eo3Fields
+.. autoclass:: eodatasets3.properties.Eo3Interface
    :members:
 
 

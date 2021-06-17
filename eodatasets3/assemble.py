@@ -30,7 +30,7 @@ from eodatasets3.model import (
     Location,
 )
 from eodatasets3.names import NameGenerator, namer
-from eodatasets3.properties import Eo3Fields, Eo3Dict
+from eodatasets3.properties import Eo3Interface, Eo3Dict
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
 
@@ -73,7 +73,7 @@ class IncompleteDatasetWarning(UserWarning):
         return str(self.validation)
 
 
-class DatasetAssembler(Eo3Fields):
+class DatasetAssembler(Eo3Interface):
     #: The properties that will automatically be inherited from a source dataset
     #: when :meth:`auto_inherit_properties=True <.add_source_path>`
     #:
@@ -153,7 +153,7 @@ class DatasetAssembler(Eo3Fields):
         Assemble a dataset with ODC metadata, writing metadata and (optionally) its imagery as COGs.
 
         In addition to the below documented methods, metadata can read and set using
-        :class:`Eo3Field's <eodatasets3.properties.Eo3Fields>` fields.
+        :class:`Eo3Interface's <eodatasets3.properties.Eo3Interface>` fields.
 
         There are three optional paths that can be specified. At least one must be specified. Collection,
         dataset or metadata path.
@@ -227,7 +227,7 @@ class DatasetAssembler(Eo3Fields):
 
         # They may have given us initialised naming conventions already:
         if names is not None:
-            self._props = names.dataset.properties
+            self._props = names.metadata.properties
             #: The name generator  (an instance of :class:`NameGenerator <eodatasets3.NameGenerator>`)
             #:
             #: By default, all names will be generated based on metadata
@@ -257,7 +257,7 @@ class DatasetAssembler(Eo3Fields):
             #: Set your own label
             #: (the human identifier for the dataset, and the default prefix of filenames)::
             #:
-            #:     p.names.dataset_label = "landat-observations-12th-may-2021"
+            #:     p.names.dataset_label = "landsat-observations-12th-may-2021"
             #:
             #: Change the folder offset for each dataset. All generated files paths are relative
             #: to this folder (and it is relative to the collection path)::
