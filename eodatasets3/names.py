@@ -785,12 +785,14 @@ def namer(
     conventions: str = "default", properties: Union[Mapping, Eo3Fields] = None
 ) -> "NameGenerator":
     """
-    Create a naming instance of the given kind.
+    Create a naming instance of the given conventions.
 
     Conventions: 'default', 'dea', 'deafrica', ...
 
+    >>> n = namer('deafrica')
+
     You usually give it existing properties, but you can use the return value's
-    :attr:`eodatasets3.NameGenerator.dataset` field to set properties afterwards.
+    :attr:`.dataset <eodatasets3.NameGenerator.dataset>` field to set properties afterwards.
 
     """
     if conventions not in KNOWN_CONVENTIONS:

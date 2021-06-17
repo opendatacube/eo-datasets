@@ -153,7 +153,7 @@ class DatasetAssembler(Eo3Fields):
         Assemble a dataset with ODC metadata, writing metadata and (optionally) its imagery as COGs.
 
         In addition to the below documented methods, metadata can read and set using
-        :class:`eodatasets3.properties.Eo3Fields`'s fields.
+        :class:`Eo3Field's <eodatasets3.properties.Eo3Fields>` fields.
 
         There are three optional paths that can be specified. At least one must be specified. Collection,
         dataset or metadata path.
@@ -228,7 +228,7 @@ class DatasetAssembler(Eo3Fields):
         # They may have given us initialised naming conventions already:
         if names is not None:
             self._props = names.dataset.properties
-            #: The name generator  (an instance of :class:`eodatasets3.NameGenerator`)
+            #: The name generator  (an instance of :class:`NameGenerator <eodatasets3.NameGenerator>`)
             #:
             #: By default, all names will be generated based on metadata
             #: fields and the chosen naming conventions.
@@ -372,7 +372,7 @@ class DatasetAssembler(Eo3Fields):
         """
         Cancel the package, cleaning up temporary files.
 
-        This works like :func:`DatasetAssembler.close`, but is intentional, so no warning will
+        This works like :meth:`.close`, but is intentional, so no warning will
         be raised for forgetting to complete the package first.
         """
         self._is_completed = True
