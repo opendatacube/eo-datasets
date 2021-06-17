@@ -42,7 +42,7 @@ def _uuid_representer(dumper, data):
     return dumper.represent_scalar("tag:yaml.org,2002:str", f"{data}")
 
 
-def represent_datetime(self, data: datetime):
+def _represent_datetime(self, data: datetime):
     """
     The default Ruamel representer strips 'Z' suffixes for UTC.
 
@@ -57,11 +57,11 @@ def represent_datetime(self, data: datetime):
     return self.represent_scalar("tag:yaml.org,2002:timestamp", value)
 
 
-def represent_numpy_datetime(self, data: numpy.datetime64):
-    return represent_datetime(self, data.astype("M8[ms]").tolist())
+def _represent_numpy_datetime(self, data: numpy.datetime64):
+    return _represent_datetime(self, data.astype("M8[ms]").tolist())
 
 
-def represent_paths(self, data: PurePath):
+def _represent_paths(self, data: PurePath):
     return Representer.represent_str(self, data.as_posix())
 
 
@@ -70,8 +70,8 @@ def _init_yaml() -> YAML:
 
     yaml.representer.add_representer(FileFormat, _format_representer)
     yaml.representer.add_multi_representer(UUID, _uuid_representer)
-    yaml.representer.add_representer(datetime, represent_datetime)
-    yaml.representer.add_multi_representer(PurePath, represent_paths)
+    yaml.representer.add_representer(datetime, _represent_datetime)
+    yaml.representer.add_multi_representer(PurePath, _represent_paths)
 
     # WAGL spits out many numpy primitives in docs.
     yaml.representer.add_representer(numpy.int8, Representer.represent_int)
@@ -85,7 +85,7 @@ def _init_yaml() -> YAML:
     yaml.representer.add_representer(numpy.float32, Representer.represent_float)
     yaml.representer.add_representer(numpy.float64, Representer.represent_float)
     yaml.representer.add_representer(numpy.ndarray, Representer.represent_list)
-    yaml.representer.add_representer(numpy.datetime64, represent_numpy_datetime)
+    yaml.representer.add_representer(numpy.datetime64, _represent_numpy_datetime)
 
     # Match yamllint default expectations. (Explicit start/end are recommended to tell if a file is cut off)
     yaml.width = 80
@@ -126,6 +126,13 @@ def loads_yaml(stream: Union[Text, IO]) -> Iterable[Dict]:
 
 
 def from_path(path: Path, skip_validation=False) -> DatasetDoc:
+    """
+    Parse an EO3 document from a filesystem path
+
+    :param path: Filesystem path
+    :param skip_validation: Optionally disable validation (it's faster, but I hope your
+            doc is structured correctly)
+    """
     if path.suffix.lower() not in (".yaml", ".yml"):
         raise ValueError(f"Unexpected file type {path.suffix}. Expected yaml")
 
@@ -186,10 +193,14 @@ METADATA_TYPE_SCHEMA = _load_schema_validator(
 
 def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:
     """
-    Convert a document to a dataset.
+    Parse a dictionary into an EO3 dataset.
 
     By default it will validate it against the schema, which will result in far more
     useful error messages if fields are missing.
+
+    :param doc: A dictionary, such as is returned from yaml.load or json.load
+    :param skip_validation: Optionally disable validation (it's faster, but I hope your
+            doc is structured correctly)
     """
 
     if not skip_validation:
@@ -244,7 +255,7 @@ def to_doc(d: DatasetDoc) -> Dict:
     Serialise a DatasetDoc to a dict
 
     If you plan to write this out as a yaml file on disk, you're
-    better off with `to_formatted_doc()`.
+    better off with one of our formatted writers: :func:`.to_stream`, :func:`.to_path`.
     """
     doc = attr.asdict(
         d,
@@ -275,6 +286,24 @@ def to_formatted_doc(d: DatasetDoc) -> CommentedMap:
                 doc["measurements"].yaml_add_eol_comment(band_doc.alias, band_name)
 
     return doc
+
+
+def to_path(path: Path, *ds: DatasetDoc):
+    """
+    Output dataset(s) as a formatted YAML to a local path
+
+    (multiple datasets will result in a multi-document yaml file)
+    """
+    dump_yaml(path, *(to_formatted_doc(d) for d in ds))
+
+
+def to_stream(stream, *ds: DatasetDoc):
+    """
+    Output dataset(s) as a formatted YAML to an output stream
+
+    (multiple datasets will result in a multi-document yaml file)
+    """
+    dumps_yaml(stream, *(to_formatted_doc(d) for d in ds))
 
 
 def _stac_key_order(key: str):

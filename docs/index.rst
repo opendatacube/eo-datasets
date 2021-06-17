@@ -1,7 +1,12 @@
 
+..
+  We avoid using bigger heading types as readthedocs annoyingly collapses all table-of-contents
+  otherwise, which is extremely annoying for small projects. 
+  (there's a mountain of empty vertical space on almost all projects! why collapse?)
 
 EO Datasets 3
-=============
+-------------
+
 
 EO Datasets aims to be the easiest way to write, validate and convert dataset imagery
 and metadata for the `Open Data Cube`_
@@ -9,8 +14,8 @@ and metadata for the `Open Data Cube`_
 .. _Open Data Cube: https://github.com/opendatacube/datacube-core
 
 
-Write a Dataset
-================
+Assemble a Dataset
+------------------
 
 Here's a simple example of creating a dataset with one measurement (called "blue") from an existing image::
 
@@ -49,7 +54,7 @@ And known properties are automatically normalised::
 
 
 Including provenance
-====================
+--------------------
 Most datasets are processed from an existing (input) dataset and have the same spatial information as the input.
 We can record them as source datasets, and the assembler can optionally copy any common metadata automatically::
 
@@ -79,14 +84,8 @@ from our input dataset::
       )
 
 
-"Less magic, please"
-====================
-
-In the above examples, the assembler is writing imagery and generating file and dataset names
-automatically, but you may want to do these parts yourself. The following sections tell you how.
-
 Writing only a metadata doc
-===========================
+---------------------------
 
 (ie. I don't want to change my existing imagery)
 
@@ -136,7 +135,7 @@ You can allow absolute paths with a field on assembler construction
 .. _COG: https://www.cogeo.org/
 
 Naming things yourself
-======================
+----------------------
 
 You can avoid the automatic name generation of products, filenames, labels etc (and their finnicky metadata requirements)
 by setting names yourself::
@@ -145,15 +144,38 @@ by setting names yourself::
 
 See the full list of options in the assembler ``.names`` property: :attr:`eodatasets3.DatasetAssembler.names`
 
+
 Dataset Assembler API
-=====================
+---------------------
 
 .. autoclass:: eodatasets3.DatasetAssembler
    :members:
    :special-members: __init__
 
-Name Generation
-===============
+Reading/Writing YAMLs
+---------------------
+
+Methods for parsing and outputting EO3 docs as a :class:`eodatasets3.DatasetDoc`
+
+Parsing
+^^^^^^^
+
+.. autofunction:: eodatasets3.serialise.from_path
+.. autofunction:: eodatasets3.serialise.from_doc
+
+
+Writing
+^^^^^^^
+
+.. autofunction:: eodatasets3.serialise.to_path
+.. autofunction:: eodatasets3.serialise.to_stream
+.. autofunction:: eodatasets3.serialise.to_doc
+
+Name Generation API
+-------------------
+
+You may want to use the name generation alone, for instance
+to tell if a dataset has already been written before you assemble it.
 
 .. autofunction:: eodatasets3.namer
 
@@ -161,8 +183,8 @@ Name Generation
    :members:
    :inherited-members:
 
-Common Metadata Properties
-==========================
+EO Metadata API
+---------------
 
 These are convenience properties for common metadata fields. They are available
 on DatasetAssemblers and within other naming APIs.
@@ -173,8 +195,8 @@ on DatasetAssemblers and within other naming APIs.
    :members:
 
 
-Other Types
-===========
+Misc Types
+----------
 
 ..
   Catch any types we didn't add explicitly above

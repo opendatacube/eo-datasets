@@ -36,6 +36,7 @@ intersphinx_mapping = {
     "numpy": ("https://docs.scipy.org/doc/numpy/", None),
     "xarray": ("https://xarray.pydata.org/en/stable/", None),
     "rasterio": ("https://rasterio.readthedocs.io/en/latest/", None),
+    "ruamel.yaml": ("https://yaml.readthedocs.io/en/latest/", None),
 }
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
