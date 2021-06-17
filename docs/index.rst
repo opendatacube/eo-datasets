@@ -87,13 +87,13 @@ from our input dataset::
 Writing only a metadata doc
 ---------------------------
 
-(ie. I don't want to change my existing imagery)
+(ie. "I don't want to change my existing imagery!")
 
 The above examples copy the imagery, converting them to valid COG_ files in a new location. But sometimes you
 want to leave the imagery as-is and just generate a metadata file for Open Data Cube. We can
-do this by using the functions named ``note_*`` (which note metadata) instead of functions named ``add_`` (which
-add them to the package). Such as :meth:`eodatasets3.DatasetAssembler.note_measurement` instead
-of :meth:`eodatasets3.DatasetAssembler.write_measurement`::
+do this by using the functions named ``note_*`` (which note metadata) instead of functions named ``write_*`` (which
+write them into the package directory). Such as :meth:`note_measurement() <eodatasets3.DatasetAssembler.note_measurement>` instead
+of :meth:`write_measurement() <eodatasets3.DatasetAssembler.write_measurement>`::
 
 
 
@@ -124,7 +124,7 @@ as this will require absolute paths. Relative paths are considered best-practice
 metadata.
 
 You can allow absolute paths with a field on assembler construction
-:meth:`eodatasets3.DatasetAssembler.__init__`::
+(:meth:`DatasetAssembler() <eodatasets3.DatasetAssembler.__init__>`)::
 
    with DatasetAssembler(
       dataset_location=usgs_level1,
@@ -142,7 +142,7 @@ by setting names yourself::
 
    p.names.platform_abbreviated = "s2"
 
-See the full list of options in the assembler ``.names`` property: :attr:`eodatasets3.DatasetAssembler.names`
+See more examples in the assembler :attr:`.names <eodatasets3.DatasetAssembler.names>` property.
 
 
 Dataset Assembler API
