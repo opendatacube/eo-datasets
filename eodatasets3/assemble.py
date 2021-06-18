@@ -72,24 +72,6 @@ class IncompleteDatasetWarning(UserWarning):
         return str(self.validation)
 
 
-def _make_dataset_paths_relative(dataset: DatasetDoc, base_path: PurePath):
-    def relative(value: PurePath):
-        if value.is_absolute():
-            if base_path not in value.parents:
-                return value
-            return value.relative_to(base_path)
-        return value
-
-    if dataset.measurements:
-        for name, doc in dataset.measurements.items():
-            if isinstance(doc.path, PurePath):
-                doc.path = relative(doc.path).as_posix()
-    if dataset.accessories:
-        for name, doc in dataset.accessories.items():
-            if isinstance(doc.path, PurePath):
-                doc.path = relative(doc.path).as_posix()
-
-
 class DatasetAssembler(Eo3Interface):
     #: The properties that will automatically be inherited from a source dataset
     #: when :meth:`auto_inherit_properties=True <.add_source_path>`
@@ -904,6 +886,11 @@ class DatasetAssembler(Eo3Interface):
                     )
                 dataset.grids[name] = doc
 
+        # The path all newly recorded measurements will be inside.
+        base_location = (
+            self._metadata_path.parent if self._metadata_path else self._work_path
+        )
+
         if measurement_docs:
             if dataset.measurements is None:
                 dataset.measurements = {}
@@ -913,16 +900,23 @@ class DatasetAssembler(Eo3Interface):
                     raise AssemblyError(
                         f"Recorded measurement already exists in the underlying dataset: {name!r}"
                     )
+                if isinstance(doc.path, PurePath):
+                    doc.path = documents.relative_path(
+                        doc.path, base_location
+                    ).as_posix()
                 dataset.measurements[name] = doc
+
+        # Convert all paths to be relative to our output.
+        if dataset.accessories:
+            for name, doc in dataset.accessories.items():
+                if isinstance(doc.path, PurePath):
+                    doc.path = documents.relative_path(
+                        doc.path, base_location
+                    ).as_posix()
 
         if dataset.measurements and sort_measurements:
             # noinspection PyTypeChecker
             dataset.measurements = dict(sorted(dataset.measurements.items()))
-
-        _make_dataset_paths_relative(
-            dataset,
-            (self._metadata_path.parent if self._metadata_path else self._work_path),
-        )
 
         if validate_correctness:
             doc = serialise.to_doc(dataset)
