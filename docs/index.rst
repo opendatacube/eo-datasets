@@ -147,30 +147,31 @@ You can use the naming module alone to find file paths:
 
    import eodatasets3
    from pathlib import Path
-   from eodatasets3 import Eo3Properties
+   from eodatasets3 import DatasetDoc
 
 Create some properties.
 
 .. testcode::
 
-   p = Eo3Properties()
-   p.platform = "sentinel-2a"
-   p.product_family = "fires"
-   p.datetime = "2018-05-04T12:23:32"
-   p.processed_now()
+   d = DatasetDoc()
+   d.platform = "sentinel-2a"
+   d.product_family = "fires"
+   d.datetime = "2018-05-04T12:23:32"
+   d.processed_now()
 
    # Arbitrarily set any properties.
-   p.properties["fmask:cloud_shadow"] = 42.0
-   p.properties.update({"odc:file_format": "GeoTIFF"})
+   d.properties["fmask:cloud_shadow"] = 42.0
+   d.properties.update({"odc:file_format": "GeoTIFF"})
 
-You can use a plain dict if you prefer. But we use an :class:`Eo3Properties() <eodatasets3.Eo3Properties>` here, which has
-convenience methods similar to :class:`DatasetAssembler <eodatasets3.DatasetAssembler>` for building properties.
+.. note::
+   You can use a plain dict if you prefer. But we use an :class:`DatasetDoc() <eodatasets3.DatasetDoc>` here, which has
+   convenience methods similar to :class:`DatasetAssembler <eodatasets3.DatasetAssembler>` for building properties.
 
-Now create a namer instance with our properties:
+Now create a `namer` instance with our properties:
 
 .. testcode::
 
-   names = eodatasets3.namer(conventions="default", properties=p)
+   names = eodatasets3.namer(conventions="default", properties=d)
 
 And we can see some generated names:
 

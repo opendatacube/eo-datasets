@@ -7,7 +7,7 @@ from typing import Mapping
 import pytest
 from ruamel import yaml
 
-from eodatasets3 import DatasetAssembler, Eo3Properties, namer
+from eodatasets3 import DatasetAssembler, DatasetDoc, namer
 from tests.common import assert_expected_eo3_doc
 
 
@@ -413,8 +413,8 @@ def test_names_alone(tmp_path: Path):
     )
 
 
-def _basic_properties_set() -> Eo3Properties:
-    p = Eo3Properties()
+def _basic_properties_set() -> DatasetDoc:
+    p = DatasetDoc()
     p.platform = "sentinel-2a"
     p.instrument = "MSI"
     p.datetime = datetime(2013, 2, 3, 6, 5, 2)
