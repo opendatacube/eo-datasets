@@ -5,10 +5,9 @@ import shutil
 import tempfile
 import uuid
 import warnings
-from collections import defaultdict
 from copy import deepcopy
 from enum import Enum, auto
-from pathlib import Path
+from pathlib import Path, PurePath
 from textwrap import dedent
 from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable, Union
 
@@ -71,6 +70,24 @@ class IncompleteDatasetWarning(UserWarning):
 
     def __str__(self) -> str:
         return str(self.validation)
+
+
+def _make_dataset_paths_relative(dataset: DatasetDoc, base_path: PurePath):
+    def relative(value: PurePath):
+        if value.is_absolute():
+            if base_path not in value.parents:
+                return value
+            return value.relative_to(base_path)
+        return value
+
+    if dataset.measurements:
+        for name, doc in dataset.measurements.items():
+            if isinstance(doc.path, PurePath):
+                doc.path = relative(doc.path).as_posix()
+    if dataset.accessories:
+        for name, doc in dataset.accessories.items():
+            if isinstance(doc.path, PurePath):
+                doc.path = relative(doc.path).as_posix()
 
 
 class DatasetAssembler(Eo3Interface):
@@ -147,7 +164,8 @@ class DatasetAssembler(Eo3Interface):
         if_exists: IfExists = IfExists.ThrowError,
         allow_absolute_paths: bool = False,
         naming_conventions: str = "default",
-        names: NameGenerator = None,
+        names: Optional[NameGenerator] = None,
+        dataset: Optional[DatasetDoc] = None,
     ) -> None:
         """
         Assemble a dataset with ODC metadata, writing metadata and (optionally) its imagery as COGs.
@@ -194,7 +212,6 @@ class DatasetAssembler(Eo3Interface):
         """
 
         #: The UUID for the dataset
-        self.dataset_id = dataset_id or uuid.uuid4()
         self._exists_behaviour = if_exists
 
         if not collection_location and not metadata_path:
@@ -207,27 +224,32 @@ class DatasetAssembler(Eo3Interface):
                 f"Provided collection location doesn't exist: {collection_location}"
             )
 
+        if not dataset:
+            dataset = DatasetDoc()
+        if not dataset.id:
+            dataset.id = dataset_id or uuid.uuid4()
+
+        self._dataset = dataset
+
+        self._dataset_location = dataset_location
+        self._metadata_path = metadata_path
+
+        self._measurements = MeasurementRecord()
+
+        self.collection_location = collection_location
+
         self._checksum = PackageChecksum()
         self._tmp_work_path: Optional[Path] = None
 
-        self._label = None
-
-        self.collection_location = collection_location
-        self._dataset_location = dataset_location
-        self._metadata_path = metadata_path
         self._allow_absolute_paths = allow_absolute_paths
-
-        self._accessories: Dict[str, Location] = {}
-        self._measurements = MeasurementRecord()
 
         self._user_metadata = dict()
         self._software_versions: List[Dict] = []
-        self._lineage: Dict[str, List[uuid.UUID]] = defaultdict(list)
+
         self._inherited_geometry = None
 
         # They may have given us initialised naming conventions already:
         if names is not None:
-            self._props = names.metadata.properties
             #: The name generator  (an instance of :class:`NameGenerator <eodatasets3.NameGenerator>`)
             #:
             #: By default, all names will be generated based on metadata
@@ -280,13 +302,25 @@ class DatasetAssembler(Eo3Interface):
             #:
             #: A full list of fields can be seen on :class:`eodatasets3.NameGenerator`
             self.names = names
+            dataset.properties = names.metadata.properties
         else:
             # Or create some:
-            self._props = Eo3Dict()
-            self.names = namer(conventions=naming_conventions, properties=self._props)
+            self.names = namer(
+                conventions=naming_conventions, properties=dataset.properties
+            )
 
         self._is_completed = False
         self._finished_init_ = True
+
+    @property
+    def dataset_id(self) -> uuid.UUID:
+        return self._dataset.id
+
+    @dataset_id.setter
+    def dataset_id(self, val: Union[uuid.UUID, str]):
+        if isinstance(val, str):
+            val = uuid.UUID(val)
+        self._dataset.id = val
 
     def _is_writing_files(self):
         """
@@ -317,7 +351,7 @@ class DatasetAssembler(Eo3Interface):
 
     @property
     def properties(self) -> Eo3Dict:
-        return self._props
+        return self._dataset.properties
 
     @property
     def measurements(self) -> Dict[str, Tuple[GridSpec, Path]]:
@@ -340,11 +374,11 @@ class DatasetAssembler(Eo3Interface):
         A label will be auto-generated using the naming-conventions, but you can manually override it by
         setting this property.
         """
-        return self._label or self.names.dataset_label
+        return self._dataset.label or self.names.dataset_label
 
     @label.setter
     def label(self, val: str):
-        self._label = val
+        self._dataset.label = val
 
     def __enter__(self) -> "DatasetAssembler":
         return self
@@ -437,7 +471,7 @@ class DatasetAssembler(Eo3Interface):
                         "Source dataset (of old-style eo) doesn't have a 'product_type' property (eg. 'level1', 'fc'), "
                         "you must specify a classifier for the kind of source dataset."
                     )
-                self._lineage[classifier].append(doc["id"])
+                self._dataset.lineage.setdefault(classifier, []).append(doc["id"])
 
     def add_source_dataset(
         self,
@@ -481,7 +515,7 @@ class DatasetAssembler(Eo3Interface):
                     "you must specify a classifier for the kind of source dataset."
                 )
 
-        self._lineage[classifier].append(dataset.id)
+        self._dataset.lineage.setdefault(classifier, []).append(dataset.id)
         if auto_inherit_properties:
             self._inherit_properties_from(dataset)
         if inherit_geometry:
@@ -523,7 +557,7 @@ class DatasetAssembler(Eo3Interface):
                     raise ValueError(
                         f"Not a valid UUID for source {classifier!r} dataset: {dataset_id!r}"
                     ) from v
-            self._lineage[classifier].append(dataset_id)
+            self._dataset.lineage.setdefault(classifier, []).append(dataset_id)
 
     def _inherit_properties_from(self, source_dataset: DatasetDoc):
         for name in self.INHERITABLE_PROPERTIES:
@@ -680,6 +714,7 @@ class DatasetAssembler(Eo3Interface):
         """
         grid_spec = images.GridSpec.from_odc_xarray(dataset)
         for name, dataarray in dataset.data_vars.items():
+            name: str
             self._write_measurement(
                 name,
                 dataarray.data,
@@ -816,6 +851,93 @@ class DatasetAssembler(Eo3Interface):
 
         self._software_versions.append(dict(name=name, url=url, version=version))
 
+    def dataset_doc(
+        self, validate_correctness: bool = True, sort_measurements: bool = True
+    ) -> DatasetDoc:
+        """
+        Get the dataset doc with all pending changes applied.
+        """
+        dataset = self._dataset
+        if not dataset.product:
+            dataset.product = ProductDoc()
+
+        dataset.product.name = dataset.product.name or self.names.product_name
+        dataset.product.href = dataset.product.href or self.names.product_uri
+        dataset.label = dataset.label or self.names.dataset_label
+
+        crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
+
+        if self._inherited_geometry:
+            valid_data = self._inherited_geometry
+        else:
+            valid_data = self._measurements.consume_and_get_valid_data()
+        # Avoid the messiness of different empty collection types.
+        # (to have a non-null geometry we'd also need non-null grids and crses)
+        if valid_data.is_empty:
+            valid_data = None
+
+        new_crs = self._crs_str(crs) if crs is not None else None
+        if dataset.crs and dataset.crs != new_crs:
+            raise AssemblyError(
+                f"New measurements have a different CRS to the underlying dataset. "
+                f"Old: {dataset.crs!r}, New: {new_crs!r}"
+            )
+        dataset.crs = dataset.crs or new_crs
+        if valid_data:
+            if dataset.geometry:
+                dataset.geometry = dataset.geometry.union(valid_data)
+            else:
+                dataset.geometry = valid_data
+
+        # TODO: this could be made smarter, as we could merge with existing grids.
+        #       for now we just throw an error if any of our generated grid names
+        #       clash with existing ones.
+        if grid_docs:
+            if dataset.grids is None:
+                dataset.grids = {}
+
+            for name, doc in grid_docs.items():
+                if name in dataset.grids:
+                    raise NotImplementedError(
+                        f"Recorded grid name already exists in the underlying dataset: {name!r},"
+                        f"and we don't yet support merging of grids."
+                    )
+                dataset.grids[name] = doc
+
+        if measurement_docs:
+            if dataset.measurements is None:
+                dataset.measurements = {}
+
+            for name, doc in measurement_docs.items():
+                if name in dataset.measurements:
+                    raise AssemblyError(
+                        f"Recorded measurement already exists in the underlying dataset: {name!r}"
+                    )
+                dataset.measurements[name] = doc
+
+        if dataset.measurements and sort_measurements:
+            # noinspection PyTypeChecker
+            dataset.measurements = dict(sorted(dataset.measurements.items()))
+
+        _make_dataset_paths_relative(
+            dataset,
+            (self._metadata_path.parent if self._metadata_path else self._work_path),
+        )
+
+        if validate_correctness:
+            doc = serialise.to_doc(dataset)
+            for m in validate.validate_dataset(doc):
+                if m.level in (Level.info, Level.warning):
+                    warnings.warn(IncompleteDatasetWarning(m))
+                elif m.level == Level.error:
+                    raise IncompleteDatasetError(m)
+                else:
+                    raise RuntimeError(
+                        f"Internal error: Unhandled type of message level: {m.level}"
+                    )
+
+        return dataset
+
     def done(
         self, validate_correctness: bool = True, sort_measurements: bool = True
     ) -> Tuple[uuid.UUID, Path]:
@@ -840,20 +962,6 @@ class DatasetAssembler(Eo3Interface):
             eodatasets3.__version__,
         )
 
-        crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
-
-        if measurement_docs and sort_measurements:
-            measurement_docs = dict(sorted(measurement_docs.items()))
-
-        if self._inherited_geometry:
-            valid_data = self._inherited_geometry
-        else:
-            valid_data = self._measurements.consume_and_get_valid_data()
-        # Avoid the messiness of different empty collection types.
-        # (to have a non-null geometry we'd also need non-null grids and crses)
-        if valid_data.is_empty:
-            valid_data = None
-
         if self._is_writing_files():
             # (the checksum isn't written yet -- it'll be the last file)
             self.add_accessory_file(
@@ -870,45 +978,23 @@ class DatasetAssembler(Eo3Interface):
             )
             self.add_accessory_file("metadata:processor", processing_metadata)
 
-        dataset = DatasetDoc(
-            id=self.dataset_id,
-            label=self.label,
-            product=ProductDoc(
-                name=self.names.product_name, href=self.names.product_uri
-            ),
-            crs=self._crs_str(crs) if crs is not None else None,
-            geometry=valid_data,
-            grids=grid_docs,
-            properties=self.properties,
-            accessories={
-                name: AccessoryDoc(path, name=name)
-                for name, path in self._accessories.items()
-            },
-            measurements=measurement_docs,
-            lineage=self._lineage,
+        dataset = self.dataset_doc(
+            validate_correctness=validate_correctness,
+            sort_measurements=sort_measurements,
         )
-
         doc = serialise.to_formatted_doc(dataset)
+
         self._write_yaml(
             doc,
             self._metadata_path
             or self._work_path / self.names.metadata_file(suffix="odc-metadata.yaml"),
         )
 
-        if validate_correctness:
-            for m in validate.validate_dataset(doc):
-                if m.level in (Level.info, Level.warning):
-                    warnings.warn(IncompleteDatasetWarning(m))
-                elif m.level == Level.error:
-                    raise IncompleteDatasetError(m)
-                else:
-                    raise RuntimeError(
-                        f"Internal error: Unhandled type of message level: {m.level}"
-                    )
-
         # If we're writing data, not just a metadata file, finish the package and move it into place.
         if self._is_writing_files():
-            self._checksum.write(self._accessories["checksum:sha1"])
+            self._checksum.write(
+                self._work_path / self._dataset.accessories["checksum:sha1"].path
+            )
 
             # Match the lower r/w permission bits to the output folder.
             # (Temp directories default to 700 otherwise.)
@@ -1110,13 +1196,13 @@ class DatasetAssembler(Eo3Interface):
         :param name: identifying name, eg ``metadata:mtl``
         :param path: local path to file.
         """
-        existing_path = self._accessories.get(name)
-        if existing_path is not None and existing_path != path:
+        existing = self._dataset.accessories.get(name)
+        if existing is not None and existing.path != path:
             raise ValueError(
                 f"Duplicate accessory name {name!r}. "
-                f"New: {path.as_posix()!r}, previous: {existing_path.as_posix()!r}"
+                f"New: {path.as_posix()!r}, previous: {existing.path}"
             )
-        self._accessories[name] = path
+        self._dataset.accessories[name] = AccessoryDoc(name=name, path=path)
 
     def _write_yaml(self, doc, path, allow_external_paths=False):
         documents.make_paths_relative(
