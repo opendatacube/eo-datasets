@@ -16,7 +16,14 @@ check:
 
 # Run tests in Docker
 test:
-	docker run --rm --volume "${PWD}":/tests -w /home/runner eodatasets:test /tests/run-tests.sh
+	docker run --rm --volume "${PWD}":/tests -w /tests eodatasets:test /tests/run-tests.sh
+
+# Run tests in Docker as container root user
+#
+# (Eg. Github Actions has file write permission issues to external volumes when not using root,
+#      and we want to write test coverage etc. to the volume.)
+test-root:
+	docker run --rm --volume "${PWD}":/tests --user root -w /tests eodatasets:test /tests/run-tests.sh
 
 # Run linters in Docker
 lint:
