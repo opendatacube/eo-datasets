@@ -229,19 +229,32 @@ def make_paths_relative(
     for doc_path, value in iterutils.research(
         doc, lambda p, k, v: isinstance(v, PurePath)
     ):
-        value: Path
+        value: PurePath
+        value = relative_path(
+            value, base_directory, allow_paths_outside_base=allow_paths_outside_base
+        )
+        docpath_set(doc, doc_path, value.as_posix())
 
-        if value.is_absolute():
-            if base_directory not in value.parents:
-                if not allow_paths_outside_base:
-                    raise ValueError(
-                        f"Path {value.as_posix()!r} is outside path {base_directory.as_posix()!r} "
-                        f"(allow_paths_outside_base={allow_paths_outside_base})"
-                    )
-                continue
-            value = value.relative_to(base_directory)
 
-        docpath_set(doc, doc_path, str(value))
+def relative_path(
+    value: PurePath, base_directory: PurePath, allow_paths_outside_base=False
+) -> PurePath:
+    """
+    Make a single path relative to the base directory if it is inside it.
+
+    By default, will throw a ValueError if not able to make it relative to the path.
+    """
+    if not value.is_absolute():
+        return value
+
+    if base_directory not in value.parents:
+        if not allow_paths_outside_base:
+            raise ValueError(
+                f"Path {value.as_posix()!r} is outside path {base_directory.as_posix()!r} "
+                f"(allow_paths_outside_base={allow_paths_outside_base})"
+            )
+        return value
+    return value.relative_to(base_directory)
 
 
 def resolve_absolute_offset(
