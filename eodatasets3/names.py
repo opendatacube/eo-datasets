@@ -412,7 +412,7 @@ class NameGenerator:
         n = namer(conventions='default', properties)
         print(n.product_name)
 
-    (You may want to use an :class:`eodatasets3.Eo3Properties` instance rather than a dict for
+    (You may want to use an :class:`eodatasets3.DatasetDoc` instance rather than a dict for
     properties, to get convenience methods such as ``.platform = 'blah'``, `.properties`, automatic
     property normalisation etc - it will behave like a DatasetAssembler instance)
 
