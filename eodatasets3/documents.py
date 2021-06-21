@@ -6,6 +6,9 @@ from __future__ import absolute_import
 
 import gzip
 import json
+import os
+import posixpath
+from urllib.parse import urlparse
 from copy import deepcopy
 from pathlib import Path, PurePath
 from typing import Generator, Dict, Tuple, Optional
@@ -236,6 +239,48 @@ def make_paths_relative(
         docpath_set(doc, doc_path, value.as_posix())
 
 
+def relative_url(value: str, base: str, allow_paths_outside_base=False) -> str:
+    """
+    Make a single url relative to the base url if it is inside it.
+
+    By default, will throw a ValueError if not able to make it relative to the path.
+
+
+    >>> relative_url('file:///g/data/v10/0/2015/blue.jpg', 'file:///g/data/v10/0/2015/odc-metadata.yaml')
+    'blue.jpg'
+    >>> relative_url('https://example.test/2015/images/blue.jpg', 'https://example.test/2015/odc-metadata.yaml')
+    'images/blue.jpg'
+    >>> relative_url('file:///g/data/v10/0/2018/blue.jpg', 'file:///g/data/v10/0/2015/odc-metadata.yaml')
+    Traceback (most recent call last):
+      ...
+    ValueError: Path 'file:///g/data/v10/0/2018/blue.jpg' is outside path 'file:///g/data/v10/0/2015/odc-metadata.yaml'\
+ (allow_paths_outside_base=False)
+    """
+
+    if not value:
+        return value
+
+    if not value.startswith(base) and not value.startswith(os.path.dirname(base)):
+        if not allow_paths_outside_base:
+            raise ValueError(
+                f"Path {value!r} is outside path {base!r} "
+                f"(allow_paths_outside_base={allow_paths_outside_base})"
+            )
+        return value
+
+    return _make_relurl(value, base)
+
+
+def _make_relurl(target: str, base: str) -> str:
+    base = urlparse(base)
+    target = urlparse(target)
+    if base.netloc != target.netloc:
+        raise ValueError("target and base netlocs do not match")
+    base_dir = "." + posixpath.dirname(base.path)
+    target = "." + target.path
+    return posixpath.relpath(target, start=base_dir)
+
+
 def relative_path(
     value: PurePath, base_directory: PurePath, allow_paths_outside_base=False
 ) -> PurePath:
@@ -243,8 +288,13 @@ def relative_path(
     Make a single path relative to the base directory if it is inside it.
 
     By default, will throw a ValueError if not able to make it relative to the path.
+
+    >>> val =  PurePath('/tmp/minimal-pkg/loch_ness_sightings_2019-07-04_blue.tif')
+    >>> base = PurePath('/tmp/minimal-pkg')
+    >>> relative_path(val, base).as_posix()
+    'loch_ness_sightings_2019-07-04_blue.tif'
     """
-    if not value.is_absolute():
+    if not value or not value.is_absolute():
         return value
 
     if base_directory not in value.parents:

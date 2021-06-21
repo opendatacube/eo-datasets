@@ -14,7 +14,7 @@ import tempfile
 import xarray
 from affine import Affine
 from collections import defaultdict
-from pathlib import Path
+from pathlib import Path, PurePath
 from rasterio import DatasetReader
 from rasterio.coords import BoundingBox
 from rasterio.crs import CRS
@@ -235,7 +235,7 @@ def _find_a_common_name(
 
 @attr.s(auto_attribs=True, slots=True)
 class _MeasurementLocation:
-    path: Path
+    path: Union[Path, str]
     layer: str = None
 
 
@@ -258,7 +258,7 @@ class MeasurementRecord:
         self,
         name: str,
         grid: GridSpec,
-        path: Union[Path, str],
+        path: Union[PurePath, str],
         img: numpy.ndarray,
         layer: Optional[str] = None,
         nodata: Optional[Union[float, int]] = None,
@@ -820,14 +820,14 @@ class FileWrite:
             if bit is not None:
                 out_data = numpy.copy(data)
                 out_data[data != bit] = 0
-                stretch = [0, bit]
+                stretch = (0, bit)
             if lookup_table is not None:
                 out_data = [
                     numpy.full_like(data, 0),
                     numpy.full_like(data, 0),
                     numpy.full_like(data, 0),
                 ]
-                stretch = [0, 255]
+                stretch = (0, 255)
 
                 for value, rgb in lookup_table.items():
                     for index in range(3):
@@ -844,13 +844,13 @@ class FileWrite:
                 with rasterio.open(temp_file, "w", **meta) as tmpdataset:
                     tmpdataset.write(out_data)
                 self.create_thumbnail(
-                    [temp_file, temp_file, temp_file],
+                    (temp_file, temp_file, temp_file),
                     out_file,
                     static_stretch=stretch,
                 )
             else:
                 # Use three different files
-                temp_files = [Path(temp_dir) / f"temp_{i}.tif" for i in range(3)]
+                temp_files = tuple(Path(temp_dir) / f"temp_{i}.tif" for i in range(3))
 
                 for i in range(3):
                     with rasterio.open(temp_files[i], "w", **meta) as tmpdataset:
