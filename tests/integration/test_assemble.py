@@ -6,6 +6,7 @@ naming conventions.
 """
 from datetime import datetime, timezone
 from pathlib import Path
+from pprint import pprint
 from textwrap import dedent
 from uuid import UUID
 
@@ -13,11 +14,14 @@ import numpy
 import pytest
 from ruamel import yaml
 
-from eodatasets3 import DatasetAssembler, namer
+from eodatasets3 import DatasetAssembler, namer, DatasetPrepare, serialise
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
 from tests import assert_file_structure
-from tests.common import assert_expected_eo3_doc
+from tests.common import (
+    assert_expected_eo3_path,
+    assert_same,
+)
 
 
 def test_dea_style_package(
@@ -96,7 +100,7 @@ def test_dea_style_package(
 
     # TODO: check sha1 checksum list.
 
-    assert_expected_eo3_doc(
+    assert_expected_eo3_path(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             "id": dataset_id,
@@ -228,6 +232,78 @@ def test_minimal_package_with_product_name(tmp_path: Path, l1_ls8_folder: Path):
                 }
             }
         },
+    )
+
+
+def test_in_memory_dataset(tmp_path: Path, l1_ls8_folder: Path):
+    """
+    You can create metadata fully in-memory, without touching paths.
+    """
+    out = tmp_path / "out"
+    out.mkdir()
+
+    [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
+
+    p = DatasetPrepare(dataset_location=out / "dataset.txt")
+    p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+    p.product_name = "loch_ness_sightings"
+    p.processed = datetime(2019, 7, 4, 13, 8, 7)
+
+    pretend_path = out / "our_image_dont_read_it.tif"
+    p.note_measurement(
+        "blue",
+        pretend_path,
+        # We give it grid information, so it doesn't have to read it itself.
+        # (reading will fail if it tries, because the path is fake!)
+        grid=GridSpec.from_path(blue_geotiff_path),
+        pixels=numpy.ones((60, 60), numpy.int16),
+        nodata=-1,
+    )
+
+    dataset: DatasetDoc = p.to_dataset_doc()
+    doc: dict = serialise.to_doc(dataset)
+
+    # We're testing geometry calc in other tests.
+    assert doc["geometry"] is not None, "Expected geometry"
+    del doc["geometry"]
+    assert doc["id"] is not None, "Expected an id"
+    del doc["id"]
+
+    pprint(doc)
+    assert_same(
+        {
+            "$schema": "https://schemas.opendatacube.org/dataset",
+            "label": "loch_ness_sightings_2019-07-04",
+            "crs": "epsg:32655",
+            "measurements": {"blue": {"path": "our_image_dont_read_it.tif"}},
+            "product": {"name": "loch_ness_sightings"},
+            "properties": {
+                "datetime": datetime(2019, 7, 4, 13, 7, 5, tzinfo=timezone.utc),
+                "odc:processing_datetime": datetime(
+                    2019, 7, 4, 13, 8, 7, tzinfo=timezone.utc
+                ),
+                "odc:product": "loch_ness_sightings",
+            },
+            "grids": {
+                "default": {
+                    "shape": [60, 60],
+                    "transform": [
+                        3955.5,
+                        0.0,
+                        641985.0,
+                        0.0,
+                        -3975.5000000000005,
+                        -3714585.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                    ],
+                }
+            },
+            "accessories": {},
+            "lineage": {},
+        },
+        doc,
     )
 
 

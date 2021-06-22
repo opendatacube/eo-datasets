@@ -8,7 +8,7 @@ import pytest
 from ruamel import yaml
 
 from eodatasets3 import DatasetAssembler, DatasetDoc, namer
-from tests.common import assert_expected_eo3_doc
+from tests.common import assert_expected_eo3_path
 
 
 def assert_names_match(
@@ -142,7 +142,7 @@ def test_s2_naming_conventions(tmp_path: Path):
         "ga_s2am_blueberries_1-0-0_Oz_2018-11-04.odc-metadata.yaml"
     )
 
-    assert_expected_eo3_doc(
+    assert_expected_eo3_path(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             "accessories": {},
