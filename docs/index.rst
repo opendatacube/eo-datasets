@@ -136,8 +136,8 @@ We can record them as source datasets, and the assembler can optionally copy any
 
       ...
 
-In these situations, we often write our new pixels as a numpy array, inheriting the existing grid spatial information (*gridspec*)
-from our input dataset::
+In these situations, we often write our new pixels as a numpy array, inheriting the existing
+:class:`grid spatial information <eodatasets3.GridSpec>` of our input dataset::
 
       # Write a measurement from a numpy array, using the source dataset's grid spec.
       p.write_measurement_numpy(
