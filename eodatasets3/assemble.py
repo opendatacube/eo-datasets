@@ -72,7 +72,7 @@ class IncompleteDatasetWarning(UserWarning):
         return str(self.validation)
 
 
-class DatasetPreparer(Eo3Interface):
+class DatasetPrepare(Eo3Interface):
 
     #: The properties that will automatically be inherited from a source dataset
     #: when :meth:`auto_inherit_properties=True <.add_source_path>`
@@ -149,7 +149,7 @@ class DatasetPreparer(Eo3Interface):
         dataset: Optional[DatasetDoc] = None,
     ) -> None:
         """
-        Creator of EO3 metadata document, with functions for reading information from imagery
+        Build an EO3 metadata document, with functions for reading information from imagery
         and calculating names and paths.
 
         In addition to the below documented methods, metadata fields can read and set using
@@ -284,6 +284,15 @@ class DatasetPreparer(Eo3Interface):
 
         self._is_completed = False
         self._finished_init_ = True
+
+    # Our with-blocks don't do anything as there's nothing to clean-up, but we want it to
+    # be a drop-in replacement for DatasetAssembler, so we let users use them.
+    # (it can also make code more readable, to have a clear block)
+    def __enter__(self) -> "DatasetPrepare":
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        ...
 
     @property
     def dataset_id(self) -> uuid.UUID:
@@ -534,14 +543,49 @@ class DatasetPreparer(Eo3Interface):
                 expand_valid_data=expand_valid_data,
             )
 
-    def dataset_doc(
+    def write_eo3(
         self,
-        location: Optional[str] = None,
+        location: Path = None,
+        validate_correctness: bool = True,
+        sort_measurements: bool = True,
+    ) -> Tuple[uuid.UUID, Path]:
+        """Write the prepared metadata document to the given output path."""
+        metadata_path = location or self._metadata_path or self.names.metadata_path
+        doc = serialise.to_formatted_doc(
+            self.to_dataset_doc(
+                metadata_path.parent,
+                validate_correctness=validate_correctness,
+                sort_measurements=sort_measurements,
+            )
+        )
+        documents.make_paths_relative(
+            doc, metadata_path.parent, allow_paths_outside_base=False
+        )
+        serialise.dump_yaml(metadata_path, doc)
+        return self._dataset.id, metadata_path
+
+    def done(
+        self,
+        validate_correctness: bool = True,
+        sort_measurements: bool = True,
+    ) -> Tuple[uuid.UUID, Path]:
+        """Write the prepared metadata document to the given output path."""
+        return self.write_eo3(
+            validate_correctness=validate_correctness,
+            sort_measurements=sort_measurements,
+        )
+
+    def to_dataset_doc(
+        self,
+        location: Optional[Path] = None,
         validate_correctness: bool = True,
         sort_measurements: bool = True,
     ) -> DatasetDoc:
         """
-        Get the dataset doc with all pending changes applied.
+        Create the metadata doc as an in-memory :class:`eodatasets3.DatasetDoc` instance.
+
+        (You can manually write this out using :func:`serialise.to_path(): <eodatasets3.serialise.to_path>`
+        or :func:`serialise.to_stream() <eodatasets3.serialise.to_stream>`)
         """
         location = location or self._metadata_path or self._dataset_location
         if not location:
@@ -717,7 +761,7 @@ class DatasetPreparer(Eo3Interface):
         return self.__str__()
 
 
-class DatasetAssembler(DatasetPreparer):
+class DatasetAssembler(DatasetPrepare):
     def __init__(
         self,
         collection_location: Optional[Path] = None,
@@ -1148,6 +1192,7 @@ class DatasetAssembler(DatasetPreparer):
         """
 
         thumb_path = self._work_path / self.names.thumbnail_file(kind=kind)
+
         _, image_path = self.measurements.get(measurement, (None, None))
 
         if image_path is None:
@@ -1216,7 +1261,7 @@ class DatasetAssembler(DatasetPreparer):
             accessory_name += f":{kind}"
         self.add_accessory_file(accessory_name, thumb_path)
 
-    def _write_yaml(self, doc, path, allow_external_paths=False):
+    def _write_yaml(self, doc: dict, path: Path, allow_external_paths=False):
         documents.make_paths_relative(
             doc, path.parent, allow_paths_outside_base=allow_external_paths
         )
@@ -1255,13 +1300,9 @@ class DatasetAssembler(DatasetPreparer):
         # Are we writing a package instead of just metadata?
         if self._is_writing_files():
             # (the checksum isn't written yet -- it'll be the last file)
-            self.add_accessory_file(
-                "checksum:sha1", self._work_path / self.names.checksum_file()
-            )
+            self.add_accessory_file("checksum:sha1", self.names.checksum_file())
 
-            processing_metadata = self._work_path / self.names.metadata_file(
-                suffix="proc-info.yaml"
-            )
+            processing_metadata = self.names.metadata_file(suffix="proc-info.yaml")
             self._write_yaml(
                 {**self._user_metadata, "software_versions": self._software_versions},
                 self._work_path / processing_metadata,
@@ -1269,7 +1310,7 @@ class DatasetAssembler(DatasetPreparer):
             )
             self.add_accessory_file("metadata:processor", processing_metadata)
 
-        dataset = self.dataset_doc(
+        dataset = self.to_dataset_doc(
             location=metadata_path,
             validate_correctness=validate_correctness,
             sort_measurements=sort_measurements,

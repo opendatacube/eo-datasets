@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 
 from ._version import get_versions
-from .assemble import DatasetAssembler, IfExists, IncompleteDatasetError
+from .assemble import DatasetAssembler, DatasetPrepare, IfExists, IncompleteDatasetError
 from .images import GridSpec
 from .model import DatasetDoc
 from .properties import Eo3Dict
@@ -18,8 +18,8 @@ del get_versions
 __all__ = (
     "DatasetAssembler",
     "DatasetDoc",
+    "DatasetPrepare",
     "Eo3Dict",
-    "DatasetDoc",
     "GridSpec",
     "IfExists",
     "IncompleteDatasetError",
