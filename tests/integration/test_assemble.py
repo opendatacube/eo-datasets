@@ -412,6 +412,10 @@ def test_add_source_dataset(tmp_path: Path, inherit_geom):
     p.add_source_dataset(
         source_dataset, auto_inherit_properties=True, inherit_geometry=inherit_geom
     )
+    if inherit_geom:
+        assert p.geometry == source_dataset.geometry
+    else:
+        assert p.geometry is None
 
     p.maturity = "interim"
     p.collection_number = "3"
@@ -434,4 +438,5 @@ def test_add_source_dataset(tmp_path: Path, inherit_geom):
     else:
         # POLYGON((684285 - 3439275, 684285 - 3444495, 689925 - 3444495, 689925 - 3439275, 684285 - 3439275))
         # Geometry is not set from the source dataset, but instead from the added wofs measurement
+        assert output.geometry is not None
         assert output.geometry != source_dataset.geometry
