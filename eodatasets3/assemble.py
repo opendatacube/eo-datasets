@@ -795,16 +795,19 @@ class DatasetAssembler(DatasetPreparer):
 
     def _is_writing_files(self):
         """
-        Have they written any files? Otherwise we're just writing a metadata doc
+        Are we writing a package instead of just metadata?
         """
         # A tmpdir is created on the first file written.
         # TODO: support writing files in declared dataset_locations too.
-        return self.collection_location is not None
+        return self._tmp_work_path is not None
 
     @property
     def _work_path(self) -> Path:
         """
-        The current folder path of the maybe-partially-built dataset.
+        Require a folder for writing files into the partially-built dataset.
+
+        The first time this is called, it becomes a packaged dataset rather than a metadata-file-
+        writer only.
         """
         if not self._tmp_work_path:
             if not self.collection_location:
@@ -1244,6 +1247,12 @@ class DatasetAssembler(DatasetPreparer):
             eodatasets3.__version__,
         )
 
+        metadata_path = (
+            self._metadata_path
+            or self._work_path / self.names.metadata_file(suffix="odc-metadata.yaml")
+        )
+
+        # Are we writing a package instead of just metadata?
         if self._is_writing_files():
             # (the checksum isn't written yet -- it'll be the last file)
             self.add_accessory_file(
@@ -1260,10 +1269,6 @@ class DatasetAssembler(DatasetPreparer):
             )
             self.add_accessory_file("metadata:processor", processing_metadata)
 
-        metadata_path = (
-            self._metadata_path
-            or self._work_path / self.names.metadata_file(suffix="odc-metadata.yaml")
-        )
         dataset = self.dataset_doc(
             location=metadata_path,
             validate_correctness=validate_correctness,
