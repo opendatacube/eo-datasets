@@ -248,10 +248,10 @@ def _extract_sinergise_fields(path: Path, p: DatasetPrepare) -> Iterable[Path]:
         )
 
     p.properties.update(process_sinergise_product_info(product_info_path))
-    p.add_accessory_file("metadata:sinergise_product_info", product_info_path)
+    p.note_accessory_file("metadata:sinergise_product_info", product_info_path)
 
     p.properties.update(process_tile_metadata(metadata_xml_path.read_text()))
-    p.add_accessory_file("metadata:s2_tile", metadata_xml_path)
+    p.note_accessory_file("metadata:s2_tile", metadata_xml_path)
 
     # TODO: sinergise folders could `process_datastrip_metadata()` in an outer directory?
 
@@ -275,17 +275,17 @@ def _extract_esa_fields(dataset, p) -> Iterable[Path]:
         p.properties.update(
             process_datastrip_metadata(z.read(datastrip_md).decode("utf-8"))
         )
-        p.add_accessory_file("metadata:s2_datastrip", datastrip_md)
+        p.note_accessory_file("metadata:s2_datastrip", datastrip_md)
 
         tile_md = one("MTD_TL.xml")
         p.properties.update(process_tile_metadata(z.read(tile_md).decode("utf-8")))
-        p.add_accessory_file("metadata:s2_tile", tile_md)
+        p.note_accessory_file("metadata:s2_tile", tile_md)
 
         user_product_md = one("MTD_MSIL1C.xml")
         p.properties.update(
             process_user_product_metadata(z.read(user_product_md).decode("utf-8"))
         )
-        p.add_accessory_file("metadata:s2_user_product", user_product_md)
+        p.note_accessory_file("metadata:s2_user_product", user_product_md)
 
         return [Path(p) for p in z.namelist() if "IMG_DATA" in p and p.endswith(".jp2")]
 

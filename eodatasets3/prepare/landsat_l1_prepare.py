@@ -490,7 +490,7 @@ def prepare_and_write(
                     relative_to_dataset_location=True,
                     expand_valid_data=False,
                 )
-        p.add_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
+        p.note_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
         return p.done()
 
 

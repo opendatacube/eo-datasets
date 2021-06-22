@@ -97,6 +97,10 @@ Eg. :meth:`note_measurement() <eodatasets3.DatasetPrepare.note_measurement>` ins
          relative_to_dataset_location=True
       )
 
+      # Add links to other files included in the package ("accessories"), such as
+      # alternative metadata files.
+      p.note_accessory_file('metadata:mtl', mtl_path)
+
       ...
 
       p.done()
