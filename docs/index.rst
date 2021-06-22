@@ -193,7 +193,8 @@ And we can see some generated names:
 
    print(names.product_name)
    print(names.dataset_folder)
-   print(names.metadata_path)
+   print(names.metadata_file)
+   print(names.dataset_location)
 
 Output:
 
@@ -201,6 +202,7 @@ Output:
 
    s2a_fires
    s2a_fires/2018/05/04
+   s2a_fires_2018-05-04.odc-metadata.yaml
    s2a_fires/2018/05/04/s2a_fires_2018-05-04.odc-metadata.yaml
 
 
@@ -227,7 +229,7 @@ parameters, and we can join it ourselves to find our dataset the same way:
 
 .. testcode::
 
-   absolute_metadata_path = collection_path / names.metadata_path
+   absolute_metadata_path = collection_path / names.dataset_location
 
    if absolute_metadata_path.exists():
        print("Our dataset already exists!")

@@ -173,6 +173,9 @@ class PackageChecksum(object):
             calculated_hash = self._checksum(path)
             yield path, calculated_hash == hash_
 
+    def __bool__(self):
+        return bool(self._file_hashes)
+
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             # pylint 1.6.4 isn't smart enough to know that this is protected access of the same class

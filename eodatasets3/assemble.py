@@ -140,7 +140,7 @@ class DatasetPrepare(Eo3Interface):
         self,
         collection_location: Optional[Path] = None,
         *,
-        dataset_location: Optional[Location] = None,
+        dataset_location: Optional[Path] = None,
         metadata_path: Optional[Path] = None,
         dataset_id: Optional[uuid.UUID] = None,
         allow_absolute_paths: bool = False,
@@ -209,13 +209,8 @@ class DatasetPrepare(Eo3Interface):
 
         self._dataset = dataset
 
-        self._dataset_location = dataset_location
-        self._metadata_path = metadata_path
-
         self._measurements = MeasurementRecord()
         self._accessories: Dict[str, Location] = {}
-
-        self.collection_location = collection_location
 
         self._allow_absolute_paths = allow_absolute_paths
 
@@ -281,6 +276,12 @@ class DatasetPrepare(Eo3Interface):
             self.names = namer(
                 conventions=naming_conventions, properties=dataset.properties
             )
+
+        self.collection_location = collection_location
+        if dataset_location:
+            self.names.dataset_location = dataset_location
+        if metadata_path:
+            self.names.metadata_file = metadata_path
 
         self._is_completed = False
         self._finished_init_ = True
@@ -523,8 +524,7 @@ class DatasetPrepare(Eo3Interface):
         read_location = path
         if relative_to_dataset_location:
             read_location = documents.resolve_absolute_offset(
-                self._dataset_location
-                or (self._metadata_path and self._metadata_path.parent),
+                self._target_dataset_location(),
                 path,
             )
         with rasterio.open(read_location) as ds:
@@ -543,21 +543,30 @@ class DatasetPrepare(Eo3Interface):
                 expand_valid_data=expand_valid_data,
             )
 
+    def _target_dataset_location(self):
+        return (self.collection_location or Path(".")) / self.names.dataset_location
+
+    def _target_metadata_path(self):
+        return self._target_dataset_location().parent / self.names.metadata_file
+
     def write_eo3(
         self,
-        location: Path = None,
+        path: Path = None,
         validate_correctness: bool = True,
         sort_measurements: bool = True,
     ) -> Tuple[uuid.UUID, Path]:
         """Write the prepared metadata document to the given output path."""
-        metadata_path = location or self._metadata_path or self.names.metadata_path
+        metadata_path = (path or Path(".")) / self._target_metadata_path()
         doc = serialise.to_formatted_doc(
             self.to_dataset_doc(
-                metadata_path.parent,
+                metadata_path,
                 validate_correctness=validate_correctness,
                 sort_measurements=sort_measurements,
             )
         )
+        # It passed validation etc. Ensure output folder exists.
+        metadata_path.parent.mkdir(parents=True, exist_ok=True)
+
         documents.make_paths_relative(
             doc, metadata_path.parent, allow_paths_outside_base=False
         )
@@ -577,7 +586,8 @@ class DatasetPrepare(Eo3Interface):
 
     def to_dataset_doc(
         self,
-        location: Optional[Path] = None,
+        dataset_location: Optional[Path] = None,
+        embed_location: bool = False,
         validate_correctness: bool = True,
         sort_measurements: bool = True,
     ) -> DatasetDoc:
@@ -587,14 +597,9 @@ class DatasetPrepare(Eo3Interface):
         (You can manually write this out using :func:`serialise.to_path(): <eodatasets3.serialise.to_path>`
         or :func:`serialise.to_stream() <eodatasets3.serialise.to_stream>`)
         """
-        location = location or self._metadata_path or self._dataset_location
-        if not location:
-            if self._metadata_path:
-                location = self._metadata_path.parent
-            else:
-                location = self._dataset_location
-            if not location:
-                raise ValueError("No location available for metadata paths.")
+        dataset_location = dataset_location or self._target_dataset_location()
+        if not dataset_location:
+            raise ValueError("No location available: cannot calculate relative paths")
 
         dataset = self._dataset
         if not dataset.product:
@@ -603,6 +608,8 @@ class DatasetPrepare(Eo3Interface):
         dataset.product.name = dataset.product.name or self.names.product_name
         dataset.product.href = dataset.product.href or self.names.product_uri
         dataset.label = dataset.label or self.names.dataset_label
+        if embed_location:
+            dataset.locations = [dataset_location.as_uri()]
 
         crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
 
@@ -654,7 +661,7 @@ class DatasetPrepare(Eo3Interface):
                     )
                 if isinstance(doc.path, PurePath):
                     doc.path = documents.relative_path(
-                        doc.path, location.parent
+                        doc.path, dataset_location.parent
                     ).as_posix()
                 dataset.measurements[name] = doc
         for name, path in self._accessories.items():
@@ -663,7 +670,7 @@ class DatasetPrepare(Eo3Interface):
                     f"Recorded accessory already exists in the underlying dataset: {name!r}"
                 )
             if isinstance(path, PurePath):
-                path = documents.relative_path(path, location.parent).as_posix()
+                path = documents.relative_path(path, dataset_location.parent).as_posix()
             dataset.accessories[name] = AccessoryDoc(path, name=name)
 
         if dataset.measurements and sort_measurements:
@@ -730,9 +737,12 @@ class DatasetPrepare(Eo3Interface):
 
     def __str__(self):
         status = "written" if self._is_completed else "unfinished"
-        target = (
-            self._metadata_path or self._dataset_location or self.collection_location
-        )
+
+        try:
+            output_location = self._target_metadata_path().as_posix()
+        except ValueError:
+            output_location = "(not yet computable)"
+
         measurements = list(self._measurements.iter_names())
         properties = list(self.properties.keys())
 
@@ -753,7 +763,7 @@ class DatasetPrepare(Eo3Interface):
             Assembling {product_name or ''} ({status})
             - {len(measurements)} measurements: {format_list(measurements)}
             - {len(properties)} properties: {format_list(properties)}
-            Writing to {target}
+            Writing to location: {output_location}
         """
         )
 
@@ -836,14 +846,6 @@ class DatasetAssembler(DatasetPrepare):
             names=names,
             dataset=dataset,
         )
-
-    def _is_writing_files(self):
-        """
-        Are we writing a package instead of just metadata?
-        """
-        # A tmpdir is created on the first file written.
-        # TODO: support writing files in declared dataset_locations too.
-        return self._tmp_work_path is not None
 
     @property
     def _work_path(self) -> Path:
@@ -959,7 +961,7 @@ class DatasetAssembler(DatasetPrepare):
             ds.read(1),
             images.GridSpec.from_rio(ds),
             self._work_path
-            / (path or self.names.measurement_file(name, "tif", file_id=file_id)),
+            / (path or self.names.make_measurement_file(name, "tif", file_id=file_id)),
             expand_valid_data=expand_valid_data,
             nodata=ds.nodata,
             overview_resampling=overview_resampling,
@@ -1004,7 +1006,7 @@ class DatasetAssembler(DatasetPrepare):
             array,
             grid_spec,
             self._work_path
-            / (path or self.names.measurement_file(name, "tif", file_id=file_id)),
+            / (path or self.names.make_measurement_file(name, "tif", file_id=file_id)),
             expand_valid_data=expand_valid_data,
             nodata=nodata,
             overview_resampling=overview_resampling,
@@ -1041,7 +1043,7 @@ class DatasetAssembler(DatasetPrepare):
                 grid_spec,
                 (
                     self._work_path
-                    / self.names.measurement_file(name, "tif", file_id=file_id)
+                    / self.names.make_measurement_file(name, "tif", file_id=file_id)
                 ),
                 expand_valid_data=expand_valid_data,
                 overview_resampling=overview_resampling,
@@ -1125,7 +1127,9 @@ class DatasetAssembler(DatasetPrepare):
         :param resampling: rasterio :class:`rasterio.enums.Resampling` method to use.
         :param static_stretch: Use a static upper/lower value to stretch by instead of dynamic stretch.
         """
-        thumb_path = self._work_path / (path or self.names.thumbnail_file(kind=kind))
+        thumb_path = self._work_path / (
+            path or self.names.make_thumbnail_file(kind=kind)
+        )
 
         missing_measurements = {red, green, blue} - set(self.measurements)
         if missing_measurements:
@@ -1191,7 +1195,7 @@ class DatasetAssembler(DatasetPrepare):
 
         """
 
-        thumb_path = self._work_path / self.names.thumbnail_file(kind=kind)
+        thumb_path = self._work_path / self.names.make_thumbnail_file(kind=kind)
 
         _, image_path = self.measurements.get(measurement, (None, None))
 
@@ -1286,90 +1290,102 @@ class DatasetAssembler(DatasetPrepare):
 
         :returns: The id and final path to the dataset metadata file.
         """
+        if (
+            self._tmp_work_path is None
+            and not self._software_versions
+            and not self._checksum
+        ):
+            warnings.warn(
+                "Using DatasetAssembler for pure metadata is deprecated. "
+                "Replace DatasetAssembler() with DatasetPrepare(): "
+                "it should be a drop-in replacement. (unless you're setting fields that were previously"
+                "being ignored).",
+                category=DeprecationWarning,
+            )
+            return super(DatasetAssembler, self).done(
+                validate_correctness=validate_correctness,
+                sort_measurements=sort_measurements,
+            )
+
+        dataset_location = self._target_dataset_location()
+
         self.note_software_version(
             "eodatasets3",
             "https://github.com/GeoscienceAustralia/eo-datasets",
             eodatasets3.__version__,
         )
 
-        metadata_path = (
-            self._metadata_path
-            or self._work_path / self.names.metadata_file(suffix="odc-metadata.yaml")
+        tmp_metadata_path = self._work_path / self.names.metadata_file
+
+        # (the checksum isn't written yet -- it'll be the last file)
+        self.add_accessory_file(
+            "checksum:sha1", self._work_path / self.names.checksum_file
         )
 
-        # Are we writing a package instead of just metadata?
-        if self._is_writing_files():
-            # (the checksum isn't written yet -- it'll be the last file)
-            self.add_accessory_file("checksum:sha1", self.names.checksum_file())
-
-            processing_metadata = self.names.metadata_file(suffix="proc-info.yaml")
-            self._write_yaml(
-                {**self._user_metadata, "software_versions": self._software_versions},
-                self._work_path / processing_metadata,
-                allow_external_paths=True,
-            )
-            self.add_accessory_file("metadata:processor", processing_metadata)
+        processing_metadata = self._work_path / self.names.make_metadata_file(
+            suffix="proc-info.yaml"
+        )
+        self._write_yaml(
+            {**self._user_metadata, "software_versions": self._software_versions},
+            processing_metadata,
+            allow_external_paths=True,
+        )
+        self.add_accessory_file("metadata:processor", processing_metadata)
 
         dataset = self.to_dataset_doc(
-            location=metadata_path,
+            dataset_location=tmp_metadata_path,
             validate_correctness=validate_correctness,
             sort_measurements=sort_measurements,
         )
+
+        # If the metadata path is not at the dataset location, include the latter,
+        if dataset_location != self._target_metadata_path():
+            dataset.locations = [dataset_location.as_uri()]
+
         self._write_yaml(
             serialise.to_formatted_doc(dataset),
-            metadata_path,
+            tmp_metadata_path,
         )
 
         # If we're writing data, not just a metadata file, finish the package and move it into place.
-        if self._is_writing_files():
-            self._checksum.write(
-                self._work_path / dataset.accessories["checksum:sha1"].path
-            )
-
-            # Match the lower r/w permission bits to the output folder.
-            # (Temp directories default to 700 otherwise.)
-            self._work_path.chmod(self.collection_location.stat().st_mode & 0o777)
-
-            # GDAL writes extra metadata in aux files,
-            # but we consider it a mistake if you're using those extensions.
-            for aux_file in self._work_path.rglob("*.aux.xml"):
-                warnings.warn(
-                    f"Cleaning unexpected gdal aux file {aux_file.as_posix()!r}"
-                )
-                aux_file.unlink()
-
-            if not self._dataset_location:
-                self._dataset_location = (
-                    self.collection_location / self.names.dataset_folder
-                )
-            # Now atomically move to final location.
-            # Someone else may have created the output while we were working.
-            # Try, and then decide how to handle it if so.
-            try:
-                self._dataset_location.parent.mkdir(parents=True, exist_ok=True)
-                self._work_path.rename(self._dataset_location)
-            except OSError:
-                if not self._dataset_location.exists():
-                    # Some other error?
-                    raise
-
-                if self._exists_behaviour == IfExists.Skip:
-                    # Something else created it while we were busy.
-                    warnings.warn(f"Skipping -- exists: {self.names.dataset_folder}")
-                elif self._exists_behaviour == IfExists.ThrowError:
-                    raise
-                elif self._exists_behaviour == IfExists.Overwrite:
-                    raise NotImplementedError("overwriting outputs not yet implemented")
-                else:
-                    raise RuntimeError(
-                        f"Unexpected exists behaviour: {self._exists_behaviour}"
-                    )
-
-        target_metadata_path = (
-            self._metadata_path
-            or self._dataset_location
-            / self.names.metadata_file(suffix="odc-metadata.yaml")
+        self._checksum.write(
+            self._work_path / dataset.accessories["checksum:sha1"].path
         )
+
+        # Match the lower r/w permission bits to the output folder.
+        # (Temp directories default to 700 otherwise.)
+        self._work_path.chmod(self.collection_location.stat().st_mode & 0o777)
+
+        # GDAL writes extra metadata in aux files,
+        # but we consider it a mistake if you're using those extensions.
+        for aux_file in self._work_path.rglob("*.aux.xml"):
+            warnings.warn(f"Cleaning unexpected gdal aux file {aux_file.as_posix()!r}")
+            aux_file.unlink()
+
+        # Now atomically move to final location.
+        # Someone else may have created the output while we were working.
+        # Try, and then decide how to handle it if so.
+        try:
+            dataset_location.parent.mkdir(parents=True, exist_ok=True)
+            self._work_path.rename(dataset_location.parent)
+        except OSError:
+            if not dataset_location.exists():
+                # Some other error?
+                raise
+
+            if self._exists_behaviour == IfExists.Skip:
+                # Something else created it while we were busy.
+                warnings.warn(f"Skipping -- exists: {self.names.dataset_folder}")
+            elif self._exists_behaviour == IfExists.ThrowError:
+                raise
+            elif self._exists_behaviour == IfExists.Overwrite:
+                raise NotImplementedError("overwriting outputs not yet implemented")
+            else:
+                raise RuntimeError(
+                    f"Unexpected exists behaviour: {self._exists_behaviour}"
+                )
+
+        target_metadata_path = self._target_metadata_path()
         assert target_metadata_path.exists()
         self._is_completed = True
         return dataset.id, target_metadata_path
