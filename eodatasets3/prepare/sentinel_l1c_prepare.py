@@ -15,7 +15,8 @@ from typing import Tuple, Dict, List, Optional, Iterable, Mapping
 import click
 from defusedxml import minidom
 
-from eodatasets3 import DatasetAssembler
+from eodatasets3 import DatasetPrepare
+from eodatasets3.properties import Eo3Interface
 from eodatasets3.ui import PathPath
 
 # Static namespace to generate uuids for datacube indexing
@@ -159,7 +160,7 @@ def process_user_product_metadata(contents: str) -> Dict:
     }
 
 
-def _get_stable_id(p: DatasetAssembler) -> uuid.UUID:
+def _get_stable_id(p: Eo3Interface) -> uuid.UUID:
     # These should have been extracted from our metadata files!
     producer = p.producer
     product_name = p.properties["sentinel:product_name"]
@@ -175,7 +176,7 @@ def prepare_and_write(
     output_yaml: Path,
     producer: str,
 ) -> Tuple[uuid.UUID, Path]:
-    with DatasetAssembler(
+    with DatasetPrepare(
         metadata_path=output_yaml,
         dataset_location=ds_path,
     ) as p:
@@ -235,7 +236,7 @@ def _get_platform_name(p: Mapping) -> str:
     return platform_name
 
 
-def _extract_sinergise_fields(path: Path, p: DatasetAssembler) -> Iterable[Path]:
+def _extract_sinergise_fields(path: Path, p: DatasetPrepare) -> Iterable[Path]:
     """Extract Sinergise metadata and return list of image offsets"""
     product_info_path = path / "productInfo.json"
     metadata_xml_path = path / "metadata.xml"
@@ -375,8 +376,8 @@ def main(
 
                 logging.info("Output exists: overwriting %s", output_yaml)
 
-            uuid, path = prepare_and_write(ds_path, output_yaml, producer)
-            logging.info("Wrote dataset %s to %s", uuid, path)
+            uuid_, path = prepare_and_write(ds_path, output_yaml, producer)
+            logging.info("Wrote dataset %s to %s", uuid_, path)
 
         sys.exit(0)
 

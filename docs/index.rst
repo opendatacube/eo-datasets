@@ -13,11 +13,19 @@ and metadata for the `Open Data Cube`_
 
 .. _Open Data Cube: https://github.com/opendatacube/datacube-core
 
+There are two major tools for creating datasets:
 
-Assemble a Dataset
-------------------
+1. *DatasetPrepare*, for preparing a metadata document using existing imagery and files.
+2. *DatasetAssembler*, for preparing a whole package folder: including metadata, writing imagery, thumbnails,
+    checksums etc.
 
-Here's a simple example of creating a dataset with one measurement (called "blue") from an existing image::
+Their APIs are the same, except the latter adds functions named ``write_*`` in addition to the metadata
+functions.
+
+Assemble a Dataset Package
+--------------------------
+
+Here's a simple example of creating a dataset package with one measurement (called "blue") from an existing image::
 
    collection = Path('/some/output/collection/path')
    with DatasetAssembler(collection) as p:
@@ -53,6 +61,62 @@ And known properties are automatically normalised::
       p.properties["eo:off_nadir"] = "34"  # into a number
 
 
+Writing only a metadata doc
+---------------------------
+
+(ie. "I already have appropriate imagery!")
+
+The above examples can be changed to use :class:`DatasetPrepare() <eodatasets3.DatasetPrepare>`
+instead of a `DatasetAssembler`, which omits all file-writing logic..
+
+And functions named ``write_`` (which write files) can be replaced by functions named ``note_*``
+(which note information in the metadata).
+
+Eg. :meth:`note_measurement() <eodatasets3.DatasetPrepare.note_measurement>` instead of
+:meth:`write_measurement() <eodatasets3.DatasetAssembler.write_measurement>`::
+
+
+
+    usgs_level1 = Path('datasets/LC08_L1TP_090084_20160121_20170405_01_T1')
+
+    with DatasetPrepare(
+      dataset_location=usgs_level1
+    ) as p:
+      p.product_family = "level1"
+      p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+
+      # Note the measurement in the metadata. (instead of ``write``)
+      p.note_measurement('red',
+         usgs_level1 / 'LC08_L1TP_090084_20160121_20170405_01_T1_B3.TIF'
+      )
+
+      # Or relative to the dataset
+      # (this will work unchanged on non-filesystem locations, such as ``s3://`` or tar files)
+      p.note_measurement('blue',
+         'LC08_L1TP_090084_20160121_20170405_01_T1_B3.TIF',
+         relative_to_dataset_location=True
+      )
+
+      ...
+
+      p.done()
+
+By default, they will throw an error if a file lives outside the dataset (location),
+as this will require absolute paths. Relative paths are considered best-practice for Open Data Cube
+metadata.
+
+You can allow absolute paths with a field on construction
+(:meth:`DatasetPrepare() <eodatasets3.DatasetPrepare.__init__>`)::
+
+   with DatasetPrepare(
+      dataset_location=usgs_level1,
+      allow_absolute_paths=True,
+    ):
+        ...
+
+.. _COG: https://www.cogeo.org/
+
+
 Including provenance
 --------------------
 Most datasets are processed from an existing (input) dataset and have the same spatial information as the input.
@@ -83,56 +147,6 @@ from our input dataset::
          nodata=-999,
       )
 
-
-Writing only a metadata doc
----------------------------
-
-(ie. "I don't want to change my existing imagery!")
-
-The above examples copy the imagery, converting them to valid COG_ files in a new location. But sometimes you
-want to leave the imagery as-is and just generate a metadata file for Open Data Cube. We can
-do this by using the functions named ``note_*`` (which note metadata) instead of functions named ``write_*`` (which
-write them into the package directory). Such as :meth:`note_measurement() <eodatasets3.DatasetAssembler.note_measurement>` instead
-of :meth:`write_measurement() <eodatasets3.DatasetAssembler.write_measurement>`::
-
-
-
-    usgs_level1 = Path('datasets/LC08_L1TP_090084_20160121_20170405_01_T1')
-
-    with DatasetAssembler(
-      dataset_location=usgs_level1
-    ) as p:
-      p.product_family = "level1"
-      p.datetime = datetime(2019, 7, 4, 13, 7, 5)
-
-      # Note the measurement in the metadata. (instead of ``write``)
-      p.note_measurement('red',
-         usgs_level1 / 'LC08_L1TP_090084_20160121_20170405_01_T1_B3.TIF'
-      )
-
-      # Or relative to the dataset
-      # (this will work unchanged on non-filesystem locations, such as ``s3://`` or tar files)
-      p.note_measurement('blue',
-         'LC08_L1TP_090084_20160121_20170405_01_T1_B3.TIF',
-         relative_to_dataset_location=True
-      )
-
-      ...
-
-By default, the assembler will throw an error if a file lives outside the dataset (location),
-as this will require absolute paths. Relative paths are considered best-practice for Open Data Cube
-metadata.
-
-You can allow absolute paths with a field on assembler construction
-(:meth:`DatasetAssembler() <eodatasets3.DatasetAssembler.__init__>`)::
-
-   with DatasetAssembler(
-      dataset_location=usgs_level1,
-      allow_absolute_paths=True,
-    ):
-        ...
-
-.. _COG: https://www.cogeo.org/
 
 Generating names ahead of time
 ------------------------------
@@ -261,11 +275,21 @@ You can set properties yourself on the namer to avoid automatic generation.
    >>> p.names.product_name
    's2_ard'
 
-See more examples in the assembler :attr:`.names <eodatasets3.DatasetAssembler.names>` property.
+See more examples in the assembler :attr:`.names <eodatasets3.DatasetPrepare.names>` property.
 
+
+Dataset Prepare API
+-------------------
+
+.. autoclass:: eodatasets3.DatasetPrepare
+   :members:
+   :special-members: __init__
 
 Dataset Assembler API
 ---------------------
+
+This contains all methods in :class:`eodatasets3.DatasetPrepare`, with additional
+functions for writing out files.
 
 .. autoclass:: eodatasets3.DatasetAssembler
    :members:
@@ -308,7 +332,8 @@ EO Metadata API
 These are convenience properties for common metadata fields. They are available
 on DatasetAssemblers and within other naming APIs.
 
-(This is abstract. If you want one of these of your own, create an :class:`eodatasets3.Eo3Properties`)
+(This is abstract. If you want one of these of your own, you probably want to create
+an :class:`eodatasets3.DatasetDoc`)
 
 .. autoclass:: eodatasets3.properties.Eo3Interface
    :members:
@@ -322,5 +347,5 @@ Misc Types
 
 .. automodule:: eodatasets3
    :members:
-   :exclude-members: DatasetAssembler, NameGenerator, namer
+   :exclude-members: DatasetAssembler, DatasetPrepare, NameGenerator, namer
 

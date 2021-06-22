@@ -16,7 +16,8 @@ from typing import List, Optional, Union, Iterable, Dict, Tuple, Callable, Gener
 
 import click
 import rasterio
-from eodatasets3 import serialise, utils, DatasetAssembler, IfExists
+
+from eodatasets3 import serialise, utils, DatasetPrepare
 from eodatasets3.properties import FileFormat
 from eodatasets3.ui import PathPath
 
@@ -383,13 +384,12 @@ def prepare_and_write(
         ]  # for C1 only
         leveln_landsat_data_type = mtl_doc[coll_map["product_contents_of"]]["data_type"]
 
-    with DatasetAssembler(
+    with DatasetPrepare(
         metadata_path=output_yaml_path,
         dataset_location=ds_path,
         # Detministic ID based on USGS's product id (which changes when the scene is reprocessed by them)
         dataset_id=uuid.uuid5(USGS_UUID_NAMESPACE, leveln_product_id),
         naming_conventions="dea",
-        if_exists=IfExists.Overwrite,
     ) as p:
         if source_telemetry:
             # Only GA's data has source telemetry...
@@ -491,7 +491,6 @@ def prepare_and_write(
                     expand_valid_data=False,
                 )
         p.add_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
-
         return p.done()
 
 
