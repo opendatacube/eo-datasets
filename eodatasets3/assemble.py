@@ -73,6 +73,26 @@ class IncompleteDatasetWarning(UserWarning):
         return str(self.validation)
 
 
+def _validate_property_name(name: str):
+    """
+    >>> _validate_property_name('eo:gsd')
+    >>> _validate_property_name('thumbnail:full_resolution')
+    >>> _validate_property_name('full resolution')
+    Traceback (most recent call last):
+       ...
+    ValueError: Not a valid property name 'full resolution' (must be alphanumeric with colons or underscores)
+    >>> _validate_property_name('Mr Sprinkles')
+    Traceback (most recent call last):
+      ...
+    ValueError: Not a valid property name 'Mr Sprinkles' (must be alphanumeric with colons or underscores)
+    """
+    if not name.replace(":", "").isidentifier():
+        raise ValueError(
+            f"Not a valid property name {name!r} "
+            "(must be alphanumeric with colons or underscores)"
+        )
+
+
 class DatasetPrepare(Eo3Interface):
 
     #: The properties that will automatically be inherited from a source dataset
@@ -416,6 +436,7 @@ class DatasetPrepare(Eo3Interface):
                         "Source dataset (of old-style eo) doesn't have a 'product_type' property (eg. 'level1', 'fc'), "
                         "you must specify a classifier for the kind of source dataset."
                     )
+                _validate_property_name(classifier)
                 self._dataset.lineage.setdefault(classifier, []).append(doc["id"])
 
     def add_source_dataset(
@@ -449,7 +470,6 @@ class DatasetPrepare(Eo3Interface):
         See :meth:`.add_source_path` if you have a filepath reference instead of a document.
 
         """
-
         if not classifier:
             classifier = dataset.properties.get("odc:product_family")
             if not classifier:
@@ -460,6 +480,7 @@ class DatasetPrepare(Eo3Interface):
                     "you must specify a classifier for the kind of source dataset."
                 )
 
+        _validate_property_name(classifier)
         self._dataset.lineage.setdefault(classifier, []).append(dataset.id)
         if auto_inherit_properties:
             self._inherit_properties_from(dataset)
@@ -548,6 +569,8 @@ class DatasetPrepare(Eo3Interface):
         :param relative_to_dataset_location: Should this be read relative to the dataset location?
                     (requires a computed dattaset location)
         """
+        _validate_property_name(name)
+
         # If we have a polygon already, there's no need to compute valid data.
         if self.geometry:
             expand_valid_data = False
@@ -734,7 +757,7 @@ class DatasetPrepare(Eo3Interface):
         #       everyone is currently on 1.1.6
         return f"epsg:{crs.to_epsg()}" if crs.is_epsg_code else crs.to_wkt()
 
-    def add_accessory_file(self, name: str, path: Location):
+    def note_accessory_file(self, name: str, path: Location):
         """
         Record a reference to an additional file that's included in the dataset, but is
         not a band/measurement.
@@ -750,6 +773,7 @@ class DatasetPrepare(Eo3Interface):
         :param name: identifying name, eg ``metadata:mtl``
         :param path: local path to file.
         """
+        _validate_property_name(name)
         existing_path = self._accessories.get(name)
         if existing_path is not None and existing_path != path:
             raise ValueError(
@@ -757,6 +781,18 @@ class DatasetPrepare(Eo3Interface):
                 f"New: {path!r}, previous: {existing_path!r}"
             )
         self._accessories[name] = path
+
+    def note_thumbnail(self, thumb_path: Path, kind: str = None):
+        """
+        Record a reference to a thumbnail path.
+
+        Optionally specify the "kind" of thumbnail if there are multiple
+        to distinguish between. eg. 'full'
+        """
+        accessory_name = "thumbnail"
+        if kind:
+            accessory_name += f":{kind}"
+        self.note_accessory_file(accessory_name, thumb_path)
 
     def iter_measurement_paths(
         self,
@@ -806,6 +842,15 @@ class DatasetPrepare(Eo3Interface):
 
     def __repr__(self):
         return self.__str__()
+
+    def add_accessory_file(self, *args, **kwargs):
+        # This was renamed to note_accessory_file() for consistency in our method names.
+        warnings.warn(
+            "add_accessory_file() is deprecated, it has been renamed to note_accessory_file() "
+            "(it's identical: was renamed for api consistency)",
+            category=DeprecationWarning,
+        )
+        self.note_accessory_file(*args, **kwargs)
 
 
 class DatasetAssembler(DatasetPrepare):
@@ -1099,6 +1144,8 @@ class DatasetAssembler(DatasetPrepare):
         overview_resampling: Resampling,
         overviews: Tuple[int, ...],
     ):
+        _validate_property_name(name)
+
         res = FileWrite.from_existing(grid.shape).write_from_ndarray(
             data,
             out_path,
@@ -1196,7 +1243,7 @@ class DatasetAssembler(DatasetPrepare):
             input_geobox=grid,
         )
 
-        self._document_thumbnail(thumb_path, kind)
+        self.note_thumbnail(thumb_path, kind)
 
     def write_thumbnail_singleband(
         self,
@@ -1253,7 +1300,7 @@ class DatasetAssembler(DatasetPrepare):
             lookup_table,
         )
 
-        self._document_thumbnail(thumb_path, kind)
+        self.note_thumbnail(thumb_path, kind)
 
     def extend_user_metadata(self, section_name: str, doc: Dict[str, Any]):
         """
@@ -1294,13 +1341,12 @@ class DatasetAssembler(DatasetPrepare):
 
         self._software_versions.append(dict(name=name, url=url, version=version))
 
-    def _document_thumbnail(self, thumb_path: Path, kind: str = None):
-        self._checksum.add_file(thumb_path)
-
-        accessory_name = "thumbnail"
-        if kind:
-            accessory_name += f":{kind}"
-        self.add_accessory_file(accessory_name, thumb_path)
+    def note_accessory_file(self, name: str, path: Location):
+        # No docstring deliberately: it's part of parent class docs.
+        #
+        # We override this to include accessories in our checksums:
+        super().note_accessory_file(name, path)
+        self._checksum.add_file(path)
 
     def _write_yaml(self, doc: dict, path: Path, allow_external_paths=False):
         documents.make_paths_relative(
@@ -1354,11 +1400,6 @@ class DatasetAssembler(DatasetPrepare):
 
         tmp_metadata_path = self._work_path / self.names.metadata_file
 
-        # (the checksum isn't written yet -- it'll be the last file)
-        self.add_accessory_file(
-            "checksum:sha1", self._work_path / self.names.checksum_file
-        )
-
         processing_metadata = self._work_path / self.names.make_metadata_file(
             suffix="proc-info.yaml"
         )
@@ -1367,7 +1408,13 @@ class DatasetAssembler(DatasetPrepare):
             processing_metadata,
             allow_external_paths=True,
         )
-        self.add_accessory_file("metadata:processor", processing_metadata)
+        self.note_accessory_file("metadata:processor", processing_metadata)
+
+        # (the checksum isn't written yet -- it'll be the last file)
+        # (we use the super() method as we can't add this to our checksum!)
+        super().note_accessory_file(
+            "checksum:sha1", self._work_path / self.names.checksum_file
+        )
 
         dataset = self.to_dataset_doc(
             dataset_location=tmp_metadata_path,
