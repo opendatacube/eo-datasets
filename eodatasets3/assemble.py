@@ -510,38 +510,54 @@ class DatasetPrepare(Eo3Interface):
         path: Location,
         expand_valid_data=True,
         relative_to_dataset_location=False,
+        grid: GridSpec = None,
+        pixels: numpy.ndarray = None,
+        nodata: Optional[Union[float, int]] = None,
     ):
         """
-        Reference a measurement from its existing file path.
+        Reference a measurement from its existing path. It may be a Path or any URL
+        resolvable by rasterio.
 
-        (no data is copied, but Geo information is read from it.)
+        The path will be opened to read geo and pixel information, unless you specify the
+        information yourself (grid, pixels, nodata). (the latter two only needed if
+        expand_valid_data==True)
 
-        :param name:
-        :param path:
-        :param expand_valid_data:
-        :param relative_to_dataset_location:
+        :param name: measurement name
+        :param path: path to measurement
+        :param expand_valid_data: Expand the valid data bounds with this measurement's valid data.
+        :param relative_to_dataset_location: Should this be read relative to the dataset location?
+                    (requires a computed dattaset location)
         """
-        read_location = path
-        if relative_to_dataset_location:
-            read_location = documents.resolve_absolute_offset(
-                self._target_dataset_location(),
-                path,
-            )
-        with rasterio.open(read_location) as ds:
-            ds: DatasetReader
-            if ds.count != 1:
-                raise NotImplementedError(
-                    "TODO: Only single-band files currently supported"
+
+        # If they didn't give us grid information, read it from the input.
+        if not grid:
+            read_location = path
+            if relative_to_dataset_location:
+                read_location = documents.resolve_absolute_offset(
+                    self._target_dataset_location(),
+                    path,
                 )
 
-            self._measurements.record_image(
-                name,
-                images.GridSpec.from_rio(ds),
-                path,
-                ds.read(1) if expand_valid_data else None,
-                nodata=ds.nodata,
-                expand_valid_data=expand_valid_data,
-            )
+            with rasterio.open(read_location) as ds:
+                ds: DatasetReader
+                grid = images.GridSpec.from_rio(ds)
+                nodata = ds.nodata
+                if expand_valid_data:
+                    if not pixels:
+                        if ds.count != 1:
+                            raise NotImplementedError(
+                                "TODO: Only single-band files currently supported"
+                            )
+                        pixels = ds.read(1)
+
+        self._measurements.record_image(
+            name,
+            grid,
+            path,
+            pixels,
+            nodata=nodata,
+            expand_valid_data=expand_valid_data,
+        )
 
     def _target_dataset_location(self):
         return (self.collection_location or Path(".")) / self.names.dataset_location

@@ -65,15 +65,18 @@ class GridSpec:
     (30.0, 30.0)
     """
 
+    #:
     shape: Tuple[int, int]
+    #:
     transform: Affine
-
+    #:
     crs: CRS = attr.ib(
         metadata=dict(doc_exclude=True), default=None, hash=False, eq=False
     )
 
     @classmethod
     def from_dataset_doc(cls, ds: DatasetDoc, grid="default") -> "GridSpec":
+        """Create from an existing parsed metadata document"""
         g = ds.grids[grid]
 
         if ds.crs.startswith("epsg:"):
@@ -85,6 +88,7 @@ class GridSpec:
 
     @classmethod
     def from_rio(cls, dataset: rasterio.DatasetReader) -> "GridSpec":
+        """Create from an open rasterio dataset"""
         return cls(shape=dataset.shape, transform=dataset.transform, crs=dataset.crs)
 
     @property
@@ -93,6 +97,7 @@ class GridSpec:
 
     @classmethod
     def from_odc_xarray(cls, dataset: xarray.Dataset) -> "GridSpec":
+        """Create from an ODC xarray"""
         shape = set(v.shape for v in dataset.data_vars.values()).pop()
         return cls(
             shape=shape,
@@ -104,7 +109,6 @@ class GridSpec:
     def bounds(self):
         """
         Get bounding box.
-
         """
         return BoundingBox(
             *(self.transform * (0, self.shape[0]))
