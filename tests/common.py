@@ -24,10 +24,10 @@ def check_prepare_outputs(
     __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
     run_prepare_cli(invoke_script, *run_args)
 
-    assert_expected_eo3_doc(expected_doc, expected_metadata_path, ignore_fields)
+    assert_expected_eo3_path(expected_doc, expected_metadata_path, ignore_fields)
 
 
-def assert_expected_eo3_doc(
+def assert_expected_eo3_path(
     expected_doc: Dict,
     expected_path: Path,
     ignore_fields=(),

@@ -76,7 +76,11 @@ class GridSpec:
 
     @classmethod
     def from_dataset_doc(cls, ds: DatasetDoc, grid="default") -> "GridSpec":
-        """Create from an existing parsed metadata document"""
+        """
+        Create from an existing parsed metadata document
+
+        :param grid: Grid name to read, if not the default.
+        """
         g = ds.grids[grid]
 
         if ds.crs.startswith("epsg:"):
@@ -104,6 +108,12 @@ class GridSpec:
             transform=dataset.geobox.transform,
             crs=CRS.from_wkt(dataset.geobox.crs.crs_str),
         )
+
+    @classmethod
+    def from_path(cls, path: str) -> "GridSpec":
+        """Create from the spec of a (rio-readable) filesystem path or url"""
+        with rasterio.open(path) as rio:
+            return GridSpec.from_rio(rio)
 
     @property
     def bounds(self):
