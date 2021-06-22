@@ -145,14 +145,7 @@ def test_s2_naming_conventions(tmp_path: Path):
     assert_expected_eo3_doc(
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
-            "accessories": {
-                "checksum:sha1": {
-                    "path": "ga_s2am_blueberries_1-0-0_Oz_2018-11-04.sha1"
-                },
-                "metadata:processor": {
-                    "path": "ga_s2am_blueberries_1-0-0_Oz_2018-11-04.proc-info.yaml"
-                },
-            },
+            "accessories": {},
             "id": dataset_id,
             "label": "ga_s2am_blueberries_1-0-0_Oz_2018-11-04",
             "product": {
@@ -391,10 +384,10 @@ def test_names_alone(tmp_path: Path):
 
     assert convention.product_name == "ga_s2am_tester_1"
     assert convention.dataset_folder == Path("ga_s2am_tester_1/023/543/2013/02/03")
-    assert convention.metadata_file(kind="sidecar") == Path(
+    assert convention.make_metadata_file(kind="sidecar") == Path(
         "ga_s2am_tester_1-2-3_023543_2013-02-03_sidecar.yaml"
     )
-    assert convention.metadata_path == Path(
+    assert convention.dataset_location == Path(
         "ga_s2am_tester_1/023/543/2013/02/03/ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
     )
 
@@ -402,13 +395,13 @@ def test_names_alone(tmp_path: Path):
 
     convention.dataset_folder = Path("/tmp/custom_folder/")
     # Now the generated metadata path will be inside it:
-    assert convention.metadata_path == Path(
+    assert convention.dataset_location == Path(
         "/tmp/custom_folder/ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
     )
 
     # Custom product name?
     convention.product_name = "my_custom_product"
-    assert convention.metadata_path == Path(
+    assert convention.dataset_location == Path(
         "/tmp/custom_folder/my_custom_product-2-3_023543_2013-02-03.odc-metadata.yaml"
     )
 

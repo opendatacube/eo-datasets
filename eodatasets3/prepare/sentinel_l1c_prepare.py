@@ -172,20 +172,20 @@ def _get_stable_id(p: Eo3Interface) -> uuid.UUID:
 
 
 def prepare_and_write(
-    ds_path: Path,
+    dataset_location: Path,
     output_yaml: Path,
     producer: str,
 ) -> Tuple[uuid.UUID, Path]:
     with DatasetPrepare(
         metadata_path=output_yaml,
-        dataset_location=ds_path,
+        dataset_location=dataset_location,
     ) as p:
         p.properties["odc:producer"] = producer
 
         if producer == "esa.int":
-            jp2_offsets = _extract_esa_fields(ds_path, p)
+            jp2_offsets = _extract_esa_fields(dataset_location, p)
         elif producer == "sinergise.com":
-            jp2_offsets = _extract_sinergise_fields(ds_path, p)
+            jp2_offsets = _extract_sinergise_fields(dataset_location.parent, p)
         else:
             raise NotImplementedError(
                 f"Unknown s2 producer {producer}. Expected 'sinergise.com' or 'esa.int'"
@@ -255,7 +255,7 @@ def _extract_sinergise_fields(path: Path, p: DatasetPrepare) -> Iterable[Path]:
 
     # TODO: sinergise folders could `process_datastrip_metadata()` in an outer directory?
 
-    return path.glob("*.jp2")
+    return list(path.glob("*.jp2"))
 
 
 def _extract_esa_fields(dataset, p) -> Iterable[Path]:
@@ -341,8 +341,8 @@ def main(
             *(
                 (
                     "sinergise.com",
-                    # Input is the folder
-                    p.parent,
+                    # Input folder: our indexed dataset location is the metadata file.
+                    (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
                     # Output is an inner metadata file, with the same name as the folder (usually S2A....).
                     (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
                 )
@@ -351,7 +351,7 @@ def main(
             *(
                 (
                     "esa.int",
-                    # Input is zip file
+                    # Input is zip file, so the zip should be our location.
                     p,
                     # Output is a sibling file with metadata suffix.
                     p.with_suffix(".odc-metadata.yaml"),
@@ -367,7 +367,7 @@ def main(
 
         for producer, ds_path, output_yaml in in_out_paths:
             if output_base:
-                output_yaml = output_base / output_yaml.name
+                output_yaml = output_base.absolute() / output_yaml.name
 
             if output_yaml.exists():
                 if not overwrite_existing:

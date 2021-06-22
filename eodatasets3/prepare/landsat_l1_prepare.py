@@ -544,7 +544,7 @@ def main(
     with rasterio.Env():
         for ds in datasets:
             if output_base:
-                output = output_base.joinpath(
+                output = output_base.absolute().joinpath(
                     *utils.subfolderise(_dataset_region_code(ds))
                 )
                 output.mkdir(parents=True, exist_ok=True)

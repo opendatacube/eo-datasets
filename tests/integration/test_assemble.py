@@ -255,7 +255,7 @@ def test_minimal_generated_naming_package(tmp_path: Path, l1_ls8_folder: Path):
             Assembling quaternarius (unfinished)
             - 1 measurements: blue
             - 4 properties: datetime, odc:file_format, odc:processing_datetime, odc:prod...
-            Writing to {out}
+            Writing to location: {out}/quaternarius/2019/07/04/quaternarius_2019-07-04.odc-metadata.yaml
         """
         )
 

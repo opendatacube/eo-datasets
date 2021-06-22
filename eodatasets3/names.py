@@ -297,6 +297,13 @@ class LazyDestinationFolder:
         return Path(*parts)
 
 
+class LazyDatasetLocation:
+    """The location of the dataset as indexed into ODC. Defaults to the metadata path."""
+
+    def __get__(self, c: "NameGenerator", owner):
+        return c.dataset_folder / c.metadata_file
+
+
 class MissingRequiredFields(ValueError):
     ...
 
@@ -382,9 +389,7 @@ class LazyFileName:
         self.suffix = suffix
 
     def __get__(self, c: "NameGenerator", owner):
-        return c.dataset_folder / c.make_filename(
-            file_id=self.file_id, suffix=self.suffix
-        )
+        return c.make_filename(file_id=self.file_id, suffix=self.suffix)
 
 
 class LazyProductURI:
@@ -490,19 +495,29 @@ class NameGenerator:
     #:
     file_pattern: str = "{n.dataset_label}{file_id}.{suffix}"
 
-    #: The folder offset of the dataset. All generated files will be
-    #: relative to this.
+    #: The folder offset of the dataset when generating a location.
     #:
     #: Example: ``Path('ga_ls8c_ones_3/090/084/2016/01/21')``
     dataset_folder: Path = LazyDestinationFolder()
 
-    #: The full path to the ODC metadata file.
+    #: The Location of the dataset as indexed into ODC.
     #:
-    #: (this includes the folder offset from self.dataset_folder)
+    #: (possibly relative, if it belongs in a collection folder.)
     #:
-    #: Example: ``Path('ga_ls8c_ones_3/090/084/2016/01/21/
-    #: ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml')``
-    metadata_path: Path = LazyFileName("", "odc-metadata.yaml")
+    #: All inner document paths are relative to this.
+    #:
+    #: (Defaults to the metadata path inside the dataset_folder)
+    dataset_location = LazyDatasetLocation()
+
+    #: The path to the ODC metadata file.
+    #:
+    #: (it's relative to self.dataset_location ... but could be absolute too)
+    #:
+    #: Example: ``Path('ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml')``
+    metadata_file: Path = LazyFileName("", "odc-metadata.yaml")
+
+    #: The path to write a checksum file
+    checksum_file: Path = LazyFileName("", "sha1")
 
     def __init__(
         self,
@@ -543,14 +558,11 @@ class NameGenerator:
             return None
         return int(self.metadata.dataset_version.split(".")[0])
 
-    def metadata_file(self, kind: str = "", suffix: str = "yaml") -> Path:
+    def make_metadata_file(self, kind: str = "", suffix: str = "yaml") -> Path:
         return self.make_filename(kind, suffix)
 
-    def checksum_file(self, suffix: str = "sha1") -> Path:
-        return self.make_filename("", suffix)
-
-    def measurement_file(
-        self, measurement_name: str, suffix: str, file_id: str = None
+    def make_measurement_file(
+        self, measurement_name: str, suffix: str = "tif", file_id: str = None
     ) -> Path:
         """
         Generate the path to a measurement for the current naming conventions.:::
@@ -579,15 +591,15 @@ class NameGenerator:
         file_id = "_" + file_id.replace("_", "-") if file_id else ""
         return Path(self.file_pattern.format(file_id=file_id, suffix=suffix, n=self))
 
-    def thumbnail_file(self, kind: str = None, suffix: str = "jpg") -> Path:
+    def make_thumbnail_file(self, kind: str = None, suffix: str = "jpg") -> Path:
         """
         Get a thumbnail file path (optionally with the given kind and/or suffix.)
         """
         if kind:
-            name = f"{kind}:thumbnail"
+            name = f"{kind}_thumbnail"
         else:
             name = "thumbnail"
-        return self.measurement_file(name, suffix)
+        return self.make_filename(name, suffix)
 
 
 class DEANamingConventions(NameGenerator):
