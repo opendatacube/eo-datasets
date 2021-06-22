@@ -17,6 +17,7 @@ import xarray
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
+from shapely.geometry.base import BaseGeometry
 
 import eodatasets3
 from eodatasets3 import serialise, validate, images, documents
@@ -176,8 +177,11 @@ class DatasetPrepare(Eo3Interface):
             Optional base directory where the collection of datasets should live. Subfolders will be
             created accordion to the naming convention.
         :param dataset_location:
-            Optional location for this specific dataset. Otherwise it will be generated according to the collection
-            path and naming conventions.
+            Optional location for this dataset.
+
+            Otherwise it will be generated according to the collection path and naming conventions.
+
+            (this is as indexed into ODC -- ie. a file name).
         :param metadata_path:
             Optional metadata document output path. Otherwise it will be generated according to the collection path
             and naming conventions.
@@ -219,7 +223,16 @@ class DatasetPrepare(Eo3Interface):
 
         self._allow_absolute_paths = allow_absolute_paths
 
-        self._inherited_geometry = None
+        #: Valid-data polygon, in the same CRS as the measurements.
+        #:
+        #: This must cover all valid pixels to be valid in ODC
+        #: (it's allowed to be larger than the valid pixel area, but not
+        #: smaller).
+        #:
+        #: It will be computed automatically from measurements if not set
+        #: manually. You can also inherit it from source datasets in the
+        #: ``add_source_*()`` methods.
+        self.geometry: Optional[BaseGeometry] = None
 
         # They may have given us initialised naming conventions already:
         if names is not None:
@@ -451,7 +464,9 @@ class DatasetPrepare(Eo3Interface):
         if auto_inherit_properties:
             self._inherit_properties_from(dataset)
         if inherit_geometry:
-            self._inherited_geometry = dataset.geometry
+            if self.geometry and self.geometry != dataset.geometry:
+                warnings.warn("Overriding existing geometry from source dataset")
+            self.geometry = dataset.geometry
 
     def note_source_datasets(
         self,
@@ -533,6 +548,9 @@ class DatasetPrepare(Eo3Interface):
         :param relative_to_dataset_location: Should this be read relative to the dataset location?
                     (requires a computed dattaset location)
         """
+        # If we have a polygon already, there's no need to compute valid data.
+        if self.geometry:
+            expand_valid_data = False
 
         # If they didn't give us grid information, read it from the input.
         if not grid:
@@ -634,10 +652,8 @@ class DatasetPrepare(Eo3Interface):
 
         crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
 
-        if self._inherited_geometry:
-            valid_data = self._inherited_geometry
-        else:
-            valid_data = self._measurements.consume_and_get_valid_data()
+        valid_data = self.geometry or self._measurements.consume_and_get_valid_data()
+
         # Avoid the messiness of different empty collection types.
         # (to have a non-null geometry we'd also need non-null grids and crses)
         if valid_data.is_empty:

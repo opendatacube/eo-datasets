@@ -147,6 +147,24 @@ In these situations, we often write our new pixels as a numpy array, inheriting 
          nodata=-999,
       )
 
+Avoiding geometry calculation
+-----------------------------
+
+Dataset metadata includes a geometry polygon which shows the coverage of valid data
+pixels of its measurements.
+
+By default, the assembler will read pixels from the measurements you ``note`` and
+calculate a geometry vector on completion.
+
+If you want to avoid this, you can set the geometry manually::
+
+    p.geometry = my_shapely_polygon
+
+Or copy it from your source datasets when you add your provenance::
+
+    p.add_source_path(source_path, inherit_geometry=True)
+
+If you do this before you `note` measurements, it will not need to read any pixels.
 
 Generating names ahead of time
 ------------------------------
