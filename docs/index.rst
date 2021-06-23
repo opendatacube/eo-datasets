@@ -361,15 +361,11 @@ to avoid automatic generation (or to avoid their finicky metadata requirements).
 
 .. testsetup:: nametest
 
-   from eodatasets3 import DatasetAssembler
+   from eodatasets3 import DatasetPrepare
    from pathlib import Path
    import tempfile
 
    collection_path = Path(tempfile.mkdtemp())
-
-   p = DatasetAssembler(collection_path)
-   p.platform = 'sentinel-2a'
-   p.product_family = 'ard'
 
 .. doctest:: nametest
 
@@ -387,18 +383,15 @@ to avoid automatic generation (or to avoid their finicky metadata requirements).
 See more examples in the assembler :attr:`.names <eodatasets3.DatasetPrepare.names>` property.
 
 
-Dataset Prepare API
--------------------
+Dataset Prepare class reference
+-------------------------------
 
 .. autoclass:: eodatasets3.DatasetPrepare
    :members:
    :special-members: __init__
 
-Dataset Assembler API
----------------------
-
-This contains all methods in :class:`eodatasets3.DatasetPrepare`, with additional
-functions for writing out files.
+Dataset Assembler class reference
+---------------------------------
 
 .. autoclass:: eodatasets3.DatasetAssembler
    :members:
@@ -439,12 +432,6 @@ to tell if a dataset has already been written before you assemble it.
 
 EO Metadata API
 ---------------
-
-These are convenience properties for common metadata fields. They are available
-on DatasetAssemblers and within other naming APIs.
-
-(This is abstract. If you want one of these of your own, you probably want to create
-an :class:`eodatasets3.DatasetDoc`)
 
 .. autoclass:: eodatasets3.properties.Eo3Interface
    :members:

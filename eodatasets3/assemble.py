@@ -94,6 +94,9 @@ def _validate_property_name(name: str):
 
 
 class DatasetPrepare(Eo3Interface):
+    """
+    Prepare dataset metadata
+    """
 
     #: The properties that will automatically be inherited from a source dataset
     #: when :meth:`auto_inherit_properties=True <.add_source_path>`
@@ -854,6 +857,13 @@ class DatasetPrepare(Eo3Interface):
 
 
 class DatasetAssembler(DatasetPrepare):
+    """
+    Assemble a package of a dataset, including metadata, writing COG images, thumbnails,
+    checksums etc.
+
+    You may want to use :class:`eodatasets3.DatasetPrepare` if you only need a metadata document.
+    """
+
     def __init__(
         self,
         collection_location: Optional[Path] = None,
