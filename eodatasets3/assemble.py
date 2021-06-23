@@ -298,9 +298,9 @@ class DatasetPrepare(Eo3Interface):
             #:
             #:     p.names.file_pattern = "my-file.{file_id}.{suffix}"
             #:
-            #: The path to the EO3 metadata doc (relative path to the dataset folder)::
+            #: The path to the EO3 metadata doc (relative path to the dataset location)::
             #:
-            #:     p.names.metadata_path = Path("my-metadata.odc-metadata.yaml")
+            #:     p.names.metadata_file = Path("my-metadata.odc-metadata.yaml")
             #:
             #: The URI for the product::
             #:

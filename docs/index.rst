@@ -15,12 +15,13 @@ and metadata for the `Open Data Cube`_
 
 There are two major tools for creating datasets:
 
-1. *DatasetPrepare*, for preparing a metadata document using existing imagery and files.
-2. *DatasetAssembler*, for preparing a whole package folder: including metadata, writing imagery, thumbnails,
-    checksums etc.
+#. :ref:`DatasetPrepare<preparing_metadata>`, for preparing a metadata document using existing imagery and files.
+#. :ref:`DatasetAssembler<assembling_metadata>`, for creating a package folder: including metadata, writing imagery, thumbnails, checksums etc.
 
 Their APIs are the same, except the latter adds functions named ``write_*`` in addition to the metadata
 functions.
+
+.. _assembling_metadata:
 
 Assemble a Dataset Package
 --------------------------
@@ -61,20 +62,24 @@ And known properties are automatically normalised::
       p.properties["eo:off_nadir"] = "34"  # into a number
 
 
+.. _preparing_metadata:
+
 Writing only a metadata doc
 ---------------------------
 
 (ie. "I already have appropriate imagery!")
 
 The above examples can be changed to use :class:`DatasetPrepare() <eodatasets3.DatasetPrepare>`
-instead of a `DatasetAssembler`, which omits all file-writing logic..
+(which prepares metadata) instead of a :class:`DatasetAssembler() <eodatasets3.DatasetAssembler>`
+(which writes packages)
 
-And functions named ``write_`` (which write files) can be replaced by functions named ``note_*``
-(which note information in the metadata).
+Functions named ``write_`` on assembler (which write files) have equivalent functions named ``note_*``
+(which note information into the metadata) available in both classes.
 
 Eg. :meth:`note_measurement() <eodatasets3.DatasetPrepare.note_measurement>` instead of
-:meth:`write_measurement() <eodatasets3.DatasetAssembler.write_measurement>`::
+:meth:`write_measurement() <eodatasets3.DatasetAssembler.write_measurement>`
 
+Example of generating metadata::
 
 
     usgs_level1 = Path('datasets/LC08_L1TP_090084_20160121_20170405_01_T1')
@@ -123,7 +128,7 @@ You can allow absolute paths with a field on construction
 
 Including provenance
 --------------------
-Most datasets are processed from an existing (input) dataset and have the same spatial information as the input.
+Most datasets are processed from an existing input dataset and have the same spatial information as the input.
 We can record them as source datasets, and the assembler can optionally copy any common metadata automatically::
 
    collection = Path('/some/output/collection/path')
@@ -151,27 +156,99 @@ In these situations, we often write our new pixels as a numpy array, inheriting 
          nodata=-999,
       )
 
+Creating documents in-memory
+----------------------------
+
+You may want to assemble metadata entirely in memory without touching the filesystem.
+
+To do this, prepare a dataset as normal. You still need a dataset location, as referenced paths
+will be relative to this location:
+
+.. testsetup:: inmem
+
+   from eodatasets3 import GridSpec
+   from affine import Affine
+   from rasterio.crs import CRS
+   from pathlib import Path
+   import numpy
+   from datetime import datetime
+
+   grid_spec = GridSpec(shape=(7721, 7621),
+      transform=Affine(30.0, 0.0, 241485.0, 0.0, -30.0, -2281485.0),
+      crs=CRS.from_epsg(32656)
+   )
+
+   import tempfile
+   dataset_location = Path(tempfile.mkdtemp())
+   measurement_path = dataset_location / "our_image_dont_read_it.tif"
+
+.. doctest:: inmem
+
+   >>> from eodatasets3 import DatasetPrepare
+   >>> p = DatasetPrepare(dataset_location=dataset_location)
+   >>> p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+   >>> p.product_name = "loch_ness_sightings"
+   >>> p.processed = datetime(2019, 7, 4, 13, 8, 7)
+
+
+We can give it a :class:`GridSpec <eodatasets3.GridSpec>` when adding measurements,
+so it will not access the measurements to read grid information itself:
+
+.. doctest:: inmem
+
+   >>> p.note_measurement(
+   ...     "blue",
+   ...     measurement_path,
+   ...     # We give it grid information, so it doesn't have to read it itself.
+   ...     grid=grid_spec,
+   ...     # And the image pixels, since we are letting it calculate our geometry.
+   ...     pixels=numpy.ones((60, 60), numpy.int16),
+   ...     nodata=-1,
+   ... )
+
+Now finish it as a :class:`DatasetDoc <eodatasets3.DatasetDoc>`:
+
+.. doctest:: inmem
+
+   >>> dataset = p.to_dataset_doc()
+
+You can now use :ref:`serialise functions<serialise_explanation>` on the result yourself,
+such as conversion to a dictionary:
+
+.. doctest:: inmem
+
+   >>> from eodatasets3 import serialise
+   >>> doc: dict = serialise.to_doc(dataset)
+   >>> doc['label']
+   'loch_ness_sightings_2019-07-04'
+
+Or convert it to a formatted yaml: :meth:`serialise.to_path(path, dataset) <eodatasets3.serialise.to_path>` or
+:meth:`serialise.to_stream(stream, dataset) <eodatasets3.serialise.to_stream>`.
+
+
 Avoiding geometry calculation
 -----------------------------
 
-Dataset metadata includes a geometry polygon which shows the coverage of valid data
-pixels of its measurements.
+Datasets include a geometry field, which shows the coverage of valid data pixels of
+all measurements.
 
-By default, the assembler will read pixels from the measurements you ``note`` and
-calculate a geometry vector on completion.
+By default, the assembler will create this geometry by reading the pixels from your
+measurements, and calculate a geometry vector on completion.
 
-If you want to avoid this, you can set the geometry manually::
+If you want to avoid these reads and calculations, you can set the geometry manually::
 
     p.geometry = my_shapely_polygon
 
-Or copy it from your source datasets when you add your provenance::
+Or copy it from one of your source datasets when you add your provenance (if it has
+the same coverage)::
 
     p.add_source_path(source_path, inherit_geometry=True)
 
-If you do this before you `note` measurements, it will not need to read any pixels.
+If you do this before you `note` measurements, it will not need to read any pixels
+from them.
 
-Generating names ahead of time
-------------------------------
+Generating names+paths ahead of time
+------------------------------------
 
 You can use the naming module alone to find file paths:
 
@@ -203,13 +280,13 @@ Create some properties.
    You can use a plain dict if you prefer. But we use an :class:`DatasetDoc() <eodatasets3.DatasetDoc>` here, which has
    convenience methods similar to :class:`DatasetAssembler <eodatasets3.DatasetAssembler>` for building properties.
 
-Now create a `namer` instance with our properties:
+Now create a `namer` instance with our properties (and chosen naming conventions):
 
 .. testcode::
 
    names = eodatasets3.namer(conventions="default", properties=d)
 
-And we can see some generated names:
+We can see some generated names:
 
 .. testcode::
 
@@ -228,9 +305,9 @@ Output:
    s2a_fires/2018/05/04/s2a_fires_2018-05-04.odc-metadata.yaml
 
 
-In reality, our paths go inside a folder (..or s3 bucket, etc) somewhere.
+In reality, these paths go within a location (folder, s3 bucket, etc) somewhere.
 
-This folder is called the `collection_path` in :class:`DatasetAssembler <eodatasets3.DatasetAssembler>`'s
+This is called the `collection_path` in :class:`DatasetAssembler <eodatasets3.DatasetAssembler>`'s
 parameters, and we can join it ourselves to find our dataset the same way:
 
 .. testcode::
@@ -256,8 +333,8 @@ parameters, and we can join it ourselves to find our dataset the same way:
    if absolute_metadata_path.exists():
        print("Our dataset already exists!")
 
-Now that we've created our own properties and names, we could also reuse them
-if we later want to assemble a dataset:
+We could now start assembling some metadata if our dataset doesn't exist,
+passing it our existing fields:
 
 .. testcode::
 
@@ -276,8 +353,11 @@ if we later want to assemble a dataset:
 Naming things yourself
 ----------------------
 
-You can set properties yourself on the namer to avoid automatic generation.
-(or to avoid their finicky metadata requirements)
+Names and paths are only auto-generated if they have not been set manually
+by the user.
+
+You can set properties yourself on the :class:`NameGenerator <eodatasets3.NameGenerator>`
+to avoid automatic generation (or to avoid their finicky metadata requirements).
 
 .. testsetup:: nametest
 
@@ -293,8 +373,13 @@ You can set properties yourself on the namer to avoid automatic generation.
 
 .. doctest:: nametest
 
+   >>> p = DatasetPrepare(collection_path)
+   >>> p.platform = 'sentinel-2a'
+   >>> p.product_family = 'ard'
+   >>> # The namer will generate a product name:
    >>> p.names.product_name
    's2a_ard'
+   >>> # Let's customise the generated abbreviation:
    >>> p.names.platform_abbreviated = "s2"
    >>> p.names.product_name
    's2_ard'
@@ -318,6 +403,8 @@ functions for writing out files.
 .. autoclass:: eodatasets3.DatasetAssembler
    :members:
    :special-members: __init__
+
+.. _serialise_explanation:
 
 Reading/Writing YAMLs
 ---------------------

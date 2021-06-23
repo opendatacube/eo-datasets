@@ -50,7 +50,13 @@ except ImportError:
 @attr.s(auto_attribs=True, slots=True, hash=True, frozen=True)
 class GridSpec:
     """
-    The coordinates/transform and size of stored pixels
+    The grid spec defines the coordinates/transform and size of pixels of a
+    measurment.
+
+    The easiest way to create one is use the ``GridSpec.from_*()`` class methods, such as
+    ``GridSpec.from_path(my_image_path)``.
+
+    To create one manually:
 
     >>> from eodatasets3 import GridSpec
     >>> from affine import Affine
