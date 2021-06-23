@@ -113,7 +113,7 @@ def _unpack_products(
                         # but not in the filename.
                         # So we manually calculate a filename without the 'kind' field included.
                         kind=product,
-                        path=p.names.make_thumbnail_file(),
+                        path=p.names.thumbnail_filename(),
                     )
 
 
@@ -152,7 +152,7 @@ def write_measurement_h5(
         # but not in its filename.
         # So we manually calculate a filename without the extra product name prefix.
         name=full_name,
-        path=p.names.make_measurement_file(band_name, "tif", file_id=file_id),
+        path=p.names.measurement_filename(band_name, "tif", file_id=file_id),
     )
 
 
@@ -322,7 +322,7 @@ def _create_contiguity(
             # 'oa_' prefix to be included in the recorded band metadata,
             # but not in its filename.
             # So we manually calculate a filename without the extra prefix.
-            path=p.names.make_measurement_file(f"{product.lower()}_contiguity"),
+            path=p.names.measurement_filename(f"{product.lower()}_contiguity"),
         )
 
         # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
@@ -677,7 +677,7 @@ def package(
                                 # 'oa_' prefix to be included in the recorded band metadata,
                                 # but not in its filename.
                                 # So we manually calculate a filename without the extra prefix.
-                                path=p.names.make_measurement_file("fmask"),
+                                path=p.names.measurement_filename("fmask"),
                             )
 
             with do("Finishing package"):

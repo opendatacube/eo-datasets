@@ -239,6 +239,7 @@ def test_in_memory_dataset(tmp_path: Path, l1_ls8_folder: Path):
     """
     You can create metadata fully in-memory, without touching paths.
     """
+
     out = tmp_path / "out"
     out.mkdir()
 
@@ -268,6 +269,15 @@ def test_in_memory_dataset(tmp_path: Path, l1_ls8_folder: Path):
     del doc["geometry"]
     assert doc["id"] is not None, "Expected an id"
     del doc["id"]
+
+    # Users can ask the generator for file names:
+    assert p.names.measurement_filename("red") == Path(
+        "loch_ness_sightings_2019-07-04_red.tif"
+    )
+
+    assert p.names.dataset_folder / p.names.measurement_filename("red") == Path(
+        "loch_ness_sightings/2019/07/04/loch_ness_sightings_2019-07-04_red.tif"
+    )
 
     pprint(doc)
     assert_same(

@@ -384,7 +384,7 @@ def test_names_alone(tmp_path: Path):
 
     assert convention.product_name == "ga_s2am_tester_1"
     assert convention.dataset_folder == Path("ga_s2am_tester_1/023/543/2013/02/03")
-    assert convention.make_metadata_file(kind="sidecar") == Path(
+    assert convention.metadata_filename(kind="sidecar") == Path(
         "ga_s2am_tester_1-2-3_023543_2013-02-03_sidecar.yaml"
     )
     assert convention.dataset_location == Path(
