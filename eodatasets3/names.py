@@ -63,7 +63,7 @@ class LazyLabel:
         self.strip_major_version = strip_major_version
         self.include_version = include_version
 
-    def __get__(self, c: "NameGenerator", owner):
+    def __get__(self, c: "NameGenerator", owner) -> str:
         d = c.metadata
 
         product_prefix = c.product_name
@@ -130,7 +130,7 @@ class LazyPlatformAbbreviation:
 
         self.allow_unknown_abbreviations = allow_unknown_abbreviations
 
-    def __get__(self, c: "NameGenerator", owner):
+    def __get__(self, c: "NameGenerator", owner) -> str:
         """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
 
         p = c.metadata.platforms
@@ -178,7 +178,7 @@ class LazyPlatformAbbreviation:
 
 
 class LazyInstrumentAbbreviation:
-    def __get__(self, c: "NameGenerator", owner):
+    def __get__(self, c: "NameGenerator", owner) -> str:
         """Abbreviated form of an instrument name, as used in dea product names. eg. 'c'."""
         if not c.metadata.instrument:
             return None
@@ -235,7 +235,7 @@ class LazyProducerAbbreviation:
             known_abbreviations or self.KNOWN_PRODUCER_ABBREVIATIONS
         )
 
-    def __get__(self, c: "NameGenerator", owner):
+    def __get__(self, c: "NameGenerator", owner) -> str:
         """Abbreviated form of a producer, as used in dea product names. eg. 'ga', 'usgs'."""
         if not c.metadata.producer:
             return None
@@ -262,7 +262,7 @@ class LazyDestinationFolder:
         self.include_non_final_maturity = include_non_final_maturity
         self.date_folders_format = date_folders_format
 
-    def __get__(self, c: "NameGenerator", owner):
+    def __get__(self, c: "NameGenerator", owner) -> Path:
         """The folder hierarchy the datasets files go into.
 
         This is returned as a relative path.
@@ -300,7 +300,7 @@ class LazyDestinationFolder:
 class LazyDatasetLocation:
     """The location of the dataset as indexed into ODC. Defaults to the metadata path."""
 
-    def __get__(self, c: "NameGenerator", owner):
+    def __get__(self, c: "NameGenerator", owner) -> Path:
         return c.dataset_folder / c.metadata_file
 
 
@@ -388,12 +388,12 @@ class LazyFileName:
         self.file_id = file_id
         self.suffix = suffix
 
-    def __get__(self, c: "NameGenerator", owner):
-        return c.make_filename(file_id=self.file_id, suffix=self.suffix)
+    def __get__(self, c: "NameGenerator", owner) -> Path:
+        return c.filename(file_id=self.file_id, suffix=self.suffix)
 
 
 class LazyProductURI:
-    def __get__(self, n: "NameGenerator", owner):
+    def __get__(self, n: "NameGenerator", owner) -> str:
         if not n.base_product_uri:
             return None
 
@@ -493,7 +493,7 @@ class NameGenerator:
     #: The pattern is in python's ``str.format()`` syntax,
     #: with fields ``{file_id}`` and ``{suffix}``
     #:
-    file_pattern: str = "{n.dataset_label}{file_id}.{suffix}"
+    filename_pattern: str = "{n.dataset_label}{file_id}.{suffix}"
 
     #: The folder offset of the dataset when generating a location.
     #:
@@ -558,10 +558,10 @@ class NameGenerator:
             return None
         return int(self.metadata.dataset_version.split(".")[0])
 
-    def make_metadata_file(self, kind: str = "", suffix: str = "yaml") -> Path:
-        return self.make_filename(kind, suffix)
+    def metadata_filename(self, kind: str = "", suffix: str = "yaml") -> Path:
+        return self.filename(kind, suffix)
 
-    def make_measurement_file(
+    def measurement_filename(
         self, measurement_name: str, suffix: str = "tif", file_id: str = None
     ) -> Path:
         """
@@ -574,13 +574,13 @@ class NameGenerator:
         """
         name = measurement_name.replace(":", "_")
 
-        return self.make_filename(
+        return self.filename(
             # We use 'band01'/etc in the filename if provided, rather than 'red'
             file_id or name,
             suffix,
         )
 
-    def make_filename(self, file_id: str, suffix: str) -> Path:
+    def filename(self, file_id: str, suffix: str) -> Path:
         """
         Make a file name according to the current naming conventions' file pattern.
 
@@ -589,9 +589,11 @@ class NameGenerator:
         Returned file paths are expected to be relative to the self.dataset_folder
         """
         file_id = "_" + file_id.replace("_", "-") if file_id else ""
-        return Path(self.file_pattern.format(file_id=file_id, suffix=suffix, n=self))
+        return Path(
+            self.filename_pattern.format(file_id=file_id, suffix=suffix, n=self)
+        )
 
-    def make_thumbnail_file(self, kind: str = None, suffix: str = "jpg") -> Path:
+    def thumbnail_filename(self, kind: str = None, suffix: str = "jpg") -> Path:
         """
         Get a thumbnail file path (optionally with the given kind and/or suffix.)
         """
@@ -599,7 +601,7 @@ class NameGenerator:
             name = f"{kind}_thumbnail"
         else:
             name = "thumbnail"
-        return self.make_filename(name, suffix)
+        return self.filename(name, suffix)
 
 
 class DEANamingConventions(NameGenerator):

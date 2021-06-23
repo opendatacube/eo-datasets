@@ -299,7 +299,7 @@ class DatasetPrepare(Eo3Interface):
             #: All filenames have a file_id (eg. "odc-metadata" or "") and a suffix (eg. "yaml")
             #: (Can contain folder separators. It will be relative to the dataset folder)::
             #:
-            #:     p.names.file_pattern = "my-file.{file_id}.{suffix}"
+            #:     p.names.filename_pattern = "my-file.{file_id}.{suffix}"
             #:
             #: The path to the EO3 metadata doc (relative path to the dataset location)::
             #:
@@ -1053,7 +1053,7 @@ class DatasetAssembler(DatasetPrepare):
             ds.read(1),
             images.GridSpec.from_rio(ds),
             self._work_path
-            / (path or self.names.make_measurement_file(name, "tif", file_id=file_id)),
+            / (path or self.names.measurement_filename(name, "tif", file_id=file_id)),
             expand_valid_data=expand_valid_data,
             nodata=ds.nodata,
             overview_resampling=overview_resampling,
@@ -1098,7 +1098,7 @@ class DatasetAssembler(DatasetPrepare):
             array,
             grid_spec,
             self._work_path
-            / (path or self.names.make_measurement_file(name, "tif", file_id=file_id)),
+            / (path or self.names.measurement_filename(name, "tif", file_id=file_id)),
             expand_valid_data=expand_valid_data,
             nodata=nodata,
             overview_resampling=overview_resampling,
@@ -1135,7 +1135,7 @@ class DatasetAssembler(DatasetPrepare):
                 grid_spec,
                 (
                     self._work_path
-                    / self.names.make_measurement_file(name, "tif", file_id=file_id)
+                    / self.names.measurement_filename(name, "tif", file_id=file_id)
                 ),
                 expand_valid_data=expand_valid_data,
                 overview_resampling=overview_resampling,
@@ -1222,7 +1222,7 @@ class DatasetAssembler(DatasetPrepare):
         :param static_stretch: Use a static upper/lower value to stretch by instead of dynamic stretch.
         """
         thumb_path = self._work_path / (
-            path or self.names.make_thumbnail_file(kind=kind)
+            path or self.names.thumbnail_filename(kind=kind)
         )
 
         missing_measurements = {red, green, blue} - set(self.measurements)
@@ -1289,7 +1289,7 @@ class DatasetAssembler(DatasetPrepare):
 
         """
 
-        thumb_path = self._work_path / self.names.make_thumbnail_file(kind=kind)
+        thumb_path = self._work_path / self.names.thumbnail_filename(kind=kind)
 
         _, image_path = self.measurements.get(measurement, (None, None))
 
@@ -1410,7 +1410,7 @@ class DatasetAssembler(DatasetPrepare):
 
         tmp_metadata_path = self._work_path / self.names.metadata_file
 
-        processing_metadata = self._work_path / self.names.make_metadata_file(
+        processing_metadata = self._work_path / self.names.metadata_filename(
             suffix="proc-info.yaml"
         )
         self._write_yaml(

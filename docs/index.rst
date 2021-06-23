@@ -206,6 +206,30 @@ so it will not access the measurements to read grid information itself:
    ...     nodata=-1,
    ... )
 
+.. note::
+
+   If you're writing your own image files manually, you may still want to use eodataset's
+   name generation. You can ask for suitable paths from
+   :attr:`p.names <eodatasets3.DatasetPrepare.names>`:
+
+   .. doctest:: inmem
+
+      >>> # The offset within our collection
+      >>> p.names.dataset_folder
+      PosixPath('loch_ness_sightings/2019/07/04')
+      >>> # How should I name a 'red' measurement file?
+      >>> p.names.measurement_filename('red')
+      PosixPath('loch_ness_sightings_2019-07-04_red.tif')
+
+   All generated filenames are relative to the dataset folder (but can also be absolute!),
+   so we calculate the full offset by combining them:
+
+   .. doctest:: inmem
+
+      >>> full_measurement_path = p.names.dataset_folder / p.names.measurement_filename('red')
+
+   (this will still be identical to the original filename if it's absolute, as desired.)
+
 Now finish it as a :class:`DatasetDoc <eodatasets3.DatasetDoc>`:
 
 .. doctest:: inmem
@@ -247,8 +271,8 @@ the same coverage)::
 If you do this before you `note` measurements, it will not need to read any pixels
 from them.
 
-Generating names+paths ahead of time
-------------------------------------
+Generating names & paths alone
+------------------------------
 
 You can use the naming module alone to find file paths:
 
@@ -290,20 +314,21 @@ We can see some generated names:
 
 .. testcode::
 
+   print(names.metadata_file)
+   print(names.measurement_filename('water'))
+   print()
    print(names.product_name)
    print(names.dataset_folder)
-   print(names.metadata_file)
-   print(names.dataset_location)
 
 Output:
 
 .. testoutput::
 
-   s2a_fires
-   s2a_fires/2018/05/04
-   s2a_fires_2018-05-04.odc-metadata.yaml
-   s2a_fires/2018/05/04/s2a_fires_2018-05-04.odc-metadata.yaml
+    s2a_fires_2018-05-04.odc-metadata.yaml
+    s2a_fires_2018-05-04_water.tif
 
+    s2a_fires
+    s2a_fires/2018/05/04
 
 In reality, these paths go within a location (folder, s3 bucket, etc) somewhere.
 
