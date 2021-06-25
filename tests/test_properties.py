@@ -81,7 +81,7 @@ def test_unknown_abbreviations():
 
         # Unless unknown platforms aren't allowed
         # (DEA wants to be stricter and add real abbreviations for everything.)
-        names = namer("dea", d.properties)
+        names = namer(d.properties, conventions="dea")
         with pytest.raises(
             ValueError, match="don't know the DEA abbreviation for platform"
         ):

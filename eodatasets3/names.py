@@ -9,11 +9,16 @@ from typing import (
     Set,
     Union,
 )
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
+
+import datacube.utils.uris as dc_uris
 
 from eodatasets3 import utils
 from eodatasets3.model import DEA_URI_PREFIX
 from eodatasets3.properties import Eo3Interface, Eo3Dict
+
+# Needed when packaging zip or tar files.
+dc_uris.register_scheme("zip", "tar")
 
 
 class LazyProductName:
@@ -130,7 +135,7 @@ class LazyPlatformAbbreviation:
 
         self.allow_unknown_abbreviations = allow_unknown_abbreviations
 
-    def __get__(self, c: "NameGenerator", owner) -> str:
+    def __get__(self, c: "NameGenerator", owner) -> Optional[str]:
         """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
 
         p = c.metadata.platforms
@@ -178,7 +183,7 @@ class LazyPlatformAbbreviation:
 
 
 class LazyInstrumentAbbreviation:
-    def __get__(self, c: "NameGenerator", owner) -> str:
+    def __get__(self, c: "NameGenerator", owner) -> Optional[str]:
         """Abbreviated form of an instrument name, as used in dea product names. eg. 'c'."""
         if not c.metadata.instrument:
             return None
@@ -235,7 +240,7 @@ class LazyProducerAbbreviation:
             known_abbreviations or self.KNOWN_PRODUCER_ABBREVIATIONS
         )
 
-    def __get__(self, c: "NameGenerator", owner) -> str:
+    def __get__(self, c: "NameGenerator", owner) -> Optional[str]:
         """Abbreviated form of a producer, as used in dea product names. eg. 'ga', 'usgs'."""
         if not c.metadata.producer:
             return None
@@ -300,8 +305,17 @@ class LazyDestinationFolder:
 class LazyDatasetLocation:
     """The location of the dataset as indexed into ODC. Defaults to the metadata path."""
 
-    def __get__(self, c: "NameGenerator", owner) -> Path:
-        return c.dataset_folder / c.metadata_file
+    def __get__(self, c: "NameGenerator", owner) -> str:
+        if not c.collection_prefix:
+            raise ValueError(
+                "collection_prefix is required if you're not setting a "
+                "dataset_location or metadata_path!"
+            )
+
+        offset = c.dataset_folder / c.metadata_file
+        if offset.is_absolute():
+            raise ValueError("Dataset offset is expected to be relative to collection")
+        return f"{c.collection_prefix}/{offset.as_posix()}"
 
 
 class MissingRequiredFields(ValueError):
@@ -393,38 +407,94 @@ class LazyFileName:
 
 
 class LazyProductURI:
-    def __get__(self, n: "NameGenerator", owner) -> str:
+    def __get__(self, n: "NameGenerator", owner) -> Optional[str]:
         if not n.base_product_uri:
             return None
 
         return f"{n.base_product_uri}/product/{quote(n.product_name)}"
 
 
+def resolve_location(path: Union[str, Path]) -> str:
+    """
+    Make sure a dataset location is a URL, suitable to be
+    the dataset_location in datacube indexing.
+
+    Users may specify a pathlib.Path(), and we'll convert it as needed.
+    """
+    if isinstance(path, str):
+        if not dc_uris.is_url(path) and not dc_uris.is_vsipath(path):
+            raise ValueError(
+                "A string location is expected to be a URL or VSI path. "
+                "Perhaps you want to give it as a local pathlib.Path()?"
+            )
+        return path
+
+    path = dc_uris.normalise_path(path)
+    if ".tar" in path.suffixes:
+        return f"tar:{path}!/"
+    elif ".zip" in path.suffixes:
+        return f"zip:{path}!/"
+    else:
+        uri = path.as_uri()
+        # Base paths specified as directories must end in a slash,
+        # so they will be url joined as subfolders. (pathlib strips them)
+        if path.is_dir():
+            return f"{uri}/"
+        return uri
+
+
+def _as_path(url: str) -> Path:
+    """Try to convert the given URL to a local Path"""
+    parts = urlparse(url)
+    if not parts.scheme == "file":
+        raise ValueError(f"Expected a filesystem path, got a URL! {url!r}")
+
+    return Path(parts.path)
+
+
 class NameGenerator:
     """
-    A generator of names for products, data labels, file paths, etc.
+    A generator of names for products, data labels, file paths, urls, etc.
 
     These are generated based on a given set of naming conventions, but a user
     can manually override any properties to avoid generation.
 
-    Create an instance by calling :meth:`eodatasets3.namer`::
+    Create an instance by calling :meth:`eodatasets3.namer`:
+
+    .. testcode ::
+
+        from eodatasets3 import namer
 
         properties = {
-            'eo:platform': 'landsat-7',
-            'eo:instrument': 'ETM',
-            ...
+            'eo:platform': 'sentinel-2a',
+            'eo:instrument': 'MSI',
+            'odc:product_family': 'level1',
         }
-        n = namer(conventions='default', properties)
+        n = namer(properties, conventions='default')
         print(n.product_name)
 
-    (You may want to use an :class:`eodatasets3.DatasetDoc` instance rather than a dict for
-    properties, to get convenience methods such as ``.platform = 'blah'``, `.properties`, automatic
-    property normalisation etc - it will behave like a DatasetAssembler instance)
+    .. testoutput ::
+
+       s2am_level1
+
+    .. note ::
+
+       You may want to use an :class:`eodatasets3.DatasetDoc` instance rather than a dict for
+       properties, to get convenience methods such as ``.platform = 'sentinel-2a'``, `.properties`, automatic
+       property normalisation etc.
+
+       See :ref:`the naming section<names_n_paths>` for an example.
 
     Fields are lazily generated when accessed using the underlying metadata properties,
-    but you can manually set any field to avoid generation::
+    but you can manually set any field to avoid generation:
 
-        >>> p = {'eo:platform': 'landsat-7', 'odc:product_family': 'nbar'}
+    .. doctest ::
+
+        >>> from eodatasets3 import DatasetDoc
+        >>> p = DatasetDoc()
+        >>> p.platform = 'landsat-7'
+        >>> p.product_family = 'nbar'
+        >>>
         >>> n = namer(conventions='default', properties=p)
         >>> n.product_name
         'ls7_nbar'
@@ -435,10 +505,23 @@ class NameGenerator:
         >>> # Or manually set the entire product name to avoid generation:
         >>> n.product_name = 'custom_nbar_albers'
 
-    All fields named ``*_file`` are filenames inside (relative to) the
-    ``self.dataset_folder``.
+    In order to calculate paths, give it a collection prefix. This can be a :class:`Path object <pathlib.Path>`
+    for local files, or a URL str for remote.
 
-    All ``*_path`` s include their folder offset already.
+    .. doctest ::
+
+       >>> p.datetime = datetime(2014, 4, 5)
+       >>> collection = "s3://dea-public-data-dev/collections"
+       >>> n = namer(conventions='default', properties=p, collection_prefix=collection)
+       >>> n.dataset_location
+       's3://dea-public-data-dev/collections/ls7_nbar/2014/04/05/ls7_nbar_2014-04-05.odc-metadata.yaml'
+
+    All fields named ``*_file`` are filenames inside (relative to) the
+    ``self.dataset_location``.
+
+        >>> n.resolve_file('thumbnail.jpg')
+        's3://dea-public-data-dev/collections/ls7_nbar/2014/04/05/thumbnail.jpg'
+
     """
 
     _ABSOLUTE_MINIMAL_PROPERTIES = {
@@ -460,19 +543,20 @@ class NameGenerator:
     product_name: str = LazyProductName(include_collection=True)
     #: Identifier URL for the product
     #: (This is seen as a global id for the product, unlike the plain product
-    #   name. It doesn't have to resolve to a real path)
+    #: name. It doesn't have to resolve to a real path)
     #:
     #: Eg. ``https://collections.dea.ga.gov.au/product/ga_ls8c_ard_3``
     #:
     product_uri: str = LazyProductURI()
 
     #: Abbreviated form of the platform, used in most other
-    #  paths and names here.
+    #: paths and names here.
     #:
     #: For example, ``landsat-7`` is usually abbreviated to ``ls7``
     platform_abbreviated: str = LazyPlatformAbbreviation()
+
     #: Abbreviated form of the instrument, used in most other
-    #  paths and names here.
+    #: paths and names here.
     #:
     #: For example, ``ETM+`` is usually abbreviated to ``e``
     instrument_abbreviated: str = LazyInstrumentAbbreviation()
@@ -493,21 +577,31 @@ class NameGenerator:
     #: The pattern is in python's ``str.format()`` syntax,
     #: with fields ``{file_id}`` and ``{suffix}``
     #:
+    #: The namer instance is readable from ``{n}``.
     filename_pattern: str = "{n.dataset_label}{file_id}.{suffix}"
 
-    #: The folder offset of the dataset when generating a location.
+    #: The prefix where all files are stored, as a URI.
+    #:
+    #: Eg. ``file:///my/dataset/collections``
+    #:
+    #: (used if dataset_location is generated)
+    collection_prefix: Optional[str] = None
+
+    #: The folder offset from the collection_prefix.
     #:
     #: Example: ``Path('ga_ls8c_ones_3/090/084/2016/01/21')``
+    #:
+    #: (used if dataset_location is generated)
     dataset_folder: Path = LazyDestinationFolder()
 
-    #: The Location of the dataset as indexed into ODC.
+    #: The full uri of the dataset as indexed into ODC.
     #:
-    #: (possibly relative, if it belongs in a collection folder.)
+    #: **All inner document paths are relative to this.**
     #:
-    #: All inner document paths are relative to this.
+    #: Eg. ``s3://dea-public-data/ga_ls_fc_3/2-5-0/091/086/2020/04/04/ga_ls_fc_091086_2020-04-04.odc-metadata.yaml``
     #:
     #: (Defaults to the metadata path inside the dataset_folder)
-    dataset_location = LazyDatasetLocation()
+    dataset_location: str = LazyDatasetLocation()
 
     #: The path to the ODC metadata file.
     #:
@@ -516,7 +610,7 @@ class NameGenerator:
     #: Example: ``Path('ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml')``
     metadata_file: Path = LazyFileName("", "odc-metadata.yaml")
 
-    #: The path to write a checksum file
+    #: The name of a checksum file
     checksum_file: Path = LazyFileName("", "sha1")
 
     def __init__(
@@ -586,7 +680,7 @@ class NameGenerator:
 
         All filenames have a file_id (eg. "odc-metadata" or "") and a suffix (eg. "yaml")
 
-        Returned file paths are expected to be relative to the self.dataset_folder
+        Returned file paths are expected to be relative to the ``self.dataset_location``
         """
         file_id = "_" + file_id.replace("_", "-") if file_id else ""
         return Path(
@@ -602,6 +696,46 @@ class NameGenerator:
         else:
             name = "thumbnail"
         return self.filename(name, suffix)
+
+    def resolve_file(self, path: Union[str, Path]) -> str:
+        """
+        Convert the given file offset to a fully qualified URL within the dataset location.
+        """
+        if isinstance(path, Path):
+            if path.is_absolute():
+                return path.as_uri()
+            path = path.as_posix()
+
+        location = self.dataset_location
+        resolved = dc_uris.uri_resolve(location, path)
+        return resolved
+
+    def resolve_path(self, path: Union[str, Path]) -> Path:
+        """
+        Convert the given file offset to a local Path inside the dataset location (if possible).
+
+        :raises ValueError if the current dataset is not in a file:// location.
+        """
+        return _as_path(self.resolve_file(path))
+
+    @property
+    def dataset_path(self) -> Optional[Path]:
+        """
+        Get the dataset location as a local Path, if possible.
+        """
+        return _as_path(self.dataset_location)
+
+    @property
+    def collection_path(self) -> Optional[Path]:
+        """
+        Get the collection prefix as a local path, if possible.
+        """
+        if not self.collection_prefix:
+            return None
+        try:
+            return _as_path(self.collection_prefix)
+        except ValueError:
+            return None
 
 
 class DEANamingConventions(NameGenerator):
@@ -797,7 +931,10 @@ KNOWN_CONVENTIONS = dict(
 
 
 def namer(
-    conventions: str = "default", properties: Union[Eo3Dict, Eo3Interface, dict] = None
+    properties: Union[Eo3Dict, Eo3Interface, dict] = None,
+    *,
+    collection_prefix: Union[str, Path] = None,
+    conventions: str = "default",
 ) -> "NameGenerator":
     """
     Create a naming instance of the given conventions.
@@ -817,4 +954,8 @@ def namer(
         properties = properties.properties
     if properties is None:
         properties = Eo3Dict()
-    return KNOWN_CONVENTIONS[conventions](properties)
+    conventions = KNOWN_CONVENTIONS[conventions](properties)
+    if collection_prefix:
+        conventions.collection_prefix = resolve_location(collection_prefix)
+
+    return conventions

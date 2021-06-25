@@ -262,9 +262,10 @@ class _MeasurementLocation:
 _Measurements = Dict[str, _MeasurementLocation]
 
 
-class MeasurementRecord:
+class MeasurementBundler:
     """
-    Record the information for measurements/images to later write out to metadata.
+    Incrementally record the information for a set of measurements/images to group into grids,
+    calculate geometry etc, suitable for metadata.
     """
 
     def __init__(self):
