@@ -242,25 +242,7 @@ yourself (see :class:`GridSpec doc <eodatasets3.GridSpec>` for creation):
    name generation. You can ask for suitable paths from
    :attr:`p.names <eodatasets3.DatasetPrepare.names>`:
 
-   .. doctest:: inmem
-
-      >>> # The offset within our collection
-      >>> p.names.dataset_folder
-      PosixPath('loch_ness_sightings/2019/07/04')
-      >>> # How should I name a 'red' measurement file?
-      >>> p.names.measurement_filename('red')
-      PosixPath('loch_ness_sightings_2019-07-04_red.tif')
-
-   All generated filenames are relative to the dataset folder (but can also be absolute!),
-   so we calculate the full offset by combining them:
-
-   .. doctest:: inmem
-
-      >>> full_measurement_path = p.names.dataset_folder / p.names.measurement_filename('red')
-
-   (this will still be identical to the original filename if it's absolute, as desired.)
-
-   The namer can calculate full URL paths too, see :ref:`the naming section<names_n_paths>`
+   See the :ref:`the naming section<names_n_paths>` for examples.
 
 Now finish it as a :class:`DatasetDoc <eodatasets3.DatasetDoc>`:
 
@@ -383,6 +365,11 @@ This location is called the `collection_prefix`, and we can create our namer wit
    print(f"We can resolve our previous file name to a dataset URL:")
    print(names.resolve_file(a_file_name))
 
+   print()
+
+   print(f"Or a local path (if it's file://):")
+   print(repr(names.resolve_path(a_file_name)))
+
 .. testoutput ::
 
     The dataset location is always a URL:
@@ -390,6 +377,9 @@ This location is called the `collection_prefix`, and we can create our namer wit
 
     We can resolve our previous file name to a dataset URL:
     file:///datacube/collections/s2a_fires/2018/05/04/s2a_fires_2018-05-04_water.tif
+
+    Or a local path (if it's file://):
+    PosixPath('/datacube/collections/s2a_fires/2018/05/04/s2a_fires_2018-05-04_water.tif')
 
 ..
    Let's override it quietly so we don't touch real paths on their system:
@@ -407,8 +397,7 @@ This location is called the `collection_prefix`, and we can create our namer wit
 
 .. note ::
 
-   We give the collection prefix as a local filesystem folder here (``Path('/datacube/collections')``), but
-   it can be a remote url: ``https://example.com/collections``, ``s3:// ...`` ... etc
+   The collection prefix can also be a remote url: ``https://example.com/collections``, ``s3:// ...`` ... etc
 
 
 We could now start assembling some metadata if our dataset doesn't exist,
@@ -417,19 +406,16 @@ passing it our existing fields:
 .. testcode::
 
    # Our dataset doesn't exist?
-   if names.dataset_path.exists():
-      raise ValueError("Oh no, it already exists!")
+   if not names.dataset_path.exists():
+       with DatasetAssembler(names=names) as p:
 
-   with DatasetAssembler(names=names) as p:
+          # The properties are already set, thanks to our namer.
 
-      # The properties are already set, thanks to our namer.
+          ... # Write some measurements here, etc!
 
-      ... # Write some measurements here, etc!
+          p.done()
 
-      p.done()
-
-   # Now it actually exists!
-
+   # It exists!
    assert names.dataset_path.exists()
 
 .. note ::
@@ -440,7 +426,7 @@ passing it our existing fields:
 .. note ::
 
    The assembler classes don't yet support writing to remote locations! But you can use the
-   above api to do it yourself (for now).
+   above api to write it yourself manually (for now).
 
 Naming things yourself
 ----------------------
