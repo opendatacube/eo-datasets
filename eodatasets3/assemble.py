@@ -235,7 +235,7 @@ class DatasetPrepare(Eo3Interface):
                     "Dataset location must be absolute if no collection location specified."
                 )
 
-        if collection_location and not collection_location.exists():
+        if isinstance(collection_location, Path) and not collection_location.exists():
             raise ValueError(
                 f"Provided collection location doesn't exist: {collection_location}"
             )
@@ -329,11 +329,11 @@ class DatasetPrepare(Eo3Interface):
             self.names.dataset_location = resolve_location(dataset_location)
         if metadata_path:
             self.names.metadata_file = metadata_path
-            if not dataset_location:
+            if not dataset_location and not collection_location:
                 try:
                     self.names.dataset_location
                 except ValueError:
-                    # They didn't set a dataset location.
+                    # They didn't give another way to calculate the dataset location.
                     # Default it to the metadata path.
                     self.names.dataset_location = resolve_location(metadata_path)
         self._is_completed = False
@@ -574,6 +574,9 @@ class DatasetPrepare(Eo3Interface):
         Reference a measurement from its existing path. It may be a Path or any URL
         resolvable by rasterio.
 
+        By default, a relative path is relative to your current directory. You may want
+        to specify ``relative_to_dataset_location=True``.
+
         The path will be opened to read geo and pixel information, unless you specify the
         information yourself (grid, pixels, nodata). (the latter two only needed if
         expand_valid_data==True)
@@ -671,6 +674,7 @@ class DatasetPrepare(Eo3Interface):
         embed_location: bool = False,
         validate_correctness: bool = True,
         sort_measurements: bool = True,
+        expect_geometry: bool = True,
     ) -> DatasetDoc:
         """
         Create the metadata doc as an in-memory :class:`eodatasets3.DatasetDoc` instance.
@@ -683,7 +687,11 @@ class DatasetPrepare(Eo3Interface):
         def rel_path(p: Union[str, Path]) -> str:
             if isinstance(p, PurePath):
                 if p.is_absolute():
-                    return relative_url(dataset_location, p.as_uri())
+                    return relative_url(
+                        dataset_location,
+                        p.as_uri(),
+                        allow_absolute=self._allow_absolute_paths,
+                    )
                 else:
                     return p.as_posix()
 
@@ -765,7 +773,7 @@ class DatasetPrepare(Eo3Interface):
 
         if validate_correctness:
             doc = serialise.to_doc(dataset)
-            for m in validate.validate_dataset(doc):
+            for m in validate.validate_dataset(doc, expect_geometry=expect_geometry):
                 if m.level in (Level.info, Level.warning):
                     warnings.warn(IncompleteDatasetWarning(m))
                 elif m.level == Level.error:
@@ -1541,7 +1549,7 @@ class DatasetAssembler(DatasetPrepare):
             warnings.warn(f"Cleaning unexpected gdal aux file {aux_file.as_posix()!r}")
             aux_file.unlink()
 
-        dataset_folder = self.names.dataset_path.parent
+        dataset_folder = self.names.dataset_path
 
         # Now atomically move to final location.
         # Someone else may have created the output while we were working.

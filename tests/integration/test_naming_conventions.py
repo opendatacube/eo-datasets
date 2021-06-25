@@ -388,26 +388,18 @@ def test_names_alone(tmp_path: Path):
         "ga_s2am_tester_1-2-3_023543_2013-02-03_sidecar.yaml"
     )
     assert convention.dataset_location == (
-        "s3://test-bucket/"
-        "ga_s2am_tester_1/023/543/2013/02/03/"
-        "ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
+        "s3://test-bucket/" "ga_s2am_tester_1/023/543/2013/02/03/"
     )
 
     # Can we override generated names?
 
     convention.dataset_folder = Path("custom/dataset/offset/")
     # Now the generated metadata path will be inside it:
-    assert convention.dataset_location == (
-        "s3://test-bucket/"
-        "custom/dataset/offset/"
-        "ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
-    )
+    assert convention.dataset_location == ("s3://test-bucket/" "custom/dataset/offset/")
 
     # Custom product name?
     convention.product_name = "my_custom_product"
-    assert convention.dataset_location == (
-        "s3://test-bucket/"
-        "custom/dataset/offset/"
+    assert convention.metadata_file == Path(
         "my_custom_product-2-3_023543_2013-02-03.odc-metadata.yaml"
     )
 
@@ -418,15 +410,13 @@ def test_local_path_naming(tmp_path: Path):
 
     convention = namer(p, conventions="dea", collection_prefix=Path("/my/collections"))
     assert convention.dataset_location == (
-        "file:///my/collections/"
-        "ga_s2am_tester_1/023/543/2013/02/03/"
-        "ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
+        "file:///my/collections/" "ga_s2am_tester_1/023/543/2013/02/03/"
     )
+    assert convention.resolve_file(convention.metadata_file)
+
     # We can get it as a pathlib object
     assert convention.dataset_path == Path(
-        "/my/collections/"
-        "ga_s2am_tester_1/023/543/2013/02/03/"
-        "ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
+        "/my/collections/" "ga_s2am_tester_1/023/543/2013/02/03"
     )
 
 

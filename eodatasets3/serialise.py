@@ -344,6 +344,8 @@ _EO3_PROPERTY_ORDER = [
     "id",
     "label",
     "product",
+    "location",
+    "locations",
     "crs",
     "geometry",
     "grids",
@@ -351,8 +353,6 @@ _EO3_PROPERTY_ORDER = [
     "measurements",
     "accessories",
     "lineage",
-    "location",
-    "locations",
 ]
 
 
