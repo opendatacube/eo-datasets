@@ -26,7 +26,8 @@ properties:
         format: url
     required:
       - name
-
+  location:
+    type: string
   locations:
     type: array
     items:

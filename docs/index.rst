@@ -525,8 +525,7 @@ Now our dataset location is included in the document:
     product:
       name: quaternarius
 
-    locations:
-    - s3://dea-public-data-dev/wofs/quaternarius/2019/07/04/
+    location: s3://dea-public-data-dev/wofs/quaternarius/2019/07/04/
 
 When ODC sees a location in the metadata document like this, the inner paths
 will be relative to this location instead of where the metadata document is stored.

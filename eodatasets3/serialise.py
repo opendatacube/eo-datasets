@@ -209,6 +209,9 @@ def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:
     # TODO: stable cattrs (<1.0) balks at the $schema variable.
     doc = doc.copy()
     del doc["$schema"]
+    location = doc.pop("location", None)
+    if location:
+        doc["locations"] = [location]
 
     c = cattr.Converter()
     c.register_structure_hook(uuid.UUID, _structure_as_uuid)
@@ -273,6 +276,10 @@ def to_doc(d: DatasetDoc) -> Dict:
         doc["geometry"] = shapely.geometry.mapping(d.geometry)
     doc["id"] = str(d.id)
     doc["properties"] = dict(d.properties)
+
+    if len(doc.get("locations", [])) == 1:
+        doc["location"] = doc.pop("locations")[0]
+
     return doc
 
 
