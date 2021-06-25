@@ -475,17 +475,25 @@ to avoid automatic generation (or to avoid their finicky metadata requirements).
 
 See more examples in the assembler :attr:`.names <eodatasets3.DatasetPrepare.names>` property.
 
-I don't want to store metadata with my data
--------------------------------------------
+.. _data_hates_metadata:
 
-You may want your data to live in a different location to your metadata files,
-and possibly not store it at all.
+Separating metadata from data
+-----------------------------
 
-To do this, you can give your own metadata location that is different to the
-collection or dataset location.
+(Or. "I don’t want to store ODC metadata alongside my data!")
 
-Then, tell the Assembler to embed the dataset location in the metadata file
-with ``embed_location=True``
+You may want your data to live in a different location to your ODC metadata
+files, or even not store metadata on disk at all. But you still want it to be
+easily indexed.
+
+To do this, the ``done()`` commands include an ``embed_location=True`` argument.
+This will tell the Assemblers to embed the ``dataset_location`` into the
+output document.
+
+.. note ::
+
+   When indexing a dataset, if ODC finds an embedded location, it uses it in place of
+   the metadata document's own location.
 
 For example:
 
@@ -494,7 +502,8 @@ For example:
     metadata_path = tmp_path / "my-dataset.odc-metadata.yaml"
 
     with DatasetPrepare(
-        collection_location="s3://dea-public-data-dev/wofs",
+        # Our collection location is different to our metadata location!
+        collection_location="s3://dea-public-data-dev",
         metadata_path=metadata_path,
         allow_absolute_paths=True,
     ) as p:
@@ -525,16 +534,18 @@ Now our dataset location is included in the document:
     product:
       name: quaternarius
 
-    location: s3://dea-public-data-dev/wofs/quaternarius/2019/07/04/
+    location: s3://dea-public-data-dev/quaternarius/2019/07/04/
 
-When ODC sees a location in the metadata document like this, the inner paths
-will be relative to this location instead of where the metadata document is stored.
+Now ODC will ignore the actual location of the metadata file we are indexing, and
+use the embedded ``s3`` location instead.
 
 .. note ::
 
-   Note that we used absolute paths in this example for the measurement! (because it was easier to test)
+   Note that we added ``allow_absolute_paths=True`` for our own testing simplicity
+   in this guide.
 
-   Normally you might use an S3 url (or similar) for measurements too, as you're storing them in that location.
+   In reality, your measurements should live in that same ``s3://`` location,
+   and so they'll end up relative.
 
 Dataset Prepare class reference
 -------------------------------
