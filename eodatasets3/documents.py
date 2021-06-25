@@ -8,12 +8,13 @@ import gzip
 import json
 import os
 import posixpath
-from urllib.parse import urlparse
 from copy import deepcopy
 from pathlib import Path, PurePath
-from typing import Generator, Dict, Tuple, Optional
+from typing import Generator, Dict, Tuple
+from urllib.parse import urlparse
 
 from boltons import iterutils
+
 from eodatasets3 import serialise
 
 _DOCUMENT_EXTENSIONS = (".yaml", ".yml", ".json")
@@ -305,55 +306,3 @@ def relative_path(
             )
         return value
     return value.relative_to(base_directory)
-
-
-def resolve_absolute_offset(
-    dataset_path: Path, offset: str, target_path: Optional[Path] = None
-) -> str:
-    """
-    Expand a filename (offset) relative to the dataset.
-
-    >>> external_metadata_loc = Path('/tmp/target-metadata.yaml')
-    >>> resolve_absolute_offset(
-    ...     Path('/tmp/great_test_dataset'),
-    ...     'band/my_great_band.jpg',
-    ...     external_metadata_loc,
-    ... )
-    '/tmp/great_test_dataset/band/my_great_band.jpg'
-    >>> resolve_absolute_offset(
-    ...     Path('/tmp/great_test_dataset.tar.gz'),
-    ...     'band/my_great_band.jpg',
-    ...     external_metadata_loc,
-    ... )
-    'tar:/tmp/great_test_dataset.tar.gz!band/my_great_band.jpg'
-    >>> resolve_absolute_offset(
-    ...     Path('/tmp/great_test_dataset.tar'),
-    ...     'band/my_great_band.jpg',
-    ... )
-    'tar:/tmp/great_test_dataset.tar!band/my_great_band.jpg'
-    >>> resolve_absolute_offset(
-    ...     Path('/tmp/great_test_dataset.zip'),
-    ...     'band/other/my_great_band.jpg',
-    ... )
-    'zip:/tmp/great_test_dataset.zip!band/other/my_great_band.jpg'
-    >>> resolve_absolute_offset(
-    ...     Path('/tmp/MY_DATASET'),
-    ...     'band/my_great_band.jpg',
-    ...     Path('/tmp/MY_DATASET/ga-metadata.yaml'),
-    ... )
-    'band/my_great_band.jpg'
-    """
-    dataset_path = dataset_path.absolute()
-
-    if target_path:
-        # If metadata is stored inside the dataset, keep paths relative.
-        if str(target_path.absolute()).startswith(str(dataset_path)):
-            return offset
-    # Bands are inside a tar file
-
-    if ".tar" in dataset_path.suffixes:
-        return "tar:{}!{}".format(dataset_path, offset)
-    elif ".zip" in dataset_path.suffixes:
-        return "zip:{}!{}".format(dataset_path, offset)
-    else:
-        return str(dataset_path / offset)

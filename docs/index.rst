@@ -15,21 +15,30 @@ and metadata for the `Open Data Cube`_
 
 There are two major tools for creating datasets:
 
-#. :ref:`DatasetPrepare<preparing_metadata>`, for preparing a metadata document using existing imagery and files.
-#. :ref:`DatasetAssembler<assembling_metadata>`, for creating a package folder: including metadata, writing imagery, thumbnails, checksums etc.
+ #. :ref:`DatasetAssembler<assembling_metadata>`, for writing a package: including writing the metadata
+    document, `COG`_ imagery, thumbnails, checksum files etc.
 
-Their APIs are the same, except the latter adds functions named ``write_*`` in addition to the metadata
-functions.
+ #. :ref:`DatasetPrepare<preparing_metadata>`, for preparing a metadata document,
+    referencing existing imagery and files.
+
+Their APIs are the same, except the assembler adds methods named ``write_*`` for writing new files.
+
+.. note ::
+
+   methods named ``note_*`` will note an existing file in the metadata, while ``write_*`` will write
+   the file into the package too.
 
 .. _assembling_metadata:
 
 Assemble a Dataset Package
 --------------------------
 
-Here's a simple example of creating a dataset package with one measurement (called "blue") from an existing image::
+Here's a simple example of creating a dataset package with one measurement (called "blue") from an existing image.
+
+The measurement is converted to a `COG`_ image when written to the package::
 
    collection = Path('/some/output/collection/path')
-   with DatasetAssembler(collection) as p:
+   with DatasetAssembler(collection, naming_conventions='default') as p:
       p.product_family = "blues"
 
       # Date of acquisition (UTC if no timezone).
@@ -47,10 +56,75 @@ Here's a simple example of creating a dataset package with one measurement (call
       # Complete the dataset.
       p.done()
 
-Note that until you call `done()`, nothing will exist in the dataset's final output location. It is stored in a hidden temporary
-folder in the output directory, and renamed by `done()` once complete and valid.
+.. note ::
 
-Custom stac-like properties can also be set directly on ``.properties``::
+   Note that until you call ``done()``, nothing will exist in the dataset's final output location. It is stored in a hidden temporary
+   folder in the output directory, and renamed by ``done()`` once complete and valid.
+
+
+.. _preparing_metadata:
+
+Writing only a metadata doc
+---------------------------
+
+(ie. "I already have appropriate imagery files!")
+
+Example of generating a metadata document with :class:`DatasetPrepare <eodatasets3.DatasetPrepare>`:
+
+.. testsetup ::
+
+   from pathlib import Path
+   import tempfile
+   collection_path = Path('../tests/integration/data').resolve()
+   from datetime import datetime
+
+.. testcode ::
+
+   from eodatasets3 import DatasetPrepare
+
+   usgs_level1 = collection_path / 'LC08_L1TP_090084_20160121_20170405_01_T1'
+   metadata_path = usgs_level1 / 'odc-metadata.yaml'
+
+   with DatasetPrepare(
+       metadata_path=metadata_path,
+   ) as p:
+       p.product_family = "level1"
+       p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+       p.processed_now()
+
+       # Note the measurement in the metadata. (instead of ``write``)
+       p.note_measurement('red',
+          usgs_level1 / 'LC08_L1TP_090084_20160121_20170405_01_T1_B4.TIF'
+       )
+
+       # Or give the path relative to the dataset location
+       # (eg. This will work unchanged on non-filesystem locations, such as ``s3://`` or tar files)
+       p.note_measurement('blue',
+          'LC08_L1TP_090084_20160121_20170405_01_T1_B2.TIF',
+          relative_to_dataset_location=True
+       )
+
+       # Add links to other files included in the package ("accessories"), such as
+       # alternative metadata files.
+       [mtl_path] = usgs_level1.glob('*_MTL.txt')
+       p.note_accessory_file('metadata:mtl', mtl_path)
+
+       # Add whatever else you want.
+       ...
+
+       # Validate and write our metadata document!
+       p.done()
+
+   # We created a metadata file!
+   assert metadata_path.exists()
+
+..  testcleanup ::
+
+   if metadata_path.exists():
+       metadata_path.unlink()
+
+
+Custom properties can also be set directly on ``.properties``::
 
       p.properties['fmask:cloud_cover'] = 34.0
 
@@ -62,66 +136,20 @@ And known properties are automatically normalised::
       p.properties["eo:off_nadir"] = "34"  # into a number
 
 
-.. _preparing_metadata:
+.. note ::
 
-Writing only a metadata doc
----------------------------
+   By default, a validation error will be thrown if a referenced file lives outside the dataset (location),
+   as this will require absolute paths. Relative paths are considered best-practice for Open Data Cube
+   metadata.
 
-(ie. "I already have appropriate imagery!")
+   You can allow absolute paths in your metadata document using a field on construction
+   (:meth:`DatasetPrepare() <eodatasets3.DatasetPrepare.__init__>`)::
 
-The above examples can be changed to use :class:`DatasetPrepare() <eodatasets3.DatasetPrepare>`
-(which prepares metadata) instead of a :class:`DatasetAssembler() <eodatasets3.DatasetAssembler>`
-(which writes packages)
-
-Functions named ``write_`` on assembler (which write files) have equivalent functions named ``note_*``
-(which note information into the metadata) available in both classes.
-
-Eg. :meth:`note_measurement() <eodatasets3.DatasetPrepare.note_measurement>` instead of
-:meth:`write_measurement() <eodatasets3.DatasetAssembler.write_measurement>`
-
-Example of generating metadata::
-
-
-    usgs_level1 = Path('datasets/LC08_L1TP_090084_20160121_20170405_01_T1')
-
-    with DatasetPrepare(
-      dataset_location=usgs_level1
-    ) as p:
-      p.product_family = "level1"
-      p.datetime = datetime(2019, 7, 4, 13, 7, 5)
-
-      # Note the measurement in the metadata. (instead of ``write``)
-      p.note_measurement('red',
-         usgs_level1 / 'LC08_L1TP_090084_20160121_20170405_01_T1_B3.TIF'
-      )
-
-      # Or relative to the dataset
-      # (this will work unchanged on non-filesystem locations, such as ``s3://`` or tar files)
-      p.note_measurement('blue',
-         'LC08_L1TP_090084_20160121_20170405_01_T1_B3.TIF',
-         relative_to_dataset_location=True
-      )
-
-      # Add links to other files included in the package ("accessories"), such as
-      # alternative metadata files.
-      p.note_accessory_file('metadata:mtl', mtl_path)
-
-      ...
-
-      p.done()
-
-By default, they will throw an error if a file lives outside the dataset (location),
-as this will require absolute paths. Relative paths are considered best-practice for Open Data Cube
-metadata.
-
-You can allow absolute paths with a field on construction
-(:meth:`DatasetPrepare() <eodatasets3.DatasetPrepare.__init__>`)::
-
-   with DatasetPrepare(
-      dataset_location=usgs_level1,
-      allow_absolute_paths=True,
-    ):
-        ...
+       with DatasetPrepare(
+          dataset_location=usgs_level1,
+          allow_absolute_paths=True,
+        ):
+            ...
 
 .. _COG: https://www.cogeo.org/
 
@@ -161,8 +189,8 @@ Creating documents in-memory
 
 You may want to assemble metadata entirely in memory without touching the filesystem.
 
-To do this, prepare a dataset as normal. You still need a dataset location, as referenced paths
-will be relative to this location:
+To do this, prepare a dataset as normal. You still need to give a dataset location, as paths
+in the document will be relative to this location:
 
 .. testsetup:: inmem
 
@@ -185,14 +213,16 @@ will be relative to this location:
 .. doctest:: inmem
 
    >>> from eodatasets3 import DatasetPrepare
+   >>>
    >>> p = DatasetPrepare(dataset_location=dataset_location)
    >>> p.datetime = datetime(2019, 7, 4, 13, 7, 5)
    >>> p.product_name = "loch_ness_sightings"
    >>> p.processed = datetime(2019, 7, 4, 13, 8, 7)
 
 
-We can give it a :class:`GridSpec <eodatasets3.GridSpec>` when adding measurements,
-so it will not access the measurements to read grid information itself:
+Normally when a measurement is added, the image will be opened to read
+grid and size informaation. You can avoid this by giving a :class:`GridSpec <eodatasets3.GridSpec>`
+yourself (see :class:`GridSpec doc <eodatasets3.GridSpec>` for creation):
 
 .. doctest:: inmem
 
@@ -229,6 +259,8 @@ so it will not access the measurements to read grid information itself:
       >>> full_measurement_path = p.names.dataset_folder / p.names.measurement_filename('red')
 
    (this will still be identical to the original filename if it's absolute, as desired.)
+
+   The namer can calculate full URL paths too, see :ref:`the naming section<names_n_paths>`
 
 Now finish it as a :class:`DatasetDoc <eodatasets3.DatasetDoc>`:
 
@@ -271,6 +303,8 @@ the same coverage)::
 If you do this before you `note` measurements, it will not need to read any pixels
 from them.
 
+.. _names_n_paths :
+
 Generating names & paths alone
 ------------------------------
 
@@ -308,7 +342,7 @@ Now create a `namer` instance with our properties (and chosen naming conventions
 
 .. testcode::
 
-   names = eodatasets3.namer(conventions="default", properties=d)
+   names = eodatasets3.namer(d, conventions="default")
 
 We can see some generated names:
 
@@ -332,12 +366,30 @@ Output:
 
 In reality, these paths go within a location (folder, s3 bucket, etc) somewhere.
 
-This is called the `collection_path` in :class:`DatasetAssembler <eodatasets3.DatasetAssembler>`'s
-parameters, and we can join it ourselves to find our dataset the same way:
+This location is called the `collection_prefix`, and we can create our namer with one:
 
 .. testcode::
 
    collection_path = Path('/datacube/collections')
+
+   names = eodatasets3.namer(d, collection_prefix=collection_path)
+
+   print("The dataset location is always a URL:")
+   print(names.dataset_location)
+
+   print()
+
+   a_file_name = names.measurement_filename('water')
+   print(f"We can resolve our previous file name to a dataset URL:")
+   print(names.resolve_file(a_file_name))
+
+.. testoutput ::
+
+    The dataset location is always a URL:
+    file:///datacube/collections/s2a_fires/2018/05/04/s2a_fires_2018-05-04.odc-metadata.yaml
+
+    We can resolve our previous file name to a dataset URL:
+    file:///datacube/collections/s2a_fires/2018/05/04/s2a_fires_2018-05-04_water.tif
 
 ..
    Let's override it quietly so we don't touch real paths on their system:
@@ -350,20 +402,25 @@ parameters, and we can join it ourselves to find our dataset the same way:
    import tempfile
    collection_path = Path(tempfile.mkdtemp())
 
+   names.collection_prefix = collection_path.as_uri()
 
-.. testcode::
 
-   absolute_metadata_path = collection_path / names.dataset_location
+.. note ::
 
-   if absolute_metadata_path.exists():
-       print("Our dataset already exists!")
+   We give the collection prefix as a local filesystem folder here (``Path('/datacube/collections')``), but
+   it can be a remote url: ``https://example.com/collections``, ``s3:// ...`` ... etc
+
 
 We could now start assembling some metadata if our dataset doesn't exist,
 passing it our existing fields:
 
 .. testcode::
 
-   with DatasetAssembler(collection_path, names=names) as p:
+   # Our dataset doesn't exist?
+   if names.dataset_path.exists():
+      raise ValueError("Oh no, it already exists!")
+
+   with DatasetAssembler(names=names) as p:
 
       # The properties are already set, thanks to our namer.
 
@@ -372,8 +429,18 @@ passing it our existing fields:
       p.done()
 
    # Now it actually exists!
-   assert absolute_metadata_path.exists()
 
+   assert names.dataset_path.exists()
+
+.. note ::
+
+   ``.dataset_path`` is a convenience property to get the ``.dataset_location``
+   as a local Path, if possible.
+
+.. note ::
+
+   The assembler classes don't yet support writing to remote locations! But you can use the
+   above api to do it yourself (for now).
 
 Naming things yourself
 ----------------------

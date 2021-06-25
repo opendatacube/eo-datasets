@@ -7,9 +7,10 @@ import uuid
 import warnings
 from copy import deepcopy
 from enum import Enum, auto
-from pathlib import Path, PurePath
+from pathlib import Path, PurePath, PosixPath
 from textwrap import dedent
 from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable, Union
+from urllib.parse import urlsplit
 
 import numpy
 import rasterio
@@ -22,14 +23,14 @@ from shapely.geometry.base import BaseGeometry
 import eodatasets3
 from eodatasets3 import serialise, validate, images, documents
 from eodatasets3.documents import find_and_read_documents
-from eodatasets3.images import FileWrite, GridSpec, MeasurementRecord
+from eodatasets3.images import FileWrite, GridSpec, MeasurementBundler
 from eodatasets3.model import (
     DatasetDoc,
     ProductDoc,
     Location,
     AccessoryDoc,
 )
-from eodatasets3.names import NameGenerator, namer
+from eodatasets3.names import NameGenerator, namer, resolve_location
 from eodatasets3.properties import Eo3Interface, Eo3Dict
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
@@ -162,9 +163,9 @@ class DatasetPrepare(Eo3Interface):
 
     def __init__(
         self,
-        collection_location: Optional[Path] = None,
+        collection_location: Optional[Location] = None,
         *,
-        dataset_location: Optional[Path] = None,
+        dataset_location: Optional[Union[str, Path]] = None,
         metadata_path: Optional[Path] = None,
         dataset_id: Optional[uuid.UUID] = None,
         allow_absolute_paths: bool = False,
@@ -219,7 +220,12 @@ class DatasetPrepare(Eo3Interface):
             (try it and see -- it will tell your what's missing).
         """
 
-        if not collection_location and not dataset_location and not metadata_path:
+        if (
+            (names is None)
+            and not collection_location
+            and not dataset_location
+            and not metadata_path
+        ):
             raise ValueError(
                 "Must specify either a collection folder, dataset location or a single metadata file"
             )
@@ -241,7 +247,7 @@ class DatasetPrepare(Eo3Interface):
 
         self._dataset = dataset
 
-        self._measurements = MeasurementRecord()
+        self._measurements = MeasurementBundler()
         self._accessories: Dict[str, Location] = {}
 
         self._allow_absolute_paths = allow_absolute_paths
@@ -310,20 +316,26 @@ class DatasetPrepare(Eo3Interface):
             #:     p.names.product_uri = "https://collections.earth.test.example/product/my-product"
             #:
             #: A full list of fields can be seen on :class:`eodatasets3.NameGenerator`
-            self.names = names
+            self.names: NameGenerator = names
             dataset.properties = names.metadata.properties
         else:
             # Or create some:
-            self.names = namer(
-                conventions=naming_conventions, properties=dataset.properties
+            self.names: NameGenerator = namer(
+                dataset.properties, conventions=naming_conventions
             )
-
-        self.collection_location = collection_location
+        if collection_location:
+            self.names.collection_prefix = resolve_location(collection_location)
         if dataset_location:
-            self.names.dataset_location = dataset_location
+            self.names.dataset_location = resolve_location(dataset_location)
         if metadata_path:
             self.names.metadata_file = metadata_path
-
+            if not dataset_location:
+                try:
+                    self.names.dataset_location
+                except ValueError:
+                    # They didn't set a dataset location.
+                    # Default it to the metadata path.
+                    self.names.dataset_location = resolve_location(metadata_path)
         self._is_completed = False
         self._finished_init_ = True
 
@@ -570,7 +582,7 @@ class DatasetPrepare(Eo3Interface):
         :param path: path to measurement
         :param expand_valid_data: Expand the valid data bounds with this measurement's valid data.
         :param relative_to_dataset_location: Should this be read relative to the dataset location?
-                    (requires a computed dattaset location)
+                    (requires a computed dataset location)
         """
         _validate_property_name(name)
 
@@ -582,10 +594,7 @@ class DatasetPrepare(Eo3Interface):
         if not grid:
             read_location = path
             if relative_to_dataset_location:
-                read_location = documents.resolve_absolute_offset(
-                    self._target_dataset_location(),
-                    path,
-                )
+                read_location = self.names.resolve_file(path)
 
             with rasterio.open(read_location) as ds:
                 ds: DatasetReader
@@ -608,23 +617,28 @@ class DatasetPrepare(Eo3Interface):
             expand_valid_data=expand_valid_data,
         )
 
-    def _target_dataset_location(self):
-        return (self.collection_location or Path(".")) / self.names.dataset_location
-
-    def _target_metadata_path(self):
-        return self._target_dataset_location().parent / self.names.metadata_file
+    def _target_metadata_path(self) -> Path:
+        return self.names.resolve_path(self.names.metadata_file)
 
     def write_eo3(
         self,
         path: Path = None,
+        embed_location: bool = False,
         validate_correctness: bool = True,
         sort_measurements: bool = True,
     ) -> Tuple[uuid.UUID, Path]:
         """Write the prepared metadata document to the given output path."""
-        metadata_path = (path or Path(".")) / self._target_metadata_path()
+        metadata_path = path or (self._target_metadata_path())
+        dataset_location = self.names.dataset_location
+
+        # Default behaviour:
+        #   If the metadata path is not the dataset location, then record the location.
+        if embed_location is None:
+            embed_location = dataset_location != metadata_path.as_uri()
+
         doc = serialise.to_formatted_doc(
             self.to_dataset_doc(
-                metadata_path,
+                embed_location=embed_location,
                 validate_correctness=validate_correctness,
                 sort_measurements=sort_measurements,
             )
@@ -642,16 +656,18 @@ class DatasetPrepare(Eo3Interface):
         self,
         validate_correctness: bool = True,
         sort_measurements: bool = True,
+        embed_location: Optional[bool] = False,
     ) -> Tuple[uuid.UUID, Path]:
         """Write the prepared metadata document to the given output path."""
         return self.write_eo3(
             validate_correctness=validate_correctness,
             sort_measurements=sort_measurements,
+            embed_location=embed_location,
         )
 
     def to_dataset_doc(
         self,
-        dataset_location: Optional[Path] = None,
+        dataset_location: Optional[str] = None,
         embed_location: bool = False,
         validate_correctness: bool = True,
         sort_measurements: bool = True,
@@ -662,7 +678,17 @@ class DatasetPrepare(Eo3Interface):
         (You can manually write this out using :func:`serialise.to_path(): <eodatasets3.serialise.to_path>`
         or :func:`serialise.to_stream() <eodatasets3.serialise.to_stream>`)
         """
-        dataset_location = dataset_location or self._target_dataset_location()
+        dataset_location = dataset_location or self.names.dataset_location
+
+        def rel_path(p: Union[str, Path]) -> str:
+            if isinstance(p, PurePath):
+                if p.is_absolute():
+                    return relative_url(dataset_location, p.as_uri())
+                else:
+                    return p.as_posix()
+
+            return p
+
         if not dataset_location:
             raise ValueError("No location available: cannot calculate relative paths")
 
@@ -674,7 +700,9 @@ class DatasetPrepare(Eo3Interface):
         dataset.product.href = dataset.product.href or self.names.product_uri
         dataset.label = dataset.label or self.names.dataset_label
         if embed_location:
-            dataset.locations = [dataset_location.as_uri()]
+            dataset.locations = [dataset_location]
+        else:
+            dataset.locations = None
 
         crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
 
@@ -722,19 +750,14 @@ class DatasetPrepare(Eo3Interface):
                     raise AssemblyError(
                         f"Recorded measurement already exists in the underlying dataset: {name!r}"
                     )
-                if isinstance(doc.path, PurePath):
-                    doc.path = documents.relative_path(
-                        doc.path, dataset_location.parent
-                    ).as_posix()
+                doc.path = rel_path(doc.path)
                 dataset.measurements[name] = doc
         for name, path in self._accessories.items():
             if name in dataset.accessories:
                 raise AssemblyError(
                     f"Recorded accessory already exists in the underlying dataset: {name!r}"
                 )
-            if isinstance(path, PurePath):
-                path = documents.relative_path(path, dataset_location.parent).as_posix()
-            dataset.accessories[name] = AccessoryDoc(path, name=name)
+            dataset.accessories[name] = AccessoryDoc(rel_path(path), name=name)
 
         if dataset.measurements and sort_measurements:
             # noinspection PyTypeChecker
@@ -815,7 +838,7 @@ class DatasetPrepare(Eo3Interface):
         status = "written" if self._is_completed else "unfinished"
 
         try:
-            output_location = self._target_metadata_path().as_posix()
+            output_location = self._target_metadata_path()
         except ValueError:
             output_location = "(not yet computable)"
 
@@ -854,6 +877,53 @@ class DatasetPrepare(Eo3Interface):
             category=DeprecationWarning,
         )
         self.note_accessory_file(*args, **kwargs)
+
+
+def relative_url(base: str, offset: str, allow_absolute=False):
+    """
+    >>> relative_url('file:///tmp/dataset/odc-metadata.yaml', 'file:///tmp/dataset/my-image.tif')
+    'my-image.tif'
+    >>> relative_url('file:///tmp/dataset/odc-metadata.yaml', 'file:///tmp/dataset/images/my-image.tif')
+    'images/my-image.tif'
+    >>> relative_url(
+    ...    'https://example.test/dataset/odc-metadata.yaml',
+    ...    'https://example.test/dataset/images/my-image.tif'
+    ... )
+    'images/my-image.tif'
+    >>> # Outside the base directory
+    >>> relative_url('https://example.test/dataset/odc-metadata.yaml', 'https://example.test/my-image.tif')
+    Traceback (most recent call last):
+    ...
+    ValueError: Absolute paths are not allowed, and file 'https://example.test/my-image.tif' is outside location \
+'https://example.test/dataset/odc-metadata.yaml'
+    >>> # Matching paths, different hosts.
+    >>> relative_url('https://example.test/odc-metadata.yaml', 'https://example2.test/my-image.tif')
+    Traceback (most recent call last):
+      ...
+    ValueError: Absolute paths are not allowed, and file 'https://example2.test/my-image.tif' is outside location \
+'https://example.test/odc-metadata.yaml'
+    """
+    base_parts = urlsplit(base)
+    offset_parts = urlsplit(offset)
+    if not allow_absolute:
+        if (base_parts.hostname, base_parts.scheme) != (
+            offset_parts.hostname,
+            offset_parts.scheme,
+        ):
+            raise ValueError(
+                f"Absolute paths are not allowed, and file {offset!r} is outside location {base!r}"
+            )
+
+    base_dir, _ = base_parts.path.rsplit("/", 1)
+    try:
+        return PosixPath(offset_parts.path).relative_to(base_dir).as_posix()
+    except ValueError:
+        if not allow_absolute:
+            raise ValueError(
+                f"Absolute paths are not allowed, and file {offset!r} is outside location {base!r}"
+            )
+        # We can't make it relative, return the absolute.
+        return offset
 
 
 class DatasetAssembler(DatasetPrepare):
@@ -939,6 +1009,14 @@ class DatasetAssembler(DatasetPrepare):
             dataset=dataset,
         )
 
+    def _target_collection_path(self) -> Path:
+        collection = self.names.collection_path
+        if not collection:
+            raise ValueError(
+                "Dataset assembler was not given a local collection path on construction: cannot write new files."
+            )
+        return collection
+
     @property
     def _work_path(self) -> Path:
         """
@@ -948,14 +1026,9 @@ class DatasetAssembler(DatasetPrepare):
         writer only.
         """
         if not self._tmp_work_path:
-            if not self.collection_location:
-                raise ValueError(
-                    "Dataset assembler was given no base path on construction: cannot write new files."
-                )
-
             self._tmp_work_path = Path(
                 tempfile.mkdtemp(
-                    prefix=".odcdataset-", dir=str(self.collection_location)
+                    prefix=".odcdataset-", dir=self._target_collection_path()
                 )
             )
 
@@ -1244,7 +1317,7 @@ class DatasetAssembler(DatasetPrepare):
         grid = unique_grids[0]
 
         FileWrite().create_thumbnail(
-            tuple(path for grid, path in rgbs),
+            (rgbs[0][1], rgbs[1][1], rgbs[2][1]),
             thumb_path,
             out_scale=scale_factor,
             resampling=resampling,
@@ -1366,7 +1439,10 @@ class DatasetAssembler(DatasetPrepare):
         self._checksum.add_file(path)
 
     def done(
-        self, validate_correctness: bool = True, sort_measurements: bool = True
+        self,
+        validate_correctness: bool = True,
+        sort_measurements: bool = True,
+        embed_location: Optional[bool] = False,
     ) -> Tuple[uuid.UUID, Path]:
         """
         Write the dataset and move it into place.
@@ -1379,6 +1455,8 @@ class DatasetAssembler(DatasetPrepare):
 
         :param validate_correctness: Run the eo3-validator on the resulting metadata.
         :param sort_measurements: Order measurements alphabetically. (instead of insert-order)
+        :param embed_location: Include the dataset location in the metadata document?
+                 When 'None', it will automatically do it if the location is different to metadata doc.
         :raises: :class:`IncompleteDatasetError` If any critical metadata is incomplete.
 
         :returns: The id and final path to the dataset metadata file.
@@ -1396,11 +1474,12 @@ class DatasetAssembler(DatasetPrepare):
                 category=DeprecationWarning,
             )
             return super(DatasetAssembler, self).done(
+                embed_location=embed_location,
                 validate_correctness=validate_correctness,
                 sort_measurements=sort_measurements,
             )
 
-        dataset_location = self._target_dataset_location()
+        dataset_location = self.names.dataset_location
 
         self.note_software_version(
             "eodatasets3",
@@ -1427,14 +1506,20 @@ class DatasetAssembler(DatasetPrepare):
         )
 
         dataset = self.to_dataset_doc(
-            dataset_location=tmp_metadata_path,
+            dataset_location=tmp_metadata_path.as_uri(),
+            embed_location=False,
             validate_correctness=validate_correctness,
             sort_measurements=sort_measurements,
         )
 
-        # If the metadata path is not at the dataset location, include the latter,
-        if dataset_location != self._target_metadata_path():
-            dataset.locations = [dataset_location.as_uri()]
+        if embed_location is None:
+            # If the dataset location is not the metadata path, then record the location.
+            embed_location = dataset_location != self._target_metadata_path()
+
+        if embed_location:
+            dataset.locations = [dataset_location]
+        else:
+            dataset.locations = None
 
         self._write_yaml(
             serialise.to_formatted_doc(dataset),
@@ -1448,7 +1533,7 @@ class DatasetAssembler(DatasetPrepare):
 
         # Match the lower r/w permission bits to the output folder.
         # (Temp directories default to 700 otherwise.)
-        self._work_path.chmod(self.collection_location.stat().st_mode & 0o777)
+        self._work_path.chmod(self._target_collection_path().stat().st_mode & 0o777)
 
         # GDAL writes extra metadata in aux files,
         # but we consider it a mistake if you're using those extensions.
@@ -1456,14 +1541,16 @@ class DatasetAssembler(DatasetPrepare):
             warnings.warn(f"Cleaning unexpected gdal aux file {aux_file.as_posix()!r}")
             aux_file.unlink()
 
+        dataset_folder = self.names.dataset_path.parent
+
         # Now atomically move to final location.
         # Someone else may have created the output while we were working.
         # Try, and then decide how to handle it if so.
         try:
-            dataset_location.parent.mkdir(parents=True, exist_ok=True)
-            self._work_path.rename(dataset_location.parent)
+            dataset_folder.parent.mkdir(parents=True, exist_ok=True)
+            self._work_path.rename(dataset_folder)
         except OSError:
-            if not dataset_location.exists():
+            if not dataset_folder.exists():
                 # Some other error?
                 raise
 

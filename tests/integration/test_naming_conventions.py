@@ -380,29 +380,53 @@ def test_africa_naming_conventions(tmp_path: Path):
 
 def test_names_alone(tmp_path: Path):
     p = _basic_properties_set()
-    convention = namer("dea", p)
+    convention = namer(p, conventions="dea", collection_prefix="s3://test-bucket")
 
     assert convention.product_name == "ga_s2am_tester_1"
     assert convention.dataset_folder == Path("ga_s2am_tester_1/023/543/2013/02/03")
     assert convention.metadata_filename(kind="sidecar") == Path(
         "ga_s2am_tester_1-2-3_023543_2013-02-03_sidecar.yaml"
     )
-    assert convention.dataset_location == Path(
-        "ga_s2am_tester_1/023/543/2013/02/03/ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
+    assert convention.dataset_location == (
+        "s3://test-bucket/"
+        "ga_s2am_tester_1/023/543/2013/02/03/"
+        "ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
     )
 
     # Can we override generated names?
 
-    convention.dataset_folder = Path("/tmp/custom_folder/")
+    convention.dataset_folder = Path("custom/dataset/offset/")
     # Now the generated metadata path will be inside it:
-    assert convention.dataset_location == Path(
-        "/tmp/custom_folder/ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
+    assert convention.dataset_location == (
+        "s3://test-bucket/"
+        "custom/dataset/offset/"
+        "ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
     )
 
     # Custom product name?
     convention.product_name = "my_custom_product"
-    assert convention.dataset_location == Path(
-        "/tmp/custom_folder/my_custom_product-2-3_023543_2013-02-03.odc-metadata.yaml"
+    assert convention.dataset_location == (
+        "s3://test-bucket/"
+        "custom/dataset/offset/"
+        "my_custom_product-2-3_023543_2013-02-03.odc-metadata.yaml"
+    )
+
+
+def test_local_path_naming(tmp_path: Path):
+    p = _basic_properties_set()
+    # The collection prefix can be given as a local path:
+
+    convention = namer(p, conventions="dea", collection_prefix=Path("/my/collections"))
+    assert convention.dataset_location == (
+        "file:///my/collections/"
+        "ga_s2am_tester_1/023/543/2013/02/03/"
+        "ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
+    )
+    # We can get it as a pathlib object
+    assert convention.dataset_path == Path(
+        "/my/collections/"
+        "ga_s2am_tester_1/023/543/2013/02/03/"
+        "ga_s2am_tester_1-2-3_023543_2013-02-03.odc-metadata.yaml"
     )
 
 
