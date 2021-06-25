@@ -2,9 +2,7 @@
 
 [![Linting](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/lint.yml/badge.svg)](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/lint.yml)
 [![Tests](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/test.yml/badge.svg)](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/test.yml)
-[![Coverage Status](
-https://coveralls.io/repos/GeoscienceAustralia/eo-datasets/badge.svg?branch=eodatasets3
-)](https://coveralls.io/r/GeoscienceAustralia/eo-datasets?branch=eodatasets3)
+[![Coverage Status](https://img.shields.io/codecov/c/github/GeoscienceAustralia/eo-datasets)](https://app.codecov.io/gh/GeoscienceAustralia/eo-datasets)
 
 A tool to easily write, validate and convert [ODC](https://github.com/opendatacube/datacube-core) 
 datasets and metadata.

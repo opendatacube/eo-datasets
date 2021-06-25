@@ -31,5 +31,5 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CodeCovToken }}
-          file: ./coverage.xml
+          file: ./tests/coverage.xml
           fail_ci_if_error: false
