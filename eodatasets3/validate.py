@@ -153,6 +153,7 @@ def validate_dataset(
     thorough: bool = False,
     readable_location: Union[str, Path] = None,
     expect_extra_measurements: bool = False,
+    expect_geometry: bool = True,
 ) -> ValidationMessages:
     """
     Validate a a dataset document, optionally against the given product.
@@ -203,7 +204,7 @@ def validate_dataset(
     if not dataset.product.href:
         _info("product_href", "A url (href) is recommended for products")
 
-    yield from _validate_geo(dataset)
+    yield from _validate_geo(dataset, expect_geometry=expect_geometry)
 
     # Note that a dataset may have no measurements (eg. telemetry data).
     # (TODO: a stricter mode for when we know we should have geo and measurement info)
@@ -693,9 +694,9 @@ def _is_nan(v):
     return isinstance(v, float) and math.isnan(v)
 
 
-def _validate_geo(dataset: DatasetDoc):
+def _validate_geo(dataset: DatasetDoc, expect_geometry: bool = True):
     has_some_geo = _has_some_geo(dataset)
-    if not has_some_geo:
+    if not has_some_geo and expect_geometry:
         yield _info("non_geo", "No geo information in dataset")
         return
 

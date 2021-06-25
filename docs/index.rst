@@ -4,6 +4,23 @@
   otherwise, which is extremely annoying for small projects.
   (there's a mountain of empty vertical space on almost all projects! why collapse?)
 
+.. testsetup :: *
+
+   integration_data_path = Path('../tests/integration/data').resolve()
+
+   blue_geotiff_path = integration_data_path / 'LC08_L1TP_090084_20160121_20170405_01_T1/LC08_L1TP_090084_20160121_20170405_01_T1_B2.TIF'
+
+   tmp_path = Path(tempfile.mkdtemp())
+
+   collection = tmp_path / 'collection'
+   collection.mkdir()
+
+.. testcleanup :: *
+
+   import shutil
+   shutil.rmtree(tmp_path)
+
+
 EO Datasets 3
 -------------
 
@@ -35,9 +52,12 @@ Assemble a Dataset Package
 
 Here's a simple example of creating a dataset package with one measurement (called "blue") from an existing image.
 
-The measurement is converted to a `COG`_ image when written to the package::
+The measurement is converted to a `COG`_ image when written to the package:
 
-   collection = Path('/some/output/collection/path')
+.. testcode ::
+
+   from eodatasets3 import DatasetAssembler
+
    with DatasetAssembler(collection, naming_conventions='default') as p:
       p.product_family = "blues"
 
@@ -71,12 +91,9 @@ Writing only a metadata doc
 
 Example of generating a metadata document with :class:`DatasetPrepare <eodatasets3.DatasetPrepare>`:
 
-.. testsetup ::
+.. testcode ::
 
-   from pathlib import Path
-   import tempfile
-   collection_path = Path('../tests/integration/data').resolve()
-   from datetime import datetime
+   collection_path = integration_data_path
 
 .. testcode ::
 
@@ -195,19 +212,17 @@ in the document will be relative to this location:
 .. testsetup:: inmem
 
    from eodatasets3 import GridSpec
-   from affine import Affine
-   from rasterio.crs import CRS
-   from pathlib import Path
-   import numpy
-   from datetime import datetime
+
+   import tempfile
+
+   tmp_path = Path(tempfile.mkdtemp())
 
    grid_spec = GridSpec(shape=(7721, 7621),
       transform=Affine(30.0, 0.0, 241485.0, 0.0, -30.0, -2281485.0),
       crs=CRS.from_epsg(32656)
    )
 
-   import tempfile
-   dataset_location = Path(tempfile.mkdtemp())
+   dataset_location = (tmp_path / 'test_dataset')
    measurement_path = dataset_location / "our_image_dont_read_it.tif"
 
 .. doctest:: inmem
@@ -373,7 +388,7 @@ This location is called the `collection_prefix`, and we can create our namer wit
 .. testoutput ::
 
     The dataset location is always a URL:
-    file:///datacube/collections/s2a_fires/2018/05/04/s2a_fires_2018-05-04.odc-metadata.yaml
+    file:///datacube/collections/s2a_fires/2018/05/04/
 
     We can resolve our previous file name to a dataset URL:
     file:///datacube/collections/s2a_fires/2018/05/04/s2a_fires_2018-05-04_water.tif
@@ -460,6 +475,67 @@ to avoid automatic generation (or to avoid their finicky metadata requirements).
 
 See more examples in the assembler :attr:`.names <eodatasets3.DatasetPrepare.names>` property.
 
+I don't want to store metadata with my data
+-------------------------------------------
+
+You may want your data to live in a different location to your metadata files,
+and possibly not store it at all.
+
+To do this, you can give your own metadata location that is different to the
+collection or dataset location.
+
+Then, tell the Assembler to embed the dataset location in the metadata file
+with ``embed_location=True``
+
+For example:
+
+..  testcode ::
+
+    metadata_path = tmp_path / "my-dataset.odc-metadata.yaml"
+
+    with DatasetPrepare(
+        collection_location="s3://dea-public-data-dev/wofs",
+        metadata_path=metadata_path,
+        allow_absolute_paths=True,
+    ) as p:
+        p.dataset_id = UUID("8c9e907a-df35-407c-a89b-920d0b24fdbf")
+        p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+        p.product_family = "quaternarius"
+        p.processed_now()
+
+        p.note_measurement("blue", blue_geotiff_path)
+
+        # When writing, embed our dataset location in the output
+        p.done(embed_location=True)
+
+    # Print the header of the document:
+    output =  metadata_path.read_text()
+    print(output[:output.find('crs:')].strip())
+
+Now our dataset location is included in the document:
+
+..  testoutput ::
+
+    ---
+    # Dataset
+    $schema: https://schemas.opendatacube.org/dataset
+    id: 8c9e907a-df35-407c-a89b-920d0b24fdbf
+
+    label: quaternarius_2019-07-04
+    product:
+      name: quaternarius
+
+    locations:
+    - s3://dea-public-data-dev/wofs/quaternarius/2019/07/04/
+
+When ODC sees a location in the metadata document like this, the inner paths
+will be relative to this location instead of where the metadata document is stored.
+
+.. note ::
+
+   Note that we used absolute paths in this example for the measurement! (because it was easier to test)
+
+   Normally you might use an S3 url (or similar) for measurements too, as you're storing them in that location.
 
 Dataset Prepare class reference
 -------------------------------
