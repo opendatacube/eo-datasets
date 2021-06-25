@@ -312,10 +312,10 @@ class LazyDatasetLocation:
                 "dataset_location or metadata_path!"
             )
 
-        offset = c.dataset_folder / c.metadata_file
+        offset = c.dataset_folder
         if offset.is_absolute():
             raise ValueError("Dataset offset is expected to be relative to collection")
-        return f"{c.collection_prefix}/{offset.as_posix()}"
+        return f"{c.collection_prefix}/{offset.as_posix()}/"
 
 
 class MissingRequiredFields(ValueError):
@@ -514,7 +514,9 @@ class NameGenerator:
        >>> collection = "s3://dea-public-data-dev/collections"
        >>> n = namer(conventions='default', properties=p, collection_prefix=collection)
        >>> n.dataset_location
-       's3://dea-public-data-dev/collections/ls7_nbar/2014/04/05/ls7_nbar_2014-04-05.odc-metadata.yaml'
+       's3://dea-public-data-dev/collections/ls7_nbar/2014/04/05/'
+       >>> n.metadata_file
+       PosixPath('ls7_nbar_2014-04-05.odc-metadata.yaml')
 
     All fields named ``*_file`` are filenames inside (relative to) the
     ``self.dataset_location``.

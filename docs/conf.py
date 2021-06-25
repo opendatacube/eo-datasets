@@ -20,6 +20,16 @@ nitpicky = True
 # Show warnings on page so people want to fix them more.
 keep_warnings = True
 
+doctest_global_setup = """
+import numpy
+import tempfile
+from uuid import UUID
+from datetime import datetime
+from affine import Affine
+from rasterio.crs import CRS
+from pathlib import Path
+"""
+
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
