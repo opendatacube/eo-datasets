@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Callable
 
+import json
 import pytest
 
 from eodatasets3 import serialise
@@ -31,6 +32,13 @@ LS8_TELEMETRY_PATH: Path = (
     / "LS8_OLITIRS_STD-MD_P00_LC80840720742017365LGN00_084_072-074_20180101T004644Z20180101T004824_1"
 )
 
+# Manually converted from a S1 STAC document
+S1_EO3_PATH: Path = (
+    Path(__file__).parent
+    / "data"
+    / "s1_rtc_021EE1_N00E001_2019_09_13_metadata_eo3.json"
+)
+
 
 WOFS_PATH: Path = Path(__file__).parent / "data" / "wofs"
 
@@ -45,6 +53,12 @@ def tar_offset(tar: Path, offset: str):
 
 def relative_offset(base, offset):
     return offset
+
+
+@pytest.fixture
+def sentinel1_eo3() -> Path:
+    with open(S1_EO3_PATH) as f:
+        return json.load(f)
 
 
 @pytest.fixture

@@ -55,7 +55,7 @@ properties:
           type: array
           items:
             type: number
-          minItems: 9
+          minItems: 6
           maxItems: 9
       required:
         - shape

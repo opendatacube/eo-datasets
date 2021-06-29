@@ -219,15 +219,17 @@ def _structure_as_stac_props(d, t):
 
 
 def _structure_as_affine(d: Tuple, t):
-    if len(d) != 9:
-        raise ValueError(f"Expected 9 coefficients in transform. Got {d!r}")
+    if len(d) not in [6, 9]:
+        raise ValueError(f"Expected 6 or 9 coefficients in transform. Got {d!r}")
 
-    if tuple(d[-3:]) != (0.0, 0.0, 1.0):
-        raise ValueError(
-            f"Nine-element affine should always end in [0, 0, 1]. Got {d!r}"
-        )
+    if len(d) == 9:
+        if tuple(d[-3:]) != (0.0, 0.0, 1.0):
+            raise ValueError(
+                f"Nine-element affine should always end in [0, 0, 1]. Got {d!r}"
+            )
+        d = [*d[:-3]]
 
-    return Affine(*d[:-3])
+    return Affine(*d)
 
 
 def _unstructure_as_stac_props(v: StacPropertyView):
