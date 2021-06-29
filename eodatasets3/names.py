@@ -605,12 +605,12 @@ class NameGenerator:
     #: (Defaults to the metadata path inside the dataset_folder)
     dataset_location: str = LazyDatasetLocation()
 
-    #: The path to the ODC metadata file.
+    #: The path or URL to the ODC metadata file.
     #:
-    #: (it's relative to self.dataset_location ... but could be absolute too)
+    #: (if relative, it's relative to self.dataset_location ... but could be absolute too)
     #:
     #: Example: ``Path('ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml')``
-    metadata_file: Path = LazyFileName("", "odc-metadata.yaml")
+    metadata_file: Union[str, Path] = LazyFileName("", "odc-metadata.yaml")
 
     #: The name of a checksum file
     checksum_file: Path = LazyFileName("", "sha1")

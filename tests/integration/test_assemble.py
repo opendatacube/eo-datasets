@@ -369,6 +369,60 @@ def test_minimal_generated_naming_package(tmp_path: Path, l1_ls8_folder: Path):
     )
 
 
+def test_generated_metadata_path(l1_ls7_tarball: Path):
+    """
+    We can specify a dataset_location alone, such as a compressed tarball.
+
+    The metadata path will be a sibling file, and measurements will be read
+    from inside the tarball.
+    """
+
+    with DatasetPrepare(
+        # Our location is a Path() to a local tar (with suffix '.tar')
+        dataset_location=l1_ls7_tarball
+    ) as p:
+        p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+        p.product_family = "tarred-product"
+        p.processed_now()
+
+        # When converting the Path() to a URL, it should convert tar paths to `tar://` scheme.
+        expected_dataset_location = f"tar:{l1_ls7_tarball.as_posix()}!/"
+        assert p.names.dataset_location == expected_dataset_location
+
+        # relative-to-location means our resulting URL will be a file inside our tar location:
+        p.note_measurement(
+            "green",
+            "LE07_L1TP_104078_20130429_20161124_01_T1_B2.TIF",
+            relative_to_dataset_location=True,
+        )
+
+        dataset_id, metadata_path = p.done(embed_location=True)
+
+    # The generated metadata-path has the same name as the tar, but with ".odc-metadata.yaml" suffix.
+    assert (
+        metadata_path
+        == l1_ls7_tarball.parent
+        / "LE07_L1TP_104078_20130429_20161124_01_T1.odc-metadata.yaml"
+    )
+
+    assert_expected_eo3_path(
+        {
+            "$schema": "https://schemas.opendatacube.org/dataset",
+            "label": "tarred_product_2019-07-04",
+            "product": {"name": "tarred_product"},
+            "location": expected_dataset_location,
+            "measurements": {
+                "green": {"path": "LE07_L1TP_104078_20130429_20161124_01_T1_B2.TIF"}
+            },
+            "accessories": {},
+            "lineage": {},
+        },
+        metadata_path,
+        # Tested in other tests. We only care about paths.
+        ignore_fields=["id", "properties", "geometry", "grids", "crs"],
+    )
+
+
 def test_dataset_no_measurements(tmp_path: Path):
     """Can we make a dataset with no measurements? (eg. telemetry data)"""
     with DatasetAssembler(tmp_path) as p:
