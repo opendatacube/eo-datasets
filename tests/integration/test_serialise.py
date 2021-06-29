@@ -5,6 +5,10 @@ from eodatasets3 import serialise
 from tests.common import dump_roundtrip
 
 
+def test_stac_to_eo3_serialise(sentinel1_eo3):
+    dump_roundtrip(sentinel1_eo3)
+
+
 def test_valid_document_works(tmp_path: Path, example_metadata: Dict):
     assert_unchanged_after_roundstrip(example_metadata)
 
