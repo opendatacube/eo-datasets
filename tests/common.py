@@ -47,15 +47,17 @@ def assert_expected_eo3_path(
         # We check the geometry below
         ignore_fields=("geometry",) + tuple(ignore_fields),
     )
-    # Compare geometry after parsing, rather than comparing the raw dict values.
-    produced_dataset = serialise.from_path(expected_path)
-    expected_dataset = serialise.from_doc(expected_doc, skip_validation=True)
-    if expected_dataset.geometry is None:
-        assert produced_dataset.geometry is None
-    else:
-        assert_shapes_mostly_equal(
-            produced_dataset.geometry, expected_dataset.geometry, 0.00000001
-        )
+
+    if "geometry" not in ignore_fields:
+        # Compare geometry after parsing, rather than comparing the raw dict values.
+        produced_dataset = serialise.from_path(expected_path)
+        expected_dataset = serialise.from_doc(expected_doc, skip_validation=True)
+        if expected_dataset.geometry is None:
+            assert produced_dataset.geometry is None
+        else:
+            assert_shapes_mostly_equal(
+                produced_dataset.geometry, expected_dataset.geometry, 0.00000001
+            )
 
 
 def assert_shapes_mostly_equal(

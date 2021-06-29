@@ -30,7 +30,7 @@ from eodatasets3.model import (
     Location,
     AccessoryDoc,
 )
-from eodatasets3.names import NameGenerator, namer, resolve_location
+from eodatasets3.names import NameGenerator, namer, resolve_location, dc_uris
 from eodatasets3.properties import Eo3Interface, Eo3Dict
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
@@ -92,6 +92,52 @@ def _validate_property_name(name: str):
             f"Not a valid property name {name!r} "
             "(must be alphanumeric with colons or underscores)"
         )
+
+
+def _default_metadata_path(dataset_url: str):
+    """
+    The default metadata path for a given dataset location url.
+
+    By default, we put a sibling file with extension 'odc-metadata.yaml':
+    >>> _default_metadata_path('file:///tmp/ls7_nbar_20120403_c1/esri-scene.stac-item.json')
+    'file:///tmp/ls7_nbar_20120403_c1/esri-scene.odc-metadata.yaml'
+    >>> _default_metadata_path('s3://deafrica-data/jaxa/alos_palsar_mosaic/2017/N05E040/N05E040_2017.tif')
+    's3://deafrica-data/jaxa/alos_palsar_mosaic/2017/N05E040/N05E040_2017.odc-metadata.yaml'
+    >>> _default_metadata_path('file:///tmp/ls7_nbar_20120403_c1/my-dataset.tar.gz')
+    'file:///tmp/ls7_nbar_20120403_c1/my-dataset.odc-metadata.yaml'
+
+    Or, if a directory, we place one inside:
+    >>> _default_metadata_path('file:///tmp/ls7_nbar_20120403_c1/')
+    'file:///tmp/ls7_nbar_20120403_c1/odc-metadata.yaml'
+
+    If a tar/zip file, place it alongside.
+    >>> _default_metadata_path('tar:///g/data/v10/somewhere/my-dataset.tar!/')
+    'file:///g/data/v10/somewhere/my-dataset.odc-metadata.yaml'
+    >>> _default_metadata_path('zip:///g/data/v10/landsat-dataset.zip!')
+    'file:///g/data/v10/landsat-dataset.odc-metadata.yaml'
+
+    Unless it's already a metadata path:
+    >>> _default_metadata_path('file:///tmp/ls7_nbar_20120403_c1/odc-metadata.yaml')
+    'file:///tmp/ls7_nbar_20120403_c1/odc-metadata.yaml'
+    """
+    # Already a metadata url?
+    if dataset_url.endswith("odc-metadata.yaml"):
+        return dataset_url
+
+    # If a tar URL, convert to file before proceding.
+    u = urlsplit(dataset_url)
+    path = PosixPath(u.path)
+    if u.scheme in ("tar", "zip"):
+        dataset_url = f"file://{path.as_posix()}"
+
+    # A directory, place a default name inside.
+    if dataset_url.endswith("/"):
+        return f"{dataset_url}odc-metadata.yaml"
+
+    # Otherwise a sibling file to the dataset file.
+    base_url, file_name = dataset_url.rsplit("/", maxsplit=1)
+    file_stem = file_name.split(".")[0]
+    return dc_uris.uri_resolve(dataset_url, f"{base_url}/{file_stem}.odc-metadata.yaml")
 
 
 class DatasetPrepare(Eo3Interface):
@@ -169,7 +215,7 @@ class DatasetPrepare(Eo3Interface):
         metadata_path: Optional[Path] = None,
         dataset_id: Optional[uuid.UUID] = None,
         allow_absolute_paths: bool = False,
-        naming_conventions: str = "default",
+        naming_conventions: Optional[str] = None,
         names: Optional[NameGenerator] = None,
         dataset: Optional[DatasetDoc] = None,
     ) -> None:
@@ -263,79 +309,106 @@ class DatasetPrepare(Eo3Interface):
         #: ``add_source_*()`` methods.
         self.geometry: Optional[BaseGeometry] = None
 
-        # They may have given us initialised naming conventions already:
-        if names is not None:
-            #: The name generator  (an instance of :class:`NameGenerator <eodatasets3.NameGenerator>`)
-            #:
-            #: By default, all names will be generated based on metadata
-            #: fields and the chosen naming conventions.
-            #:
-            #: But you can set your own names here manually to avoid the magic.
-            #:
-            #: (for the devious among you, this can also avoid metadata field requirements
-            #: for name generation).
-            #:
-            #: Examples:
-            #:
-            #: Set a product name::
-            #:
-            #:     p.names.product_name = 'my_product_name'
-            #:
-            #: Manually set the abbreviations used in name generation
-            #:
-            #: (By default, for example, landsat-7 will be abbreviated to "ls7". But maybe
-            #: you want "ls" in all your datasets)::
-            #:
-            #:     p.names.platform_abbreviated = "ls"
-            #:     # Other abbreviations:
-            #:     p.names.instrument_abbreviated = "e"
-            #:     p.names.producer_abbreviated = "usgs"
-            #:
-            #: Set your own label
-            #: (the human identifier for the dataset, and the default prefix of filenames)::
-            #:
-            #:     p.names.dataset_label = "landsat-observations-12th-may-2021"
-            #:
-            #: Change the folder offset for each dataset. All generated files paths are relative
-            #: to this folder (and it is relative to the collection path)::
-            #:
-            #:     p.names.dataset_folder = Path("datasets/january/2021")
-            #:
-            #: Set a different pattern used for generating filenames
-            #: All filenames have a file_id (eg. "odc-metadata" or "") and a suffix (eg. "yaml")
-            #: (Can contain folder separators. It will be relative to the dataset folder)::
-            #:
-            #:     p.names.filename_pattern = "my-file.{file_id}.{suffix}"
-            #:
-            #: The path to the EO3 metadata doc (relative path to the dataset location)::
-            #:
-            #:     p.names.metadata_file = Path("my-metadata.odc-metadata.yaml")
-            #:
-            #: The URI for the product::
-            #:
-            #:     p.names.product_uri = "https://collections.earth.test.example/product/my-product"
-            #:
-            #: A full list of fields can be seen on :class:`eodatasets3.NameGenerator`
-            self.names: NameGenerator = names
-            dataset.properties = names.metadata.properties
-        else:
-            # Or create some:
-            self.names: NameGenerator = namer(
-                dataset.properties, conventions=naming_conventions
+        no_naming_specified = (
+            (names is None)
+            and naming_conventions is None
+            and collection_location is None
+        )
+        if names is None:
+            names: NameGenerator = namer(
+                dataset.properties, conventions=naming_conventions or "default"
             )
+        else:
+            # Our properties should come from the given names instance.
+            dataset.properties = names.metadata.properties
+
+        #: The name generator  (an instance of :class:`NameGenerator <eodatasets3.NameGenerator>`)
+        #:
+        #: By default, all names will be generated based on metadata
+        #: fields and the chosen naming conventions.
+        #:
+        #: But you can set your own names here manually to avoid the magic.
+        #:
+        #: (for the devious among you, this can also avoid metadata field requirements
+        #: for name generation).
+        #:
+        #: Examples:
+        #:
+        #: Set a product name::
+        #:
+        #:     p.names.product_name = 'my_product_name'
+        #:
+        #: Manually set the abbreviations used in name generation
+        #:
+        #: (By default, for example, landsat-7 will be abbreviated to "ls7". But maybe
+        #: you want "ls" in all your datasets)::
+        #:
+        #:     p.names.platform_abbreviated = "ls"
+        #:     # Other abbreviations:
+        #:     p.names.instrument_abbreviated = "e"
+        #:     p.names.producer_abbreviated = "usgs"
+        #:
+        #: Set your own label
+        #: (the human identifier for the dataset, and the default prefix of filenames)::
+        #:
+        #:     p.names.dataset_label = "landsat-observations-12th-may-2021"
+        #:
+        #: Change the folder offset for each dataset. All generated files paths are relative
+        #: to this folder (and it is relative to the collection path)::
+        #:
+        #:     p.names.dataset_folder = Path("datasets/january/2021")
+        #:
+        #: Set a different pattern used for generating filenames
+        #: All filenames have a file_id (eg. "odc-metadata" or "") and a suffix (eg. "yaml")
+        #: (Can contain folder separators. It will be relative to the dataset folder)::
+        #:
+        #:     p.names.filename_pattern = "my-file.{file_id}.{suffix}"
+        #:
+        #: The path to the EO3 metadata doc (relative path to the dataset location)::
+        #:
+        #:     p.names.metadata_file = Path("my-metadata.odc-metadata.yaml")
+        #:
+        #: The URI for the product::
+        #:
+        #:     p.names.product_uri = "https://collections.earth.test.example/product/my-product"
+        #:
+        #: A full list of fields can be seen on :class:`eodatasets3.NameGenerator`
+        self.names: NameGenerator = names
+
         if collection_location:
             self.names.collection_prefix = resolve_location(collection_location)
         if dataset_location:
             self.names.dataset_location = resolve_location(dataset_location)
         if metadata_path:
-            self.names.metadata_file = metadata_path
-            if not dataset_location and not collection_location:
-                try:
-                    self.names.dataset_location
-                except ValueError:
-                    # They didn't give another way to calculate the dataset location.
-                    # Default it to the metadata path.
-                    self.names.dataset_location = resolve_location(metadata_path)
+            self.names.metadata_file = resolve_location(metadata_path)
+
+        has_collection_location = self.names.collection_prefix is not None
+        try:
+            has_dataset_location = self.names.dataset_location is not None
+        except ValueError:
+            # "Not enough fields to fill naming conventions"
+            has_dataset_location = False
+        try:
+            has_metadata_path = self.names.metadata_file is not None
+        except ValueError:
+            # "Not enough fields to fill naming conventions"
+            has_metadata_path = False
+
+        # We must always have a metadata path and dataset location.
+        # If they only gave a metadata path, it will be the dataset_location too.
+        if (
+            (not has_dataset_location)
+            and has_metadata_path
+            and (not has_collection_location)
+        ):
+            self.names.dataset_location = self.names.metadata_file
+
+        # If they only gave a dataset location, and don't have naming conventions, make metadata file a sibling.
+        if (not has_metadata_path) and no_naming_specified and has_dataset_location:
+            self.names.metadata_file = _default_metadata_path(
+                self.names.dataset_location
+            )
+
         self._is_completed = False
         self._finished_init_ = True
 
