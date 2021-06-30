@@ -590,23 +590,23 @@ But you usually don't need to give them explicitly. They will be inferred if mis
  #. If you only give a dataset location, a metadata path will be created as a
     sibling file with ``.odc-metadata.yaml`` suffix within the same "directory" as the location.::
 
-        dataset_location =       "file:///tmp/`ls7_nbar_20120403_c1/my-dataset.tar"
+        dataset_location       = "file:///tmp/ls7_nbar_20120403_c1/my-dataset.tar"
         inferred_metadata_path = "file:///tmp/ls7_nbar_20120403_c1/my-dataset.odc-metadata.yaml"
 
- #. ... or specify neither! And have them generated from a base `collection_path`.::
+ #. ... or you can give neither of them! And they will be generated from a base `collection_path`.::
 
-        collection_path = "file:///collections"
+        collection_path           = "file:///collections"
         inferred_dataset_location = "file:///collections/ga_s2am_level4_3/023/543/2013/02/03/
-        inferred_metadata_path = "file:///collections/ga_s2am_level4_3/023/543/2013/02/03/ga_s2am_level4_3-2-3_023543_2013-02-03_final.odc-metadata.yaml
+        inferred_metadata_path    = "file:///collections/ga_s2am_level4_3/023/543/2013/02/03/ga_s2am_level4_3-2-3_023543_2013-02-03_final.odc-metadata.yaml
 
 
 .. note::
-   All locations can be given as a :class:`pathlib.Path`, and they will
-   be converted into URLs for you.
+   For local files, you can give the location as a :class:`pathlib.Path`,
+   and it will internally be converted into a URL for you.
 
-
-These offsets from a collection path are generated from your metadata properties and
-chosen naming conventions. You can also :attr:`override parts of it individually <eodatasets3.DatasetPrepare.names>`.
+In the third case, the folder and file names are generated from your
+metadata properties and chosen naming convention. You can
+also :attr:`set folders, files and parts yourself <eodatasets3.DatasetPrepare.names>`.
 
 Specifying a collection path::
 
@@ -617,8 +617,10 @@ Let's print out a table of example default paths for each built-in naming conven
 
 .. testcode ::
 
-   from eodatasets3 import namer, names, DatasetDoc
+   from eodatasets3 import namer, DatasetDoc
+   import eodatasets3.names
 
+   # Build an example dataset
    p = DatasetDoc()
    p.platform = "sentinel-2a"
    p.instrument = "MSI"
@@ -632,32 +634,34 @@ Let's print out a table of example default paths for each built-in naming conven
    p.collection_number = 3
    p.properties['sentinel:sentinel_tile_id'] = 'S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00'
 
-   collection_prefix = 'https://collections.test'
+   collection_prefix = 'https://test-collection'
 
    # Print the result for each known convention
    header = f"{'convention':20} {'metadata_file':64} dataset_location"
    print(header)
    print('-' * len(header))
-   for convention in names.KNOWN_CONVENTIONS.keys():
-       n = namer(p, conventions=convention, collection_prefix=collection_prefix)
-       print(f"{convention:20} {str(n.metadata_file):64} {n.dataset_location}")
+   for conventions in eodatasets3.names.KNOWN_CONVENTIONS.keys():
+       n = namer(p, conventions=conventions, collection_prefix=collection_prefix)
+       print(f"{conventions:20} {str(n.metadata_file):64} {n.dataset_location}")
+
+Result:
 
 .. testoutput ::
 
    convention           metadata_file                                                    dataset_location
    ------------------------------------------------------------------------------------------------------
-   default              ga_s2am_level4_3-2-3_023543_2013-02-03_final.odc-metadata.yaml   https://collections.test/ga_s2am_level4_3/023/543/2013/02/03/
-   dea                  ga_s2am_level4_3-2-3_023543_2013-02-03_final.odc-metadata.yaml   https://collections.test/ga_s2am_level4_3/023/543/2013/02/03/
-   dea_s2               ga_s2am_level4_3-2-3_023543_2013-02-03_final.odc-metadata.yaml   https://collections.test/ga_s2am_level4_3/023/543/2013/02/03/20210426T010904/
-   dea_s2_derivative    ga_s2_level4_3_023543_2013-02-03_final.odc-metadata.yaml         https://collections.test/ga_s2_level4_3/1-2-3/023/543/2013/02/03/20210426T010904/
-   dea_c3               ga_s2_level4_3_023543_2013-02-03_final.odc-metadata.yaml         https://collections.test/ga_s2_level4_3/1-2-3/023/543/2013/02/03/
-   deafrica             level4_s2_023543_2013-02-03_final.odc-metadata.yaml              https://collections.test/level4_s2/1-2-3/023/543/2013/02/03/
+   default              ga_s2am_level4_3-2-3_023543_2013-02-03_final.odc-metadata.yaml   https://test-collection/ga_s2am_level4_3/023/543/2013/02/03/
+   dea                  ga_s2am_level4_3-2-3_023543_2013-02-03_final.odc-metadata.yaml   https://test-collection/ga_s2am_level4_3/023/543/2013/02/03/
+   dea_s2               ga_s2am_level4_3-2-3_023543_2013-02-03_final.odc-metadata.yaml   https://test-collection/ga_s2am_level4_3/023/543/2013/02/03/20210426T010904/
+   dea_s2_derivative    ga_s2_level4_3_023543_2013-02-03_final.odc-metadata.yaml         https://test-collection/ga_s2_level4_3/1-2-3/023/543/2013/02/03/20210426T010904/
+   dea_c3               ga_s2_level4_3_023543_2013-02-03_final.odc-metadata.yaml         https://test-collection/ga_s2_level4_3/1-2-3/023/543/2013/02/03/
+   deafrica             level4_s2_023543_2013-02-03_final.odc-metadata.yaml              https://test-collection/level4_s2/1-2-3/023/543/2013/02/03/
 
 
 .. note::
 
    The ``default`` conventions look the same as ``dea`` here, but ``dea`` is
-   stricter in its mandatory metadata fields (to follow policies within the
+   stricter in its mandatory metadata fields (following policies within the
    organisation).
 
    You can leave out many more properties from your metadata in ``default`` and they
