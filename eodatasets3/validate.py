@@ -701,7 +701,8 @@ def _validate_geo(dataset: DatasetDoc, expect_geometry: bool = True):
         return
 
     if dataset.geometry is None:
-        yield _error("incomplete_geo", "Dataset has some geo fields but no geometry")
+        if expect_geometry:
+            yield _info("incomplete_geo", "Dataset has some geo fields but no geometry")
     elif not dataset.geometry.is_valid:
         yield _error(
             "invalid_geometry",
