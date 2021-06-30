@@ -443,6 +443,9 @@ passing it our existing fields:
    The assembler classes don't yet support writing to remote locations! But you can use the
    above api to write it yourself manually (for now).
 
+
+.. _naming_things:
+
 Naming things yourself
 ----------------------
 
@@ -546,6 +549,119 @@ use the embedded ``s3`` location instead.
 
    In reality, your measurements should live in that same ``s3://`` location,
    and so they'll end up relative.
+
+Understanding Locations
+-----------------------
+
+When writing an ODC dataset, there are two important locations that need to be known
+by assembler: where the metadata file will go, and the "dataset location".
+
+.. note::
+
+   In ODC, all file paths in a dataset are computed relative to the dataset_location
+
+   Examples
+
+   +------------------------------------------------------------+------------------------------------------------------+------------------------------------------------------------+
+   | Dataset Location                                           | Path                                                 | Result                                                     |
+   +============================================================+======================================================+============================================================+
+   | ``s3://dea-public-data/year-summary/2010/``                | ``water.tif``                                        | ``s3://dea-public-data/year-summary/2010/water.tif``       |
+   +------------------------------------------------------------+------------------------------------------------------+------------------------------------------------------------+
+   | ``s3://dea-public-data/year-summary/2010/``                | ``bands/water.tif``                                  | ``s3://dea-public-data/year-summary/2010/bands/water.tif`` |
+   +------------------------------------------------------------+------------------------------------------------------+------------------------------------------------------------+
+   | ``file:///rs0/datacube/LS7_NBAR/10_-24/odc-metadata.yaml`` | ``v1496652530.nc``                                   | ``file:///rs0/datacube/LS7_NBAR/10_-24/v1496652530.nc``    |
+   +------------------------------------------------------------+------------------------------------------------------+------------------------------------------------------------+
+   | ``file:///rs0/datacube/LS7_NBAR/10_-24/odc-metadata.yaml`` | ``s3://dea-public-data/year-summary/2010/water.tif`` | ``s3://dea-public-data/year-summary/2010/water.tif``       |
+   |                                                            |                                                      |                                                            |
+   +------------------------------------------------------------+------------------------------------------------------+------------------------------------------------------------+
+
+You can specify both of these paths if you want::
+
+    with DatasetPrepare(dataset_location=..., metadata_path=...):
+        ...
+
+But you usually don't need to give them explicitly. They will be inferred if missing.
+
+ #. If you only give a metadata path, the dataset location will be the same.::
+
+        metadata_path             = "file:///tmp/ls7_nbar_20120403_c1/my-dataset.odc-metadata.yaml"
+        inferred_dataset_location = "file:///tmp/ls7_nbar_20120403_c1/my-dataset.odc-metadata.yaml"
+
+ #. If you only give a dataset location, a metadata path will be created as a
+    sibling file with ``.odc-metadata.yaml`` suffix within the same "directory" as the location.::
+
+        dataset_location =       "file:///tmp/`ls7_nbar_20120403_c1/my-dataset.tar"
+        inferred_metadata_path = "file:///tmp/ls7_nbar_20120403_c1/my-dataset.odc-metadata.yaml"
+
+ #. ... or specify neither! And have them generated from a base `collection_path`.::
+
+        collection_path = "file:///collections"
+        inferred_dataset_location = "file:///collections/ga_s2am_level4_3/023/543/2013/02/03/
+        inferred_metadata_path = "file:///collections/ga_s2am_level4_3/023/543/2013/02/03/ga_s2am_level4_3-2-3_023543_2013-02-03_final.odc-metadata.yaml
+
+
+.. note::
+   All locations can be given as a :class:`pathlib.Path`, and they will
+   be converted into URLs for you.
+
+
+These offsets from a collection path are generated from your metadata properties and
+chosen naming conventions. You can also :attr:`override parts of it individually <eodatasets3.DatasetPrepare.names>`.
+
+Specifying a collection path::
+
+    with DatasetPrepare(collection_path=collection, naming_conventions='default'):
+        ...
+
+Let's print out a table of example default paths for each built-in naming convention:
+
+.. testcode ::
+
+   from eodatasets3 import namer, names, DatasetDoc
+
+   p = DatasetDoc()
+   p.platform = "sentinel-2a"
+   p.instrument = "MSI"
+   p.datetime = datetime(2013, 2, 3, 6, 5, 2)
+   p.region_code = "023543"
+   p.processed_now()
+   p.producer = "ga.gov.au"
+   p.dataset_version = "1.2.3"
+   p.product_family = "level4"
+   p.maturity = 'final'
+   p.collection_number = 3
+   p.properties['sentinel:sentinel_tile_id'] = 'S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00'
+
+   collection_prefix = 'https://collections.test'
+
+   # Print the result for each known convention
+   header = f"{'convention':20} {'metadata_file':64} dataset_location"
+   print(header)
+   print('-' * len(header))
+   for convention in names.KNOWN_CONVENTIONS.keys():
+       n = namer(p, conventions=convention, collection_prefix=collection_prefix)
+       print(f"{convention:20} {str(n.metadata_file):64} {n.dataset_location}")
+
+.. testoutput ::
+
+   convention           metadata_file                                                    dataset_location
+   ------------------------------------------------------------------------------------------------------
+   default              ga_s2am_level4_3-2-3_023543_2013-02-03_final.odc-metadata.yaml   https://collections.test/ga_s2am_level4_3/023/543/2013/02/03/
+   dea                  ga_s2am_level4_3-2-3_023543_2013-02-03_final.odc-metadata.yaml   https://collections.test/ga_s2am_level4_3/023/543/2013/02/03/
+   dea_s2               ga_s2am_level4_3-2-3_023543_2013-02-03_final.odc-metadata.yaml   https://collections.test/ga_s2am_level4_3/023/543/2013/02/03/20210426T010904/
+   dea_s2_derivative    ga_s2_level4_3_023543_2013-02-03_final.odc-metadata.yaml         https://collections.test/ga_s2_level4_3/1-2-3/023/543/2013/02/03/20210426T010904/
+   dea_c3               ga_s2_level4_3_023543_2013-02-03_final.odc-metadata.yaml         https://collections.test/ga_s2_level4_3/1-2-3/023/543/2013/02/03/
+   deafrica             level4_s2_023543_2013-02-03_final.odc-metadata.yaml              https://collections.test/level4_s2/1-2-3/023/543/2013/02/03/
+
+
+.. note::
+
+   The ``default`` conventions look the same as ``dea`` here, but ``dea`` is
+   stricter in its mandatory metadata fields (to follow policies within the
+   organisation).
+
+   You can leave out many more properties from your metadata in ``default`` and they
+   will not be included in the generated paths.
 
 Dataset Prepare class reference
 -------------------------------
