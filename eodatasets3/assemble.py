@@ -230,10 +230,10 @@ class DatasetPrepare(Eo3Interface):
         There are three optional paths that can be specified. At least one must be specified. Collection,
         dataset or metadata path.
 
-        - A *collection path* is the root folder where datasets will live (in sub-[sub]-folders).
-        - Each dataset has its own *dataset location*, as stored in an Open Data Cube index.
-          All paths inside the metadata document are relative to this location.
-        - An output *metadata document location*.
+         - A ``collection_path`` is the root folder where datasets will live (in sub-[sub]-folders).
+         - Each dataset has its own ``dataset_location``, as stored in an Open Data Cube index.
+           All paths inside the metadata document are relative to this location.
+         - An output ``metadata_path`` document location*.
 
         If you're writing data, you typically only need to specify the collection path, and the others
         will be automatically generated using the naming conventions.
@@ -1038,10 +1038,10 @@ class DatasetAssembler(DatasetPrepare):
         There are three optional paths that can be specified. At least one must be specified. Collection,
         dataset or metadata path.
 
-        - A *collection path* is the root folder where datasets will live (in sub-[sub]-folders).
-        - Each dataset has its own *dataset location*, as stored in an Open Data Cube index.
-          All paths inside the metadata document are relative to this location.
-        - An output *metadata document location*.
+         - A ``collection_path`` is the root folder where datasets will live (in sub-[sub]-folders).
+         - Each dataset has its own ``dataset_location``, as stored in an Open Data Cube index.
+           All paths inside the metadata document are relative to this location.
+         - An output ``metadata_path`` document location*.
 
         If you're writing data, you typically only need to specify the collection path, and the others
         will be automatically generated using the naming conventions.
