@@ -58,10 +58,7 @@ metadata doc for Open Data Cube, and create appropriate file and folder structur
 
 If you already have existing imagery, you can use DatasetAssembler to create a matching metadata document. 
 
-Many other uses and fields are available, see [the docs](https://eodatasets.readthedocs.io/en/latest/). 
-
-Further examples can be seen in the tests [tests/integration/test_assemble.py](tests/integration/test_assemble.py),
-[L1](eodatasets3/prepare/landsat_l1_prepare.py) or [ARD](eodatasets3/wagl.py) packagers.
+See [the documentation guide for more features and examples](https://eodatasets.readthedocs.io/en/latest/).
 
 ## Open Data Cube compatibility
 
@@ -71,6 +68,8 @@ Datacube versions from 1.8 onwards are compatible natively with eo3.
 
 eo3 adds information about the native grid of the data, and aims to be more easily interoperable 
 with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec/tree/master/item-spec).
+
+# Other Tools Included
 
 ## Validator
 
@@ -114,7 +113,7 @@ their properties match the product (nodata, dtype etc)
  
 
 
-## Conversion to Stac metadata
+## Stac metadata conversion
 
 `eo3-to-stac`: Convert an EO3 metadata doc to a Stac Item
 
@@ -140,47 +139,15 @@ Example usage:
 	LT05_L1TP_113081_19880330_20170209_01_T1.odc-metadata.yaml
 	LT05_L1TP_113081_19880330_20170209_01_T1.stac-item.json
 
+## Prep Scripts 
 
-# Development
-
-
-Run the tests using [pytest](http://pytest.org/).
-
-	❯ pytest
-
-You may need to install test dependencies first:
-
-	❯ pip install -e .[test]
-
-Dependencies such as gdal can be tricky to install on some systems. You
-may prefer to use the included Docker file for development: run `make
-build` to create a container, and `make test` to run tests.
-
-We have strict linting and formatting checks on this reposistory, so
-please run pre-commit (below) after checkout.
-
-## Pre-commit setup
-
-	❯ pip install pre-commit
-	❯ pre-commit install
-
-(if you are using Conda, you need to `conda install pre_commit` instead of using pip)
-
-Your code will now be formatted and validated before each commit. You can also invoke it manually by running `pre-commit run`
-
-This allows you to immediately catch and fix issues before you raise a pull request that fails.
-
-Most notably, all code is formatted using
-[black](https://github.com/ambv/black), and checked with
-[pyflakes](https://github.com/PyCQA/pyflakes).
-
-# DEA Prep
-
-Some included scripts to prepare existing DEA products.
+Some scripts are included for preparing common metadata documents, 
+such as landsat scenes.
 
 `eo3-prepare`: Prepare ODC metadata from the commandline.
 
-Some preparers need the ancillary dependencies: `pip install .[ancillary]`
+Some sub-commands need the ancillary dependencies, for reading from
+exotic formats: `pip install .[ancillary]`
 
 	❯ eo3-prepare --help
 	Usage: eo3-prepare [OPTIONS] COMMAND [ARGS]...
@@ -231,6 +198,38 @@ Some preparers need the ancillary dependencies: `pip install .[ancillary]`
 
 	  --help                          Show this message and exit.
 
+
+# Development Setup
+
+Run the tests using [pytest](http://pytest.org/).
+
+	❯ pytest
+
+You may need to install test dependencies first:
+
+	❯ pip install -e .[test]
+
+Dependencies such as gdal can be tricky to install on some systems. You
+may prefer to use the included Docker file for development: run `make
+build` to create a container, and `make test` to run tests.
+
+We have strict linting and formatting checks on this reposistory, so
+please run pre-commit (below) after checkout.
+
+## Pre-commit setup
+
+	❯ pip install pre-commit
+	❯ pre-commit install
+
+(if you are using Conda, you need to `conda install pre_commit` instead of using pip)
+
+Your code will now be formatted and validated before each commit. You can also invoke it manually by running `pre-commit run`
+
+This allows you to immediately catch and fix issues before you raise a pull request that fails.
+
+Most notably, all code is formatted using
+[black](https://github.com/ambv/black), and checked with
+[pyflakes](https://github.com/PyCQA/pyflakes).
 
 
 ## Creating Releases
