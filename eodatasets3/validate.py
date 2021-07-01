@@ -679,9 +679,9 @@ def _match_product(
 
         difference_hint = _differences_as_hint(closest_differences)
         return None, [
-            _warning(
+            _error(
                 "unknown_product",
-                "Cannot match dataset to product",
+                "Dataset does not match the given products",
                 hint=f"Closest match is {closest_product_name}, with differences:"
                 f"\n{difference_hint}",
             )

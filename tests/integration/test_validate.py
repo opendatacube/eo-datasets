@@ -691,7 +691,7 @@ def test_complains_about_product_not_matching(
     eo_validator.assert_invalid(product, l1_ls8_metadata_path)
     assert (
         eo_validator.messages.get("unknown_product")
-        == "Cannot match dataset to product"
+        == "Dataset does not match the given products"
     )
 
 
