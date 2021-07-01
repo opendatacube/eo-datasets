@@ -7,6 +7,7 @@ import math
 import sys
 from datetime import datetime
 from pathlib import Path
+from textwrap import indent
 from typing import (
     List,
     Counter,
@@ -25,12 +26,13 @@ import numpy as np
 import rasterio
 from boltons.iterutils import get_path
 from click import style, echo, secho
+from datacube.utils import changes
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.errors import CRSError
 from shapely.validation import explain_validity
 
-from eodatasets3 import serialise, model
+from eodatasets3 import serialise, model, utils
 from eodatasets3.model import DatasetDoc
 from eodatasets3.ui import PathPath, is_absolute, uri_resolve, bool_style
 from eodatasets3.utils import default_utc, EO3_SCHEMA
@@ -592,25 +594,11 @@ def validate_eo3_doc(
     messages = []
 
     # TODO: follow ODC's match rules?
-    product = None
-    product_name = get_path(doc, ("product", "name"), default=None)
+
+    matched_product = None
 
     if products:
-        if len(products) == 1:
-            [product] = products.values()
-        elif product_name is not None:
-            product = products.get(product_name)
-
-        if product is None:
-            messages.append(
-                _warning(
-                    "unknown_product",
-                    "Cannot match dataset to product",
-                    hint=f"Nothing matches {product_name!r}"
-                    if product_name
-                    else "No product name in dataset (TODO: field matching)",
-                )
-            )
+        matched_product, messages = _match_product(doc, products)
     else:
         messages.append(
             ValidationMessage(
@@ -623,13 +611,129 @@ def validate_eo3_doc(
     messages.extend(
         validate_dataset(
             doc,
-            product_definition=product,
+            product_definition=matched_product,
             readable_location=location,
             thorough=thorough,
             expect_extra_measurements=expect_extra_measurements,
         )
     )
     return messages
+
+
+def _get_printable_differences(dict1: Dict, dict2: Dict):
+    """
+    Get a series of lines to print that show the reason that dict1 is not a superset of dict2
+    """
+    dict1 = dict(utils.flatten_dict(dict1))
+    dict2 = dict(utils.flatten_dict(dict2))
+
+    for path in dict2.keys():
+        v1, v2 = dict1.get(path), dict2.get(path)
+        print(f"{path}, {v1}, {v2}")
+        if v1 != v2:
+            yield f"{path}: {v1!r} != {v2!r}"
+
+
+def _get_product_mismatch_reasons(dataset_doc: Dict, product_definition: Dict):
+    """
+    Which fields don't match the given dataset doc to a product definition?
+
+    Gives human-readable lines of text.
+    """
+    yield from _get_printable_differences(dataset_doc, product_definition["metadata"])
+
+
+def _match_product(
+    dataset_doc: Dict, product_definitions: Dict[str, Dict]
+) -> Tuple[Optional[Dict], List[ValidationMessage]]:
+    """Match the given dataset to a product definition"""
+
+    product = None
+
+    # EO3 datasets often put the product name directly inside.
+    specified_product_name = get_path(dataset_doc, ("product", "name"), default=None)
+    specified_product_name = specified_product_name or get_path(
+        dataset_doc, ("properties", "odc:product"), default=None
+    )
+
+    if specified_product_name and (specified_product_name in product_definitions):
+        product = product_definitions[specified_product_name]
+
+    matching_products = {
+        name: definition
+        for name, definition in product_definitions.items()
+        if changes.contains(dataset_doc, definition["metadata"])
+    }
+
+    # We we have nothing, give up!
+    if (not matching_products) and (not product):
+
+        # Find the product that most closely matches it, to helpfully show the differences!
+        closest_product_name = None
+        closest_differences = None
+        for name, definition in product_definitions.items():
+            diffs = tuple(_get_product_mismatch_reasons(dataset_doc, definition))
+            if (closest_differences is None) or len(diffs) < len(closest_differences):
+                closest_product_name = name
+                closest_differences = diffs
+
+        difference_hint = _differences_as_hint(closest_differences)
+        return None, [
+            _warning(
+                "unknown_product",
+                "Cannot match dataset to product",
+                hint=f"Closest match is {closest_product_name}, with differences:"
+                f"\n{difference_hint}",
+            )
+        ]
+
+    messages = []
+
+    if specified_product_name not in matching_products:
+        if product:
+            difference_hint = _differences_as_hint(
+                _get_product_mismatch_reasons(dataset_doc, product)
+            )
+            messages.append(
+                _info(
+                    "strange_product_claim",
+                    f"Dataset claims to be product {specified_product_name!r}, but doesn't match its fields",
+                    hint=f"{difference_hint}",
+                )
+            )
+        else:
+            messages.append(
+                _info(
+                    "unknown_product_claim",
+                    f"Dataset claims to be product {specified_product_name!r}, but it wasn't supplied.",
+                )
+            )
+
+    if len(matching_products) > 1:
+        matching_names = ", ".join(matching_products.keys())
+        messages.append(
+            _error(
+                "product_match_clash",
+                "Multiple products match the given dataset",
+                hint=f"Maybe you need more fields in the 'metadata' section?\n"
+                f"Claims to be a {specified_product_name!r}, and matches {matching_names!r}"
+                if specified_product_name
+                else f"Maybe you need more fields in the 'metadata' section?\n"
+                f"Matches {matching_names!r}",
+            )
+        )
+        # (We wont pick one from the bunch here. Maybe they already matched one above to use in continuing validation.)
+
+    # Just like ODC, match rules will rule all. Even if their metadata has a "product_name" field.
+    if len(matching_products) == 1:
+        [product] = matching_products.values()
+
+    print(f"Matched {product['name']}")
+    return product, messages
+
+
+def _differences_as_hint(product_diffs):
+    return indent("\n".join(product_diffs), prefix="\t")
 
 
 def _validate_stac_properties(dataset: DatasetDoc):
@@ -828,7 +932,11 @@ def run(
                 f"\t{message.level.name[0].upper()} {displayable_code} {message.reason}"
             )
             if message.hint:
-                echo(f'\t\t({style("Hint")}: {message.hint})')
+                if "\n" in message.hint:
+                    echo("\t\tHint:")
+                    echo(indent(message.hint, "\t\t" + (" " * 5)))
+                else:
+                    echo(f'\t\t({style("Hint")}: {message.hint})')
 
     if not quiet:
         result = (

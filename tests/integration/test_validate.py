@@ -676,6 +676,25 @@ def test_complains_about_measurement_lists(
     )
 
 
+def test_complains_about_product_not_matching(
+    eo_validator: ValidateRunner,
+    l1_ls8_metadata_path: Path,
+    product: Dict,
+):
+    """
+    Complains when we're given products but they don't match the dataset
+    """
+
+    # A metadata field that's not in the dataset.
+    product["metadata"]["favourite_sandwich"] = "cucumber"
+
+    eo_validator.assert_invalid(product, l1_ls8_metadata_path)
+    assert (
+        eo_validator.messages.get("unknown_product")
+        == "Cannot match dataset to product"
+    )
+
+
 def test_complains_about_impossible_nodata_vals(
     eo_validator: ValidateRunner,
     l1_ls8_metadata_path: Path,

@@ -3,7 +3,7 @@ import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, Tuple, Dict, Any
+from typing import Iterable, Tuple, Dict, Any, Mapping
 
 import ciso8601
 import click
@@ -166,3 +166,26 @@ def is_doc_eo3(doc: Dict[str, Any]) -> bool:
     # We don't want future documents (like Stac items, or "eo4") to be quietly
     # accepted as legacy eo.
     raise ValueError(f"Unsupported dataset schema: {schema!r}")
+
+
+def flatten_dict(
+    d: Mapping, prefix: str = None, separator: str = "."
+) -> Iterable[Tuple[str, Any]]:
+    """
+    Flatten a nested dicts into one level, with keys that show their original nested path ("a.b.c")
+
+    Returns them as a generator of (key, value) pairs.
+
+    (Doesn't currently venture into other collection types, like lists)
+
+    >>> dict(flatten_dict({'a' : 1, 'b' : {'inner' : 2},'c' : 3}))
+    {'a': 1, 'b.inner': 2, 'c': 3}
+    >>> dict(flatten_dict({'a' : 1, 'b' : {'inner' : {'core' : 2}}}, prefix='outside', separator=':'))
+    {'outside:a': 1, 'outside:b:inner:core': 2}
+    """
+    for k, v in d.items():
+        name = f"{prefix}{separator}{k}" if prefix else k
+        if isinstance(v, Mapping):
+            yield from flatten_dict(v, prefix=name, separator=separator)
+        else:
+            yield name, v

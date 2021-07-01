@@ -11,7 +11,7 @@ import re
 import sys
 from datetime import timedelta, datetime
 from pathlib import Path
-from typing import List, Sequence, Optional, Iterable, Any, Tuple, Dict, Mapping
+from typing import List, Sequence, Optional, Iterable, Any, Tuple, Dict
 from uuid import UUID
 
 import attr
@@ -30,7 +30,7 @@ from eodatasets3.model import DatasetDoc
 from eodatasets3.properties import Eo3Interface
 from eodatasets3.serialise import loads_yaml
 from eodatasets3.ui import bool_style
-from eodatasets3.utils import default_utc
+from eodatasets3.utils import default_utc, flatten_dict
 
 try:
     import h5py
@@ -684,27 +684,12 @@ def package(
                 return p.done()
 
 
-def _flatten_dict(d: Mapping, prefix=None, separator=".") -> Iterable[Tuple[str, Any]]:
-    """
-    >>> dict(_flatten_dict({'a' : 1, 'b' : {'inner' : 2},'c' : 3}))
-    {'a': 1, 'b.inner': 2, 'c': 3}
-    >>> dict(_flatten_dict({'a' : 1, 'b' : {'inner' : {'core' : 2}}}, prefix='outside', separator=':'))
-    {'outside:a': 1, 'outside:b:inner:core': 2}
-    """
-    for k, v in d.items():
-        name = f"{prefix}{separator}{k}" if prefix else k
-        if isinstance(v, Mapping):
-            yield from _flatten_dict(v, prefix=name, separator=separator)
-        else:
-            yield name, v
-
-
 def _read_gqa_doc(p: DatasetAssembler, doc: Dict):
     _take_software_versions(p, doc)
     p.extend_user_metadata("gqa", doc)
 
     # TODO: more of the GQA fields?
-    for k, v in _flatten_dict(doc["residual"], separator="_"):
+    for k, v in flatten_dict(doc["residual"], separator="_"):
         p.properties[f"gqa:{k}"] = v
 
 
