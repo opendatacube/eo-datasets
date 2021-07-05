@@ -21,12 +21,13 @@ from typing import (
 )
 
 import attr
+import ciso8601
 import click
 import numpy as np
 import rasterio
 from boltons.iterutils import get_path
 from click import style, echo, secho
-from datacube.utils import changes
+from datacube.utils import changes, read_documents, is_url, InvalidDocException
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.errors import CRSError
@@ -34,7 +35,7 @@ from shapely.validation import explain_validity
 
 from eodatasets3 import serialise, model, utils
 from eodatasets3.model import DatasetDoc
-from eodatasets3.ui import PathPath, is_absolute, uri_resolve, bool_style
+from eodatasets3.ui import is_absolute, uri_resolve, bool_style
 from eodatasets3.utils import default_utc, EO3_SCHEMA
 
 
@@ -71,15 +72,15 @@ SUFFIX_KINDS = {
 DOC_TYPE_SUFFIXES = {v: k for k, v in SUFFIX_KINDS.items()}
 
 
-def filename_doc_kind(path: Path) -> Optional["DocKind"]:
+def filename_doc_kind(path: Union[str, Path]) -> Optional["DocKind"]:
     """
     Get the expected file type for the given filename.
 
     Returns None if it does not follow any naming conventions.
 
-    >>> filename_doc_kind(Path('LC8_2014.odc-metadata.yaml')).name
+    >>> filename_doc_kind('LC8_2014.odc-metadata.yaml').name
     'dataset'
-    >>> filename_doc_kind(Path('/tmp/something/water_bodies.odc-metadata.yaml.gz')).name
+    >>> filename_doc_kind('/tmp/something/water_bodies.odc-metadata.yaml.gz').name
     'dataset'
     >>> filename_doc_kind(Path('/tmp/something/ls8_fc.odc-product.yaml')).name
     'product'
@@ -90,7 +91,7 @@ def filename_doc_kind(path: Path) -> Optional["DocKind"]:
     >>> filename_doc_kind(Path('/tmp/something/some_other_file.yaml'))
     """
 
-    for suffix in reversed(path.suffixes):
+    for suffix in reversed(Path(path).suffixes):
         suffix = suffix.lower()
         if suffix in SUFFIX_KINDS:
             return SUFFIX_KINDS[suffix]
@@ -483,72 +484,70 @@ class ExpectedMeasurement:
 
 
 def validate_paths(
-    paths: List[Path],
+    paths: List[str],
     thorough: bool = False,
     expect_extra_measurements: bool = False,
-) -> Generator[Tuple[Path, int, List[ValidationMessage]], None, None]:
+) -> Generator[Tuple[str, List[ValidationMessage]], None, None]:
     """Validate the list of paths. Product documents can be specified before their datasets."""
     products: Dict[str, Dict] = {}
 
-    for path, was_specified_by_user in expand_directories(paths):
-        with path.open("r") as f:
-            for i, doc in enumerate(serialise.loads_yaml(f)):
-                messages = []
-                kind = filename_doc_kind(path)
-                if kind is None:
-                    kind = guess_kind_from_contents(doc)
-                    if kind and (kind in DOC_TYPE_SUFFIXES):
-                        # It looks like an ODC doc but doesn't have the standard suffix.
-                        messages.append(
-                            _warning(
-                                "missing_suffix",
-                                f"Document looks like a {kind.name} but does not have "
-                                f'filename extension "{DOC_TYPE_SUFFIXES[kind]}{_readable_doc_extension(path)}"',
-                            )
-                        )
-
-                if kind == DocKind.product:
-                    messages.extend(validate_product(doc))
-                    if "name" in doc:
-                        products[doc["name"]] = doc
-                elif kind == DocKind.dataset:
-                    messages.extend(
-                        validate_eo3_doc(
-                            doc, path, products, thorough, expect_extra_measurements
-                        )
+    for url, doc, was_specified_by_user in read_paths(paths):
+        messages = []
+        kind = filename_doc_kind(url)
+        if kind is None:
+            kind = guess_kind_from_contents(doc)
+            if kind and (kind in DOC_TYPE_SUFFIXES):
+                # It looks like an ODC doc but doesn't have the standard suffix.
+                messages.append(
+                    _warning(
+                        "missing_suffix",
+                        f"Document looks like a {kind.name} but does not have "
+                        f'filename extension "{DOC_TYPE_SUFFIXES[kind]}{_readable_doc_extension(url)}"',
                     )
-                elif kind == DocKind.metadata_type:
-                    messages.extend(validate_metadata_type(doc))
-                # Otherwise it's a file we don't support.
-                # If the user gave us the path explicitly, it seems to be an error.
-                # (if they didn't -- it was found via scanning directories -- we don't care.)
-                elif was_specified_by_user:
-                    if kind is None:
-                        raise ValueError(f"Unknown document type for path {path}")
-                    else:
-                        raise NotImplementedError(
-                            f"Cannot currently validate {kind.name} files"
-                        )
-                else:
-                    # Not a doc type we recognise, and the user didn't specify it. Skip it.
-                    continue
+                )
 
-                yield path, i, messages
+        if kind == DocKind.product:
+            messages.extend(validate_product(doc))
+            if "name" in doc:
+                products[doc["name"]] = doc
+        elif kind == DocKind.dataset:
+            messages.extend(
+                validate_eo3_doc(
+                    doc, url, products, thorough, expect_extra_measurements
+                )
+            )
+        elif kind == DocKind.metadata_type:
+            messages.extend(validate_metadata_type(doc))
+        # Otherwise it's a file we don't support.
+        # If the user gave us the path explicitly, it seems to be an error.
+        # (if they didn't -- it was found via scanning directories -- we don't care.)
+        elif was_specified_by_user:
+            if kind is None:
+                raise ValueError(f"Unknown document type for {url}")
+            else:
+                raise NotImplementedError(
+                    f"Cannot currently validate {kind.name} files"
+                )
+        else:
+            # Not a doc type we recognise, and the user didn't specify it. Skip it.
+            continue
+
+        yield url, messages
 
 
-def _readable_doc_extension(path: Path):
+def _readable_doc_extension(path: str):
     """
-    >>> _readable_doc_extension(Path('something.json.gz'))
+    >>> _readable_doc_extension('something.json.gz')
     '.json.gz'
-    >>> _readable_doc_extension(Path('something.yaml'))
+    >>> _readable_doc_extension('something.yaml')
     '.yaml'
-    >>> _readable_doc_extension(Path('apple.odc-metadata.yaml.gz'))
+    >>> _readable_doc_extension('apple.odc-metadata.yaml.gz')
     '.yaml.gz'
-    >>> _readable_doc_extension(Path('/tmp/human.06.tall.yml'))
+    >>> _readable_doc_extension('/tmp/human.06.tall.yml')
     '.yml'
     >>> # Not a doc, even though it's compressed.
-    >>> _readable_doc_extension(Path('db_dump.gz'))
-    >>> _readable_doc_extension(Path('/tmp/nothing'))
+    >>> _readable_doc_extension('db_dump.gz')
+    >>> _readable_doc_extension('/tmp/nothing')
     """
     compression_formats = (".gz",)
     doc_formats = (
@@ -558,7 +557,7 @@ def _readable_doc_extension(path: Path):
     )
     suffix = "".join(
         s.lower()
-        for s in path.suffixes
+        for s in Path(path).suffixes
         if s.lower() in doc_formats + compression_formats
     )
     # If it's only compression, no doc format, it's not valid.
@@ -567,21 +566,47 @@ def _readable_doc_extension(path: Path):
     return suffix or None
 
 
-def expand_directories(
-    input_paths: Iterable[Path],
+def read_paths(
+    input_paths: Iterable[str],
+) -> Generator[Tuple[str, Union[Dict, str], bool], None, None]:
+    """
+    Read the given input paths, returning a URL, document, and whether
+    it was explicitly given by the user.
+
+    When a local directory is specified, inner readable docs are returned, but will
+    be marked as not explicitly specified.
+    """
+    for input_ in input_paths:
+        for uri, was_specified in expand_paths_as_uris([input_]):
+            try:
+                for full_uri, doc in read_documents(uri, uri=True):
+                    yield full_uri, doc, was_specified
+            except InvalidDocException as e:
+                if was_specified:
+                    raise
+                else:
+                    echo(e, err=True)
+
+
+def expand_paths_as_uris(
+    input_paths: Iterable[str],
 ) -> Generator[Tuple[Path, bool], None, None]:
     """
     For any paths that are directories, find inner documents that are known.
 
-    Returns Tuples: path, and whether it was specified explicitly by user.
+    Returns Tuples: path as a URL, and whether it was specified explicitly by user.
     """
-    for path in input_paths:
-        if path.is_dir():
-            for found_path in path.rglob("*"):
-                if _readable_doc_extension(found_path) is not None:
-                    yield found_path, False
+    for input_ in input_paths:
+        if is_url(input_):
+            yield input_, True
         else:
-            yield path, True
+            path = Path(input_).resolve()
+            if path.is_dir():
+                for found_path in path.rglob("*"):
+                    if _readable_doc_extension(found_path.as_uri()) is not None:
+                        yield found_path.as_uri(), False
+            else:
+                yield path.as_uri(), True
 
 
 def validate_eo3_doc(
@@ -629,7 +654,6 @@ def _get_printable_differences(dict1: Dict, dict2: Dict):
 
     for path in dict2.keys():
         v1, v2 = dict1.get(path), dict2.get(path)
-        print(f"{path}, {v1}, {v2}")
         if v1 != v2:
             yield f"{path}: {v1!r} != {v2!r}"
 
@@ -728,7 +752,6 @@ def _match_product(
     if len(matching_products) == 1:
         [product] = matching_products.values()
 
-    print(f"Matched {product['name']}")
     return product, messages
 
 
@@ -749,6 +772,13 @@ def _validate_stac_properties(dataset: DatasetDoc):
                     # A normaliser can return two values, the latter adding extra extracted fields.
                     if isinstance(normalised_value, tuple):
                         normalised_value = normalised_value[0]
+
+                    # It's okay for datetimes to be strings
+                    # .. since ODC's own loader does that.
+                    if isinstance(normalised_value, datetime) and isinstance(
+                        value, str
+                    ):
+                        value = ciso8601.parse_datetime(value)
 
                     # Special case for dates, as "no timezone" and "utc timezone" are treated identical.
                     if isinstance(value, datetime):
@@ -854,13 +884,14 @@ def _has_some_geo(dataset):
     help=__doc__
     + """
 Paths can be products, dataset documents, or directories to scan (for files matching
-names '*.odc-metadata.yaml' etc).
+names '*.odc-metadata.yaml' etc), either local or URLs.
 
-But each product must be specified before its datasets to be validated against them.
+Datasets are validated against matching products that have been scanned already, so specify
+products first, and datasets later, to ensure they can be matched.
 """
 )
 @click.version_option()
-@click.argument("paths", nargs=-1, type=PathPath(exists=True, readable=True))
+@click.argument("paths", nargs=-1)
 @click.option(
     "--warnings-as-errors",
     "-W",
@@ -888,7 +919,7 @@ But each product must be specified before its datasets to be validated against t
     help="Only print problems, one per line",
 )
 def run(
-    paths: List[Path],
+    paths: List[str],
     strict_warnings,
     quiet,
     thorough: bool,
@@ -896,15 +927,19 @@ def run(
 ):
     validation_counts: Counter[Level] = collections.Counter()
     invalid_paths = 0
+    current_location = Path(".").resolve().as_uri() + "/"
 
     s = {
         Level.info: dict(),
         Level.warning: dict(fg="yellow"),
         Level.error: dict(fg="red"),
     }
-    for path, path_index, messages in validate_paths(
+    for url, messages in validate_paths(
         paths, thorough=thorough, expect_extra_measurements=expect_extra_measurements
     ):
+        if url.startswith(current_location):
+            url = url[len(current_location) :]
+
         levels = collections.Counter(m.level for m in messages)
         is_invalid = levels[Level.error] > 0
         if strict_warnings:
@@ -915,8 +950,7 @@ def run(
             messages = [m for m in messages if m.level != Level.info]
 
         if messages or not quiet:
-            path_suffix = f" document {path_index+1}" if path_index else ""
-            secho(f"{bool_style(not is_invalid)} {path}{path_suffix}")
+            secho(f"{bool_style(not is_invalid)} {url}")
 
         if not messages:
             continue
