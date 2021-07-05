@@ -79,22 +79,24 @@ with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec
 Give it ODC documents for your products, types and/or datasets to have
 them validated.
 
-    eo3-validate my-product.odc-product.yaml /tmp/path/to/dataset.odc-metadata.yaml
+    ❯ eo3-validate my-product.odc-product.yaml /tmp/path/to/dataset.odc-metadata.yaml
+    ❯ eo3-validate https://explorer.dea.ga.gov.au/products/ga_ls_fc_3.odc-product.yaml
 
 You can also run with `--thorough` to have it open imagery files too, checking
 their properties match the product (nodata, dtype etc)
 
 
-	❯ eo3-validate --help
+    ❯ eo3-validate --help
     Usage: eo3-validate [OPTIONS] [PATHS]...
     
       Validate ODC dataset documents
     
       Paths can be products, dataset documents, or directories to scan (for
-      files matching names '*.odc-metadata.yaml' etc).
+      files matching names '*.odc-metadata.yaml' etc), either local or URLs.
     
-      But each product must be specified before its datasets to be validated
-      against them.
+      Datasets are validated against matching products that have been scanned
+      already, so specify products first, and datasets later, to ensure they can
+      be matched.
     
     Options:
       --version                       Show the version and exit.
@@ -110,8 +112,6 @@ their properties match the product (nodata, dtype etc)
     
       -q, --quiet                     Only print problems, one per line
       --help                          Show this message and exit.
- 
-
 
 ## Stac metadata conversion
 
