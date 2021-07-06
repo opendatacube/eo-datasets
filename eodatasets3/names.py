@@ -14,7 +14,7 @@ from urllib.parse import quote, urlparse
 import datacube.utils.uris as dc_uris
 
 from eodatasets3 import utils
-from eodatasets3.model import DEA_URI_PREFIX
+from eodatasets3.model import DEA_URI_PREFIX, Location
 from eodatasets3.properties import Eo3Interface, Eo3Dict
 
 # Needed when packaging zip or tar files.
@@ -267,12 +267,14 @@ class LazyDestinationFolder:
         self.include_non_final_maturity = include_non_final_maturity
         self.date_folders_format = date_folders_format
 
-    def __get__(self, c: "NameGenerator", owner) -> Path:
+    def __get__(self, c: "NameGenerator", owner) -> str:
         """The folder hierarchy the datasets files go into.
 
         This is returned as a relative path.
 
-        Example: Path("ga_ls8c_ard_3/092/084/2016/06/28")
+        (forward slashes, but no starting or ending slash)
+
+        Example: ``"ga_ls8c_ard_3/092/084/2016/06/28"``
         """
         d = c.metadata
         parts = [c.product_name]
@@ -299,7 +301,7 @@ class LazyDestinationFolder:
             if isinstance(val, datetime):
                 val = f"{val:%Y%m%dT%H%M%S}"
             parts.append(val)
-        return Path(*parts)
+        return Path(*parts).as_posix()
 
 
 class LazyDatasetLocation:
@@ -313,9 +315,9 @@ class LazyDatasetLocation:
             )
 
         offset = c.dataset_folder
-        if offset.is_absolute():
+        if Path(offset).is_absolute():
             raise ValueError("Dataset offset is expected to be relative to collection")
-        return f"{c.collection_prefix}/{offset.as_posix()}/"
+        return f"{c.collection_prefix}/{offset}/"
 
 
 class MissingRequiredFields(ValueError):
@@ -402,7 +404,7 @@ class LazyFileName:
         self.file_id = file_id
         self.suffix = suffix
 
-    def __get__(self, c: "NameGenerator", owner) -> Path:
+    def __get__(self, c: "NameGenerator", owner) -> str:
         return c.filename(file_id=self.file_id, suffix=self.suffix)
 
 
@@ -414,7 +416,7 @@ class LazyProductURI:
         return f"{n.base_product_uri}/product/{quote(n.product_name)}"
 
 
-def resolve_location(path: Union[str, Path]) -> str:
+def resolve_location(path: Location) -> str:
     """
     Make sure a dataset location is a URL, suitable to be
     the dataset_location in datacube indexing.
@@ -516,7 +518,7 @@ class NameGenerator:
        >>> n.dataset_location
        's3://dea-public-data-dev/collections/ls7_nbar/2014/04/05/'
        >>> n.metadata_file
-       PosixPath('ls7_nbar_2014-04-05.odc-metadata.yaml')
+       'ls7_nbar_2014-04-05.odc-metadata.yaml'
 
     All fields named ``*_file`` are filenames inside (relative to) the
     ``self.dataset_location``.
@@ -584,17 +586,17 @@ class NameGenerator:
 
     #: The prefix where all files are stored, as a URI.
     #:
-    #: Eg. ``file:///my/dataset/collections``
+    #: Eg. ``'file:///my/dataset/collections'``
     #:
     #: (used if dataset_location is generated)
     collection_prefix: Optional[str] = None
 
     #: The folder offset from the collection_prefix.
     #:
-    #: Example: ``Path('ga_ls8c_ones_3/090/084/2016/01/21')``
+    #: Example: ``'ga_ls8c_ones_3/090/084/2016/01/21'``
     #:
     #: (used if dataset_location is generated)
-    dataset_folder: Path = LazyDestinationFolder()
+    dataset_folder: str = LazyDestinationFolder()
 
     #: The full uri of the dataset as indexed into ODC.
     #:
@@ -609,11 +611,11 @@ class NameGenerator:
     #:
     #: (if relative, it's relative to self.dataset_location ... but could be absolute too)
     #:
-    #: Example: ``Path('ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml')``
-    metadata_file: Union[str, Path] = LazyFileName("", "odc-metadata.yaml")
+    #: Example: ``'ga_ls8c_ones_3-0-0_090084_2016-01-21_final.odc-metadata.yaml'``
+    metadata_file: str = LazyFileName("", "odc-metadata.yaml")
 
     #: The name of a checksum file
-    checksum_file: Path = LazyFileName("", "sha1")
+    checksum_file: str = LazyFileName("", "sha1")
 
     def __init__(
         self,
@@ -654,17 +656,17 @@ class NameGenerator:
             return None
         return int(self.metadata.dataset_version.split(".")[0])
 
-    def metadata_filename(self, kind: str = "", suffix: str = "yaml") -> Path:
+    def metadata_filename(self, kind: str = "", suffix: str = "yaml") -> str:
         return self.filename(kind, suffix)
 
     def measurement_filename(
         self, measurement_name: str, suffix: str = "tif", file_id: str = None
-    ) -> Path:
+    ) -> str:
         """
         Generate the path to a measurement for the current naming conventions.:::
 
             >> p.names.measurement_file('blue', 'tif')
-            Path('ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif')
+            'ga_ls8c_ones_3-0-0_090084_2016-01-21_final_blue.tif'
 
         This is the filename inside the self.dataset_folder
         """
@@ -676,7 +678,7 @@ class NameGenerator:
             suffix,
         )
 
-    def filename(self, file_id: str, suffix: str) -> Path:
+    def filename(self, file_id: str, suffix: str) -> str:
         """
         Make a file name according to the current naming conventions' file pattern.
 
@@ -685,11 +687,9 @@ class NameGenerator:
         Returned file paths are expected to be relative to the ``self.dataset_location``
         """
         file_id = "_" + file_id.replace("_", "-") if file_id else ""
-        return Path(
-            self.filename_pattern.format(file_id=file_id, suffix=suffix, n=self)
-        )
+        return self.filename_pattern.format(file_id=file_id, suffix=suffix, n=self)
 
-    def thumbnail_filename(self, kind: str = None, suffix: str = "jpg") -> Path:
+    def thumbnail_filename(self, kind: str = None, suffix: str = "jpg") -> str:
         """
         Get a thumbnail file path (optionally with the given kind and/or suffix.)
         """
@@ -699,7 +699,7 @@ class NameGenerator:
             name = "thumbnail"
         return self.filename(name, suffix)
 
-    def resolve_file(self, path: Union[str, Path]) -> str:
+    def resolve_file(self, path: Location) -> str:
         """
         Convert the given file offset to a fully qualified URL within the dataset location.
         """
@@ -712,25 +712,28 @@ class NameGenerator:
         resolved = dc_uris.uri_resolve(location, path)
         return resolved
 
-    def resolve_path(self, path: Union[str, Path]) -> Path:
+    def resolve_path(self, path: Location) -> Path:
         """
-        Convert the given file offset to a local Path inside the dataset location (if possible).
+        Convert the given file offset (inside the dataset location) to a Path on the
+        local filesystem (if possible).
 
-        :raises ValueError if the current dataset is not in a file:// location.
+        :raises ValueError: if the current dataset is not in a file:// location.
         """
         return _as_path(self.resolve_file(path))
 
     @property
     def dataset_path(self) -> Optional[Path]:
         """
-        Get the dataset location as a local Path, if possible.
+        Get the dataset location as a Path on the local filesystem, if possible.
+
+        :raises ValueError: if the current dataset is not in a file:// location.
         """
         return _as_path(self.dataset_location)
 
     @property
     def collection_path(self) -> Optional[Path]:
         """
-        Get the collection prefix as a local path, if possible.
+        Get the collection prefix as a Path on the local filesystem, if possible.
         """
         if not self.collection_prefix:
             return None
@@ -935,7 +938,7 @@ KNOWN_CONVENTIONS = dict(
 def namer(
     properties: Union[Eo3Dict, Eo3Interface, dict] = None,
     *,
-    collection_prefix: Union[str, Path] = None,
+    collection_prefix: Location = None,
     conventions: str = "default",
 ) -> "NameGenerator":
     """

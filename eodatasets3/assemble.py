@@ -211,8 +211,8 @@ class DatasetPrepare(Eo3Interface):
         self,
         collection_location: Optional[Location] = None,
         *,
-        dataset_location: Optional[Union[str, Path]] = None,
-        metadata_path: Optional[Path] = None,
+        dataset_location: Optional[Location] = None,
+        metadata_path: Optional[Location] = None,
         dataset_id: Optional[uuid.UUID] = None,
         allow_absolute_paths: bool = False,
         naming_conventions: Optional[str] = None,
@@ -356,7 +356,7 @@ class DatasetPrepare(Eo3Interface):
         #: Change the folder offset for each dataset. All generated files paths are relative
         #: to this folder (and it is relative to the collection path)::
         #:
-        #:     p.names.dataset_folder = Path("datasets/january/2021")
+        #:     p.names.dataset_folder = "datasets/january/2021"
         #:
         #: Set a different pattern used for generating filenames
         #: All filenames have a file_id (eg. "odc-metadata" or "") and a suffix (eg. "yaml")
@@ -366,7 +366,7 @@ class DatasetPrepare(Eo3Interface):
         #:
         #: The path to the EO3 metadata doc (relative path to the dataset location)::
         #:
-        #:     p.names.metadata_file = Path("my-metadata.odc-metadata.yaml")
+        #:     p.names.metadata_file = "my-metadata.odc-metadata.yaml"
         #:
         #: The URI for the product::
         #:
@@ -401,7 +401,7 @@ class DatasetPrepare(Eo3Interface):
             and has_metadata_path
             and (not has_collection_location)
         ):
-            self.names.dataset_location = self.names.metadata_file
+            self.names.dataset_location = resolve_location(self.names.metadata_file)
 
         # If they only gave a dataset location, and don't have naming conventions, make metadata file a sibling.
         if (not has_metadata_path) and no_naming_specified and has_dataset_location:
@@ -1637,7 +1637,7 @@ class DatasetAssembler(DatasetPrepare):
 
             if self._exists_behaviour == IfExists.Skip:
                 # Something else created it while we were busy.
-                warnings.warn(f"Skipping -- exists: {self.names.dataset_folder}")
+                warnings.warn(f"Skipping -- exists: {dataset_folder}")
             elif self._exists_behaviour == IfExists.ThrowError:
                 raise
             elif self._exists_behaviour == IfExists.Overwrite:
