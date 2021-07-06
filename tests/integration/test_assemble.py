@@ -245,12 +245,14 @@ def test_in_memory_dataset(tmp_path: Path, l1_ls8_folder: Path):
 
     [blue_geotiff_path] = l1_ls8_folder.rglob("L*_B2.TIF")
 
-    p = DatasetPrepare(dataset_location=out / "dataset.txt")
+    dataset_location = out / "my/custom/dataset/path/ls_whatever.stac-item.json"
+
+    p = DatasetPrepare(dataset_location=dataset_location)
     p.datetime = datetime(2019, 7, 4, 13, 7, 5)
     p.product_name = "loch_ness_sightings"
     p.processed = datetime(2019, 7, 4, 13, 8, 7)
 
-    pretend_path = out / "our_image_dont_read_it.tif"
+    pretend_path = dataset_location.parent / "our_image_dont_read_it.tif"
     p.note_measurement(
         "blue",
         pretend_path,
@@ -271,12 +273,15 @@ def test_in_memory_dataset(tmp_path: Path, l1_ls8_folder: Path):
     del doc["id"]
 
     # Users can ask the generator for file names:
-    assert p.names.measurement_filename("red") == Path(
-        "loch_ness_sightings_2019-07-04_red.tif"
+    assert (
+        p.names.measurement_filename("red") == "loch_ness_sightings_2019-07-04_red.tif"
     )
 
-    assert p.names.dataset_folder / p.names.measurement_filename("red") == Path(
-        "loch_ness_sightings/2019/07/04/loch_ness_sightings_2019-07-04_red.tif"
+    # The computed file paths are relative to our given dataset location.
+    out_url = out.as_uri()
+    assert (
+        p.names.resolve_file(p.names.measurement_filename("red"))
+        == f"{out_url}/my/custom/dataset/path/loch_ness_sightings_2019-07-04_red.tif"
     )
 
     pprint(doc)
