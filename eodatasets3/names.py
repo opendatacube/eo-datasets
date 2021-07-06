@@ -255,17 +255,32 @@ class LazyProducerAbbreviation:
             )
 
 
+class LazyRegionOffset:
+    def __get__(self, c: "NameGenerator", owner) -> Optional[str]:
+        # Cut the region code in subfolders
+        region_code = c.metadata.region_code
+        if region_code:
+            return "/".join(utils.subfolderise(region_code))
+        return None
+
+
+class LazyTimeOffset:
+    def __init__(self, date_folders_format="%Y/%m/%d") -> None:
+        self.date_folders_format = date_folders_format
+
+    def __get__(self, c: "NameGenerator", owner) -> Optional[str]:
+        return c.metadata.datetime.strftime(self.date_folders_format)
+
+
 class LazyDestinationFolder:
     def __init__(
         self,
-        date_folders_format="%Y/%m/%d",
         include_version=False,
         include_non_final_maturity=True,
     ) -> None:
         super().__init__()
         self.include_version = include_version
         self.include_non_final_maturity = include_non_final_maturity
-        self.date_folders_format = date_folders_format
 
     def __get__(self, c: "NameGenerator", owner) -> str:
         """The folder hierarchy the datasets files go into.
@@ -282,12 +297,10 @@ class LazyDestinationFolder:
         if self.include_version:
             parts.append(d.dataset_version.replace(".", "-"))
 
-        # Cut the region code in subfolders
-        region_code = d.region_code
-        if region_code:
-            parts.extend(utils.subfolderise(region_code))
-
-        parts.extend(d.datetime.strftime(self.date_folders_format).split("/"))
+        if c.region_folder is not None:
+            parts.append(c.region_folder)
+        if c.time_folder is not None:
+            parts.append(c.time_folder)
 
         if self.include_non_final_maturity:
             # If it's not a final product, append the maturity to the folder.
@@ -591,7 +604,23 @@ class NameGenerator:
     #: (used if dataset_location is generated)
     collection_prefix: Optional[str] = None
 
-    #: The folder offset from the collection_prefix.
+    #: The region portion of dataset_folder
+    #:
+    #: By default, it will split the region code in half
+    #:
+    #: Eg. ``'012/094'``
+    #:
+    region_folder = LazyRegionOffset()
+
+    #: The time portion of dataset_folder
+    #:
+    #: By default, it will be ``"%Y/%m/%d"`` of the dataset's ``'datetime'`` property.
+    #:
+    #: Eg. ``'2019/03/12'``
+    #:
+    time_folder = LazyTimeOffset()
+
+    #: The full folder offset from the collection_prefix.
     #:
     #: Example: ``'ga_ls8c_ones_3/090/084/2016/01/21'``
     #:
