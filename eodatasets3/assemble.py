@@ -353,16 +353,38 @@ class DatasetPrepare(Eo3Interface):
         #:
         #:     p.names.dataset_label = "landsat-observations-12th-may-2021"
         #:
-        #: Change the folder offset for each dataset. All generated files paths are relative
-        #: to this folder (and it is relative to the collection path)::
+        #: Customise the dataset's folder offset::
+        #:
+        #:     >>> p.names.dataset_folder
+        #:     'ga_ls8c_ones_3/090/084/2016/01/21'
+        #:
+        #: ... to use a custom time hierarchy::
+        #:
+        #:     >>> p.names.time_folder = p.datetime.strftime("years/%Y")
+        #:     >>> p.names.dataset_folder
+        #:     'ga_ls8c_ones_3/090/084/years/2016'
+        #:
+        #: ... or a custom region format::
+        #:
+        #:     >>> p.names.region_folder = 'x04y23'
+        #:     >>> p.names.dataset_folder
+        #:     'ga_ls8c_ones_3/x04y23/years/2016'
+        #:
+        #: ... or replace it altogether::
         #:
         #:     p.names.dataset_folder = "datasets/january/2021"
         #:
-        #: Set a different pattern used for generating filenames
-        #: All filenames have a file_id (eg. "odc-metadata" or "") and a suffix (eg. "yaml")
-        #: (Can contain folder separators. It will be relative to the dataset folder)::
+        #: Configure the pattern used for generating filenames::
         #:
         #:     p.names.filename_pattern = "my-file.{file_id}.{suffix}"
+        #:
+        #: .. note::
+        #:
+        #:    All filenames are given a ``{file_id}`` (eg. ``"odc-metadata"`` or ``""``)
+        #:    and ``{suffix}`` (eg. ``"yaml"``) variable to distinguish themselves.
+        #:
+        #:    (Patterns can also contain folder separators. It will be relative to the dataset
+        #:    folder)
         #:
         #: The path to the EO3 metadata doc (relative path to the dataset location)::
         #:

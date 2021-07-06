@@ -395,6 +395,15 @@ def test_names_alone(tmp_path: Path):
 
     # Can we override generated names?
 
+    convention.time_folder = "years/2013"
+    assert convention.dataset_location == (
+        "s3://test-bucket/ga_s2am_tester_1/023/543/years/2013/"
+    )
+    convention.region_folder = "x023y543"
+    assert convention.dataset_location == (
+        "s3://test-bucket/ga_s2am_tester_1/x023y543/years/2013/"
+    )
+
     convention.dataset_folder = Path("custom/dataset/offset/")
     # Now the generated metadata path will be inside it:
     assert convention.dataset_location == "s3://test-bucket/custom/dataset/offset/"
