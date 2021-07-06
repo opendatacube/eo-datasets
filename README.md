@@ -85,7 +85,6 @@ them validated.
 You can also run with `--thorough` to have it open imagery files too, checking
 their properties match the product (nodata, dtype etc)
 
-
     ❯ eo3-validate --help
     Usage: eo3-validate [OPTIONS] [PATHS]...
     
@@ -110,6 +109,9 @@ their properties match the product (nodata, dtype etc)
                                       (deliberately) allowed by ODC, but often a
                                       mistake. This flag disables the warning.
     
+      --from-explorer TEXT            Read all product definitions from the given
+                                      Explorer URL
+
       -q, --quiet                     Only print problems, one per line
       --help                          Show this message and exit.
 

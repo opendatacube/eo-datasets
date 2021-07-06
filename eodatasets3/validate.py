@@ -19,6 +19,8 @@ from typing import (
     Sequence,
     Iterable,
 )
+from urllib.parse import urljoin
+from urllib.request import urlopen
 
 import attr
 import ciso8601
@@ -912,6 +914,11 @@ products first, and datasets later, to ensure they can be matched.
     "This is (deliberately) allowed by ODC, but often a mistake. This flag disables the warning.",
 )
 @click.option(
+    "--from-explorer",
+    "explorer_url",
+    help="Read all product definitions from the given Explorer URL",
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
@@ -924,10 +931,27 @@ def run(
     quiet,
     thorough: bool,
     expect_extra_measurements: bool,
+    explorer_url: str,
 ):
     validation_counts: Counter[Level] = collections.Counter()
     invalid_paths = 0
     current_location = Path(".").resolve().as_uri() + "/"
+
+    if explorer_url:
+        # Read product yamls from the Explorer instance,
+        # eg: https://explorer.dea.ga.gov.au/products/ls5_fc_albers.odc-product.yaml
+        #
+        # Add them to the beginning of path list, so they can be used to validate any following datasets too.
+        paths = [
+            *(
+                urljoin(explorer_url, f"/products/{name.strip()}.odc-product.yaml")
+                for name in urlopen(urljoin(explorer_url, "products.txt"))
+                .read()
+                .decode("utf-8")
+                .split("\n")
+            ),
+            *paths,
+        ]
 
     s = {
         Level.info: dict(),
