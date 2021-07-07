@@ -275,11 +275,6 @@ class DatasetPrepare(Eo3Interface):
             raise ValueError(
                 "Must specify either a collection folder, dataset location or a single metadata file"
             )
-        if not collection_location:
-            if dataset_location and not dataset_location.is_absolute():
-                raise ValueError(
-                    "Dataset location must be absolute if no collection location specified."
-                )
 
         if isinstance(collection_location, Path) and not collection_location.exists():
             raise ValueError(
