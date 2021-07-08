@@ -4,6 +4,7 @@ Validate ODC dataset documents
 import collections
 import enum
 import math
+import multiprocessing
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -29,7 +30,9 @@ import numpy as np
 import rasterio
 from boltons.iterutils import get_path
 from click import style, echo, secho
+from datacube import Datacube
 from datacube.utils import changes, read_documents, is_url, InvalidDocException
+from datacube.utils.documents import load_documents
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.errors import CRSError
@@ -489,9 +492,11 @@ def validate_paths(
     paths: List[str],
     thorough: bool = False,
     expect_extra_measurements: bool = False,
+    product_definitions: Dict[str, Dict] = None,
 ) -> Generator[Tuple[str, List[ValidationMessage]], None, None]:
     """Validate the list of paths. Product documents can be specified before their datasets."""
-    products: Dict[str, Dict] = {}
+
+    products = dict(product_definitions or {})
 
     for url, doc, was_specified_by_user in read_paths(paths):
         messages = []
@@ -914,9 +919,16 @@ products first, and datasets later, to ensure they can be matched.
     "This is (deliberately) allowed by ODC, but often a mistake. This flag disables the warning.",
 )
 @click.option(
-    "--from-explorer",
+    "--explorer-url",
     "explorer_url",
-    help="Read all product definitions from the given Explorer URL",
+    help="Use product definitions from the given Explorer URL to validate datasets. "
+    'Eg: "https://explorer.dea.ga.gov.au/"',
+)
+@click.option(
+    "--odc",
+    "use_datacube",
+    is_flag=True,
+    help="Use product definitions from datacube to validate datasets",
 )
 @click.option(
     "-q",
@@ -932,34 +944,25 @@ def run(
     thorough: bool,
     expect_extra_measurements: bool,
     explorer_url: str,
+    use_datacube: bool,
 ):
     validation_counts: Counter[Level] = collections.Counter()
     invalid_paths = 0
     current_location = Path(".").resolve().as_uri() + "/"
 
-    if explorer_url:
-        # Read product yamls from the Explorer instance,
-        # eg: https://explorer.dea.ga.gov.au/products/ls5_fc_albers.odc-product.yaml
-        #
-        # Add them to the beginning of path list, so they can be used to validate any following datasets too.
-        paths = [
-            *(
-                urljoin(explorer_url, f"/products/{name.strip()}.odc-product.yaml")
-                for name in urlopen(urljoin(explorer_url, "products.txt"))
-                .read()
-                .decode("utf-8")
-                .split("\n")
-            ),
-            *paths,
-        ]
+    product_definitions = _load_remote_product_definitions(use_datacube, explorer_url)
 
     s = {
         Level.info: dict(),
         Level.warning: dict(fg="yellow"),
         Level.error: dict(fg="red"),
     }
+
     for url, messages in validate_paths(
-        paths, thorough=thorough, expect_extra_measurements=expect_extra_measurements
+        paths,
+        thorough=thorough,
+        expect_extra_measurements=expect_extra_measurements,
+        product_definitions=product_definitions,
     ):
         if url.startswith(current_location):
             url = url[len(current_location) :]
@@ -1015,3 +1018,55 @@ def run(
             secho(f"{len(paths)} paths", err=True)
 
     sys.exit(invalid_paths)
+
+
+def _load_remote_product_definitions(
+    from_datacube: bool = False,
+    from_explorer_url: Optional[str] = None,
+) -> Dict[str, Dict]:
+
+    product_definitions = {}
+    # Load any remote products that were asked for.
+    if from_explorer_url:
+        for definition in _load_explorer_product_definitions(from_explorer_url):
+            product_definitions[definition["name"]] = definition
+
+    if from_datacube:
+        # The normal datacube environment variables can be used to choose alternative configs.
+        with Datacube(app="eo3-validate") as dc:
+            for product in dc.index.products.get_all():
+                product_definitions[product.name] = product.definition
+
+    secho(f"{len(product_definitions)} ODC products")
+    return product_definitions
+
+
+def _load_doc(url):
+    return list(load_documents(url))
+
+
+def _load_explorer_product_definitions(
+    explorer_url: str,
+    workers: int = 6,
+) -> Generator[Dict, None, None]:
+    """
+    Read all product yamls from the given Explorer instance,
+
+    eg: https://explorer.dea.ga.gov.au/products/ls5_fc_albers.odc-product.yaml
+    """
+    product_urls = [
+        urljoin(explorer_url, f"/products/{name.strip()}.odc-product.yaml")
+        for name in urlopen(urljoin(explorer_url, "products.txt"))
+        .read()
+        .decode("utf-8")
+        .split("\n")
+    ]
+    count = 0
+    with multiprocessing.Pool(workers) as pool:
+        for product_definitions in pool.imap_unordered(_load_doc, product_urls):
+            count += 1
+            echo(f"\r{count} Explorer products", nl=False)
+            yield from product_definitions
+        pool.close()
+        pool.join()
+    echo()
