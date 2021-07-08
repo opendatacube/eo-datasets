@@ -771,6 +771,20 @@ class NameGenerator:
         except ValueError:
             return None
 
+    def __repr__(self) -> str:
+        ps = {"collection_prefix": self.collection_prefix}
+        try:
+            ps["dataset_location"] = self.dataset_location
+        except ValueError:
+            ...
+        try:
+            ps["metadata_file"] = self.metadata_file
+        except ValueError:
+            ...
+
+        ps = ", ".join(f"{k}={v!r}" for k, v in ps.items())
+        return f"{self.__class__.__name__}({ps})"
+
 
 class DEANamingConventions(NameGenerator):
     """
