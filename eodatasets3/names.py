@@ -27,7 +27,7 @@ class LazyProductName:
         self.include_instrument = include_instrument
         self.include_collection = include_collection
 
-    def __get__(self, c: "NameGenerator", owner) -> str:
+    def __get__(self, c: "NamingConventions", owner) -> str:
         if c.metadata.product_name:
             return c.metadata.product_name
 
@@ -68,7 +68,7 @@ class LazyLabel:
         self.strip_major_version = strip_major_version
         self.include_version = include_version
 
-    def __get__(self, c: "NameGenerator", owner) -> str:
+    def __get__(self, c: "NamingConventions", owner) -> str:
         d = c.metadata
 
         product_prefix = c.product_name
@@ -135,7 +135,7 @@ class LazyPlatformAbbreviation:
 
         self.allow_unknown_abbreviations = allow_unknown_abbreviations
 
-    def __get__(self, c: "NameGenerator", owner) -> Optional[str]:
+    def __get__(self, c: "NamingConventions", owner) -> Optional[str]:
         """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
 
         p = c.metadata.platforms
@@ -183,7 +183,7 @@ class LazyPlatformAbbreviation:
 
 
 class LazyInstrumentAbbreviation:
-    def __get__(self, c: "NameGenerator", owner) -> Optional[str]:
+    def __get__(self, c: "NamingConventions", owner) -> Optional[str]:
         """Abbreviated form of an instrument name, as used in dea product names. eg. 'c'."""
         if not c.metadata.instrument:
             return None
@@ -240,7 +240,7 @@ class LazyProducerAbbreviation:
             known_abbreviations or self.KNOWN_PRODUCER_ABBREVIATIONS
         )
 
-    def __get__(self, c: "NameGenerator", owner) -> Optional[str]:
+    def __get__(self, c: "NamingConventions", owner) -> Optional[str]:
         """Abbreviated form of a producer, as used in dea product names. eg. 'ga', 'usgs'."""
         if not c.metadata.producer:
             return None
@@ -256,7 +256,7 @@ class LazyProducerAbbreviation:
 
 
 class LazyRegionOffset:
-    def __get__(self, c: "NameGenerator", owner) -> Optional[str]:
+    def __get__(self, c: "NamingConventions", owner) -> Optional[str]:
         # Cut the region code in subfolders
         region_code = c.metadata.region_code
         if region_code:
@@ -268,7 +268,7 @@ class LazyTimeOffset:
     def __init__(self, date_folders_format="%Y/%m/%d") -> None:
         self.date_folders_format = date_folders_format
 
-    def __get__(self, c: "NameGenerator", owner) -> Optional[str]:
+    def __get__(self, c: "NamingConventions", owner) -> Optional[str]:
         return c.metadata.datetime.strftime(self.date_folders_format)
 
 
@@ -282,7 +282,7 @@ class LazyDestinationFolder:
         self.include_version = include_version
         self.include_non_final_maturity = include_non_final_maturity
 
-    def __get__(self, c: "NameGenerator", owner) -> str:
+    def __get__(self, c: "NamingConventions", owner) -> str:
         """The folder hierarchy the datasets files go into.
 
         This is returned as a relative path.
@@ -320,7 +320,7 @@ class LazyDestinationFolder:
 class LazyDatasetLocation:
     """The location of the dataset as indexed into ODC. Defaults to the metadata path."""
 
-    def __get__(self, c: "NameGenerator", owner) -> str:
+    def __get__(self, c: "NamingConventions", owner) -> str:
         if not c.collection_prefix:
             raise ValueError(
                 "collection_prefix is required if you're not setting a "
@@ -417,12 +417,12 @@ class LazyFileName:
         self.file_id = file_id
         self.suffix = suffix
 
-    def __get__(self, c: "NameGenerator", owner) -> str:
+    def __get__(self, c: "NamingConventions", owner) -> str:
         return c.filename(file_id=self.file_id, suffix=self.suffix)
 
 
 class LazyProductURI:
-    def __get__(self, n: "NameGenerator", owner) -> Optional[str]:
+    def __get__(self, n: "NamingConventions", owner) -> Optional[str]:
         if not n.base_product_uri:
             return None
 
@@ -467,7 +467,7 @@ def _as_path(url: str) -> Path:
     return Path(parts.path)
 
 
-class NameGenerator:
+class NamingConventions:
     """
     A generator of names for products, data labels, file paths, urls, etc.
 
@@ -786,7 +786,7 @@ class NameGenerator:
         return f"{self.__class__.__name__}({ps})"
 
 
-class DEANamingConventions(NameGenerator):
+class DEANamingConventions(NamingConventions):
     """
     Example file structure (note version number in file):
 
@@ -926,13 +926,13 @@ class DEAS2DerivativesNamingConventions(DEADerivativesNamingConventions):
 
 
 class AfricaProductName:
-    def __get__(self, c: "NameGenerator", owner) -> str:
+    def __get__(self, c: "NamingConventions", owner) -> str:
         if c.metadata.product_name:
             return c.metadata.product_name
         return f"{c.metadata.product_family}_{c.platform_abbreviated}"
 
 
-class DEAfricaNamingConventions(NameGenerator):
+class DEAfricaNamingConventions(NamingConventions):
     """
     DEAfrica avoids org names and uses simpler "{family}_{platform}" product names.
 
@@ -969,7 +969,7 @@ class DEAfricaNamingConventions(NameGenerator):
 
 
 KNOWN_CONVENTIONS = dict(
-    default=NameGenerator,
+    default=NamingConventions,
     dea=DEANamingConventions,
     dea_s2=DEAS2NamingConventions,
     dea_s2_derivative=DEAS2DerivativesNamingConventions,
@@ -983,14 +983,14 @@ def namer(
     *,
     collection_prefix: Location = None,
     conventions: str = "default",
-) -> "NameGenerator":
+) -> "NamingConventions":
     """
     Create a naming instance of the given conventions.
 
     Conventions: 'default', 'dea', 'deafrica', ...
 
     You usually give it existing properties, but you can use the return value's
-    :attr:`.metadata <eodatasets3.NameGenerator.metadata>` field to set properties afterwards.
+    :attr:`.metadata <eodatasets3.NamingConventions.metadata>` field to set properties afterwards.
 
     """
     if conventions not in KNOWN_CONVENTIONS:

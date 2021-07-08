@@ -30,7 +30,7 @@ from eodatasets3.model import (
     Location,
     AccessoryDoc,
 )
-from eodatasets3.names import NameGenerator, namer, resolve_location, dc_uris
+from eodatasets3.names import NamingConventions, namer, resolve_location, dc_uris
 from eodatasets3.properties import Eo3Interface, Eo3Dict
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
@@ -216,7 +216,7 @@ class DatasetPrepare(Eo3Interface):
         dataset_id: Optional[uuid.UUID] = None,
         allow_absolute_paths: bool = False,
         naming_conventions: Optional[str] = None,
-        names: Optional[NameGenerator] = None,
+        names: Optional[NamingConventions] = None,
         dataset: Optional[DatasetDoc] = None,
     ) -> None:
         """
@@ -310,14 +310,14 @@ class DatasetPrepare(Eo3Interface):
             and collection_location is None
         )
         if names is None:
-            names: NameGenerator = namer(
+            names: NamingConventions = namer(
                 dataset.properties, conventions=naming_conventions or "default"
             )
         else:
             # Our properties should come from the given names instance.
             dataset.properties = names.metadata.properties
 
-        #: The name generator  (an instance of :class:`NameGenerator <eodatasets3.NameGenerator>`)
+        #: The name generator  (an instance of :class:`NamingConventions <eodatasets3.NamingConventions>`)
         #:
         #: By default, all names will be generated based on metadata
         #: fields and the chosen naming conventions.
@@ -389,8 +389,8 @@ class DatasetPrepare(Eo3Interface):
         #:
         #:     p.names.product_uri = "https://collections.earth.test.example/product/my-product"
         #:
-        #: A full list of fields can be seen on :class:`eodatasets3.NameGenerator`
-        self.names: NameGenerator = names
+        #: A full list of fields can be seen on :class:`eodatasets3.NamingConventions`
+        self.names: NamingConventions = names
 
         if collection_location:
             self.names.collection_prefix = resolve_location(collection_location)
@@ -1043,7 +1043,7 @@ class DatasetAssembler(DatasetPrepare):
         if_exists: IfExists = IfExists.ThrowError,
         allow_absolute_paths: bool = False,
         naming_conventions: str = "default",
-        names: Optional[NameGenerator] = None,
+        names: Optional[NamingConventions] = None,
         dataset: Optional[DatasetDoc] = None,
     ) -> None:
         """

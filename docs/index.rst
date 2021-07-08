@@ -452,7 +452,7 @@ Naming things yourself
 Names and paths are only auto-generated if they have not been set manually
 by the user.
 
-You can set properties yourself on the :class:`NameGenerator <eodatasets3.NameGenerator>`
+You can set properties yourself on the :class:`NamingConventions <eodatasets3.NamingConventions>`
 to avoid automatic generation (or to avoid their finicky metadata requirements).
 
 .. testsetup:: nametest
@@ -710,7 +710,7 @@ to tell if a dataset has already been written before you assemble it.
 
 .. autofunction:: eodatasets3.namer
 
-.. autoclass:: eodatasets3.NameGenerator
+.. autoclass:: eodatasets3.NamingConventions
    :members:
    :inherited-members:
 
@@ -729,5 +729,5 @@ Misc Types
 
 .. automodule:: eodatasets3
    :members:
-   :exclude-members: DatasetAssembler, DatasetPrepare, NameGenerator, namer
+   :exclude-members: DatasetAssembler, DatasetPrepare, NamingConventions, namer
 
