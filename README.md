@@ -109,9 +109,13 @@ their properties match the product (nodata, dtype etc)
                                       (deliberately) allowed by ODC, but often a
                                       mistake. This flag disables the warning.
     
-      --from-explorer TEXT            Read all product definitions from the given
-                                      Explorer URL
-
+      --explorer-url TEXT             Use product definitions from the given
+                                      Explorer URL to validate datasets. Eg:
+                                      "https://explorer.dea.ga.gov.au/"
+    
+      --odc                           Use product definitions from datacube to
+                                      validate datasets
+    
       -q, --quiet                     Only print problems, one per line
       --help                          Show this message and exit.
 
