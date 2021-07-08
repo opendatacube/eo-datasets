@@ -8,7 +8,7 @@ from .images import GridSpec
 from .model import DatasetDoc
 from .properties import Eo3Dict
 
-from .names import namer, NameGenerator
+from .names import namer, NamingConventions
 
 REPO_URL = "https://github.com/GeoscienceAustralia/eo-datasets.git"
 
@@ -23,7 +23,7 @@ __all__ = (
     "GridSpec",
     "IfExists",
     "IncompleteDatasetError",
-    "NameGenerator",
+    "NamingConventions",
     "namer",
     "REPO_URL",
     "__version__",
