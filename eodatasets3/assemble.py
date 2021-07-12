@@ -774,17 +774,21 @@ class DatasetPrepare(Eo3Interface):
         """
         dataset_location = dataset_location or self.names.dataset_location
 
-        def rel_path(p: Union[str, Path]) -> str:
+        def rel_location(p: Location) -> str:
             if isinstance(p, PurePath):
                 if p.is_absolute():
-                    return relative_url(
-                        dataset_location,
-                        p.as_uri(),
-                        allow_absolute=self._allow_absolute_paths,
-                    )
+                    p = p.as_uri()
                 else:
-                    return p.as_posix()
+                    p = p.as_posix()
 
+            # Is it an (absolute) URL
+            if dc_uris.is_url(p):
+                return relative_url(
+                    dataset_location,
+                    p,
+                    allow_absolute=self._allow_absolute_paths,
+                )
+            # Otherwise, already relative.
             return p
 
         if not dataset_location:
@@ -848,14 +852,14 @@ class DatasetPrepare(Eo3Interface):
                     raise AssemblyError(
                         f"Recorded measurement already exists in the underlying dataset: {name!r}"
                     )
-                doc.path = rel_path(doc.path)
+                doc.path = rel_location(doc.path)
                 dataset.measurements[name] = doc
         for name, path in self._accessories.items():
             if name in dataset.accessories:
                 raise AssemblyError(
                     f"Recorded accessory already exists in the underlying dataset: {name!r}"
                 )
-            dataset.accessories[name] = AccessoryDoc(rel_path(path), name=name)
+            dataset.accessories[name] = AccessoryDoc(rel_location(path), name=name)
 
         if dataset.measurements and sort_measurements:
             # noinspection PyTypeChecker

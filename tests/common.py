@@ -10,7 +10,7 @@ from deepdiff.model import DiffLevel
 from ruamel import yaml
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets3 import serialise
+from eodatasets3 import serialise, DatasetDoc
 
 
 def check_prepare_outputs(
@@ -58,6 +58,33 @@ def assert_expected_eo3_path(
             assert_shapes_mostly_equal(
                 produced_dataset.geometry, expected_dataset.geometry, 0.00000001
             )
+
+
+def assert_expected_eo3(
+    expected_doc: DatasetDoc,
+    given_doc: DatasetDoc,
+    *,
+    ignore_fields=(),
+):
+    """
+    Do the two DatasetDocs match?
+
+    (Unlike equality, gives reasonable error message of differences, and
+    compares geometry more intelligently.)
+    """
+    __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
+    if expected_doc.geometry is None:
+        assert given_doc.geometry is None, "Expected no geometry"
+    else:
+        assert_shapes_mostly_equal(
+            given_doc.geometry, expected_doc.geometry, 0.00000001
+        )
+    e = serialise.to_doc(expected_doc)
+    g = serialise.to_doc(given_doc)
+    for f in ("geometry",) + ignore_fields:
+        e.pop(f)
+        g.pop(f)
+    assert_same(g, e)
 
 
 def assert_shapes_mostly_equal(
