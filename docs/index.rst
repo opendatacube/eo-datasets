@@ -190,6 +190,7 @@ We can record them as source datasets, and the assembler can optionally copy any
 
       ...
 
+
 In these situations, we often write our new pixels as a numpy array, inheriting the existing
 :class:`grid spatial information <eodatasets3.GridSpec>` of our input dataset::
 
@@ -200,6 +201,12 @@ In these situations, we often write our new pixels as a numpy array, inheriting 
          GridSpec.from_dataset_doc(source_dataset),
          nodata=-999,
       )
+
+Other ways to reference your source datasets:
+
+- As an in-memory :class:`DatasetDoc <eodatasets3.DatasetDoc>` using :func:`p.add_source_dataset() <eodatasets3.DatasetPrepare.add_source_dataset>`
+- Or as raw uuids, using :func:`p.note_source_datasets() <eodatasets3.DatasetPrepare.note_source_datasets>` (without property inheritance)
+
 
 Creating documents in-memory
 ----------------------------
