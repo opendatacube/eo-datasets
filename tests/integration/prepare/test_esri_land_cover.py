@@ -31,7 +31,7 @@ def test_esri_prepare():
             lineage={},
             label="esri_land_cover_60K_2020-01-01",
             locations=[
-                "file:///home/jez/dea/eo-datasets/tests/integration/data/esri-land-cover/60K_20200101-20210101.tif",
+                tif_url,
             ],
             properties=Eo3Dict(
                 {
