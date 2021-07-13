@@ -12,6 +12,21 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Tuple,
+    Union,
+    Set,
+)
+import sys
+import tempfile
+from collections import defaultdict
+from pathlib import Path, PurePath
+from typing import (
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
     Set,
     Tuple,
     Union,
@@ -33,6 +48,7 @@ from rasterio.enums import Resampling
 from rasterio.io import DatasetWriter, MemoryFile
 from rasterio.shutil import copy as rio_copy
 from rasterio.warp import calculate_default_transform, reproject
+from scipy.ndimage import binary_fill_holes
 from shapely.geometry.base import CAP_STYLE, JOIN_STYLE, BaseGeometry
 
 from eodatasets3.model import DatasetDoc, GridDoc, MeasurementDoc
@@ -421,11 +437,13 @@ class MeasurementBundler:
                 )
         return crs, grid_docs, measurement_docs
 
-    def consume_and_get_valid_data(self) -> BaseGeometry:
+    def consume_and_get_valid_data(self, fill_holes: bool = False) -> BaseGeometry:
         """
         Consume the stored grids and produce the valid data for them.
 
         (they are consumed in order to to minimise peak memory usage)
+
+        :param fill_holes: Fill any holes in masks before calculating geometry.
         """
 
         def valid_shape(shape):
@@ -437,6 +455,9 @@ class MeasurementBundler:
         while self.mask_by_grid:
             grid, mask = self.mask_by_grid.popitem()
             mask = mask.astype("uint8")
+            if fill_holes:
+                binary_fill_holes(mask, output=mask)
+
             shape = shapely.ops.unary_union(
                 [
                     valid_shape(shapely.geometry.shape(shape))
