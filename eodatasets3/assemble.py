@@ -792,6 +792,7 @@ class DatasetPrepare(Eo3Interface):
         validate_correctness: bool = True,
         sort_measurements: bool = True,
         expect_geometry: bool = True,
+        fill_geometry_holes: bool = True,
     ) -> DatasetDoc:
         """
         Create the metadata doc as an in-memory :class:`eodatasets3.DatasetDoc` instance.
@@ -835,7 +836,9 @@ class DatasetPrepare(Eo3Interface):
 
         crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
 
-        valid_data = self.geometry or self._measurements.consume_and_get_valid_data()
+        valid_data = self.geometry or self._measurements.consume_and_get_valid_data(
+            fill_holes=fill_geometry_holes
+        )
 
         # Avoid the messiness of different empty collection types.
         # (to have a non-null geometry we'd also need non-null grids and crses)

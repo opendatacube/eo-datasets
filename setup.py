@@ -73,6 +73,7 @@ setup(
         "pyproj",
         "rasterio",
         "ruamel.yaml",
+        "scipy",
         "shapely",
         "structlog",
         "xarray",
