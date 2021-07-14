@@ -1,6 +1,6 @@
 from ._version import get_versions
 from .assemble import DatasetAssembler, DatasetPrepare, IfExists, IncompleteDatasetError
-from .images import GridSpec
+from .images import GridSpec, ValidDataMethod
 from .model import DatasetDoc
 from .names import NamingConventions, namer
 from .properties import Eo3Dict
@@ -21,5 +21,6 @@ __all__ = (
     "NamingConventions",
     "namer",
     "REPO_URL",
+    "ValidDataMethod",
     "__version__",
 )

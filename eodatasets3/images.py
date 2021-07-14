@@ -4,6 +4,7 @@ import string
 import sys
 import tempfile
 from collections import defaultdict
+from enum import Enum, auto
 from pathlib import Path, PurePath
 from typing import (
     Dict,
@@ -49,6 +50,7 @@ from rasterio.io import DatasetWriter, MemoryFile
 from rasterio.shutil import copy as rio_copy
 from rasterio.warp import calculate_default_transform, reproject
 from scipy.ndimage import binary_fill_holes
+from shapely.geometry import box
 from shapely.geometry.base import CAP_STYLE, JOIN_STYLE, BaseGeometry
 
 from eodatasets3.model import DatasetDoc, GridDoc, MeasurementDoc
@@ -60,6 +62,22 @@ try:
     import h5py
 except ImportError:
     h5py = None
+
+
+class ValidDataMethod(Enum):
+    """
+    How to calculate the valid_data geometry for an image?
+    """
+
+    #: Shape of all valid pixels
+    #:
+    thorough = auto()
+    #: Shape of valid pixels after filling holes
+    #:
+    #: (Potentially much faster if there's many small nodata holes)
+    filled = auto()
+    #: Use the outer image file bounds, ignoring actual pixel values.
+    bounds = auto()
 
 
 @attr.s(auto_attribs=True, slots=True, hash=True, frozen=True)
@@ -437,65 +455,35 @@ class MeasurementBundler:
                 )
         return crs, grid_docs, measurement_docs
 
-    def consume_and_get_valid_data(self, fill_holes: bool = False) -> BaseGeometry:
+    def consume_and_get_valid_data(
+        self, valid_data_method: ValidDataMethod = ValidDataMethod.filled
+    ) -> BaseGeometry:
         """
         Consume the stored grids and produce the valid data for them.
 
         (they are consumed in order to to minimise peak memory usage)
 
-        :param fill_holes: Fill any holes in masks before calculating geometry.
+        :param valid_data_method: How to calculate the valid-data polygon?
         """
 
-        def valid_shape(shape):
-            if shape.is_valid:
-                return shape
-            return shape.buffer(0)
-
         geoms = []
+
         while self.mask_by_grid:
             grid, mask = self.mask_by_grid.popitem()
-            mask = mask.astype("uint8")
-            if fill_holes:
+
+            if valid_data_method is ValidDataMethod.bounds:
+                geom = box(*grid.bounds)
+            elif valid_data_method is ValidDataMethod.filled:
+                mask = mask.astype("uint8")
                 binary_fill_holes(mask, output=mask)
-
-            shape = shapely.ops.unary_union(
-                [
-                    valid_shape(shapely.geometry.shape(shape))
-                    for shape, val in rasterio.features.shapes(mask)
-                    if val == 1
-                ]
-            )
-            shape_y, shape_x = mask.shape
-            del mask
-
-            # convex hull
-            geom = shape.convex_hull
-
-            # buffer by 1 pixel
-            geom = geom.buffer(
-                1, cap_style=CAP_STYLE.square, join_style=JOIN_STYLE.bevel
-            )
-
-            # simplify with 1 pixel radius
-            geom = geom.simplify(1)
-
-            # intersect with image bounding box
-            geom = geom.intersection(shapely.geometry.box(0, 0, shape_x, shape_y))
-
-            # transform from pixel space into CRS space
-            geom = shapely.affinity.affine_transform(
-                geom,
-                (
-                    grid.transform.a,
-                    grid.transform.b,
-                    grid.transform.d,
-                    grid.transform.e,
-                    grid.transform.xoff,
-                    grid.transform.yoff,
-                ),
-            )
+                geom = _grid_to_poly(grid, mask)
+            elif valid_data_method is ValidDataMethod.thorough:
+                geom = _grid_to_poly(grid, mask.astype("uint8"))
+            else:
+                raise NotImplementedError(
+                    f"Unexpected valid data method: {valid_data_method}"
+                )
             geoms.append(geom)
-
         return shapely.ops.unary_union(geoms)
 
     def iter_names(self) -> Generator[str, None, None]:
@@ -509,6 +497,46 @@ class MeasurementBundler:
         for grid, measurements in self._measurements_per_grid.items():
             for band_name, meas_path in measurements.items():
                 yield grid, band_name, meas_path.path
+
+
+def _valid_shape(shape: BaseGeometry) -> BaseGeometry:
+    if shape.is_valid:
+        return shape
+    return shape.buffer(0)
+
+
+def _grid_to_poly(grid: GridSpec, mask: numpy.ndarray) -> BaseGeometry:
+
+    shape = shapely.ops.unary_union(
+        [
+            _valid_shape(shapely.geometry.shape(shape))
+            for shape, val in rasterio.features.shapes(mask)
+            if val == 1
+        ]
+    )
+    shape_y, shape_x = mask.shape
+    del mask
+    # convex hull
+    geom = shape.convex_hull
+    # buffer by 1 pixel
+    geom = geom.buffer(1, cap_style=CAP_STYLE.square, join_style=JOIN_STYLE.bevel)
+    # simplify with 1 pixel radius
+    geom = geom.simplify(1)
+    # intersect with image bounding box
+    geom = geom.intersection(shapely.geometry.box(0, 0, shape_x, shape_y))
+    # transform from pixel space into CRS space
+    geom = shapely.affinity.affine_transform(
+        geom,
+        (
+            grid.transform.a,
+            grid.transform.b,
+            grid.transform.d,
+            grid.transform.e,
+            grid.transform.xoff,
+            grid.transform.yoff,
+        ),
+    )
+    return geom
 
 
 @attr.s(auto_attribs=True)

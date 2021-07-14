@@ -23,6 +23,15 @@ from shapely.geometry.base import BaseGeometry
 import eodatasets3
 from eodatasets3 import documents, images, serialise, validate
 from eodatasets3.documents import find_and_read_documents
+from eodatasets3.images import FileWrite, GridSpec, MeasurementBundler, ValidDataMethod
+from eodatasets3.model import (
+    DatasetDoc,
+    ProductDoc,
+    Location,
+    AccessoryDoc,
+)
+from eodatasets3.names import NamingConventions, namer, resolve_location, dc_uris
+from eodatasets3.properties import Eo3Interface, Eo3Dict
 from eodatasets3.images import FileWrite, GridSpec, MeasurementBundler
 from eodatasets3.model import AccessoryDoc, DatasetDoc, Location, ProductDoc
 from eodatasets3.names import NamingConventions, dc_uris, namer, resolve_location
@@ -278,6 +287,9 @@ class DatasetPrepare(Eo3Interface):
             raise ValueError(
                 f"Provided collection location doesn't exist: {collection_location}"
             )
+
+        #: How to calculate the valid data polygon?
+        self.valid_data_method: ValidDataMethod = ValidDataMethod.filled
 
         if not dataset:
             dataset = DatasetDoc()
@@ -837,7 +849,7 @@ class DatasetPrepare(Eo3Interface):
         crs, grid_docs, measurement_docs = self._measurements.as_geo_docs()
 
         valid_data = self.geometry or self._measurements.consume_and_get_valid_data(
-            fill_holes=fill_geometry_holes
+            valid_data_method=self.valid_data_method
         )
 
         # Avoid the messiness of different empty collection types.
