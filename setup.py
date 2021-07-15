@@ -28,7 +28,9 @@ EXTRAS_REQUIRE = {
     # If packaging ard/wagl.
     "wagl": ["h5py"],
     # The (legacy) prepare scripts
-    "ancillary": ["scipy", "checksumdir", "netCDF4"],
+    "ancillary": ["checksumdir", "netCDF4"],
+    # Optional valid-data poly handling methods
+    "algorithms": ["scikit-image"],
 }
 EXTRAS_REQUIRE["all"] = list(chain(EXTRAS_REQUIRE.values()))
 # Tests need all those optionals too.
