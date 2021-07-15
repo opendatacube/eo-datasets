@@ -76,6 +76,14 @@ class ValidDataMethod(Enum):
     #:
     #: (Potentially much faster if there's many small nodata holes)
     filled = auto()
+
+    #: Shape of the the convex-hull of valid pixels
+    #:
+    #: Slower than 'filled', but will work with more unusual shapes.
+    #:
+    #: Requires 'scikit-image' dependency.
+    convex_hull = auto()
+
     #: Use the outer image file bounds, ignoring actual pixel values.
     bounds = auto()
 
@@ -477,6 +485,13 @@ class MeasurementBundler:
                 mask = mask.astype("uint8")
                 binary_fill_holes(mask, output=mask)
                 geom = _grid_to_poly(grid, mask)
+            elif valid_data_method is ValidDataMethod.convex_hull:
+                # Requires optional dependency scikit-image
+                from skimage import morphology as morph
+
+                geom = _grid_to_poly(
+                    grid, morph.convex_hull_image(mask).astype("uint8")
+                )
             elif valid_data_method is ValidDataMethod.thorough:
                 geom = _grid_to_poly(grid, mask.astype("uint8"))
             else:
@@ -506,7 +521,6 @@ def _valid_shape(shape: BaseGeometry) -> BaseGeometry:
 
 
 def _grid_to_poly(grid: GridSpec, mask: numpy.ndarray) -> BaseGeometry:
-
     shape = shapely.ops.unary_union(
         [
             _valid_shape(shapely.geometry.shape(shape))
