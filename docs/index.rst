@@ -295,7 +295,11 @@ all measurements.
 By default, the assembler will create this geometry by reading the pixels from your
 measurements, and calculate a geometry vector on completion.
 
-If you want to avoid these reads and calculations, you can set the geometry manually::
+This can be configured by setting the :attr:`p.valid_data_method <eodatasets3.DatasetPrepare.valid_data_method>`
+to a different :class:`ValidDataMethod<eodatasets3.ValidDataMethod>` value.
+
+But you may want to avoid these reads and calculations entirely, in which case you can set
+a geometry yourself::
 
     p.geometry = my_shapely_polygon
 
@@ -736,4 +740,5 @@ Misc Types
 
 .. automodule:: eodatasets3
    :members:
+   :member-order: bysource
    :exclude-members: DatasetAssembler, DatasetPrepare, NamingConventions, namer
