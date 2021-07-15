@@ -66,25 +66,30 @@ except ImportError:
 
 class ValidDataMethod(Enum):
     """
-    How to calculate the valid_data geometry for an image?
+    How to calculate the valid data geometry for an image?
     """
 
-    #: Shape of all valid pixels
+    #: Vectorize the valid pixel mask as-is.
     #:
-    thorough = auto()
-    #: Shape of valid pixels after filling holes
+    vanilla = auto()
+
+    #: Fill holes in the valid pixel mask before vectorizing.
     #:
-    #: (Potentially much faster if there's many small nodata holes)
+    #: (Potentially much faster than ``vanilla`` if there's many small
+    #: nodata holes, as they will create many tiny polygons.
+    #: *slightly* slower if no holes exist.)
     filled = auto()
 
-    #: Shape of the the convex-hull of valid pixels
+    #: Take convex-hull of valid pixel mask before vectorizing.
     #:
-    #: Slower than 'filled', but will work with more unusual shapes.
+    #: This is much slower than ``filled``, but will work in cases where
+    #: you have a lot of internal geometry that aren't holes.
+    #: Such as SLC-Off Landsat 7 data.
     #:
     #: Requires 'scikit-image' dependency.
     convex_hull = auto()
 
-    #: Use the outer image file bounds, ignoring actual pixel values.
+    #: Use the image file bounds, ignoring actual pixel values.
     bounds = auto()
 
 
@@ -492,7 +497,7 @@ class MeasurementBundler:
                 geom = _grid_to_poly(
                     grid, morph.convex_hull_image(mask).astype("uint8")
                 )
-            elif valid_data_method is ValidDataMethod.thorough:
+            elif valid_data_method is ValidDataMethod.vanilla:
                 geom = _grid_to_poly(grid, mask.astype("uint8"))
             else:
                 raise NotImplementedError(

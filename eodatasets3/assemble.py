@@ -288,7 +288,16 @@ class DatasetPrepare(Eo3Interface):
                 f"Provided collection location doesn't exist: {collection_location}"
             )
 
-        #: How to calculate the valid data polygon?
+        #: What method to use to calculate the valid data geometry?
+        #:
+        #: Defaults to :attr:`eodatasets3.ValidDataMethod.filled`
+        #:
+        #: You may change this property before finishing your package.
+        #:
+        #: Eg::
+        #:
+        #:    p.valid_data_method = ValidDataMethod.vanilla
+        #:
         self.valid_data_method: ValidDataMethod = ValidDataMethod.filled
 
         if not dataset:
