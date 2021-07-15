@@ -813,7 +813,6 @@ class DatasetPrepare(Eo3Interface):
         validate_correctness: bool = True,
         sort_measurements: bool = True,
         expect_geometry: bool = True,
-        fill_geometry_holes: bool = True,
     ) -> DatasetDoc:
         """
         Create the metadata doc as an in-memory :class:`eodatasets3.DatasetDoc` instance.
