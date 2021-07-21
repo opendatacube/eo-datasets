@@ -640,11 +640,12 @@ class DatasetPrepare(Eo3Interface):
 
         if not inherit_skip_properties:
             # change the inherit_skip_properties to [] if it is None. Make the 'in list check' easier.
-            inherit_skip_properties = [] 
+            inherit_skip_properties = []
 
         for name in self.INHERITABLE_PROPERTIES:
-            if name in inherit_skip_properties: 
-                continue # if we plan to skip this property, skip it immediately.
+            if name in inherit_skip_properties:
+                # if we plan to skip this property, skip it immediately.
+                continue
 
             if name not in source_dataset.properties:
                 continue
