@@ -576,6 +576,10 @@ class DatasetPrepare(Eo3Interface):
                             data, which can be very computationally expensive e.g. Landsat 7
                             striped data, use the valid data geometry from this source dataset.
 
+        :param inherit_skip_properties: An extra list of property names that should not be copied.
+                                        This is useful when generating summaries which combine multiple
+                                        input source datasets.
+
         See :meth:`.add_source_path` if you have a filepath reference instead of a document.
 
         """
@@ -637,7 +641,9 @@ class DatasetPrepare(Eo3Interface):
             self._dataset.lineage.setdefault(classifier, []).append(dataset_id)
 
     def _inherit_properties_from(
-        self, source_dataset: DatasetDoc, inherit_skip_properties: Optional[str] = None
+        self,
+        source_dataset: DatasetDoc,
+        inherit_skip_properties: Optional[List[str]] = None,
     ):
 
         if not inherit_skip_properties:
