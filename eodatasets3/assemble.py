@@ -636,7 +636,9 @@ class DatasetPrepare(Eo3Interface):
                     ) from v
             self._dataset.lineage.setdefault(classifier, []).append(dataset_id)
 
-    def _inherit_properties_from(self, source_dataset: DatasetDoc, inherit_skip_properties: Optional[str] = None):
+    def _inherit_properties_from(
+        self, source_dataset: DatasetDoc, inherit_skip_properties: Optional[str] = None
+    ):
 
         if not inherit_skip_properties:
             # change the inherit_skip_properties to [] if it is None. Make the 'in list check' easier.
