@@ -100,7 +100,7 @@ def _proj_fields(grid: Dict[str, GridDoc], grid_name: str = "default") -> Dict:
     """
     Add fields of the STAC Projection (proj) Extension to a STAC Item
     """
-    grid_doc = grid.get(grid_name)
+    grid_doc = grid.get(grid_name or "default")
     if grid_doc:
         return {
             "proj:shape": grid_doc.shape,
