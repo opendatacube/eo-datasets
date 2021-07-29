@@ -958,10 +958,15 @@ class FileWrite:
                 "Please set either bit or lookup_table, you haven't set either of them"
             )
 
-        # the output_data has three layers, as R, G, B
         out_data, stretch = self.filter_singleband_data(input_data, bit, lookup_table)
+
+        if bit:
+            rgb = [out_data, out_data, out_data]
+        else:
+            rgb = out_data
+
         return self.create_thumbnail_from_numpy(
-            rgb=out_data,
+            rgb=rgb,
             static_stretch=stretch,
             input_geobox=input_geobox,
             nodata=nodata,
