@@ -4,13 +4,14 @@
 
 import os
 import sys
+from datetime import datetime
 
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("."))
 is_on_readthedocs = os.environ.get("READTHEDOCS", None) == "True"
 
 project = "eodatasets3"
-copyright = "2019, Geoscience Australia"
+copyright = f"{datetime.now().year}, Geoscience Australia"
 author = "Geoscience Australia"
 
 # Show __init__ docstring as the class docstring.
