@@ -39,6 +39,11 @@ class LazyProductName:
                 f"{c.platform_abbreviated or ''}{instrument or ''}",
                 c.metadata.product_family,
                 (
+                    c.metadata.product_maturity
+                    if c.metadata.product_maturity != "stable"
+                    else None
+                ),
+                (
                     f"{c.displayed_collection_number}"
                     if (self.include_collection and c.displayed_collection_number)
                     else None
