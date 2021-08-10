@@ -1,9 +1,10 @@
+import datetime
 import warnings
 from contextlib import contextmanager
 
 import pytest
 
-from eodatasets3 import namer
+from eodatasets3 import namer, Eo3Dict
 from eodatasets3.model import DatasetDoc
 from eodatasets3.names import NamingConventions
 from eodatasets3.properties import (
@@ -86,3 +87,40 @@ def test_unknown_abbreviations():
             ValueError, match="don't know the DEA abbreviation for platform"
         ):
             print(names.platform_abbreviated)
+
+
+def test_normalise_input_fields():
+    """
+    When properties are constructed manually, they should be normalised, including
+    sometimes the generation of new, parsed properties, without failing.
+
+    (this matches usage by Alchemist)
+    """
+    # Manually constructed properties that will need normalisation.
+    # (this is what Alechmist does)
+    properties = Eo3Dict(
+        {
+            "odc:region_code": "234343",
+            "datetime": datetime.datetime(2014, 3, 4),
+            "eo:instrument": "MSI",
+            # Needs normalisation
+            "eo:platform": "SENTINEL-2",
+            "sentinel:sentinel_tile_id": "S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09",
+            # Alchemist includes this field with invalid value "??" for Sentinel.
+            "landsat:landsat_scene_id": "??",
+        }
+    )
+
+    assert dict(properties) == {
+        "datetime": datetime.datetime(2014, 3, 4, 0, 0, tzinfo=datetime.timezone.utc),
+        "eo:instrument": "MSI",
+        # Was normalised.
+        "eo:platform": "sentinel-2",
+        "landsat:landsat_scene_id": "??",
+        "odc:region_code": "234343",
+        # Was read from the tile id.
+        "sentinel:datatake_start_datetime": datetime.datetime(
+            2020, 10, 31, 2, 28, 59, tzinfo=datetime.timezone.utc
+        ),
+        "sentinel:sentinel_tile_id": "S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09",
+    }
