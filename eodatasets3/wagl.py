@@ -10,6 +10,7 @@ import os
 import re
 import sys
 from datetime import timedelta, datetime
+from enum import Enum
 from pathlib import Path
 from typing import List, Sequence, Optional, Iterable, Any, Tuple, Dict
 from uuid import UUID
@@ -56,6 +57,11 @@ FILENAME_TIF_BAND = re.compile(
     r"(?P<extension>\....)"
 )
 PRODUCT_SUITE_FROM_GRANULE = re.compile("(L1[GTPCS]{1,2})")
+
+
+class ProductMaturity(Enum):
+    provisional = "provisional"
+    stable = "stable"
 
 
 def _find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> List[str]:
@@ -574,6 +580,8 @@ def package_file(
 def package(
     out_directory: Path,
     granule: Granule,
+    *,
+    product_maturity: ProductMaturity = ProductMaturity.stable,
     included_products: Iterable[str] = DEFAULT_PRODUCTS,
     include_oa: bool = True,
     oa_resolution: Optional[Tuple[float, float]] = None,
@@ -622,6 +630,12 @@ def package(
                 processed=p.processed,
                 wagl_doc=wagl_doc,
             )
+
+            # We don't bother including product maturity if it's stable, for consistency with old datasets.
+            # Stable is the assumed default.
+            if product_maturity is not ProductMaturity.stable:
+                p.product_maturity = product_maturity
+
             if granule.source_level1_metadata is not None:
                 # For historical consistency: we want to use the instrument that the source L1 product
                 # came from, not the instruments reported from the WAGL doc.
