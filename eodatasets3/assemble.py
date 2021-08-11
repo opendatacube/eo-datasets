@@ -442,6 +442,17 @@ class DatasetPrepare(Eo3Interface):
         ...
 
     @property
+    def collection_location(self) -> Path:
+        # Backward compat method. No docstring to avoid sphinx visibility.
+        return self.names.collection_path
+
+    @collection_location.setter
+    def collection_location(self, val: Path):
+        # Backward compat method. No docstring to avoid sphinx visibility.
+        # Previously, people could set the collection using this property, and it was a Path
+        self.names.collection_prefix = resolve_location(val)
+
+    @property
     def dataset_id(self) -> uuid.UUID:
         return self._dataset.id
 
