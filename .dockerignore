@@ -2,3 +2,4 @@ dev/*
 **/.pyc
 dist
 build
+Dockerfile
