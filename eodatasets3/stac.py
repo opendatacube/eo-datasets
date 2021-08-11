@@ -4,14 +4,17 @@ Convert an EO3 metadata doc to a Stac Item. (BETA/Incomplete)
 import math
 import mimetypes
 import warnings
+from datacube.utils.geometry import CRS, Geometry
 from pathlib import Path
-from typing import Dict, List, Optional, Callable, Mapping
-from urllib.parse import urljoin
+from pystac import Item, Link, Asset, MediaType
+from pystac.errors import STACError
+from pystac.extensions.projection import ProjectionExtension
+from pystac.extensions.eo import EOExtension
+from pystac.extensions.view import ViewExtension
 
-import jsonschema
-import rapidjson
-from datacube.utils.geometry import Geometry, CRS
 from requests_cache.core import CachedSession
+from typing import Dict, List, Mapping, Optional, Tuple
+from urllib.parse import urljoin
 
 from eodatasets3.model import DatasetDoc, GridDoc
 
@@ -56,58 +59,58 @@ def _convert_value_to_stac_type(key: str, value):
         return value
 
 
-def _media_fields(path: Path) -> Dict:
+def _media_type(path: Path) -> str:
     """
     Add media type of the asset object
     """
     mime_type = mimetypes.guess_type(path.name)[0]
     if path.suffix == ".sha1":
-        return {"type": "text/plain"}
+        return MediaType.TEXT
     elif path.suffix == ".yaml":
-        return {"type": "text/yaml"}
+        return "text/yaml"
     elif mime_type:
         if mime_type == "image/tiff":
-            return {"type": "image/tiff; application=geotiff"}
+            return MediaType.COG
         else:
-            return {"type": mime_type}
+            return mime_type
     else:
-        return {}
+        return "application/octet-stream"
 
 
-def _asset_roles_fields(asset_name: str) -> Dict:
+def _asset_roles_fields(asset_name: str) -> List[str]:
     """
     Add roles of the asset object
     """
     if asset_name.startswith("thumbnail"):
-        return {"roles": ["thumbnail"]}
-    elif asset_name.startswith("metadata"):
-        return {"roles": ["metadata"]}
+        return ["thumbnail"]
     else:
-        return {}
+        return ["metadata"]
 
 
-def _asset_title_fields(asset_name: str) -> Dict:
+def _asset_title_fields(asset_name: str) -> Optional[str]:
     """
     Add title of the asset object
     """
     if asset_name.startswith("thumbnail"):
-        return {"title": "Thumbnail image"}
+        return "Thumbnail image"
     else:
-        return {}
+        return None
 
 
-def _proj_fields(grid: Dict[str, GridDoc], grid_name: str = "default") -> Dict:
+def _proj_fields(
+    grid: Dict[str, GridDoc], grid_name: str = "default"
+) -> Optional[Dict]:
     """
     Add fields of the STAC Projection (proj) Extension to a STAC Item
     """
     grid_doc = grid.get(grid_name)
     if grid_doc:
         return {
-            "proj:shape": grid_doc.shape,
-            "proj:transform": grid_doc.transform,
+            "shape": grid_doc.shape,
+            "transform": grid_doc.transform,
         }
     else:
-        return {}
+        return None
 
 
 def _lineage_fields(lineage: Dict) -> Dict:
@@ -124,39 +127,51 @@ def _odc_links(
     explorer_base_url: str,
     dataset: DatasetDoc,
     collection_url: Optional[str],
-) -> List:
+) -> List[Link]:
     """
     Add links for ODC product into a STAC Item
     """
 
     if collection_url:
-        yield {
-            "rel": "collection",
-            "href": collection_url,
-        }
+        yield Link(
+            rel="collection",
+            target=collection_url,
+        )
     if explorer_base_url:
         if not collection_url:
-            yield {
-                "rel": "collection",
-                "href": urljoin(
+            yield Link(
+                rel="collection",
+                target=urljoin(
                     explorer_base_url, f"/stac/collections/{dataset.product.name}"
                 ),
-            }
-        yield {
-            "title": "ODC Product Overview",
-            "rel": "product_overview",
-            "type": "text/html",
-            "href": urljoin(explorer_base_url, f"product/{dataset.product.name}"),
-        }
-        yield {
-            "title": "ODC Dataset Overview",
-            "rel": "alternative",
-            "type": "text/html",
-            "href": urljoin(explorer_base_url, f"dataset/{dataset.id}"),
-        }
+            )
+        yield Link(
+            title="ODC Product Overview",
+            rel="product_overview",
+            media_type="text/html",
+            target=urljoin(explorer_base_url, f"product/{dataset.product.name}"),
+        )
+        yield Link(
+            title="ODC Dataset Overview",
+            rel="alternative",
+            media_type="text/html",
+            target=urljoin(explorer_base_url, f"dataset/{dataset.id}"),
+        )
 
     if not collection_url and not explorer_base_url:
         warnings.warn("No collection provided for Stac Item.")
+
+
+def _get_projection(dataset: DatasetDoc) -> Tuple[int, str]:
+    crs_l = dataset.crs.lower()
+    epsg = None
+    wkt = None
+    if crs_l.startswith("epsg:"):
+        return epsg
+    else:
+        wkt = dataset.crs
+
+    return epsg, wkt
 
 
 def eo3_to_stac_properties(
@@ -172,14 +187,7 @@ def eo3_to_stac_properties(
             MAPPING_EO3_TO_STAC.get(key, key): _convert_value_to_stac_type(key, val)
             for key, val in properties.items()
         },
-        # This field is required to be present, even if null.
-        "proj:epsg": None,
     }
-    crs_l = crs.lower()
-    if crs_l.startswith("epsg:"):
-        properties["proj:epsg"] = int(crs_l.lstrip("epsg:"))
-    else:
-        properties["proj:wkt2"] = crs
 
     return properties
 
@@ -211,9 +219,8 @@ def to_stac_item(
     geom = Geometry(dataset.geometry, CRS(dataset.crs))
     wgs84_geometry = geom.to_crs(CRS("epsg:4326"), math.inf)
 
-    properties = eo3_to_stac_properties(
-        dataset.properties, dataset.crs, title=dataset.label
-    )
+    properties = eo3_to_stac_properties(dataset.properties, title=dataset.label)
+    properties.update(_lineage_fields(dataset.lineage))
 
     # TODO: choose remote if there's multiple locations?
     # Without a dataset location, all paths will be relative.
@@ -221,83 +228,90 @@ def to_stac_item(
         dataset.locations[0] if dataset.locations else None
     )
 
-    links = []
-    if stac_item_destination_url:
-        links.append(
-            {
-                "rel": "self",
-                "type": "application/json",
-                "href": stac_item_destination_url,
-            }
-        )
-    if odc_dataset_metadata_url:
-        links.append(
-            {
-                "title": "ODC Dataset YAML",
-                "rel": "odc_yaml",
-                "type": "text/yaml",
-                "href": odc_dataset_metadata_url,
-            }
-        )
-    links.extend(_odc_links(explorer_base_url, dataset, collection_url))
-
-    item_doc = dict(
-        stac_version="1.0.0-beta.2",
-        stac_extensions=["eo", "projection"],
-        type="Feature",
-        id=dataset.id,
-        bbox=wgs84_geometry.boundingbox,
+    item = Item(
+        id=str(dataset.id),
+        datetime=properties["datetime"],
+        properties=properties,
         geometry=wgs84_geometry.json,
-        properties={
-            **properties,
-            "odc:product": dataset.product.name,
-            **(_proj_fields(dataset.grids) if dataset.grids else {}),
-            **_lineage_fields(dataset.lineage),
-        },
-        # TODO: Currently assuming no name collisions.
-        assets={
-            **{
-                name: (
-                    {
-                        "eo:bands": [{"name": name}],
-                        **_media_fields(Path(m.path)),
-                        "roles": ["data"],
-                        "href": urljoin(dataset_location, m.path),
-                        **(
-                            _proj_fields(dataset.grids, m.grid) if dataset.grids else {}
-                        ),
-                    }
-                )
-                for name, m in dataset.measurements.items()
-            },
-            **{
-                name: (
-                    {
-                        **_asset_title_fields(name),
-                        **_media_fields(Path(m.path)),
-                        **_asset_roles_fields(name),
-                        "href": urljoin(dataset_location, m.path),
-                    }
-                )
-                for name, m in dataset.accessories.items()
-            },
-        },
-        links=links,
+        bbox=wgs84_geometry.boundingbox,
     )
 
-    # To pass validation, only add 'view' extension when we're using it somewhere.
-    if any(k.startswith("view:") for k in item_doc["properties"].keys()):
-        item_doc["stac_extensions"].append("view")
+    # Add links
+    if stac_item_destination_url:
+        item.links.append(
+            Link(
+                rel="self",
+                media_type=MediaType.JSON,
+                target=stac_item_destination_url,
+            )
+        )
+    if odc_dataset_metadata_url:
+        item.links.append(
+            Link(
+                title="ODC Dataset YAML",
+                rel="odc_yaml",
+                media_type="text/yaml",
+                target=odc_dataset_metadata_url,
+            )
+        )
 
-    return item_doc
+    for link in _odc_links(explorer_base_url, dataset, collection_url):
+        item.links.append(link)
+
+    # Add extensions
+    EOExtension.ext(item)
+    proj = ProjectionExtension.ext(item)
+
+    epsg, wkt = _get_projection(dataset)
+    if epsg is not None:
+        proj.apply(epsg=epsg)
+    elif wkt is not None:
+        proj.apply(wkt2=wkt)
+    else:
+        raise STACError("Projection extension requires either epsg or wkt for crs.")
+
+    # To pass validation, only add 'view' extension when we're using it somewhere.
+    if any(k.startswith("view:") for k in properties.keys()):
+        ViewExtension.ext(item)
+
+    # Add assets that are data
+    for name, measurement in dataset.measurements.items():
+        asset = Asset(
+            href=urljoin(dataset_location, measurement.path),
+            media_type=_media_type(Path(measurement.path)),
+            title=name,
+            roles=["data"],
+        )
+        eo = EOExtension.ext(asset)
+        eo.apply(bands=[name])
+
+        if dataset.grids:
+            proj_fields = _proj_fields(dataset.grids, measurement.grid)
+            if proj_fields is not None:
+                proj = ProjectionExtension.ext(asset)
+                proj.apply(
+                    shape=proj_fields["shape"], transform=proj_fields["transform"]
+                )
+
+        item.add_asset(asset)
+
+    # Add assets that are accessories
+    for name, measurement in dataset.accessories.items():
+        asset = Asset(
+            href=urljoin(dataset_location, measurement.path),
+            media_type=_media_type(Path(measurement.path)),
+            title=_asset_title_fields(name),
+            roles=_asset_roles_fields(name),
+        )
+
+        item.add_asset(asset)
+
+    return item.to_dict()
 
 
 def validate_item(
     item_doc: Dict,
     allow_cached_specs: bool = True,
-    disallow_network_access: bool = False,
-    log: Callable[[str], None] = lambda line: None,
-    schema_host="https://schemas.stacspec.org",
 ):
     """
     Validate a document against the Stac Item schema and its declared extensions
@@ -314,66 +328,17 @@ def validate_item(
 
     :raises NoAvailableSchemaError: When cannot find a spec for the given Stac version+extentions
     """
-    item_doc = _normalise_doc(item_doc)
-
-    stac_version = item_doc.get("stac_version")
 
     one_day = 60 * 60 * 24
-    max_cache_time = one_day if "beta" in stac_version else one_day * 365
-
-    schemas = [
-        (
-            "Item",
-            f"{schema_host}/v{stac_version}/item-spec/json-schema/item.json#",
-        )
-    ]
-    for extension in item_doc.get("stac_extensions", []):
-        schemas.append(
-            (
-                f"extension {extension!r}",
-                f"{schema_host}/v{stac_version}/extensions/{extension}/json-schema/schema.json#",
-            )
-        )
-
-    log(f"Stac version {stac_version}. Schema cache: {max_cache_time/60//60}hrs.")
 
     with CachedSession(
         "stac_schema_cache",
         backend="sqlite",
-        expire_after=max_cache_time,
+        expire_after=one_day,
         old_data_on_error=True,
     ) as session:
         if not allow_cached_specs:
             session.cache.clear()
 
-        for schema_label, schema_url in schemas:
-            if not session.cache.has_url(schema_url):
-                if disallow_network_access:
-                    raise NoAvailableSchemaError(
-                        f"{schema_label} schema is not cached, and network access is disabled: {schema_url}"
-                    )
-
-                log(f"{schema_url}")
-            r = session.get(schema_url, timeout=60)
-            if r.status_code == 404:
-                raise NoAvailableSchemaError(
-                    f"No schema found for Stac {stac_version} {schema_label}: "
-                    f"{schema_url!r}"
-                )
-            r.raise_for_status()
-            schema_json = r.json()
-            log(f"Validating {schema_label}...")
-            jsonschema.validate(item_doc, schema_json)
-
-
-class NoAvailableSchemaError(Exception):
-    pass
-
-
-def _normalise_doc(doc: Dict) -> Dict:
-    """
-    Normalise all the embedded values to simple json types.
-
-    (needed for jsonschema validation.)
-    """
-    return rapidjson.loads(rapidjson.dumps(doc, datetime_mode=True, uuid_mode=True))
+        item = Item.from_dict(item_doc)
+        item.validate()
