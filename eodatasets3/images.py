@@ -826,7 +826,10 @@ class FileWrite:
         nodata: int = -999,
     ):
         """
-        Generate a numpy which can save as jpg image using the given three arrays as red, green, blue.
+        Generate a thumbnail as numpy arrays.
+
+        Unlike the default `create_thumbnail` function, this is done entirely in-memory. It will likely require more
+        memory but does not touch the filesystem.
 
         A linear stretch is performed on the colour. By default this is a dynamic 2% stretch
         (the 2% and 98% percentile values of the input). The static_stretch parameter will
@@ -910,7 +913,7 @@ class FileWrite:
 
         with rasterio.open(in_file) as dataset:
             data = dataset.read()
-            out_data, stretch = self.filter_singleband_data(data, bit, lookup_table)
+            out_data, stretch = self._filter_singleband_data(data, bit, lookup_table)
 
         meta = dataset.meta
         meta["driver"] = "GTiff"
@@ -958,7 +961,7 @@ class FileWrite:
                 "Please set either bit or lookup_table, you haven't set either of them"
             )
 
-        out_data, stretch = self.filter_singleband_data(input_data, bit, lookup_table)
+        out_data, stretch = self._filter_singleband_data(input_data, bit, lookup_table)
 
         if bit:
             rgb = [out_data, out_data, out_data]
@@ -972,7 +975,7 @@ class FileWrite:
             nodata=nodata,
         )
 
-    def filter_singleband_data(
+    def _filter_singleband_data(
         self,
         data: numpy.array,
         bit: int = None,
