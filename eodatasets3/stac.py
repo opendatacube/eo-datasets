@@ -1,19 +1,20 @@
 """
 Convert an EO3 metadata doc to a Stac Item. (BETA/Incomplete)
 """
+import datetime
 import math
 import mimetypes
 import warnings
 from datacube.utils.geometry import CRS, Geometry
 from pathlib import Path
-from pystac import Item, Link, Asset, MediaType
+from pystac import Asset, Item, Link, MediaType
 from pystac.errors import STACError
+from pystac.extensions.eo import Band, EOExtension
 from pystac.extensions.projection import ProjectionExtension
-from pystac.extensions.eo import EOExtension
 from pystac.extensions.view import ViewExtension
-
+from pystac.utils import datetime_to_str
 from requests_cache.core import CachedSession
-from typing import Dict, List, Mapping, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from urllib.parse import urljoin
 
 from eodatasets3.model import DatasetDoc, GridDoc
@@ -55,6 +56,9 @@ def _convert_value_to_stac_type(key: str, value):
     # In STAC spec, "instruments" have [String] type
     if key == "eo:instrument":
         return _as_stac_instruments(value)
+    # Convert the non-default datetimes to a string
+    elif isinstance(value, datetime.datetime) and key != "datetime":
+        return datetime_to_str(value)
     else:
         return value
 
@@ -118,7 +122,7 @@ def _lineage_fields(lineage: Dict) -> Dict:
     Add custom lineage field to a STAC Item
     """
     if lineage:
-        return {"odc:lineage": lineage}
+        return {"odc:lineage": [str(lin) for lin in lineage]}
     else:
         return {}
 
@@ -167,7 +171,7 @@ def _get_projection(dataset: DatasetDoc) -> Tuple[int, str]:
     epsg = None
     wkt = None
     if crs_l.startswith("epsg:"):
-        return epsg
+        epsg = int(crs_l.lstrip("epsg:"))
     else:
         wkt = dataset.crs
 
@@ -175,7 +179,7 @@ def _get_projection(dataset: DatasetDoc) -> Tuple[int, str]:
 
 
 def eo3_to_stac_properties(
-    properties: Mapping, crs: Optional[str] = None, title: str = None
+    dataset: DatasetDoc, crs: Optional[str] = None, title: str = None
 ) -> Dict:
     """
     Convert EO3 properties dictionary to the Stac equivalent.
@@ -185,7 +189,7 @@ def eo3_to_stac_properties(
         **(dict(title=title) if title else {}),
         **{
             MAPPING_EO3_TO_STAC.get(key, key): _convert_value_to_stac_type(key, val)
-            for key, val in properties.items()
+            for key, val in dataset.properties.items()
         },
     }
 
@@ -219,8 +223,11 @@ def to_stac_item(
     geom = Geometry(dataset.geometry, CRS(dataset.crs))
     wgs84_geometry = geom.to_crs(CRS("epsg:4326"), math.inf)
 
-    properties = eo3_to_stac_properties(dataset.properties, title=dataset.label)
+    properties = eo3_to_stac_properties(dataset, title=dataset.label)
     properties.update(_lineage_fields(dataset.lineage))
+
+    dt = properties["datetime"]
+    del properties["datetime"]
 
     # TODO: choose remote if there's multiple locations?
     # Without a dataset location, all paths will be relative.
@@ -230,10 +237,11 @@ def to_stac_item(
 
     item = Item(
         id=str(dataset.id),
-        datetime=properties["datetime"],
+        datetime=dt,
         properties=properties,
         geometry=wgs84_geometry.json,
         bbox=wgs84_geometry.boundingbox,
+        collection=dataset.product.name,
     )
 
     # Add links
@@ -259,7 +267,9 @@ def to_stac_item(
         item.links.append(link)
 
     # Add extensions
-    EOExtension.ext(item)
+    EOExtension.add_to(item)
+    eo = EOExtension.ext(item)
+    ProjectionExtension.add_to(item)
     proj = ProjectionExtension.ext(item)
 
     epsg, wkt = _get_projection(dataset)
@@ -272,6 +282,7 @@ def to_stac_item(
 
     # To pass validation, only add 'view' extension when we're using it somewhere.
     if any(k.startswith("view:") for k in properties.keys()):
+        ViewExtension.add_to(item)
         ViewExtension.ext(item)
 
     # Add assets that are data
@@ -283,17 +294,23 @@ def to_stac_item(
             roles=["data"],
         )
         eo = EOExtension.ext(asset)
-        eo.apply(bands=[name])
+
+        # TODO: pull out more information about the band
+        band = Band.create(name)
+        eo.apply(bands=[band])
 
         if dataset.grids:
             proj_fields = _proj_fields(dataset.grids, measurement.grid)
             if proj_fields is not None:
                 proj = ProjectionExtension.ext(asset)
+                # Not sure how this handles None for an EPSG code
                 proj.apply(
-                    shape=proj_fields["shape"], transform=proj_fields["transform"]
+                    shape=proj_fields["shape"],
+                    transform=proj_fields["transform"],
+                    epsg=epsg,
                 )
 
-        item.add_asset(asset)
+        item.add_asset(name, asset=asset)
 
     # Add assets that are accessories
     for name, measurement in dataset.accessories.items():
@@ -304,7 +321,7 @@ def to_stac_item(
             roles=_asset_roles_fields(name),
         )
 
-        item.add_asset(asset)
+        item.add_asset(name, asset=asset)
 
     return item.to_dict()
 

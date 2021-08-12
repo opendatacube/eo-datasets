@@ -55,7 +55,7 @@ def run(
         )
 
         if validate:
-            eo3stac.validate_item(item_doc, log=echo if verbose else lambda line: None)
+            eo3stac.validate_item(item_doc)
 
         with output_path.open("w") as f:
             json.dump(item_doc, f, indent=4, default=json_fallback)

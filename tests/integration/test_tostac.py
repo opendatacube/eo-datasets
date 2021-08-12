@@ -29,6 +29,7 @@ def test_tostac(input_doc_folder: Path):
     assert expected_stac_path.exists()
 
     actual_doc = json.load(actual_stac_path.open())
+    print(actual_stac_path)
     expected_doc = json.load(expected_stac_path.open())
     assert_same(expected_doc, actual_doc)
 

@@ -31,3 +31,6 @@ build
 
 .vscode
 *.swp
+
+# STAC schema cache
+stac_schema_cache.sqlite
