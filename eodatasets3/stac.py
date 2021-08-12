@@ -271,10 +271,8 @@ def to_stac_item(
         item.links.append(link)
 
     # Add extensions
-    EOExtension.add_to(item)
-    eo = EOExtension.ext(item)
-    ProjectionExtension.add_to(item)
-    proj = ProjectionExtension.ext(item)
+    eo = EOExtension.ext(item, add_if_missing=True)
+    proj = ProjectionExtension.ext(item, add_if_missing=True)
 
     epsg, wkt = _get_projection(dataset)
     if epsg is not None:
@@ -286,8 +284,7 @@ def to_stac_item(
 
     # To pass validation, only add 'view' extension when we're using it somewhere.
     if any(k.startswith("view:") for k in properties.keys()):
-        ViewExtension.add_to(item)
-        ViewExtension.ext(item)
+        ViewExtension.ext(item, add_if_missing=True)
 
     # Add assets that are data
     for name, measurement in dataset.measurements.items():
