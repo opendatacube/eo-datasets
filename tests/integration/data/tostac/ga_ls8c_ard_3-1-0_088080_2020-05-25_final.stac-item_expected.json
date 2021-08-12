@@ -52,9 +52,11 @@
       "odc:producer": "ga.gov.au",
       "odc:product_family": "ard",
       "odc:region_code": "088080",
-      "odc:lineage": [
-          "level1"
-      ],
+      "odc:lineage": {
+          "level1": [
+              "b5f234fe-bba8-5483-9bc0-250360d429cf"
+          ]
+      },
       "proj:epsg": 32656,
       "datetime": "2020-05-25T23:35:47.745731Z"
   },

@@ -122,7 +122,11 @@ def _lineage_fields(lineage: Dict) -> Dict:
     Add custom lineage field to a STAC Item
     """
     if lineage:
-        return {"odc:lineage": [str(lin) for lin in lineage]}
+        lineage_dict = {
+            key: [str(uuid) for uuid in value] for key, value in lineage.items()
+        }
+
+        return {"odc:lineage": lineage_dict}
     else:
         return {}
 
