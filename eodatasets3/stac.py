@@ -5,8 +5,12 @@ import datetime
 import math
 import mimetypes
 import warnings
-from datacube.utils.geometry import CRS, Geometry
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+from urllib.parse import urljoin
+
+import datacube.utils.uris as dc_uris
+from datacube.utils.geometry import CRS, Geometry
 from pystac import Asset, Item, Link, MediaType
 from pystac.errors import STACError
 from pystac.extensions.eo import Band, EOExtension
@@ -14,8 +18,6 @@ from pystac.extensions.projection import ProjectionExtension
 from pystac.extensions.view import ViewExtension
 from pystac.utils import datetime_to_str
 from requests_cache.core import CachedSession
-from typing import Dict, List, Optional, Tuple
-from urllib.parse import urljoin
 
 from eodatasets3.model import DatasetDoc, GridDoc
 
@@ -288,8 +290,12 @@ def to_stac_item(
 
     # Add assets that are data
     for name, measurement in dataset.measurements.items():
+        if not dataset_location and not measurement.path:
+            # No URL to link to. URL is mandatory for Stac validation.
+            continue
+
         asset = Asset(
-            href=urljoin(dataset_location, measurement.path),
+            href=_uri_resolve(dataset_location, measurement.path),
             media_type=_media_type(Path(measurement.path)),
             title=name,
             roles=["data"],
@@ -315,8 +321,12 @@ def to_stac_item(
 
     # Add assets that are accessories
     for name, measurement in dataset.accessories.items():
+        if not dataset_location and not measurement.path:
+            # No URL to link to. URL is mandatory for Stac validation.
+            continue
+
         asset = Asset(
-            href=urljoin(dataset_location, measurement.path),
+            href=_uri_resolve(dataset_location, measurement.path),
             media_type=_media_type(Path(measurement.path)),
             title=_asset_title_fields(name),
             roles=_asset_roles_fields(name),
@@ -360,3 +370,11 @@ def validate_item(
 
         item = Item.from_dict(item_doc)
         item.validate()
+
+
+def _uri_resolve(location: str, path: str):
+    # ODC's method doesn't support empty locations. Fall back to the path alone.
+    if not location:
+        return path
+
+    return dc_uris.uri_resolve(location, path)
