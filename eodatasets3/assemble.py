@@ -442,6 +442,17 @@ class DatasetPrepare(Eo3Interface):
         ...
 
     @property
+    def collection_location(self) -> Path:
+        # Backward compat method. No docstring to avoid sphinx visibility.
+        return self.names.collection_path
+
+    @collection_location.setter
+    def collection_location(self, val: Path):
+        # Backward compat method. No docstring to avoid sphinx visibility.
+        # Previously, people could set the collection using this property, and it was a Path
+        self.names.collection_prefix = resolve_location(val)
+
+    @property
     def dataset_id(self) -> uuid.UUID:
         return self._dataset.id
 
@@ -553,6 +564,7 @@ class DatasetPrepare(Eo3Interface):
         classifier: Optional[str] = None,
         auto_inherit_properties: bool = False,
         inherit_geometry: bool = False,
+        inherit_skip_properties: Optional[str] = None,
     ):
         """
         Record a source dataset using its metadata document.
@@ -575,6 +587,10 @@ class DatasetPrepare(Eo3Interface):
                             data, which can be very computationally expensive e.g. Landsat 7
                             striped data, use the valid data geometry from this source dataset.
 
+        :param inherit_skip_properties: An extra list of property names that should not be copied.
+                                        This is useful when generating summaries which combine multiple
+                                        input source datasets.
+
         See :meth:`.add_source_path` if you have a filepath reference instead of a document.
 
         """
@@ -591,7 +607,7 @@ class DatasetPrepare(Eo3Interface):
         _validate_property_name(classifier)
         self._dataset.lineage.setdefault(classifier, []).append(dataset.id)
         if auto_inherit_properties:
-            self._inherit_properties_from(dataset)
+            self._inherit_properties_from(dataset, inherit_skip_properties)
         if inherit_geometry:
             if self.geometry and self.geometry != dataset.geometry:
                 warnings.warn("Overriding existing geometry from source dataset")
@@ -635,8 +651,21 @@ class DatasetPrepare(Eo3Interface):
                     ) from v
             self._dataset.lineage.setdefault(classifier, []).append(dataset_id)
 
-    def _inherit_properties_from(self, source_dataset: DatasetDoc):
+    def _inherit_properties_from(
+        self,
+        source_dataset: DatasetDoc,
+        inherit_skip_properties: Optional[List[str]] = None,
+    ):
+
+        if not inherit_skip_properties:
+            # change the inherit_skip_properties to [] if it is None. Make the 'in list check' easier.
+            inherit_skip_properties = []
+
         for name in self.INHERITABLE_PROPERTIES:
+            if name in inherit_skip_properties:
+                # if we plan to skip this property, skip it immediately.
+                continue
+
             if name not in source_dataset.properties:
                 continue
             new_value = source_dataset.properties[name]

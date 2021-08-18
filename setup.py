@@ -15,7 +15,7 @@ README = (HERE / "README.md").read_text()
 
 tests_require = [
     "deepdiff",
-    "gdal",
+    "gdal==3.3.0",
     "mock",
     "pep8-naming",
     "pytest",
@@ -58,6 +58,7 @@ setup(
         "affine",
         "attrs>=18.1",  # 18.1 adds 'factory' syntactic sugar
         "boltons",
+        "botocore",  # missing from datacube
         "cattrs",
         "ciso8601",
         "click",
@@ -73,6 +74,7 @@ setup(
         "requests-cache",
         "datacube",
         "python-rapidjson",
+        "pystac>=1.1.0",
     ],
     tests_require=tests_require,
     extras_require=EXTRAS_REQUIRE,

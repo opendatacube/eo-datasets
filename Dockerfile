@@ -1,21 +1,36 @@
-FROM opendatacube/geobase:wheels as env_builder
+ARG V_BASE=3.3.0
+
+FROM opendatacube/geobase-builder:${V_BASE} as env_builder
+ENV LC_ALL=C.UTF-8
+
 ARG py_env_path=/env
 ARG ENVIRONMENT=test
 
+# Copy the folder full of requirements-related files in
 COPY requirements /tmp/requirements
-# RUN env-build-tool new /tmp/requirements.txt ${py_env_path}
+
 RUN if [ "$ENVIRONMENT" = "test" ] ; then \
-        rm /wheels/rasterio*whl ; \
-        env-build-tool new /tmp/requirements/docker-dev.txt ${py_env_path} ; \
+        env-build-tool new /tmp/requirements/docker-dev.txt /tmp/requirements/constraints.txt ${py_env_path} ; \
     else \
-        env-build-tool new /tmp/requirements/main.txt ${py_env_path} ; \
+        env-build-tool new /tmp/requirements/main.txt /tmp/requirements/constraints.txt ${py_env_path} ; \
     fi
 
-ENV PATH=${py_env_path}/bin:$PATH
+ENV PATH="${py_env_path}/bin:${PATH}"
 
+# Copy source code and install it
+RUN mkdir -p /code
+WORKDIR /code
+ADD . /code
+
+RUN pip install .[all]
+
+# Is it working?
+RUN eo3-validate --version
 
 # Build the production runner stage from here
-FROM opendatacube/geobase:runner
+FROM opendatacube/geobase-runner:${V_BASE}
+ARG py_env_path=/env
+
 ARG ENVIRONMENT=test
 
 ENV LC_ALL=C.UTF-8 \
@@ -23,10 +38,10 @@ ENV LC_ALL=C.UTF-8 \
     SHELL=bash \
     PYTHONFAULTHANDLER=1
 
-RUN useradd --create-home runner
+COPY --from=env_builder $py_env_path $py_env_path
+ENV PATH="${py_env_path}/bin:${PATH}"
 
-COPY --from=env_builder /env /env
-ENV PATH=/env/bin:$PATH
+RUN useradd --create-home runner
 
 RUN if [ "$ENVIRONMENT" = "test" ] ; then \
 	apt-get update \
@@ -39,6 +54,7 @@ RUN if [ "$ENVIRONMENT" = "test" ] ; then \
 #    We do this in a tmp repository, before copying our real code, as we
 #    want this cached by Docker and not rebuilt every time code changes
 COPY .pre-commit-config.yaml /tmp/
+
 USER runner
 RUN if [ "$ENVIRONMENT" = "test" ] ; then \
        mkdir -p ~/pre-commit \
@@ -49,15 +65,7 @@ RUN if [ "$ENVIRONMENT" = "test" ] ; then \
        && rm -rf ~/pre-commit ; \
     fi
 
-# Copy source code and install it
-WORKDIR /code
-COPY . .
-
-USER root
-RUN pip install --no-cache-dir --disable-pip-version-check --use-feature=2020-resolver .
-USER runner
-
-# Is it working?
+# Is it still working?
 RUN eo3-validate --version
 
 CMD ["python"]

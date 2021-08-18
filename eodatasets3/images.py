@@ -19,7 +19,7 @@ from rasterio import DatasetReader
 from rasterio.coords import BoundingBox
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
-from rasterio.io import DatasetWriter
+from rasterio.io import DatasetWriter, MemoryFile
 from rasterio.shutil import copy as rio_copy
 from rasterio.warp import calculate_default_transform, reproject
 from shapely.geometry.base import CAP_STYLE, JOIN_STYLE, BaseGeometry
@@ -814,6 +814,82 @@ class FileWrite:
                                 index,
                             )
 
+    def create_thumbnail_from_numpy(
+        self,
+        rgb: Tuple[numpy.array, numpy.array, numpy.array],
+        out_scale=10,
+        resampling=Resampling.average,
+        static_stretch: Tuple[int, int] = None,
+        percentile_stretch: Tuple[int, int] = (2, 98),
+        compress_quality: int = 85,
+        input_geobox: GridSpec = None,
+        nodata: int = -999,
+    ):
+        """
+        Generate a thumbnail as numpy arrays.
+
+        Unlike the default `create_thumbnail` function, this is done entirely in-memory. It will likely require more
+        memory but does not touch the filesystem.
+
+        A linear stretch is performed on the colour. By default this is a dynamic 2% stretch
+        (the 2% and 98% percentile values of the input). The static_stretch parameter will
+        override this with a static range of values.
+
+        Any non-contiguous data across the colour domain, will be set to zero.
+        """
+        ql_grid, numpy_array_list, ql_write_args = _write_to_numpy_array(
+            rgb,
+            resampling,
+            static_range=static_stretch,
+            percentile_range=percentile_stretch,
+            input_geobox=input_geobox,
+            nodata=nodata,
+        )
+        out_crs = ql_grid.crs
+
+        # Scale and write as JPEG to the output.
+        (thumb_transform, thumb_width, thumb_height,) = calculate_default_transform(
+            out_crs,
+            out_crs,
+            ql_grid.shape[1],
+            ql_grid.shape[0],
+            *ql_grid.bounds,
+            dst_width=ql_grid.shape[1] // out_scale,
+            dst_height=ql_grid.shape[0] // out_scale,
+        )
+        thumb_args = dict(
+            driver="JPEG",
+            quality=compress_quality,
+            height=thumb_height,
+            width=thumb_width,
+            count=3,
+            dtype="uint8",
+            nodata=0,
+            transform=thumb_transform,
+            crs=out_crs,
+        )
+
+        with MemoryFile() as mem_tif_file:
+            with mem_tif_file.open(**ql_write_args) as dataset:
+                for i, data in enumerate(numpy_array_list):
+                    dataset.write(data, i + 1)
+
+                with MemoryFile() as mem_jpg_file:
+                    with mem_jpg_file.open(**thumb_args) as thumbnail:
+                        for index in thumbnail.indexes:
+                            thumbnail.write(  # write the data from temp_tif to temp_jpg
+                                dataset.read(
+                                    index,
+                                    out_shape=(thumb_height, thumb_width),
+                                    resampling=Resampling.average,
+                                ),
+                                index,
+                            )
+
+                    return_bytes = mem_jpg_file.read()
+
+        return return_bytes
+
     def create_thumbnail_singleband(
         self,
         in_file: Path,
@@ -837,22 +913,7 @@ class FileWrite:
 
         with rasterio.open(in_file) as dataset:
             data = dataset.read()
-
-            if bit is not None:
-                out_data = numpy.copy(data)
-                out_data[data != bit] = 0
-                stretch = (0, bit)
-            if lookup_table is not None:
-                out_data = [
-                    numpy.full_like(data, 0),
-                    numpy.full_like(data, 0),
-                    numpy.full_like(data, 0),
-                ]
-                stretch = (0, 255)
-
-                for value, rgb in lookup_table.items():
-                    for index in range(3):
-                        out_data[index][data == value] = rgb[index]
+            out_data, stretch = self._filter_singleband_data(data, bit, lookup_table)
 
         meta = dataset.meta
         meta["driver"] = "GTiff"
@@ -877,6 +938,152 @@ class FileWrite:
                     with rasterio.open(temp_files[i], "w", **meta) as tmpdataset:
                         tmpdataset.write(out_data[i])
                 self.create_thumbnail(temp_files, out_file, static_stretch=stretch)
+
+    def create_thumbnail_singleband_from_numpy(
+        self,
+        input_data: numpy.array,
+        bit: int = None,
+        lookup_table: Dict[int, Tuple[int, int, int]] = None,
+        input_geobox: GridSpec = None,
+        nodata: int = -999,
+    ) -> bytes:
+        """
+        Output a thumbnail ready bytes from the input numpy array.
+        This takes a valid raster data (numpy arrary) and return
+        out bytes with only the values of the bit (integer) as white.
+        """
+        if bit is not None and lookup_table is not None:
+            raise ValueError(
+                "Please set either bit or lookup_table, and not both of them"
+            )
+        if bit is None and lookup_table is None:
+            raise ValueError(
+                "Please set either bit or lookup_table, you haven't set either of them"
+            )
+
+        out_data, stretch = self._filter_singleband_data(input_data, bit, lookup_table)
+
+        if bit:
+            rgb = [out_data, out_data, out_data]
+        else:
+            rgb = out_data
+
+        return self.create_thumbnail_from_numpy(
+            rgb=rgb,
+            static_stretch=stretch,
+            input_geobox=input_geobox,
+            nodata=nodata,
+        )
+
+    def _filter_singleband_data(
+        self,
+        data: numpy.array,
+        bit: int = None,
+        lookup_table: Dict[int, Tuple[int, int, int]] = None,
+    ):
+        """
+        Apply bit or lookup_table to filter the numpy array
+        and generate the thumbnail content.
+        """
+        if bit is not None:
+            out_data = numpy.copy(data)
+            out_data[data != bit] = 0
+            stretch = (0, bit)
+        if lookup_table is not None:
+            out_data = [
+                numpy.full_like(data, 0),
+                numpy.full_like(data, 0),
+                numpy.full_like(data, 0),
+            ]
+            stretch = (0, 255)
+
+            for value, rgb in lookup_table.items():
+                for index in range(3):
+                    out_data[index][data == value] = rgb[index]
+        return out_data, stretch
+
+
+def _write_to_numpy_array(
+    rgb: Sequence[numpy.array],
+    resampling: Resampling,
+    static_range: Tuple[int, int],
+    percentile_range: Tuple[int, int] = (2, 98),
+    input_geobox: GridSpec = None,
+    nodata: int = -999,
+) -> GridSpec:
+    """
+    Write an intensity-scaled wgs84 image using the given files as bands.
+    """
+    if input_geobox is None:
+        raise NotImplementedError("generating geobox from numpy is't yet supported")
+
+    out_crs = CRS.from_epsg(4326)
+    (
+        reprojected_transform,
+        reprojected_width,
+        reprojected_height,
+    ) = calculate_default_transform(
+        input_geobox.crs,
+        out_crs,
+        input_geobox.shape[1],
+        input_geobox.shape[0],
+        *input_geobox.bounds,
+    )
+    reproj_grid = GridSpec(
+        (reprojected_height, reprojected_width), reprojected_transform, crs=out_crs
+    )
+    ql_write_args = dict(
+        driver="GTiff",
+        dtype="uint8",
+        count=len(rgb),
+        width=reproj_grid.shape[1],
+        height=reproj_grid.shape[0],
+        transform=reproj_grid.transform,
+        crs=reproj_grid.crs,
+        nodata=0,
+        tiled="yes",
+    )
+
+    # Only set blocksize on larger imagery; enables reduced resolution processing
+    if reproj_grid.shape[0] > 512:
+        ql_write_args["blockysize"] = 512
+    if reproj_grid.shape[1] > 512:
+        ql_write_args["blockxsize"] = 512
+
+    # Calculate combined nodata mask
+    valid_data_mask = numpy.ones(input_geobox.shape, dtype="bool")
+    calculated_range = read_valid_mask_and_value_range(
+        valid_data_mask, _iter_arrays(rgb, nodata=nodata), percentile_range
+    )
+
+    output_list = []
+
+    for band_no, (image, nodata) in enumerate(
+        _iter_arrays(rgb, nodata=nodata), start=1
+    ):
+        reprojected_data = numpy.zeros(reproj_grid.shape, dtype=numpy.uint8)
+        reproject(
+            rescale_intensity(
+                image,
+                image_null_mask=~valid_data_mask,
+                in_range=(static_range or calculated_range),
+                out_range=(1, 255),
+                out_dtype=numpy.uint8,
+            ),
+            reprojected_data,
+            src_crs=input_geobox.crs,
+            src_transform=input_geobox.transform,
+            src_nodata=0,
+            dst_crs=reproj_grid.crs,
+            dst_nodata=0,
+            dst_transform=reproj_grid.transform,
+            resampling=resampling,
+            num_threads=2,
+        )
+        output_list.append(reprojected_data)
+        del reprojected_data
+
+    return reproj_grid, output_list, ql_write_args
 
 
 def _write_quicklook(
@@ -979,6 +1186,16 @@ def _iter_images(rgb: Sequence[Path]) -> LazyImages:
                     "multi-band measurement files aren't yet supported"
                 )
             yield ds.read(1), ds.nodata
+
+
+def _iter_arrays(rgb: Sequence[numpy.array], nodata: int) -> LazyImages:
+    """
+    Lazily load a series of single-band images from a path.
+
+    Yields the image array and nodata value.
+    """
+    for data in rgb:
+        yield data, nodata
 
 
 def read_valid_mask_and_value_range(

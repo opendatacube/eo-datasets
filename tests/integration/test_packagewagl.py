@@ -2,6 +2,7 @@ from binascii import crc32
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from textwrap import indent
 
 import pytest
 import rasterio
@@ -63,22 +64,9 @@ def test_whole_landsat_wagl_package(
 ):
     out = tmp_path
 
-    from eodatasets3.scripts import packagewagl
-
-    # No warnings should be logged during package.
-    # We could tighten this to specific warnings if it proves too noisy, but it's
-    # useful for catching things like unclosed files.
-    with expect_no_warnings():
-        res = CliRunner().invoke(
-            packagewagl.run,
-            map(
-                str,
-                (WAGL_LANDSAT_OUTPUT, "--level1", L1_METADATA_PATH, "--output", out),
-            ),
-            catch_exceptions=False,
-        )
-        # The last line of output ends with the dataset path.
-        words, reported_metadata = res.output.splitlines()[-1].rsplit(" ", 1)
+    reported_metadata = _run_wagl(
+        (WAGL_LANDSAT_OUTPUT, "--level1", L1_METADATA_PATH, "--output", out)
+    )
 
     expected_folder = out / "ga_ls8c_ard_3/092/084/2016/06/28"
     assert_file_structure(
@@ -491,6 +479,95 @@ def test_whole_landsat_wagl_package(
     assert_image(thumb_path, bands=3, shape=(7, 8))
 
 
+def _run_wagl(args):
+
+    from eodatasets3.scripts import packagewagl
+
+    # No warnings should be logged during package.
+    # We could tighten this to specific warnings if it proves too noisy, but it's
+    # useful for catching things like unclosed files.
+    with expect_no_warnings():
+        res = CliRunner().invoke(
+            packagewagl.run,
+            map(
+                str,
+                args,
+            ),
+            catch_exceptions=False,
+        )
+        # The last line of output ends with the dataset path.
+        words, reported_metadata = res.output.splitlines()[-1].rsplit(" ", 1)
+
+    assert (
+        res.exit_code == 0
+    ), f"WAGL returned error code. Output:\n{indent(res.output, ' '*4)}"
+    return reported_metadata
+
+
+def test_landsat_wagl_package_provisional_file_structure(
+    l1_ls8_dataset: DatasetDoc, l1_ls8_folder: Path, tmp_path: Path
+):
+    """
+    When given the 'provisional' flag, the files and product should contain it.
+    """
+    out = tmp_path
+
+    _run_wagl(
+        (
+            WAGL_LANDSAT_OUTPUT,
+            "--product-maturity",
+            "provisional",
+            "--level1",
+            L1_METADATA_PATH,
+            "--output",
+            out,
+        )
+    )
+    expected_folder = out / "ga_ls8c_ard_provisional_3/092/084/2016/06/28"
+    assert_file_structure(
+        expected_folder,
+        {
+            "ga_ls8c_ard_provisional_3-2-1_092084_2016-06-28_final.odc-metadata.yaml": "",
+            "ga_ls8c_ard_provisional_3-2-1_092084_2016-06-28_final.proc-info.yaml": "",
+            "ga_ls8c_ard_provisional_3-2-1_092084_2016-06-28_final.sha1": "",
+            "ga_ls8c_nbar_provisional_3-2-1_092084_2016-06-28_final_band01.tif": "",
+            "ga_ls8c_nbar_provisional_3-2-1_092084_2016-06-28_final_band02.tif": "",
+            "ga_ls8c_nbar_provisional_3-2-1_092084_2016-06-28_final_band03.tif": "",
+            "ga_ls8c_nbar_provisional_3-2-1_092084_2016-06-28_final_band04.tif": "",
+            "ga_ls8c_nbar_provisional_3-2-1_092084_2016-06-28_final_band05.tif": "",
+            "ga_ls8c_nbar_provisional_3-2-1_092084_2016-06-28_final_band06.tif": "",
+            "ga_ls8c_nbar_provisional_3-2-1_092084_2016-06-28_final_band07.tif": "",
+            "ga_ls8c_nbar_provisional_3-2-1_092084_2016-06-28_final_band08.tif": "",
+            "ga_ls8c_nbar_provisional_3-2-1_092084_2016-06-28_final_thumbnail.jpg": "",
+            "ga_ls8c_nbart_provisional_3-2-1_092084_2016-06-28_final_band01.tif": "",
+            "ga_ls8c_nbart_provisional_3-2-1_092084_2016-06-28_final_band02.tif": "",
+            "ga_ls8c_nbart_provisional_3-2-1_092084_2016-06-28_final_band03.tif": "",
+            "ga_ls8c_nbart_provisional_3-2-1_092084_2016-06-28_final_band04.tif": "",
+            "ga_ls8c_nbart_provisional_3-2-1_092084_2016-06-28_final_band05.tif": "",
+            "ga_ls8c_nbart_provisional_3-2-1_092084_2016-06-28_final_band06.tif": "",
+            "ga_ls8c_nbart_provisional_3-2-1_092084_2016-06-28_final_band07.tif": "",
+            "ga_ls8c_nbart_provisional_3-2-1_092084_2016-06-28_final_band08.tif": "",
+            "ga_ls8c_nbart_provisional_3-2-1_092084_2016-06-28_final_thumbnail.jpg": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_azimuthal-exiting.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_azimuthal-incident.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_combined-terrain-shadow.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_exiting-angle.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_fmask.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_incident-angle.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_nbar-contiguity.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_nbart-contiguity.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_relative-azimuth.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_relative-slope.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_satellite-azimuth.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_satellite-view.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_solar-azimuth.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_solar-zenith.tif": "",
+            "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_time-delta.tif": "",
+        },
+    )
+    [output_metadata] = expected_folder.rglob("*.odc-metadata.yaml")
+
+
 def test_maturity_calculation():
     from eodatasets3 import wagl
 
@@ -617,29 +694,18 @@ def expect_no_warnings():
 
 
 def test_esa_sentinel_wagl_package(tmp_path: Path):
-    from eodatasets3.scripts import packagewagl
-
-    # No warnings should have been logged during package.
-    # We could tighten this to specific warnings if it proves too noisy, but it's
-    # useful for catching things like unclosed files.
-    with expect_no_warnings():
-        CliRunner().invoke(
-            packagewagl.run,
-            map(
-                str,
-                (
-                    WAGL_ESA_SENTINEL_OUTPUT,
-                    "--level1",
-                    S2_ESA_L1_METADATA_PATH,
-                    "--output",
-                    tmp_path,
-                    # Our weird scaled test dataset resolution
-                    "--oa-resolution",
-                    998.1818181818181,
-                ),
-            ),
-            catch_exceptions=False,
+    _run_wagl(
+        (
+            WAGL_ESA_SENTINEL_OUTPUT,
+            "--level1",
+            S2_ESA_L1_METADATA_PATH,
+            "--output",
+            tmp_path,
+            # Our weird scaled test dataset resolution
+            "--oa-resolution",
+            998.1818181818181,
         )
+    )
 
     expected_folder = tmp_path / "ga_s2am_ard_3/53/JQJ/2020/10/31"
     assert_file_structure(
@@ -1050,27 +1116,18 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
 
 
 def test_sinergise_sentinel_wagl_package(tmp_path: Path):
-    from eodatasets3.scripts import packagewagl
 
-    # No warnings should have been logged during package.
-    # We could tighten this to specific warnings if it proves too noisy, but it's
-    # useful for catching things like unclosed files.
-    CliRunner().invoke(
-        packagewagl.run,
-        map(
-            str,
-            (
-                WAGL_SINERGISE_SENTINEL_OUTPUT,
-                "--level1",
-                S2_SINERGISE_L1_METADATA_PATH,
-                "--output",
-                tmp_path,
-                # Our weird scaled test dataset resolution
-                "--oa-resolution",
-                998.1818181818181,
-            ),
-        ),
-        catch_exceptions=False,
+    _run_wagl(
+        (
+            WAGL_SINERGISE_SENTINEL_OUTPUT,
+            "--level1",
+            S2_SINERGISE_L1_METADATA_PATH,
+            "--output",
+            tmp_path,
+            # Our weird scaled test dataset resolution
+            "--oa-resolution",
+            998.1818181818181,
+        )
     )
 
     expected_folder = tmp_path / "ga_s2bm_ard_3/56/JMQ/2021/04/25/"
