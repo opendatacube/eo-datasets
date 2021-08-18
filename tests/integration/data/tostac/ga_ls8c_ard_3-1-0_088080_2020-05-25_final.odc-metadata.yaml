@@ -52,7 +52,7 @@ properties:
   gqa:abs_x: 0.28
   gqa:abs_xy: 0.4
   gqa:abs_y: 0.28
-  gqa:cep90: 0.4
+  gqa:cep90: .nan
   gqa:iterative_mean_x: 0.03
   gqa:iterative_mean_xy: 0.12
   gqa:iterative_mean_y: 0.12
