@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from functools import partial
 from pathlib import Path, PurePath
 from typing import Dict, Tuple, Text, IO, Union, Iterable, Mapping
 from uuid import UUID
@@ -191,7 +192,9 @@ METADATA_TYPE_SCHEMA = _load_schema_validator(
 )
 
 
-def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:
+def from_doc(
+    doc: Dict, skip_validation=False, normalise_properties=False
+) -> DatasetDoc:
     """
     Parse a dictionary into an EO3 dataset.
 
@@ -216,7 +219,10 @@ def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:
     c = cattr.Converter()
     c.register_structure_hook(uuid.UUID, _structure_as_uuid)
     c.register_structure_hook(BaseGeometry, _structure_as_shape)
-    c.register_structure_hook(Eo3Dict, _structure_as_stac_props)
+    c.register_structure_hook(
+        Eo3Dict,
+        partial(_structure_as_stac_props, normalise_properties=normalise_properties),
+    )
 
     c.register_structure_hook(Affine, _structure_as_affine)
 
@@ -228,9 +234,9 @@ def _structure_as_uuid(d, t):
     return uuid.UUID(str(d))
 
 
-def _structure_as_stac_props(d, t):
+def _structure_as_stac_props(d, t, normalise_properties=False):
     # We don't normalise properties as we want it to reflect the original file.
-    return Eo3Dict(d, normalise_input=False)
+    return Eo3Dict(d, normalise_input=normalise_properties)
 
 
 def _structure_as_affine(d: Tuple, t):
