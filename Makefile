@@ -49,4 +49,3 @@ internal-update:
 	pip-compile requirements/dev.in
 	pip-compile --extra ancillary --extra wagl -o requirements/main.txt
 	pip-compile --extra test -o requirements/test.txt
-

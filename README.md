@@ -4,7 +4,7 @@
 [![Tests](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/test.yml/badge.svg)](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/test.yml)
 [![Coverage Status](https://img.shields.io/codecov/c/github/GeoscienceAustralia/eo-datasets)](https://app.codecov.io/gh/GeoscienceAustralia/eo-datasets)
 
-A tool to easily write, validate and convert [ODC](https://github.com/opendatacube/datacube-core) 
+A tool to easily write, validate and convert [ODC](https://github.com/opendatacube/datacube-core)
 datasets and metadata.
 
 
@@ -22,20 +22,20 @@ The assembler api aims to make it easy to write datasets.
     from eodatasets3 import DatasetAssembler
     from datetime import datetime
     from pathlib import Path
-    
+
     with DatasetAssembler(
-            Path('/some/output/collection/path'), 
+            Path('/some/output/collection/path'),
             naming_conventions='default') as p:
-        
+
         # Add some common metadata fields.
         p.platform = 'landsat-7'
         p.instrument = 'ETM'
         p.datetime = datetime(2019, 7, 4, 13, 7, 5)
         p.processed_now()
-        
+
         # Support for custom metadata fields
         p.properties['fmask:cloud_shadow'] = 42.0
-        
+
         # If you have a source dataset, you can include it as provenance.
         # Assembler can also copy common metadata properties from it.
         # (... so we didn't need to set the "platform" above!)
@@ -45,18 +45,18 @@ The assembler api aims to make it easy to write datasets.
         # file paths, ODC Datasets...
         p.write_measurement("red", red_path)
         ...  # now write more measurements
-        
+
         # Create a jpg thumbnail image using the measurements we've written
         p.write_thumbnail(red="swir1", green="swir2", blue="red")
-        
+
         # Validate the dataset and write it to the destination folder atomically.
         p.done()
 ```
 
-The Assembler will write a folder of [COG](https://www.cogeo.org/) imagery, an [eo3](#open-data-cube-compatibility) 
-metadata doc for Open Data Cube, and create appropriate file and folder structures for the chosen naming conventions. 
+The Assembler will write a folder of [COG](https://www.cogeo.org/) imagery, an [eo3](#open-data-cube-compatibility)
+metadata doc for Open Data Cube, and create appropriate file and folder structures for the chosen naming conventions.
 
-If you already have existing imagery, you can use DatasetAssembler to create a matching metadata document. 
+If you already have existing imagery, you can use DatasetAssembler to create a matching metadata document.
 
 See [the documentation guide for more features and examples](https://eodatasets.readthedocs.io/en/latest/).
 
@@ -66,7 +66,7 @@ The assembler writes a format called "eo3", which will be the native metadata fo
 2.0. We recommend new products are written with this format, even if targeting Open Data Cube 1.
 Datacube versions from 1.8 onwards are compatible natively with eo3.
 
-eo3 adds information about the native grid of the data, and aims to be more easily interoperable 
+eo3 adds information about the native grid of the data, and aims to be more easily interoperable
 with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec/tree/master/item-spec).
 
 # Other Tools Included
@@ -87,35 +87,35 @@ their properties match the product (nodata, dtype etc)
 
     ❯ eo3-validate --help
     Usage: eo3-validate [OPTIONS] [PATHS]...
-    
+
       Validate ODC dataset documents
-    
+
       Paths can be products, dataset documents, or directories to scan (for
       files matching names '*.odc-metadata.yaml' etc), either local or URLs.
-    
+
       Datasets are validated against matching products that have been scanned
       already, so specify products first, and datasets later, to ensure they can
       be matched.
-    
+
     Options:
       --version                       Show the version and exit.
       -W, --warnings-as-errors        Fail if any warnings are produced
       --thorough                      Attempt to read the data/measurements, and
                                       check their properties match
-    
+
       --expect-extra-measurements / --warn-extra-measurements
                                       Allow some dataset measurements to be
                                       missing from the product definition. This is
                                       (deliberately) allowed by ODC, but often a
                                       mistake. This flag disables the warning.
-    
+
       --explorer-url TEXT             Use product definitions from the given
                                       Explorer URL to validate datasets. Eg:
                                       "https://explorer.dea.ga.gov.au/"
-    
+
       --odc                           Use product definitions from datacube to
                                       validate datasets
-    
+
       -q, --quiet                     Only print problems, one per line
       --help                          Show this message and exit.
 
@@ -145,9 +145,9 @@ Example usage:
 	LT05_L1TP_113081_19880330_20170209_01_T1.odc-metadata.yaml
 	LT05_L1TP_113081_19880330_20170209_01_T1.stac-item.json
 
-## Prep Scripts 
+## Prep Scripts
 
-Some scripts are included for preparing common metadata documents, 
+Some scripts are included for preparing common metadata documents,
 such as landsat scenes.
 
 `eo3-prepare`: Prepare ODC metadata from the commandline.
@@ -249,14 +249,14 @@ Now tag and upload:
 # Be up-to-date.
 git fetch origin
 
-# Create a tag for the new version 
+# Create a tag for the new version
 # (using semantic versioning https://semver.org/)
 git tag eodatasets3-<version> origin/eodatasets3
 
 # Create package
 python3 setup.py sdist bdist_wheel
 
-# Upload it (Jeremy, Damien, Kirill have pypi ownership) 
+# Upload it (Jeremy, Damien, Kirill have pypi ownership)
 python3 -m twine upload  dist/*
 
 # Push tag to main repository

@@ -1,4 +1,7 @@
 ---
+# Test data is supposed to be verbatim, including errors. Exclude it from linting.
+exclude: tests/integration/data
+
 repos:
     - repo: https://github.com/ambv/black
       rev: 21.5b2
@@ -30,12 +33,10 @@ repos:
         - id: check-symlinks # Symlinks that don't point to anything?
         - id: check-yaml # Check Yaml file syntax
         - id: debug-statements # Avoid commiting debug/breakpoints
-        - id: end-of-file-fixer
+        - id: end-of-file-fixer # Normalise on exactly one newline
         - id: fix-byte-order-marker # No UTF-8 byte order marks
         - id: mixed-line-ending # Don't allow mixed line endings
-        - id: name-tests-test # Test files should start with `test*`
-          args: ['--django'] # (It's called django format of naming)
         - id: pretty-format-json
           args: ['--no-sort-keys', '--indent=4', '--autofix']
-        - id: requirements-txt-fixer
-        - id: trailing-whitespace
+        - id: requirements-txt-fixer # Keep requirements files sorted.
+        - id: trailing-whitespace # Auto remove trailing whitespace
