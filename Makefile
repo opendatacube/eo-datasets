@@ -29,6 +29,13 @@ test-root:
 lint:
 	docker run --volume "${PWD}":/tests -w /tests eodatasets:test pre-commit run -a
 
+# Run Tests in Docker as container root user
+#
+# (Eg. Github Actions has file write permission issues to external volumes when not using root,
+#      and we want to write test coverage etc. to the volume.)
+lint-root:
+	docker run --volume "${PWD}":/tests --user root -w /tests eodatasets:test pre-commit run -a
+
 # Lint the Dockerfile itself
 # (hadolint has too many false positives to run in CI, but is useful for reference)
 lint-dockerfile:
