@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 
 import versioneer
 
-HERE = pathlib.Path(__file__).parent
+HERE = pathlib.Path(__file__).parent.resolve()
 
 README = (HERE / "README.md").read_text()
 
@@ -46,11 +46,14 @@ setup(
     packages=find_packages(exclude=("tests", "tests.*")),
     package_data={"": ["*.json", "*.yaml"]},
     license="Apache Software License 2.0",
+    python_requires=">=3.6",
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Operating System :: OS Independent",
     ],
     url="https://github.com/GeoscienceAustralia/eo-datasets",
@@ -86,4 +89,8 @@ setup(
         eo3-package-wagl=eodatasets3.scripts.packagewagl:run
         eo3-to-stac=eodatasets3.scripts.tostac:run
     """,
+    project_urls={
+        "Bug Reports": "https://github.com/GeoscienceAustralia/eo-datasets/issues",
+        "Source": "https://github.com/GeoscienceAustralia/eo-datasets",
+    },
 )
