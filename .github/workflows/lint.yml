@@ -25,5 +25,4 @@ jobs:
 
       - name: Run linting
         run: |
-          make lint
-
+          make lint-root

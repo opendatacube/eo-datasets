@@ -1,7 +1,10 @@
 ---
+# Test data is supposed to be verbatim, including errors. Exclude it from linting.
+exclude: tests/integration/data
+
 repos:
     - repo: https://github.com/ambv/black
-      rev: 21.5b2
+      rev: 21.7b0
       hooks:
           - id: black
     - repo: https://gitlab.com/pycqa/flake8
@@ -18,4 +21,22 @@ repos:
                   - flake8-pep3101 # Don't use old string % formatting
                   - flake8-pytest # Use plain assert, not unittest assertions
                   - pep8-naming # Follow pep8 naming rules (eg. function names lowercase)
-
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.0.1
+      hooks:
+        - id: check-added-large-files # We don't want huge files. (Cut down test data!)
+          args: ['--maxkb=2000']
+        - id: check-case-conflict # Don't allow files that differ by case sensitivity.
+        - id: check-docstring-first # Avoid common error of code before docstring.
+        - id: check-json # Check json file syntax
+        - id: check-merge-conflict
+        - id: check-symlinks # Symlinks that don't point to anything?
+        - id: check-yaml # Check Yaml file syntax
+        - id: debug-statements # Avoid commiting debug/breakpoints
+        - id: end-of-file-fixer # Normalise on exactly one newline
+        - id: fix-byte-order-marker # No UTF-8 byte order marks
+        - id: mixed-line-ending # Don't allow mixed line endings
+        - id: pretty-format-json
+          args: ['--no-sort-keys', '--indent=4', '--autofix']
+        - id: requirements-txt-fixer # Keep requirements files sorted.
+        - id: trailing-whitespace # Auto remove trailing whitespace

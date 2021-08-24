@@ -737,4 +737,3 @@ Misc Types
 .. automodule:: eodatasets3
    :members:
    :exclude-members: DatasetAssembler, DatasetPrepare, NamingConventions, namer
-
