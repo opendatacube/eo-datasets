@@ -235,8 +235,17 @@ def _structure_as_uuid(d, t):
 
 
 def _structure_as_stac_props(d, t, normalise_properties=False):
-    # We don't normalise properties as we want it to reflect the original file.
-    return Eo3Dict(d, normalise_input=normalise_properties)
+    """
+    :param normalise_properties:
+        We don't normalise properties by default as we usually want it to reflect the original file.
+
+    """
+    return Eo3Dict(
+        # The passed-in dictionary is stored internally, so we want to make a copy of it
+        # so that our serialised output is fully separate from the input.
+        dict(d),
+        normalise_input=normalise_properties,
+    )
 
 
 def _structure_as_affine(d: Tuple, t):
