@@ -1,2 +1,2 @@
-sphinx-autodoc-typehints
 .
+sphinx-autodoc-typehints
