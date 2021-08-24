@@ -9,10 +9,10 @@ from eodatasets3 import verify
 from eodatasets3.scripts import recompress
 
 this_folder = Path(__file__).parent
-packaged_base: Path = this_folder.joinpath("recompress_packed")
+packaged_base: Path = this_folder / "data/recompress_packed"
 packaged_offset = "USGS/L1/Landsat/C1/092_091/LT50920911991126/LT05_L1GS_092091_19910506_20170126_01_T2.tar.gz"
 packaged_path = packaged_base / packaged_offset
-unpackaged_base: Path = this_folder.joinpath("recompress_unpackaged")
+unpackaged_base: Path = this_folder / "data/recompress_unpackaged"
 unpackaged_offset = "USGS/L1/Landsat/C1/092_091/LT50920911991126"
 unpackaged_path = unpackaged_base / unpackaged_offset
 
@@ -115,7 +115,7 @@ def test_recompress_dataset(base_in_path: Path, in_offset: str, tmp_path: Path):
 
 def test_recompress_gap_mask_dataset(tmp_path: Path):
     input_path = this_folder.joinpath(
-        "recompress_packed/USGS/L1/Landsat/C1/091_080/LE70910802008014",
+        "data/recompress_packed/USGS/L1/Landsat/C1/091_080/LE70910802008014",
         "LE07_L1GT_091080_20080114_20161231_01_T2.tar.gz",
     )
     assert input_path.exists()
@@ -198,7 +198,7 @@ def test_recompress_dirty_dataset(tmp_path: Path):
     # We expect such tifs to be unmodified by this repackager.
 
     input_path = this_folder.joinpath(
-        "recompress_packed/USGS/L1/Landsat/C1/091_075/LC80910752016348",
+        "data/recompress_packed/USGS/L1/Landsat/C1/091_075/LC80910752016348",
         "LC08_L1TP_091075_20161213_20170316_01_T2.tar.gz",
     )
     assert input_path.exists()
