@@ -5,6 +5,7 @@ import collections
 import enum
 import math
 import multiprocessing
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -42,6 +43,9 @@ from eodatasets3 import serialise, model, utils
 from eodatasets3.model import DatasetDoc
 from eodatasets3.ui import is_absolute, uri_resolve, bool_style
 from eodatasets3.utils import default_utc, EO3_SCHEMA
+
+
+FORCE_PLAIN_OUTPUT = False
 
 
 class Level(enum.Enum):
@@ -952,12 +956,6 @@ def run(
 
     product_definitions = _load_remote_product_definitions(use_datacube, explorer_url)
 
-    s = {
-        Level.info: dict(),
-        Level.warning: dict(fg="yellow"),
-        Level.error: dict(fg="red"),
-    }
-
     for url, messages in validate_paths(
         paths,
         thorough=thorough,
@@ -987,17 +985,7 @@ def run(
 
         for message in messages:
             validation_counts[message.level] += 1
-
-            displayable_code = style(f"{message.code}", **s[message.level], bold=True)
-            echo(
-                f"\t{message.level.name[0].upper()} {displayable_code} {message.reason}"
-            )
-            if message.hint:
-                if "\n" in message.hint:
-                    echo("\t\tHint:")
-                    echo(indent(message.hint, "\t\t" + (" " * 5)))
-                else:
-                    echo(f'\t\t({style("Hint")}: {message.hint})')
+            display_message(message, url)
 
     if not quiet:
         result = (
@@ -1018,6 +1006,44 @@ def run(
             secho(f"{len(paths)} paths", err=True)
 
     sys.exit(invalid_paths)
+
+
+def display_message(message: ValidationMessage, file_offset: str):
+    """
+    Print a validation message to the Console.
+
+    This will use colour if available (interactive use), and Github Actions codes if available (for annotating warnings
+    against the file)
+    """
+    # Are we in Github Actions?
+    # Send any warnings/errors in its custom format
+    if "GITHUB_ACTIONS" in os.environ and not FORCE_PLAIN_OUTPUT:
+        if message.level == Level.error:
+            code = "::error"
+        else:
+            code = "::warning"
+
+        text = message.reason
+        if message.hint:
+            text += f"\n\nHint:\n{message.hint})"
+        # URL-Encode any newlines
+        text = text.replace("\n", "%0A")
+        echo(f"{code} file={file_offset}::{text}")
+    # Otherwise console output, with color if possible.
+    else:
+        s = {
+            Level.info: dict(),
+            Level.warning: dict(fg="yellow"),
+            Level.error: dict(fg="red"),
+        }
+        displayable_code = style(f"{message.code}", **s[message.level], bold=True)
+        echo(f"\t{message.level.name[0].upper()} {displayable_code} {message.reason}")
+        if message.hint:
+            if "\n" in message.hint:
+                echo("\t\tHint:")
+                echo(indent(message.hint, "\t\t" + (" " * 5)))
+            else:
+                echo(f'\t\t({style("Hint")}: {message.hint})')
 
 
 def _load_remote_product_definitions(
