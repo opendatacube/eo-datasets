@@ -9,6 +9,7 @@ import rasterio
 from click.testing import CliRunner, Result
 from rasterio.io import DatasetWriter
 
+import eodatasets3.validate
 from eodatasets3 import serialise, validate
 from eodatasets3.model import DatasetDoc
 
@@ -16,6 +17,15 @@ from eodatasets3.model import DatasetDoc
 from eodatasets3.validate import DocKind, guess_kind_from_contents, filename_doc_kind
 
 Doc = Union[Dict, Path]
+
+
+@pytest.fixture(autouse=True)
+def force_plain_output():
+    # We don't want this defaulting to Github Actions formatting when running our
+    # own tests on the plain output.
+    eodatasets3.validate.FORCE_PLAIN_OUTPUT = True
+    yield
+    eodatasets3.validate.FORCE_PLAIN_OUTPUT = False
 
 
 @pytest.fixture()
