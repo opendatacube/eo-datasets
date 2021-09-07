@@ -1015,6 +1015,15 @@ def display_message(message: ValidationMessage, file_offset: str):
     This will use colour if available (interactive use), and Github Actions codes if available (for annotating warnings
     against the file)
     """
+    hint = ""
+    if message.hint:
+        # Indent the hint if it's multi-line.
+        if "\n" in message.hint:
+            hint = "\t\tHint:\n"
+            hint += indent(message.hint, "\t\t" + (" " * 5))
+        else:
+            hint = f"\t\t(Hint: {message.hint})"
+
     # Are we in Github Actions?
     # Send any warnings/errors in its custom format
     if "GITHUB_ACTIONS" in os.environ and not FORCE_PLAIN_OUTPUT:
@@ -1023,9 +1032,9 @@ def display_message(message: ValidationMessage, file_offset: str):
         else:
             code = "::warning"
 
-        text = message.reason
-        if message.hint:
-            text += f"\n\nHint:\n{message.hint})"
+        text = f"{message.reason}"
+        if hint:
+            text += f"\n{hint}"
         # URL-Encode any newlines
         text = text.replace("\n", "%0A")
         echo(f"{code} file={file_offset}::{text}")
@@ -1038,12 +1047,8 @@ def display_message(message: ValidationMessage, file_offset: str):
         }
         displayable_code = style(f"{message.code}", **s[message.level], bold=True)
         echo(f"\t{message.level.name[0].upper()} {displayable_code} {message.reason}")
-        if message.hint:
-            if "\n" in message.hint:
-                echo("\t\tHint:")
-                echo(indent(message.hint, "\t\t" + (" " * 5)))
-            else:
-                echo(f'\t\t({style("Hint")}: {message.hint})')
+        if hint:
+            echo(hint)
 
 
 def _load_remote_product_definitions(
