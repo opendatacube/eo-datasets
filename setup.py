@@ -74,7 +74,7 @@ setup(
         "shapely",
         "structlog",
         "xarray",
-        "requests-cache",
+        "requests-cache>=0.6",
         "datacube",
         "python-rapidjson",
         "pystac>=1.1.0",
