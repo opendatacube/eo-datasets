@@ -372,7 +372,7 @@ def validate_product(doc: Dict) -> ValidationMessages:
         yield _warning(
             "no_license",
             f"Product {doc['name']!r} has no license field",
-            hint='Eg. "CC-BY-SA-4.0" (SPDX format), "various" or "proprietary"',
+            hint='Eg. "CC-BY-4.0" (SPDX format), "various" or "proprietary"',
         )
 
     # Check measurement name clashes etc.
