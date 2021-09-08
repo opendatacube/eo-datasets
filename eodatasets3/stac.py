@@ -17,7 +17,7 @@ from pystac.extensions.eo import Band, EOExtension
 from pystac.extensions.projection import ProjectionExtension
 from pystac.extensions.view import ViewExtension
 from pystac.utils import datetime_to_str
-from requests_cache.core import CachedSession
+from requests_cache import CachedSession
 
 from eodatasets3.model import DatasetDoc, GridDoc
 
