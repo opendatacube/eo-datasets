@@ -22,7 +22,7 @@ from typing import (
     Sequence,
     Iterable,
 )
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from urllib.request import urlopen
 
 import attr
@@ -544,7 +544,7 @@ def validate_paths(
         yield url, messages
 
 
-def _readable_doc_extension(path: str):
+def _readable_doc_extension(uri: str):
     """
     >>> _readable_doc_extension('something.json.gz')
     '.json.gz'
@@ -552,12 +552,15 @@ def _readable_doc_extension(path: str):
     '.yaml'
     >>> _readable_doc_extension('apple.odc-metadata.yaml.gz')
     '.yaml.gz'
+    >>> _readable_doc_extension('products/tmad/tmad_product.yaml#part=1')
+    '.yaml'
     >>> _readable_doc_extension('/tmp/human.06.tall.yml')
     '.yml'
     >>> # Not a doc, even though it's compressed.
     >>> _readable_doc_extension('db_dump.gz')
     >>> _readable_doc_extension('/tmp/nothing')
     """
+    path = urlparse(uri).path
     compression_formats = (".gz",)
     doc_formats = (
         ".yaml",
