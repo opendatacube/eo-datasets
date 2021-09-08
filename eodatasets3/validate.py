@@ -8,6 +8,7 @@ import multiprocessing
 import os
 import sys
 from datetime import datetime
+from functools import partial
 from pathlib import Path
 from textwrap import indent
 from typing import (
@@ -31,21 +32,18 @@ import numpy as np
 import rasterio
 from boltons.iterutils import get_path
 from click import style, echo, secho
-from datacube import Datacube
-from datacube.utils import changes, read_documents, is_url, InvalidDocException
-from datacube.utils.documents import load_documents
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.errors import CRSError
 from shapely.validation import explain_validity
 
+from datacube import Datacube
+from datacube.utils import changes, read_documents, is_url, InvalidDocException
+from datacube.utils.documents import load_documents
 from eodatasets3 import serialise, model, utils
 from eodatasets3.model import DatasetDoc
 from eodatasets3.ui import is_absolute, uri_resolve, bool_style
 from eodatasets3.utils import default_utc, EO3_SCHEMA
-
-
-FORCE_PLAIN_OUTPUT = False
 
 
 class Level(enum.Enum):
@@ -891,6 +889,71 @@ def _has_some_geo(dataset):
     return dataset.geometry is not None or dataset.grids or dataset.crs
 
 
+def display_result_console(
+    url: str, is_valid: bool, messages: List[ValidationMessage], quiet=False
+):
+    """
+    Print validation messages to the Console (using colour if available).
+    """
+    # Otherwise console output, with color if possible.
+    if messages or not quiet:
+        echo(f"{bool_style(is_valid)} {url}")
+
+    for message in messages:
+        hint = ""
+        if message.hint:
+            # Indent the hint if it's multi-line.
+            if "\n" in message.hint:
+                hint = "\t\tHint:\n"
+                hint += indent(message.hint, "\t\t" + (" " * 5))
+            else:
+                hint = f"\t\t(Hint: {message.hint})"
+        s = {
+            Level.info: dict(),
+            Level.warning: dict(fg="yellow"),
+            Level.error: dict(fg="red"),
+        }
+        displayable_code = style(f"{message.code}", **s[message.level], bold=True)
+        echo(f"\t{message.level.name[0].upper()} {displayable_code} {message.reason}")
+        if hint:
+            echo(hint)
+
+
+def display_result_github(url: str, is_valid: bool, messages: List[ValidationMessage]):
+    """
+    Print validation messages using Github Action's command language for warnings/errors.
+    """
+    echo(f"{bool_style(is_valid)} {url}")
+    for message in messages:
+        hint = ""
+        if message.hint:
+            # Indent the hint if it's multi-line.
+            if "\n" in message.hint:
+                hint = "\n\nHint:\n"
+                hint += indent(message.hint, (" " * 5))
+            else:
+                hint = f"\n\n(Hint: {message.hint})"
+
+        if message.level == Level.error:
+            code = "::error"
+        else:
+            code = "::warning"
+
+        text = f"{message.reason}{hint}"
+
+        # URL-Encode any newlines
+        text = text.replace("\n", "%0A")
+        # TODO: Get the real line numbers?
+        echo(f"{code} file={url},line=1::{text}")
+
+
+_OUTPUT_WRITERS = dict(
+    plain=display_result_console,
+    quiet=partial(display_result_console, quiet=True),
+    github=display_result_github,
+)
+
+
 @click.command(
     help=__doc__
     + """
@@ -909,6 +972,16 @@ products first, and datasets later, to ensure they can be matched.
     "strict_warnings",
     is_flag=True,
     help="Fail if any warnings are produced",
+)
+@click.option(
+    "-f",
+    "--output-format",
+    help="Output format",
+    type=click.Choice(list(_OUTPUT_WRITERS)),
+    # Are we in Github Actions?
+    # Send any warnings/errors in its custom format
+    default="github" if "GITHUB_ACTIONS" in os.environ else "plain",
+    show_default=True,
 )
 @click.option(
     "--thorough",
@@ -949,12 +1022,17 @@ def run(
     expect_extra_measurements: bool,
     explorer_url: str,
     use_datacube: bool,
+    output_format: str,
 ):
     validation_counts: Counter[Level] = collections.Counter()
     invalid_paths = 0
     current_location = Path(".").resolve().as_uri() + "/"
 
     product_definitions = _load_remote_product_definitions(use_datacube, explorer_url)
+
+    if output_format == "plain" and quiet:
+        output_format = "quiet"
+    write_file_report = _OUTPUT_WRITERS[output_format]
 
     for url, messages in validate_paths(
         paths,
@@ -974,19 +1052,19 @@ def run(
             # Errors/Warnings only. Remove info-level.
             messages = [m for m in messages if m.level != Level.info]
 
-        if messages or not quiet:
-            secho(f"{bool_style(not is_invalid)} {url}")
-
-        if not messages:
-            continue
-
         if is_invalid:
             invalid_paths += 1
 
         for message in messages:
             validation_counts[message.level] += 1
-            display_message(message, url)
 
+        write_file_report(
+            url=url,
+            is_valid=not is_invalid,
+            messages=messages,
+        )
+
+    # Print a summary on stderr for humans.
     if not quiet:
         result = (
             style("failure", fg="red", bold=True)
@@ -1008,49 +1086,6 @@ def run(
     sys.exit(invalid_paths)
 
 
-def display_message(message: ValidationMessage, file_offset: str):
-    """
-    Print a validation message to the Console.
-
-    This will use colour if available (interactive use), and Github Actions codes if available (for annotating warnings
-    against the file)
-    """
-    hint = ""
-    if message.hint:
-        # Indent the hint if it's multi-line.
-        if "\n" in message.hint:
-            hint = "\t\tHint:\n"
-            hint += indent(message.hint, "\t\t" + (" " * 5))
-        else:
-            hint = f"\t\t(Hint: {message.hint})"
-
-    # Are we in Github Actions?
-    # Send any warnings/errors in its custom format
-    if "GITHUB_ACTIONS" in os.environ and not FORCE_PLAIN_OUTPUT:
-        if message.level == Level.error:
-            code = "::error"
-        else:
-            code = "::warning"
-
-        text = f"{message.reason}"
-        if hint:
-            text += f"\n{hint}"
-        # URL-Encode any newlines
-        text = text.replace("\n", "%0A")
-        echo(f"{code} file={file_offset}::{text}")
-    # Otherwise console output, with color if possible.
-    else:
-        s = {
-            Level.info: dict(),
-            Level.warning: dict(fg="yellow"),
-            Level.error: dict(fg="red"),
-        }
-        displayable_code = style(f"{message.code}", **s[message.level], bold=True)
-        echo(f"\t{message.level.name[0].upper()} {displayable_code} {message.reason}")
-        if hint:
-            echo(hint)
-
-
 def _load_remote_product_definitions(
     from_datacube: bool = False,
     from_explorer_url: Optional[str] = None,
@@ -1061,6 +1096,7 @@ def _load_remote_product_definitions(
     if from_explorer_url:
         for definition in _load_explorer_product_definitions(from_explorer_url):
             product_definitions[definition["name"]] = definition
+        secho(f"{len(product_definitions)} Explorer products", err=True)
 
     if from_datacube:
         # The normal datacube environment variables can be used to choose alternative configs.
@@ -1068,7 +1104,7 @@ def _load_remote_product_definitions(
             for product in dc.index.products.get_all():
                 product_definitions[product.name] = product.definition
 
-    secho(f"{len(product_definitions)} ODC products")
+        secho(f"{len(product_definitions)} ODC products", err=True)
     return product_definitions
 
 
