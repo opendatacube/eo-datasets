@@ -53,6 +53,6 @@ dependency-update:
 # This has to be run using the same Python interpreter we are deploying with.
 # ie. Use "make dependency-update" instead!
 internal-update:
-	pip-compile requirements/dev.in
-	pip-compile --extra ancillary --extra wagl -o requirements/main.txt
+	pip-compile requirements/setup.in
+	pip-compile --extra deployment -o requirements/deployment.txt
 	pip-compile --extra test -o requirements/test.txt
