@@ -75,4 +75,4 @@ RUN pip freeze
 RUN eo3-validate --version
 
 ENTRYPOINT ["/bin/tini", "--"]
-CMD ["eo3-validate", "--help"]
+CMD ["eo3-validate"]
