@@ -1,0 +1,62 @@
+---
+name: Docker
+
+on:
+  push:
+    branches:
+      - eodatasets3
+    paths:
+      - "**"
+
+  release:
+    types: [created, edited, published]
+
+env:
+  IMAGE_NAME: opendatacube/eo-datasets
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/eodatasets3' || github.event_name == 'release'
+
+    steps:
+      - name: Checkout git
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Get unstable git tag
+        run: >
+          echo "UNSTABLE_TAG=$(git describe --tags | sed 's/eodatasets3-//')" >> $GITHUB_ENV
+
+      - name: Log the unstable tag
+        run: echo $UNSTABLE_TAG
+
+      - name: Build and Push unstable + latest Docker image tag
+        if: github.event_name != 'release'
+        uses: whoan/docker-build-with-cache-action@v4
+        with:
+          image_name: ${{ env.IMAGE_NAME }}
+          username: gadockersvc
+          image_tag: ${{ env.UNSTABLE_TAG }},latest
+          password: "${{ secrets.DockerPassword }}"
+          build_extra_args: "--build-arg=ENVIRONMENT=deployment"
+
+      # This section is for releases
+      - name: Get tag for this build if it exists
+        if: github.event_name == 'release'
+        run: >
+          echo "RELEASE=$(git describe --tags | sed 's/eodatasets3-//')" >> $GITHUB_ENV
+
+      - name: Log the tag
+        run: echo $RELEASE
+
+      - name: Build and Push release if we have a tag
+        uses: whoan/docker-build-with-cache-action@v4
+        if: github.event_name == 'release'
+        with:
+          image_name: ${{ env.IMAGE_NAME }}
+          image_tag: ${{ env.RELEASE }}
+          username: gadockersvc
+          password: "${{ secrets.DockerPassword }}"
+          build_extra_args: "--build-arg=ENVIRONMENT=deployment"
