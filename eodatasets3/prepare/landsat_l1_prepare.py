@@ -392,8 +392,10 @@ def prepare_and_write(
         naming_conventions="dea",
     ) as p:
         if source_telemetry:
-            # Only GA's data has source telemetry...
-            assert producer == "ga.gov.au"
+            if producer != "ga.gov.au":
+                raise NotImplementedError(
+                    "Only GA's L1 data is expected to have telemetry source data?"
+                )
             p.add_source_path(source_telemetry)
 
         p.platform = mtl_doc[coll_map["image_attributes"]]["spacecraft_id"]
