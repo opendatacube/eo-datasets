@@ -4,7 +4,7 @@ exclude: tests/integration/data
 
 repos:
     - repo: https://github.com/ambv/black
-      rev: 21.7b0
+      rev: 21.8b0
       hooks:
           - id: black
     - repo: https://gitlab.com/pycqa/flake8
@@ -21,6 +21,12 @@ repos:
                   - flake8-pep3101 # Don't use old string % formatting
                   - flake8-pytest # Use plain assert, not unittest assertions
                   - pep8-naming # Follow pep8 naming rules (eg. function names lowercase)
+    # Common Python security checks. (this is complementary to dlint in flake8)
+    - repo: https://github.com/PyCQA/bandit
+      rev: '1.7.0'
+      hooks:
+        - id: bandit
+          exclude: '^tests/|_version.py|versioneer.py'
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v4.0.1
       hooks:

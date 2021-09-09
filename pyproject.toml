@@ -19,3 +19,7 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.bandit]
+
+exclude = 'tests'

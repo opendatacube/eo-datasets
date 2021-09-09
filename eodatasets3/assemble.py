@@ -1701,6 +1701,9 @@ class DatasetAssembler(DatasetPrepare):
                 )
 
         target_metadata_path = self._target_metadata_path()
-        assert target_metadata_path.exists()
+        if not target_metadata_path.exists():
+            raise RuntimeError(
+                f"Internal error: expected metadata path result: {target_metadata_path}"
+            )
         self._is_completed = True
         return dataset.id, target_metadata_path
