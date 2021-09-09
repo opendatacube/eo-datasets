@@ -15,7 +15,7 @@ README = (HERE / "README.md").read_text()
 
 tests_require = [
     "deepdiff",
-    "gdal==3.3.0",
+    "gdal",
     "mock",
     "pep8-naming",
     "pytest",
@@ -33,7 +33,10 @@ EXTRAS_REQUIRE = {
 }
 EXTRAS_REQUIRE["all"] = list(chain(EXTRAS_REQUIRE.values()))
 # Tests need all those optionals too.
+
 EXTRAS_REQUIRE["test"] = EXTRAS_REQUIRE["all"]
+# Prod deployment just adds the optional wagl depenencies.
+EXTRAS_REQUIRE["deployment"] = EXTRAS_REQUIRE["wagl"]
 
 setup(
     name="eodatasets3",
