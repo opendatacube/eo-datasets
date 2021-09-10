@@ -4,35 +4,35 @@ name: Docker
 on:
   push:
     branches:
-      - eodatasets3
+      - develop
     paths:
       - "**"
 
   pull_request:
     branches:
-      - eodatasets3
+      - develop
 
   release:
     types: [created, edited, published]
 
 env:
-  IMAGE_NAME: opendatacube/eo-datasets
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  docker:
+  build_n_push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout git
+      - name: Checkout Git
         uses: actions/checkout@v2
 
-      - name: Deterimine docker tags from repo
+      - name: Determine Docker info from repo
         id: meta
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.IMAGE_NAME }}
 
-      - name: Log the labels
+      - name: Log the image labels
         run: echo '${{ steps.meta.outputs.labels }}'
 
       - name: Set up Docker Buildx
