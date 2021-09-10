@@ -22,41 +22,30 @@ jobs:
     steps:
       - name: Checkout git
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
-      - name: Get unstable git tag
+      - name: Get version number
         run: >
-          echo "UNSTABLE_TAG=$(git describe --tags | sed 's/eodatasets3-//')" >> $GITHUB_ENV
+          echo "TAGGED_VERSION=$(git describe --tags | sed 's/eodatasets3-//')" >> $GITHUB_ENV
 
-      - name: Log the unstable tag
-        run: echo $UNSTABLE_TAG
+      - name: Log the version
+        run: echo $TAGGED_VERSION
 
-      - name: Build and Push unstable + latest Docker image tag
-        if: github.event_name != 'release'
-        uses: whoan/docker-build-with-cache-action@v4
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
         with:
-          image_name: ${{ env.IMAGE_NAME }}
           username: gadockersvc
-          image_tag: ${{ env.UNSTABLE_TAG }},latest
-          password: "${{ secrets.DockerPassword }}"
-          build_extra_args: "--build-arg=ENVIRONMENT=deployment"
+          password: ${{ secrets.GADOCKERSVC_PASSWORD }}
 
-      # This section is for releases
-      - name: Get tag for this build if it exists
-        if: github.event_name == 'release'
-        run: >
-          echo "RELEASE=$(git describe --tags | sed 's/eodatasets3-//')" >> $GITHUB_ENV
-
-      - name: Log the tag
-        run: echo $RELEASE
-
-      - name: Build and Push release if we have a tag
-        uses: whoan/docker-build-with-cache-action@v4
-        if: github.event_name == 'release'
+      - name: Build and push
+        uses: docker/build-push-action@v2
         with:
-          image_name: ${{ env.IMAGE_NAME }}
-          image_tag: ${{ env.RELEASE }}
-          username: gadockersvc
-          password: "${{ secrets.DockerPassword }}"
-          build_extra_args: "--build-arg=ENVIRONMENT=deployment"
+          context: .
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:latest,${{ env.IMAGE_NAME }}:${{ env.TAGGED_VERSION }}
+          build-args: |
+            ENVIRONMENT=deployment
