@@ -8,6 +8,10 @@ on:
     paths:
       - "**"
 
+  pull_request:
+    branches:
+      - eodatasets3
+
   release:
     types: [created, edited, published]
 
@@ -17,24 +21,26 @@ env:
 jobs:
   docker:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/eodatasets3' || github.event_name == 'release'
 
     steps:
       - name: Checkout git
         uses: actions/checkout@v2
 
-      - name: Get version number
-        run: >
-          echo "TAGGED_VERSION=$(git describe --tags | sed 's/eodatasets3-//')" >> $GITHUB_ENV
+      - name: Deterimine docker tags from repo
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.IMAGE_NAME }}
 
-      - name: Log the version
-        run: echo $TAGGED_VERSION
+      - name: Log the labels
+        run: echo '${{ steps.meta.outputs.labels }}'
 
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v1
 
       - name: Login to DockerHub
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v1
         with:
           username: gadockersvc
@@ -45,7 +51,8 @@ jobs:
         with:
           context: .
           builder: ${{ steps.buildx.outputs.name }}
-          push: true
-          tags: ${{ env.IMAGE_NAME }}:latest,${{ env.IMAGE_NAME }}:${{ env.TAGGED_VERSION }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             ENVIRONMENT=deployment
