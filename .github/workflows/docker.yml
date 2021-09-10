@@ -2,6 +2,8 @@
 name: Docker
 
 on:
+  workflow_dispatch:
+
   push:
     branches:
       - develop
@@ -13,7 +15,7 @@ on:
       - develop
 
   release:
-    types: [created, edited, published]
+    types: [published]
 
 env:
   IMAGE_NAME: ${{ github.repository }}
