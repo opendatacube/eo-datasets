@@ -45,7 +45,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v1
         with:
-          username: gadockersvc
+          username: ${{ secrets.GADOCKERSVC_USERNAME }}
           password: ${{ secrets.GADOCKERSVC_PASSWORD }}
 
       - name: Build and push
