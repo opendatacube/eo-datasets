@@ -19,38 +19,39 @@ Python 3.6+ is supported.
 The assembler api aims to make it easy to write datasets.
 
 ```python
-    from eodatasets3 import DatasetAssembler
-    from datetime import datetime
-    from pathlib import Path
+from datetime import datetime
+from pathlib import Path
 
-    with DatasetAssembler(
-            Path('/some/output/collection/path'),
-            naming_conventions='default') as p:
+from eodatasets3 import DatasetAssembler
 
-        # Add some common metadata fields.
-        p.platform = 'landsat-7'
-        p.instrument = 'ETM'
-        p.datetime = datetime(2019, 7, 4, 13, 7, 5)
-        p.processed_now()
+with DatasetAssembler(
+    Path("/some/output/collection/path"), naming_conventions="default"
+) as p:
 
-        # Support for custom metadata fields
-        p.properties['fmask:cloud_shadow'] = 42.0
+    # Add some common metadata fields.
+    p.platform = "landsat-7"
+    p.instrument = "ETM"
+    p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+    p.processed_now()
 
-        # If you have a source dataset, you can include it as provenance.
-        # Assembler can also copy common metadata properties from it.
-        # (... so we didn't need to set the "platform" above!)
-        p.add_source_path(source_dataset, auto_inherit_properties=True)
+    # Support for custom metadata fields
+    p.properties["fmask:cloud_shadow"] = 42.0
 
-        # Write measurements. They can be from numpy arrays, open rasterio datasets,
-        # file paths, ODC Datasets...
-        p.write_measurement("red", red_path)
-        ...  # now write more measurements
+    # If you have a source dataset, you can include it as provenance.
+    # Assembler can also copy common metadata properties from it.
+    # (... so we didn't need to set the "platform" above!)
+    p.add_source_path(source_dataset, auto_inherit_properties=True)
 
-        # Create a jpg thumbnail image using the measurements we've written
-        p.write_thumbnail(red="swir1", green="swir2", blue="red")
+    # Write measurements. They can be from numpy arrays, open rasterio datasets,
+    # file paths, ODC Datasets...
+    p.write_measurement("red", red_path)
+    ...  # now write more measurements
 
-        # Validate the dataset and write it to the destination folder atomically.
-        p.done()
+    # Create a jpg thumbnail image using the measurements we've written
+    p.write_thumbnail(red="swir1", green="swir2", blue="red")
+
+    # Validate the dataset and write it to the destination folder atomically.
+    p.done()
 ```
 
 The Assembler will write a folder of [COG](https://www.cogeo.org/) imagery, an [eo3](#open-data-cube-compatibility)

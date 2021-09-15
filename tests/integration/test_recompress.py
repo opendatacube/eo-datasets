@@ -1,10 +1,11 @@
 import shutil
 import tarfile
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import Dict, List, Tuple
 
 import pytest
 from click.testing import CliRunner, Result
+
 from eodatasets3 import verify
 from eodatasets3.scripts import recompress
 
@@ -57,9 +58,9 @@ def test_recompress_dataset(base_in_path: Path, in_offset: str, tmp_path: Path):
     )
 
     # Pytest has better error messages for strings than Paths.
-    all_output_files = set(
+    all_output_files = {
         str(p.relative_to(output_base)) for p in output_base.rglob("*") if p.is_file()
-    )
+    }
 
     assert len(all_output_files) == 1, (
         f"Expected one output tar file. Got: {len(all_output_files)}"

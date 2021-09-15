@@ -19,17 +19,17 @@ from contextlib import suppress
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from typing import List, Iterable, Tuple, Callable, IO, Dict
+from typing import IO, Callable, Dict, Iterable, List, Tuple
 
 import click
 import numpy
 import rasterio
 import structlog
 from structlog.processors import (
+    JSONRenderer,
     StackInfoRenderer,
     TimeStamper,
     format_exc_info,
-    JSONRenderer,
 )
 
 from eodatasets3.ui import PathPath

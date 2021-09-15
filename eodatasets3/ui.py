@@ -2,8 +2,7 @@ import os
 import urllib.parse
 from pathlib import Path
 from typing import Optional, Union
-from urllib.parse import urljoin
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import click
 

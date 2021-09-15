@@ -14,9 +14,10 @@ from rio_cogeo import cogeo
 
 import eodatasets3
 from eodatasets3.model import DatasetDoc
-from tests import assert_file_structure
-from tests.common import assert_same_as_file, assert_expected_eo3_path
+
 from . import assert_image
+from tests import assert_file_structure
+from tests.common import assert_expected_eo3_path, assert_same_as_file
 
 h5py = pytest.importorskip(
     "h5py",
@@ -118,11 +119,11 @@ def test_whole_landsat_wagl_package(
 
     # Checksum should include all files other than itself.
     [checksum_file] = expected_folder.rglob("*.sha1")
-    all_output_files = set(
+    all_output_files = {
         p.relative_to(checksum_file.parent)
         for p in expected_folder.rglob("*")
         if p != checksum_file
-    )
+    }
     files_in_checksum = {
         Path(line.split("\t")[1]) for line in checksum_file.read_text().splitlines()
     }
@@ -761,11 +762,11 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
 
     # Checksum should include all files other than itself.
     [checksum_file] = expected_folder.rglob("*.sha1")
-    all_output_files = set(
+    all_output_files = {
         p.relative_to(checksum_file.parent)
         for p in expected_folder.rglob("*")
         if p != checksum_file and not p.is_dir()
-    )
+    }
     files_in_checksum = {
         Path(line.split("\t")[1]) for line in checksum_file.read_text().splitlines()
     }

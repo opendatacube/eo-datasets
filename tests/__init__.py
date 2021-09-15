@@ -1,6 +1,3 @@
-# coding=utf-8
-from __future__ import absolute_import
-
 import atexit
 import os
 import pathlib
@@ -34,14 +31,14 @@ def assert_same(o1, o2, prefix=""):
             _compare(i, val, o2[i])
     elif isinstance(o1, dict) and isinstance(o2, dict):
         for k, val in o1.items():
-            assert k in o2, "%s[%r] is missing.\n\t%r\n\t%r" % (prefix, k, o1, o2)
+            assert k in o2, f"{prefix}[{k!r}] is missing.\n\t{o1!r}\n\t{o2!r}"
         for k, val in o2.items():
-            assert k in o1, "%s[%r] is missing.\n\t%r\n\t%r" % (prefix, k, o2, o1)
+            assert k in o1, f"{prefix}[{k!r}] is missing.\n\t{o2!r}\n\t{o1!r}"
             _compare(k, val, o1[k])
     elif o1 != o2:
         sys.stderr.write("%r\n" % o1)
         sys.stderr.write("%r\n" % o2)
-        raise AssertionError("Mismatch for property %r:  %r != %r" % (prefix, o1, o2))
+        raise AssertionError(f"Mismatch for property {prefix!r}:  {o1!r} != {o2!r}")
 
 
 def assert_file_structure(folder, expected_structure, root=""):
@@ -53,12 +50,12 @@ def assert_file_structure(folder, expected_structure, root=""):
     :type expected_structure: dict[str,str|dict]
     """
     __tracebackhide__ = True
-    required_filenames = set(
+    required_filenames = {
         name for name, option in expected_structure.items() if option != "optional"
-    )
-    optional_filenames = set(
+    }
+    optional_filenames = {
         name for name, option in expected_structure.items() if option == "optional"
-    )
+    }
     assert (
         folder.exists()
     ), f"Expected base folder doesn't even exist! {folder.as_posix()!r}"
@@ -71,11 +68,11 @@ def assert_file_structure(folder, expected_structure, root=""):
         extra_files = actual_filenames - required_filenames
         added_text = "Extra  : %r" % (sorted(list(extra_files)))
         raise AssertionError(
-            "Folder mismatch of %r\n\t%s\n\t%s" % (root, missing_text, added_text)
+            f"Folder mismatch of {root!r}\n\t{missing_text}\n\t{added_text}"
         )
 
     for k, v in expected_structure.items():
-        id_ = "%s/%s" % (root, k) if root else k
+        id_ = f"{root}/{k}" if root else k
 
         is_optional = v == "optional"
 
@@ -85,12 +82,12 @@ def assert_file_structure(folder, expected_structure, root=""):
             if is_optional:
                 continue
 
-            assert False, "%s is missing" % (id_,)
+            assert False, f"{id_} is missing"
         elif isinstance(v, dict):
-            assert f.is_dir(), "%s is not a dir" % (id_,)
+            assert f.is_dir(), f"{id_} is not a dir"
             assert_file_structure(f, v, id_)
         elif isinstance(v, str):
-            assert f.is_file(), "%s is not a file" % (id_,)
+            assert f.is_file(), f"{id_} is not a file"
         else:
             assert (
                 False

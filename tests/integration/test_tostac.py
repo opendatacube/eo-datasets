@@ -3,9 +3,11 @@ import shutil
 from pathlib import Path
 
 import pytest
+
 from eodatasets3 import serialise
 from eodatasets3.scripts import tostac
-from tests.common import run_prepare_cli, assert_same
+
+from tests.common import assert_same, run_prepare_cli
 
 TO_STAC_DATA: Path = Path(__file__).parent.joinpath("data/tostac")
 ODC_METADATA_FILE: str = "ga_ls8c_ard_3-1-0_088080_2020-05-25_final.odc-metadata.yaml"

@@ -1,9 +1,9 @@
+import json
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Callable
+from typing import Callable, Dict
 
-import json
 import pytest
 
 from eodatasets3 import serialise

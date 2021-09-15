@@ -1,20 +1,31 @@
 import math
+import os
 import string
+import sys
+import tempfile
+from collections import defaultdict
+from pathlib import Path, PurePath
+from typing import (
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 
 import attr
 import numpy
-import os
 import rasterio
 import rasterio.features
 import shapely
 import shapely.affinity
 import shapely.ops
-import sys
-import tempfile
 import xarray
 from affine import Affine
-from collections import defaultdict
-from pathlib import Path, PurePath
 from rasterio import DatasetReader
 from rasterio.coords import BoundingBox
 from rasterio.crs import CRS
@@ -23,21 +34,9 @@ from rasterio.io import DatasetWriter, MemoryFile
 from rasterio.shutil import copy as rio_copy
 from rasterio.warp import calculate_default_transform, reproject
 from shapely.geometry.base import CAP_STYLE, JOIN_STYLE, BaseGeometry
-from typing import (
-    Dict,
-    Generator,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    Set,
-)
 
 from eodatasets3.model import DatasetDoc, GridDoc, MeasurementDoc
 from eodatasets3.properties import FileFormat
-
 
 DEFAULT_OVERVIEWS = (8, 16, 32)
 
@@ -108,7 +107,7 @@ class GridSpec:
     @classmethod
     def from_odc_xarray(cls, dataset: xarray.Dataset) -> "GridSpec":
         """Create from an ODC xarray"""
-        shape = set(v.shape for v in dataset.data_vars.values()).pop()
+        shape = {v.shape for v in dataset.data_vars.values()}.pop()
         return cls(
             shape=shape,
             transform=dataset.geobox.transform,
@@ -614,7 +613,7 @@ class FileWrite:
         # Check for excluded datatypes
         excluded_dtypes = ["int64", "int8", "uint64"]
         if dtype in excluded_dtypes:
-            raise TypeError("Datatype not supported: {dt}".format(dt=dtype))
+            raise TypeError(f"Datatype not supported: {dtype}")
 
         # convert any bools to uin8
         if dtype == "bool":
@@ -634,9 +633,7 @@ class FileWrite:
             lines = shape[1]
             bands = shape[0]
         else:
-            raise IndexError(
-                "Input array is not of 2 or 3 dimensions. Got {dims}".format(dims=ndims)
-            )
+            raise IndexError(f"Input array is not of 2 or 3 dimensions. Got {ndims}")
 
         transform = None
         projection = None

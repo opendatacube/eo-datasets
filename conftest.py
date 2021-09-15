@@ -1,4 +1,3 @@
-# coding=utf-8
 # Require a '--runslow' argument to run the tests with a @slow annotation.
 
 import pytest

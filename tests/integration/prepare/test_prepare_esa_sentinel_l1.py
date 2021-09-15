@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from eodatasets3.prepare import sentinel_l1c_prepare
+
 from tests.common import check_prepare_outputs
 
 DATASET_PATH: Path = Path(__file__).parent.parent / (

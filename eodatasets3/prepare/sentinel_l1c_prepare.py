@@ -10,7 +10,7 @@ import sys
 import uuid
 import zipfile
 from pathlib import Path
-from typing import Tuple, Dict, List, Optional, Iterable, Mapping
+from typing import Dict, Iterable, List, Mapping, Optional, Tuple
 
 import click
 from defusedxml import minidom

@@ -8,16 +8,15 @@ import logging
 import os
 import re
 import tarfile
-import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Union, Iterable, Dict, Tuple, Callable, Generator
+from typing import Callable, Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 import click
 import rasterio
 
-from eodatasets3 import serialise, utils, DatasetPrepare
+from eodatasets3 import DatasetPrepare, serialise, utils
 from eodatasets3.properties import FileFormat
 from eodatasets3.ui import PathPath
 
@@ -219,7 +218,7 @@ def get_mtl_content(acquisition_path: Path, root_element=None) -> Tuple[Dict, st
             member = tp.next()
 
     if not acquisition_path.exists():
-        raise RuntimeError("Missing path '{}'".format(acquisition_path))
+        raise RuntimeError(f"Missing path '{acquisition_path}'")
 
     if acquisition_path.is_file() and tarfile.is_tarfile(str(acquisition_path)):
         with tarfile.open(str(acquisition_path), "r") as tp:
@@ -229,9 +228,7 @@ def get_mtl_content(acquisition_path: Path, root_element=None) -> Tuple[Dict, st
                         mtl_doc, file_root_element = read_mtl(fp)
                         return mtl_doc, file_root_element, member.name
             else:
-                raise RuntimeError(
-                    "MTL file not found in {}".format(str(acquisition_path))
-                )
+                raise RuntimeError(f"MTL file not found in {str(acquisition_path)}")
 
     else:
         paths = list(acquisition_path.rglob("*_MTL.txt"))
@@ -566,7 +563,7 @@ def main(
                 continue
 
             logging.info("Processing %s", ds_path)
-            output_yaml = output / "{}.odc-metadata.yaml".format(_dataset_name(ds_path))
+            output_yaml = output / f"{_dataset_name(ds_path)}.odc-metadata.yaml"
 
             if output_yaml.exists():
                 if not overwrite_existing:
@@ -590,6 +587,7 @@ def _normalise_dataset_path(input_path: Path) -> Path:
 
     Translate other inputs (example: the MTL path) to one of the two.
 
+    >>> import tempfile
     >>> tmppath = Path(tempfile.mkdtemp())
     >>> ds_path = tmppath.joinpath('LE07_L1GT_104078_20131209_20161119_01_T1')
     >>> ds_path.mkdir()
@@ -620,11 +618,11 @@ def _normalise_dataset_path(input_path: Path) -> Path:
 
     if not mtl_files:
         raise ValueError(
-            "No MTL files within input path '{}'. Not a dataset?".format(input_path)
+            f"No MTL files within input path '{input_path}'. Not a dataset?"
         )
     if len(mtl_files) > 1:
         raise ValueError(
-            "Multiple MTL files in a single dataset (got path: {})".format(input_path)
+            f"Multiple MTL files in a single dataset (got path: {input_path})"
         )
     return input_path
 

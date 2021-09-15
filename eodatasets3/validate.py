@@ -12,15 +12,15 @@ from functools import partial
 from pathlib import Path
 from textwrap import indent
 from typing import (
-    List,
     Counter,
     Dict,
     Generator,
-    Optional,
-    Union,
-    Tuple,
-    Sequence,
     Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
 )
 from urllib.parse import urljoin, urlparse
 from urllib.request import urlopen
@@ -31,19 +31,19 @@ import click
 import numpy as np
 import rasterio
 from boltons.iterutils import get_path
-from click import style, echo, secho
+from click import echo, secho, style
+from datacube import Datacube
+from datacube.utils import InvalidDocException, changes, is_url, read_documents
+from datacube.utils.documents import load_documents
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.errors import CRSError
 from shapely.validation import explain_validity
 
-from datacube import Datacube
-from datacube.utils import changes, read_documents, is_url, InvalidDocException
-from datacube.utils.documents import load_documents
-from eodatasets3 import serialise, model, utils
+from eodatasets3 import model, serialise, utils
 from eodatasets3.model import DatasetDoc
-from eodatasets3.ui import is_absolute, uri_resolve, bool_style
-from eodatasets3.utils import default_utc, EO3_SCHEMA
+from eodatasets3.ui import bool_style, is_absolute, uri_resolve
+from eodatasets3.utils import EO3_SCHEMA, default_utc
 
 
 class Level(enum.Enum):
@@ -265,7 +265,7 @@ def validate_dataset(
                     f"Product {product_name} expects a measurement {name!r})",
                 )
         measurements_not_in_product = set(dataset.measurements.keys()).difference(
-            set(m["name"] for m in product_definition.get("measurements") or ())
+            {m["name"] for m in product_definition.get("measurements") or ()}
         )
         if (not expect_extra_measurements) and measurements_not_in_product:
             things = ", ".join(sorted(measurements_not_in_product))

@@ -1,16 +1,13 @@
-# coding=utf-8
 """
 Common methods for UI code.
 """
-from __future__ import absolute_import
 
 import gzip
 import json
 import os
 import posixpath
-from copy import deepcopy
 from pathlib import Path, PurePath
-from typing import Generator, Dict, Tuple
+from typing import Dict, Generator, Tuple
 from urllib.parse import urlparse
 
 from boltons import iterutils
@@ -101,7 +98,7 @@ def new_metadata_path(dataset_path):
         return dataset_path.joinpath("ga-metadata.yaml")
 
     if dataset_path.is_file():
-        return dataset_path.parent.joinpath("{}.ga-md.yaml".format(dataset_path.name))
+        return dataset_path.parent.joinpath(f"{dataset_path.name}.ga-md.yaml")
 
     raise ValueError(f"Unhandled path type for {dataset_path!r}")
 
@@ -119,7 +116,7 @@ def _find_any_metadata_suffix(path):
         return None
 
     if len(existing_paths) > 1:
-        raise ValueError("Multiple matched metadata files: {!r}".format(existing_paths))
+        raise ValueError(f"Multiple matched metadata files: {existing_paths!r}")
 
     return existing_paths[0]
 
@@ -214,6 +211,7 @@ def make_paths_relative(
     """
     Find all pathlib.Path values in a document structure and make them relative to the given path.
 
+    >>> from copy import deepcopy
     >>> base = PurePath('/tmp/basket')
     >>> doc = {'id': 1, 'fruits': [{'apple': PurePath('/tmp/basket/fruits/apple.txt')}]}
     >>> make_paths_relative(doc, base)

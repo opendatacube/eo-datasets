@@ -3,10 +3,11 @@ from functools import partial
 from pathlib import Path
 from pprint import pformat
 
-from eodatasets3 import serialise
 from deepdiff import DeepDiff
 
+from eodatasets3 import serialise
 from eodatasets3.prepare import noaa_c_c_prwtreatm_1_prepare
+
 from tests.common import run_prepare_cli
 
 NCEP_PR_WTR_FILE: Path = (

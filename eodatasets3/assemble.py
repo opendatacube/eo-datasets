@@ -7,9 +7,9 @@ import uuid
 import warnings
 from copy import deepcopy
 from enum import Enum, auto
-from pathlib import Path, PurePath, PosixPath
+from pathlib import Path, PosixPath, PurePath
 from textwrap import dedent
-from typing import Dict, List, Optional, Tuple, Generator, Any, Iterable, Union
+from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
 from urllib.parse import urlsplit
 
 import numpy
@@ -21,17 +21,12 @@ from rasterio.enums import Resampling
 from shapely.geometry.base import BaseGeometry
 
 import eodatasets3
-from eodatasets3 import serialise, validate, images, documents
+from eodatasets3 import documents, images, serialise, validate
 from eodatasets3.documents import find_and_read_documents
 from eodatasets3.images import FileWrite, GridSpec, MeasurementBundler
-from eodatasets3.model import (
-    DatasetDoc,
-    ProductDoc,
-    Location,
-    AccessoryDoc,
-)
-from eodatasets3.names import NamingConventions, namer, resolve_location, dc_uris
-from eodatasets3.properties import Eo3Interface, Eo3Dict
+from eodatasets3.model import AccessoryDoc, DatasetDoc, Location, ProductDoc
+from eodatasets3.names import NamingConventions, dc_uris, namer, resolve_location
+from eodatasets3.properties import Eo3Dict, Eo3Interface
 from eodatasets3.validate import Level, ValidationMessage
 from eodatasets3.verify import PackageChecksum
 
@@ -468,9 +463,9 @@ class DatasetPrepare(Eo3Interface):
 
     @property
     def measurements(self) -> Dict[str, Tuple[GridSpec, Path]]:
-        return dict(
-            (name, (grid, path)) for grid, name, path in self._measurements.iter_paths()
-        )
+        return {
+            name: (grid, path) for grid, name, path in self._measurements.iter_paths()
+        }
 
     @property
     def label(self) -> Optional[str]:
@@ -1443,7 +1438,7 @@ class DatasetAssembler(DatasetPrepare):
                 )
             )
         rgbs = [self.measurements[b] for b in (red, green, blue)]
-        unique_grids: List[GridSpec] = list(set(grid for grid, path in rgbs))
+        unique_grids: List[GridSpec] = list({grid for grid, path in rgbs})
         if len(unique_grids) != 1:
             raise NotImplementedError(
                 "Thumbnails can only currently be created from measurements of the same grid spec."
@@ -1607,7 +1602,7 @@ class DatasetAssembler(DatasetPrepare):
                 "being ignored).",
                 category=DeprecationWarning,
             )
-            return super(DatasetAssembler, self).done(
+            return super().done(
                 embed_location=embed_location,
                 validate_correctness=validate_correctness,
                 sort_measurements=sort_measurements,
