@@ -10,7 +10,7 @@ from deepdiff.model import DiffLevel
 from ruamel import yaml
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets3 import serialise, DatasetDoc
+from eodatasets3 import DatasetDoc, serialise
 
 
 def check_prepare_outputs(

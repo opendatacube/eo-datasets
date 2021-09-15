@@ -1,17 +1,16 @@
-# coding=utf-8
 """
 Module
 """
-from __future__ import absolute_import
 
 import binascii
 import hashlib
-import rasterio
 import tempfile
 from pathlib import Path
-from rasterio import DatasetReader
 from typing import Dict, Tuple
+
 import numpy
+import rasterio
+from rasterio import DatasetReader
 
 allow_anything = object()
 
@@ -70,7 +69,7 @@ def directory_size(directory):
     return sum(p.stat().st_size for p in directory.rglob("*") if p.is_file())
 
 
-class FakeAncilFile(object):
+class FakeAncilFile:
     def __init__(self, base_folder, type_, filename, folder_offset=()):
         """
         :type base_folder: pathlib.Path

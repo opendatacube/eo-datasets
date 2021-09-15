@@ -1,10 +1,8 @@
-# coding=utf-8
-from __future__ import absolute_import
-
 import hashlib
 import unittest
 
 from eodatasets3 import verify
+
 from tests import write_files
 
 

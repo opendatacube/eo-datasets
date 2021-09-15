@@ -1,10 +1,9 @@
-# coding=utf-8
 """
 Module
 """
-from __future__ import absolute_import
 
-from eodatasets3.documents import find_metadata_path, _find_any_metadata_suffix
+from eodatasets3.documents import _find_any_metadata_suffix, find_metadata_path
+
 from tests import write_files
 
 

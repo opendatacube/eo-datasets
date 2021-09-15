@@ -3,7 +3,7 @@ import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, Tuple, Dict, Any, Mapping
+from typing import Any, Dict, Iterable, Mapping, Tuple
 
 import ciso8601
 import click

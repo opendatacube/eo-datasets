@@ -1,12 +1,7 @@
-# coding=utf-8
-from __future__ import absolute_import
-
 import binascii
 import hashlib
 import logging
-
 import typing
-
 from distutils import spawn
 from pathlib import Path
 
@@ -80,7 +75,7 @@ def calculate_file_crc32(filename, block_size=1024 * 16):
     return f"{m & 0xFFFFFFFF:08x}"
 
 
-class PackageChecksum(object):
+class PackageChecksum:
     """
     Incrementally build a checksum file for a package.
 
@@ -137,7 +132,7 @@ class PackageChecksum(object):
         with output_file.open("wb") as f:
             f.writelines(
                 (
-                    "{0}\t{1}\n".format(
+                    "{}\t{}\n".format(
                         str(hash_), str(filename.relative_to(output_file.parent))
                     ).encode("utf-8")
                     for filename, hash_ in sorted(self._file_hashes.items())

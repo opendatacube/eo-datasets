@@ -5,6 +5,7 @@ import ciso8601
 
 from eodatasets3 import serialise
 from eodatasets3.utils import default_utc
+
 from tests.common import dump_roundtrip
 
 

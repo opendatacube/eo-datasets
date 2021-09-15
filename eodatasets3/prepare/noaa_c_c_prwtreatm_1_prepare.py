@@ -6,7 +6,7 @@ import datetime
 import urllib.parse
 import uuid
 from pathlib import Path
-from typing import Iterable, Dict
+from typing import Dict, Iterable
 
 import click
 import rasterio
@@ -14,7 +14,8 @@ import rasterio.crs
 from rasterio.io import DatasetReader
 
 from eodatasets3 import serialise
-from eodatasets3.utils import read_paths_from_file, ItemProvider
+from eodatasets3.utils import ItemProvider, read_paths_from_file
+
 from ..metadata.valid_region import valid_region
 
 NOAA_WATER_VAPOUR_NS = uuid.UUID(hex="857bd048-8c86-4670-a2b4-5dbea26d7692")

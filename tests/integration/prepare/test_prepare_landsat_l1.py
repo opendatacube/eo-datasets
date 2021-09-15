@@ -1,13 +1,13 @@
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Callable
+from typing import Callable, Dict
 
 import pytest
 
 from eodatasets3.prepare import landsat_l1_prepare
-from tests.common import check_prepare_outputs
-from tests.common import run_prepare_cli
+
+from tests.common import check_prepare_outputs, run_prepare_cli
 
 LC08_L2_C2_POST_20210507_INPUT_PATH: Path = (
     Path(__file__).parent.parent / "data" / "LC08_L2SP_098084_20210503_20210508_02_T1"

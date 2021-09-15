@@ -1,7 +1,7 @@
 import operator
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, Union, Mapping, Sequence, Optional, Tuple
+from typing import Dict, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pytest
@@ -13,7 +13,7 @@ from eodatasets3 import serialise, validate
 from eodatasets3.model import DatasetDoc
 
 # Either a dict or a path to a document
-from eodatasets3.validate import DocKind, guess_kind_from_contents, filename_doc_kind
+from eodatasets3.validate import DocKind, filename_doc_kind, guess_kind_from_contents
 
 Doc = Union[Dict, Path]
 

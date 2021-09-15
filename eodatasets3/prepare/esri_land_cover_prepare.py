@@ -4,8 +4,7 @@ from pathlib import Path
 import rasterio
 from shapely.geometry import box
 
-from eodatasets3 import DatasetPrepare
-from eodatasets3 import GridSpec
+from eodatasets3 import DatasetPrepare, GridSpec
 
 _ESRI_ID_NAMESPACE = uuid.UUID("88a620e0-6b62-462b-9b23-4027e05898f3")
 

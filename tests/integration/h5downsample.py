@@ -13,8 +13,7 @@ from typing import List, Optional
 
 import click
 import h5py
-from click import secho
-from click import style
+from click import secho, style
 
 from eodatasets3.ui import PathPath
 from eodatasets3.wagl import find_a_granule_name
@@ -45,7 +44,7 @@ RES_GROUP_PATH = re.compile(r"(.*/RES-GROUP-\d+)/")
 @click.option("--anti-alias/--no-anti-alias", is_flag=True, default=False)
 def downsample(input: Path, factor: int, anti_alias: bool):
     # Fail early if h5repack cli command is not available.
-    from sh import h5repack, gdal_translate
+    from sh import gdal_translate, h5repack
 
     granule_name = find_a_granule_name(input)
     fmask_image = input.with_name(f"{granule_name}.fmask.img")

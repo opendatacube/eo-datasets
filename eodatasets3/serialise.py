@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from functools import partial
 from pathlib import Path, PurePath
-from typing import Dict, Tuple, Text, IO, Union, Iterable, Mapping
+from typing import IO, Dict, Iterable, Mapping, Tuple, Union
 from uuid import UUID
 
 import attr
@@ -22,11 +22,7 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets3.model import (
-    DatasetDoc,
-    ODC_DATASET_SCHEMA_URL,
-    Eo3Dict,
-)
+from eodatasets3.model import ODC_DATASET_SCHEMA_URL, DatasetDoc, Eo3Dict
 from eodatasets3.properties import FileFormat
 
 
@@ -99,7 +95,7 @@ def _init_yaml() -> YAML:
 def dump_yaml(output_yaml: Path, *docs: Mapping) -> None:
     if not output_yaml.name.lower().endswith(".yaml"):
         raise ValueError(
-            "YAML filename doesn't end in *.yaml (?). Received {!r}".format(output_yaml)
+            f"YAML filename doesn't end in *.yaml (?). Received {output_yaml!r}"
         )
 
     yaml = _init_yaml()
@@ -121,7 +117,7 @@ def _yaml():
     return YAML(typ="safe")
 
 
-def loads_yaml(stream: Union[Text, IO]) -> Iterable[Dict]:
+def loads_yaml(stream: Union[str, IO]) -> Iterable[Dict]:
     """Dump yaml through a stream, using the default deserialisation settings."""
     return _yaml().load_all(stream)
 

@@ -1,5 +1,6 @@
 import tempfile
 from pathlib import Path
+
 import rasterio
 
 from eodatasets3.images import FileWrite, GridSpec

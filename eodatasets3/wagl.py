@@ -9,23 +9,23 @@ import contextlib
 import os
 import re
 import sys
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import List, Sequence, Optional, Iterable, Any, Tuple, Dict
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from uuid import UUID
 
 import attr
 import numpy
 import rasterio
 from affine import Affine
-from boltons.iterutils import get_path, PathAccessError
+from boltons.iterutils import PathAccessError, get_path
 from click import secho
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
 
-from eodatasets3 import serialise, utils, images, DatasetAssembler
+from eodatasets3 import DatasetAssembler, images, serialise, utils
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
 from eodatasets3.properties import Eo3Interface
@@ -91,9 +91,7 @@ def _unpack_products(
 
     for product in product_list:
         with sub_product(product, p):
-            for pathname in [
-                p for p in img_paths if "/{}/".format(product.upper()) in p
-            ]:
+            for pathname in [p for p in img_paths if f"/{product.upper()}/" in p]:
 
                 with do(f"Path {pathname!r}"):
                     dataset = h5group[pathname]
@@ -751,11 +749,11 @@ def find_a_granule_name(wagl_hdf5: Path) -> str:
 
 def _read_wagl_metadata(granule_group: h5py.Group):
     try:
-        wagl_path, *ancil_paths = [
+        wagl_path, *ancil_paths = (
             pth
             for pth in (_find_h5_paths(granule_group, "SCALAR"))
             if "METADATA" in pth
-        ]
+        )
     except ValueError:
         raise ValueError("No nbar metadata found in granule")
 

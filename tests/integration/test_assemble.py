@@ -14,14 +14,12 @@ import numpy
 import pytest
 from ruamel import yaml
 
-from eodatasets3 import DatasetAssembler, namer, DatasetPrepare, serialise
+from eodatasets3 import DatasetAssembler, DatasetPrepare, namer, serialise
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
+
 from tests import assert_file_structure
-from tests.common import (
-    assert_expected_eo3_path,
-    assert_same,
-)
+from tests.common import assert_expected_eo3_path, assert_same
 
 
 def test_dea_style_package(
