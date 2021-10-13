@@ -276,11 +276,21 @@ def to_stac_item(
     eo = EOExtension.ext(item, add_if_missing=True)
     proj = ProjectionExtension.ext(item, add_if_missing=True)
 
+    proj_fields = _proj_fields(dataset.grids)
+
     epsg, wkt = _get_projection(dataset)
     if epsg is not None:
-        proj.apply(epsg=epsg)
+        proj.apply(
+            shape=proj_fields["shape"],
+            transform=proj_fields["transform"],
+            epsg=epsg,
+        )
     elif wkt is not None:
-        proj.apply(wkt2=wkt)
+        proj.apply(
+            shape=proj_fields["shape"],
+            transform=proj_fields["transform"],
+            wkt2=wkt,
+        )
     else:
         raise STACError("Projection extension requires either epsg or wkt for crs.")
 
