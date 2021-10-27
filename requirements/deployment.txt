@@ -56,7 +56,7 @@ cloudpickle==1.6.0
     #   dask
     #   datacube
     #   distributed
-dask==2021.09.0
+dask==2021.10.0
     # via
     #   datacube
     #   distributed
