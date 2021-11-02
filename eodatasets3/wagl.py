@@ -146,7 +146,7 @@ def write_measurement_h5(
             transform=Affine.from_gdal(*g.attrs["geotransform"]),
             crs=CRS.from_wkt(g.attrs["crs_wkt"]),
         ),
-        nodata=(g.attrs.get("no_data_value")),
+        nodata=g.attrs.get("no_data_value"),
         overviews=overviews,
         overview_resampling=overview_resampling,
         expand_valid_data=expand_valid_data,
@@ -750,9 +750,7 @@ def find_a_granule_name(wagl_hdf5: Path) -> str:
 def _read_wagl_metadata(granule_group: h5py.Group):
     try:
         wagl_path, *ancil_paths = (
-            pth
-            for pth in (_find_h5_paths(granule_group, "SCALAR"))
-            if "METADATA" in pth
+            pth for pth in _find_h5_paths(granule_group, "SCALAR") if "METADATA" in pth
         )
     except ValueError:
         raise ValueError("No nbar metadata found in granule")
