@@ -748,7 +748,7 @@ class DatasetPrepare(Eo3Interface):
         sort_measurements: bool = True,
     ) -> Tuple[uuid.UUID, Path]:
         """Write the prepared metadata document to the given output path."""
-        metadata_path = path or (self._target_metadata_path())
+        metadata_path = path or self._target_metadata_path()
         dataset_location = self.names.dataset_location
 
         # Default behaviour:
@@ -1232,6 +1232,7 @@ class DatasetAssembler(DatasetPrepare):
         self,
         name: str,
         ds: DatasetReader,
+        index: Optional[int] = None,
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.average,
         expand_valid_data=True,
@@ -1242,17 +1243,18 @@ class DatasetAssembler(DatasetPrepare):
         Write a measurement by reading it from an open rasterio dataset
 
         :param ds: An open rasterio dataset
+        :param index: Which index to read from the image, if it contains more than one.
 
         See :func:`write_measurement` for other parameters.
         """
-        if len(ds.indexes) != 1:
-            raise NotImplementedError(
-                f"TODO: Multi-band images not currently implemented (have {len(ds.indexes)})"
+        if len(ds.indexes) != 1 and not index:
+            raise ValueError(
+                f"Image has {len(ds.indexes)} indexes to choose from, but index wasn't specified."
             )
 
         self._write_measurement(
             name,
-            ds.read(1),
+            ds.read(index or 1),
             images.GridSpec.from_rio(ds),
             self._work_path
             / (path or self.names.measurement_filename(name, "tif", file_id=file_id)),
