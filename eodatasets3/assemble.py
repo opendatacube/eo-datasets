@@ -1196,6 +1196,7 @@ class DatasetAssembler(DatasetPrepare):
         self,
         name: str,
         input_path: Location,
+        index: Optional[int] = None,
         overviews: Iterable[int] = images.DEFAULT_OVERVIEWS,
         overview_resampling: Resampling = Resampling.average,
         expand_valid_data: bool = True,
@@ -1209,6 +1210,7 @@ class DatasetAssembler(DatasetPrepare):
 
         :param name: Identifier for the measurement eg ``'blue'``.
         :param input_path: The image to read
+        :param index: Which index to read from the image, if it contains more than one.
         :param overviews: Set of overview sizes to write
         :param overview_resampling: rasterio Resampling method to use
         :param expand_valid_data: Include this measurement in the valid-data geometry of the metadata.
@@ -1221,6 +1223,7 @@ class DatasetAssembler(DatasetPrepare):
             self.write_measurement_rio(
                 name,
                 ds,
+                index=index,
                 overviews=overviews,
                 expand_valid_data=expand_valid_data,
                 overview_resampling=overview_resampling,
