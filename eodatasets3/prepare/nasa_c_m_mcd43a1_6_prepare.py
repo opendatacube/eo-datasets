@@ -62,21 +62,15 @@ def parse_xml(filepath: Path):
         "platform": platform,
         "vertical_tile": int(v_tile),
         "horizontal_tile": int(h_tile),
-        "from_dt": (
-            datetime.datetime.strptime(
-                start_date + " " + start_time, "%Y-%m-%d %H:%M:%S.%f"
-            ).replace(tzinfo=datetime.timezone.utc)
-        ),
-        "to_dt": (
-            datetime.datetime.strptime(
-                end_date + " " + end_time, "%Y-%m-%d %H:%M:%S.%f"
-            ).replace(tzinfo=datetime.timezone.utc)
-        ),
-        "creation_dt": (
-            datetime.datetime.strptime(creation_dt, "%Y-%m-%d %H:%M:%S.%f").replace(
-                tzinfo=datetime.timezone.utc
-            )
-        ),
+        "from_dt": datetime.datetime.strptime(
+            start_date + " " + start_time, "%Y-%m-%d %H:%M:%S.%f"
+        ).replace(tzinfo=datetime.timezone.utc),
+        "to_dt": datetime.datetime.strptime(
+            end_date + " " + end_time, "%Y-%m-%d %H:%M:%S.%f"
+        ).replace(tzinfo=datetime.timezone.utc),
+        "creation_dt": datetime.datetime.strptime(
+            creation_dt, "%Y-%m-%d %H:%M:%S.%f"
+        ).replace(tzinfo=datetime.timezone.utc),
     }
 
 
