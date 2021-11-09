@@ -103,20 +103,21 @@ def _asset_title_fields(asset_name: str) -> Optional[str]:
         return None
 
 
-def _proj_fields(
-    grid: Dict[str, GridDoc], grid_name: str = "default"
-) -> Optional[Dict]:
+def _proj_fields(grid: Dict[str, GridDoc], grid_name: str = "default") -> Dict:
     """
-    Add fields of the STAC Projection (proj) Extension to a STAC Item
+    Get any proj (Stac projection extension) fields if we have them for the grid.
     """
+    if not grid:
+        return {}
+
     grid_doc = grid.get(grid_name or "default")
-    if grid_doc:
-        return {
-            "shape": grid_doc.shape,
-            "transform": grid_doc.transform,
-        }
-    else:
-        return None
+    if not grid_doc:
+        return {}
+
+    return {
+        "shape": grid_doc.shape,
+        "transform": grid_doc.transform,
+    }
 
 
 def _lineage_fields(lineage: Dict) -> Dict:
@@ -276,21 +277,11 @@ def to_stac_item(
     eo = EOExtension.ext(item, add_if_missing=True)
     proj = ProjectionExtension.ext(item, add_if_missing=True)
 
-    proj_fields = _proj_fields(dataset.grids)
-
     epsg, wkt = _get_projection(dataset)
     if epsg is not None:
-        proj.apply(
-            shape=proj_fields["shape"],
-            transform=proj_fields["transform"],
-            epsg=epsg,
-        )
+        proj.apply(epsg=epsg, **_proj_fields(dataset.grids))
     elif wkt is not None:
-        proj.apply(
-            shape=proj_fields["shape"],
-            transform=proj_fields["transform"],
-            wkt2=wkt,
-        )
+        proj.apply(wkt2=wkt, **_proj_fields(dataset.grids))
     else:
         raise STACError("Projection extension requires either epsg or wkt for crs.")
 
