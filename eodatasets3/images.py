@@ -13,21 +13,6 @@ from typing import (
     List,
     Optional,
     Sequence,
-    Tuple,
-    Union,
-    Set,
-)
-import sys
-import tempfile
-from collections import defaultdict
-from pathlib import Path, PurePath
-from typing import (
-    Dict,
-    Generator,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
     Set,
     Tuple,
     Union,
@@ -69,13 +54,16 @@ class ValidDataMethod(Enum):
     How to calculate the valid data geometry for an image?
     """
 
-    #: Vectorize the valid pixel mask as-is.
+    #: Vectorize the full valid pixel mask as-is.
     #:
-    vanilla = auto()
+    #: In some circumstances this can be very slow.
+    #: `filled` may be safer.
+    #:
+    thorough = auto()
 
     #: Fill holes in the valid pixel mask before vectorizing.
     #:
-    #: (Potentially much faster than ``vanilla`` if there's many small
+    #: (Potentially much faster than ``thorough`` if there's many small
     #: nodata holes, as they will create many tiny polygons.
     #: *slightly* slower if no holes exist.)
     filled = auto()
@@ -469,7 +457,7 @@ class MeasurementBundler:
         return crs, grid_docs, measurement_docs
 
     def consume_and_get_valid_data(
-        self, valid_data_method: ValidDataMethod = ValidDataMethod.filled
+        self, valid_data_method: ValidDataMethod = ValidDataMethod.thorough
     ) -> BaseGeometry:
         """
         Consume the stored grids and produce the valid data for them.
@@ -497,7 +485,7 @@ class MeasurementBundler:
                 geom = _grid_to_poly(
                     grid, morph.convex_hull_image(mask).astype("uint8")
                 )
-            elif valid_data_method is ValidDataMethod.vanilla:
+            elif valid_data_method is ValidDataMethod.thorough:
                 geom = _grid_to_poly(grid, mask.astype("uint8"))
             else:
                 raise NotImplementedError(

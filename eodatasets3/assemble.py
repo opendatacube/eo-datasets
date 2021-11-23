@@ -24,15 +24,6 @@ import eodatasets3
 from eodatasets3 import documents, images, serialise, validate
 from eodatasets3.documents import find_and_read_documents
 from eodatasets3.images import FileWrite, GridSpec, MeasurementBundler, ValidDataMethod
-from eodatasets3.model import (
-    DatasetDoc,
-    ProductDoc,
-    Location,
-    AccessoryDoc,
-)
-from eodatasets3.names import NamingConventions, namer, resolve_location, dc_uris
-from eodatasets3.properties import Eo3Interface, Eo3Dict
-from eodatasets3.images import FileWrite, GridSpec, MeasurementBundler
 from eodatasets3.model import AccessoryDoc, DatasetDoc, Location, ProductDoc
 from eodatasets3.names import NamingConventions, dc_uris, namer, resolve_location
 from eodatasets3.properties import Eo3Dict, Eo3Interface
@@ -290,15 +281,15 @@ class DatasetPrepare(Eo3Interface):
 
         #: What method to use to calculate the valid data geometry?
         #:
-        #: Defaults to :attr:`eodatasets3.ValidDataMethod.filled`
+        #: Defaults to :attr:`eodatasets3.ValidDataMethod.thorough`
         #:
         #: You may change this property before finishing your package.
         #:
         #: Eg::
         #:
-        #:    p.valid_data_method = ValidDataMethod.vanilla
+        #:    p.valid_data_method = ValidDataMethod.filled
         #:
-        self.valid_data_method: ValidDataMethod = ValidDataMethod.filled
+        self.valid_data_method: ValidDataMethod = ValidDataMethod.thorough
 
         if not dataset:
             dataset = DatasetDoc()
