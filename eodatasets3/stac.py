@@ -174,6 +174,9 @@ def _odc_links(
 
 
 def _get_projection(dataset: DatasetDoc) -> Tuple[int, str]:
+    if dataset.crs is None:
+        return None
+
     crs_l = dataset.crs.lower()
     epsg = None
     wkt = None
@@ -227,8 +230,15 @@ def to_stac_item(
                               Will allow links to things such as the product definition.
     """
 
-    geom = Geometry(dataset.geometry, CRS(dataset.crs))
-    wgs84_geometry = geom.to_crs(CRS("epsg:4326"), math.inf)
+    if dataset.geometry is not None:
+        geom = Geometry(dataset.geometry, CRS(dataset.crs))
+        wgs84_geometry = geom.to_crs(CRS("epsg:4326"), math.inf)
+
+        geometry = wgs84_geometry.json
+        bbox = wgs84_geometry.boundingbox
+    else:
+        geometry = None
+        bbox = None
 
     properties = eo3_to_stac_properties(dataset, title=dataset.label)
     properties.update(_lineage_fields(dataset.lineage))
@@ -246,8 +256,8 @@ def to_stac_item(
         id=str(dataset.id),
         datetime=dt,
         properties=properties,
-        geometry=wgs84_geometry.json,
-        bbox=wgs84_geometry.boundingbox,
+        geometry=geometry,
+        bbox=bbox,
         collection=dataset.product.name,
     )
 
@@ -273,17 +283,17 @@ def to_stac_item(
     for link in _odc_links(explorer_base_url, dataset, collection_url):
         item.links.append(link)
 
-    # Add extensions
-    eo = EOExtension.ext(item, add_if_missing=True)
-    proj = ProjectionExtension.ext(item, add_if_missing=True)
+    EOExtension.ext(item, add_if_missing=True)
 
-    epsg, wkt = _get_projection(dataset)
-    if epsg is not None:
-        proj.apply(epsg=epsg, **_proj_fields(dataset.grids))
-    elif wkt is not None:
-        proj.apply(wkt2=wkt, **_proj_fields(dataset.grids))
-    else:
-        raise STACError("Projection extension requires either epsg or wkt for crs.")
+    if dataset.geometry:
+        proj = ProjectionExtension.ext(item, add_if_missing=True)
+        epsg, wkt = _get_projection(dataset)
+        if epsg is not None:
+            proj.apply(epsg=epsg, **_proj_fields(dataset.grids))
+        elif wkt is not None:
+            proj.apply(wkt2=wkt, **_proj_fields(dataset.grids))
+        else:
+            raise STACError("Projection extension requires either epsg or wkt for crs.")
 
     # To pass validation, only add 'view' extension when we're using it somewhere.
     if any(k.startswith("view:") for k in properties.keys()):
