@@ -72,7 +72,7 @@ RUN if [ "$ENVIRONMENT" = "deployment" ] ; then\
 RUN pip freeze
 
 # Is it working?
-RUN eo3-validate --version
+RUN /usr/local/bin/eo3-validate --version
 
 ENTRYPOINT ["/bin/tini", "--"]
-CMD ["eo3-validate"]
+CMD ["/usr/local/bin/eo3-validate"]
