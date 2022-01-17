@@ -34,6 +34,9 @@ RUN pip install pip-tools pre-commit pytest-cov
 # Pip installation
 RUN mkdir -p /conf
 COPY requirements /conf/
+
+ENV PATH=/usr/local/bin:$PATH
+
 RUN pip install -r /conf/${ENVIRONMENT}.txt
 
 # USER runner ?
@@ -62,17 +65,21 @@ ADD . $APPDIR
 # These ENVIRONMENT flags make this a bit complex, but basically, if we are in dev
 # then we want to link the source (with the -e flag) and if we're in prod, we
 # want to delete the stuff in the /code folder to keep it simple.
+#
+# (note: --editable doesn't currently work well with pyproject.toml projects, so
+#        we turn off pep517 with it)
+#
 RUN if [ "$ENVIRONMENT" = "deployment" ] ; then\
         pip install .[$ENVIRONMENT] ; \
         rm -rf /code/* ; \
     else \
-        pip install --editable .[$ENVIRONMENT] ; \
+        pip install --no-use-pep517 --editable .[$ENVIRONMENT] ; \
     fi
 
 RUN pip freeze
 
 # Is it working?
-RUN /usr/local/bin/eo3-validate --version
+RUN eo3-validate --version
 
 ENTRYPOINT ["/bin/tini", "--"]
-CMD ["/usr/local/bin/eo3-validate"]
+CMD ["eo3-validate"]
