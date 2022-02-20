@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from eodatasets3.prepare import sentinel_l1c_prepare
+from eodatasets3.prepare import sentinel_l1_prepare
 
 from tests.common import check_prepare_outputs
 
@@ -153,7 +153,7 @@ def test_sinergise_sentinel_l1(tmp_path, expected_dataset_document):
         / "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.odc-metadata.yaml"
     )
     check_prepare_outputs(
-        invoke_script=sentinel_l1c_prepare.main,
+        invoke_script=sentinel_l1_prepare.main,
         run_args=[
             work_dir,
         ],
