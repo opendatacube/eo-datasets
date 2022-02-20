@@ -3,7 +3,7 @@ import click
 from ..prepare.landsat_l1_prepare import main as landsat_l1
 from ..prepare.nasa_c_m_mcd43a1_6_prepare import main as mcd43a1
 from ..prepare.noaa_c_c_prwtreatm_1_prepare import main as prwtr
-from ..prepare.sentinel_l1c_prepare import main as sentinel_l1c
+from ..prepare.sentinel_l1_prepare import main as sentinel_l1c
 
 
 @click.group()

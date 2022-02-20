@@ -320,6 +320,18 @@ def _rglob_with_self(path: Path, pattern: str) -> Iterable[Path]:
     help="Overwrite if exists (otherwise skip)",
 )
 @click.option(
+    "--provider",
+    default=False,
+    type=click.Choice(
+        [
+            "sinergise.com",
+            "esa.int",
+        ]
+    ),
+    help="Restrict scanning to only packages of the given provider. "
+    "(ESA assumes a zip file, sinergise a directory)",
+)
+@click.option(
     "--output-base",
     help="Write metadata files into a directory instead of alongside each dataset",
     required=False,
@@ -330,6 +342,7 @@ def _rglob_with_self(path: Path, pattern: str) -> Iterable[Path]:
 def main(
     output_base: Optional[Path],
     datasets: List[Path],
+    provider: Optional[str],
     overwrite_existing: bool,
 ):
 
@@ -337,28 +350,31 @@ def main(
         format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
     )
     for input_path in datasets:
-        in_out_paths = [
-            *(
+        in_out_paths = []
+
+        if provider == "sinergise.com" or not provider:
+            in_out_paths.extend(
                 (
                     "sinergise.com",
-                    # Input folder: our indexed dataset location is the metadata file.
+                    # Dataset location is the metadata file itself.
                     (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
                     # Output is an inner metadata file, with the same name as the folder (usually S2A....).
                     (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
                 )
                 for p in _rglob_with_self(input_path, "tileInfo.json")
-            ),
-            *(
+            )
+        if provider == "esa.int" or not provider:
+            in_out_paths.extend(
                 (
                     "esa.int",
-                    # Input is zip file, so the zip should be our location.
+                    # Dataset location is the zip file
                     p,
-                    # Output is a sibling file with metadata suffix.
+                    # Metadata is a sibling file with a metadata suffix.
                     p.with_suffix(".odc-metadata.yaml"),
                 )
                 for p in _rglob_with_self(input_path, "*.zip")
-            ),
-        ]
+            )
+
         if not in_out_paths:
             raise ValueError(
                 f"No S2 datasets found in given path {input_path}. "
