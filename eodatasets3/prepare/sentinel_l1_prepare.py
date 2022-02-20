@@ -8,6 +8,7 @@ import json
 import logging
 import sys
 import uuid
+import warnings
 import zipfile
 from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Tuple
@@ -175,7 +176,13 @@ def prepare_and_write(
     dataset_location: Path,
     output_yaml: Path,
     producer: str,
+    embed_location: bool = None,
 ) -> Tuple[uuid.UUID, Path]:
+
+    if embed_location is None:
+        # Default to embedding the location if they're not in the same folder.
+        embed_location = dataset_location.parent != output_yaml.parent
+
     with DatasetPrepare(
         metadata_path=output_yaml,
         dataset_location=dataset_location,
@@ -217,7 +224,7 @@ def prepare_and_write(
                 relative_to_dataset_location=True,
             )
 
-        return p.done()
+        return p.done(embed_location=embed_location)
 
 
 def _get_platform_name(p: Mapping) -> str:
@@ -320,8 +327,14 @@ def _rglob_with_self(path: Path, pattern: str) -> Iterable[Path]:
     help="Overwrite if exists (otherwise skip)",
 )
 @click.option(
+    "--embed-location/--no-embed-location",
+    is_flag=True,
+    default=None,
+    help="Overwrite if exists (otherwise skip)",
+)
+@click.option(
     "--provider",
-    default=False,
+    default=None,
     type=click.Choice(
         [
             "sinergise.com",
@@ -344,7 +357,12 @@ def main(
     datasets: List[Path],
     provider: Optional[str],
     overwrite_existing: bool,
+    embed_location: Optional[bool],
 ):
+    if sys.argv[1] == "sentinel-l1c":
+        warnings.warn(
+            "Command name 'sentinel-l1c-prepare' is deprecated: remove the 'c', and use `sentinel-l1-prepare`"
+        )
 
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
@@ -392,7 +410,9 @@ def main(
 
                 logging.info("Output exists: overwriting %s", output_yaml)
 
-            uuid_, path = prepare_and_write(ds_path, output_yaml, producer)
+            uuid_, path = prepare_and_write(
+                ds_path, output_yaml, producer, embed_location=embed_location
+            )
             logging.info("Wrote dataset %s to %s", uuid_, path)
 
         sys.exit(0)
