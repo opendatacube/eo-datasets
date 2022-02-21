@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Tuple
 from urllib.parse import urljoin
 
 import datacube.utils.uris as dc_uris
+import pystac
 from datacube.utils.geometry import CRS, Geometry
 from pystac import Asset, Item, Link, MediaType
 from pystac.errors import STACError
@@ -206,14 +207,14 @@ def eo3_to_stac_properties(
     return properties
 
 
-def to_stac_item(
+def to_pystac_item(
     dataset: DatasetDoc,
     stac_item_destination_url: str,
     dataset_location: Optional[str] = None,
     odc_dataset_metadata_url: Optional[str] = None,
     explorer_base_url: Optional[str] = None,
     collection_url: Optional[str] = None,
-) -> dict:
+) -> pystac.Item:
     """
     Convert the given ODC Dataset into a Stac Item document.
 
@@ -345,7 +346,30 @@ def to_stac_item(
 
         item.add_asset(name, asset=asset)
 
-    return item.to_dict()
+    return item
+
+
+def to_stac_item(
+    dataset: DatasetDoc,
+    stac_item_destination_url: str,
+    dataset_location: Optional[str] = None,
+    odc_dataset_metadata_url: Optional[str] = None,
+    explorer_base_url: Optional[str] = None,
+    collection_url: Optional[str] = None,
+) -> dict:
+    """
+    Convert the given dataset to a stac item (as a dictionary).
+
+    See ``to_pystac_item()`` for the parameters.
+    """
+    return to_pystac_item(
+        dataset,
+        stac_item_destination_url,
+        dataset_location,
+        odc_dataset_metadata_url,
+        explorer_base_url,
+        collection_url,
+    ).to_dict()
 
 
 def validate_item(
