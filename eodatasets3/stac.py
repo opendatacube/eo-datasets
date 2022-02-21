@@ -18,7 +18,6 @@ from pystac.extensions.eo import Band, EOExtension
 from pystac.extensions.projection import ProjectionExtension
 from pystac.extensions.view import ViewExtension
 from pystac.utils import datetime_to_str
-from requests_cache import CachedSession
 
 from eodatasets3.model import DatasetDoc, GridDoc
 
@@ -385,26 +384,12 @@ def validate_item(
     :param item_doc:
     :param allow_cached_specs: Allow using a cached spec.
                               Disable to force-download the spec again.
-    :param disallow_network_access: Only allow validation using cached specs.
-    :param log: Callback for human-readable progress/status (eg: 'print').
-    :param schema_host: The host to download stac schemas from.
 
     :raises NoAvailableSchemaError: When cannot find a spec for the given Stac version+extentions
     """
-
-    one_day = 60 * 60 * 24
-
-    with CachedSession(
-        "stac_schema_cache",
-        backend="sqlite",
-        expire_after=one_day,
-        old_data_on_error=True,
-    ) as session:
-        if not allow_cached_specs:
-            session.cache.clear()
-
-        item = Item.from_dict(item_doc)
-        item.validate()
+    # Pystac now does this for us, but we'll keep this method for backwards compat.
+    item = Item.from_dict(item_doc)
+    item.validate()
 
 
 def _uri_resolve(location: str, path: str):
