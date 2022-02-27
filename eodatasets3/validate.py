@@ -275,12 +275,14 @@ def validate_dataset(
                 hint="This may be valid, as it's allowed by ODC. Set `expect_extra_measurements` to mute this.",
             )
 
+    dataset_location = dataset.locations[0] if dataset.locations else readable_location
+
     # If we have a location:
     # For each measurement, try to load it.
     # If loadable:
     if thorough:
         for name, measurement in dataset.measurements.items():
-            full_path = uri_resolve(readable_location, measurement.path)
+            full_path = uri_resolve(dataset_location, measurement.path)
             expected_measurement = required_measurements.get(name)
 
             band = measurement.band or 1
