@@ -173,9 +173,9 @@ def _odc_links(
         warnings.warn("No collection provided for Stac Item.")
 
 
-def _get_projection(dataset: DatasetDoc) -> Tuple[int, str]:
+def _get_projection(dataset: DatasetDoc) -> Tuple[Optional[int], Optional[str]]:
     if dataset.crs is None:
-        return None
+        return None, None
 
     crs_l = dataset.crs.lower()
     epsg = None
