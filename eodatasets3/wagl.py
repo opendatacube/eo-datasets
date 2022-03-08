@@ -178,27 +178,12 @@ def _file_id(dataset: h5py.Dataset) -> str:
 
 def _unpack_observation_attributes(
     p: DatasetAssembler,
-    product_list: Iterable[str],
-    h5group: h5py.Group,
-    infer_datetime_range=False,
-    oa_resolution: Optional[Tuple[float, float]] = None,
+    res_grp: h5py.Group,
 ):
     """
     Unpack the angles + other supplementary datasets produced by wagl.
     Currently only the mode resolution group gets extracted.
     """
-    resolution_groups = {
-        tuple(h5group[k].attrs["resolution"]): h5group[k]
-        for k in h5group.keys()
-        if k.startswith("RES-GROUP-")
-    }
-
-    # Use the highest resolution as the ground sample distance.
-    if "eo:gsd" in p.properties:
-        del p.properties["eo:gsd"]
-    p.properties["eo:gsd"] = min(min(resolution_groups.keys()))
-
-    res_grp = choose_resolution_group(resolution_groups, p.platform, oa_resolution)
 
     def _write(section: str, dataset_names: Sequence[str]):
         """
@@ -234,19 +219,8 @@ def _unpack_observation_attributes(
     _write("RELATIVE-SLOPE", ["RELATIVE-SLOPE"])
     _write("SHADOW-MASKS", ["COMBINED-TERRAIN-SHADOW"])
 
-    timedelta_data = (
-        res_grp["SATELLITE-SOLAR/TIME-DELTA"] if infer_datetime_range else None
-    )
-    with do("Contiguity", timedelta=bool(timedelta_data)):
-        _create_contiguity(
-            p,
-            product_list,
-            resolution_yx=tuple(res_grp.attrs["resolution"]),
-            timedelta_data=timedelta_data,
-        )
 
-
-def choose_resolution_group(
+def get_oa_resolution_group(
     resolution_groups: Dict[tuple, h5py.Group],
     platform: str,
     oa_resolution: Optional[Tuple[float, float]],
@@ -260,7 +234,7 @@ def choose_resolution_group(
         if platform.startswith("landsat"):
             oa_resolution = max(resolution_groups.keys())
         elif platform.startswith("sentinel"):
-            oa_resolution = (10.0, 10.0)
+            oa_resolution = (20.0, 20.0)
         else:
             raise NotImplementedError(
                 f"Don't know how to choose a default OA resolution for platform {platform !r}"
@@ -671,13 +645,49 @@ def package(
             if include_oa:
                 with sub_product("oa", p):
                     with do("Starting OA", heading=True):
+                        resolution_groups = {
+                            tuple(granule_group[k].attrs["resolution"]): granule_group[
+                                k
+                            ]
+                            for k in granule_group.keys()
+                            if k.startswith("RES-GROUP-")
+                        }
+
+                        # Use the highest resolution as the ground sample distance.
+                        if "eo:gsd" in p.properties:
+                            del p.properties["eo:gsd"]
+                        p.properties["eo:gsd"] = min(min(resolution_groups.keys()))
+
                         _unpack_observation_attributes(
                             p,
-                            included_products,
-                            granule_group,
-                            infer_datetime_range=p.platform.startswith("landsat"),
-                            oa_resolution=oa_resolution,
+                            get_oa_resolution_group(
+                                resolution_groups, p.platform, oa_resolution
+                            ),
                         )
+
+                    infer_datetime_range = p.platform.startswith("landsat")
+
+                    with do("Contiguity", timedelta=infer_datetime_range):
+                        # For landsat, we want the "common" band resolution, not panchromatic. Pick lower res.
+                        if p.platform.startswith("landsat"):
+                            contiguity_res = max(resolution_groups.keys())
+                        elif p.platform.startswith("sentinel"):
+                            contiguity_res = (10.0, 10.0)
+
+                        contiguity_res_grp = resolution_groups[contiguity_res]
+
+                        timedelta_data = (
+                            contiguity_res_grp["SATELLITE-SOLAR/TIME-DELTA"]
+                            if infer_datetime_range
+                            else None
+                        )
+                        _create_contiguity(
+                            p,
+                            included_products,
+                            resolution_yx=tuple(contiguity_res_grp.attrs["resolution"]),
+                            timedelta_data=timedelta_data,
+                        )
+
                     if granule.fmask_image:
                         with do(f"Writing fmask from {granule.fmask_image} "):
                             p.write_measurement(
