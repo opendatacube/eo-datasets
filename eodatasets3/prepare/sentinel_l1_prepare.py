@@ -329,8 +329,8 @@ def _rglob_with_self(path: Path, pattern: str) -> Iterable[Path]:
 @click.option(
     "--embed-location/--no-embed-location",
     is_flag=True,
-    default=None,
-    help="Overwrite if exists (otherwise skip)",
+    help="Embed the location of the dataset in the metadata "
+    "(if you wish to store them separately)",
 )
 @click.option(
     "--provider",
