@@ -304,6 +304,7 @@ def prepare_and_write(
     source_telemetry: Path = None,
     # TODO: Can we infer producer automatically? This is bound to cause mistakes othewise
     producer="usgs.gov",
+    embed_location: bool = False,
 ) -> Tuple[uuid.UUID, Path]:
     """
     Prepare an eo3 metadata file for a Level1 dataset.
@@ -490,7 +491,7 @@ def prepare_and_write(
                     expand_valid_data=False,
                 )
         p.note_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
-        return p.done()
+        return p.done(embed_location=embed_location)
 
 
 @click.command(help=__doc__)
@@ -507,6 +508,12 @@ def prepare_and_write(
     "(either the folder or metadata file)",
     required=False,
     type=PathPath(exists=True),
+)
+@click.option(
+    "--embed-location/--no-embed-location",
+    is_flag=True,
+    help="Embed the location of the dataset in the metadata "
+    "(if you wish to store them separately)",
 )
 @click.option(
     "--producer",
@@ -534,6 +541,7 @@ def main(
     datasets: List[Path],
     overwrite_existing: bool,
     producer: str,
+    embed_location: bool,
     source_telemetry: Optional[Path],
     newer_than: datetime,
 ):
@@ -577,6 +585,7 @@ def main(
                 output_yaml,
                 producer=producer,
                 source_telemetry=source_telemetry,
+                embed_location=embed_location,
             )
             logging.info("Wrote dataset %s to %s", output_uuid, output_path)
 
