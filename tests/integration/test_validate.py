@@ -452,7 +452,6 @@ def test_odc_product_schema(
 def test_warn_bad_product_license(
     eo_validator: ValidateRunner, l1_ls8_metadata_path: Path, product: Dict
 ):
-
     # Missing license is a warning.
     del product["license"]
     eo_validator.assert_valid(product, expect_no_messages=False)
@@ -752,6 +751,30 @@ def test_dataset_is_not_a_product(example_metadata: Dict):
     """
     assert guess_kind_from_contents(example_metadata) == DocKind.dataset
     assert filename_doc_kind(Path("asdf.odc-metadata.yaml")) == DocKind.dataset
+
+
+def test_get_field_offsets(metadata_type: Dict):
+    """
+    Test the get_field_offsets function.
+    """
+    assert list(validate._get_field_offsets(metadata_type)) == [
+        ("id", [["id"]]),
+        ("sources", [["lineage", "source_datasets"]]),
+        ("grid_spatial", [["grid_spatial", "projection"]]),
+        ("measurements", [["measurements"]]),
+        ("creation_dt", [["properties", "odc:processing_datetime"]]),
+        ("label", [["label"]]),
+        ("format", [["properties", "odc:file_format"]]),
+        (
+            "time",
+            [
+                ["properties", "dtr:start_datetime"],
+                ["properties", "datetime"],
+                ["properties", "dtr:end_datetime"],
+                ["properties", "datetime"],
+            ],
+        ),
+    ]
 
 
 @pytest.fixture

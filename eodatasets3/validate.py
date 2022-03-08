@@ -19,6 +19,7 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Set,
     Tuple,
     Union,
 )
@@ -30,9 +31,11 @@ import ciso8601
 import click
 import numpy as np
 import rasterio
+import toolz
 from boltons.iterutils import get_path
 from click import echo, secho, style
 from datacube import Datacube
+from datacube.index.eo3 import prep_eo3
 from datacube.utils import InvalidDocException, changes, is_url, read_documents
 from datacube.utils.documents import load_documents
 from rasterio import DatasetReader
@@ -160,10 +163,12 @@ ValidationMessages = Generator[ValidationMessage, None, None]
 def validate_dataset(
     doc: Dict,
     product_definition: Optional[Dict] = None,
+    metadata_type_definition: Optional[Dict] = None,
     thorough: bool = False,
     readable_location: Union[str, Path] = None,
     expect_extra_measurements: bool = False,
     expect_geometry: bool = True,
+    nullable_fields: Iterable[str] = ("label",),
 ) -> ValidationMessages:
     """
     Validate a a dataset document, optionally against the given product.
@@ -275,6 +280,33 @@ def validate_dataset(
                 hint="This may be valid, as it's allowed by ODC. Set `expect_extra_measurements` to mute this.",
             )
 
+    if metadata_type_definition:
+        # Datacube does certain transforms on an eo3 doc before storage.
+        # We need to do the same, as the fields will be read from the storage.
+        prepared_doc = prep_eo3(doc)
+
+        for field_name, offsets in _get_field_offsets(
+            metadata_type=metadata_type_definition
+        ):
+            if not any(_has_offset(prepared_doc, offset) for offset in offsets):
+                readable_offsets = " or ".join("->".join(offset) for offset in offsets)
+                yield _warning(
+                    "missing_field",
+                    f"Dataset is missing field {field_name!r}",
+                    hint=f"Expected at {readable_offsets}",
+                )
+                continue
+
+            if field_name not in nullable_fields:
+                value = None
+                for offset in offsets:
+                    value = toolz.get_in(offset, prepared_doc)
+                if value is None:
+                    yield _info(
+                        "null_field",
+                        f"Value is null for configured field {field_name!r}",
+                    )
+
     dataset_location = dataset.locations[0] if dataset.locations else readable_location
 
     # If we have a location:
@@ -342,6 +374,17 @@ def validate_dataset(
                             f"{name} nodata: "
                             f"product {expected_nodata !r} != dataset {ds_nodata !r}",
                         )
+
+
+def _has_offset(doc: Dict, offset: List[str]) -> bool:
+    """
+    Is the given offset present in the document?
+    """
+    for key in offset:
+        if key not in doc:
+            return False
+        doc = doc[key]
+    return True
 
 
 def validate_product(doc: Dict) -> ValidationMessages:
@@ -492,15 +535,21 @@ class ExpectedMeasurement:
         return ExpectedMeasurement(doc["name"], doc.get("dtype"), doc.get("nodata"))
 
 
+# Name of a field and its possible offsets in the document.
+FieldNameOffsetS = Tuple[str, Set[List[str]]]
+
+
 def validate_paths(
     paths: List[str],
     thorough: bool = False,
     expect_extra_measurements: bool = False,
     product_definitions: Dict[str, Dict] = None,
+    metadata_type_definitions: Dict[str, Dict] = None,
 ) -> Generator[Tuple[str, List[ValidationMessage]], None, None]:
     """Validate the list of paths. Product documents can be specified before their datasets."""
 
     products = dict(product_definitions or {})
+    metadata_types = dict(metadata_type_definitions or {})
 
     for url, doc, was_specified_by_user in read_paths(paths):
         messages = []
@@ -524,11 +573,19 @@ def validate_paths(
         elif kind == DocKind.dataset:
             messages.extend(
                 validate_eo3_doc(
-                    doc, url, products, thorough, expect_extra_measurements
+                    doc,
+                    url,
+                    products,
+                    metadata_types,
+                    thorough,
+                    expect_extra_measurements,
                 )
             )
         elif kind == DocKind.metadata_type:
             messages.extend(validate_metadata_type(doc))
+            if "name" in doc:
+                metadata_types[doc["name"]] = doc
+
         # Otherwise it's a file we don't support.
         # If the user gave us the path explicitly, it seems to be an error.
         # (if they didn't -- it was found via scanning directories -- we don't care.)
@@ -544,6 +601,39 @@ def validate_paths(
             continue
 
         yield url, messages
+
+
+def _get_field_offsets(metadata_type: Dict) -> Iterable[FieldNameOffsetS]:
+    """
+    Yield all fields and their possible document-offsets that are expected for this metadata type.
+
+    Eg, if the metadata type has a region_code field expected properties->region_code, this
+    will yield ('region_code', {['properties', 'region_code']})
+
+    (Properties can have multiple offsets, where ODC will choose the first non-null one, hence the
+    return of multiple offsets for each field.)
+    """
+    dataset_section = metadata_type["dataset"]
+    search_fields = dataset_section["search_fields"]
+
+    # The fixed fields of ODC. 'id', 'label', etc.
+    for field in dataset_section:
+        if field == "search_fields":
+            continue
+
+        offset = dataset_section[field]
+        if offset is not None:
+            yield field, [offset]
+
+    # The configurable search fields.
+    for field, spec in search_fields.items():
+        offsets = []
+        if "offset" in spec:
+            offsets.append(spec["offset"])
+        offsets.extend(spec.get("min_offset", []))
+        offsets.extend(spec.get("max_offset", []))
+
+        yield field, offsets
 
 
 def _readable_doc_extension(uri: str):
@@ -627,6 +717,7 @@ def validate_eo3_doc(
     doc: Dict,
     location: Union[str, Path],
     products: Dict[str, Dict],
+    metadata_types: Dict[str, Dict],
     thorough: bool = False,
     expect_extra_measurements=False,
 ) -> List[ValidationMessage]:
@@ -647,12 +738,25 @@ def validate_eo3_doc(
             )
         )
 
+    metadata_type = None
+    if metadata_types and matched_product:
+        metadata_type = matched_product["metadata_type"]
+        if metadata_type not in metadata_types:
+            messages.append(
+                ValidationMessage(
+                    Level.error if thorough else Level.info,
+                    "no_metadata_type",
+                    f"Metadata type not provided {metadata_type}: not validating fields",
+                )
+            )
+
     messages.extend(
         validate_dataset(
             doc,
             product_definition=matched_product,
             readable_location=location,
             thorough=thorough,
+            metadata_type_definition=metadata_types.get(metadata_type),
             expect_extra_measurements=expect_extra_measurements,
         )
     )
