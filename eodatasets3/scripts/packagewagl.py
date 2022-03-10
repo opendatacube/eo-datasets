@@ -75,6 +75,12 @@ DEFAULT_MATURITY = wagl.ProductMaturity.stable
     type=float,
     default=None,
 )
+@click.option(
+    "--contiguity-resolution",
+    help="Resolution choice for contiguity " "(default: automatic based on sensor)",
+    type=float,
+    default=None,
+)
 @click.argument("h5_file", type=PathPath(exists=True, readable=True, writable=False))
 def run(
     level1: Path,
@@ -85,6 +91,7 @@ def run(
     product_maturity: wagl.ProductMaturity,
     allow_missing_provenance: bool,
     oa_resolution: Optional[float],
+    contiguity_resolution: Optional[float],
 ):
     if products:
         products = {p.lower() for p in products}
@@ -115,6 +122,7 @@ def run(
                     included_products=products,
                     include_oa=with_oa,
                     oa_resolution=oa_resolution,
+                    contiguity_resolution=contiguity_resolution,
                 )
                 secho(f"Created folder {click.style(str(dataset_path), fg='green')}")
 

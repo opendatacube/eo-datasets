@@ -557,6 +557,7 @@ def package(
     included_products: Iterable[str] = DEFAULT_PRODUCTS,
     include_oa: bool = True,
     oa_resolution: Optional[Tuple[float, float]] = None,
+    contiguity_resolution: Optional[Tuple[float, float]] = None,
 ) -> Tuple[UUID, Path]:
     """
     Package an L2 product.
@@ -669,7 +670,9 @@ def package(
 
                     with do("Contiguity", timedelta=infer_datetime_range):
                         # For landsat, we want the "common" band resolution, not panchromatic. Pick lower res.
-                        if p.platform.startswith("landsat"):
+                        if contiguity_resolution is not None:
+                            contiguity_res = contiguity_resolution
+                        elif p.platform.startswith("landsat"):
                             contiguity_res = max(resolution_groups.keys())
                         elif p.platform.startswith("sentinel"):
                             contiguity_res = (10.0, 10.0)
