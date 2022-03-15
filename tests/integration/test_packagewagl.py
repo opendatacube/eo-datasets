@@ -705,6 +705,8 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
             # Our weird scaled test dataset resolution
             "--oa-resolution",
             998.1818181818181,
+            "--contiguity-resolution",
+            998.1818181818181,
         )
     )
 
