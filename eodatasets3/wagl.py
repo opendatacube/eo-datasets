@@ -677,6 +677,11 @@ def package(
                         elif p.platform.startswith("sentinel"):
                             contiguity_res = (10.0, 10.0)
 
+                        if contiguity_res not in resolution_groups:
+                            raise ValueError(
+                                f"No resolution group {contiguity_res} found in {granule.name}."
+                                f"Options: {list(resolution_groups.keys())}"
+                            )
                         contiguity_res_grp = resolution_groups[contiguity_res]
 
                         timedelta_data = (
