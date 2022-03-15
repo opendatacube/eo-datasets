@@ -100,6 +100,8 @@ def run(
 
     if oa_resolution is not None:
         oa_resolution = (oa_resolution, oa_resolution)
+    if contiguity_resolution is not None:
+        contiguity_resolution = (contiguity_resolution, contiguity_resolution)
 
     with rasterio.Env():
         for granule in wagl.Granule.for_path(
