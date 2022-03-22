@@ -909,6 +909,7 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
                 "sat:relative_orbit": 102,
                 "sentinel:datastrip_id": "S2A_OPER_MSI_L1C_DS_EPAE_20201031T022859_S20201031T004711_N02.09",
                 "sentinel:sentinel_tile_id": "S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09",
+                "sentinel:product_name": "S2A_MSIL1C_20201031T004711_N0209_R102_T53JQJ_20201031T022859",
                 "sentinel:datatake_start_datetime": "2020-10-31T02:28:59",
             },
             "measurements": {
@@ -1317,6 +1318,7 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path):
                 "sentinel:grid_square": "MQ",
                 "sentinel:latitude_band": "J",
                 "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00",
+                "sentinel:product_name": "S2B_MSIL1C_20210425T235239_N0300_R130_T56JMQ_20210426T010904",
                 "sentinel:utm_zone": 56,
             },
             "measurements": {
