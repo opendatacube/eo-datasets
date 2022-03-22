@@ -201,6 +201,7 @@ class DatasetPrepare(Eo3Interface):
         "sentinel:datatake_start_datetime",
         "sentinel:grid_square",
         "sentinel:latitude_band",
+        "sentinel:product_name",
         "sentinel:sentinel_tile_id",
         "sentinel:utm_zone",
     }
