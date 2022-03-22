@@ -48,6 +48,12 @@ from eodatasets3.model import DatasetDoc
 from eodatasets3.ui import bool_style, is_absolute, uri_resolve
 from eodatasets3.utils import EO3_SCHEMA, default_utc
 
+DEFAULT_NULLABLE_FIELDS = [
+    "label",
+    # When missing, it's considered 'final'.
+    "dataset_maturity",
+]
+
 
 class Level(enum.Enum):
     info = 1
@@ -159,6 +165,8 @@ def _error(code: str, reason: str, hint: str = None):
 
 ValidationMessages = Generator[ValidationMessage, None, None]
 
+_default = object()
+
 
 def validate_dataset(
     doc: Dict,
@@ -168,7 +176,7 @@ def validate_dataset(
     readable_location: Union[str, Path] = None,
     expect_extra_measurements: bool = False,
     expect_geometry: bool = True,
-    nullable_fields: Iterable[str] = ("label",),
+    nullable_fields: Iterable[str] = _default,
 ) -> ValidationMessages:
     """
     Validate a a dataset document, optionally against the given product.
@@ -183,7 +191,12 @@ def validate_dataset(
             Allow some dataset measurements to be missing from the product definition.
             This is (deliberately) allowed by ODC, but often a mistake.
             This flag disables the warning.
+    :param nullable_fields: Field names that are allowed to be missing from datasets.
+                  Defaults to DEFAULT_NULLABLE_FIELDS
     """
+    if nullable_fields is _default:
+        nullable_fields = DEFAULT_NULLABLE_FIELDS
+
     schema = doc.get("$schema")
     if schema is None:
         yield _error(
@@ -292,7 +305,8 @@ def validate_dataset(
                 readable_offsets = " or ".join("->".join(offset) for offset in offsets)
                 yield _warning(
                     "missing_field",
-                    f"Dataset is missing field {field_name!r}",
+                    f"Dataset is missing field {field_name!r} "
+                    f"for type {metadata_type_definition['name']!r} ",
                     hint=f"Expected at {readable_offsets}",
                 )
                 continue
