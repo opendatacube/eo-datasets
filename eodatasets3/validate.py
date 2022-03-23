@@ -50,8 +50,6 @@ from eodatasets3.utils import EO3_SCHEMA, default_utc
 
 DEFAULT_NULLABLE_FIELDS = [
     "label",
-    # When missing, it's considered 'final'.
-    "dataset_maturity",
 ]
 
 
