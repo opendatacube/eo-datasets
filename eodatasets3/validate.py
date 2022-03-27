@@ -177,7 +177,7 @@ def validate_dataset(
     nullable_fields: Iterable[str] = _default,
 ) -> ValidationMessages:
     """
-    Validate a a dataset document, optionally against the given product.
+    Validate a dataset document, optionally against the given product.
 
     By default this will only look at the metadata, run with thorough=True to
     open the data files too.
