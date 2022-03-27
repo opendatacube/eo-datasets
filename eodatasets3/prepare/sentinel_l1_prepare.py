@@ -329,8 +329,9 @@ def _rglob_with_self(path: Path, pattern: str) -> Iterable[Path]:
 @click.option(
     "--embed-location/--no-embed-location",
     is_flag=True,
-    help="Embed the location of the dataset in the metadata "
-    "(if you wish to store them separately)",
+    default=None,
+    help="Embed the location of the dataset in the metadata? "
+    "(if you wish to store them separately. default: auto)",
 )
 @click.option(
     "--provider",
@@ -352,8 +353,17 @@ def _rglob_with_self(path: Path, pattern: str) -> Iterable[Path]:
         exists=True, writable=True, dir_okay=True, file_okay=False, resolve_path=True
     ),
 )
+@click.option(
+    "--input-relative-to",
+    help="Input root folder that should be used for the subfolder hierarchy in the output-base",
+    required=False,
+    type=PathPath(
+        exists=True, writable=True, dir_okay=True, file_okay=False, resolve_path=True
+    ),
+)
 def main(
     output_base: Optional[Path],
+    input_relative_to: Optional[Path],
     datasets: List[Path],
     provider: Optional[str],
     overwrite_existing: bool,
@@ -367,7 +377,20 @@ def main(
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
     )
-    for input_path in datasets:
+    for i, input_path in enumerate(datasets):
+        # The default input_relative path is a parent folder named 'L1C'.
+        if i == 0 and input_relative_to is None:
+            for parent in input_path.parents:
+                if parent.name.lower() == "l1c":
+                    input_relative_to = parent
+                    break
+            else:
+                raise ValueError(
+                    "Unknown root folder for path subfolders. "
+                    "(Hint: specify --input-relative-to with a parent folder of the inputs. "
+                    "Outputs will use the same subfolder structure.)"
+                )
+
         in_out_paths = []
 
         if provider == "sinergise.com" or not provider:
@@ -401,7 +424,14 @@ def main(
 
         for producer, ds_path, output_yaml in in_out_paths:
             if output_base:
-                output_yaml = output_base.absolute() / output_yaml.name
+                output_folder = output_base.absolute()
+                # If we want to copy the input folder hierarchy
+                if input_relative_to:
+                    output_folder = output_folder / input_path.parent.relative_to(
+                        input_relative_to
+                    )
+
+                output_yaml = output_folder / output_yaml.name
 
             if output_yaml.exists():
                 if not overwrite_existing:
