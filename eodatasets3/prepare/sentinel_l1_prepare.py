@@ -379,7 +379,7 @@ def main(
     )
     for i, input_path in enumerate(datasets):
         # The default input_relative path is a parent folder named 'L1C'.
-        if i == 0 and input_relative_to is None:
+        if output_base and (i == 0 and input_relative_to is None):
             for parent in input_path.parents:
                 if parent.name.lower() == "l1c":
                     input_relative_to = parent
