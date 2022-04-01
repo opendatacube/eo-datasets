@@ -444,7 +444,7 @@ def main(
     overwrite_existing: bool,
     embed_location: Optional[bool],
     limit_regions_file: Optional[Path],
-    limit_newer_than: Tuple[int, int],
+    limit_newer_than: Optional[Tuple[int, int]],
 ):
     if sys.argv[1] == "sentinel-l1c":
         warnings.warn(
