@@ -184,6 +184,12 @@ def prepare_and_write(
     if embed_location is None:
         # Default to embedding the location if they're not in the same folder.
         embed_location = dataset_location.parent != output_yaml.parent
+        logging.info(
+            "Auto-embedding location? %s %s %s",
+            dataset_location.parent,
+            "!=" if embed_location else "==",
+            output_yaml.parent,
+        )
 
     with DatasetPrepare(
         metadata_path=output_yaml,
