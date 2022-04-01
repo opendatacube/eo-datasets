@@ -1,5 +1,6 @@
 import operator
 from pathlib import Path
+from textwrap import indent
 from typing import Dict, Iterable
 
 import pytest
@@ -22,9 +23,13 @@ def check_prepare_outputs(
 ):
     """Call a prepare script and check for an expected output document."""
     __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
-    run_prepare_cli(invoke_script, *run_args)
+    res = run_prepare_cli(invoke_script, *run_args)
 
-    assert_expected_eo3_path(expected_doc, expected_metadata_path, ignore_fields)
+    try:
+        assert_expected_eo3_path(expected_doc, expected_metadata_path, ignore_fields)
+    except AssertionError:
+        print(f'Output:\n{indent(res.output, "    ")}')
+        raise
 
 
 def assert_expected_eo3_path(
