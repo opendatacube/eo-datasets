@@ -410,13 +410,30 @@ def test_filter_folder_structure_info(
     # Sanity check: no output exists yet.
     assert not expected_metadata_path.exists()
 
-    # Run with a filter that skips this dataset:
+    # Run with filters that skips this dataset:
     # (it should do nothing)
+
+    # Filter the region
     res = run_prepare_cli(
         sentinel_l1_prepare.main,
-        # It contains our region, so it should work!
+        # It contains our region, so it should filter!
         "--limit-regions-file",
         regions_file,
+        # "Put the output in a different location":
+        "--output-base",
+        output_folder,
+        input_dataset_path,
+    )
+    assert (
+        not expected_metadata_path.exists()
+    ), f"Expected dataset to be filtered out! {res.output}"
+
+    # Filter the time period
+    res = run_prepare_cli(
+        sentinel_l1_prepare.main,
+        # After our time period, so it should filter!
+        "--limit-newer-than",
+        "2019-03",
         # "Put the output in a different location":
         "--output-base",
         output_folder,
@@ -430,6 +447,9 @@ def test_filter_folder_structure_info(
     check_prepare_outputs(
         invoke_script=sentinel_l1_prepare.main,
         run_args=[
+            # Before our time period, so it should be fine!
+            "--limit-newer-than",
+            "2018-12",
             # "Put the output in a different location":
             "--output-base",
             output_folder,
