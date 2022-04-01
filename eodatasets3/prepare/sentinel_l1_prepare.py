@@ -350,6 +350,25 @@ class FolderInfo:
         return FolderInfo(int(year), int(month, 10), region_code)
 
 
+class YearMonth(click.ParamType):
+    """A YYYY-MM string converted to an integer tuple"""
+
+    name = "year-month"
+
+    def convert(self, value, param, ctx):
+        if value is None:
+            return None
+        hp = value.split("-")
+        if len(hp) != 2:
+            self.fail("Expect value in YYYY-MM format")
+
+        year, month = hp
+        if not year.isdigit() or not month.isdigit():
+            self.fail("Expect value in YYYY-MM format")
+
+        return int(year), int(month)
+
+
 @click.command(help=__doc__)
 @click.argument(
     "datasets",
@@ -405,6 +424,12 @@ class FolderInfo:
         exists=True, readable=True, dir_okay=False, file_okay=True, resolve_path=True
     ),
 )
+@click.option(
+    "--limit-newer-than",
+    help="A {year}-{month} string to limit the scan to datasets newer than that date",
+    required=False,
+    type=YearMonth(),
+)
 def main(
     output_base: Optional[Path],
     input_relative_to: Optional[Path],
@@ -413,6 +438,7 @@ def main(
     overwrite_existing: bool,
     embed_location: Optional[bool],
     limit_regions_file: Optional[Path],
+    limit_newer_than: Tuple[int, int],
 ):
     if sys.argv[1] == "sentinel-l1c":
         warnings.warn(
@@ -432,16 +458,26 @@ def main(
         info = FolderInfo.for_path(input_path)
 
         # Skip regions that are not in the limit?
-        if limit_regions:
+        if limit_regions or limit_newer_than:
             if info is None:
                 raise ValueError(
                     f"Cannot filter from non-standard folder layout: {input_path}"
                 )
-            if info.region_code in limit_regions:
-                logging.debug(
-                    f"Skipping because region {info.region_code!r} is in region filter"
-                )
-                continue
+
+            if limit_regions:
+                if info.region_code in limit_regions:
+                    logging.debug(
+                        f"Skipping because region {info.region_code!r} is in region filter"
+                    )
+                    continue
+            if limit_newer_than is not None:
+                year, month = limit_newer_than
+
+                if info.year < year or (info.year == year and info.month < month):
+                    logging.debug(
+                        f"Skipping because year {info.year}-{info.month} is older than {year}-{month}"
+                    )
+                    continue
 
         # The default input_relative path is a parent folder named 'L1C'.
         if output_base and (i == 0 and input_relative_to is None):
