@@ -3,9 +3,11 @@ Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise or esa.
 
 Takes ESA zipped datasets or Sinergise dataset directories
 """
+import dataclasses
 import fnmatch
 import json
 import logging
+import re
 import sys
 import uuid
 import warnings
@@ -314,6 +316,40 @@ def _rglob_with_self(path: Path, pattern: str) -> Iterable[Path]:
     yield from path.rglob(pattern)
 
 
+@dataclasses.dataclass
+class FolderInfo:
+    """
+    Information extracted from a standard S2 folder layout.
+    """
+
+    year: int
+    month: int
+    region_code: str
+
+    # Compiled regexp for extracting year, month and region
+    # Standard layout is of the form: 'L1C/{yyyy}/{yyyy}-{mm}/{area}/S2*_{region}_{timestamp}(.zip)'
+    STANDARD_SUBFOLDER_LAYOUT = re.compile(
+        r"(\d{4})/(\d{4})-(\d{2})/[\dSE]+-[\dSE]+/S2[AB]_MSIL1C_[^/]+_T([A-Z\d]+)_[\dT]+(\.zip)?$"
+    )
+
+    @classmethod
+    def for_path(cls, path: Path) -> Optional["FolderInfo"]:
+        """
+        Can we extract information from the given path?
+
+        Returns None if we can't.
+        """
+        m = cls.STANDARD_SUBFOLDER_LAYOUT.search(path.as_posix())
+        if not m:
+            return None
+
+        year, year2, month, region_code, extension = m.groups()
+        if year != year2:
+            raise ValueError(f"Year mismatch in {path}")
+
+        return FolderInfo(int(year), int(month, 10), region_code)
+
+
 @click.command(help=__doc__)
 @click.argument(
     "datasets",
@@ -361,6 +397,14 @@ def _rglob_with_self(path: Path, pattern: str) -> Iterable[Path]:
         exists=True, writable=True, dir_okay=True, file_okay=False, resolve_path=True
     ),
 )
+@click.option(
+    "--limit-regions-file",
+    help="A file containing the list of region codes to limit the scan to",
+    required=False,
+    type=PathPath(
+        exists=True, readable=True, dir_okay=False, file_okay=True, resolve_path=True
+    ),
+)
 def main(
     output_base: Optional[Path],
     input_relative_to: Optional[Path],
@@ -368,6 +412,7 @@ def main(
     provider: Optional[str],
     overwrite_existing: bool,
     embed_location: Optional[bool],
+    limit_regions_file: Optional[Path],
 ):
     if sys.argv[1] == "sentinel-l1c":
         warnings.warn(
@@ -377,7 +422,27 @@ def main(
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
     )
+
+    limit_regions = None
+    if limit_regions_file:
+        limit_regions = set(limit_regions_file.read_text().splitlines())
+
     for i, input_path in enumerate(datasets):
+
+        info = FolderInfo.for_path(input_path)
+
+        # Skip regions that are not in the limit?
+        if limit_regions:
+            if info is None:
+                raise ValueError(
+                    f"Cannot filter from non-standard folder layout: {input_path}"
+                )
+            if info.region_code in limit_regions:
+                logging.debug(
+                    f"Skipping because region {info.region_code!r} is in region filter"
+                )
+                continue
+
         # The default input_relative path is a parent folder named 'L1C'.
         if output_base and (i == 0 and input_relative_to is None):
             for parent in input_path.parents:
@@ -398,7 +463,7 @@ def main(
                 (
                     "sinergise.com",
                     # Dataset location is the metadata file itself.
-                    (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
+                    p,
                     # Output is an inner metadata file, with the same name as the folder (usually S2A....).
                     (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
                 )

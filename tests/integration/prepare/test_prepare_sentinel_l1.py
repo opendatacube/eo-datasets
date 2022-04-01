@@ -1,12 +1,41 @@
 import datetime
 import shutil
 from pathlib import Path
+from typing import Dict, Tuple
 
 import pytest
 
 from eodatasets3.prepare import sentinel_l1_prepare
+from eodatasets3.prepare.sentinel_l1_prepare import FolderInfo
 
-from tests.common import check_prepare_outputs
+from tests.common import check_prepare_outputs, run_prepare_cli
+
+
+def test_subfolder_info_extraction():
+    info = FolderInfo.for_path(
+        Path(
+            "2019/2019-01/25S125E-30S130/S2A_MSIL1C_20190101T000000_N0206_R065_T32UJ_20190101T002651.zip"
+        )
+    )
+    assert info is not None
+    assert info == FolderInfo(2019, 1, "32UJ")
+
+    info = FolderInfo.for_path(
+        Path(
+            "/dea/test-data/L1C/2022/2022-03/25S125E-30S130E/"
+            "S2B_MSIL1C_20210719T010729_N0301_R045_T53LQC_20210719T021248.zip"
+        )
+    )
+    assert info == FolderInfo(2022, 3, "53LQC")
+
+    # A folder that doesn't follow standard layout will return no info
+    info = FolderInfo.for_path(
+        Path(
+            "ARD/2019/04/S2A_MSIL1C_20190101T000000_N0206_R065_T32UJ_20190101T002651.zip"
+        )
+    )
+    assert info is None
+
 
 ESA_INPUT_DATASET: Path = Path(__file__).parent.parent / (
     "data/esa_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.zip"
@@ -339,7 +368,81 @@ def dataset_input_output(request, tmp_path):
     )
 
 
-def test_generate_expected_outputs(tmp_path, dataset_input_output):
+def test_filter_folder_structure_info(
+    tmp_path: Path, dataset_input_output: Tuple[Path, Dict, Path]
+):
+    (
+        input_dataset_path,
+        expected_metadata_doc,
+        expected_metadata_path,
+    ) = dataset_input_output
+
+    metadata_offset = expected_metadata_path.relative_to(
+        input_dataset_path if input_dataset_path.is_dir() else input_dataset_path.parent
+    )
+
+    subfolders = "2019/2019-01/25S125E-30S130"
+
+    # Move input data into subfolder hierarchy.
+    dataset_folder = tmp_path / "L1C" / subfolders
+    dataset_folder.mkdir(parents=True)
+    new_input_dataset_path = dataset_folder / input_dataset_path.name
+    input_dataset_path.rename(new_input_dataset_path)
+    input_dataset_path = new_input_dataset_path
+
+    # Expect metadata files to be stored in an identical hierarchy in a different output folder
+    output_folder = tmp_path / "output"
+    output_folder.mkdir(parents=True)
+    expected_metadata_path = output_folder / subfolders / metadata_offset
+
+    # Our output metadata is in a different place than the data, so we expect it to
+    # embed the true location in the metadata (by default)
+    if input_dataset_path.is_dir():
+        expected_metadata_doc[
+            "location"
+        ] = f"file://{input_dataset_path.as_posix()}/tileInfo.json"
+    else:
+        expected_metadata_doc["location"] = f"zip:{input_dataset_path}!/"
+
+    regions_file = tmp_path / "our-regions.txt"
+    regions_file.write_text("\n".join(["55HFA", "55HFB"]))
+
+    # Sanity check: no output exists yet.
+    assert not expected_metadata_path.exists()
+
+    # Run with a filter that skips this dataset:
+    # (it should do nothing)
+    res = run_prepare_cli(
+        sentinel_l1_prepare.main,
+        # It contains our region, so it should work!
+        "--limit-regions-file",
+        regions_file,
+        # "Put the output in a different location":
+        "--output-base",
+        output_folder,
+        input_dataset_path,
+    )
+    assert (
+        not expected_metadata_path.exists()
+    ), f"Expected dataset to be filtered out! {res.output}"
+
+    # Now run for real, expect an output.
+    check_prepare_outputs(
+        invoke_script=sentinel_l1_prepare.main,
+        run_args=[
+            # "Put the output in a different location":
+            "--output-base",
+            output_folder,
+            input_dataset_path,
+        ],
+        expected_doc=expected_metadata_doc,
+        expected_metadata_path=expected_metadata_path,
+    )
+
+
+def test_generate_expected_outputs(
+    tmp_path: Path, dataset_input_output: Tuple[Path, Dict, Path]
+):
     """
     Run prepare on our test input scenes, and check the created metadata matches expected.
     """
