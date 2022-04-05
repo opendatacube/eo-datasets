@@ -431,8 +431,16 @@ class YearMonth(click.ParamType):
     ),
 )
 @click.option(
-    "--limit-newer-than",
-    help="A {year}-{month} string to limit the scan to datasets newer than that date",
+    "--after-month",
+    help="Limit the scan to datasets newer than a given month "
+    "(expressed as {year}-{month}, eg '2010-01')",
+    required=False,
+    type=YearMonth(),
+)
+@click.option(
+    "--before-month",
+    help="Limit the scan to datasets older than the given month "
+    "(expressed as {year}-{month}, eg '2010-01')",
     required=False,
     type=YearMonth(),
 )
@@ -444,7 +452,8 @@ def main(
     overwrite_existing: bool,
     embed_location: Optional[bool],
     limit_regions_file: Optional[Path],
-    limit_newer_than: Optional[Tuple[int, int]],
+    before_month: Optional[Tuple[int, int]],
+    after_month: Optional[Tuple[int, int]],
 ):
     if sys.argv[1] == "sentinel-l1c":
         warnings.warn(
@@ -464,7 +473,7 @@ def main(
         info = FolderInfo.for_path(input_path)
 
         # Skip regions that are not in the limit?
-        if limit_regions or limit_newer_than:
+        if limit_regions or before_month or after_month:
             if info is None:
                 raise ValueError(
                     f"Cannot filter from non-standard folder layout: {input_path}"
@@ -476,12 +485,21 @@ def main(
                         f"Skipping because region {info.region_code!r} is in region filter"
                     )
                     continue
-            if limit_newer_than is not None:
-                year, month = limit_newer_than
+
+            if after_month is not None:
+                year, month = after_month
 
                 if info.year < year or (info.year == year and info.month < month):
                     logging.debug(
                         f"Skipping because year {info.year}-{info.month} is older than {year}-{month}"
+                    )
+                    continue
+            if before_month is not None:
+                year, month = before_month
+
+                if info.year > year or (info.year == year and info.month > month):
+                    logging.debug(
+                        f"Skipping because year {info.year}-{info.month} is newer than {year}-{month}"
                     )
                     continue
 
