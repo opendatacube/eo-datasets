@@ -1,3 +1,4 @@
+import copy
 import datetime
 import shutil
 from pathlib import Path
@@ -363,7 +364,7 @@ def dataset_input_output(request, tmp_path):
 
     return (
         unique_in_path,
-        expected_metadata_doc,
+        copy.deepcopy(expected_metadata_doc),
         expected_metadata_path,
     )
 
@@ -474,7 +475,6 @@ def test_generate_expected_outputs(
     check_prepare_outputs(
         invoke_script=sentinel_l1_prepare.main,
         run_args=[
-            "--no-embed-location",
             input_dataset_path,
         ],
         expected_doc=expected_metadata_doc,
