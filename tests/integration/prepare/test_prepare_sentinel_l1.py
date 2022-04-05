@@ -433,8 +433,23 @@ def test_filter_folder_structure_info(
     res = run_prepare_cli(
         sentinel_l1_prepare.main,
         # After our time period, so it should filter!
-        "--limit-newer-than",
+        "--after-month",
         "2019-03",
+        # "Put the output in a different location":
+        "--output-base",
+        output_folder,
+        input_dataset_path,
+    )
+    assert (
+        not expected_metadata_path.exists()
+    ), f"Expected dataset to be filtered out! {res.output}"
+
+    # Filter the time period
+    res = run_prepare_cli(
+        sentinel_l1_prepare.main,
+        # Before our time period, so it should filter!
+        "--before-month",
+        "2018-03",
         # "Put the output in a different location":
         "--output-base",
         output_folder,
@@ -449,7 +464,7 @@ def test_filter_folder_structure_info(
         invoke_script=sentinel_l1_prepare.main,
         run_args=[
             # Before our time period, so it should be fine!
-            "--limit-newer-than",
+            "--after-month",
             "2018-12",
             # "Put the output in a different location":
             "--output-base",
