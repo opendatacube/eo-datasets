@@ -25,6 +25,7 @@ from eodatasets3.ui import PathPath
 # Static namespace to generate uuids for datacube indexing
 S2_UUID_NAMESPACE = uuid.UUID("9df23adf-fc90-4ec7-9299-57bd536c7590")
 
+_LOG = logging.getLogger("sentinel-l1")
 
 SENTINEL_MSI_BAND_ALIASES = {
     "01": "coastal_aerosol",
@@ -184,8 +185,9 @@ def prepare_and_write(
     if embed_location is None:
         # Default to embedding the location if they're not in the same folder.
         embed_location = dataset_location.parent != output_yaml.parent
-        logging.info(
-            "Auto-embedding location? %s %s %s",
+        _LOG.debug(
+            "Auto-embed location? %s: %s %s %s",
+            "Yes" if embed_location else "No",
             dataset_location.parent,
             "!=" if embed_location else "==",
             output_yaml.parent,
@@ -376,6 +378,7 @@ class YearMonth(click.ParamType):
 
 
 @click.command(help=__doc__)
+@click.option("-v", "--verbose", is_flag=True)
 @click.argument(
     "datasets",
     type=PathPath(exists=True, readable=True, writable=False, resolve_path=True),
@@ -450,6 +453,7 @@ def main(
     datasets: List[Path],
     provider: Optional[str],
     overwrite_existing: bool,
+    verbose: bool,
     embed_location: Optional[bool],
     limit_regions_file: Optional[Path],
     before_month: Optional[Tuple[int, int]],
@@ -460,9 +464,8 @@ def main(
             "Command name 'sentinel-l1c-prepare' is deprecated: remove the 'c', and use `sentinel-l1-prepare`"
         )
 
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
-    )
+    logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s")
+    _LOG.setLevel(logging.DEBUG if verbose else logging.INFO)
 
     limit_regions = None
     if limit_regions_file:
@@ -481,7 +484,7 @@ def main(
 
             if limit_regions:
                 if info.region_code in limit_regions:
-                    logging.debug(
+                    _LOG.debug(
                         f"Skipping because region {info.region_code!r} is in region filter"
                     )
                     continue
@@ -490,7 +493,7 @@ def main(
                 year, month = after_month
 
                 if info.year < year or (info.year == year and info.month < month):
-                    logging.debug(
+                    _LOG.debug(
                         f"Skipping because year {info.year}-{info.month} is older than {year}-{month}"
                     )
                     continue
@@ -498,7 +501,7 @@ def main(
                 year, month = before_month
 
                 if info.year > year or (info.year == year and info.month > month):
-                    logging.debug(
+                    _LOG.debug(
                         f"Skipping because year {info.year}-{info.month} is newer than {year}-{month}"
                     )
                     continue
@@ -560,15 +563,15 @@ def main(
 
             if output_yaml.exists():
                 if not overwrite_existing:
-                    logging.info("Output exists: skipping. %s", output_yaml)
+                    _LOG.info("Output exists: skipping. %s", output_yaml)
                     continue
 
-                logging.info("Output exists: overwriting %s", output_yaml)
+                _LOG.info("Output exists: overwriting %s", output_yaml)
 
             uuid_, path = prepare_and_write(
                 ds_path, output_yaml, producer, embed_location=embed_location
             )
-            logging.info("Wrote dataset %s to %s", uuid_, path)
+            _LOG.info("Wrote dataset %s to %s", uuid_, path)
 
         sys.exit(0)
 
