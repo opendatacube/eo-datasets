@@ -20,6 +20,7 @@ attrs==21.2.0
     #   requests-cache
 boltons==21.0.0
     # via eodatasets3 (setup.py)
+boto3==1.17.106
 botocore==1.21.38
     # via eodatasets3 (setup.py)
 cachetools==4.2.2
