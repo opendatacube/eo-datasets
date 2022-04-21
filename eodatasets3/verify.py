@@ -4,9 +4,20 @@ import logging
 import typing
 from distutils import spawn
 from pathlib import Path
+from urllib.parse import urlparse
+import boto3
 
 _LOG = logging.getLogger(__name__)
 
+def get_bucket_key(s3_key):
+    """
+    Return bucket name and key from a s3 key
+    """
+    o = urlparse(s3_key)
+    bucket = o.netloc
+    key = o.path
+    #Remove the leading slash from the prefix/key
+    return bucket, key[1:]
 
 def find_exe(name: str):
     """
@@ -39,8 +50,15 @@ def calculate_file_hash(filename, hash_fn=hashlib.sha1, block_size=4096):
     :return: String of hex characters.
     :rtype: str
     """
-    with Path(filename).open("rb") as f:
+    if "s3" in str(filename):
+        bucket, key = get_bucket_key(filename)
+        s3client = boto3.client('s3', region_name='us-east-1')
+        fileobj = s3client.get_object(Bucket=bucket, Key=key)
+        f = fileobj['Body'].read()
         return calculate_hash(f, hash_fn, block_size)
+    else:
+        with Path(filename).open("rb") as f:
+            return calculate_hash(f, hash_fn, block_size)
 
 
 def calculate_hash(f, hash_fn=hashlib.sha1, block_size=4096):
@@ -91,6 +109,21 @@ class PackageChecksum:
         :type file_path: Path
         :rtype: None
         """
+
+        if "s3" in str(file_path):
+            s3client = boto3.client('s3', region_name='us-east-1')
+            bucket, key = get_bucket_key(filename)
+            response_obj = s3client.list_objects_v2(Bucket=bucket, Prefix=key):
+            objs = [obj['Key'] for obj in os['Contents']]
+            if len(objs) > 1:
+                for file_path in objs:
+                    hash_ = self._checksum(file_path)
+                    self._append_hash(file_path, hash_)
+            else:
+                hash_ = self._checksum(file_path)
+                self._append_hash(file_path, hash_)
+            return
+
         if file_path.is_dir():
             self.add_files(file_path.iterdir())
         else:
