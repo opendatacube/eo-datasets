@@ -113,7 +113,7 @@ class PackageChecksum:
         if "s3" in str(file_path):
             s3client = boto3.client('s3', region_name='us-east-1')
             bucket, key = get_bucket_key(filename)
-            response_obj = s3client.list_objects_v2(Bucket=bucket, Prefix=key):
+            response_obj = s3client.list_objects_v2(Bucket=bucket, Prefix=key)
             objs = [obj['Key'] for obj in os['Contents']]
             if len(objs) > 1:
                 for file_path in objs:
