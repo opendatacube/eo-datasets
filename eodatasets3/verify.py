@@ -117,7 +117,7 @@ class PackageChecksum:
             objs = [obj['Key'] for obj in os['Contents']]
             if len(objs) > 1:
                 for file_path in objs:
-                    hash_ = self._checksum(file_path)
+                    hash_ = self._checksum("s3://{bucket}/{file_path}")
                     self._append_hash(file_path, hash_)
             else:
                 hash_ = self._checksum(file_path)
