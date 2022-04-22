@@ -66,6 +66,7 @@ setup(
         "attrs>=18.1",  # 18.1 adds 'factory' syntactic sugar
         "boltons",
         "botocore",  # missing from datacube
+        "boto3",
         "cattrs",
         "ciso8601",
         "click",
