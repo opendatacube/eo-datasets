@@ -161,6 +161,8 @@ class DatasetPrepare(Eo3Interface):
         "fmask:cloud_shadow",
         "fmask:snow",
         "fmask:water",
+        "s2cloudless:clear",
+        "s2cloudless:cloud",
         "gqa:abs_iterative_mean_x",
         "gqa:abs_iterative_mean_xy",
         "gqa:abs_iterative_mean_y",
