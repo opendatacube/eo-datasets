@@ -7,7 +7,7 @@ percent_class_distribution:
     cloud: 5.745885136855438
 software_versions:
     eugl:
-        repo_url: https://github.com/OpenDataCubePipelines/eugl
+        repo_url: https://github.com/OpenDataCubePipelines/eugl.git
         version: 0.5.1
     s2cloudless:
         repo_url: https://github.com/sentinel-hub/sentinel2-cloud-detector
