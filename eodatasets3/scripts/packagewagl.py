@@ -103,7 +103,7 @@ def run(
     if contiguity_resolution is not None:
         contiguity_resolution = (contiguity_resolution, contiguity_resolution)
 
-    with rasterio.Env():
+    with rasterio.Env(GDAL_PAM_ENABLED=False):
         for granule in wagl.Granule.for_path(
             h5_file,
             level1_metadata_path=level1,

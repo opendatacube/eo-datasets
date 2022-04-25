@@ -747,6 +747,8 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
                 "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_combined-terrain-shadow.tif": "",
                 "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_exiting-angle.tif": "",
                 "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_fmask.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_s2cloudless-mask.tif": "",
+                "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_s2cloudless-prob.tif": "",
                 "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_incident-angle.tif": "",
                 "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_nbar-contiguity.tif": "",
                 "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_nbart-contiguity.tif": "",
@@ -880,6 +882,8 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
                 "fmask:cloud_shadow": 0.6983135097842945,
                 "fmask:snow": 14.583962676987106,
                 "fmask:water": 0.0004671112027989303,
+                "s2cloudless:clear": 94.25411486314457,
+                "s2cloudless:cloud": 5.745885136855438,
                 "gqa:abs_iterative_mean_x": 0.42,
                 "gqa:abs_iterative_mean_xy": 0.53,
                 "gqa:abs_iterative_mean_y": 0.32,
@@ -1009,6 +1013,14 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
                     "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_fmask.tif",
                     "grid": "c",
                 },
+                "oa_s2cloudless_mask": {
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_s2cloudless-mask.tif",
+                    "grid": "b",
+                },
+                "oa_s2cloudless_prob": {
+                    "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_s2cloudless-prob.tif",
+                    "grid": "b",
+                },
                 "oa_incident_angle": {
                     "path": "ga_s2am_oa_3-2-1_53JQJ_2020-10-31_final_incident-angle.tif"
                 },
@@ -1076,6 +1088,17 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
                     "water": 0.0004671112027989303,
                 },
             },
+            "s2cloudless": {
+                "parameters": {
+                    "average_over": 4,
+                    "dilation_size": 2,
+                    "threshold": 0.4
+                },
+                "percent_class_distribution": {
+                    "clear": 94.25411486314457,
+                    "cloud": 5.745885136855438
+                }
+            },
             "software_versions": [
                 {
                     "name": "modtran",
@@ -1090,13 +1113,18 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
                 {
                     "name": "eugl",
                     "url": "https://github.com/OpenDataCubePipelines/eugl.git",
-                    "version": "0.2.1",
+                    "version": "0.5.1",
                 },
                 {"name": "gverify", "url": None, "version": "v0.25c"},
                 {
                     "name": "fmask",
                     "url": "https://bitbucket.org/chchrsc/python-fmask",
                     "version": "0.5.4",
+                },
+                {
+                    "name": "s2cloudless",
+                    "url": "https://github.com/sentinel-hub/sentinel2-cloud-detector",
+                    "version": "1.5.0",
                 },
                 {
                     "name": "tesp",
@@ -1173,6 +1201,8 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path):
                 "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_combined-terrain-shadow.tif": "",
                 "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_exiting-angle.tif": "",
                 "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_fmask.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_s2cloudless-mask.tif": "",
+                "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_s2cloudless-prob.tif": "",
                 "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_incident-angle.tif": "",
                 "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_nbar-contiguity.tif": "",
                 "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_nbart-contiguity.tif": "",
@@ -1288,6 +1318,8 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path):
                 "fmask:cloud_shadow": 1.6774401648547776,
                 "fmask:snow": 0.2035270117090613,
                 "fmask:water": 4.797206763265085,
+                "s2cloudless:clear": 97.14675202540054,
+                "s2cloudless:cloud": 2.8532479745994497,
                 "gqa:abs_iterative_mean_x": 0.34,
                 "gqa:abs_iterative_mean_xy": 0.36,
                 "gqa:abs_iterative_mean_y": 0.11,
@@ -1418,6 +1450,14 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path):
                     "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_fmask.tif",
                     "grid": "c",
                 },
+                "oa_s2cloudless_mask": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_s2cloudless-mask.tif",
+                    "grid": "b",
+                },
+                "oa_s2cloudless_prob": {
+                    "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_s2cloudless-prob.tif",
+                    "grid": "b",
+                },
                 "oa_incident_angle": {
                     "path": "ga_s2bm_oa_3-2-1_56JMQ_2021-04-25_final_incident-angle.tif"
                 },
@@ -1485,6 +1525,17 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path):
                     "water": 4.797206763265085,
                 },
             },
+            "s2cloudless": {
+                "parameters": {
+                    "average_over": 4,
+                    "dilation_size": 2,
+                    "threshold": 0.4
+                },
+                "percent_class_distribution": {
+                    "clear": 97.14675202540054,
+                    "cloud": 2.8532479745994497
+                },
+            },
             "software_versions": [
                 {
                     "name": "modtran",
@@ -1499,13 +1550,18 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path):
                 {
                     "name": "eugl",
                     "url": "https://github.com/OpenDataCubePipelines/eugl",
-                    "version": "0.3.1",
+                    "version": "0.5.1",
                 },
                 {"name": "gverify", "url": None, "version": "v0.25c"},
                 {
                     "name": "fmask",
                     "url": "https://www.pythonfmask.org/",
                     "version": "0.5.5",
+                },
+                {
+                    "name": "s2cloudless",
+                    "url": "https://github.com/sentinel-hub/sentinel2-cloud-detector",
+                    "version": "1.5.0",
                 },
                 {
                     "name": "tesp",
