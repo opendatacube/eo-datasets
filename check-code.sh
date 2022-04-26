@@ -5,7 +5,8 @@ set -eu
 set -x
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-
+echo "###########"
+echo $script_dir
 cd script_dir
 
 pre-commit run -a
