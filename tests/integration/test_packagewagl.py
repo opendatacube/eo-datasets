@@ -1089,15 +1089,11 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
                 },
             },
             "s2cloudless": {
-                "parameters": {
-                    "average_over": 4,
-                    "dilation_size": 2,
-                    "threshold": 0.4
-                },
+                "parameters": {"average_over": 4, "dilation_size": 2, "threshold": 0.4},
                 "percent_class_distribution": {
                     "clear": 94.25411486314457,
-                    "cloud": 5.745885136855438
-                }
+                    "cloud": 5.745885136855438,
+                },
             },
             "software_versions": [
                 {
@@ -1526,14 +1522,10 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path):
                 },
             },
             "s2cloudless": {
-                "parameters": {
-                    "average_over": 4,
-                    "dilation_size": 2,
-                    "threshold": 0.4
-                },
+                "parameters": {"average_over": 4, "dilation_size": 2, "threshold": 0.4},
                 "percent_class_distribution": {
                     "clear": 97.14675202540054,
-                    "cloud": 2.8532479745994497
+                    "cloud": 2.8532479745994497,
                 },
             },
             "software_versions": [

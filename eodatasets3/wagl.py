@@ -459,23 +459,31 @@ class Granule:
                     [fmask_doc] = loads_yaml(fl)
 
                 if "sentinel" in wagl_doc["source_datasets"]["platform_id"].lower():
-                    s2cloudless_prob_path = s2cloudless_prob_path or wagl_hdf5.with_name(
-                        f"{granule_name}.prob.s2cloudless.tif"
+                    s2cloudless_prob_path = (
+                        s2cloudless_prob_path
+                        or wagl_hdf5.with_name(f"{granule_name}.prob.s2cloudless.tif")
                     )
                     if not s2cloudless_prob_path.exists():
-                        raise ValueError(f"No s2cloudless probability image found at {s2cloudless_prob_path}")
+                        raise ValueError(
+                            f"No s2cloudless probability image found at {s2cloudless_prob_path}"
+                        )
 
-                    s2cloudless_mask_path = s2cloudless_mask_path or wagl_hdf5.with_name(
-                        f"{granule_name}.mask.s2cloudless.tif"
+                    s2cloudless_mask_path = (
+                        s2cloudless_mask_path
+                        or wagl_hdf5.with_name(f"{granule_name}.mask.s2cloudless.tif")
                     )
                     if not s2cloudless_mask_path.exists():
-                        raise ValueError(f"No s2cloudless mask image found at {s2cloudless_mask_path}")
+                        raise ValueError(
+                            f"No s2cloudless mask image found at {s2cloudless_mask_path}"
+                        )
 
                     s2cloudless_doc_path = s2cloudless_doc_path or wagl_hdf5.with_name(
                         f"{granule_name}.s2cloudless.yaml"
                     )
                     if not s2cloudless_doc_path.exists():
-                        raise ValueError(f"No s2cloudless metadata found at {s2cloudless_doc_path}")
+                        raise ValueError(
+                            f"No s2cloudless metadata found at {s2cloudless_doc_path}"
+                        )
                     with s2cloudless_doc_path.open("r") as fl:
                         [s2cloudless_doc] = loads_yaml(fl)
                 else:
@@ -747,7 +755,9 @@ def package(
                             )
 
                     if granule.s2cloudless_prob:
-                        with do(f"Writing s2cloudless probability from {granule.s2cloudless_prob} "):
+                        with do(
+                            f"Writing s2cloudless probability from {granule.s2cloudless_prob} "
+                        ):
                             p.write_measurement(
                                 "oa:s2cloudless_prob",
                                 granule.s2cloudless_prob,
@@ -757,7 +767,9 @@ def package(
                             )
 
                     if granule.s2cloudless_mask:
-                        with do(f"Writing s2cloudless mask from {granule.s2cloudless_mask} "):
+                        with do(
+                            f"Writing s2cloudless mask from {granule.s2cloudless_mask} "
+                        ):
                             p.write_measurement(
                                 "oa:s2cloudless_mask",
                                 granule.s2cloudless_mask,
