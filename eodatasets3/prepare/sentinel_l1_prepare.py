@@ -214,7 +214,9 @@ def prepare_and_write(
         p.instrument = "MSI"
         p.constellation = "sentinel-2"
 
-        p.dataset_version = f"0.0.{p.processed:%Y%m%d}"
+        # TODO: How to read collection number from metadata? (once ESA etc add one)
+        collection_number = 0
+        p.dataset_version = f"{collection_number}.0.{p.processed:%Y%m%d}"
 
         p.properties["odc:file_format"] = "JPEG2000"
         p.product_family = "level1"
