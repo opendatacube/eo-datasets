@@ -108,7 +108,7 @@ ESA_EXPECTED_METADATA = {
             ],
         },
     },
-    "label": "esa_s2bm_level1_1-0-20201011_55HFA_2020-10-11",
+    "label": "esa_s2bm_level1_0-0-20201011_55HFA_2020-10-11",
     "lineage": {},
     "measurements": {
         "blue": {
@@ -167,7 +167,7 @@ ESA_EXPECTED_METADATA = {
             "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B09.jp2",
         },
     },
-    "product": {"name": "esa_s2bm_level1_1"},
+    "product": {"name": "esa_s2bm_level1_0"},
     "properties": {
         "datetime": datetime.datetime(2020, 10, 11, 0, 6, 49, 882566),
         "eo:cloud_cover": 24.9912,
@@ -177,7 +177,7 @@ ESA_EXPECTED_METADATA = {
         "eo:constellation": "sentinel-2",
         "eo:sun_azimuth": 46.3307328858312,
         "eo:sun_elevation": 37.3713908882192,
-        "odc:dataset_version": "1.0.20201011",
+        "odc:dataset_version": "0.0.20201011",
         "odc:file_format": "JPEG2000",
         "odc:processing_datetime": datetime.datetime(2020, 10, 11, 1, 47, 4, 112949),
         "odc:producer": "esa.int",
@@ -215,7 +215,7 @@ SINERGISE_EXPECTED_METADATA = {
     "id": "f3e0eee1-573c-5035-870e-8d8392df8e33",
     "crs": "epsg:32755",
     "product": {
-        "name": "sinergise_s2bm_level1_1",
+        "name": "sinergise_s2bm_level1_0",
     },
     "geometry": {
         "coordinates": [
@@ -275,7 +275,7 @@ SINERGISE_EXPECTED_METADATA = {
             ],
         },
     },
-    "label": "sinergise_s2bm_level1_1-0-20201011_55HFA_2020-10-11",
+    "label": "sinergise_s2bm_level1_0-0-20201011_55HFA_2020-10-11",
     "lineage": {},
     "measurements": {
         "blue": {"grid": "998", "path": "B02.jp2"},
@@ -310,7 +310,7 @@ SINERGISE_EXPECTED_METADATA = {
         "eo:constellation": "sentinel-2",
         "eo:sun_azimuth": 46.3307328858312,
         "eo:sun_elevation": 37.3713908882192,
-        "odc:dataset_version": "1.0.20201011",
+        "odc:dataset_version": "0.0.20201011",
         "odc:file_format": "JPEG2000",
         "odc:processing_datetime": datetime.datetime(2020, 10, 11, 1, 47, 4, 112949),
         "odc:producer": "sinergise.com",
