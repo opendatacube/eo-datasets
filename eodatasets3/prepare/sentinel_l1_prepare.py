@@ -9,12 +9,16 @@ import json
 import logging
 import re
 import sys
+import traceback
 import uuid
 import warnings
 import zipfile
+from itertools import chain
+from multiprocessing import Pool
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
 
+import attr
 import click
 from defusedxml import minidom
 
@@ -181,7 +185,6 @@ def prepare_and_write(
     producer: str,
     embed_location: bool = None,
 ) -> Tuple[uuid.UUID, Path]:
-
     if embed_location is None:
         # Default to embedding the location if they're not in the same folder.
         embed_location = dataset_location.parent != output_yaml.parent
@@ -379,12 +382,37 @@ class YearMonth(click.ParamType):
         return int(year), int(month)
 
 
+@attr.s(auto_attribs=True, order=True, hash=True)
+class Job:
+    ds_path: Path
+    output_yaml_path: Path
+    producer: str
+    embed_location: bool
+
+
 @click.command(help=__doc__)
 @click.option("-v", "--verbose", is_flag=True)
 @click.argument(
     "datasets",
     type=PathPath(exists=True, readable=True, writable=False, resolve_path=True),
     nargs=-1,
+)
+@click.option(
+    "-f",
+    "--datasets-path",
+    help="A file to read input dataset paths from, one per line",
+    required=False,
+    type=PathPath(
+        exists=True, readable=True, dir_okay=False, file_okay=True, resolve_path=True
+    ),
+)
+@click.option(
+    "-j",
+    "--jobs",
+    "workers",
+    help="Number of workers to run in parallel",
+    type=int,
+    default=1,
 )
 @click.option(
     "--overwrite-existing/--skip-existing",
@@ -453,9 +481,11 @@ def main(
     output_base: Optional[Path],
     input_relative_to: Optional[Path],
     datasets: List[Path],
+    datasets_path: Optional[Path],
     provider: Optional[str],
     overwrite_existing: bool,
     verbose: bool,
+    workers: int,
     embed_location: Optional[bool],
     limit_regions_file: Optional[Path],
     before_month: Optional[Tuple[int, int]],
@@ -473,7 +503,12 @@ def main(
     if limit_regions_file:
         limit_regions = set(limit_regions_file.read_text().splitlines())
 
-    for i, input_path in enumerate(datasets):
+    extra_datasets = datasets_path.read_text().splitlines() if datasets_path else []
+
+    jobs: Set[Job] = set()
+    for i, input_path in enumerate(
+        chain(datasets, (Path(p.strip()) for p in extra_datasets))
+    ):
 
         info = FolderInfo.for_path(input_path)
 
@@ -570,12 +605,55 @@ def main(
 
                 _LOG.info("Output exists: overwriting %s", output_yaml)
 
-            uuid_, path = prepare_and_write(
-                ds_path, output_yaml, producer, embed_location=embed_location
-            )
-            _LOG.info("Wrote dataset %s to %s", uuid_, path)
+            jobs.add(Job(ds_path, output_yaml, producer, embed_location=embed_location))
 
-    sys.exit(0)
+    jobs = sorted(jobs)
+    _LOG.info(f"{len(jobs)} dataset(s) to process (with {workers} workers)")
+
+    # If only one process, call it directly.
+    # (Multiprocessing makes debugging harder, so we prefer to make it optional)
+
+    errors = 0
+    if workers == 1:
+        for job in jobs:
+            try:
+                uuid_, path = prepare_and_write(
+                    job.ds_path,
+                    job.output_yaml_path,
+                    job.producer,
+                    embed_location=job.embed_location,
+                )
+                _LOG.info("Wrote dataset %s to %s", uuid_, path)
+            except Exception:
+                _LOG.exception("Failed to write dataset: %s", job)
+                errors += 1
+    else:
+        with Pool(processes=workers) as pool:
+            for res in pool.imap_unordered(write_dataset_safe, jobs):
+                if isinstance(res, str):
+                    _LOG.error(res)
+                    errors += 1
+                else:
+                    uuid_, path = res
+                    _LOG.info("Wrote dataset %s to %s", uuid_, path)
+            pool.close()
+            pool.join()
+
+    _LOG.debug(f"Completed {len(jobs)-errors} datasets with {errors} failures")
+    sys.exit(errors)
+
+
+def write_dataset_safe(job: Job) -> Union[Tuple[uuid.UUID, Path], str]:
+    try:
+        uuid_, path = prepare_and_write(
+            job.ds_path,
+            job.output_yaml_path,
+            job.producer,
+            embed_location=job.embed_location,
+        )
+        return uuid_, path
+    except Exception:
+        return f"Failed to write dataset: {job}\n" + traceback.format_exc()
 
 
 if __name__ == "__main__":
