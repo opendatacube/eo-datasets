@@ -384,8 +384,11 @@ class YearMonth(click.ParamType):
 
 @attr.s(auto_attribs=True, order=True, hash=True)
 class Job:
-    ds_path: Path
+    """A dataset to process"""
+
+    dataset_path: Path
     output_yaml_path: Path
+    # "sinergise.com" / "esa.int"
     producer: str
     embed_location: bool
 
@@ -621,7 +624,7 @@ def main(
         for job in jobs:
             try:
                 uuid_, path = prepare_and_write(
-                    job.ds_path,
+                    job.dataset_path,
                     job.output_yaml_path,
                     job.producer,
                     embed_location=job.embed_location,
@@ -632,7 +635,7 @@ def main(
                 errors += 1
     else:
         with Pool(processes=workers) as pool:
-            for res in pool.imap_unordered(write_dataset_safe, jobs):
+            for res in pool.imap_unordered(_write_dataset_safe, jobs):
                 if isinstance(res, str):
                     _LOG.error(res)
                     errors += 1
@@ -648,10 +651,16 @@ def main(
     sys.exit(errors)
 
 
-def write_dataset_safe(job: Job) -> Union[Tuple[uuid.UUID, Path], str]:
+def _write_dataset_safe(job: Job) -> Union[Tuple[uuid.UUID, Path], str]:
+    """
+    A wrapper around `prepare_and_write` that catches exceptions and makes them
+    serialisable as error strings.
+
+    (for use in multiprocessing pools etc)
+    """
     try:
         uuid_, path = prepare_and_write(
-            job.ds_path,
+            job.dataset_path,
             job.output_yaml_path,
             job.producer,
             embed_location=job.embed_location,
