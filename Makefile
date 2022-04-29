@@ -34,7 +34,7 @@ lint:
 # (Eg. Github Actions has file write permission issues to external volumes when not using root,
 #      and we want to write test coverage etc. to the volume.)
 lint-root:
-	docker run --volume "${PWD}":/tests --user root -w /tests eodatasets:test pre-commit run -a
+	docker run --user root -w /code eodatasets:test pre-commit run -a
 
 # Lint the Dockerfile itself
 # (hadolint has too many false positives to run in CI, but is useful for reference)
@@ -53,6 +53,6 @@ dependency-update:
 # This has to be run using the same Python interpreter we are deploying with.
 # ie. Use "make dependency-update" instead!
 internal-update:
-	pip-compile requirements/setup.in
+	pip-compile requirements/dev.in
 	pip-compile --extra deployment -o requirements/deployment.txt
 	pip-compile --extra test -o requirements/test.txt
