@@ -505,11 +505,12 @@ def main(
 
     extra_datasets = datasets_path.read_text().splitlines() if datasets_path else []
 
+    input_count = 0
     jobs: Set[Job] = set()
     for i, input_path in enumerate(
         chain(datasets, (Path(p.strip()) for p in extra_datasets))
     ):
-
+        input_count += 1
         info = FolderInfo.for_path(input_path)
 
         # Skip regions that are not in the limit?
@@ -608,7 +609,9 @@ def main(
             jobs.add(Job(ds_path, output_yaml, producer, embed_location=embed_location))
 
     jobs = sorted(jobs)
-    _LOG.info(f"{len(jobs)} dataset(s) to process (with {workers} workers)")
+    _LOG.info(
+        f"{len(jobs)} dataset(s) to process out of {input_count} inputs. Using {workers} workers"
+    )
 
     # If only one process, call it directly.
     # (Multiprocessing makes debugging harder, so we prefer to make it optional)
@@ -639,7 +642,9 @@ def main(
             pool.close()
             pool.join()
 
-    _LOG.debug(f"Completed {len(jobs)-errors} datasets with {errors} failures")
+    _LOG.debug(
+        f"Completed {len(jobs)-errors} dataset(s) successfully, with {errors} failure(s)"
+    )
     sys.exit(errors)
 
 
