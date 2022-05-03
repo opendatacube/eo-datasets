@@ -29,6 +29,14 @@ def test_subfolder_info_extraction():
     )
     assert info == FolderInfo(2022, 3, "53LQC")
 
+    info = FolderInfo.for_path(
+        Path(
+            "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2021/2021-07/20N095E-15N100E/"
+            "S2B_MSIL1C_20210716T035539_N0301_R004_T47QMB_20210716T063913.zip"
+        )
+    )
+    assert info == FolderInfo(2021, 7, "47QMB")
+
     # A folder that doesn't follow standard layout will return no info
     info = FolderInfo.for_path(
         Path(

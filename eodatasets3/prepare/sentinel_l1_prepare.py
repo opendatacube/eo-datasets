@@ -1,5 +1,5 @@
 """
-Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise or esa.
+Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise or ESA.
 
 Takes ESA zipped datasets or Sinergise dataset directories
 """
@@ -342,7 +342,7 @@ class FolderInfo:
     # Compiled regexp for extracting year, month and region
     # Standard layout is of the form: 'L1C/{yyyy}/{yyyy}-{mm}/{area}/S2*_{region}_{timestamp}(.zip)'
     STANDARD_SUBFOLDER_LAYOUT = re.compile(
-        r"(\d{4})/(\d{4})-(\d{2})/[\dSE]+-[\dSE]+/S2[AB]_MSIL1C_[^/]+_T([A-Z\d]+)_[\dT]+(\.zip)?$"
+        r"(\d{4})/(\d{4})-(\d{2})/[\dNESW]+-[\dNESW]+/S2[AB]_MSIL1C_[^/]+_T([A-Z\d]+)_[\dT]+(\.zip)?$"
     )
 
     @classmethod
