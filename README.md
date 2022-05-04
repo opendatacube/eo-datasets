@@ -169,6 +169,67 @@ exotic formats: `pip install .[ancillary]`
 	  noaa-prwtr     Prepare NCEP/NCAR reanalysis 1 water pressure datasets...
 	  sentinel-l1   Prepare eo3 metadata for Sentinel-2 Level 1C data produced...
 
+Prep scripts have their own options, for example Sentinel L1 generation can filter by time
+or region, if the inputs follow a common directory structure:
+
+```
+❯ eo3-prepare sentinel-l1 --help
+Usage: eo3-prepare sentinel-l1 [OPTIONS] [DATASETS]...
+
+  Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise or
+  esa.
+
+  Takes ESA zipped datasets or Sinergise dataset directories
+
+Options:
+  -v, --verbose
+  --overwrite-existing / --skip-existing
+                                  Overwrite if exists (otherwise skip)
+  --embed-location / --no-embed-location
+                                  Embed the location of the dataset in the
+                                  metadata? (if you wish to store them
+                                  separately. default: auto)
+  --provider [sinergise.com|esa.int]
+                                  Restrict scanning to only packages of the
+                                  given provider. (ESA assumes a zip file,
+                                  sinergise a directory)
+  --output-base DIRECTORY         Write metadata files into a directory
+                                  instead of alongside each dataset
+  --input-relative-to DIRECTORY   Input root folder that should be used for
+                                  the subfolder hierarchy in the output-base
+  --limit-regions-file FILE       A file containing the list of region codes
+                                  to limit the scan to
+  --after-month YEAR-MONTH        Limit the scan to datasets newer than a
+                                  given month (expressed as {year}-{month}, eg
+                                  '2010-01')
+  --before-month YEAR-MONTH       Limit the scan to datasets older than the
+                                  given month (expressed as {year}-{month}, eg
+                                  '2010-01')
+  --help                          Show this message and exit.
+```
+
+An example of preparing metadata in a separate directory (not alongside the datasets) at NCI
+can be as follows:
+
+```bash
+module use -a /g/data/v10/private/modules/modulefiles /g/data/v10/public/modules/modulefiles
+module load eodatasets3
+
+# With a full list of input paths, 4 workers, and separate output directory:
+eo3-prepare sentinel-l1 -j 4 --output-base my-metadata-directory
+   -f l1cs-2022-05-02.txt
+  /g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2021
+
+# Filtered to a certain region list and recent months:
+eo3-prepare sentinel-l1 \
+    --output-base /g/data/v10/agdc/jez/c3/L1C  \
+    --limit-regions-file test-regions.txt \
+    --after-month 2022-04 \
+    -f l1cs-2022-05-02.txt
+
+```
+
+
 `eo3-package-wagl`: Convert and package WAGL HDF5 outputs.
 
  Needs the wagl dependencies group: `pip install .[wagl]`
