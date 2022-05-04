@@ -45,7 +45,15 @@ def test_subfolder_info_extraction():
         )
     )
     assert info == FolderInfo(2015, 12, None)
-    #
+
+    # A sinergise-like input path.
+    info = FolderInfo.for_path(
+        Path(
+            "/test_filter_folder_structure_i1/L1C/2019/2019-01/25S125E-30S130/"
+            "S2B_MSIL1C_20190111T000249_N0209_R030_T55HFA_20190111T011446/tileInfo.json"
+        )
+    )
+    assert info == FolderInfo(2019, 1, "55HFA")
 
     # A folder that doesn't follow standard layout will return no info
     info = FolderInfo.for_path(

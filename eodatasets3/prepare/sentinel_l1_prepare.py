@@ -343,7 +343,7 @@ class FolderInfo:
     # Standard layout is of the form: 'L1C/{yyyy}/{yyyy}-{mm}/{area}/S2*_{region}_{timestamp}(.zip)'
     STANDARD_SUBFOLDER_LAYOUT = re.compile(
         r"(\d{4})/(\d{4})-(\d{2})/[\dNESW]+-[\dNESW]+/"
-        r"S2[AB](?:_OPER_PRD)?_MSIL1C(?:_PDMC)?(?:_[a-zA-Z0-9]+){3}(?:_T([A-Z\d]+))?_[\dT]+(\.zip)?$"
+        r"S2[AB](?:_OPER_PRD)?_MSIL1C(?:_PDMC)?(?:_[a-zA-Z0-9]+){3}(?:_T([A-Z\d]+))?_[\dT]+(\.zip|/tileInfo\.json)?$"
     )
 
     @classmethod
@@ -575,7 +575,7 @@ def main(
                     if limit_regions or before_month or after_month:
                         if info is None:
                             raise ValueError(
-                                f"Cannot filter from non-standard folder layout: {input_path}"
+                                f"Cannot filter from non-standard folder layout: {ds_path}"
                             )
 
                         if limit_regions:
