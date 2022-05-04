@@ -20,6 +20,7 @@ from typing import Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 import attr
 import click
+from datacube.utils.uris import normalise_path
 from defusedxml import minidom
 
 from eodatasets3 import DatasetPrepare
@@ -398,7 +399,7 @@ class Job:
 @click.option("-v", "--verbose", is_flag=True)
 @click.argument(
     "datasets",
-    type=PathPath(exists=True, readable=True, writable=False, resolve_path=True),
+    type=PathPath(),
     nargs=-1,
 )
 @click.option(
@@ -520,6 +521,7 @@ def main(
         label="Scanning inputs",
     ) as progress:
         for i, input_path in enumerate(progress):
+            input_path = normalise_path(input_path)
             input_count += 1
 
             # Scan the input path for our key identifying files of a package.
@@ -607,7 +609,7 @@ def main(
                             continue
 
                 if output_base:
-                    output_folder = output_base.absolute()
+                    output_folder = normalise_path(output_base)
                     # If we want to copy the input folder hierarchy
                     if input_relative_to:
                         output_folder = output_folder / input_path.parent.relative_to(
