@@ -16,7 +16,7 @@ import zipfile
 from itertools import chain
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
+from typing import Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 import attr
 import click
@@ -480,6 +480,7 @@ class Job:
     required=False,
     type=YearMonth(),
 )
+@click.option("--dry-run", is_flag=True, default=False)
 def main(
     output_base: Optional[Path],
     input_relative_to: Optional[Path],
@@ -493,6 +494,7 @@ def main(
     limit_regions_file: Optional[Path],
     before_month: Optional[Tuple[int, int]],
     after_month: Optional[Tuple[int, int]],
+    dry_run: bool,
 ):
     if sys.argv[1] == "sentinel-l1c":
         warnings.warn(
@@ -509,141 +511,152 @@ def main(
     extra_datasets = datasets_path.read_text().splitlines() if datasets_path else []
 
     input_count = 0
-    jobs: Set[Job] = set()
-    for i, input_path in enumerate(
-        chain(datasets, (Path(p.strip()) for p in extra_datasets))
-    ):
-        input_count += 1
-        info = FolderInfo.for_path(input_path)
+    jobs: List[Job] = []
+    with click.progressbar(
+        chain(datasets, (Path(p.strip()) for p in extra_datasets)),
+        length=len(datasets) + len(extra_datasets),
+        label="Scanning inputs",
+    ) as progress:
+        for i, input_path in enumerate(progress):
+            input_count += 1
+            info = FolderInfo.for_path(input_path)
 
-        # Skip regions that are not in the limit?
-        if limit_regions or before_month or after_month:
-            if info is None:
+            # Skip regions that are not in the limit?
+            if limit_regions or before_month or after_month:
+                if info is None:
+                    raise ValueError(
+                        f"Cannot filter from non-standard folder layout: {input_path}"
+                    )
+
+                if limit_regions:
+                    if info.region_code in limit_regions:
+                        _LOG.debug(
+                            f"Skipping because region {info.region_code!r} is in region filter"
+                        )
+                        continue
+
+                if after_month is not None:
+                    year, month = after_month
+
+                    if info.year < year or (info.year == year and info.month < month):
+                        _LOG.debug(
+                            f"Skipping because year {info.year}-{info.month} is older than {year}-{month}"
+                        )
+                        continue
+                if before_month is not None:
+                    year, month = before_month
+
+                    if info.year > year or (info.year == year and info.month > month):
+                        _LOG.debug(
+                            f"Skipping because year {info.year}-{info.month} is newer than {year}-{month}"
+                        )
+                        continue
+
+            # The default input_relative path is a parent folder named 'L1C'.
+            if output_base and (i == 0 and input_relative_to is None):
+                for parent in input_path.parents:
+                    if parent.name.lower() == "l1c":
+                        input_relative_to = parent
+                        break
+                else:
+                    raise ValueError(
+                        "Unknown root folder for path subfolders. "
+                        "(Hint: specify --input-relative-to with a parent folder of the inputs. "
+                        "Outputs will use the same subfolder structure.)"
+                    )
+
+            in_out_paths = []
+
+            if provider == "sinergise.com" or not provider:
+                in_out_paths.extend(
+                    (
+                        "sinergise.com",
+                        # Dataset location is the metadata file itself.
+                        p,
+                        # Output is an inner metadata file, with the same name as the folder (usually S2A....).
+                        (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
+                    )
+                    for p in _rglob_with_self(input_path, "tileInfo.json")
+                )
+            if provider == "esa.int" or not provider:
+                in_out_paths.extend(
+                    (
+                        "esa.int",
+                        # Dataset location is the zip file
+                        p,
+                        # Metadata is a sibling file with a metadata suffix.
+                        p.with_suffix(".odc-metadata.yaml"),
+                    )
+                    for p in _rglob_with_self(input_path, "*.zip")
+                )
+
+            if not in_out_paths:
                 raise ValueError(
-                    f"Cannot filter from non-standard folder layout: {input_path}"
+                    f"No S2 datasets found in given path {input_path}. "
+                    f"Expected either Sinergise (productInfo.json) files or ESA zip files to be contained in it."
                 )
 
-            if limit_regions:
-                if info.region_code in limit_regions:
-                    _LOG.debug(
-                        f"Skipping because region {info.region_code!r} is in region filter"
-                    )
-                    continue
+            for producer, ds_path, output_yaml in in_out_paths:
+                if output_base:
+                    output_folder = output_base.absolute()
+                    # If we want to copy the input folder hierarchy
+                    if input_relative_to:
+                        output_folder = output_folder / input_path.parent.relative_to(
+                            input_relative_to
+                        )
 
-            if after_month is not None:
-                year, month = after_month
+                    output_yaml = output_folder / output_yaml.name
 
-                if info.year < year or (info.year == year and info.month < month):
-                    _LOG.debug(
-                        f"Skipping because year {info.year}-{info.month} is older than {year}-{month}"
-                    )
-                    continue
-            if before_month is not None:
-                year, month = before_month
+                if output_yaml.exists():
+                    if not overwrite_existing:
+                        _LOG.info("Output exists: skipping. %s", output_yaml)
+                        continue
 
-                if info.year > year or (info.year == year and info.month > month):
-                    _LOG.debug(
-                        f"Skipping because year {info.year}-{info.month} is newer than {year}-{month}"
-                    )
-                    continue
+                    _LOG.info("Output exists: overwriting %s", output_yaml)
 
-        # The default input_relative path is a parent folder named 'L1C'.
-        if output_base and (i == 0 and input_relative_to is None):
-            for parent in input_path.parents:
-                if parent.name.lower() == "l1c":
-                    input_relative_to = parent
-                    break
-            else:
-                raise ValueError(
-                    "Unknown root folder for path subfolders. "
-                    "(Hint: specify --input-relative-to with a parent folder of the inputs. "
-                    "Outputs will use the same subfolder structure.)"
+                jobs.append(
+                    Job(ds_path, output_yaml, producer, embed_location=embed_location)
                 )
 
-        in_out_paths = []
-
-        if provider == "sinergise.com" or not provider:
-            in_out_paths.extend(
-                (
-                    "sinergise.com",
-                    # Dataset location is the metadata file itself.
-                    p,
-                    # Output is an inner metadata file, with the same name as the folder (usually S2A....).
-                    (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
-                )
-                for p in _rglob_with_self(input_path, "tileInfo.json")
-            )
-        if provider == "esa.int" or not provider:
-            in_out_paths.extend(
-                (
-                    "esa.int",
-                    # Dataset location is the zip file
-                    p,
-                    # Metadata is a sibling file with a metadata suffix.
-                    p.with_suffix(".odc-metadata.yaml"),
-                )
-                for p in _rglob_with_self(input_path, "*.zip")
-            )
-
-        if not in_out_paths:
-            raise ValueError(
-                f"No S2 datasets found in given path {input_path}. "
-                f"Expected either Sinergise (productInfo.json) files or ESA zip files to be contained in it."
-            )
-
-        for producer, ds_path, output_yaml in in_out_paths:
-            if output_base:
-                output_folder = output_base.absolute()
-                # If we want to copy the input folder hierarchy
-                if input_relative_to:
-                    output_folder = output_folder / input_path.parent.relative_to(
-                        input_relative_to
-                    )
-
-                output_yaml = output_folder / output_yaml.name
-
-            if output_yaml.exists():
-                if not overwrite_existing:
-                    _LOG.info("Output exists: skipping. %s", output_yaml)
-                    continue
-
-                _LOG.info("Output exists: overwriting %s", output_yaml)
-
-            jobs.add(Job(ds_path, output_yaml, producer, embed_location=embed_location))
-
-    jobs = sorted(jobs)
     _LOG.info(
-        f"{len(jobs)} dataset(s) to process out of {input_count} inputs. Using {workers} workers"
+        f"{len(jobs)} dataset(s) to process out of {input_count} inputs. (using {workers} worker[s])"
     )
+
+    errors = 0
+
+    if dry_run:
+        _LOG.info("Dry run: not writing any files.")
+        sys.exit(0)
 
     # If only one process, call it directly.
     # (Multiprocessing makes debugging harder, so we prefer to make it optional)
-
-    errors = 0
     if workers == 1:
-        for job in jobs:
-            try:
-                uuid_, path = prepare_and_write(
-                    job.dataset_path,
-                    job.output_yaml_path,
-                    job.producer,
-                    embed_location=job.embed_location,
-                )
-                _LOG.info("Wrote dataset %s to %s", uuid_, path)
-            except Exception:
-                _LOG.exception("Failed to write dataset: %s", job)
-                errors += 1
-    else:
-        with Pool(processes=workers) as pool:
-            for res in pool.imap_unordered(_write_dataset_safe, jobs):
-                if isinstance(res, str):
-                    _LOG.error(res)
-                    errors += 1
-                else:
-                    uuid_, path = res
+        with click.progressbar(jobs, label="Preparing metadata") as progress:
+            for job in progress:
+                try:
+                    uuid_, path = prepare_and_write(
+                        job.dataset_path,
+                        job.output_yaml_path,
+                        job.producer,
+                        embed_location=job.embed_location,
+                    )
                     _LOG.info("Wrote dataset %s to %s", uuid_, path)
-            pool.close()
-            pool.join()
+                except Exception:
+                    _LOG.exception("Failed to write dataset: %s", job)
+                    errors += 1
+    else:
+        with click.progressbar(jobs, label="Preparing metadata") as progress:
+            with Pool(processes=workers) as pool:
+                for res in pool.imap_unordered(_write_dataset_safe, jobs):
+                    progress.update(1)
+                    if isinstance(res, str):
+                        _LOG.error(res)
+                        errors += 1
+                    else:
+                        uuid_, path = res
+                        _LOG.info("Wrote dataset %s to %s", uuid_, path)
+                pool.close()
+                pool.join()
 
     _LOG.debug(
         f"Completed {len(jobs)-errors} dataset(s) successfully, with {errors} failure(s)"
