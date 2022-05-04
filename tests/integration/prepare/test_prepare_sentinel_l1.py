@@ -37,6 +37,16 @@ def test_subfolder_info_extraction():
     )
     assert info == FolderInfo(2021, 7, "47QMB")
 
+    # Older dataset structure had no region code
+    info = FolderInfo.for_path(
+        Path(
+            "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2015/2015-12/30S170E-35S175E/"
+            "S2A_OPER_PRD_MSIL1C_PDMC_20151225T022834_R072_V20151224T223838_20151224T223838.zip"
+        )
+    )
+    assert info == FolderInfo(2015, 12, None)
+    #
+
     # A folder that doesn't follow standard layout will return no info
     info = FolderInfo.for_path(
         Path(
