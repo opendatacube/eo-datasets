@@ -521,54 +521,9 @@ def main(
     ) as progress:
         for i, input_path in enumerate(progress):
             input_count += 1
-            info = FolderInfo.for_path(input_path)
 
-            # Skip regions that are not in the limit?
-            if limit_regions or before_month or after_month:
-                if info is None:
-                    raise ValueError(
-                        f"Cannot filter from non-standard folder layout: {input_path}"
-                    )
-
-                if limit_regions:
-                    if info.region_code in limit_regions:
-                        _LOG.debug(
-                            f"Skipping because region {info.region_code!r} is in region filter"
-                        )
-                        continue
-
-                if after_month is not None:
-                    year, month = after_month
-
-                    if info.year < year or (info.year == year and info.month < month):
-                        _LOG.debug(
-                            f"Skipping because year {info.year}-{info.month} is older than {year}-{month}"
-                        )
-                        continue
-                if before_month is not None:
-                    year, month = before_month
-
-                    if info.year > year or (info.year == year and info.month > month):
-                        _LOG.debug(
-                            f"Skipping because year {info.year}-{info.month} is newer than {year}-{month}"
-                        )
-                        continue
-
-            # The default input_relative path is a parent folder named 'L1C'.
-            if output_base and (i == 0 and input_relative_to is None):
-                for parent in input_path.parents:
-                    if parent.name.lower() == "l1c":
-                        input_relative_to = parent
-                        break
-                else:
-                    raise ValueError(
-                        "Unknown root folder for path subfolders. "
-                        "(Hint: specify --input-relative-to with a parent folder of the inputs. "
-                        "Outputs will use the same subfolder structure.)"
-                    )
-
+            # Scan the input path for our key identifying files of a package.
             in_out_paths = []
-
             if provider == "sinergise.com" or not provider:
                 in_out_paths.extend(
                     (
@@ -598,7 +553,59 @@ def main(
                     f"Expected either Sinergise (productInfo.json) files or ESA zip files to be contained in it."
                 )
 
+            # The default input_relative path is a parent folder named 'L1C'.
+            if output_base and (i == 0 and input_relative_to is None):
+                for parent in input_path.parents:
+                    if parent.name.lower() == "l1c":
+                        input_relative_to = parent
+                        break
+                else:
+                    raise ValueError(
+                        "Unknown root folder for path subfolders. "
+                        "(Hint: specify --input-relative-to with a parent folder of the inputs. "
+                        "Outputs will use the same subfolder structure.)"
+                    )
+
             for producer, ds_path, output_yaml in in_out_paths:
+
+                # Filter based on metadata
+                info = FolderInfo.for_path(ds_path)
+
+                # Skip regions that are not in the limit?
+                if limit_regions or before_month or after_month:
+                    if info is None:
+                        raise ValueError(
+                            f"Cannot filter from non-standard folder layout: {input_path}"
+                        )
+
+                    if limit_regions:
+                        if info.region_code in limit_regions:
+                            _LOG.debug(
+                                f"Skipping because region {info.region_code!r} is in region filter"
+                            )
+                            continue
+
+                    if after_month is not None:
+                        year, month = after_month
+
+                        if info.year < year or (
+                            info.year == year and info.month < month
+                        ):
+                            _LOG.debug(
+                                f"Skipping because year {info.year}-{info.month} is older than {year}-{month}"
+                            )
+                            continue
+                    if before_month is not None:
+                        year, month = before_month
+
+                        if info.year > year or (
+                            info.year == year and info.month > month
+                        ):
+                            _LOG.debug(
+                                f"Skipping because year {info.year}-{info.month} is newer than {year}-{month}"
+                            )
+                            continue
+
                 if output_base:
                     output_folder = output_base.absolute()
                     # If we want to copy the input folder hierarchy
