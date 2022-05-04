@@ -337,12 +337,13 @@ class FolderInfo:
 
     year: int
     month: int
-    region_code: str
+    region_code: Optional[str]
 
     # Compiled regexp for extracting year, month and region
     # Standard layout is of the form: 'L1C/{yyyy}/{yyyy}-{mm}/{area}/S2*_{region}_{timestamp}(.zip)'
     STANDARD_SUBFOLDER_LAYOUT = re.compile(
-        r"(\d{4})/(\d{4})-(\d{2})/[\dNESW]+-[\dNESW]+/S2[AB]_MSIL1C_[^/]+_T([A-Z\d]+)_[\dT]+(\.zip)?$"
+        r"(\d{4})/(\d{4})-(\d{2})/[\dNESW]+-[\dNESW]+/"
+        r"S2[AB](?:_OPER_PRD)?_MSIL1C(?:_PDMC)?(?:_[a-zA-Z0-9]+){3}(?:_T([A-Z\d]+))?_[\dT]+(\.zip)?$"
     )
 
     @classmethod
@@ -460,7 +461,8 @@ class Job:
 )
 @click.option(
     "--limit-regions-file",
-    help="A file containing the list of region codes to limit the scan to",
+    help="A file containing the list of region codes to limit the scan to. "
+    "(Note that some older ESA datasets have no region code, and will not match any region here.)",
     required=False,
     type=PathPath(
         exists=True, readable=True, dir_okay=False, file_okay=True, resolve_path=True
