@@ -304,9 +304,16 @@ def _extract_esa_fields(dataset, p) -> Iterable[Path]:
         p.note_accessory_file("metadata:s2_tile", tile_md)
 
         user_product_md = one("MTD_MSIL1C.xml")
-        p.properties.update(
-            process_user_product_metadata(z.read(user_product_md).decode("utf-8"))
-        )
+        for prop, value in process_user_product_metadata(
+            z.read(user_product_md).decode("utf-8")
+        ).items():
+            if prop in p.properties:
+                _LOG.debug(
+                    f"Not overridding tile metadata {prop!r} with product metadata"
+                )
+            else:
+                p.properties[prop] = value
+
         p.note_accessory_file("metadata:s2_user_product", user_product_md)
 
         return [Path(p) for p in z.namelist() if "IMG_DATA" in p and p.endswith(".jp2")]
