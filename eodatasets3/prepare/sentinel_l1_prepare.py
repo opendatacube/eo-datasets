@@ -529,45 +529,54 @@ def main(
                 "Outputs will use the same subfolder structure.)"
             )
 
-    _LOG.info(f"{len(datasets)} paths(s) to process. (using {workers} worker[s])")
+    _LOG.info(f"{len(datasets)} paths(s) to process using {workers} worker(s))")
+
+    def files_in_path(input_path: Path):
+        """
+        Scan the input path for our key identifying files of a package.
+        """
+        found_something = False
+        if provider == "sinergise.com" or not provider:
+            for p in _rglob_with_self(input_path, "tileInfo.json"):
+                found_something = True
+                yield (
+                    "sinergise.com",
+                    # Dataset location is the metadata file itself.
+                    p,
+                    # Output is an inner metadata file, with the same name as the folder (usually S2A....).
+                    (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
+                )
+        if provider == "esa.int" or not provider:
+            for p in _rglob_with_self(input_path, "*.zip"):
+                found_something = True
+                yield (
+                    "esa.int",
+                    # Dataset location is the zip file
+                    p,
+                    # Metadata is a sibling file with a metadata suffix.
+                    p.with_suffix(".odc-metadata.yaml"),
+                )
+        if not found_something:
+            raise ValueError(
+                f"No S2 datasets found in given path {input_path}. "
+                f"Expected either Sinergise (productInfo.json) files or ESA zip files to be contained in it."
+            )
 
     def find_jobs() -> Iterable[Job]:
-        with click.progressbar(datasets, label="Preparing metadata") as progress:
+        with click.progressbar(
+            datasets, label="Preparing metadata", show_pos=True
+        ) as progress:
             for i, input_path in enumerate(progress):
                 input_path = normalise_path(input_path)
 
-                # Scan the input path for our key identifying files of a package.
-                in_out_paths = []
-                if provider == "sinergise.com" or not provider:
-                    in_out_paths.extend(
-                        (
-                            "sinergise.com",
-                            # Dataset location is the metadata file itself.
-                            p,
-                            # Output is an inner metadata file, with the same name as the folder (usually S2A....).
-                            (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
-                        )
-                        for p in _rglob_with_self(input_path, "tileInfo.json")
-                    )
-                if provider == "esa.int" or not provider:
-                    in_out_paths.extend(
-                        (
-                            "esa.int",
-                            # Dataset location is the zip file
-                            p,
-                            # Metadata is a sibling file with a metadata suffix.
-                            p.with_suffix(".odc-metadata.yaml"),
-                        )
-                        for p in _rglob_with_self(input_path, "*.zip")
-                    )
+                first = True
+                for producer, ds_path, output_yaml in files_in_path(input_path):
+                    # Make sure we tick progress on extra datasets that were found.
+                    if not first:
+                        progress.length += 1
+                        progress.update(1)
+                        first = False
 
-                if not in_out_paths:
-                    raise ValueError(
-                        f"No S2 datasets found in given path {input_path}. "
-                        f"Expected either Sinergise (productInfo.json) files or ESA zip files to be contained in it."
-                    )
-
-                for producer, ds_path, output_yaml in in_out_paths:
                     # Filter based on metadata
                     info = FolderInfo.for_path(ds_path)
 
