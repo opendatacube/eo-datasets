@@ -503,7 +503,12 @@ class Job:
     default=False,
     help="Index newly-generated metadata into the configured datacube",
 )
-@click.option("--dry-run", is_flag=True, default=False)
+@click.option(
+    "--dry-run",
+    help="Show what would be created, but don't create anything",
+    is_flag=True,
+    default=False,
+)
 def main(
     output_base: Optional[Path],
     input_relative_to: Optional[Path],
