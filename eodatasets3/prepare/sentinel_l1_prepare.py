@@ -19,10 +19,14 @@ from typing import Dict, Iterable, Mapping, Optional, Tuple, Union
 
 import attr
 import click
+from datacube.config import LocalConfig
+from datacube.index import index_connect
+from datacube.model import Dataset
+from datacube.ui.click import config_option, environment_option
 from datacube.utils.uris import normalise_path
 from defusedxml import minidom
 
-from eodatasets3 import DatasetPrepare
+from eodatasets3 import DatasetDoc, DatasetPrepare, serialise
 from eodatasets3.properties import Eo3Interface
 from eodatasets3.ui import PathPath
 
@@ -181,11 +185,11 @@ def _get_stable_id(p: Eo3Interface) -> uuid.UUID:
 
 def prepare_and_write(
     dataset_location: Path,
-    output_yaml: Path,
+    output_yaml: Optional[Path],
     producer: str,
     embed_location: bool = None,
-) -> Tuple[uuid.UUID, Path]:
-    if embed_location is None:
+) -> Tuple[DatasetDoc, Path]:
+    if embed_location is None and output_yaml:
         # Default to embedding the location if they're not in the same folder.
         embed_location = dataset_location.parent != output_yaml.parent
         _LOG.debug(
@@ -239,7 +243,11 @@ def prepare_and_write(
                 relative_to_dataset_location=True,
             )
 
-        return p.done(embed_location=embed_location)
+        dataset_id, metadata_path = p.done(embed_location=embed_location)
+        doc = serialise.from_doc(
+            p.written_dataset_doc, skip_validation=True, normalise_properties=False
+        )
+        return doc, metadata_path
 
 
 def _get_platform_name(p: Mapping) -> str:
@@ -307,11 +315,8 @@ def _extract_esa_fields(dataset, p) -> Iterable[Path]:
         for prop, value in process_user_product_metadata(
             z.read(user_product_md).decode("utf-8")
         ).items():
-            if prop in p.properties:
-                _LOG.debug(
-                    f"Not overridding tile metadata {prop!r} with product metadata"
-                )
-            else:
+            # We don't want to override properties that came from the (more-specific) tile metadata.
+            if prop not in p.properties:
                 p.properties[prop] = value
 
         p.note_accessory_file("metadata:s2_user_product", user_product_md)
@@ -489,6 +494,15 @@ class Job:
     required=False,
     type=YearMonth(),
 )
+@environment_option
+@config_option
+@click.option(
+    "--index",
+    "index_to_odc",
+    is_flag=True,
+    default=False,
+    help="Index newly-generated metadata into the configured datacube",
+)
 @click.option("--dry-run", is_flag=True, default=False)
 def main(
     output_base: Optional[Path],
@@ -504,6 +518,8 @@ def main(
     before_month: Optional[Tuple[int, int]],
     after_month: Optional[Tuple[int, int]],
     dry_run: bool,
+    index_to_odc: bool,
+    local_config: LocalConfig = None,
 ):
     if sys.argv[1] == "sentinel-l1c":
         warnings.warn(
@@ -652,39 +668,73 @@ def main(
     # If only one process, call it directly.
     # (Multiprocessing makes debugging harder, so we prefer to make it optional)
     successes = 0
-    if workers == 1 or dry_run:
-        for job in find_jobs():
-            try:
-                if dry_run:
-                    _LOG.info(
-                        "Would write dataset %s to %s",
-                        job.dataset_path,
-                        job.output_yaml_path,
-                    )
-                else:
-                    uuid_, path = prepare_and_write(
-                        job.dataset_path,
-                        job.output_yaml_path,
-                        job.producer,
-                        embed_location=job.embed_location,
-                    )
-                    _LOG.debug("Wrote dataset %s to %s", uuid_, path)
-                successes += 1
-            except Exception:
-                _LOG.exception("Failed to write dataset: %s", job)
-                errors += 1
+
+    # Are we indexing on success?
+    index = None
+    if index_to_odc:
+        _LOG.info("Indexing new datasets")
+        _LOG.debug("Indexing to %s", local_config)
+        index = index_connect(local_config, application_name="s2-prepare")
+        products = {}
+
+        def on_success(dataset: DatasetDoc, dataset_path: Path):
+            """
+            Index the dataset
+            """
+            product_name = dataset.product.name
+            product = products.get(product_name)
+            if not product:
+                product = index.products.get_by_name(product_name)
+                if not product:
+                    raise ValueError(f"Product {product_name} not found in ODC index")
+                products[product_name] = product
+
+            index.datasets.add(Dataset(product, serialise.to_doc(dataset)))
+            _LOG.debug("Wrote and indexed dataset %s to %s", dataset.id, dataset_path)
+
     else:
-        with Pool(processes=workers) as pool:
-            for res in pool.imap_unordered(_write_dataset_safe, find_jobs()):
-                if isinstance(res, str):
-                    _LOG.error(res)
-                    errors += 1
-                else:
-                    uuid_, path = res
-                    _LOG.debug("Wrote dataset %s to %s", uuid_, path)
+
+        def on_success(dataset: DatasetDoc, dataset_path: Path):
+            """Nothing extra"""
+            _LOG.debug("Wrote dataset %s to %s", dataset.id, dataset_path)
+
+    try:
+        if workers == 1 or dry_run:
+            for job in find_jobs():
+                try:
+                    if dry_run:
+                        _LOG.info(
+                            "Would write dataset %s to %s",
+                            job.dataset_path,
+                            job.output_yaml_path,
+                        )
+                    else:
+                        dataset, path = prepare_and_write(
+                            job.dataset_path,
+                            job.output_yaml_path,
+                            job.producer,
+                            embed_location=job.embed_location,
+                        )
+                        on_success(dataset, path)
                     successes += 1
-            pool.close()
-            pool.join()
+                except Exception:
+                    _LOG.exception("Failed to write dataset: %s", job)
+                    errors += 1
+        else:
+            with Pool(processes=workers) as pool:
+                for res in pool.imap_unordered(_write_dataset_safe, find_jobs()):
+                    if isinstance(res, str):
+                        _LOG.error(res)
+                        errors += 1
+                    else:
+                        dataset, path = res
+                        on_success(dataset, path)
+                        successes += 1
+                pool.close()
+                pool.join()
+    finally:
+        if index is not None:
+            index.close()
 
     _LOG.info(
         f"Completed {successes} dataset(s) successfully, with {errors} failure(s)"
@@ -692,7 +742,7 @@ def main(
     sys.exit(errors)
 
 
-def _write_dataset_safe(job: Job) -> Union[Tuple[uuid.UUID, Path], str]:
+def _write_dataset_safe(job: Job) -> Union[Tuple[DatasetDoc, Path], str]:
     """
     A wrapper around `prepare_and_write` that catches exceptions and makes them
     serialisable as error strings.
@@ -700,13 +750,13 @@ def _write_dataset_safe(job: Job) -> Union[Tuple[uuid.UUID, Path], str]:
     (for use in multiprocessing pools etc)
     """
     try:
-        uuid_, path = prepare_and_write(
+        dataset, path = prepare_and_write(
             job.dataset_path,
             job.output_yaml_path,
             job.producer,
             embed_location=job.embed_location,
         )
-        return uuid_, path
+        return dataset, path
     except Exception:
         return f"Failed to write dataset: {job}\n" + traceback.format_exc()
 
