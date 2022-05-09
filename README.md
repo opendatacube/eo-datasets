@@ -212,7 +212,8 @@ Options:
   -C, --config, --config_file TEXT
   --index                         Index newly-generated metadata into the
                                   configured datacube
-  --dry-run
+  --dry-run                       Show what would be created, but don't create
+                                  anything
   --help                          Show this message and exit.
 
 ```
