@@ -185,11 +185,11 @@ def _get_stable_id(p: Eo3Interface) -> uuid.UUID:
 
 def prepare_and_write(
     dataset_location: Path,
-    output_yaml: Optional[Path],
+    output_yaml: Path,
     producer: str,
     embed_location: bool = None,
 ) -> Tuple[DatasetDoc, Path]:
-    if embed_location is None and output_yaml:
+    if embed_location is None:
         # Default to embedding the location if they're not in the same folder.
         embed_location = dataset_location.parent != output_yaml.parent
         _LOG.debug(
