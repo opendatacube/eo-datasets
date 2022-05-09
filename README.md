@@ -174,15 +174,16 @@ or region, if the inputs follow a common directory structure:
 
 ```
 ❯ eo3-prepare sentinel-l1 --help
-Usage: eo3-prepare sentinel-l1 [OPTIONS] [DATASETS]...
-
   Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise or
-  esa.
+  ESA.
 
   Takes ESA zipped datasets or Sinergise dataset directories
 
 Options:
   -v, --verbose
+  -f, --datasets-path FILE        A file to read input dataset paths from, one
+                                  per line
+  -j, --jobs INTEGER              Number of workers to run in parallel
   --overwrite-existing / --skip-existing
                                   Overwrite if exists (otherwise skip)
   --embed-location / --no-embed-location
@@ -198,14 +199,22 @@ Options:
   --input-relative-to DIRECTORY   Input root folder that should be used for
                                   the subfolder hierarchy in the output-base
   --limit-regions-file FILE       A file containing the list of region codes
-                                  to limit the scan to
+                                  to limit the scan to. (Note that some older
+                                  ESA datasets have no region code, and will
+                                  not match any region here.)
   --after-month YEAR-MONTH        Limit the scan to datasets newer than a
                                   given month (expressed as {year}-{month}, eg
                                   '2010-01')
   --before-month YEAR-MONTH       Limit the scan to datasets older than the
                                   given month (expressed as {year}-{month}, eg
                                   '2010-01')
+  -E, --env TEXT
+  -C, --config, --config_file TEXT
+  --index                         Index newly-generated metadata into the
+                                  configured datacube
+  --dry-run
   --help                          Show this message and exit.
+
 ```
 
 An example of preparing metadata in a separate directory (not alongside the datasets) at NCI
