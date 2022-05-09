@@ -678,7 +678,8 @@ def main(
     index = None
     if index_to_odc:
         _LOG.info("Indexing new datasets")
-        _LOG.debug("Indexing to %s", local_config)
+        if local_config:
+            _LOG.debug("Indexing to %s", local_config)
         index = index_connect(local_config, application_name="s2-prepare")
         products = {}
 
