@@ -215,12 +215,11 @@ can be as follows:
 module use -a /g/data/v10/private/modules/modulefiles /g/data/v10/public/modules/modulefiles
 module load eodatasets3
 
-# With a full list of input paths, 4 workers, and separate output directory:
-eo3-prepare sentinel-l1 -j 4 --output-base my-metadata-directory
-   -f l1cs-2022-05-02.txt
+# With a folder of input paths, 4 workers, and separate output directory:
+eo3-prepare sentinel-l1 -j 4 --output-base /output/metadata/directory \
   /g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2021
 
-# Filtered to a certain region list and recent months:
+# Using a file for input paths. Filter them to a certain region list and recent months:
 eo3-prepare sentinel-l1 \
     --output-base /g/data/v10/agdc/jez/c3/L1C  \
     --limit-regions-file test-regions.txt \
