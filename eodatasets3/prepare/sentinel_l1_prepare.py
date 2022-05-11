@@ -472,8 +472,8 @@ class Job:
     ),
 )
 @click.option(
-    "--limit-regions-file",
-    help="A file containing the list of region codes to limit the scan to. "
+    "--only-regions-in-file",
+    help="Only process datasets in the given regions. Expects a file with one region code per line. "
     "(Note that some older ESA datasets have no region code, and will not match any region here.)",
     required=False,
     type=PathPath(
@@ -519,7 +519,7 @@ def main(
     verbose: bool,
     workers: int,
     embed_location: Optional[bool],
-    limit_regions_file: Optional[Path],
+    only_regions_in_file: Optional[Path],
     before_month: Optional[Tuple[int, int]],
     after_month: Optional[Tuple[int, int]],
     dry_run: bool,
@@ -534,9 +534,9 @@ def main(
     logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s")
     _LOG.setLevel(logging.DEBUG if verbose else logging.INFO)
 
-    limit_regions = None
-    if limit_regions_file:
-        limit_regions = set(limit_regions_file.read_text().splitlines())
+    included_regions = None
+    if only_regions_in_file:
+        included_regions = set(only_regions_in_file.read_text().splitlines())
 
     if datasets_path:
         datasets = [
@@ -609,16 +609,16 @@ def main(
                     info = FolderInfo.for_path(ds_path)
 
                     # Skip regions that are not in the limit?
-                    if limit_regions or before_month or after_month:
+                    if included_regions or before_month or after_month:
                         if info is None:
                             raise ValueError(
                                 f"Cannot filter from non-standard folder layout: {ds_path}"
                             )
 
-                        if limit_regions:
-                            if info.region_code in limit_regions:
+                        if included_regions:
+                            if info.region_code not in included_regions:
                                 _LOG.debug(
-                                    f"Skipping because region {info.region_code!r} is in region filter"
+                                    f"Skipping because region {info.region_code!r} is not in region list"
                                 )
                                 continue
 
