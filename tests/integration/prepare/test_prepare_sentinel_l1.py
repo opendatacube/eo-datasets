@@ -431,8 +431,12 @@ def test_filter_folder_structure_info(
     else:
         expected_metadata_doc["location"] = f"zip:{input_dataset_path}!/"
 
+    # A file with the correct region
     regions_file = tmp_path / "our-regions.txt"
     regions_file.write_text("\n".join(["55HFA", "55HFB"]))
+    # A file that doesn't have our region.
+    non_regions_file = tmp_path / "our-non-regions.txt"
+    non_regions_file.write_text("\n".join(["55HFB", "55HFC"]))
 
     # Sanity check: no output exists yet.
     assert not expected_metadata_path.exists()
@@ -440,12 +444,28 @@ def test_filter_folder_structure_info(
     # Run with filters that skips this dataset:
     # (it should do nothing)
 
-    # Filter the region
+    # Whitelist including the correct region
     res = run_prepare_cli(
         sentinel_l1_prepare.main,
         # It contains our region, so it should filter!
-        "--limit-regions-file",
+        "--only-regions-in-file",
         regions_file,
+        # "Put the output in a different location":
+        "--output-base",
+        output_folder,
+        input_dataset_path,
+    )
+    assert (
+        expected_metadata_path.exists()
+    ), f"Expected dataset to be processed (it's within the region file)! {res.output}"
+    expected_metadata_path.unlink()
+
+    # Run with a region list that doesn't include our dataset region.
+    res = run_prepare_cli(
+        sentinel_l1_prepare.main,
+        # It contains our region, so it should filter!
+        "--only-regions-in-file",
+        non_regions_file,
         # "Put the output in a different location":
         "--output-base",
         output_folder,
