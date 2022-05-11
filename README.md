@@ -174,6 +174,8 @@ or region, if the inputs follow a common directory structure:
 
 ```
 ❯ eo3-prepare sentinel-l1 --help
+Usage: eo3-prepare sentinel-l1 [OPTIONS] [DATASETS]...
+
   Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise or
   ESA.
 
@@ -198,10 +200,11 @@ Options:
                                   instead of alongside each dataset
   --input-relative-to DIRECTORY   Input root folder that should be used for
                                   the subfolder hierarchy in the output-base
-  --limit-regions-file FILE       A file containing the list of region codes
-                                  to limit the scan to. (Note that some older
-                                  ESA datasets have no region code, and will
-                                  not match any region here.)
+  --only-regions-in-file FILE     Only process datasets in the given regions.
+                                  Expects a file with one region code per
+                                  line. (Note that some older ESA datasets
+                                  have no region code, and will not match any
+                                  region here.)
   --after-month YEAR-MONTH        Limit the scan to datasets newer than a
                                   given month (expressed as {year}-{month}, eg
                                   '2010-01')
@@ -215,7 +218,6 @@ Options:
   --dry-run                       Show what would be created, but don't create
                                   anything
   --help                          Show this message and exit.
-
 ```
 
 An example of preparing metadata in a separate directory (not alongside the datasets) at NCI
@@ -232,7 +234,7 @@ eo3-prepare sentinel-l1 -j 4 --output-base /output/metadata/directory \
 # Using a file for input paths. Filter them to a certain region list and recent months:
 eo3-prepare sentinel-l1 \
     --output-base /g/data/v10/agdc/jez/c3/L1C  \
-    --limit-regions-file test-regions.txt \
+    --only-regions-in-file test-regions.txt \
     --after-month 2022-04 \
     -f l1cs-2022-05-02.txt
 
