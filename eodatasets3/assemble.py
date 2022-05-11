@@ -28,7 +28,7 @@ from eodatasets3.images import FileWrite, GridSpec, MeasurementBundler, ValidDat
 from eodatasets3.model import AccessoryDoc, DatasetDoc, Location, ProductDoc
 from eodatasets3.names import NamingConventions, dc_uris, namer, resolve_location
 from eodatasets3.properties import Eo3Dict, Eo3Interface
-from eodatasets3.validate import Level, ValidationMessage
+from eodatasets3.validate import Level, ValidationExpectations, ValidationMessage
 from eodatasets3.verify import PackageChecksum
 
 
@@ -812,6 +812,7 @@ class DatasetPrepare(Eo3Interface):
         validate_correctness: bool = True,
         sort_measurements: bool = True,
         expect_geometry: bool = True,
+        expect: ValidationExpectations = None,
     ) -> DatasetDoc:
         """
         Create the metadata doc as an in-memory :class:`eodatasets3.DatasetDoc` instance.
@@ -916,7 +917,9 @@ class DatasetPrepare(Eo3Interface):
 
         if validate_correctness:
             doc = serialise.to_doc(dataset)
-            for m in validate.validate_dataset(doc, expect_geometry=expect_geometry):
+            for m in validate.validate_dataset(
+                doc, expect or ValidationExpectations(require_geometry=expect_geometry)
+            ):
                 if m.level in (Level.info, Level.warning):
                     warnings.warn(IncompleteDatasetWarning(m))
                 elif m.level == Level.error:

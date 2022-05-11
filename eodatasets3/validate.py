@@ -27,11 +27,13 @@ from urllib.parse import urljoin, urlparse
 from urllib.request import urlopen
 
 import attr
+import cattr
 import ciso8601
 import click
 import numpy as np
 import rasterio
 import toolz
+from attr import Factory, define, field, frozen
 from boltons.iterutils import get_path
 from click import echo, secho, style
 from datacube import Datacube
@@ -48,9 +50,11 @@ from eodatasets3.model import DatasetDoc
 from eodatasets3.ui import bool_style, is_absolute, uri_resolve
 from eodatasets3.utils import EO3_SCHEMA, default_utc
 
-DEFAULT_NULLABLE_FIELDS = [
-    "label",
-]
+DEFAULT_NULLABLE_FIELDS = ("label",)
+DEFAULT_OPTIONAL_FIELDS = (
+    # Older product do not have this field at all, and when not specified it is considered stable.
+    "dataset_maturity",
+)
 
 
 class Level(enum.Enum):
@@ -135,12 +139,14 @@ def guess_kind_from_contents(doc: Dict):
     return None
 
 
-@attr.s(auto_attribs=True, frozen=True)
+@frozen
 class ValidationMessage:
     level: Level
     code: str
     reason: str
     hint: str = None
+    #: What was assumed when validating this? Eg: dict(product='ls7_nbar', metadata_type='eo3')
+    context: dict = None
 
     def __str__(self) -> str:
         hint = ""
@@ -163,7 +169,52 @@ def _error(code: str, reason: str, hint: str = None):
 
 ValidationMessages = Generator[ValidationMessage, None, None]
 
-_default = object()
+
+@frozen(init=True)
+class ValidationExpectations:
+    """
+    What expectations do we have when validating this dataset?
+    """
+
+    #: Allow these extra measurement names to be included in the dataset.
+    #: (ODC allows unlisted measurement names, but it's usually a mistake)
+    allow_extra_measurements: Sequence[str] = ()
+
+    #: Do we expect full geometry information in every dataset?
+    #: (It's optional in ODC, but often a mistake to miss it)
+    require_geometry: bool = True
+
+    #: Are any of the configured fields nullable?
+    allow_nullable_fields: Sequence[str] = field(
+        default=Factory(lambda: DEFAULT_NULLABLE_FIELDS)
+    )
+    #: Can any of the fields be completely omitted from the document?
+    allow_missing_fields: Sequence[str] = field(
+        default=Factory(lambda: DEFAULT_OPTIONAL_FIELDS)
+    )
+
+    def with_document_overrides(self, doc: Dict):
+        """
+        Return an instance with any overrides from the given document.
+        """
+        if "default_allowances" not in doc:
+            return self
+
+        overridden_values = {**attr.asdict(self), **doc["default_allowances"]}
+        # Merge, don't replace, these lists.
+        overridden_values["allow_nullable_fields"] = list(
+            {*overridden_values["allow_nullable_fields"], *self.allow_nullable_fields}
+        )
+        overridden_values["allow_missing_fields"] = list(
+            {*overridden_values["allow_missing_fields"], *self.allow_missing_fields}
+        )
+        overridden_values["allow_extra_measurements"] = list(
+            {
+                *overridden_values["allow_extra_measurements"],
+                *self.allow_extra_measurements,
+            }
+        )
+        return cattr.structure(overridden_values, self.__class__)
 
 
 def validate_dataset(
@@ -172,9 +223,7 @@ def validate_dataset(
     metadata_type_definition: Optional[Dict] = None,
     thorough: bool = False,
     readable_location: Union[str, Path] = None,
-    expect_extra_measurements: bool = False,
-    expect_geometry: bool = True,
-    nullable_fields: Iterable[str] = _default,
+    expect: ValidationExpectations = None,
 ) -> ValidationMessages:
     """
     Validate a dataset document, optionally against the given product.
@@ -185,15 +234,34 @@ def validate_dataset(
     :param product_definition: Optionally check that the dataset matches this product definition.
     :param thorough: Open the imagery too, to check that data types etc match.
     :param readable_location: Dataset location to use, if not the metadata path.
-    :param expect_extra_measurements:
-            Allow some dataset measurements to be missing from the product definition.
-            This is (deliberately) allowed by ODC, but often a mistake.
-            This flag disables the warning.
-    :param nullable_fields: Field names that are allowed to be missing from datasets.
-                  Defaults to DEFAULT_NULLABLE_FIELDS
+    :param expect: Where can we be lenient in validation?
     """
-    if nullable_fields is _default:
-        nullable_fields = DEFAULT_NULLABLE_FIELDS
+    validation_context = {}
+    expect = expect or ValidationExpectations()
+    if metadata_type_definition is not None:
+        expect = expect.with_document_overrides(metadata_type_definition)
+        validation_context["type"] = metadata_type_definition["name"]
+    if product_definition is not None:
+        expect = expect.with_document_overrides(product_definition)
+        validation_context["product"] = product_definition["name"]
+
+    # noinspection PyShadowingNames
+    def _info(code: str, reason: str, hint: str = None):
+        return ValidationMessage(
+            Level.info, code, reason, hint=hint, context=validation_context
+        )
+
+    # noinspection PyShadowingNames
+    def _warning(code: str, reason: str, hint: str = None):
+        return ValidationMessage(
+            Level.warning, code, reason, hint=hint, context=validation_context
+        )
+
+    # noinspection PyShadowingNames
+    def _error(code: str, reason: str, hint: str = None):
+        return ValidationMessage(
+            Level.error, code, reason, hint=hint, context=validation_context
+        )
 
     schema = doc.get("$schema")
     if schema is None:
@@ -230,7 +298,7 @@ def validate_dataset(
     if not dataset.product.href:
         _info("product_href", "A url (href) is recommended for products")
 
-    yield from _validate_geo(dataset, expect_geometry=expect_geometry)
+    yield from _validate_geo(dataset, expect_geometry=expect.require_geometry)
 
     # Note that a dataset may have no measurements (eg. telemetry data).
     # (TODO: a stricter mode for when we know we should have geo and measurement info)
@@ -283,7 +351,12 @@ def validate_dataset(
         measurements_not_in_product = set(dataset.measurements.keys()).difference(
             {m["name"] for m in product_definition.get("measurements") or ()}
         )
-        if (not expect_extra_measurements) and measurements_not_in_product:
+        # Remove the measurements that are allowed to be extra.
+        measurements_not_in_product.difference_update(
+            expect.allow_extra_measurements or set()
+        )
+
+        if measurements_not_in_product:
             things = ", ".join(sorted(measurements_not_in_product))
             yield _warning(
                 "extra_measurements",
@@ -296,20 +369,35 @@ def validate_dataset(
         # We need to do the same, as the fields will be read from the storage.
         prepared_doc = prep_eo3(doc)
 
+        all_nullable_fields = tuple(expect.allow_nullable_fields) + tuple(
+            expect.allow_missing_fields
+        )
         for field_name, offsets in _get_field_offsets(
             metadata_type=metadata_type_definition
         ):
-            if not any(_has_offset(prepared_doc, offset) for offset in offsets):
+            if (
+                # If a field is required...
+                (field_name not in expect.allow_missing_fields)
+                and
+                # ... and none of its offsets are in the document
+                not any(_has_offset(prepared_doc, offset) for offset in offsets)
+            ):
+                # ... warn them.
+                product_name = (
+                    product_definition.get("name")
+                    if product_definition
+                    else dataset.product.name
+                )
                 readable_offsets = " or ".join("->".join(offset) for offset in offsets)
                 yield _warning(
                     "missing_field",
                     f"Dataset is missing field {field_name!r} "
-                    f"for type {metadata_type_definition['name']!r} ",
+                    f"for type {metadata_type_definition['name']!r}",
                     hint=f"Expected at {readable_offsets}",
                 )
                 continue
 
-            if field_name not in nullable_fields:
+            if field_name not in all_nullable_fields:
                 value = None
                 for offset in offsets:
                     value = toolz.get_in(offset, prepared_doc)
@@ -473,8 +561,8 @@ def validate_product(doc: Dict) -> ValidationMessages:
                     f"Measurement {measurement_name!r} has a duplicate alias named {duplicate_name!r}",
                 )
 
-            for field in these_names:
-                seen_names_and_aliases[field].append(measurement_name)
+            for field_ in these_names:
+                seen_names_and_aliases[field_].append(measurement_name)
 
 
 def validate_metadata_type(doc: Dict) -> ValidationMessages:
@@ -536,7 +624,7 @@ def numpy_value_fits_dtype(value, dtype):
         return np.all(np.array([value], dtype=dtype) == [value])
 
 
-@attr.s(auto_attribs=True)
+@define
 class ExpectedMeasurement:
     name: str
     dtype: str
@@ -554,9 +642,9 @@ FieldNameOffsetS = Tuple[str, Set[List[str]]]
 def validate_paths(
     paths: List[str],
     thorough: bool = False,
-    expect_extra_measurements: bool = False,
     product_definitions: Dict[str, Dict] = None,
     metadata_type_definitions: Dict[str, Dict] = None,
+    expect: ValidationExpectations = None,
 ) -> Generator[Tuple[str, List[ValidationMessage]], None, None]:
     """Validate the list of paths. Product documents can be specified before their datasets."""
 
@@ -590,7 +678,7 @@ def validate_paths(
                     products,
                     metadata_types,
                     thorough,
-                    expect_extra_measurements,
+                    expect=expect,
                 )
             )
         elif kind == DocKind.metadata_type:
@@ -629,23 +717,23 @@ def _get_field_offsets(metadata_type: Dict) -> Iterable[FieldNameOffsetS]:
     search_fields = dataset_section["search_fields"]
 
     # The fixed fields of ODC. 'id', 'label', etc.
-    for field in dataset_section:
-        if field == "search_fields":
+    for field_ in dataset_section:
+        if field_ == "search_fields":
             continue
 
-        offset = dataset_section[field]
+        offset = dataset_section[field_]
         if offset is not None:
-            yield field, [offset]
+            yield field_, [offset]
 
     # The configurable search fields.
-    for field, spec in search_fields.items():
+    for field_, spec in search_fields.items():
         offsets = []
         if "offset" in spec:
             offsets.append(spec["offset"])
         offsets.extend(spec.get("min_offset", []))
         offsets.extend(spec.get("max_offset", []))
 
-        yield field, offsets
+        yield field_, offsets
 
 
 def _readable_doc_extension(uri: str):
@@ -731,7 +819,7 @@ def validate_eo3_doc(
     products: Dict[str, Dict],
     metadata_types: Dict[str, Dict],
     thorough: bool = False,
-    expect_extra_measurements=False,
+    expect: ValidationExpectations = None,
 ) -> List[ValidationMessage]:
     messages = []
 
@@ -769,7 +857,7 @@ def validate_eo3_doc(
             readable_location=location,
             thorough=thorough,
             metadata_type_definition=metadata_types.get(metadata_type),
-            expect_extra_measurements=expect_extra_measurements,
+            expect=expect,
         )
     )
     return messages
@@ -1006,7 +1094,7 @@ def _validate_geo(dataset: DatasetDoc, expect_geometry: bool = True):
                 )
 
 
-def _has_some_geo(dataset):
+def _has_some_geo(dataset: DatasetDoc) -> bool:
     return dataset.geometry is not None or dataset.grids or dataset.crs
 
 
@@ -1110,13 +1198,6 @@ products first, and datasets later, to ensure they can be matched.
     help="Attempt to read the data/measurements, and check their properties match",
 )
 @click.option(
-    "--expect-extra-measurements/--warn-extra-measurements",
-    is_flag=True,
-    default=False,
-    help="Allow some dataset measurements to be missing from the product definition. "
-    "This is (deliberately) allowed by ODC, but often a mistake. This flag disables the warning.",
-)
-@click.option(
     "--explorer-url",
     "explorer_url",
     help="Use product definitions from the given Explorer URL to validate datasets. "
@@ -1140,11 +1221,11 @@ def run(
     strict_warnings,
     quiet,
     thorough: bool,
-    expect_extra_measurements: bool,
     explorer_url: str,
     use_datacube: bool,
     output_format: str,
 ):
+    expect = ValidationExpectations()
     validation_counts: Counter[Level] = collections.Counter()
     invalid_paths = 0
     current_location = Path(".").resolve().as_uri() + "/"
@@ -1158,7 +1239,7 @@ def run(
     for url, messages in validate_paths(
         paths,
         thorough=thorough,
-        expect_extra_measurements=expect_extra_measurements,
+        expect=expect,
         product_definitions=product_definitions,
     ):
         if url.startswith(current_location):
