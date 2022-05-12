@@ -918,7 +918,9 @@ class DatasetPrepare(Eo3Interface):
         if validate_correctness:
             doc = serialise.to_doc(dataset)
             for m in validate.validate_dataset(
-                doc, expect or ValidationExpectations(require_geometry=expect_geometry)
+                doc,
+                expect=expect
+                or ValidationExpectations(require_geometry=expect_geometry),
             ):
                 if m.level in (Level.info, Level.warning):
                     warnings.warn(IncompleteDatasetWarning(m))
