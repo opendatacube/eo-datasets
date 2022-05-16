@@ -9,6 +9,10 @@ import boto3
 
 _LOG = logging.getLogger(__name__)
 
+def is_uri(uri):
+    parsed_uri = urlparse(uri)
+    return parsed_uri == 's3'
+
 def get_bucket_key(s3_key):
     """
     Return bucket name and key from a s3 key
@@ -50,7 +54,7 @@ def calculate_file_hash(filename, hash_fn=hashlib.sha1, block_size=4096):
     :return: String of hex characters.
     :rtype: str
     """
-    if "s3" in str(filename):
+    if is_uri(str(filename)):
         bucket, key = get_bucket_key(filename)
         s3client = boto3.client('s3', region_name='us-east-1')
         fileobj = s3client.get_object(Bucket=bucket, Key=key)
@@ -110,9 +114,11 @@ class PackageChecksum:
         :rtype: None
         """
 
-        if "s3" in str(file_path):
-            s3client = boto3.client('s3', region_name='us-east-1')
-            bucket, key = get_bucket_key(filename)
+        if is_uri(str(file_path)):
+            region_name = os.environ.get('AWS_DEFAULT_REGION')
+            assert  region_name is not None, "AWS_DEFAULT_REGION is not defined"
+            s3client = boto3.client('s3', region_name)
+            bucket, key = get_bucket_key(file_path)
             response_obj = s3client.list_objects_v2(Bucket=bucket, Prefix=key)
             objs = [obj['Key'] for obj in os['Contents']]
             if len(objs) > 1:
