@@ -78,10 +78,13 @@ with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec
 `eo3-validate` a lint-like checker to check ODC documents.
 
 Give it ODC documents for your products, types and/or datasets to have
-them validated.
+ it find errors.
 
     ❯ eo3-validate my-product.odc-product.yaml /tmp/path/to/dataset.odc-metadata.yaml
     ❯ eo3-validate https://explorer.dea.ga.gov.au/products/ga_ls_fc_3.odc-product.yaml
+
+Note that they're processed in order, so types and products must be specified before
+their matching datasets to be used for dataset validation.
 
 You can also run with `--thorough` to have it open imagery files too, checking
 their properties match the product (nodata, dtype etc)
@@ -119,6 +122,42 @@ their properties match the product (nodata, dtype etc)
 
       -q, --quiet                     Only print problems, one per line
       --help                          Show this message and exit.
+
+### Per-product validation configuration
+
+Sometimes you need to make use of ODC's flexibility in your products,
+and so the validator will be too strict for you.
+
+You can add a `default_allowances` section to the end of your Product definition to
+tell the validator that its datasets can be more slovenly.
+
+(The same section can also be included in any Metadata Type, and will apply to all products of that
+type)
+
+List of fields:
+
+```yaml
+
+# Possible restriction to ease.
+# All fields can be omitted (please don't include them if you don't need them).
+default_allowances:
+
+  # "It's okay if some datasets to have null geometry."
+  require_geometry: false
+
+  # Allow some metadata fields (from the metadata type) to be null
+  # (but they must still be in each dataset document)
+  allow_nullable_fields:
+    - dataset_maturity
+
+  # Allow some metadata fields to be entirely missing from datasets
+  allow_missing_fields:
+    - sentinel_product_name
+    - s2cloudless_clear
+
+  # Allow datasets to have extra measurements that weren't in the product definition.
+  allow_extra_measurements: [nbar_blue, nbar_green, nbar_red]
+```
 
 ## Stac metadata conversion
 
