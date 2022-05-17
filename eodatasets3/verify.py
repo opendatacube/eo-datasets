@@ -2,6 +2,7 @@ import binascii
 import hashlib
 import logging
 import typing
+import os
 from distutils import spawn
 from pathlib import Path
 from urllib.parse import urlparse
@@ -9,9 +10,11 @@ import boto3
 
 _LOG = logging.getLogger(__name__)
 
+
 def is_uri(uri):
     parsed_uri = urlparse(uri)
-    return parsed_uri == 's3'
+    return parsed_uri.scheme == 's3'
+
 
 def get_bucket_key(s3_key):
     """
@@ -20,8 +23,9 @@ def get_bucket_key(s3_key):
     o = urlparse(s3_key)
     bucket = o.netloc
     key = o.path
-    #Remove the leading slash from the prefix/key
+    # Remove the leading slash from the prefix/key
     return bucket, key[1:]
+
 
 def find_exe(name: str):
     """
@@ -115,12 +119,15 @@ class PackageChecksum:
         """
 
         if is_uri(str(file_path)):
-            region_name = os.environ.get('AWS_DEFAULT_REGION')
-            assert  region_name is not None, "AWS_DEFAULT_REGION is not defined"
+            try:
+                region_name = os.environ['AWS_DEFAULT_REGION']
+            except Exception as exp:
+                raise ValueError('Failed to find AWS_DEFAULT_REGION in the environemnt variables') from exp
+
             s3client = boto3.client('s3', region_name)
             bucket, key = get_bucket_key(file_path)
             response_obj = s3client.list_objects_v2(Bucket=bucket, Prefix=key)
-            objs = [obj['Key'] for obj in os['Contents']]
+            objs = [obj['Key'] for obj in response_obj['Contents']]
             if len(objs) > 1:
                 for file_path in objs:
                     hash_ = self._checksum("s3://{bucket}/{file_path}")
