@@ -1,4 +1,5 @@
 import enum
+import functools
 import os
 import re
 from datetime import datetime, timezone
@@ -7,6 +8,7 @@ from typing import Any, Dict, Iterable, Mapping, Tuple
 
 import ciso8601
 import click
+from datacube.config import LocalConfig
 
 EO3_SCHEMA = "https://schemas.opendatacube.org/dataset"
 
@@ -189,3 +191,39 @@ def flatten_dict(
             yield from flatten_dict(v, prefix=name, separator=separator)
         else:
             yield name, v
+
+
+def pass_config(*, required=True):
+    """
+    Get a datacube config as the first argument.
+
+    Based on ODC's pass_config(), but allows the config to not exist.
+
+    If required=False, allow the config to be None.
+    """
+
+    def pass_config_outer(fn):
+        @functools.wraps(fn)
+        def inner(*args, **kwargs):
+            obj = click.get_current_context().obj
+
+            paths = obj.get("config_files", None)
+            # If the user is overriding the defaults
+            specific_environment = obj.get("config_environment")
+            parsed_config = None
+
+            try:
+                parsed_config = LocalConfig.find(paths=paths, env=specific_environment)
+            except ValueError as e:
+                if specific_environment:
+                    raise click.ClickException(
+                        f"No datacube config found for '{specific_environment}'"
+                    ) from e
+                elif required:
+                    raise click.ClickException("No datacube config found") from e
+
+            return fn(parsed_config, *args, **kwargs)
+
+        return inner
+
+    return pass_config_outer
