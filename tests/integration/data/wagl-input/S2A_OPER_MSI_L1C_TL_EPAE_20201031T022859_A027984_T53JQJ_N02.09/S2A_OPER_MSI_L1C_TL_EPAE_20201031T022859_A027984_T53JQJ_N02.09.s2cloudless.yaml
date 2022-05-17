@@ -1,0 +1,14 @@
+parameters:
+    average_over: 4
+    dilation_size: 2
+    threshold: 0.4
+percent_class_distribution:
+    clear: 94.25411486314457
+    cloud: 5.745885136855438
+software_versions:
+    eugl:
+        repo_url: https://github.com/OpenDataCubePipelines/eugl.git
+        version: 0.5.1
+    s2cloudless:
+        repo_url: https://github.com/sentinel-hub/sentinel2-cloud-detector
+        version: 1.5.0

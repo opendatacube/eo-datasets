@@ -393,6 +393,9 @@ class Granule:
 
     fmask_doc: Optional[Dict] = None
     fmask_image: Optional[Path] = None
+    s2cloudless_prob: Optional[Path] = None
+    s2cloudless_mask: Optional[Path] = None
+    s2cloudless_doc: Optional[Dict] = None
     gqa_doc: Optional[Dict] = None
     tesp_doc: Optional[Dict] = None
 
@@ -404,6 +407,9 @@ class Granule:
         level1_metadata_path: Optional[Path] = None,
         fmask_image_path: Optional[Path] = None,
         fmask_doc_path: Optional[Path] = None,
+        s2cloudless_prob_path: Optional[Path] = None,
+        s2cloudless_mask_path: Optional[Path] = None,
+        s2cloudless_doc_path: Optional[Path] = None,
         gqa_doc_path: Optional[Path] = None,
         tesp_doc_path: Optional[Path] = None,
         allow_missing_provenance: bool = False,
@@ -452,6 +458,39 @@ class Granule:
                 with fmask_doc_path.open("r") as fl:
                     [fmask_doc] = loads_yaml(fl)
 
+                if "sentinel" in wagl_doc["source_datasets"]["platform_id"].lower():
+                    s2cloudless_prob_path = (
+                        s2cloudless_prob_path
+                        or wagl_hdf5.with_name(f"{granule_name}.prob.s2cloudless.tif")
+                    )
+                    if not s2cloudless_prob_path.exists():
+                        raise ValueError(
+                            f"No s2cloudless probability image found at {s2cloudless_prob_path}"
+                        )
+
+                    s2cloudless_mask_path = (
+                        s2cloudless_mask_path
+                        or wagl_hdf5.with_name(f"{granule_name}.mask.s2cloudless.tif")
+                    )
+                    if not s2cloudless_mask_path.exists():
+                        raise ValueError(
+                            f"No s2cloudless mask image found at {s2cloudless_mask_path}"
+                        )
+
+                    s2cloudless_doc_path = s2cloudless_doc_path or wagl_hdf5.with_name(
+                        f"{granule_name}.s2cloudless.yaml"
+                    )
+                    if not s2cloudless_doc_path.exists():
+                        raise ValueError(
+                            f"No s2cloudless metadata found at {s2cloudless_doc_path}"
+                        )
+                    with s2cloudless_doc_path.open("r") as fl:
+                        [s2cloudless_doc] = loads_yaml(fl)
+                else:
+                    s2cloudless_prob_path = None
+                    s2cloudless_mask_path = None
+                    s2cloudless_doc = None
+
                 gqa_doc_path = gqa_doc_path or wagl_hdf5.with_name(
                     f"{granule_name}.gqa.yaml"
                 )
@@ -480,6 +519,9 @@ class Granule:
                     source_level1_metadata=level1,
                     fmask_doc=fmask_doc,
                     fmask_image=fmask_image_path,
+                    s2cloudless_prob=s2cloudless_prob_path,
+                    s2cloudless_mask=s2cloudless_mask_path,
+                    s2cloudless_doc=s2cloudless_doc,
                     gqa_doc=gqa_doc,
                     tesp_doc=tesp_doc,
                 )
@@ -638,6 +680,8 @@ def package(
 
             _read_gqa_doc(p, granule.gqa_doc)
             _read_fmask_doc(p, granule.fmask_doc)
+            if granule.s2cloudless_doc:
+                _read_s2cloudless_doc(p, granule.s2cloudless_doc)
             if granule.tesp_doc:
                 _take_software_versions(p, granule.tesp_doc)
 
@@ -710,6 +754,30 @@ def package(
                                 path=p.names.measurement_filename("fmask"),
                             )
 
+                    if granule.s2cloudless_prob:
+                        with do(
+                            f"Writing s2cloudless probability from {granule.s2cloudless_prob} "
+                        ):
+                            p.write_measurement(
+                                "oa:s2cloudless_prob",
+                                granule.s2cloudless_prob,
+                                expand_valid_data=False,
+                                overview_resampling=Resampling.bilinear,
+                                path=p.names.measurement_filename("s2cloudless-prob"),
+                            )
+
+                    if granule.s2cloudless_mask:
+                        with do(
+                            f"Writing s2cloudless mask from {granule.s2cloudless_mask} "
+                        ):
+                            p.write_measurement(
+                                "oa:s2cloudless_mask",
+                                granule.s2cloudless_mask,
+                                expand_valid_data=False,
+                                overview_resampling=Resampling.mode,
+                                path=p.names.measurement_filename("s2cloudless-mask"),
+                            )
+
             with do("Finishing package"):
                 return p.done()
 
@@ -735,6 +803,14 @@ def _read_fmask_doc(p: DatasetAssembler, doc: Dict):
 
     _take_software_versions(p, doc)
     p.extend_user_metadata("fmask", doc)
+
+
+def _read_s2cloudless_doc(p: DatasetAssembler, doc: Dict):
+    for name, value in doc["percent_class_distribution"].items():
+        p.properties[f"s2cloudless:{name}"] = value
+
+    _take_software_versions(p, doc)
+    p.extend_user_metadata("s2cloudless", doc)
 
 
 def _take_software_versions(p: DatasetAssembler, doc: Dict):

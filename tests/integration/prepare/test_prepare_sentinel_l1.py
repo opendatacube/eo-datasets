@@ -29,6 +29,32 @@ def test_subfolder_info_extraction():
     )
     assert info == FolderInfo(2022, 3, "53LQC")
 
+    info = FolderInfo.for_path(
+        Path(
+            "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2021/2021-07/20N095E-15N100E/"
+            "S2B_MSIL1C_20210716T035539_N0301_R004_T47QMB_20210716T063913.zip"
+        )
+    )
+    assert info == FolderInfo(2021, 7, "47QMB")
+
+    # Older dataset structure had no region code
+    info = FolderInfo.for_path(
+        Path(
+            "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2015/2015-12/30S170E-35S175E/"
+            "S2A_OPER_PRD_MSIL1C_PDMC_20151225T022834_R072_V20151224T223838_20151224T223838.zip"
+        )
+    )
+    assert info == FolderInfo(2015, 12, None)
+
+    # A sinergise-like input path.
+    info = FolderInfo.for_path(
+        Path(
+            "/test_filter_folder_structure_i1/L1C/2019/2019-01/25S125E-30S130/"
+            "S2B_MSIL1C_20190111T000249_N0209_R030_T55HFA_20190111T011446/tileInfo.json"
+        )
+    )
+    assert info == FolderInfo(2019, 1, "55HFA")
+
     # A folder that doesn't follow standard layout will return no info
     info = FolderInfo.for_path(
         Path(
@@ -108,7 +134,7 @@ ESA_EXPECTED_METADATA = {
             ],
         },
     },
-    "label": "esa_s2bm_level1_1-0-20201011_55HFA_2020-10-11",
+    "label": "esa_s2bm_level1_0-0-20201011_55HFA_2020-10-11",
     "lineage": {},
     "measurements": {
         "blue": {
@@ -167,7 +193,7 @@ ESA_EXPECTED_METADATA = {
             "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B09.jp2",
         },
     },
-    "product": {"name": "esa_s2bm_level1_1"},
+    "product": {"name": "esa_s2bm_level1_0"},
     "properties": {
         "datetime": datetime.datetime(2020, 10, 11, 0, 6, 49, 882566),
         "eo:cloud_cover": 24.9912,
@@ -177,7 +203,7 @@ ESA_EXPECTED_METADATA = {
         "eo:constellation": "sentinel-2",
         "eo:sun_azimuth": 46.3307328858312,
         "eo:sun_elevation": 37.3713908882192,
-        "odc:dataset_version": "1.0.20201011",
+        "odc:dataset_version": "0.0.20201011",
         "odc:file_format": "JPEG2000",
         "odc:processing_datetime": datetime.datetime(2020, 10, 11, 1, 47, 4, 112949),
         "odc:producer": "esa.int",
@@ -215,7 +241,7 @@ SINERGISE_EXPECTED_METADATA = {
     "id": "f3e0eee1-573c-5035-870e-8d8392df8e33",
     "crs": "epsg:32755",
     "product": {
-        "name": "sinergise_s2bm_level1_1",
+        "name": "sinergise_s2bm_level1_0",
     },
     "geometry": {
         "coordinates": [
@@ -275,7 +301,7 @@ SINERGISE_EXPECTED_METADATA = {
             ],
         },
     },
-    "label": "sinergise_s2bm_level1_1-0-20201011_55HFA_2020-10-11",
+    "label": "sinergise_s2bm_level1_0-0-20201011_55HFA_2020-10-11",
     "lineage": {},
     "measurements": {
         "blue": {"grid": "998", "path": "B02.jp2"},
@@ -310,7 +336,7 @@ SINERGISE_EXPECTED_METADATA = {
         "eo:constellation": "sentinel-2",
         "eo:sun_azimuth": 46.3307328858312,
         "eo:sun_elevation": 37.3713908882192,
-        "odc:dataset_version": "1.0.20201011",
+        "odc:dataset_version": "0.0.20201011",
         "odc:file_format": "JPEG2000",
         "odc:processing_datetime": datetime.datetime(2020, 10, 11, 1, 47, 4, 112949),
         "odc:producer": "sinergise.com",
@@ -405,8 +431,12 @@ def test_filter_folder_structure_info(
     else:
         expected_metadata_doc["location"] = f"zip:{input_dataset_path}!/"
 
+    # A file with the correct region
     regions_file = tmp_path / "our-regions.txt"
     regions_file.write_text("\n".join(["55HFA", "55HFB"]))
+    # A file that doesn't have our region.
+    non_regions_file = tmp_path / "our-non-regions.txt"
+    non_regions_file.write_text("\n".join(["55HFB", "55HFC"]))
 
     # Sanity check: no output exists yet.
     assert not expected_metadata_path.exists()
@@ -414,12 +444,28 @@ def test_filter_folder_structure_info(
     # Run with filters that skips this dataset:
     # (it should do nothing)
 
-    # Filter the region
+    # Whitelist including the correct region
     res = run_prepare_cli(
         sentinel_l1_prepare.main,
         # It contains our region, so it should filter!
-        "--limit-regions-file",
+        "--only-regions-in-file",
         regions_file,
+        # "Put the output in a different location":
+        "--output-base",
+        output_folder,
+        input_dataset_path,
+    )
+    assert (
+        expected_metadata_path.exists()
+    ), f"Expected dataset to be processed (it's within the region file)! {res.output}"
+    expected_metadata_path.unlink()
+
+    # Run with a region list that doesn't include our dataset region.
+    res = run_prepare_cli(
+        sentinel_l1_prepare.main,
+        # It contains our region, so it should filter!
+        "--only-regions-in-file",
+        non_regions_file,
         # "Put the output in a different location":
         "--output-base",
         output_folder,

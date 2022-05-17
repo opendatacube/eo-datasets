@@ -18,6 +18,7 @@ import xarray
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
+from ruamel.yaml import CommentedMap
 from shapely.geometry.base import BaseGeometry
 
 import eodatasets3
@@ -161,6 +162,8 @@ class DatasetPrepare(Eo3Interface):
         "fmask:cloud_shadow",
         "fmask:snow",
         "fmask:water",
+        "s2cloudless:clear",
+        "s2cloudless:cloud",
         "gqa:abs_iterative_mean_x",
         "gqa:abs_iterative_mean_xy",
         "gqa:abs_iterative_mean_y",
@@ -298,6 +301,9 @@ class DatasetPrepare(Eo3Interface):
             dataset.id = dataset_id or uuid.uuid4()
 
         self._dataset = dataset
+
+        #: The document that was written to disk, if any.
+        self.written_dataset_doc: Optional[CommentedMap] = None
 
         self._measurements = MeasurementBundler()
         self._accessories: Dict[str, Location] = {}
@@ -783,6 +789,7 @@ class DatasetPrepare(Eo3Interface):
             doc, metadata_path.parent, allow_paths_outside_base=False
         )
         serialise.dump_yaml(metadata_path, doc)
+        self.written_dataset_doc = doc
         return self._dataset.id, metadata_path
 
     def done(

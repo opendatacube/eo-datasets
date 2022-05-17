@@ -38,7 +38,10 @@ class LazyProductName:
                 ),
                 (
                     f"{c.displayed_collection_number}"
-                    if (self.include_collection and c.displayed_collection_number)
+                    if (
+                        self.include_collection
+                        and c.displayed_collection_number is not None
+                    )
                     else None
                 ),
             )
@@ -675,11 +678,11 @@ class NamingConventions:
     @property
     def displayed_collection_number(self) -> Optional[int]:
         # An explicit collection number trumps all.
-        if self.metadata.collection_number:
+        if self.metadata.collection_number is not None:
             return int(self.metadata.collection_number)
 
         # Otherwise it's the first digit of the dataset version.
-        if not self.metadata.dataset_version:
+        if self.metadata.dataset_version is None:
             return None
         return int(self.metadata.dataset_version.split(".")[0])
 

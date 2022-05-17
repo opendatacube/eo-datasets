@@ -11,7 +11,7 @@ percent_class_distribution:
 software_versions:
     eugl:
         repo_url: https://github.com/OpenDataCubePipelines/eugl
-        version: 0.3.1
+        version: 0.5.1
     fmask:
         repo_url: https://www.pythonfmask.org/
         version: 0.5.5
