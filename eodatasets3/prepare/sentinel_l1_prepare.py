@@ -29,6 +29,7 @@ from defusedxml import minidom
 from eodatasets3 import DatasetDoc, DatasetPrepare, serialise
 from eodatasets3.properties import Eo3Interface
 from eodatasets3.ui import PathPath
+from eodatasets3.utils import pass_config
 
 # Static namespace to generate uuids for datacube indexing
 S2_UUID_NAMESPACE = uuid.UUID("9df23adf-fc90-4ec7-9299-57bd536c7590")
@@ -494,8 +495,6 @@ class Job:
     required=False,
     type=YearMonth(),
 )
-@environment_option
-@config_option
 @click.option(
     "--index",
     "index_to_odc",
@@ -509,7 +508,11 @@ class Job:
     is_flag=True,
     default=False,
 )
+@environment_option
+@config_option
+@pass_config(required=False)
 def main(
+    local_config: LocalConfig,
     output_base: Optional[Path],
     input_relative_to: Optional[Path],
     datasets: Tuple[Path],
@@ -524,7 +527,6 @@ def main(
     after_month: Optional[Tuple[int, int]],
     dry_run: bool,
     index_to_odc: bool,
-    local_config: LocalConfig = None,
 ):
     if sys.argv[1] == "sentinel-l1c":
         warnings.warn(
