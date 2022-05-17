@@ -60,7 +60,11 @@ def calculate_file_hash(filename, hash_fn=hashlib.sha1, block_size=4096):
     """
     if is_uri(str(filename)):
         bucket, key = get_bucket_key(filename)
-        s3client = boto3.client('s3', region_name='us-east-1')
+        try:
+            region_name = os.environ['AWS_DEFAULT_REGION']
+        except Exception as exp:
+            raise ValueError('Failed to find AWS_DEFAULT_REGION in the environemnt variables') from exp
+        s3client = boto3.client('s3', region_name=region_name)
         fileobj = s3client.get_object(Bucket=bucket, Key=key)
         f = fileobj['Body'].read()
         return calculate_hash(f, hash_fn, block_size)
