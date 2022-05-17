@@ -1,19 +1,20 @@
 import binascii
 import hashlib
 import logging
-import typing
 import os
+import typing
 from distutils import spawn
 from pathlib import Path
 from urllib.parse import urlparse
+
 import boto3
 
 _LOG = logging.getLogger(__name__)
 
 
-def is_uri(uri):
+def is_s3_uri(uri):
     parsed_uri = urlparse(uri)
-    return parsed_uri.scheme == 's3'
+    return parsed_uri.scheme == "s3"
 
 
 def get_bucket_key(s3_key):
@@ -58,15 +59,17 @@ def calculate_file_hash(filename, hash_fn=hashlib.sha1, block_size=4096):
     :return: String of hex characters.
     :rtype: str
     """
-    if is_uri(str(filename)):
+    if is_s3_uri(str(filename)):
         bucket, key = get_bucket_key(filename)
         try:
-            region_name = os.environ['AWS_DEFAULT_REGION']
+            region_name = os.environ["AWS_DEFAULT_REGION"]
         except Exception as exp:
-            raise ValueError('Failed to find AWS_DEFAULT_REGION in the environemnt variables') from exp
-        s3client = boto3.client('s3', region_name=region_name)
+            raise ValueError(
+                "Failed to find AWS_DEFAULT_REGION in the environment variables"
+            ) from exp
+        s3client = boto3.client("s3", region_name=region_name)
         fileobj = s3client.get_object(Bucket=bucket, Key=key)
-        f = fileobj['Body'].read()
+        f = fileobj["Body"].read()
         return calculate_hash(f, hash_fn, block_size)
     else:
         with Path(filename).open("rb") as f:
@@ -122,16 +125,18 @@ class PackageChecksum:
         :rtype: None
         """
 
-        if is_uri(str(file_path)):
+        if is_s3_uri(str(file_path)):
             try:
-                region_name = os.environ['AWS_DEFAULT_REGION']
+                region_name = os.environ["AWS_DEFAULT_REGION"]
             except Exception as exp:
-                raise ValueError('Failed to find AWS_DEFAULT_REGION in the environemnt variables') from exp
+                raise ValueError(
+                    "Failed to find AWS_DEFAULT_REGION in the environment variables"
+                ) from exp
 
-            s3client = boto3.client('s3', region_name)
+            s3client = boto3.client("s3", region_name)
             bucket, key = get_bucket_key(file_path)
             response_obj = s3client.list_objects_v2(Bucket=bucket, Prefix=key)
-            objs = [obj['Key'] for obj in response_obj['Contents']]
+            objs = [obj["Key"] for obj in response_obj["Contents"]]
             if len(objs) > 1:
                 for file_path in objs:
                     hash_ = self._checksum("s3://{bucket}/{file_path}")
