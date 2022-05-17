@@ -27,6 +27,23 @@ def product():
         license="CC-BY-SA-4.0",
         metadata_type="eo3",
         measurements=[dict(name="blue", units="1", dtype="uint8", nodata=255)],
+        default_allowances=dict(
+            # Allow anything used in test data. We don't need to test this warning except when done explicitly.
+            allow_extra_measurements=[
+                "cirrus",
+                "coastal_aerosol",
+                "blue",
+                "green",
+                "lwir_1",
+                "lwir_2",
+                "nir",
+                "panchromatic",
+                "quality",
+                "red",
+                "swir_1",
+                "swir_2",
+            ],
+        ),
     )
 
 
@@ -214,9 +231,7 @@ class ValidateRunner:
                 self.result.exit_code == 1
             ), f"Expected error code 1 for 1 invalid path. Got {sorted(self.messages.items())}"
 
-    def run_validate(
-        self, docs: Sequence[Doc], allow_extra_measurements=True, suffix=".yaml"
-    ):
+    def run_validate(self, docs: Sequence[Doc], suffix=".yaml"):
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
 
         args = ("-f", "plain")
@@ -227,8 +242,6 @@ class ValidateRunner:
             args += ("-W",)
         if self.thorough:
             args += ("--thorough",)
-        if allow_extra_measurements:
-            args += ("--expect-extra-measurements",)
 
         for i, doc in enumerate(docs):
             if isinstance(doc, Mapping):
