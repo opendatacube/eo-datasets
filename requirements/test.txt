@@ -74,7 +74,7 @@ deepdiff==5.5.0
     # via eodatasets3 (setup.py)
 defusedxml==0.7.1
     # via eodatasets3 (setup.py)
-distributed==2021.9.0
+distributed==2021.10.0
     # via datacube
 docutils==0.16
     # via
