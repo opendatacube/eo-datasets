@@ -528,6 +528,7 @@ def main(
     dry_run: bool,
     index_to_odc: bool,
 ):
+    output_base = normalise_path(output_base)
     if sys.argv[1] == "sentinel-l1c":
         warnings.warn(
             "Command name 'sentinel-l1c-prepare' is deprecated: remove the 'c', and use `sentinel-l1-prepare`"
@@ -546,19 +547,6 @@ def main(
             *(Path(p.strip()) for p in (datasets_path.read_text().splitlines())),
         ]
 
-    # The default input_relative path is a parent folder named 'L1C'.
-    if output_base and input_relative_to is None and datasets:
-        for parent in datasets[0].parents:
-            if parent.name.lower() == "l1c":
-                input_relative_to = parent
-                break
-        else:
-            raise ValueError(
-                "Unknown root folder for path subfolders. "
-                "(Hint: specify --input-relative-to with a parent folder of the inputs. "
-                "Outputs will use the same subfolder structure.)"
-            )
-
     _LOG.info(f"{len(datasets)} paths(s) to process using {workers} worker(s))")
 
     def files_in_path(input_path: Path):
@@ -573,8 +561,8 @@ def main(
                     "sinergise.com",
                     # Dataset location is the metadata file itself.
                     p,
-                    # Output is an inner metadata file, with the same name as the folder (usually S2A....).
-                    (p.parent / f"{p.parent.stem}.odc-metadata.yaml"),
+                    # Output is a sibling metadata file, with the same name as the folder (usually S2A....).
+                    (p.parent.parent / f"{p.parent.stem}.odc-metadata.yaml"),
                 )
         if provider == "esa.int" or not provider:
             for p in _rglob_with_self(input_path, "*.zip"):
@@ -593,6 +581,7 @@ def main(
             )
 
     def find_jobs() -> Iterable[Job]:
+        nonlocal input_relative_to
         with click.progressbar(
             datasets, label="Preparing metadata", show_pos=True
         ) as progress:
@@ -600,7 +589,7 @@ def main(
                 input_path = normalise_path(input_path)
 
                 first = True
-                for producer, ds_path, output_yaml in files_in_path(input_path):
+                for producer, ds_path, sibling_yaml_path in files_in_path(input_path):
                     # Make sure we tick progress on extra datasets that were found.
                     if not first:
                         progress.length += 1
@@ -645,16 +634,23 @@ def main(
                                 )
                                 continue
 
+                    # Put it in a different folder?
                     if output_base:
-                        output_folder = normalise_path(output_base)
-                        # If we want to copy the input folder hierarchy
-                        if input_relative_to:
-                            output_folder = (
-                                output_folder
-                                / input_path.parent.relative_to(input_relative_to)
+
+                        # What base folder should we choose for creating subfolders in the output?
+                        if input_relative_to is None:
+                            input_relative_to = _get_default_relative_folder_base(
+                                sibling_yaml_path
                             )
 
-                        output_yaml = output_folder / output_yaml.name
+                        output_folder = (
+                            output_base
+                            / sibling_yaml_path.parent.relative_to(input_relative_to)
+                        )
+
+                        output_yaml = output_folder / sibling_yaml_path.name
+                    else:
+                        output_yaml = sibling_yaml_path
 
                     if output_yaml.exists():
                         if not overwrite_existing:
@@ -748,6 +744,22 @@ def main(
         f"Completed {successes} dataset(s) successfully, with {errors} failure(s)"
     )
     sys.exit(errors)
+
+
+def _get_default_relative_folder_base(path: Path) -> Optional[Path]:
+    for parent in path.parents:
+        if parent.name.lower() == "l1c":
+            input_relative_to = parent
+            _LOG.debug(f"Inputs will be relative to {input_relative_to}")
+            break
+    else:
+        raise ValueError(
+            "Unknown root folder for path subfolders. "
+            "(Hint: specify --input-relative-to with a parent folder of the inputs. "
+            "Outputs will use the same subfolder structure.)"
+        )
+
+    return input_relative_to
 
 
 def _write_dataset_safe(job: Job) -> Union[Tuple[DatasetDoc, Path], str]:

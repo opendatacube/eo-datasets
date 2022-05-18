@@ -408,10 +408,12 @@ def test_filter_folder_structure_info(
         input_dataset_path if input_dataset_path.is_dir() else input_dataset_path.parent
     )
 
+    input_folder = tmp_path / "inputs"
+
     subfolders = "2019/2019-01/25S125E-30S130"
 
     # Move input data into subfolder hierarchy.
-    dataset_folder = tmp_path / "L1C" / subfolders
+    dataset_folder = input_folder / "L1C" / subfolders
     dataset_folder.mkdir(parents=True)
     new_input_dataset_path = dataset_folder / input_dataset_path.name
     input_dataset_path.rename(new_input_dataset_path)
@@ -516,6 +518,25 @@ def test_filter_folder_structure_info(
             "--output-base",
             output_folder,
             input_dataset_path,
+        ],
+        expected_doc=expected_metadata_doc,
+        expected_metadata_path=expected_metadata_path,
+    )
+
+    # Now run again using a folder input, not an exact zip input.
+    # (so it has to scan for datasets)
+    shutil.rmtree(output_folder)
+    output_folder.mkdir()
+
+    # Now run for real, expect an output.
+    check_prepare_outputs(
+        invoke_script=sentinel_l1_prepare.main,
+        run_args=[
+            # "Put the output in a different location":
+            "--output-base",
+            output_folder,
+            # The base folder, so it has to scan for zip files itself!
+            input_folder,
         ],
         expected_doc=expected_metadata_doc,
         expected_metadata_path=expected_metadata_path,
