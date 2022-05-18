@@ -77,64 +77,62 @@ with the upcoming [Stac Item metadata](https://github.com/radiantearth/stac-spec
 
 `eo3-validate` a lint-like checker to check ODC documents.
 
-Give it ODC documents for your products, types and/or datasets to have
- it find errors.
+Give it ODC documents for your products, types and/or datasets to find
+errors quickly.
 
     ❯ eo3-validate my-product.odc-product.yaml /tmp/path/to/dataset.odc-metadata.yaml
     ❯ eo3-validate https://explorer.dea.ga.gov.au/products/ga_ls_fc_3.odc-product.yaml
 
-Note that they're processed in order, so types and products must be specified before
-their matching datasets to be used for dataset validation.
+Note that documents are processed in order. A product should be specified before its dataset,
+so that the product is known by the validator before the dataset is checked.
 
-You can also run with `--thorough` to have it open imagery files too, checking
-their properties match the product (nodata, dtype etc)
+Similarly, a Metadata Type should ideally be specified before its product, so that the type is known.
+But all are optional for basic checks
+
+- **Note** You can use `--odc` or `--explorer-url` to automatically load a list of types and products.
+
+### Help text
 
     ❯ eo3-validate --help
-    Usage: eo3-validate [OPTIONS] [PATHS]...
+	Usage: eo3-validate [OPTIONS] [PATHS]...
 
-      Validate ODC dataset documents
+	  Validate ODC dataset documents
 
-      Paths can be products, dataset documents, or directories to scan (for
-      files matching names '*.odc-metadata.yaml' etc), either local or URLs.
+	  Paths can be products, dataset documents, or directories to scan (for files
+	  matching names '*.odc-metadata.yaml' etc), either local or URLs.
 
-      Datasets are validated against matching products that have been scanned
-      already, so specify products first, and datasets later, to ensure they can
-      be matched.
+	  Datasets are validated against matching products that have been scanned
+	  already, so specify products first, and datasets later, to ensure they can
+	  be matched.
 
-    Options:
-      --version                       Show the version and exit.
-      -W, --warnings-as-errors        Fail if any warnings are produced
-      --thorough                      Attempt to read the data/measurements, and
-                                      check their properties match
+	Options:
+	  --version                       Show the version and exit.
+	  -W, --warnings-as-errors        Fail if any warnings are produced
+	  -f, --output-format [plain|quiet|github]
+					  Output format  [default: plain]
+	  --thorough                      Attempt to read the data/measurements, and
+					  check their properties match
+	  --explorer-url TEXT             Use product definitions from the given
+					  Explorer URL to validate datasets. Eg:
+					  "https://explorer.dea.ga.gov.au/"
+	  --odc                           Use product definitions from datacube to
+					  validate datasets
+	  -q, --quiet                     Only print problems, one per line
+	  --help                          Show this message and exit.
 
-      --expect-extra-measurements / --warn-extra-measurements
-                                      Allow some dataset measurements to be
-                                      missing from the product definition. This is
-                                      (deliberately) allowed by ODC, but often a
-                                      mistake. This flag disables the warning.
 
-      --explorer-url TEXT             Use product definitions from the given
-                                      Explorer URL to validate datasets. Eg:
-                                      "https://explorer.dea.ga.gov.au/"
+### Disabling warnings
 
-      --odc                           Use product definitions from datacube to
-                                      validate datasets
+ODC is very configurable, and sometimes the validator will be too strict
+for you.
 
-      -q, --quiet                     Only print problems, one per line
-      --help                          Show this message and exit.
+You can ease some restrictions for a product by adding
+a `default_allowances` section to the end of your Product definition.
 
-### Per-product validation configuration
+(The same section can also be included in any Metadata Type, and will apply
+to all products of that type)
 
-Sometimes you need to make use of ODC's flexibility in your products,
-and so the validator will be too strict for you.
-
-You can add a `default_allowances` section to the end of your Product definition to
-tell the validator that its datasets can be more slovenly.
-
-(The same section can also be included in any Metadata Type, and will apply to all products of that
-type)
-
-List of fields:
+Example supported fields:
 
 ```yaml
 
@@ -158,6 +156,13 @@ default_allowances:
   # Allow datasets to have extra measurements that weren't in the product definition.
   allow_extra_measurements: [nbar_blue, nbar_green, nbar_red]
 ```
+
+### 'Thorough' mode
+
+By default, the validator will only look at the given metadata document(s).
+
+But when the `--thorough` flag is given, the validator will attempt to read any
+referenced imagery, checking their properties match the definitions (nodata, dtype etc).
 
 ## Stac metadata conversion
 
