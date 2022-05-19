@@ -528,7 +528,8 @@ def main(
     dry_run: bool,
     index_to_odc: bool,
 ):
-    output_base = normalise_path(output_base)
+    output_base = normalise_path(output_base) if output_base else None
+
     if sys.argv[1] == "sentinel-l1c":
         warnings.warn(
             "Command name 'sentinel-l1c-prepare' is deprecated: remove the 'c', and use `sentinel-l1-prepare`"
