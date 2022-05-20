@@ -5,13 +5,15 @@ from typing import Optional, Union
 from urllib.parse import urljoin, urlparse
 
 import click
+from datacube.utils.uris import normalise_path
 
 
 class PathPath(click.Path):
-    """A Click path argument that returns a pathlib Path, not a string"""
+    """
+    A Click argument that returns a normalised (absolute) pathlib Path"""
 
     def convert(self, value, param, ctx):
-        return Path(super().convert(value, param, ctx))
+        return Path(normalise_path(super().convert(value, param, ctx)))
 
 
 def uri_resolve(base: Union[str, Path], path: Optional[str]) -> str:

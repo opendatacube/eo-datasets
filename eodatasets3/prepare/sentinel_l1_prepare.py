@@ -528,8 +528,6 @@ def main(
     dry_run: bool,
     index_to_odc: bool,
 ):
-    output_base = normalise_path(output_base) if output_base else None
-
     if sys.argv[1] == "sentinel-l1c":
         warnings.warn(
             "Command name 'sentinel-l1c-prepare' is deprecated: remove the 'c', and use `sentinel-l1-prepare`"
@@ -545,7 +543,10 @@ def main(
     if datasets_path:
         datasets = [
             *datasets,
-            *(Path(p.strip()) for p in (datasets_path.read_text().splitlines())),
+            *(
+                normalise_path(p.strip())
+                for p in (datasets_path.read_text().splitlines())
+            ),
         ]
 
     _LOG.info(f"{len(datasets)} paths(s) to process using {workers} worker(s))")
@@ -587,7 +588,6 @@ def main(
             datasets, label="Preparing metadata", show_pos=True
         ) as progress:
             for i, input_path in enumerate(progress):
-                input_path = normalise_path(input_path)
 
                 first = True
                 for producer, ds_path, sibling_yaml_path in files_in_path(input_path):
