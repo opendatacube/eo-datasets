@@ -192,7 +192,7 @@ def prepare_and_write(
 ) -> Tuple[DatasetDoc, Path]:
     if embed_location is None:
         # Default to embedding the location if they're not in the same folder.
-        embed_location = dataset_location.parent != output_yaml.parent
+        embed_location = output_yaml.parent not in dataset_location.parents
         _LOG.debug(
             "Auto-embed location? %s: %s %s %s",
             "Yes" if embed_location else "No",

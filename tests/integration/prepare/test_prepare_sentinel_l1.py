@@ -379,14 +379,11 @@ def dataset_input_output(request, tmp_path):
 
     if input_dataset_path.is_dir():
         shutil.copytree(input_dataset_path, unique_in_path)
-        # A folder input expects a metadata file inside.
-        expected_metadata_path = (
-            tmp_path / input_dataset_path.name / expected_metadata_name
-        )
     else:
         shutil.copy(input_dataset_path, unique_in_path)
-        # A file expects a sibling metadata path.
-        expected_metadata_path = tmp_path / expected_metadata_name
+
+    # A file expect a sibling metadata path.
+    expected_metadata_path = tmp_path / expected_metadata_name
 
     return (
         unique_in_path,
@@ -404,9 +401,7 @@ def test_filter_folder_structure_info(
         expected_metadata_path,
     ) = dataset_input_output
 
-    metadata_offset = expected_metadata_path.relative_to(
-        input_dataset_path if input_dataset_path.is_dir() else input_dataset_path.parent
-    )
+    metadata_offset = expected_metadata_path.relative_to(input_dataset_path.parent)
 
     input_folder = tmp_path / "inputs"
 
