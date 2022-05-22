@@ -551,6 +551,35 @@ def main(
 
     _LOG.info(f"{len(datasets)} paths(s) to process using {workers} worker(s))")
 
+    # Are we indexing on success?
+    index = None
+    if index_to_odc:
+        _LOG.info("Indexing new datasets")
+        if local_config:
+            _LOG.debug("Indexing to %s", local_config)
+        index = index_connect(local_config, application_name="s2-prepare")
+        products = {}
+
+        def on_success(dataset: DatasetDoc, dataset_path: Path):
+            """
+            Index the dataset
+            """
+            product_name = dataset.product.name
+            product = products.get(product_name)
+            if not product:
+                product = index.products.get_by_name(product_name)
+                if not product:
+                    raise ValueError(f"Product {product_name} not found in ODC index")
+                products[product_name] = product
+
+            index.datasets.add(Dataset(product, serialise.to_doc(dataset)))
+            _LOG.debug("Indexed dataset %s to %s", dataset.id, dataset_path)
+
+    else:
+
+        def on_success(dataset: DatasetDoc, dataset_path: Path):
+            """Nothing extra"""
+
     def files_in_path(input_path: Path):
         """
         Scan the input path for our key identifying files of a package.
@@ -655,7 +684,7 @@ def main(
 
                     if output_yaml.exists():
                         if not overwrite_existing:
-                            _LOG.debug("Output exists: skipping. %s", output_yaml)
+                            _LOG.debug("Output exists: not writing. %s", output_yaml)
                             continue
 
                         _LOG.debug("Output exists: overwriting %s", output_yaml)
@@ -672,36 +701,6 @@ def main(
     # If only one process, call it directly.
     # (Multiprocessing makes debugging harder, so we prefer to make it optional)
     successes = 0
-
-    # Are we indexing on success?
-    index = None
-    if index_to_odc:
-        _LOG.info("Indexing new datasets")
-        if local_config:
-            _LOG.debug("Indexing to %s", local_config)
-        index = index_connect(local_config, application_name="s2-prepare")
-        products = {}
-
-        def on_success(dataset: DatasetDoc, dataset_path: Path):
-            """
-            Index the dataset
-            """
-            product_name = dataset.product.name
-            product = products.get(product_name)
-            if not product:
-                product = index.products.get_by_name(product_name)
-                if not product:
-                    raise ValueError(f"Product {product_name} not found in ODC index")
-                products[product_name] = product
-
-            index.datasets.add(Dataset(product, serialise.to_doc(dataset)))
-            _LOG.debug("Wrote and indexed dataset %s to %s", dataset.id, dataset_path)
-
-    else:
-
-        def on_success(dataset: DatasetDoc, dataset_path: Path):
-            """Nothing extra"""
-            _LOG.debug("Wrote dataset %s to %s", dataset.id, dataset_path)
 
     try:
         if workers == 1 or dry_run:
@@ -720,6 +719,7 @@ def main(
                             job.producer,
                             embed_location=job.embed_location,
                         )
+                        _LOG.debug("Wrote dataset %s to %s", dataset.id, path)
                         on_success(dataset, path)
                     successes += 1
                 except Exception:
@@ -733,6 +733,7 @@ def main(
                         errors += 1
                     else:
                         dataset, path = res
+                        _LOG.debug("Wrote dataset %s to %s", dataset.id, path)
                         on_success(dataset, path)
                         successes += 1
                 pool.close()
