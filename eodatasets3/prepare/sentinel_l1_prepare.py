@@ -572,7 +572,9 @@ def main(
                     raise ValueError(f"Product {product_name} not found in ODC index")
                 products[product_name] = product
 
-            index.datasets.add(Dataset(product, serialise.to_doc(dataset)))
+            index.datasets.add(
+                Dataset(product, serialise.to_doc(dataset), uris=dataset.locations)
+            )
             _LOG.debug("Indexed dataset %s to %s", dataset.id, dataset_path)
 
     else:
