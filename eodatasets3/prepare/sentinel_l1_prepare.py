@@ -688,7 +688,7 @@ def main(
 
                     if output_yaml.exists():
                         if not overwrite_existing:
-                            _LOG.debug("Output exists: not writing. %s", output_yaml)
+                            _LOG.debug("Output exists: skipping. %s", output_yaml)
                             continue
 
                         _LOG.debug("Output exists: overwriting %s", output_yaml)
@@ -727,7 +727,7 @@ def main(
                         on_success(dataset, path)
                     successes += 1
                 except Exception:
-                    _LOG.exception("Failed to write dataset: %s", job)
+                    _LOG.exception("Failed to complete dataset: %s", job)
                     errors += 1
         else:
             with Pool(processes=workers) as pool:
