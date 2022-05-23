@@ -26,7 +26,7 @@ from datacube.ui.click import config_option, environment_option
 from datacube.utils.uris import normalise_path
 from defusedxml import minidom
 
-from eodatasets3 import DatasetDoc, DatasetPrepare, serialise
+from eodatasets3 import DatasetDoc, DatasetPrepare, names, serialise
 from eodatasets3.properties import Eo3Interface
 from eodatasets3.ui import PathPath
 from eodatasets3.utils import pass_config
@@ -248,6 +248,8 @@ def prepare_and_write(
         doc = serialise.from_doc(
             p.written_dataset_doc, skip_validation=True, normalise_properties=False
         )
+        if not doc.locations:
+            doc.locations = [names.resolve_location(dataset_location)]
         return doc, metadata_path
 
 
