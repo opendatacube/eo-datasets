@@ -157,10 +157,19 @@ def process_datastrip_metadata(contents: str) -> Dict:
     }
 
 
-def process_user_product_metadata(contents: str) -> Dict:
+def process_user_product_metadata(contents: str, filename_stem: str = None) -> Dict:
     root = minidom.parseString(contents)
 
-    product_uri = _value(root, "PRODUCT_URI").split(".")[0]
+    # - On newer datasets, get the product URI from metadata.
+    # - On older datasets, get it from the filename.
+    # (the metadata field is useless on older datasets, the filename is useless/fixed on newer datasets)
+    raw_product_uri = _value(root, "PRODUCT_URI")
+
+    if raw_product_uri.startswith("S2"):
+        product_uri = raw_product_uri.split(".")[0]
+    else:
+        product_uri = filename_stem
+
     region_code = product_uri.split("_")[5][1:]
     return {
         "eo:platform": _value(root, "SPACECRAFT_NAME"),
@@ -310,29 +319,32 @@ def _extract_esa_fields(dataset, p) -> Iterable[Path]:
             ]
             if len(matches) != 1:
                 raise ValueError(
-                    f"Expected exactly one file matching {patterns}, but found {len(matches)} of them in {dataset}, "
+                    f"Expected exactly one file matching {patterns}, but found {len(matches)} of them in {dataset}:"
+                    f"\n\t{matches}"
                 )
             return matches[0]
 
-        datastrip_md = one("*MTD_DS.xml", "DATASTRIP/*.xml")
+        datastrip_md = one("*MTD_DS.xml", "DATASTRIP/S2*.xml")
         p.properties.update(
             process_datastrip_metadata(z.read(datastrip_md).decode("utf-8"))
         )
         p.note_accessory_file("metadata:s2_datastrip", datastrip_md)
 
-        tile_md = one("*MTD_TL.xml", "GRANULE/*.xml")
-        p.properties.update(process_tile_metadata(z.read(tile_md).decode("utf-8")))
-        p.note_accessory_file("metadata:s2_tile", tile_md)
-
         user_product_md = one("*MTD_MSIL1C.xml", "S2*.xml")
         for prop, value in process_user_product_metadata(
-            z.read(user_product_md).decode("utf-8")
+            z.read(user_product_md).decode("utf-8"),
+            filename_stem=Path(user_product_md).stem,
         ).items():
             # We don't want to override properties that came from the (more-specific) tile metadata.
             if prop not in p.properties:
                 p.properties[prop] = value
 
         p.note_accessory_file("metadata:s2_user_product", user_product_md)
+
+        # All individual granules
+        tile_md = one("*MTD_TL.xml", "GRANULE/S2*.xml")
+        p.properties.update(process_tile_metadata(z.read(tile_md).decode("utf-8")))
+        p.note_accessory_file("metadata:s2_tile", tile_md)
 
         return [Path(p) for p in z.namelist() if "IMG_DATA" in p and p.endswith(".jp2")]
 
