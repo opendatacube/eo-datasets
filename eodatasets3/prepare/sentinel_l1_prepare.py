@@ -7,6 +7,7 @@ import dataclasses
 import fnmatch
 import json
 import logging
+import os.path
 import re
 import sys
 import traceback
@@ -295,26 +296,35 @@ def _extract_esa_fields(dataset, p) -> Iterable[Path]:
     """Extract ESA metadata and return list of image offsets"""
     with zipfile.ZipFile(dataset, "r") as z:
 
-        def one(suffix: str) -> str:
+        def one(*patterns) -> str:
             """Find one path ending in the given name"""
-            matches = [s for s in z.namelist() if s.endswith(suffix)]
+
+            internal_folder_name = os.path.commonprefix(z.namelist())
+            matches = [
+                s
+                for s in z.namelist()
+                if any(
+                    fnmatch.fnmatch(s[len(internal_folder_name) :], pattern)
+                    for pattern in patterns
+                )
+            ]
             if len(matches) != 1:
                 raise ValueError(
-                    f"Expected exactly one file called {suffix} in {dataset}, found {len(matches)}"
+                    f"Expected exactly one file matching {patterns}, but found {len(matches)} of them in {dataset}, "
                 )
             return matches[0]
 
-        datastrip_md = one("MTD_DS.xml")
+        datastrip_md = one("*MTD_DS.xml", "DATASTRIP/*.xml")
         p.properties.update(
             process_datastrip_metadata(z.read(datastrip_md).decode("utf-8"))
         )
         p.note_accessory_file("metadata:s2_datastrip", datastrip_md)
 
-        tile_md = one("MTD_TL.xml")
+        tile_md = one("*MTD_TL.xml", "GRANULE/*.xml")
         p.properties.update(process_tile_metadata(z.read(tile_md).decode("utf-8")))
         p.note_accessory_file("metadata:s2_tile", tile_md)
 
-        user_product_md = one("MTD_MSIL1C.xml")
+        user_product_md = one("*MTD_MSIL1C.xml", "S2*.xml")
         for prop, value in process_user_product_metadata(
             z.read(user_product_md).decode("utf-8")
         ).items():
