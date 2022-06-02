@@ -170,7 +170,7 @@ partd==1.2.0
     # via dask
 pep8-naming==0.12.1
     # via eodatasets3 (setup.py)
-pillow==9.1.0
+pillow==9.1.1
     # via
     #   imageio
     #   scikit-image
