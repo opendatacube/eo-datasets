@@ -774,8 +774,7 @@ def main(
                     _LOG.debug(f"Found {len(granule_ids)} granules")
 
                 for granule_id in granule_ids:
-
-                    if granule_id:
+                    if len(granule_ids) > 1:
                         yaml_filename = (
                             f"{found_dataset.name}.{granule_id}.odc-metadata.yaml"
                         )
