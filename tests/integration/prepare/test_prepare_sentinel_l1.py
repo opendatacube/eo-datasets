@@ -75,6 +75,7 @@ ESA_MULTIGRANULE_DATASET: Path = (
     Path(__file__).parent.parent
     / "data/multi-granule/S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016.zip"
 )
+assert ESA_MULTIGRANULE_DATASET.exists()
 
 ESA_EXPECTED_METADATA = {
     "$schema": "https://schemas.opendatacube.org/dataset",
@@ -548,52 +549,50 @@ def test_run_multigranule(tmp_path: Path):
     out.mkdir()
 
     # Sanity check: there should be no sibling files in the input directory
-    assert len(list(ESA_MULTIGRANULE_DATASET.parent.iterdir())) == 1
+    assert (
+        len(list(ESA_MULTIGRANULE_DATASET.parent.iterdir())) == 1
+    ), "Expected input directory to only contain the zip"
 
     # Run an older zip file with multiple granules.
     res = run_prepare_cli(
-        sentinel_l1_prepare.main, "-v", "--output-base", out, ESA_MULTIGRANULE_DATASET
+        sentinel_l1_prepare.main,
+        "-v",
+        "--output-base",
+        out,
+        "--input-relative-to",
+        ESA_MULTIGRANULE_DATASET.parent,
+        ESA_MULTIGRANULE_DATASET,
     )
 
     assert res.exit_code == 0, res.output
 
-    # There should still be no sibling files in the input directory
-    assert len(list(ESA_MULTIGRANULE_DATASET.parent.iterdir())) == 1
+    # There should still be no sibling files in the input directory -- we're using an output folder.
+    assert (
+        len(list(ESA_MULTIGRANULE_DATASET.parent.iterdir())) == 1
+    ), "Input directory should not get any new files"
 
-    out_paths = list(out.iterdir())
+    dataset_name = (
+        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016"
+    )
+    out_paths = sorted(s.relative_to(out).as_posix() for s in out.iterdir())
 
     # It should have one metadata file per granule, named correctly.
     assert out_paths == [
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T52KGB_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T52KHB_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T52KHC_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T52KHD_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KKS_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KKT_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KKU_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KLS_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KLT_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KLU_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KMS_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KMT_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KMU_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KNT_N02.04.odc-metadata.yaml",
-        "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016."
-        "S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KNU_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T52KGB_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T52KHB_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T52KHC_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T52KHD_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KKS_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KKT_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KKU_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KLS_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KLT_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KLU_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KMS_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KMT_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KMU_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KNT_N02.04.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KNU_N02.04.odc-metadata.yaml",
     ]
 
 
