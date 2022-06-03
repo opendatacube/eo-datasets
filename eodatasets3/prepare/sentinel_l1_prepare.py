@@ -16,10 +16,10 @@ import warnings
 import zipfile
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Dict, Iterable, Mapping, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
-import attr
 import click
+from attr import define
 from datacube.config import LocalConfig
 from datacube.index import index_connect
 from datacube.model import Dataset
@@ -194,10 +194,33 @@ def _get_stable_id(p: Eo3Interface) -> uuid.UUID:
     )
 
 
+def list_granules(dataset_location: Path) -> Optional[List[str]]:
+    """
+    Get a list of granule ids if it's a dataset that may contain multiple.
+    """
+    if dataset_location.suffix.lower() == ".json":
+        # Sinergise
+        return None
+
+    # Each granule is a directory. Get a unique list of all the granule directory names (ie. IDs).
+    granules = set()
+
+    granule_folder_pattern = re.compile(r"/GRANULE/([^/]+)/")
+
+    with zipfile.ZipFile(dataset_location, "r") as z:
+        for name in z.namelist():
+            match = granule_folder_pattern.search(name)
+            if match:
+                granules.add(match.group(1))
+
+    return sorted(granules)
+
+
 def prepare_and_write(
     dataset_location: Path,
     output_yaml: Path,
     producer: str,
+    granule_id: str = None,
     embed_location: bool = None,
 ) -> Tuple[DatasetDoc, Path]:
     if embed_location is None:
@@ -218,7 +241,9 @@ def prepare_and_write(
         p.properties["odc:producer"] = producer
 
         if producer == "esa.int":
-            jp2_offsets = _extract_esa_fields(dataset_location, p)
+            jp2_offsets = _extract_esa_fields(
+                dataset_location, p, granule_id=granule_id
+            )
         elif producer == "sinergise.com":
             jp2_offsets = _extract_sinergise_fields(dataset_location.parent, p)
         else:
@@ -290,33 +315,41 @@ def _extract_sinergise_fields(path: Path, p: DatasetPrepare) -> Iterable[Path]:
             "Are you sure the input is a sinergise dataset folder?"
         )
 
-    p.properties.update(process_sinergise_product_info(product_info_path))
-    p.note_accessory_file("metadata:sinergise_product_info", product_info_path)
-
+    # Tile/Granule metadata
     p.properties.update(process_tile_metadata(metadata_xml_path.read_text()))
     p.note_accessory_file("metadata:s2_tile", metadata_xml_path)
+
+    # Whole-product metadata
+    for prop, value in process_sinergise_product_info(product_info_path).items():
+        # We don't want to override properties that came from the (more-specific) tile metadata.
+        if prop not in p.properties:
+            p.properties[prop] = value
+    p.note_accessory_file("metadata:sinergise_product_info", product_info_path)
 
     # TODO: sinergise folders could `process_datastrip_metadata()` in an outer directory?
 
     return list(path.glob("*.jp2"))
 
 
-def _extract_esa_fields(dataset, p) -> Iterable[Path]:
+def _extract_esa_fields(
+    dataset: Path, p: DatasetPrepare, granule_id: str
+) -> Iterable[Path]:
     """Extract ESA metadata and return list of image offsets"""
     with zipfile.ZipFile(dataset, "r") as z:
+
+        def find(*patterns) -> Iterable[str]:
+            internal_folder_name = os.path.commonprefix(z.namelist())
+            for s in z.namelist():
+                if any(
+                    fnmatch.fnmatch(s[len(internal_folder_name) :], pattern)
+                    for pattern in patterns
+                ):
+                    yield s
 
         def one(*patterns) -> str:
             """Find one path ending in the given name"""
 
-            internal_folder_name = os.path.commonprefix(z.namelist())
-            matches = [
-                s
-                for s in z.namelist()
-                if any(
-                    fnmatch.fnmatch(s[len(internal_folder_name) :], pattern)
-                    for pattern in patterns
-                )
-            ]
+            [*matches] = find(*patterns)
             if len(matches) != 1:
                 raise ValueError(
                     f"Expected exactly one file matching {patterns}, but found {len(matches)} of them in {dataset}:"
@@ -330,6 +363,31 @@ def _extract_esa_fields(dataset, p) -> Iterable[Path]:
         )
         p.note_accessory_file("metadata:s2_datastrip", datastrip_md)
 
+        # Get the specific granule metadata
+        [*tile_mds] = find(
+            "*MTD_TL.xml",
+            f"GRANULE/{granule_id}/S2*.xml" if granule_id else "GRANULE/S2*.xml",
+        )
+        if not tile_mds:
+            raise ValueError(
+                "Could not find any tile metadata files in the dataset. "
+                + (
+                    f"(Searching for granule {granule_id!r})"
+                    if granule_id
+                    else "(Any granule)"
+                )
+            )
+        if len(tile_mds) != 1:
+            raise ValueError(
+                f"Expected exactly one granule in package, since no granule id was provided: {dataset}:"
+                f"\n\t{tile_mds}"
+            )
+        tile_md = tile_mds[0]
+
+        p.properties.update(process_tile_metadata(z.read(tile_md).decode("utf-8")))
+        p.note_accessory_file("metadata:s2_tile", tile_md)
+
+        # Wider product metadata.
         user_product_md = one("*MTD_MSIL1C.xml", "S2*.xml")
         for prop, value in process_user_product_metadata(
             z.read(user_product_md).decode("utf-8"),
@@ -338,15 +396,15 @@ def _extract_esa_fields(dataset, p) -> Iterable[Path]:
             # We don't want to override properties that came from the (more-specific) tile metadata.
             if prop not in p.properties:
                 p.properties[prop] = value
-
         p.note_accessory_file("metadata:s2_user_product", user_product_md)
 
-        # All individual granules
-        tile_md = one("*MTD_TL.xml", "GRANULE/S2*.xml")
-        p.properties.update(process_tile_metadata(z.read(tile_md).decode("utf-8")))
-        p.note_accessory_file("metadata:s2_tile", tile_md)
-
-        return [Path(p) for p in z.namelist() if "IMG_DATA" in p and p.endswith(".jp2")]
+        # Get the list of images in the same tile folder.
+        img_folder_offset = (Path(tile_md).parent / "IMG_DATA").as_posix()
+        return [
+            Path(p)
+            for p in z.namelist()
+            if p.startswith(img_folder_offset) and p.endswith(".jp2")
+        ]
 
 
 def _extract_band_number(name: str) -> str:
@@ -420,15 +478,34 @@ class YearMonth(click.ParamType):
         return int(year), int(month)
 
 
-@attr.s(auto_attribs=True, order=True, hash=True)
+@define(order=True, hash=True)
 class Job:
     """A dataset to process"""
 
     dataset_path: Path
     output_yaml_path: Path
+    granule_id: Optional[str]
+
     # "sinergise.com" / "esa.int"
     producer: str
     embed_location: bool
+
+
+@define(order=True, hash=True)
+class InputDataset:
+    name: str
+    producer: str
+
+    path: Path
+    base_folder: Path
+
+    @property
+    def metadata(self) -> Optional[FolderInfo]:
+        return FolderInfo.for_path(self.path)
+
+    @property
+    def granule_ids(self) -> Optional[List[str]]:
+        return list_granules(self.path)
 
 
 @click.command(help=__doc__)
@@ -606,7 +683,7 @@ def main(
         def on_success(dataset: DatasetDoc, dataset_path: Path):
             """Nothing extra"""
 
-    def files_in_path(input_path: Path):
+    def find_inputs_in_path(input_path: Path) -> Iterable[InputDataset]:
         """
         Scan the input path for our key identifying files of a package.
         """
@@ -614,22 +691,24 @@ def main(
         if provider == "sinergise.com" or not provider:
             for p in _rglob_with_self(input_path, "tileInfo.json"):
                 found_something = True
-                yield (
-                    "sinergise.com",
+                yield InputDataset(
+                    producer="sinergise.com",
                     # Dataset location is the metadata file itself.
-                    p,
+                    path=p,
                     # Output is a sibling metadata file, with the same name as the folder (usually S2A....).
-                    (p.parent.parent / f"{p.parent.stem}.odc-metadata.yaml"),
+                    base_folder=p.parent.parent,
+                    name=p.parent.stem,
                 )
         if provider == "esa.int" or not provider:
             for p in _rglob_with_self(input_path, "*.zip"):
                 found_something = True
-                yield (
-                    "esa.int",
+                yield InputDataset(
+                    producer="esa.int",
                     # Dataset location is the zip file
-                    p,
+                    path=p,
                     # Metadata is a sibling file with a metadata suffix.
-                    p.with_suffix(".odc-metadata.yaml"),
+                    base_folder=p.parent,
+                    name=p.stem,
                 )
         if not found_something:
             raise ValueError(
@@ -638,57 +717,70 @@ def main(
             )
 
     def find_jobs() -> Iterable[Job]:
-        nonlocal input_relative_to
-        with click.progressbar(
-            datasets, label="Preparing metadata", show_pos=True
-        ) as progress:
-            for i, input_path in enumerate(progress):
+        nonlocal input_relative_to, embed_location
+        for input_path in datasets:
 
-                first = True
-                for producer, ds_path, sibling_yaml_path in files_in_path(input_path):
-                    # Make sure we tick progress on extra datasets that were found.
-                    if not first:
-                        progress.length += 1
-                        progress.update(1)
-                        first = False
+            first = True
+            for found_dataset in find_inputs_in_path(input_path):
+                _LOG.debug(f"Trying {found_dataset.name}")
+                # Make sure we tick progress on extra datasets that were found.
+                if not first:
+                    first = False
 
-                    # Filter based on metadata
-                    info = FolderInfo.for_path(ds_path)
+                # Filter based on metadata
+                info = found_dataset.metadata
 
-                    # Skip regions that are not in the limit?
-                    if included_regions or before_month or after_month:
-                        if info is None:
-                            raise ValueError(
-                                f"Cannot filter from non-standard folder layout: {ds_path}"
+                # Skip regions that are not in the limit?
+                if included_regions or before_month or after_month:
+                    if info is None:
+                        raise ValueError(
+                            f"Cannot filter from non-standard folder layout: {found_dataset.path}"
+                        )
+
+                    if included_regions:
+                        if info.region_code not in included_regions:
+                            _LOG.debug(
+                                f"Skipping because region {info.region_code!r} is not in region list"
                             )
+                            continue
 
-                        if included_regions:
-                            if info.region_code not in included_regions:
-                                _LOG.debug(
-                                    f"Skipping because region {info.region_code!r} is not in region list"
-                                )
-                                continue
+                    if after_month is not None:
+                        year, month = after_month
 
-                        if after_month is not None:
-                            year, month = after_month
+                        if info.year < year or (
+                            info.year == year and info.month < month
+                        ):
+                            _LOG.debug(
+                                f"Skipping because year {info.year}-{info.month} is older than {year}-{month}"
+                            )
+                            continue
+                    if before_month is not None:
+                        year, month = before_month
 
-                            if info.year < year or (
-                                info.year == year and info.month < month
-                            ):
-                                _LOG.debug(
-                                    f"Skipping because year {info.year}-{info.month} is older than {year}-{month}"
-                                )
-                                continue
-                        if before_month is not None:
-                            year, month = before_month
+                        if info.year > year or (
+                            info.year == year and info.month > month
+                        ):
+                            _LOG.debug(
+                                f"Skipping because year {info.year}-{info.month} is newer than {year}-{month}"
+                            )
+                            continue
 
-                            if info.year > year or (
-                                info.year == year and info.month > month
-                            ):
-                                _LOG.debug(
-                                    f"Skipping because year {info.year}-{info.month} is newer than {year}-{month}"
-                                )
-                                continue
+                granule_ids = found_dataset.granule_ids
+
+                # When granule_id is None, it means process all without filtering.
+                if not granule_ids:
+                    granule_ids = [None]
+                else:
+                    _LOG.debug(f"Found {len(granule_ids)} granules")
+
+                for granule_id in granule_ids:
+
+                    if granule_id:
+                        yaml_filename = (
+                            f"{found_dataset.name}.{granule_id}.odc-metadata.yaml"
+                        )
+                    else:
+                        yaml_filename = f"{found_dataset.name}.odc-metadata.yaml"
 
                     # Put it in a different folder?
                     if output_base:
@@ -696,18 +788,23 @@ def main(
                         # What base folder should we choose for creating subfolders in the output?
                         if input_relative_to is None:
                             input_relative_to = _get_default_relative_folder_base(
-                                sibling_yaml_path
+                                found_dataset.base_folder
                             )
 
                         output_folder = (
                             output_base
-                            / sibling_yaml_path.parent.relative_to(input_relative_to)
+                            / found_dataset.base_folder.relative_to(input_relative_to)
                         )
-
-                        output_yaml = output_folder / sibling_yaml_path.name
+                        # Default to true.
+                        if embed_location is None:
+                            embed_location = True
                     else:
-                        output_yaml = sibling_yaml_path
+                        output_folder = found_dataset.base_folder
+                        # Default to false
+                        if embed_location is None:
+                            embed_location = False
 
+                    output_yaml = output_folder / yaml_filename
                     if output_yaml.exists():
                         if not overwrite_existing:
                             _LOG.debug("Output exists: skipping. %s", output_yaml)
@@ -715,8 +812,15 @@ def main(
 
                         _LOG.debug("Output exists: overwriting %s", output_yaml)
 
+                    _LOG.info(
+                        f'Queued {found_dataset.name} (granule: {granule_id or "assuming-single"})'
+                    )
                     yield Job(
-                        ds_path, output_yaml, producer, embed_location=embed_location
+                        dataset_path=found_dataset.path,
+                        output_yaml_path=output_yaml,
+                        producer=found_dataset.producer,
+                        granule_id=granule_id,
+                        embed_location=embed_location,
                     )
 
     errors = 0
@@ -743,9 +847,10 @@ def main(
                             job.dataset_path,
                             job.output_yaml_path,
                             job.producer,
+                            granule_id=job.granule_id,
                             embed_location=job.embed_location,
                         )
-                        _LOG.debug("Wrote dataset %s to %s", dataset.id, path)
+                        _LOG.info("Wrote dataset %s to %s", dataset.id, path)
                         on_success(dataset, path)
                     successes += 1
                 except Exception:
@@ -759,7 +864,7 @@ def main(
                         errors += 1
                     else:
                         dataset, path = res
-                        _LOG.debug("Wrote dataset %s to %s", dataset.id, path)
+                        _LOG.info("Wrote dataset %s to %s", dataset.id, path)
                         on_success(dataset, path)
                         successes += 1
                 pool.close()
@@ -802,6 +907,7 @@ def _write_dataset_safe(job: Job) -> Union[Tuple[DatasetDoc, Path], str]:
             job.dataset_path,
             job.output_yaml_path,
             job.producer,
+            granule_id=job.granule_id,
             embed_location=job.embed_location,
         )
         return dataset, path
