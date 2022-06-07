@@ -550,7 +550,7 @@ class InputDataset:
     "always_granule_id",
     is_flag=True,
     default=None,
-    help="Include the granule id in metadata filenames? (default: auto: include only for multi-granule files)."
+    help="Include the granule id in metadata filenames? (default: auto -- include only for multi-granule files). "
     "Beware that multi-granule datasets without a granule id in the filename will overwrite each-other",
 )
 @click.option(
