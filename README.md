@@ -236,6 +236,12 @@ Options:
                                   Embed the location of the dataset in the
                                   metadata? (if you wish to store them
                                   separately. default: auto)
+  --always-granule-id / --never-granule-id
+                                  Include the granule id in metadata
+                                  filenames? (default: auto: include only for
+                                  multi-granule files).Beware that multi-
+                                  granule datasets without a granule id in the
+                                  filename will overwrite each-other
   --provider [sinergise.com|esa.int]
                                   Restrict scanning to only packages of the
                                   given provider. (ESA assumes a zip file,
@@ -255,12 +261,12 @@ Options:
   --before-month YEAR-MONTH       Limit the scan to datasets older than the
                                   given month (expressed as {year}-{month}, eg
                                   '2010-01')
-  -E, --env TEXT
-  -C, --config, --config_file TEXT
   --index                         Index newly-generated metadata into the
                                   configured datacube
   --dry-run                       Show what would be created, but don't create
                                   anything
+  -E, --env TEXT
+  -C, --config, --config_file TEXT
   --help                          Show this message and exit.
 ```
 
