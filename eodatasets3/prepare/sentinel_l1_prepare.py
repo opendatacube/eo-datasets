@@ -546,6 +546,14 @@ class InputDataset:
     "(if you wish to store them separately. default: auto)",
 )
 @click.option(
+    "--always-granule-id/--never-granule-id",
+    "always_granule_id",
+    is_flag=True,
+    default=None,
+    help="Include the granule id in metadata filenames? (default: auto: include only for multi-granule files)."
+    "Beware that multi-granule datasets without a granule id in the filename will overwrite each-other",
+)
+@click.option(
     "--provider",
     default=None,
     type=click.Choice(
@@ -627,6 +635,7 @@ def main(
     before_month: Optional[Tuple[int, int]],
     after_month: Optional[Tuple[int, int]],
     dry_run: bool,
+    always_granule_id: Optional[bool],
     index_to_odc: bool,
 ):
     if sys.argv[1] == "sentinel-l1c":
@@ -774,7 +783,11 @@ def main(
                     _LOG.debug(f"Found {len(granule_ids)} granules")
 
                 for granule_id in granule_ids:
-                    if len(granule_ids) > 1:
+                    if always_granule_id or (
+                        # None means 'auto': ie. automatically include granule id when there are multiple granules
+                        always_granule_id is None
+                        and len(granule_ids) > 1
+                    ):
                         yaml_filename = (
                             f"{found_dataset.name}.{granule_id}.odc-metadata.yaml"
                         )
