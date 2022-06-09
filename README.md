@@ -242,6 +242,10 @@ Options:
                                   for multi-granule files). Beware that multi-
                                   granule datasets without a granule id in the
                                   filename will overwrite each-other
+  --throughly-check-existing / --cheaply-check-existing
+                                  Should we open every dataset to check if
+                                  *all* inner granules have been produced?
+                                  Default: false.
   --provider [sinergise.com|esa.int]
                                   Restrict scanning to only packages of the
                                   given provider. (ESA assumes a zip file,

@@ -554,6 +554,13 @@ class InputDataset:
     "Beware that multi-granule datasets without a granule id in the filename will overwrite each-other",
 )
 @click.option(
+    "--throughly-check-existing/--cheaply-check-existing",
+    "thoroughly_check_existing",
+    is_flag=True,
+    default=False,
+    help="Should we open every dataset to check if *all* inner granules have been produced? Default: false.",
+)
+@click.option(
     "--provider",
     default=None,
     type=click.Choice(
@@ -630,6 +637,7 @@ def main(
     overwrite_existing: bool,
     verbose: bool,
     workers: int,
+    thoroughly_check_existing: bool,
     embed_location: Optional[bool],
     only_regions_in_file: Optional[Path],
     before_month: Optional[Tuple[int, int]],
@@ -774,6 +782,45 @@ def main(
                             )
                             continue
 
+                # Put outputs in a different folder?
+                if output_base:
+                    # What base folder should we choose for creating subfolders in the output?
+                    if input_relative_to is None:
+                        input_relative_to = _get_default_relative_folder_base(
+                            found_dataset.base_folder
+                        )
+
+                    output_folder = output_base / found_dataset.base_folder.relative_to(
+                        input_relative_to
+                    )
+                    # Default to true.
+                    if embed_location is None:
+                        embed_location = True
+                else:
+                    output_folder = found_dataset.base_folder
+                    # Default to false
+                    if embed_location is None:
+                        embed_location = False
+
+                # It's very slow to read the list of inner granules.
+                #
+                # So, if we're not thoroughly checking for missing outputs.
+                if (
+                    (not thoroughly_check_existing)
+                    # ... and any outputs exist at all
+                    and list(
+                        output_folder.glob(f"{found_dataset.name}*.odc-metadata.yaml")
+                    )
+                    # ... and we're not overwriting our outputs
+                    and not overwrite_existing
+                ):
+                    # Skip it!
+                    _LOG.debug(
+                        "At least one output exists: skipping. %s", found_dataset.name
+                    )
+                    continue
+
+                # This has to read the files, so can be slow. That's why we try to skip above if possible.
                 granule_ids = found_dataset.granule_ids
 
                 # When granule_id is None, it means process all without filtering.
@@ -793,28 +840,6 @@ def main(
                         )
                     else:
                         yaml_filename = f"{found_dataset.name}.odc-metadata.yaml"
-
-                    # Put it in a different folder?
-                    if output_base:
-
-                        # What base folder should we choose for creating subfolders in the output?
-                        if input_relative_to is None:
-                            input_relative_to = _get_default_relative_folder_base(
-                                found_dataset.base_folder
-                            )
-
-                        output_folder = (
-                            output_base
-                            / found_dataset.base_folder.relative_to(input_relative_to)
-                        )
-                        # Default to true.
-                        if embed_location is None:
-                            embed_location = True
-                    else:
-                        output_folder = found_dataset.base_folder
-                        # Default to false
-                        if embed_location is None:
-                            embed_location = False
 
                     output_yaml = output_folder / yaml_filename
                     if output_yaml.exists():
