@@ -1,0 +1,16 @@
+# action.yml
+name: 'eo3-validate'
+description: 'A lint-like checker to check ODC documents'
+inputs:
+  filepath:  # id of input
+    description: 'path to files'
+    required: true
+    default: ''
+# outputs:
+#   time: # id of output
+#     description: 'The time we greeted you'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.filepath }}
