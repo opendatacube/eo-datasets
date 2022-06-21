@@ -121,6 +121,17 @@ But all are optional for basic checks
 	  --help                          Show this message and exit.
 
 
+### Eo3-validate docker github action
+#### Inputs
+
+`filepath`: **Required** The name of the person to greet. Default `"World"`.
+
+#### Example usage
+
+uses: actions/eo3-validate@v1
+with:
+  filepath: '/'
+
 ### Disabling warnings
 
 ODC is very configurable, and sometimes the validator will be too strict
