@@ -136,7 +136,7 @@ netcdf4==1.5.7
     #   eodatasets3 (setup.py)
 networkx==2.8
     # via scikit-image
-numpy==1.21.2
+numpy==1.22.0
     # via
     #   cftime
     #   dask
