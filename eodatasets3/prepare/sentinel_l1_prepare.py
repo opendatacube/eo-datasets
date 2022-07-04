@@ -3,7 +3,6 @@ Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise or ESA.
 
 Takes ESA zipped datasets or Sinergise dataset directories
 """
-import dataclasses
 import fnmatch
 import json
 import logging
@@ -424,7 +423,34 @@ def _rglob_with_self(path: Path, pattern: str) -> Iterable[Path]:
     yield from path.rglob(pattern)
 
 
-@dataclasses.dataclass
+_AREA_PARTS = re.compile(r"(\d+)([NS])(\d+)([EW])")
+
+
+def area_to_tuple(area: str) -> Tuple[int, int, int, int]:
+    """
+    >>> area_to_tuple('20S120E-25S125E')
+    (-20, 120, -25, 125)
+    >>> area_to_tuple('00N160W-05S155W')
+    (0, -160, -5, -155)
+    """
+
+    def point(part: str) -> Tuple[int, int]:
+        match = _AREA_PARTS.match(part)
+        if match is None:
+            raise ValueError(f"Not an area? {part!r} to {_AREA_PARTS!r}")
+        lat, ns, lon, ew = match.groups()
+        if ns == "S":
+            lat = "-" + lat
+        if ew == "W":
+            lon = "-" + lon
+
+        return int(lat), int(lon)
+
+    first, second = area.split("-")
+    return (*point(first), *point(second))
+
+
+@define
 class FolderInfo:
     """
     Information extracted from a standard S2 folder layout.
@@ -432,14 +458,19 @@ class FolderInfo:
 
     year: int
     month: int
+    area: str
     region_code: Optional[str]
 
     # Compiled regexp for extracting year, month and region
     # Standard layout is of the form: 'L1C/{yyyy}/{yyyy}-{mm}/{area}/S2*_{region}_{timestamp}(.zip)'
     STANDARD_SUBFOLDER_LAYOUT = re.compile(
-        r"(\d{4})/(\d{4})-(\d{2})/[\dNESW]+-[\dNESW]+/"
+        r"(\d{4})/(\d{4})-(\d{2})/([\dNESW]+-[\dNESW]+)/"
         r"S2[AB](?:_OPER_PRD)?_MSIL1C(?:_PDMC)?(?:_[a-zA-Z0-9]+){3}(?:_T([A-Z\d]+))?_[\dT]+(\.zip|/tileInfo\.json)?$"
     )
+
+    @property
+    def area_tuple(self):
+        return area_to_tuple(self.area)
 
     @classmethod
     def for_path(cls, path: Path) -> Optional["FolderInfo"]:
@@ -452,11 +483,11 @@ class FolderInfo:
         if not m:
             return None
 
-        year, year2, month, region_code, extension = m.groups()
+        year, year2, month, area, region_code, extension = m.groups()
         if year != year2:
             raise ValueError(f"Year mismatch in {path}")
 
-        return FolderInfo(int(year), int(month, 10), region_code)
+        return FolderInfo(int(year), int(month, 10), area, region_code)
 
 
 class YearMonth(click.ParamType):
