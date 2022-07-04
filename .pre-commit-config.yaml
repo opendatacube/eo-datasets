@@ -32,7 +32,7 @@ repos:
       rev: v4.1.0
       hooks:
         - id: check-added-large-files # We don't want huge files. (Cut down test data!)
-          args: ['--maxkb=2000']
+          args: ['--maxkb=3000']
         - id: check-case-conflict # Don't allow files that differ by case sensitivity.
         - id: check-docstring-first # Avoid common error of code before docstring.
         - id: check-json # Check json file syntax
