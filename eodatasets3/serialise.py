@@ -62,6 +62,11 @@ def _represent_paths(self, data: PurePath):
     return Representer.represent_str(self, data.as_posix())
 
 
+def _represent_float(self, data: float):
+    float_text = numpy.format_float_scientific(data)
+    return self.represent_scalar(u'tag:yaml.org,2002:float', float_text)
+
+
 def _init_yaml() -> YAML:
     yaml = YAML()
 
@@ -81,6 +86,7 @@ def _init_yaml() -> YAML:
     yaml.representer.add_representer(numpy.uint64, Representer.represent_int)
     yaml.representer.add_representer(numpy.float32, Representer.represent_float)
     yaml.representer.add_representer(numpy.float64, Representer.represent_float)
+
     yaml.representer.add_representer(numpy.ndarray, Representer.represent_list)
     yaml.representer.add_representer(numpy.datetime64, _represent_numpy_datetime)
 
@@ -105,7 +111,9 @@ def dump_yaml(output_yaml: Path, *docs: Mapping) -> None:
 
 def dumps_yaml(stream, *docs: Mapping) -> None:
     """Dump yaml through a stream, using the default serialisation settings."""
-    return _init_yaml().dump_all(docs, stream=stream)
+    yml = _init_yaml()
+    yml.representer.add_representer(float, _represent_float)
+    return yml.dump_all(docs, stream=stream)
 
 
 def load_yaml(p: Path) -> Dict:
