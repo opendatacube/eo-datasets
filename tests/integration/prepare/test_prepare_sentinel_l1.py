@@ -23,6 +23,14 @@ def test_subfolder_info_extraction():
 
     info = FolderInfo.for_path(
         Path(
+            "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2016/2016-01/25S135E-30S140E/"
+            "S2A_OPER_PRD_MSIL1C_PDMC_20160210T005347_R002_V20160129T010047_20160129T010047.zip"
+        )
+    )
+    assert info is not None
+
+    info = FolderInfo.for_path(
+        Path(
             "/dea/test-data/L1C/2022/2022-03/25S125E-30S130E/"
             "S2B_MSIL1C_20210719T010729_N0301_R045_T53LQC_20210719T021248.zip"
         )
