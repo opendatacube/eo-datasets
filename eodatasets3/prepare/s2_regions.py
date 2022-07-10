@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 from pprint import pprint
-from typing import Dict, Iterable, List, Optional
+from typing import List, Optional, Dict, Iterable
 
 import click
 from click import echo, pass_obj
@@ -46,9 +46,13 @@ class RegionLookup:
 
     def add_from_file(self, paths_file: Path) -> int:
         """Add a paths to the lookup table"""
-        return self.add_from_paths(
-            Path(p.strip()) for p in paths_file.read_text().splitlines(False)
-        )
+        opener = open
+        if paths_file.suffix.lower() == ".gz":
+            import gzip
+
+            opener = gzip.open
+
+        return self.add_from_paths(Path(p.strip()) for p in opener(paths_file, "rt"))
 
     def add_from_scanning_path(self, l1cs: Path) -> int:
         """Scan for zips in a directory and add them to the table"""
@@ -99,6 +103,11 @@ class RegionLookup:
 
         return list(get_lazy())
 
+    def vacuum(self):
+        """Vacuum the database (reclaim space)"""
+        self.open()
+        self._db.execute("vacuum")
+
     def stats(self) -> Dict:
         """Get stats about the lookup table"""
         self.open()
@@ -124,7 +133,7 @@ def cli(ctx, db: Path):
 
 @cli.command("create", help="Recreate the database")
 @click.option("--scan-path", default=None, type=PathPath(exists=True))
-@click.option("-f", "paths-file", default=None, type=PathPath(exists=True))
+@click.option("-f", "paths_file", default=None, type=PathPath(exists=True))
 @pass_obj
 def cli_create(db: RegionLookup, scan_path: Path, paths_file: Path):
     if scan_path is None and paths_file is None:
@@ -141,6 +150,7 @@ def cli_create(db: RegionLookup, scan_path: Path, paths_file: Path):
         inserted = db.add_from_file(paths_file)
         echo(f"Loaded {inserted} items from file {paths_file}")
 
+    db.vacuum()
     db.close()
 
 

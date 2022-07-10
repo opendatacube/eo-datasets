@@ -19,13 +19,13 @@ from typing import Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 import click
 from attr import define
+from defusedxml import minidom
+
 from datacube.config import LocalConfig
 from datacube.index import index_connect
 from datacube.model import Dataset
 from datacube.ui.click import config_option, environment_option
 from datacube.utils.uris import normalise_path
-from defusedxml import minidom
-
 from eodatasets3 import DatasetDoc, DatasetPrepare, names, serialise
 from eodatasets3.properties import Eo3Interface
 from eodatasets3.ui import PathPath
