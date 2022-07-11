@@ -580,9 +580,7 @@ def test_run_multigranule(tmp_path: Path):
     assert res.exit_code == 0, res.output
 
     # There should still be no sibling files in the input directory -- we're using an output folder.
-    assert (
-            len(list(ESA_MULTIGRANULE_DATASET.parent.iterdir())) == 1
-    ), "Input directory should not get any new files"
+    check_input_dir_normal()
 
     dataset_name = (
         "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016"
