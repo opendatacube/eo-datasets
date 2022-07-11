@@ -726,17 +726,16 @@ def main(
                     if included_regions:
                         # If it's an older dataset without a region, try to map its area to a known region.
                         if info.region_code is None:
-                            # If none of the mapped regions are in the list of included regions, skip it.
-                            if not any(
-                                (region in included_regions)
-                                for region in region_lookup.get(info.area)
-                            ):
+                            for region in region_lookup.get(info.area):
+                                if region in included_regions:
+                                    _LOG.debug(f'Area {info.area!r} mapped to (included) region {region!r}')
+                                    break
+                            else:
                                 _LOG.debug(
                                     f"Skipping because area {info.area!r} doesn't map to an included region"
                                 )
                                 continue
-
-                        if info.region_code not in included_regions:
+                        elif info.region_code not in included_regions:
                             _LOG.debug(
                                 f"Skipping because region {info.region_code!r} is not in region list"
                             )
