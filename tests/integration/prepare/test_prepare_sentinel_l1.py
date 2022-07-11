@@ -7,6 +7,7 @@ from typing import Dict, Tuple
 import pytest
 
 from eodatasets3.prepare import sentinel_l1_prepare
+from eodatasets3.prepare.s2_common import RegionLookup
 from eodatasets3.prepare.sentinel_l1_prepare import FolderInfo
 
 from tests.common import check_prepare_outputs, run_prepare_cli
@@ -19,7 +20,7 @@ def test_subfolder_info_extraction():
         )
     )
     assert info is not None
-    assert info == FolderInfo(2019, 1, "32UJ")
+    assert info == FolderInfo(2019, 1, '25S125E-30S130', "32UJ")
 
     info = FolderInfo.for_path(
         Path(
@@ -35,7 +36,7 @@ def test_subfolder_info_extraction():
             "S2B_MSIL1C_20210719T010729_N0301_R045_T53LQC_20210719T021248.zip"
         )
     )
-    assert info == FolderInfo(2022, 3, "53LQC")
+    assert info == FolderInfo(2022, 3, '25S125E-30S130E', "53LQC")
 
     info = FolderInfo.for_path(
         Path(
@@ -43,7 +44,7 @@ def test_subfolder_info_extraction():
             "S2B_MSIL1C_20210716T035539_N0301_R004_T47QMB_20210716T063913.zip"
         )
     )
-    assert info == FolderInfo(2021, 7, "47QMB")
+    assert info == FolderInfo(2021, 7, '20N095E-15N100E', "47QMB")
 
     # Older dataset structure had no region code
     info = FolderInfo.for_path(
@@ -52,7 +53,9 @@ def test_subfolder_info_extraction():
             "S2A_OPER_PRD_MSIL1C_PDMC_20151225T022834_R072_V20151224T223838_20151224T223838.zip"
         )
     )
-    assert info == FolderInfo(2015, 12, None)
+    assert info == FolderInfo(2015, 12, '30S170E-35S175E', None)
+    # But it can be looked up?
+    assert '59HPB' in RegionLookup().get(info.area)
 
     # A sinergise-like input path.
     info = FolderInfo.for_path(
@@ -61,7 +64,7 @@ def test_subfolder_info_extraction():
             "S2B_MSIL1C_20190111T000249_N0209_R030_T55HFA_20190111T011446/tileInfo.json"
         )
     )
-    assert info == FolderInfo(2019, 1, "55HFA")
+    assert info == FolderInfo(2019, 1, '25S125E-30S130', "55HFA")
 
     # A folder that doesn't follow standard layout will return no info
     info = FolderInfo.for_path(
