@@ -80,10 +80,17 @@ SINERGISE_INPUT_DATASET: Path = Path(__file__).parent.parent / (
 )
 
 ESA_MULTIGRANULE_DATASET: Path = (
-    Path(__file__).parent.parent
-    / "data/multi-granule/S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016.zip"
+        Path(__file__).parent.parent
+        / "data/multi-granule/S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016.zip"
 )
 assert ESA_MULTIGRANULE_DATASET.exists()
+
+# This one has some quirky metadata. No resolution, etc.
+ESA_MULTIGRANULE_DATASET_FOLDERS: Path = (
+        Path(__file__).parent.parent
+        / "data/multi-granule/L1C/2016/2016-01/25S135E-30S140E/"
+          "S2A_OPER_PRD_MSIL1C_PDMC_20160210T005347_R002_V20160129T010047_20160129T010047.zip"
+)
 
 ESA_EXPECTED_METADATA = {
     "$schema": "https://schemas.opendatacube.org/dataset",
@@ -153,57 +160,57 @@ ESA_EXPECTED_METADATA = {
         "blue": {
             "grid": "50",
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
-            "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B02.jp2",
+                    "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B02.jp2",
         },
         "coastal_aerosol": {
             "grid": "300",
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
-            "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B01.jp2",
+                    "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B01.jp2",
         },
         "green": {
             "grid": "50",
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
-            "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B03.jp2",
+                    "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B03.jp2",
         },
         "nir_1": {
             "grid": "50",
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
-            "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B08.jp2",
+                    "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B08.jp2",
         },
         "red": {
             "grid": "50",
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
-            "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B04.jp2",
+                    "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B04.jp2",
         },
         "red_edge_1": {
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
-            "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B05.jp2"
+                    "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B05.jp2"
         },
         "red_edge_2": {
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
-            "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B06.jp2"
+                    "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B06.jp2"
         },
         "red_edge_3": {
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
-            "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B07.jp2"
+                    "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B07.jp2"
         },
         "swir_1_cirrus": {
             "grid": "300",
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
-            "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B10.jp2",
+                    "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B10.jp2",
         },
         "swir_2": {
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
-            "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B11.jp2"
+                    "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B11.jp2"
         },
         "swir_3": {
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
-            "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B12.jp2"
+                    "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B12.jp2"
         },
         "water_vapour": {
             "grid": "300",
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
-            "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B09.jp2",
+                    "L1C_T55HFA_A018789_20201011T000244/IMG_DATA/T55HFA_20201011T000249_B09.jp2",
         },
     },
     "product": {"name": "esa_s2bm_level1_0"},
@@ -236,18 +243,17 @@ ESA_EXPECTED_METADATA = {
     "accessories": {
         "metadata:s2_datastrip": {
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/DATASTRIP/"
-            "DS_EPAE_20201011T011446_S20201011T000244/MTD_DS.xml"
+                    "DS_EPAE_20201011T011446_S20201011T000244/MTD_DS.xml"
         },
         "metadata:s2_user_product": {
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/MTD_MSIL1C.xml"
         },
         "metadata:s2_tile": {
             "path": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.SAFE/GRANULE/"
-            "L1C_T55HFA_A018789_20201011T000244/MTD_TL.xml"
+                    "L1C_T55HFA_A018789_20201011T000244/MTD_TL.xml"
         },
     },
 }
-
 
 SINERGISE_EXPECTED_METADATA = {
     "$schema": "https://schemas.opendatacube.org/dataset",
@@ -406,7 +412,7 @@ def dataset_input_output(request, tmp_path):
 
 
 def test_filter_folder_structure_info(
-    tmp_path: Path, dataset_input_output: Tuple[Path, Dict, Path]
+        tmp_path: Path, dataset_input_output: Tuple[Path, Dict, Path]
 ):
     (
         input_dataset_path,
@@ -552,14 +558,10 @@ def test_filter_folder_structure_info(
 
 
 def test_run_multigranule(tmp_path: Path):
-
     out = tmp_path / "out"
     out.mkdir()
 
-    # Sanity check: there should be no sibling files in the input directory
-    assert (
-        len(list(ESA_MULTIGRANULE_DATASET.parent.iterdir())) == 1
-    ), "Expected input directory to only contain the zip"
+    check_input_dir_normal()
 
     # Run an older zip file with multiple granules.
     res = run_prepare_cli(
@@ -576,7 +578,7 @@ def test_run_multigranule(tmp_path: Path):
 
     # There should still be no sibling files in the input directory -- we're using an output folder.
     assert (
-        len(list(ESA_MULTIGRANULE_DATASET.parent.iterdir())) == 1
+            len(list(ESA_MULTIGRANULE_DATASET.parent.iterdir())) == 1
     ), "Input directory should not get any new files"
 
     dataset_name = (
@@ -604,8 +606,64 @@ def test_run_multigranule(tmp_path: Path):
     ]
 
 
+def check_input_dir_normal():
+    # Sanity check: there should be no sibling files in the input directory
+    non_zip_files = [f for f in ESA_MULTIGRANULE_DATASET.parent.rglob('*') if f.is_file() and f.suffix != '.zip']
+    assert not non_zip_files, ("Test data directory contains files that aren't zips. "
+                               f"Did a prepare tool dirty the input directory? Found: {non_zip_files}")
+
+
+def test_run_unusual_multigranule(tmp_path: Path):
+    """This older dataset has metadata that missed some fields, like resolution."""
+
+    out = tmp_path / "out"
+    out.mkdir()
+
+    check_input_dir_normal()
+
+    # Run an older zip file with multiple granules.
+    res = run_prepare_cli(
+        sentinel_l1_prepare.main,
+        "-v",
+        "--output-base",
+        out,
+        "--input-relative-to",
+        ESA_MULTIGRANULE_DATASET_FOLDERS.parent,
+        ESA_MULTIGRANULE_DATASET_FOLDERS,
+    )
+
+    assert res.exit_code == 0, res.output
+
+    check_input_dir_normal()
+
+    dataset_name = (
+        "S2A_OPER_PRD_MSIL1C_PDMC_20160210T005347_R002_V20160129T010047_20160129T010047"
+    )
+    out_paths = sorted(s.relative_to(out).as_posix() for s in out.iterdir())
+    print(repr(out_paths))
+
+    # It should have one metadata file per granule, named correctly.
+    assert out_paths == [
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_N02.01.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMJ_N02.01.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JNH_N02.01.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JNJ_N02.01.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JNK_N02.01.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JPH_N02.01.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JPJ_N02.01.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JPK_N02.01.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JQH_N02.01.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JQJ_N02.01.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JQK_N02.01.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T54JTN_N02.01.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T54JTP_N02.01.odc-metadata.yaml",
+        f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T54JTQ_N02.01.odc-metadata.yaml"
+
+    ]
+
+
 def test_generate_expected_outputs(
-    tmp_path: Path, dataset_input_output: Tuple[Path, Dict, Path]
+        tmp_path: Path, dataset_input_output: Tuple[Path, Dict, Path]
 ):
     """
     Run prepare on our test input scenes, and check the created metadata matches expected.

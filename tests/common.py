@@ -144,8 +144,9 @@ def run_prepare_cli(invoke_script, *args, expect_success=True) -> Result:
     res: Result = CliRunner().invoke(
         invoke_script, [str(a) for a in args], catch_exceptions=False
     )
+
     if expect_success:
-        assert res.exit_code == 0, res.output
+        assert res.exit_code == 0, f'Failed with output: {res.output}'
 
     return res
 

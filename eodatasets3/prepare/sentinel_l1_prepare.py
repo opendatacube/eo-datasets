@@ -147,9 +147,14 @@ def process_datastrip_metadata(contents: str) -> Dict:
     """
     root = minidom.parseString(contents)
 
-    resolution = min(
-        int(i.firstChild.data) for i in root.getElementsByTagName("RESOLUTION")
-    )
+    resolution_tags = root.getElementsByTagName("RESOLUTION")
+    if resolution_tags:
+        resolution = min(int(i.firstChild.data) for i in resolution_tags)
+    elif root.getElementsByTagName("SPACECRAFT_NAME")[0].firstChild.data.startswith("Sentinel-2"):
+        resolution = 10.0
+    else:
+        raise ValueError("No resolution in datastrip metadata and unknown craft")
+
     return {
         "sentinel:reception_station": _value(root, "RECEPTION_STATION"),
         "sentinel:processing_center": _value(root, "PROCESSING_CENTER"),
