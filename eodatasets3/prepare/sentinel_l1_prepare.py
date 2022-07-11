@@ -27,6 +27,7 @@ from datacube.model import Dataset
 from datacube.ui.click import config_option, environment_option
 from datacube.utils.uris import normalise_path
 from eodatasets3 import DatasetDoc, DatasetPrepare, names, serialise
+from eodatasets3.prepare.s2_common import RegionLookup, FolderInfo
 from eodatasets3.properties import Eo3Interface
 from eodatasets3.ui import PathPath
 from eodatasets3.utils import pass_config
@@ -423,73 +424,6 @@ def _rglob_with_self(path: Path, pattern: str) -> Iterable[Path]:
     yield from path.rglob(pattern)
 
 
-_AREA_PARTS = re.compile(r"(\d+)([NS])(\d+)([EW])")
-
-
-def area_to_tuple(area: str) -> Tuple[int, int, int, int]:
-    """
-    >>> area_to_tuple('20S120E-25S125E')
-    (-20, 120, -25, 125)
-    >>> area_to_tuple('00N160W-05S155W')
-    (0, -160, -5, -155)
-    """
-
-    def point(part: str) -> Tuple[int, int]:
-        match = _AREA_PARTS.match(part)
-        if match is None:
-            raise ValueError(f"Not an area? {part!r} to {_AREA_PARTS!r}")
-        lat, ns, lon, ew = match.groups()
-        if ns == "S":
-            lat = "-" + lat
-        if ew == "W":
-            lon = "-" + lon
-
-        return int(lat), int(lon)
-
-    first, second = area.split("-")
-    return (*point(first), *point(second))
-
-
-@define
-class FolderInfo:
-    """
-    Information extracted from a standard S2 folder layout.
-    """
-
-    year: int
-    month: int
-    area: str
-    region_code: Optional[str]
-
-    # Compiled regexp for extracting year, month and region
-    # Standard layout is of the form: 'L1C/{yyyy}/{yyyy}-{mm}/{area}/S2*_{region}_{timestamp}(.zip)'
-    STANDARD_SUBFOLDER_LAYOUT = re.compile(
-        r"(\d{4})/(\d{4})-(\d{2})/([\dNESW]+-[\dNESW]+)/"
-        r"S2[AB](?:_OPER_PRD)?_MSIL1C(?:_PDMC)?(?:_[a-zA-Z0-9]+){3}(?:_T([A-Z\d]+))?_[\dT]+(\.zip|/tileInfo\.json)?$"
-    )
-
-    @property
-    def area_tuple(self):
-        return area_to_tuple(self.area)
-
-    @classmethod
-    def for_path(cls, path: Path) -> Optional["FolderInfo"]:
-        """
-        Can we extract information from the given path?
-
-        Returns None if we can't.
-        """
-        m = cls.STANDARD_SUBFOLDER_LAYOUT.search(path.as_posix())
-        if not m:
-            return None
-
-        year, year2, month, area, region_code, extension = m.groups()
-        if year != year2:
-            raise ValueError(f"Year mismatch in {path}")
-
-        return FolderInfo(int(year), int(month, 10), area, region_code)
-
-
 class YearMonth(click.ParamType):
     """A YYYY-MM string converted to an integer tuple"""
 
@@ -765,6 +699,9 @@ def main(
             )
 
     def find_jobs() -> Iterable[Job]:
+
+        region_lookup = RegionLookup()
+
         nonlocal input_relative_to, embed_location
         for input_path in datasets:
 
@@ -782,10 +719,23 @@ def main(
                 if included_regions or before_month or after_month:
                     if info is None:
                         raise ValueError(
-                            f"Cannot filter from non-standard folder layout: {found_dataset.path}"
+                            f"Cannot filter from non-standard folder layout: {found_dataset.path} "
+                            f" expected of form L1C/yyyy/yyyy-mm/area/S2_.."
                         )
 
                     if included_regions:
+                        # If it's an older dataset without a region, try to map its area to a known region.
+                        if info.region_code is None:
+                            # If none of the mapped regions are in the list of included regions, skip it.
+                            if not any(
+                                (region in included_regions)
+                                for region in region_lookup.get(info.area)
+                            ):
+                                _LOG.debug(
+                                    f"Skipping because area {info.area!r} doesn't map to an included region"
+                                )
+                                continue
+
                         if info.region_code not in included_regions:
                             _LOG.debug(
                                 f"Skipping because region {info.region_code!r} is not in region list"

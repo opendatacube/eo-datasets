@@ -1,17 +1,85 @@
+import re
 import sqlite3
 from pathlib import Path
 from pprint import pprint
-from typing import List, Optional, Dict, Iterable
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import click
+from attr import define
 from click import echo, pass_obj
 
-from eodatasets3.prepare.sentinel_l1_prepare import FolderInfo, area_to_tuple
 from eodatasets3.ui import PathPath
 
 NCI_L1C_LOCATION = Path("/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C")
 
-DB_LOCATION = Path(__file__).parent / "s2_regions.db"
+DEFAULT_DB = Path(__file__).parent / "s2_regions.db"
+
+
+_AREA_PARTS = re.compile(r"(\d+)([NS])(\d+)([EW])")
+
+
+def area_to_tuple(area: str) -> Tuple[int, int, int, int]:
+    """
+    >>> area_to_tuple('20S120E-25S125E')
+    (-20, 120, -25, 125)
+    >>> area_to_tuple('00N160W-05S155W')
+    (0, -160, -5, -155)
+    """
+
+    def point(part: str) -> Tuple[int, int]:
+        match = _AREA_PARTS.match(part)
+        if match is None:
+            raise ValueError(f"Not an area? {part!r} to {_AREA_PARTS!r}")
+        lat, ns, lon, ew = match.groups()
+        if ns == "S":
+            lat = "-" + lat
+        if ew == "W":
+            lon = "-" + lon
+
+        return int(lat), int(lon)
+
+    first, second = area.split("-")
+    return (*point(first), *point(second))
+
+
+@define
+class FolderInfo:
+    """
+    Information extracted from a standard S2 folder layout.
+    """
+
+    year: int
+    month: int
+    area: str
+    region_code: Optional[str]
+
+    # Compiled regexp for extracting year, month and region
+    # Standard layout is of the form: 'L1C/{yyyy}/{yyyy}-{mm}/{area}/S2*_{region}_{timestamp}(.zip)'
+    STANDARD_SUBFOLDER_LAYOUT = re.compile(
+        r"(\d{4})/(\d{4})-(\d{2})/([\dNESW]+-[\dNESW]+)/"
+        r"S2[AB](?:_OPER_PRD)?_MSIL1C(?:_PDMC)?(?:_[a-zA-Z0-9]+){3}(?:_T([A-Z\d]+))?_[\dT]+(\.zip|/tileInfo\.json)?$"
+    )
+
+    @property
+    def area_tuple(self):
+        return area_to_tuple(self.area)
+
+    @classmethod
+    def for_path(cls, path: Path) -> Optional["FolderInfo"]:
+        """
+        Can we extract information from the given path?
+
+        Returns None if we can't.
+        """
+        m = cls.STANDARD_SUBFOLDER_LAYOUT.search(path.as_posix())
+        if not m:
+            return None
+
+        year, year2, month, area, region_code, extension = m.groups()
+        if year != year2:
+            raise ValueError(f"Year mismatch in {path}")
+
+        return FolderInfo(int(year), int(month, 10), area, region_code)
 
 
 class RegionLookup:
@@ -24,13 +92,17 @@ class RegionLookup:
     The table is stored as an sqlite database.
     """
 
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path = None):
         self.db_path = db_path
         self._db: Optional[sqlite3.Connection] = None
 
     def open(self):
         if self._db is None:
-            self._db = sqlite3.connect(self.db_path)
+            if self.db_path is None:
+                # Open the default db read-only
+                self._db = sqlite3.connect(f"{DEFAULT_DB.as_uri()}?mode=ro", uri=True)
+            else:
+                self._db = sqlite3.connect(self.db_path)
 
     def close(self):
         if self._db:
@@ -125,7 +197,7 @@ class RegionLookup:
 
 
 @click.group("s2_regions", help=__doc__)
-@click.option("--db", default=DB_LOCATION, type=PathPath())
+@click.option("--db", default=DEFAULT_DB, type=PathPath())
 @click.pass_context
 def cli(ctx, db: Path):
     ctx.obj = RegionLookup(db)
