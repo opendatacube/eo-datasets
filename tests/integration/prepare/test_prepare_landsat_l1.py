@@ -9,6 +9,7 @@ from eodatasets3.prepare import landsat_l1_prepare
 
 from tests.common import check_prepare_outputs, run_prepare_cli
 
+
 LC08_L2_C2_POST_20210507_INPUT_PATH: Path = (
     Path(__file__).parent.parent / "data" / "LC08_L2SP_098084_20210503_20210508_02_T1"
 )
@@ -114,6 +115,33 @@ def test_prepare_l8_l1_c2(
             l1_c2_ls8_folder,
         ],
         expected_doc=l1_c2_ls8_usgs_expected,
+        expected_metadata_path=expected_metadata_path,
+    )
+
+
+def test_prepare_l9_l1_c2(
+    tmp_path: Path, l1_ls9_tarball: Path, l1_ls8_folder_md_expected: Dict
+):
+    """Run prepare script with a source telemetry data and unique producer."""
+    assert l1_ls9_tarball.exists(), "Test data missing(?)"
+
+    output_path = tmp_path
+    expected_metadata_path = (
+        output_path
+        / "090"
+        / "084"
+        / "LC08_L1TP_090084_20160121_20200907_02_T1.odc-metadata.yaml"
+    )
+    check_prepare_outputs(
+        invoke_script=landsat_l1_prepare.main,
+        run_args=[
+            "--output-base",
+            output_path,
+            "--producer",
+            "usgs.gov",
+            l1_ls9_tarball,
+        ],
+        expected_doc=l1_ls8_folder_md_expected,
         expected_metadata_path=expected_metadata_path,
     )
 
