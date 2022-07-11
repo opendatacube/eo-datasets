@@ -26,6 +26,12 @@ L8_C2_INPUT_PATH: Path = (
     Path(__file__).parent / "data" / "LC08_L1TP_090084_20160121_20200907_02_T1"
 )
 
+
+L91TP_TARBALL_PATH: Path = (
+    Path(__file__).parent / "data" / "LC09_L1TP_112081_20220209_20220209_02_T1.tar"
+)
+
+
 LS8_TELEMETRY_PATH: Path = (
     Path(__file__).parent
     / "data"
@@ -94,6 +100,11 @@ def l1_ls7_tarball(tmp_path: Path) -> Path:
 @pytest.fixture
 def l1_ls5_tarball(tmp_path: Path) -> Path:
     return _make_copy(L5_TARBALL_PATH, tmp_path)
+
+
+@pytest.fixture
+def l1_ls9_tarball(tmp_path: Path) -> Path:
+    return _make_copy(L91TP_TARBALL_PATH, tmp_path)
 
 
 def _make_copy(input_path, tmp_path):

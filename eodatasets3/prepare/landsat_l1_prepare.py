@@ -108,6 +108,13 @@ LANDSAT_OLI_TIRS_BAND_ALIASES = {
     "11": "lwir_2",
     "quality": "quality",
     "qa_aerosol": "qa_aerosol",
+    # LS9
+    "saa": "solar_azimuth",
+    "sza": "solar_zenith",
+    "vaa": "view_azimuth",
+    "vza": "view_zenith",
+    "qa_pixel": "qa_pixel",
+    "qa_radsat": "qa_radsat",
 }
 
 LANDSAT_xTM_BAND_ALIASES = {
@@ -188,7 +195,7 @@ def get_band_alias_mappings(sat: str, instrument: str) -> Dict[str, str]:
         )
     landsat_number = int(sat.split("-")[1])
 
-    if landsat_number == 8:
+    if landsat_number in (8, 9):
         return LANDSAT_OLI_TIRS_BAND_ALIASES
     if landsat_number in (4, 5, 7) and instrument.endswith("TM"):
         return LANDSAT_xTM_BAND_ALIASES
