@@ -58,7 +58,10 @@ def assert_expected_eo3_path(
         produced_dataset = serialise.from_path(expected_path)
         expected_dataset = serialise.from_doc(expected_doc, skip_validation=True)
         if expected_dataset.geometry is None:
-            assert produced_dataset.geometry is None
+            assert produced_dataset.geometry is None, (
+                f"Expected a null geometry, "
+                f"but output included one: {produced_dataset.geometry.__geo_interface__!r}"
+            )
         else:
             assert_shapes_mostly_equal(
                 produced_dataset.geometry, expected_dataset.geometry, 0.00000001
@@ -146,7 +149,7 @@ def run_prepare_cli(invoke_script, *args, expect_success=True) -> Result:
     )
 
     if expect_success:
-        assert res.exit_code == 0, f'Failed with output: {res.output}'
+        assert res.exit_code == 0, f"Failed with output: {res.output}"
 
     return res
 

@@ -9,7 +9,6 @@ from eodatasets3.prepare import landsat_l1_prepare
 
 from tests.common import check_prepare_outputs, run_prepare_cli
 
-
 LC08_L2_C2_POST_20210507_INPUT_PATH: Path = (
     Path(__file__).parent.parent / "data" / "LC08_L2SP_098084_20210503_20210508_02_T1"
 )
@@ -119,19 +118,137 @@ def test_prepare_l8_l1_c2(
     )
 
 
-def test_prepare_l9_l1_c2(
-    tmp_path: Path, l1_ls9_tarball: Path, l1_ls8_folder_md_expected: Dict
-):
+@pytest.fixture
+def l9_expected():
+    return {
+        "$schema": "https://schemas.opendatacube.org/dataset",
+        "id": "dba08e46-2651-5125-b811-c4adf0a8e450",
+        "label": "usgs_ls9c_level1_2-0-20220209_112081_2022-02-09",
+        "product": {
+            "name": "usgs_ls9c_level1_2",
+            "href": "https://collections.dea.ga.gov.au/product/usgs_ls9c_level1_2",
+        },
+        "crs": "epsg:32650",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": (
+                (
+                    (384592.5, -3430919.6807745784),
+                    (384592.5, -3430453.8689052663),
+                    (384585.0, -3430451.9965122077),
+                    (384585.0, -3393908.1584824338),
+                    (419428.36278902093, -3239400.6840891885),
+                    (422756.67805196694, -3236385.0),
+                    (462566.30393798096, -3236385.0),
+                    (616215.0, -3274336.4508977565),
+                    (616215.0, -3302620.079207405),
+                    (616207.5, -3302673.174815242),
+                    (616207.5, -3307542.583714816),
+                    (614513.9386270659, -3314662.5975493155),
+                    (612262.5701458402, -3330600.9679461434),
+                    (584927.4336458556, -3439049.187930595),
+                    (577611.2836455577, -3469807.5),
+                    (577174.5847835429, -3469807.5),
+                    (577172.6943557998, -3469815.0),
+                    (542256.2351088949, -3469815.0),
+                    (528099.5549533233, -3466280.7507125223),
+                    (384592.5, -3430919.6807745784),
+                ),
+            ),
+        },
+        "grids": {
+            "default": {
+                "shape": [60, 60],
+                "transform": [
+                    3860.5,
+                    0.0,
+                    384585.0,
+                    0.0,
+                    -3890.5,
+                    -3236385.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                ],
+            },
+            "panchromatic": {
+                "shape": [60, 60],
+                "transform": [
+                    3860.2500000000005,
+                    0.0,
+                    384592.5,
+                    0.0,
+                    -3890.2500000000005,
+                    -3236392.5,
+                    0.0,
+                    0.0,
+                    1.0,
+                ],
+            },
+        },
+        "properties": {
+            "datetime": "2022-02-09T02:05:18.736033",
+            "eo:cloud_cover": 0.12,
+            "eo:gsd": 15.0,
+            "eo:instrument": "OLI_TIRS",
+            "eo:platform": "landsat-9",
+            "eo:sun_azimuth": 72.16674497,
+            "eo:sun_elevation": 54.14346217,
+            "landsat:collection_category": "T1",
+            "landsat:collection_number": 2,
+            "landsat:data_type": "L1TP",
+            "landsat:geometric_rmse_model_x": 4.208,
+            "landsat:geometric_rmse_model_y": 4.237,
+            "landsat:ground_control_points_model": 857,
+            "landsat:ground_control_points_version": 5,
+            "landsat:landsat_product_id": "LC09_L1TP_112081_20220209_20220209_02_T1",
+            "landsat:landsat_scene_id": "LC91120812022040LGN00",
+            "landsat:processing_software_version": "LPGS_15.6.0",
+            "landsat:station_id": "LGN",
+            "landsat:wrs_path": 112,
+            "landsat:wrs_row": 81,
+            "odc:dataset_version": "2.0.20220209",
+            "odc:file_format": "GeoTIFF",
+            "odc:processing_datetime": "2022-02-09T04:08:31",
+            "odc:producer": "usgs.gov",
+            "odc:product_family": "level1",
+            "odc:region_code": "112081",
+        },
+        "measurements": {
+            "blue": {"path": "LC09_L1TP_112081_20220209_20220209_02_T1_B2.TIF"},
+            "cirrus": {"path": "LC09_L1TP_112081_20220209_20220209_02_T1_B9.TIF"},
+            "coastal_aerosol": {
+                "path": "LC09_L1TP_112081_20220209_20220209_02_T1_B1.TIF"
+            },
+            "green": {"path": "LC09_L1TP_112081_20220209_20220209_02_T1_B3.TIF"},
+            "lwir_1": {"path": "LC09_L1TP_112081_20220209_20220209_02_T1_B10.TIF"},
+            "lwir_2": {"path": "LC09_L1TP_112081_20220209_20220209_02_T1_B11.TIF"},
+            "nir": {"path": "LC09_L1TP_112081_20220209_20220209_02_T1_B5.TIF"},
+            "panchromatic": {
+                "path": "LC09_L1TP_112081_20220209_20220209_02_T1_B8.TIF",
+                "grid": "panchromatic",
+            },
+            "quality": {
+                "path": "LC09_L1TP_112081_20220209_20220209_02_T1_QA_PIXEL.TIF"
+            },
+            "red": {"path": "LC09_L1TP_112081_20220209_20220209_02_T1_B4.TIF"},
+            "swir_1": {"path": "LC09_L1TP_112081_20220209_20220209_02_T1_B6.TIF"},
+            "swir_2": {"path": "LC09_L1TP_112081_20220209_20220209_02_T1_B7.TIF"},
+        },
+        "accessories": {
+            "metadata:landsat_mtl": {
+                "path": "LC09_L1TP_112081_20220209_20220209_02_T1_MTL.txt"
+            }
+        },
+        "lineage": {},
+    }
+
+
+def test_prepare_l9_l1_c2(tmp_path: Path, l1_ls9_tarball: Path, l9_expected: Dict):
     """Run prepare script with a source telemetry data and unique producer."""
     assert l1_ls9_tarball.exists(), "Test data missing(?)"
 
     output_path = tmp_path
-    expected_metadata_path = (
-        output_path
-        / "090"
-        / "084"
-        / "LC08_L1TP_090084_20160121_20200907_02_T1.odc-metadata.yaml"
-    )
     check_prepare_outputs(
         invoke_script=landsat_l1_prepare.main,
         run_args=[
@@ -141,8 +258,13 @@ def test_prepare_l9_l1_c2(
             "usgs.gov",
             l1_ls9_tarball,
         ],
-        expected_doc=l1_ls8_folder_md_expected,
-        expected_metadata_path=expected_metadata_path,
+        expected_doc=l9_expected,
+        expected_metadata_path=(
+            output_path
+            / "112"
+            / "081"
+            / "LC09_L1TP_112081_20220209_20220209_02_T1.odc-metadata.yaml"
+        ),
     )
 
 
