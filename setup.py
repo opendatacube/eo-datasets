@@ -48,7 +48,7 @@ setup(
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     packages=find_packages(exclude=("tests", "tests.*")),
-    package_data={"": ["*.json", "*.yaml"]},
+    package_data={"": ["*.json", "*.yaml", "*.db"]},
     license="Apache Software License 2.0",
     python_requires=">=3.6",
     classifiers=[
