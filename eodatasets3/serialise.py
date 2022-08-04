@@ -64,7 +64,7 @@ def _represent_paths(self, data: PurePath):
 
 def _represent_float(self, data: float):
     float_text = numpy.format_float_scientific(data)
-    return self.represent_scalar(u'tag:yaml.org,2002:float', float_text)
+    return self.represent_scalar("tag:yaml.org,2002:float", float_text)
 
 
 def _init_yaml() -> YAML:
