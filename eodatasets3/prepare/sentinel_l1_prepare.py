@@ -347,7 +347,7 @@ def _extract_esa_fields(
             internal_folder_name = os.path.commonprefix(z.namelist())
             for s in z.namelist():
                 if any(
-                    fnmatch.fnmatch(s[len(internal_folder_name) :], pattern)
+                    re.match(pattern, s[len(internal_folder_name) :])
                     for pattern in patterns
                 ):
                     yield s
@@ -363,7 +363,7 @@ def _extract_esa_fields(
                 )
             return matches[0]
 
-        datastrip_md = one("*MTD_DS.xml", "DATASTRIP/S2*.xml")
+        datastrip_md = one(r".*MTD_DS\.xml$", r"DATASTRIP/S2[^/]+/S2[^/]+\.xml$")
         p.properties.update(
             process_datastrip_metadata(z.read(datastrip_md).decode("utf-8"))
         )
@@ -371,8 +371,8 @@ def _extract_esa_fields(
 
         # Get the specific granule metadata
         [*tile_mds] = find(
-            "*MTD_TL.xml",
-            f"GRANULE/{granule_id}/S2*.xml" if granule_id else "GRANULE/S2*.xml",
+            r".*MTD_TL\.xml$",
+            rf"GRANULE/{granule_id}/S2.*\.xml" if granule_id else r"GRANULE/S2.*\.xml",
         )
         if not tile_mds:
             raise ValueError(
@@ -394,7 +394,7 @@ def _extract_esa_fields(
         p.note_accessory_file("metadata:s2_tile", tile_md)
 
         # Wider product metadata.
-        user_product_md = one("*MTD_MSIL1C.xml", "S2*.xml")
+        user_product_md = one(r".*MTD_MSIL1C\.xml", r"S2.*\.xml")
         for prop, value in process_user_product_metadata(
             z.read(user_product_md).decode("utf-8"),
             filename_stem=Path(user_product_md).stem,
