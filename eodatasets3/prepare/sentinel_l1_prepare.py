@@ -5,7 +5,6 @@ Takes ESA zipped datasets or Sinergise dataset directories
 """
 import fnmatch
 import json
-import logging
 import os.path
 import re
 import sys
@@ -18,6 +17,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 import click
+import structlog
 from attr import define
 from defusedxml import minidom
 
@@ -35,7 +35,7 @@ from eodatasets3.utils import pass_config
 # Static namespace to generate uuids for datacube indexing
 S2_UUID_NAMESPACE = uuid.UUID("9df23adf-fc90-4ec7-9299-57bd536c7590")
 
-_LOG = logging.getLogger("sentinel-l1")
+_LOG = structlog.get_logger()
 
 SENTINEL_MSI_BAND_ALIASES = {
     "01": "coastal_aerosol",
@@ -150,7 +150,9 @@ def process_datastrip_metadata(contents: str) -> Dict:
     resolution_tags = root.getElementsByTagName("RESOLUTION")
     if resolution_tags:
         resolution = min(int(i.firstChild.data) for i in resolution_tags)
-    elif root.getElementsByTagName("SPACECRAFT_NAME")[0].firstChild.data.startswith("Sentinel-2"):
+    elif root.getElementsByTagName("SPACECRAFT_NAME")[0].firstChild.data.startswith(
+        "Sentinel-2"
+    ):
         resolution = 10.0
     else:
         raise ValueError("No resolution in datastrip metadata and unknown craft")
@@ -232,11 +234,10 @@ def prepare_and_write(
         # Default to embedding the location if they're not in the same folder.
         embed_location = output_yaml.parent not in dataset_location.parents
         _LOG.debug(
-            "Auto-embed location? %s: %s %s %s",
-            "Yes" if embed_location else "No",
-            dataset_location.parent,
-            "!=" if embed_location else "==",
-            output_yaml.parent,
+            "Auto-embed location?",
+            auto_embed=bool(embed_location),
+            data_location=dataset_location.parent,
+            yaml_location=output_yaml.parent,
         )
 
     with DatasetPrepare(
@@ -621,9 +622,6 @@ def main(
             "Command name 'sentinel-l1c-prepare' is deprecated: remove the 'c', and use `sentinel-l1-prepare`"
         )
 
-    logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s")
-    _LOG.setLevel(logging.DEBUG if verbose else logging.INFO)
-
     included_regions = None
     if only_regions_in_file:
         included_regions = set(only_regions_in_file.read_text().splitlines())
@@ -642,9 +640,7 @@ def main(
     # Are we indexing on success?
     index = None
     if index_to_odc:
-        _LOG.info("Indexing new datasets")
-        if local_config:
-            _LOG.debug("Indexing to %s", local_config)
+        _LOG.info("Indexing new datasets", local_config=local_config)
         index = index_connect(local_config, application_name="s2-prepare")
         products = {}
 
@@ -663,7 +659,9 @@ def main(
             index.datasets.add(
                 Dataset(product, serialise.to_doc(dataset), uris=dataset.locations)
             )
-            _LOG.debug("Indexed dataset %s to %s", dataset.id, dataset_path)
+            _LOG.debug(
+                "Indexed dataset", dataset_id=dataset.id, dataset_path=dataset_path
+            )
 
     else:
 
@@ -733,7 +731,9 @@ def main(
                         if info.region_code is None:
                             for region in region_lookup.get(info.area):
                                 if region in included_regions:
-                                    _LOG.debug(f'Area {info.area!r} mapped to (included) region {region!r}')
+                                    _LOG.debug(
+                                        f"Area {info.area!r} mapped to (included) region {region!r}"
+                                    )
                                     break
                             else:
                                 _LOG.debug(
@@ -801,7 +801,8 @@ def main(
                 ):
                     # Skip it!
                     _LOG.debug(
-                        "At least one output exists: skipping. %s", found_dataset.name
+                        "At least one output exists: skipping.",
+                        dataset_name=found_dataset.name,
                     )
                     continue
 
@@ -829,10 +830,14 @@ def main(
                     output_yaml = output_folder / yaml_filename
                     if output_yaml.exists():
                         if not overwrite_existing:
-                            _LOG.debug("Output exists: skipping. %s", output_yaml)
+                            _LOG.debug(
+                                "Output exists: skipping.", output_yaml=output_yaml
+                            )
                             continue
 
-                        _LOG.debug("Output exists: overwriting %s", output_yaml)
+                        _LOG.debug(
+                            "Output exists: overwriting.", output_yaml=output_yaml
+                        )
 
                     _LOG.info(
                         f'Queued {found_dataset.name} (granule: {granule_id or "assuming-single"})'
@@ -860,9 +865,9 @@ def main(
                 try:
                     if dry_run:
                         _LOG.info(
-                            "Would write dataset %s to %s",
-                            job.dataset_path,
-                            job.output_yaml_path,
+                            "Would write dataset",
+                            dataset_path=job.dataset_path,
+                            output_yaml_path=job.output_yaml_path,
                         )
                     else:
                         dataset, path = prepare_and_write(
@@ -872,11 +877,13 @@ def main(
                             granule_id=job.granule_id,
                             embed_location=job.embed_location,
                         )
-                        _LOG.info("Wrote dataset %s to %s", dataset.id, path)
+                        _LOG.info(
+                            "Wrote dataset", dataset_id=dataset.id, datsaset_path=path
+                        )
                         on_success(dataset, path)
                     successes += 1
                 except Exception:
-                    _LOG.exception("Failed to complete dataset: %s", job)
+                    _LOG.exception(f"Failed to complete dataset: {job}")
                     errors += 1
         else:
             with Pool(processes=workers) as pool:
@@ -886,7 +893,9 @@ def main(
                         errors += 1
                     else:
                         dataset, path = res
-                        _LOG.info("Wrote dataset %s to %s", dataset.id, path)
+                        _LOG.info(
+                            "Wrote dataset", dataset_id=dataset.id, dataset_path=path
+                        )
                         on_success(dataset, path)
                         successes += 1
                 pool.close()
