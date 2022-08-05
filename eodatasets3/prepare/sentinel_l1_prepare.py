@@ -127,6 +127,13 @@ def process_tile_metadata(contents: str) -> Dict:
     resolution = min(
         int(i.attributes["resolution"].value) for i in root.getElementsByTagName("Size")
     )
+    tile_id = _value(root, "TILE_ID")
+
+    region_code = tile_id.split('_')[-2]
+    if not region_code.startswith('T'):
+        raise RuntimeError(f"Tile id is not recognised -- not a region code? Please report this. {tile_id!r}")
+    region_code = region_code[1:]
+
     return {
         "datetime": _value(root, "SENSING_TIME"),
         "eo:cloud_cover": _value(root, "CLOUDY_PIXEL_PERCENTAGE", type_=float),
@@ -135,7 +142,8 @@ def process_tile_metadata(contents: str) -> Dict:
         "eo:sun_elevation": _value(root, "Mean_Sun_Angle", "ZENITH_ANGLE", type_=float),
         "odc:processing_datetime": _value(root, "ARCHIVING_TIME"),
         "sentinel:datastrip_id": _value(root, "DATASTRIP_ID"),
-        "sentinel:sentinel_tile_id": _value(root, "TILE_ID"),
+        "sentinel:sentinel_tile_id": tile_id,
+        "odc:region_code": region_code,
     }
 
 
@@ -177,7 +185,6 @@ def process_user_product_metadata(contents: str, filename_stem: str = None) -> D
     else:
         product_uri = filename_stem
 
-    region_code = product_uri.split("_")[5][1:]
     return {
         "eo:platform": _value(root, "SPACECRAFT_NAME"),
         "sat:relative_orbit": _value(root, "SENSING_ORBIT_NUMBER", type_=int),
@@ -186,7 +193,6 @@ def process_user_product_metadata(contents: str, filename_stem: str = None) -> D
         "sentinel:processing_baseline": _value(root, "PROCESSING_BASELINE"),
         "sentinel:product_name": product_uri,
         "eo:cloud_cover": _value(root, "Cloud_Coverage_Assessment"),
-        "odc:region_code": region_code,
     }
 
 
