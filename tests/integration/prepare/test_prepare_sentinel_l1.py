@@ -678,7 +678,7 @@ def test_run_unusual_multigranule(tmp_path: Path):
         {
             "$schema": "https://schemas.opendatacube.org/dataset",
             "id": "d0464929-3414-5b8c-aa8b-9ef5a0f4f893",
-            "label": "esa_s2am_level1_0-0-20160209_0160210T005347_2016-01-29",
+            "label": "esa_s2am_level1_0-0-20160209_53JMH_2016-01-29",
             "product": {"name": "esa_s2am_level1_0"},
             "location": f"zip:{ESA_MULTIGRANULE_DATASET_ZIP}!/",
             "crs": "epsg:32753",
