@@ -712,7 +712,7 @@ def test_run_unusual_multigranule(tmp_path: Path):
                 "odc:processing_datetime": "2016-02-09T14:32:42.340511",
                 "odc:producer": "esa.int",
                 "odc:product_family": "level1",
-                "odc:region_code": "0160210T005347",
+                "odc:region_code": "53JMH",
                 "sat:orbit_state": "descending",
                 "sat:relative_orbit": 2,
                 "sentinel:datastrip_id": "S2A_OPER_MSI_L1C_DS_MTI__20160209T133001_S20160129T010047_N02.01",
