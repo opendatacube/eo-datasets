@@ -10,7 +10,11 @@ from eodatasets3.prepare import sentinel_l1_prepare
 from eodatasets3.prepare.s2_common import RegionLookup
 from eodatasets3.prepare.sentinel_l1_prepare import FolderInfo
 
-from tests.common import check_prepare_outputs, run_prepare_cli
+from tests.common import (
+    assert_expected_eo3_path,
+    check_prepare_outputs,
+    run_prepare_cli,
+)
 
 
 def test_subfolder_info_extraction():
@@ -89,7 +93,7 @@ ESA_MULTIGRANULE_DATASET: Path = (
 assert ESA_MULTIGRANULE_DATASET.exists()
 
 # This one has some quirky metadata. No resolution, etc.
-ESA_MULTIGRANULE_DATASET_FOLDERS: Path = (
+ESA_MULTIGRANULE_DATASET_ZIP: Path = (
     Path(__file__).parent.parent
     / "data/multi-granule/L1C/2016/2016-01/25S135E-30S140E/"
     "S2A_OPER_PRD_MSIL1C_PDMC_20160210T005347_R002_V20160129T010047_20160129T010047.zip"
@@ -635,8 +639,8 @@ def test_run_unusual_multigranule(tmp_path: Path):
         "--output-base",
         out,
         "--input-relative-to",
-        ESA_MULTIGRANULE_DATASET_FOLDERS.parent,
-        ESA_MULTIGRANULE_DATASET_FOLDERS,
+        ESA_MULTIGRANULE_DATASET_ZIP.parent,
+        ESA_MULTIGRANULE_DATASET_ZIP,
     )
 
     assert res.exit_code == 0, res.output
@@ -666,6 +670,154 @@ def test_run_unusual_multigranule(tmp_path: Path):
         f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T54JTP_N02.01.odc-metadata.yaml",
         f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T54JTQ_N02.01.odc-metadata.yaml",
     ]
+
+    # Check the first granule metadata file.
+    inner_offset = "S2A_OPER_PRD_MSIL1C_PDMC_20160210T005347_R002_V20160129T010047_20160129T010047.SAFE"
+    granule_offset = f"{inner_offset}/GRANULE/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_N02.01"
+    assert_expected_eo3_path(
+        {
+            "$schema": "https://schemas.opendatacube.org/dataset",
+            "id": "d0464929-3414-5b8c-aa8b-9ef5a0f4f893",
+            "label": "esa_s2am_level1_0-0-20160209_0160210T005347_2016-01-29",
+            "product": {"name": "esa_s2am_level1_0"},
+            "location": f"zip:{ESA_MULTIGRANULE_DATASET_ZIP}!/",
+            "crs": "epsg:32753",
+            "grids": {
+                "default": {
+                    "shape": [60, 60],
+                    "transform": [
+                        1830.0,
+                        0.0,
+                        399960.0,
+                        0.0,
+                        -1830.0,
+                        6800020.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                    ],
+                }
+            },
+            "properties": {
+                "datetime": "2016-01-29T01:00:47.667000",
+                "eo:cloud_cover": 18.0896,
+                "eo:constellation": "sentinel-2",
+                "eo:gsd": 10,
+                "eo:instrument": "MSI",
+                "eo:platform": "sentinel-2a",
+                "eo:sun_azimuth": 76.3510135153089,
+                "eo:sun_elevation": 31.56054447161,
+                "odc:dataset_version": "0.0.20160209",
+                "odc:file_format": "JPEG2000",
+                "odc:processing_datetime": "2016-02-09T14:32:42.340511",
+                "odc:producer": "esa.int",
+                "odc:product_family": "level1",
+                "odc:region_code": "0160210T005347",
+                "sat:orbit_state": "descending",
+                "sat:relative_orbit": 2,
+                "sentinel:datastrip_id": "S2A_OPER_MSI_L1C_DS_MTI__20160209T133001_S20160129T010047_N02.01",
+                "sentinel:datatake_start_datetime": "2016-02-09T13:30:01",
+                "sentinel:datatake_type": "INS-NOBS",
+                "sentinel:processing_baseline": "02.01",
+                "sentinel:processing_center": "MTI_",
+                "sentinel:product_name": (
+                    "S2A_OPER_MTD_SAFL1C_PDMC_20160210T005347_R002_V20160129T010047_20160129T010047"
+                ),
+                "sentinel:reception_station": "MTI_",
+                "sentinel:sentinel_tile_id": "S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_N02.01",
+            },
+            "measurements": {
+                "blue": {
+                    "path": (
+                        f"{granule_offset}/IMG_DATA/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_B02.jp2"
+                    )
+                },
+                "coastal_aerosol": {
+                    "path": (
+                        f"{granule_offset}/IMG_DATA/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_B01.jp2"
+                    )
+                },
+                "green": {
+                    "path": (
+                        f"{granule_offset}/IMG_DATA/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_B03.jp2"
+                    )
+                },
+                "nir_1": {
+                    "path": (
+                        f"{granule_offset}/IMG_DATA/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_B08.jp2"
+                    )
+                },
+                "nir_2": {
+                    "path": (
+                        f"{granule_offset}/IMG_DATA/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_B8A.jp2"
+                    )
+                },
+                "red": {
+                    "path": (
+                        f"{granule_offset}/IMG_DATA/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_B04.jp2"
+                    )
+                },
+                "red_edge_1": {
+                    "path": (
+                        f"{granule_offset}/IMG_DATA/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_B05.jp2"
+                    )
+                },
+                "red_edge_2": {
+                    "path": (
+                        f"{granule_offset}/IMG_DATA/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_B06.jp2"
+                    )
+                },
+                "red_edge_3": {
+                    "path": (
+                        f"{granule_offset}/IMG_DATA/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_B07.jp2"
+                    )
+                },
+                "swir_1_cirrus": {
+                    "path": (
+                        f"{granule_offset}/IMG_DATA/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_B10.jp2"
+                    )
+                },
+                "swir_2": {
+                    "path": (
+                        f"{granule_offset}/IMG_DATA/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_B11.jp2"
+                    )
+                },
+                "swir_3": {
+                    "path": (
+                        f"{granule_offset}/IMG_DATA/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_B12.jp2"
+                    )
+                },
+                "water_vapour": {
+                    "path": (
+                        f"{granule_offset}/IMG_DATA/S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_B09.jp2"
+                    )
+                },
+            },
+            "accessories": {
+                "metadata:s2_datastrip": {
+                    "path": (
+                        f"{inner_offset}/DATASTRIP/S2A_OPER_MSI_L1C_DS_MTI__20160209T133001_S20160129T010047_N02.01/"
+                        f"S2A_OPER_MTD_L1C_DS_MTI__20160209T133001_S20160129T010047.xml"
+                    )
+                },
+                "metadata:s2_tile": {
+                    "path": (
+                        f"{granule_offset}/S2A_OPER_MTD_L1C_TL_MTI__20160209T133001_A003145_T53JMH.xml"
+                    )
+                },
+                "metadata:s2_user_product": {
+                    "path": (
+                        f"{inner_offset}/"
+                        f"S2A_OPER_MTD_SAFL1C_PDMC_20160210T005347_R002_V20160129T010047_20160129T010047.xml"
+                    )
+                },
+            },
+            "lineage": {},
+        },
+        out
+        / f"{dataset_name}.S2A_OPER_MSI_L1C_TL_MTI__20160209T133001_A003145_T53JMH_N02.01.odc-metadata.yaml",
+        ignore_fields=("geometry",),
+    )
 
 
 def test_generate_expected_outputs(
