@@ -94,42 +94,42 @@ _COPYABLE_MTL_FIELDS["C2"] = [
 USGS_UUID_NAMESPACE = uuid.UUID("276af61d-99f8-4aa3-b2fb-d7df68c5e28f")
 
 LANDSAT_OLI_TIRS_BAND_ALIASES = {
-    "1": "coastal_aerosol",
-    "2": "blue",
-    "3": "green",
-    "4": "red",
-    "5": "nir",
-    "6": "swir_1",
-    "7": "swir_2",
-    "8": "panchromatic",
-    "9": "cirrus",
-    "st_b10": "lwir",  # USGS only
-    "10": "lwir_1",
-    "11": "lwir_2",
+    "band_1": "coastal_aerosol",
+    "band_2": "blue",
+    "band_3": "green",
+    "band_4": "red",
+    "band_5": "nir",
+    "band_6": "swir_1",
+    "band_7": "swir_2",
+    "band_8": "panchromatic",
+    "band_9": "cirrus",
+    "band_st_b10": "lwir",  # USGS only
+    "band_10": "lwir_1",
+    "band_11": "lwir_2",
     "quality": "quality",
     "qa_aerosol": "qa_aerosol",
     # LS9
-    "saa": "solar_azimuth",
-    "sza": "solar_zenith",
-    "vaa": "view_azimuth",
-    "vza": "view_zenith",
-    "qa_pixel": "qa_pixel",
-    "qa_radsat": "qa_radsat",
+    "quality_l1_pixel": "qa_pixel",
+    "quality_l1_radiometric_saturation": "qa_radsat",
+    "angle_sensor_azimuth_band_4": "view_azimuth",
+    "angle_sensor_zenith_band_4": "view_zenith",
+    "angle_solar_azimuth_band_4": "solar_azimuth",
+    "angle_solar_zenith_band_4": "solar_zenith",
 }
 
 LANDSAT_xTM_BAND_ALIASES = {
-    "1": "blue",
-    "2": "green",
-    "3": "red",
-    "4": "nir",
-    "5": "swir_1",
-    "6": "tir",
-    "6_vcid_1": "tir_1",
-    "6_vcid_2": "tir_2",
-    "st_b6": "lwir",  # USGS only
-    "7": "swir_2",
-    "8": "panchromatic",
-    "quality": "quality",
+    "band_1": "blue",
+    "band_2": "green",
+    "band_3": "red",
+    "band_4": "nir",
+    "band_5": "swir_1",
+    "band_6": "tir",
+    "band_6_vcid_1": "tir_1",
+    "band_6_vcid_2": "tir_2",
+    "band_st_b6": "lwir",  # USGS only
+    "band_7": "swir_2",
+    "band_8": "panchromatic",
+    "band_quality": "quality",
     "cloud_qa": "qa_cloud",
     "atmos_opacity": "atmos_opacity",
 }
@@ -296,13 +296,21 @@ def read_mtl(fp: Iterable[Union[str, bytes]], root_element=None) -> Tuple[Dict, 
     return tree[root_element], root_element
 
 
-def _iter_bands_paths(product_doc: Dict) -> Generator[Tuple[str, str], None, None]:
-    prefix = "file_name_band_"
+def _iter_image_paths(product_doc: Dict) -> Generator[Tuple[str, str], None, None]:
+    file_pattern = re.compile(r"file_name_([\w]+)")
     for name, filepath in product_doc.items():
-        if not name.startswith(prefix):
+        match = file_pattern.match(name)
+        if not match or not filepath.endswith(".TIF"):
+            print(f"Not matched {name}")
             continue
-        usgs_band_id = name[len(prefix) :]
-        yield usgs_band_id, filepath
+
+        file_id = match.groups()[0]
+        # assert file_type in ('band', 'angle', 'quality'), f'Unknown file type {file_type}'
+
+        # We always want "4", not "band_4"
+        # file_id = file_id.replace('band_', '')
+
+        yield file_id, filepath
 
 
 def prepare_and_write(
@@ -445,14 +453,22 @@ def prepare_and_write(
             p.properties["dea:dataset_maturity"] = "nrt"
 
         band_aliases = get_band_alias_mappings(p.platform, p.instrument)
-        for usgs_band_id, file_location in _iter_bands_paths(
+
+        for usgs_band_id, file_location in _iter_image_paths(
             mtl_doc[coll_map["product_contents_fn"]]
         ):
+            if usgs_band_id not in band_aliases:
+                all_found = dict(
+                    _iter_image_paths(mtl_doc[coll_map["product_contents_fn"]])
+                )
+                raise ValueError(
+                    f"Unknown band {usgs_band_id!r}. Total collection: {all_found!r}"
+                )
             p.note_measurement(
                 band_aliases[usgs_band_id],
                 file_location,
                 relative_to_dataset_location=True,
-                expand_valid_data=usgs_band_id != "quality",
+                expand_valid_data=usgs_band_id.startswith("band_"),
             )
         if collection_key == "C2":
             p.note_measurement(

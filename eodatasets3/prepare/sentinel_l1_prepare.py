@@ -19,15 +19,15 @@ from typing import Dict, Iterable, List, Mapping, Optional, Tuple, Union
 import click
 import structlog
 from attr import define
-from defusedxml import minidom
-
 from datacube.config import LocalConfig
 from datacube.index import index_connect
 from datacube.model import Dataset
 from datacube.ui.click import config_option, environment_option
 from datacube.utils.uris import normalise_path
+from defusedxml import minidom
+
 from eodatasets3 import DatasetDoc, DatasetPrepare, names, serialise
-from eodatasets3.prepare.s2_common import RegionLookup, FolderInfo
+from eodatasets3.prepare.s2_common import FolderInfo, RegionLookup
 from eodatasets3.properties import Eo3Interface
 from eodatasets3.ui import PathPath
 from eodatasets3.utils import pass_config
@@ -129,9 +129,11 @@ def process_tile_metadata(contents: str) -> Dict:
     )
     tile_id = _value(root, "TILE_ID")
 
-    region_code = tile_id.split('_')[-2]
-    if not region_code.startswith('T'):
-        raise RuntimeError(f"Tile id is not recognised -- not a region code? Please report this. {tile_id!r}")
+    region_code = tile_id.split("_")[-2]
+    if not region_code.startswith("T"):
+        raise RuntimeError(
+            f"Tile id is not recognised -- not a region code? Please report this. {tile_id!r}"
+        )
     region_code = region_code[1:]
 
     return {

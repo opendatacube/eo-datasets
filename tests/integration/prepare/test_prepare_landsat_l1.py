@@ -128,7 +128,6 @@ def l9_expected():
             "name": "usgs_ls9c_level1_2",
             "href": "https://collections.dea.ga.gov.au/product/usgs_ls9c_level1_2",
         },
-        "crs": "epsg:32650",
         "geometry": {
             "type": "Polygon",
             "coordinates": (
@@ -156,6 +155,7 @@ def l9_expected():
                 ),
             ),
         },
+        "crs": "epsg:32650",
         "grids": {
             "default": {
                 "shape": [60, 60],
@@ -228,12 +228,28 @@ def l9_expected():
                 "path": "LC09_L1TP_112081_20220209_20220209_02_T1_B8.TIF",
                 "grid": "panchromatic",
             },
+            "qa_pixel": {
+                "path": "LC09_L1TP_112081_20220209_20220209_02_T1_QA_PIXEL.TIF"
+            },
+            "qa_radsat": {
+                "path": "LC09_L1TP_112081_20220209_20220209_02_T1_QA_RADSAT.TIF"
+            },
             "quality": {
                 "path": "LC09_L1TP_112081_20220209_20220209_02_T1_QA_PIXEL.TIF"
             },
             "red": {"path": "LC09_L1TP_112081_20220209_20220209_02_T1_B4.TIF"},
+            "solar_azimuth": {
+                "path": "LC09_L1TP_112081_20220209_20220209_02_T1_SAA.TIF"
+            },
+            "solar_zenith": {
+                "path": "LC09_L1TP_112081_20220209_20220209_02_T1_SZA.TIF"
+            },
             "swir_1": {"path": "LC09_L1TP_112081_20220209_20220209_02_T1_B6.TIF"},
             "swir_2": {"path": "LC09_L1TP_112081_20220209_20220209_02_T1_B7.TIF"},
+            "view_azimuth": {
+                "path": "LC09_L1TP_112081_20220209_20220209_02_T1_VAA.TIF"
+            },
+            "view_zenith": {"path": "LC09_L1TP_112081_20220209_20220209_02_T1_VZA.TIF"},
         },
         "accessories": {
             "metadata:landsat_mtl": {
