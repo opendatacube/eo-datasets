@@ -643,7 +643,7 @@ def main(
             ),
         ]
 
-    _LOG.info(f"{len(datasets)} paths(s) to process using {workers} worker(s))")
+    _LOG.info("kickoff", path_count=len(datasets), worker_count=workers)
 
     # Are we indexing on success?
     index = None
@@ -718,7 +718,7 @@ def main(
 
             first = True
             for found_dataset in find_inputs_in_path(input_path):
-                _LOG.debug(f"Trying {found_dataset.name}")
+                _LOG.debug("found_dataset", name=found_dataset.name)
                 # Make sure we tick progress on extra datasets that were found.
                 if not first:
                     first = False
@@ -740,17 +740,21 @@ def main(
                             for region in region_lookup.get(info.area):
                                 if region in included_regions:
                                     _LOG.debug(
-                                        f"Area {info.area!r} mapped to (included) region {region!r}"
+                                        "mapped_area_match",
+                                        input_area=info.area,
+                                        region_match=region,
                                     )
                                     break
                             else:
                                 _LOG.debug(
-                                    f"Skipping because area {info.area!r} doesn't map to an included region"
+                                    "skipping.mapped_area_not_in_regions",
+                                    input_area=info.area,
                                 )
                                 continue
                         elif info.region_code not in included_regions:
                             _LOG.debug(
-                                f"Skipping because region {info.region_code!r} is not in region list"
+                                "skipping.region_not_in_region_list",
+                                region_code=info.region_code,
                             )
                             continue
 
@@ -761,7 +765,9 @@ def main(
                             info.year == year and info.month < month
                         ):
                             _LOG.debug(
-                                f"Skipping because year {info.year}-{info.month} is older than {year}-{month}"
+                                "skipping.too_old",
+                                dataset_year_month=(info.year, info.month),
+                                max_year_month=(year, month),
                             )
                             continue
                     if before_month is not None:
@@ -771,7 +777,9 @@ def main(
                             info.year == year and info.month > month
                         ):
                             _LOG.debug(
-                                f"Skipping because year {info.year}-{info.month} is newer than {year}-{month}"
+                                "skipping.too_young",
+                                dataset_year_month=(info.year, info.month),
+                                min_year_month=(year, month),
                             )
                             continue
 
@@ -821,7 +829,7 @@ def main(
                 if not granule_ids:
                     granule_ids = [None]
                 else:
-                    _LOG.debug(f"Found {len(granule_ids)} granules")
+                    _LOG.debug("found_granules", granule_count=len(granule_ids))
 
                 for granule_id in granule_ids:
                     if always_granule_id or (
@@ -848,7 +856,9 @@ def main(
                         )
 
                     _LOG.info(
-                        f'Queued {found_dataset.name} (granule: {granule_id or "assuming-single"})'
+                        "queued",
+                        dataset_name=found_dataset.name,
+                        granule=granule_id or "any",
                     )
                     yield Job(
                         dataset_path=found_dataset.path,
@@ -891,7 +901,7 @@ def main(
                         on_success(dataset, path)
                     successes += 1
                 except Exception:
-                    _LOG.exception(f"Failed to complete dataset: {job}")
+                    _LOG.exception("failed_job", job=job)
                     errors += 1
         else:
             with Pool(processes=workers) as pool:
@@ -912,9 +922,7 @@ def main(
         if index is not None:
             index.close()
 
-    _LOG.info(
-        f"Completed {successes} dataset(s) successfully, with {errors} failure(s)"
-    )
+    _LOG.info("completed", success_count=successes, failure_count=errors)
     sys.exit(errors)
 
 
@@ -922,7 +930,7 @@ def _get_default_relative_folder_base(path: Path) -> Optional[Path]:
     for parent in path.parents:
         if parent.name.lower() == "l1c":
             input_relative_to = parent
-            _LOG.debug(f"Inputs will be relative to {input_relative_to}")
+            _LOG.debug("found_base_folder", inputs_are_relative_to=input_relative_to)
             break
     else:
         raise ValueError(

@@ -174,7 +174,7 @@ def repackage_tar(
             log.info("input.cleanup")
             please_remove(input_path, excluding=output_tar_path)
     except Exception:
-        log.exception("error", exc_info=True)
+        log.exception("error", exc_info=True)  # noqa: G202
         return False
     return True
 
@@ -473,7 +473,7 @@ def _output_tar_path_from_directory(base_output, input_path):
     if not mtl_files:
         raise ValueError(f"Dataset has no mtl: {input_path}")
     if len(mtl_files) > 1:
-        _LOG.warn("multiple.mtl.files", in_path=input_path)
+        _LOG.warning("multiple.mtl.files", in_path=input_path)
     mtl_file = mtl_files[0]
     dataset_name = mtl_file.name.replace("_MTL.txt", "")
 

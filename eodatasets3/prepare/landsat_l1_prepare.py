@@ -587,9 +587,10 @@ def main(
             create_date = datetime.utcfromtimestamp(ctime)
             if newer_than and (create_date <= newer_than):
                 logging.info(
-                    "Creation time {} older than start date {:%Y-%m-%d %H:%M} ...SKIPPING {}".format(
-                        newer_than - create_date, newer_than, ds_path.name
-                    )
+                    "Creation time %s older than start date %s ...SKIPPING %s",
+                    newer_than - create_date,
+                    newer_than,
+                    ds_path.name,
                 )
                 continue
 
