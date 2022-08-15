@@ -106,7 +106,7 @@ LANDSAT_OLI_TIRS_BAND_ALIASES = {
     "band_st_b10": "lwir",  # USGS only
     "band_10": "lwir_1",
     "band_11": "lwir_2",
-    "quality": "quality",
+    "band_quality": "quality",
     "qa_aerosol": "qa_aerosol",
     # LS9
     "quality_l1_pixel": "qa_pixel",
@@ -468,7 +468,9 @@ def prepare_and_write(
                 band_aliases[usgs_band_id],
                 file_location,
                 relative_to_dataset_location=True,
-                expand_valid_data=usgs_band_id.startswith("band_"),
+                expand_valid_data=(
+                    usgs_band_id.startswith("band_") and ("quality" not in usgs_band_id)
+                ),
             )
         if collection_key == "C2":
             p.note_measurement(
