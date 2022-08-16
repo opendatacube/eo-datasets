@@ -228,9 +228,6 @@ def l9_expected():
                 "path": "LC09_L1TP_112081_20220209_20220209_02_T1_B8.TIF",
                 "grid": "panchromatic",
             },
-            "qa_pixel": {
-                "path": "LC09_L1TP_112081_20220209_20220209_02_T1_QA_PIXEL.TIF"
-            },
             "qa_radsat": {
                 "path": "LC09_L1TP_112081_20220209_20220209_02_T1_QA_RADSAT.TIF"
             },
