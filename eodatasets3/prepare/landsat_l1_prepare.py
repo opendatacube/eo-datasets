@@ -107,6 +107,8 @@ LANDSAT_OLI_TIRS_BAND_ALIASES = {
     "band_10": "lwir_1",
     "band_11": "lwir_2",
     "quality_l1_pixel": "quality",
+    # Older collection called quality a "band"
+    "band_quality": "quality",
     "qa_aerosol": "qa_aerosol",
     "thermal_radiance": "thermal_radiance",
     "upwell_radiance": "upwell_radiance",
@@ -463,23 +465,28 @@ def prepare_and_write(
 
         band_aliases = get_band_alias_mappings(p.platform, p.instrument)
 
-        for usgs_band_id, file_location in _iter_image_paths(
+        for usgs_file_type, file_location in _iter_image_paths(
             mtl_doc[coll_map["product_contents_fn"]]
         ):
-            if usgs_band_id not in band_aliases:
+            if usgs_file_type not in band_aliases:
                 all_found = dict(
                     _iter_image_paths(mtl_doc[coll_map["product_contents_fn"]])
                 )
                 raise ValueError(
-                    f"Band name {usgs_band_id!r} is not known among our aliases. "
+                    f"Band name {usgs_file_type!r} is not known among our aliases. "
                     f"(All bands found in the dataset: {all_found!r})"
                 )
             p.note_measurement(
-                band_aliases[usgs_band_id],
+                band_aliases[usgs_file_type],
                 file_location,
                 relative_to_dataset_location=True,
                 expand_valid_data=(
-                    usgs_band_id.startswith("band_") and ("quality" not in usgs_band_id)
+                    usgs_file_type.startswith("band_")
+                    and (
+                        # The older collection called quality a "band"
+                        "quality"
+                        not in usgs_file_type
+                    )
                 ),
             )
 
