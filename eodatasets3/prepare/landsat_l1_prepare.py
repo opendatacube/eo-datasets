@@ -106,10 +106,19 @@ LANDSAT_OLI_TIRS_BAND_ALIASES = {
     "band_st_b10": "lwir",  # USGS only
     "band_10": "lwir_1",
     "band_11": "lwir_2",
-    "band_quality": "quality",
+    "quality_l1_pixel": "quality",
     "qa_aerosol": "qa_aerosol",
-    # LS9
-    "quality_l1_pixel": "qa_pixel",
+    "thermal_radiance": "thermal_radiance",
+    "upwell_radiance": "upwell_radiance",
+    "downwell_radiance": "downwell_radiance",
+    "atmospheric_transmittance": "atmos_transmittance",
+    "atmospheric_opacity": "atmos_opacity",
+    "emissivity": "emissivity",
+    "emissivity_stdev": "emissivity_stdev",
+    "cloud_distance": "cloud_distance",
+    "quality_l2_aerosol": "qa_aerosol",
+    "quality_l2_surface_reflectance_cloud": "qa_cloud",
+    "quality_l2_surface_temperature": "qa_temperature",
     "quality_l1_radiometric_saturation": "qa_radsat",
     "angle_sensor_azimuth_band_4": "view_azimuth",
     "angle_sensor_zenith_band_4": "view_zenith",
@@ -462,7 +471,8 @@ def prepare_and_write(
                     _iter_image_paths(mtl_doc[coll_map["product_contents_fn"]])
                 )
                 raise ValueError(
-                    f"Unknown band {usgs_band_id!r}. Total collection: {all_found!r}"
+                    f"Band name {usgs_band_id!r} is not known among our aliases. "
+                    f"(All bands found in the dataset: {all_found!r})"
                 )
             p.note_measurement(
                 band_aliases[usgs_band_id],
@@ -472,49 +482,7 @@ def prepare_and_write(
                     usgs_band_id.startswith("band_") and ("quality" not in usgs_band_id)
                 ),
             )
-        if collection_key == "C2":
-            p.note_measurement(
-                band_aliases["quality"],
-                mtl_doc[coll_map["product_contents_fn"]]["file_name_quality_l1_pixel"],
-                relative_to_dataset_location=True,
-                expand_valid_data=False,
-            )
-            if (
-                "file_name_quality_l2_aerosol"
-                in mtl_doc[coll_map["product_contents_fn"]]
-            ):
-                p.note_measurement(
-                    band_aliases["qa_aerosol"],
-                    mtl_doc[coll_map["product_contents_fn"]][
-                        "file_name_quality_l2_aerosol"
-                    ],
-                    relative_to_dataset_location=True,
-                    expand_valid_data=False,
-                )
-            if (
-                "file_name_quality_l2_surface_reflectance_cloud"
-                in mtl_doc[coll_map["product_contents_fn"]]
-            ):
-                p.note_measurement(
-                    band_aliases["cloud_qa"],
-                    mtl_doc[coll_map["product_contents_fn"]][
-                        "file_name_quality_l2_surface_reflectance_cloud"
-                    ],
-                    relative_to_dataset_location=True,
-                    expand_valid_data=False,
-                )
-            if (
-                "file_name_atmospheric_opacity"
-                in mtl_doc[coll_map["product_contents_fn"]]
-            ):
-                p.note_measurement(
-                    band_aliases["atmos_opacity"],
-                    mtl_doc[coll_map["product_contents_fn"]][
-                        "file_name_atmospheric_opacity"
-                    ],
-                    relative_to_dataset_location=True,
-                    expand_valid_data=False,
-                )
+
         p.note_accessory_file("metadata:landsat_mtl", Path(mtl_filename))
         return p.done(embed_location=embed_location)
 

@@ -464,18 +464,10 @@ def expected_lc08_l2_c2_post_20210507_folder(
     org_code = organisation.split(".")[0]
     product_name = f"{org_code}_ls8c_level{leveln_collection}_{collection}"
     processing_datetime = datetime(2021, 5, 8, 11, 5, 47)
-    cloud_cover = 72.57
-    points_model = 35
-    points_version = 5
-    rmse_model_x = 5.974
-    rmse_model_y = 4.276
-    software_version = "LPGS_15.4.0"
-    uuid = "d4ff459f-67e0-57df-af73-dfef14ad9c47"
-    quality_tag = "QA_PIXEL"
     processing_date = processing_datetime.strftime("%Y%m%d")
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
-        "id": uuid,
+        "id": "d4ff459f-67e0-57df-af73-dfef14ad9c47",
         "label": f"{product_name}-0-{processing_date}_098084_2021-05-03",
         "product": {
             "name": product_name,
@@ -491,7 +483,7 @@ def expected_lc08_l2_c2_post_20210507_folder(
             "odc:producer": organisation,
             "odc:product_family": "level2",
             "odc:region_code": "098084",
-            "eo:cloud_cover": cloud_cover,
+            "eo:cloud_cover": 72.57,
             "eo:gsd": 30.0,
             "eo:instrument": "OLI_TIRS",
             "eo:platform": "landsat-8",
@@ -501,13 +493,13 @@ def expected_lc08_l2_c2_post_20210507_folder(
             "landsat:collection_category": "T1",
             "landsat:collection_number": int(leveln_collection),
             "landsat:data_type": "L2SP",
-            "landsat:geometric_rmse_model_x": rmse_model_x,
-            "landsat:geometric_rmse_model_y": rmse_model_y,
-            "landsat:ground_control_points_model": points_model,
-            "landsat:ground_control_points_version": points_version,
+            "landsat:geometric_rmse_model_x": 5.974,
+            "landsat:geometric_rmse_model_y": 4.276,
+            "landsat:ground_control_points_model": 35,
+            "landsat:ground_control_points_version": 5,
             "landsat:landsat_product_id": f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1",
             "landsat:landsat_scene_id": "LC80980842021123LGN00",
-            "landsat:processing_software_version": software_version,
+            "landsat:processing_software_version": "LPGS_15.4.0",
             "landsat:station_id": "LGN",
             "landsat:wrs_path": 98,
             "landsat:wrs_row": 84,
@@ -549,16 +541,46 @@ def expected_lc08_l2_c2_post_20210507_folder(
             },
         },
         "measurements": {
+            "atmos_transmittance": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_ST_ATRAN.TIF",
+                )
+            },
             "blue": {
                 "path": offset(
                     l2_c2_ls8_folder,
                     f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_SR_B2.TIF",
                 )
             },
+            "cloud_distance": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_ST_CDIST.TIF",
+                )
+            },
             "coastal_aerosol": {
                 "path": offset(
                     l2_c2_ls8_folder,
                     f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_SR_B1.TIF",
+                )
+            },
+            "downwell_radiance": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_ST_DRAD.TIF",
+                )
+            },
+            "emissivity": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_ST_EMIS.TIF",
+                )
+            },
+            "emissivity_stdev": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_ST_EMSD.TIF",
                 )
             },
             "green": {
@@ -585,10 +607,22 @@ def expected_lc08_l2_c2_post_20210507_folder(
                     f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_SR_QA_AEROSOL.TIF",
                 )
             },
+            "qa_radsat": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_QA_RADSAT.TIF",
+                )
+            },
+            "qa_temperature": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_ST_QA.TIF",
+                )
+            },
             "quality": {
                 "path": offset(
                     l2_c2_ls8_folder,
-                    f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_{quality_tag}.TIF",
+                    f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_QA_PIXEL.TIF",
                 )
             },
             "red": {
@@ -609,10 +643,25 @@ def expected_lc08_l2_c2_post_20210507_folder(
                     f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_SR_B7.TIF",
                 )
             },
+            "thermal_radiance": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_ST_TRAD.TIF",
+                )
+            },
+            "upwell_radiance": {
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_ST_URAD.TIF",
+                )
+            },
         },
         "accessories": {
             "metadata:landsat_mtl": {
-                "path": f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_MTL.txt"
+                "path": offset(
+                    l2_c2_ls8_folder,
+                    f"LC08_L2SP_098084_20210503_{processing_date}_0{leveln_collection}_T1_MTL.txt",
+                )
             }
         },
         "lineage": lineage or {},
