@@ -142,7 +142,14 @@ LANDSAT_xTM_BAND_ALIASES = {
     "band_8": "panchromatic",
     "band_quality": "quality",
     "cloud_qa": "qa_cloud",
-    "atmos_opacity": "atmos_opacity",
+    "thermal_radiance": "thermal_radiance",
+    "upwell_radiance": "upwell_radiance",
+    "downwell_radiance": "downwell_radiance",
+    "atmospheric_transmittance": "atmos_transmittance",
+    "atmospheric_opacity": "atmos_opacity",
+    "emissivity": "emissivity",
+    "emissivity_stdev": "emissivity_stdev",
+    "cloud_distance": "cloud_distance",
 }
 
 MTL_PAIRS_RE = re.compile(r"(\w+)\s=\s(.*)")
