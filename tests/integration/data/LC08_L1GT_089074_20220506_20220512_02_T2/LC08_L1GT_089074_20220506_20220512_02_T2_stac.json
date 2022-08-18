@@ -1,0 +1,583 @@
+{
+    "type": "Feature",
+    "stac_version": "1.0.0",
+    "stac_extensions": [
+        "https://landsat.usgs.gov/stac/landsat-extension/v1.1.1/schema.json",
+        "https://stac-extensions.github.io/view/v1.0.0/schema.json",
+        "https://stac-extensions.github.io/projection/v1.0.0/schema.json",
+        "https://stac-extensions.github.io/eo/v1.0.0/schema.json",
+        "https://stac-extensions.github.io/alternate-assets/v1.1.0/schema.json",
+        "https://stac-extensions.github.io/storage/v1.0.0/schema.json"
+    ],
+    "id": "LC08_L1GT_089074_20220506_20220512_02_T2",
+    "description": "Landsat Collection 2 Level-1 Product",
+    "bbox": [
+        153.9245234567515,
+        -21.275835432626742,
+        156.07651181681908,
+        -19.184359644719446
+    ],
+    "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [
+                    154.33615861122288,
+                    -19.184359644719446
+                ],
+                [
+                    153.9245234567515,
+                    -20.910370351252233
+                ],
+                [
+                    155.68467631620402,
+                    -21.275835432626742
+                ],
+                [
+                    156.07651181681908,
+                    -19.54500841164592
+                ],
+                [
+                    154.33615861122288,
+                    -19.184359644719446
+                ]
+            ]
+        ]
+    },
+    "properties": {
+        "datetime": "2022-05-06T23:39:59.285133Z",
+        "eo:cloud_cover": 86.35,
+        "view:sun_azimuth": 39.80724521,
+        "view:sun_elevation": 43.24426868,
+        "platform": "LANDSAT_8",
+        "instruments": [
+            "OLI",
+            "TIRS"
+        ],
+        "view:off_nadir": 0,
+        "landsat:cloud_cover_land": 100.0,
+        "landsat:wrs_type": "2",
+        "landsat:wrs_path": "089",
+        "landsat:wrs_row": "074",
+        "landsat:scene_id": "LC80890742022126LGN00",
+        "landsat:collection_category": "T2",
+        "landsat:collection_number": "02",
+        "landsat:correction": "L1GT",
+        "proj:epsg": 32656,
+        "proj:shape": [
+            7821,
+            7721
+        ],
+        "proj:transform": [
+            30.0,
+            0.0,
+            594285.0,
+            0.0,
+            -30.0,
+            -2121285.0
+        ]
+    },
+    "assets": {
+        "thumbnail": {
+            "title": "Thumbnail image",
+            "type": "image/jpeg",
+            "roles": [
+                "thumbnail"
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_thumb_small.jpeg",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_thumb_small.jpeg"
+                }
+            }
+        },
+        "reduced_resolution_browse": {
+            "title": "Reduced resolution browse image",
+            "type": "image/jpeg",
+            "roles": [
+                "overview"
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_thumb_large.jpeg",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_thumb_large.jpeg"
+                }
+            }
+        },
+        "index": {
+            "title": "HTML index page",
+            "type": "text/html",
+            "roles": [
+                "metadata"
+            ],
+            "href": "https://landsatlook.usgs.gov/stac-browser/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2"
+        },
+        "coastal": {
+            "title": "Coastal/Aerosol Band (B1)",
+            "description": "Collection 2 Level-1 Coastal/Aerosol Band (B1) Top of Atmosphere Radiance",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "data"
+            ],
+            "eo:bands": [
+                {
+                    "name": "B1",
+                    "common_name": "coastal",
+                    "gsd": 30,
+                    "center_wavelength": 0.44
+                }
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B1.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B1.TIF"
+                }
+            }
+        },
+        "blue": {
+            "title": "Blue Band (B2)",
+            "description": "Collection 2 Level-1 Blue Band (B2) Top of Atmosphere Radiance",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "data"
+            ],
+            "eo:bands": [
+                {
+                    "name": "B2",
+                    "common_name": "blue",
+                    "gsd": 30,
+                    "center_wavelength": 0.48
+                }
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B2.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B2.TIF"
+                }
+            }
+        },
+        "green": {
+            "title": "Green Band (B3)",
+            "description": "Collection 2 Level-1 Green Band (B3) Top of Atmosphere Radiance",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "data"
+            ],
+            "eo:bands": [
+                {
+                    "name": "B3",
+                    "common_name": "green",
+                    "gsd": 30,
+                    "center_wavelength": 0.56
+                }
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B3.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B3.TIF"
+                }
+            }
+        },
+        "red": {
+            "title": "Red Band (B4)",
+            "description": "Collection 2 Level-1 Red Band (B4) Top of Atmosphere Radiance",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "data"
+            ],
+            "eo:bands": [
+                {
+                    "name": "B4",
+                    "common_name": "red",
+                    "gsd": 30,
+                    "center_wavelength": 0.66
+                }
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B4.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B4.TIF"
+                }
+            }
+        },
+        "nir08": {
+            "title": "Near Infrared Band 0.8 (B5)",
+            "description": "Collection 2 Level-1 Near Infrared Band 0.8 (B5) Top of Atmosphere Radiance",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "data",
+                "reflectance"
+            ],
+            "eo:bands": [
+                {
+                    "name": "B5",
+                    "common_name": "nir08",
+                    "gsd": 30,
+                    "center_wavelength": 0.87
+                }
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B5.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B5.TIF"
+                }
+            }
+        },
+        "swir16": {
+            "title": "Short-wave Infrared Band 1.6 (B6)",
+            "description": "Collection 2 Level-1 Short-wave Infrared Band 1.6 (B6) Top of Atmosphere Radiance",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "data",
+                "reflectance"
+            ],
+            "eo:bands": [
+                {
+                    "name": "B6",
+                    "common_name": "swir16",
+                    "gsd": 30,
+                    "center_wavelength": 1.61
+                }
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B6.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B6.TIF"
+                }
+            }
+        },
+        "swir22": {
+            "title": "Short-wave Infrared Band 2.2 (B7)",
+            "description": "Collection 2 Level-1 Short-wave Infrared Band 2.2 (B7) Top of Atmosphere Radiance",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "data",
+                "reflectance"
+            ],
+            "eo:bands": [
+                {
+                    "name": "B7",
+                    "common_name": "swir22",
+                    "gsd": 30,
+                    "center_wavelength": 2.2
+                }
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B7.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B7.TIF"
+                }
+            }
+        },
+        "pan": {
+            "title": "Panchromatic Band (B8)",
+            "description": "Collection 2 Level-1 Panchromatic Band (B8) Top of Atmosphere Radiance",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "data"
+            ],
+            "eo:bands": [
+                {
+                    "name": "B8",
+                    "common_name": "pan",
+                    "gsd": 15,
+                    "center_wavelength": 0.59
+                }
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B8.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B8.TIF"
+                }
+            },
+            "proj:shape": [
+                15641,
+                15441
+            ],
+            "proj:transform": [
+                15.0,
+                0.0,
+                594292.5,
+                0.0,
+                -15.0,
+                -2121292.5
+            ]
+        },
+        "cirrus": {
+            "title": "Cirrus Band (B9)",
+            "description": "Collection 2 Level-1 Cirrus Band (B9) Top of Atmosphere Radiance",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "data"
+            ],
+            "eo:bands": [
+                {
+                    "name": "B9",
+                    "common_name": "cirrus",
+                    "gsd": 30,
+                    "center_wavelength": 1.37
+                }
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B9.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B9.TIF"
+                }
+            }
+        },
+        "lwir11": {
+            "title": "Thermal Infrared Band 10.9 (B10)",
+            "description": "Collection 2 Level-1 Thermal Infrared Band 10.9 (B10) Top of Atmosphere Radiance",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "data",
+                "temperature"
+            ],
+            "eo:bands": [
+                {
+                    "name": "B10",
+                    "common_name": "lwir11",
+                    "gsd": 100,
+                    "center_wavelength": 10.9
+                }
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B10.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B10.TIF"
+                }
+            }
+        },
+        "lwir12": {
+            "title": "Thermal Infrared Band 12.0 (B11)",
+            "description": "Collection 2 Level-1 Thermal Infrared Band 12.0 (B11) Top of Atmosphere Radiance",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "data",
+                "temperature"
+            ],
+            "eo:bands": [
+                {
+                    "name": "B11",
+                    "common_name": "lwir12",
+                    "gsd": 100,
+                    "center_wavelength": 12.01
+                }
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B11.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_B11.TIF"
+                }
+            }
+        },
+        "ANG.txt": {
+            "title": "Angle Coefficients File",
+            "description": "Collection 2 Level-1 Angle Coefficients File (ANG)",
+            "type": "text/plain",
+            "roles": [
+                "metadata"
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_ANG.txt",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_ANG.txt"
+                }
+            }
+        },
+        "MTL.txt": {
+            "title": "Product Metadata File",
+            "description": "Collection 2 Level-1 Product Metadata File (MTL)",
+            "type": "text/plain",
+            "roles": [
+                "metadata"
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_MTL.txt",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_MTL.txt"
+                }
+            }
+        },
+        "MTL.xml": {
+            "title": "Product Metadata File (xml)",
+            "description": "Collection 2 Level-1 Product Metadata File (xml)",
+            "type": "application/xml",
+            "roles": [
+                "metadata"
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_MTL.xml",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_MTL.xml"
+                }
+            }
+        },
+        "MTL.json": {
+            "title": "Product Metadata File (json)",
+            "description": "Collection 2 Level-1 Product Metadata File (json)",
+            "type": "application/json",
+            "roles": [
+                "metadata"
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_MTL.json",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_MTL.json"
+                }
+            }
+        },
+        "qa_pixel": {
+            "title": "Quality Assessment Band",
+            "description": "Collection 2 Level-1 Quality Assessment Band (QA_PIXEL) Top of Atmosphere Radiance",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "cloud",
+                "cloud-shadow",
+                "snow-ice",
+                "water-mask"
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_QA_PIXEL.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_QA_PIXEL.TIF"
+                }
+            }
+        },
+        "qa_radsat": {
+            "title": "Radiometric Saturation Quality Assessment Band",
+            "description": "Radiometric Saturation Quality Assessment Band Top of Atmosphere Radiance",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "saturation"
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_QA_RADSAT.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_QA_RADSAT.TIF"
+                }
+            }
+        },
+        "VAA": {
+            "title": "Sensor Azimuth Angle Band",
+            "description": "Collection 2 Level-1 Sensor Azimuth Angle Band",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "azimuth"
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_VAA.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_VAA.TIF"
+                }
+            }
+        },
+        "VZA": {
+            "title": "Sensor Zenith Angle Band",
+            "description": "Collection 2 Level-1 Sensor Zenith Angle Band",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "data"
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_VZA.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_VZA.TIF"
+                }
+            }
+        },
+        "SAA": {
+            "title": "Solar Azimuth Angle Band",
+            "description": "Collection 2 Level-1 Solar Azimuth Angle Band",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "sun-azimuth"
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_SAA.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_SAA.TIF"
+                }
+            }
+        },
+        "SZA": {
+            "title": "Solar Zenith Angle Band",
+            "description": "Collection 2 Level-1 Solar Zenith Angle Band",
+            "type": "image/vnd.stac.geotiff; cloud-optimized=true",
+            "roles": [
+                "data"
+            ],
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_SZA.TIF",
+            "alternate": {
+                "s3": {
+                    "storage:platform": "AWS",
+                    "storage:requester_pays": true,
+                    "href": "s3://usgs-landsat/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_SZA.TIF"
+                }
+            }
+        }
+    },
+    "links": [
+        {
+            "rel": "root",
+            "href": "https://landsatlook.usgs.gov/data/catalog.json"
+        },
+        {
+            "rel": "parent",
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/catalog.json"
+        },
+        {
+            "rel": "collection",
+            "href": "https://landsatlook.usgs.gov/data/collection02/landsat-c2l1.json"
+        },
+        {
+            "rel": "self",
+            "href": "https://landsatlook.usgs.gov/data/collection02/level-1/standard/oli-tirs/2022/089/074/LC08_L1GT_089074_20220506_20220512_02_T2/LC08_L1GT_089074_20220506_20220512_02_T2_stac.json"
+        }
+    ],
+    "collection": "landsat-c2l1"
+}

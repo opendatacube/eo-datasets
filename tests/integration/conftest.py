@@ -23,7 +23,7 @@ L8_INPUT_PATH: Path = (
 )
 
 L8_C2_INPUT_PATH: Path = (
-    Path(__file__).parent / "data" / "LC08_L1TP_090084_20160121_20200907_02_T1"
+    Path(__file__).parent / "data" / "LC08_L1GT_089074_20220506_20220512_02_T2"
 )
 
 
@@ -135,17 +135,6 @@ def l1_ls8_ga_expected(l1_ls8_folder) -> Dict:
         collection="3",
         # the id in the ls8_telemetry_path fixture
         lineage={"satellite_telemetry_data": ["30841328-89c2-4693-8802-a3560a6cf67a"]},
-    )
-
-
-@pytest.fixture
-def l1_c2_ls8_usgs_expected(l1_ls8_folder) -> Dict:
-    return expected_l1_ls8_folder(
-        l1_ls8_folder,
-        relative_offset,
-        organisation="usgs.gov",
-        collection="2",
-        l1_collection="2",
     )
 
 
