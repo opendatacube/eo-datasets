@@ -324,15 +324,9 @@ def _iter_image_paths(product_doc: Dict) -> Generator[Tuple[str, str], None, Non
     for name, filepath in product_doc.items():
         match = file_pattern.match(name)
         if not match or not filepath.endswith(".TIF"):
-            print(f"Not matched {name}")
             continue
 
         file_id = match.groups()[0]
-        # assert file_type in ('band', 'angle', 'quality'), f'Unknown file type {file_type}'
-
-        # We always want "4", not "band_4"
-        # file_id = file_id.replace('band_', '')
-
         yield file_id, filepath
 
 
