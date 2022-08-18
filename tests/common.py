@@ -64,7 +64,10 @@ def assert_expected_eo3_path(
             )
         else:
             assert_shapes_mostly_equal(
-                produced_dataset.geometry, expected_dataset.geometry, 0.00000001
+                produced_dataset.geometry,
+                expected_dataset.geometry,
+                # Typically meters -- this is easily good enough accuracy.
+                0.0001,
             )
 
 
@@ -103,7 +106,7 @@ def assert_shapes_mostly_equal(
     # Check area first, as it's a nicer error message when they're wildly different.
     assert shape1.area == pytest.approx(
         shape2.area, abs=threshold
-    ), "Shapes have different areas"
+    ), f"Shapes have different areas: {shape1.area} != {shape2.area}"
 
     s1 = shape1.simplify(tolerance=threshold)
     s2 = shape2.simplify(tolerance=threshold)
