@@ -791,46 +791,27 @@ def expected_lt05_l2_c2_folder():
     }
 
 
-def expected_le07_l2_c2_folder(
-    l2_c2_ls8_folder: Path = None,
-    offset: Callable[[Path, str], str] = relative_offset,
-    organisation="usgs.gov",
-    collection="2",
-    leveln_collection="2",
-    lineage=None,
-):
-    """ """
-    org_code = organisation.split(".")[0]
-    product_name = f"{org_code}_ls7e_level{leveln_collection}_{collection}"
-    processing_datetime = datetime(2021, 4, 26, 10, 52, 29)
-    cloud_cover = 6.0
-    points_model = 1240
-    points_version = 5
-    rmse_model_x = 3.08
-    rmse_model_y = 3.663
-    software_version = "LPGS_15.4.0"
-    uuid = "2184a390-3bfc-5393-91fa-e9dae7c3fe39"
-    quality_tag = "QA_PIXEL"
-    processing_date = processing_datetime.strftime("%Y%m%d")
+def expected_le07_l2_c2_folder():
+
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
-        "id": uuid,
-        "label": f"{product_name}-0-{processing_date}_090084_2021-03-31",
+        "id": "2184a390-3bfc-5393-91fa-e9dae7c3fe39",
+        "label": "usgs_ls7e_level2_2-0-20210426_090084_2021-03-31",
         "product": {
-            "name": product_name,
-            "href": f"https://collections.dea.ga.gov.au/product/{product_name}",
+            "name": "usgs_ls7e_level2_2",
+            "href": "https://collections.dea.ga.gov.au/product/usgs_ls7e_level2_2",
         },
         "properties": {
             "datetime": datetime(2021, 3, 31, 23, 1, 59, 738020),
             # The minor version comes from the processing date,
             # as used in filenames to distinguish reprocesses.
-            "odc:dataset_version": f"{collection}.0.{processing_date}",
+            "odc:dataset_version": "2.0.20210426",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": processing_datetime,
-            "odc:producer": organisation,
+            "odc:processing_datetime": (datetime(2021, 4, 26, 10, 52, 29)),
+            "odc:producer": "usgs.gov",
             "odc:product_family": "level2",
             "odc:region_code": "090084",
-            "eo:cloud_cover": cloud_cover,
+            "eo:cloud_cover": 6.0,
             "eo:gsd": 30.0,
             "eo:instrument": "ETM",
             "eo:platform": "landsat-7",
@@ -838,15 +819,15 @@ def expected_le07_l2_c2_folder(
             "eo:sun_elevation": 31.970_873_9,
             "landsat:algorithm_source_surface_reflectance": "LEDAPS_3.4.0",
             "landsat:collection_category": "T1",
-            "landsat:collection_number": int(leveln_collection),
+            "landsat:collection_number": int(2),
             "landsat:data_type": "L2SP",
-            "landsat:geometric_rmse_model_x": rmse_model_x,
-            "landsat:geometric_rmse_model_y": rmse_model_y,
-            "landsat:ground_control_points_model": points_model,
-            "landsat:ground_control_points_version": points_version,
-            "landsat:landsat_product_id": f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1",
+            "landsat:geometric_rmse_model_x": 3.08,
+            "landsat:geometric_rmse_model_y": 3.663,
+            "landsat:ground_control_points_model": 1240,
+            "landsat:ground_control_points_version": 5,
+            "landsat:landsat_product_id": "LE07_L2SP_090084_20210331_20210426_02_T1",
             "landsat:landsat_scene_id": "LE70900842021090ASA00",
-            "landsat:processing_software_version": software_version,
+            "landsat:processing_software_version": "LPGS_15.4.0",
             "landsat:station_id": "ASA",
             "landsat:wrs_path": 90,
             "landsat:wrs_row": 84,
@@ -888,70 +869,53 @@ def expected_le07_l2_c2_folder(
         },
         "measurements": {
             "atmos_opacity": {
-                "path": offset(
-                    l2_c2_ls8_folder,
-                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_ATMOS_OPACITY.TIF",
-                )
+                "path": "LE07_L2SP_090084_20210331_20210426_02_T1_SR_ATMOS_OPACITY.TIF"
             },
-            "blue": {
-                "path": offset(
-                    l2_c2_ls8_folder,
-                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_B1.TIF",
-                )
+            "atmos_transmittance": {
+                "path": "LE07_L2SP_090084_20210331_20210426_02_T1_ST_ATRAN.TIF"
             },
-            "green": {
-                "path": offset(
-                    l2_c2_ls8_folder,
-                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_B2.TIF",
-                )
+            "blue": {"path": "LE07_L2SP_090084_20210331_20210426_02_T1_SR_B1.TIF"},
+            "cloud_distance": {
+                "path": "LE07_L2SP_090084_20210331_20210426_02_T1_ST_CDIST.TIF"
             },
-            "lwir": {
-                "path": offset(
-                    l2_c2_ls8_folder,
-                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_ST_B6.TIF",
-                )
+            "downwell_radiance": {
+                "path": "LE07_L2SP_090084_20210331_20210426_02_T1_ST_DRAD.TIF"
             },
-            "nir": {
-                "path": offset(
-                    l2_c2_ls8_folder,
-                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_B4.TIF",
-                )
+            "emissivity": {
+                "path": "LE07_L2SP_090084_20210331_20210426_02_T1_ST_EMIS.TIF"
             },
+            "emissivity_stdev": {
+                "path": "LE07_L2SP_090084_20210331_20210426_02_T1_ST_EMSD.TIF"
+            },
+            "green": {"path": "LE07_L2SP_090084_20210331_20210426_02_T1_SR_B2.TIF"},
+            "lwir": {"path": "LE07_L2SP_090084_20210331_20210426_02_T1_ST_B6.TIF"},
+            "nir": {"path": "LE07_L2SP_090084_20210331_20210426_02_T1_SR_B4.TIF"},
             "qa_cloud": {
-                "path": offset(
-                    l2_c2_ls8_folder,
-                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_CLOUD_QA.TIF",
-                )
+                "path": "LE07_L2SP_090084_20210331_20210426_02_T1_SR_CLOUD_QA.TIF"
+            },
+            "qa_radsat": {
+                "path": "LE07_L2SP_090084_20210331_20210426_02_T1_QA_RADSAT.TIF"
+            },
+            "qa_temperature": {
+                "path": "LE07_L2SP_090084_20210331_20210426_02_T1_ST_QA.TIF"
             },
             "quality": {
-                "path": offset(
-                    l2_c2_ls8_folder,
-                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_{quality_tag}.TIF",
-                )
+                "path": "LE07_L2SP_090084_20210331_20210426_02_T1_QA_PIXEL.TIF"
             },
-            "red": {
-                "path": offset(
-                    l2_c2_ls8_folder,
-                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_B3.TIF",
-                )
+            "red": {"path": "LE07_L2SP_090084_20210331_20210426_02_T1_SR_B3.TIF"},
+            "swir_1": {"path": "LE07_L2SP_090084_20210331_20210426_02_T1_SR_B5.TIF"},
+            "swir_2": {"path": "LE07_L2SP_090084_20210331_20210426_02_T1_SR_B7.TIF"},
+            "thermal_radiance": {
+                "path": "LE07_L2SP_090084_20210331_20210426_02_T1_ST_TRAD.TIF"
             },
-            "swir_1": {
-                "path": offset(
-                    l2_c2_ls8_folder,
-                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_B5.TIF",
-                )
-            },
-            "swir_2": {
-                "path": offset(
-                    l2_c2_ls8_folder,
-                    f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_SR_B7.TIF",
-                )
+            "upwell_radiance": {
+                "path": "LE07_L2SP_090084_20210331_20210426_02_T1_ST_URAD.TIF"
             },
         },
         "accessories": {
             "metadata:landsat_mtl": {
-                "path": f"LE07_L2SP_090084_20210331_{processing_date}_0{leveln_collection}_T1_MTL.txt"
+                "path": "LE07_L2SP_090084_20210331_20210426_02_T1_MTL.txt"
             }
         },
-        "lineage": lineage or {},
+        "lineage": {},
     }
