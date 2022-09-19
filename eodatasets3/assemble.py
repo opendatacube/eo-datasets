@@ -1689,7 +1689,7 @@ class DatasetAssembler(DatasetPrepare):
 
         # Match the lower r/w permission bits to the output folder.
         # (Temp directories default to 700 otherwise.)
-        self._work_path.chmod(self._target_collection_path().stat().st_mode & 0o777)
+        self._work_path.chmod(self._target_collection_path().stat().st_mode & 0o7777)
 
         # GDAL writes extra metadata in aux files,
         # but we consider it a mistake if you're using those extensions.
