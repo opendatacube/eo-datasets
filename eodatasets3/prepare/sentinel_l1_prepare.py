@@ -487,6 +487,14 @@ class InputDataset:
         return list_granules(self.path)
 
 
+def get_region_code_from_granule_id(granule_id: str) -> str:
+    """
+    >>> get_region_code_from_granule_id('S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T52KGB_N02.04')
+    '52KGB'
+    """
+    return granule_id.split("_")[-2][1:]
+
+
 @click.command(help=__doc__)
 @click.option("-v", "--verbose", is_flag=True)
 @click.argument(
@@ -832,6 +840,18 @@ def main(
                     _LOG.debug("found_granules", granule_count=len(granule_ids))
 
                 for granule_id in granule_ids:
+
+                    # Now that we've extracted actual granules, try again to filter by region.
+                    if granule_id and included_regions:
+                        region_code = get_region_code_from_granule_id(granule_id)
+                        if region_code not in included_regions:
+                            _LOG.debug(
+                                "skipping.granule_out_of_region",
+                                granule_id=granule_id,
+                                region_code=region_code,
+                            )
+                            continue
+
                     if always_granule_id or (
                         # None means 'auto': ie. automatically include granule id when there are multiple granules
                         always_granule_id is None
