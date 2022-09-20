@@ -18,7 +18,7 @@ import xarray
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
-from ruamel.yaml import CommentedMap
+from ruamel.yaml.comments import CommentedMap
 from shapely.geometry.base import BaseGeometry
 
 import eodatasets3
