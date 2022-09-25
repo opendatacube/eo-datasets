@@ -483,16 +483,26 @@ class InputDataset:
         return FolderInfo.for_path(self.path)
 
     @property
-    def granule_ids(self) -> Optional[List[str]]:
+    def granule_offsets(self) -> Optional[List[str]]:
+        """
+        Get the list of granule offsets in the dataset.
+
+        Offsets are the subdirectory names used inside ESA dataset packages.
+
+        Example: 'L1C_T55HFA_A018789_20201011T000244'
+        """
         return list_granules(self.path)
 
 
-def get_region_code_from_granule_id(granule_id: str) -> str:
+def get_region_code_from_granule_offset(granule_id: str) -> str:
     """
-    >>> get_region_code_from_granule_id('S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T52KGB_N02.04')
-    '52KGB'
+    >>> get_region_code_from_granule_offset('L1C_T55HFA_A018789_20201011T000244')
+    '55HFA'
     """
-    return granule_id.split("_")[-2][1:]
+    granule_section = granule_id.split("_")[1]
+    if not granule_section.startswith("T"):
+        raise ValueError(f"Granule offset is in an unexpected form? {granule_id!r}")
+    return granule_section[1:]
 
 
 @click.command(help=__doc__)
@@ -831,23 +841,24 @@ def main(
                     continue
 
                 # This has to read the files, so can be slow. That's why we try to skip above if possible.
-                granule_ids = found_dataset.granule_ids
+                granule_offsets = found_dataset.granule_offsets
 
                 # When granule_id is None, it means process all without filtering.
-                if not granule_ids:
-                    granule_ids = [None]
+                if not granule_offsets:
+                    granule_offsets = [None]
                 else:
-                    _LOG.debug("found_granules", granule_count=len(granule_ids))
+                    _LOG.debug("found_granules", granule_count=len(granule_offsets))
 
-                for granule_id in granule_ids:
-
+                for granule_offset in granule_offsets:
                     # Now that we've extracted actual granules, try again to filter by region.
-                    if granule_id and included_regions:
-                        region_code = get_region_code_from_granule_id(granule_id)
+                    if granule_offset and included_regions:
+                        region_code = get_region_code_from_granule_offset(
+                            granule_offset
+                        )
                         if region_code not in included_regions:
                             _LOG.debug(
                                 "skipping.granule_out_of_region",
-                                granule_id=granule_id,
+                                granule_offset=granule_offset,
                                 region_code=region_code,
                             )
                             continue
@@ -855,10 +866,10 @@ def main(
                     if always_granule_id or (
                         # None means 'auto': ie. automatically include granule id when there are multiple granules
                         always_granule_id is None
-                        and len(granule_ids) > 1
+                        and len(granule_offsets) > 1
                     ):
                         yaml_filename = (
-                            f"{found_dataset.name}.{granule_id}.odc-metadata.yaml"
+                            f"{found_dataset.name}.{granule_offset}.odc-metadata.yaml"
                         )
                     else:
                         yaml_filename = f"{found_dataset.name}.odc-metadata.yaml"
@@ -878,13 +889,13 @@ def main(
                     _LOG.info(
                         "queued",
                         dataset_name=found_dataset.name,
-                        granule=granule_id or "any",
+                        granule=granule_offset or "any",
                     )
                     yield Job(
                         dataset_path=found_dataset.path,
                         output_yaml_path=output_yaml,
                         producer=found_dataset.producer,
-                        granule_id=granule_id,
+                        granule_id=granule_offset,
                         embed_location=embed_location,
                     )
 
