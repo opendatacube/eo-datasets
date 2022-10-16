@@ -494,15 +494,28 @@ class InputDataset:
         return list_granules(self.path)
 
 
+REGION_CODE_FORMAT = re.compile(
+    r"T"
+    # A landsat path/row
+    r"([0-9]{6}"
+    # ... or a sentinel MGRS
+    r"|[0-9A-Z]{5})"
+)
+
+
 def get_region_code_from_granule_offset(granule_id: str) -> str:
     """
     >>> get_region_code_from_granule_offset('L1C_T55HFA_A018789_20201011T000244')
     '55HFA'
+    >>> get_region_code_from_granule_offset('S2A_OPER_MSI_L1C_TL_EPA__20161001T102755_A000900_T53KNU_N02.04')
+    '53KNU'
     """
-    granule_section = granule_id.split("_")[1]
-    if not granule_section.startswith("T"):
-        raise ValueError(f"Granule offset is in an unexpected form? {granule_id!r}")
-    return granule_section[1:]
+    for section in granule_id.split("_"):
+        match = REGION_CODE_FORMAT.match(section)
+        if match:
+            return match.group(1)
+
+    raise ValueError(f"Granule offset is in an unexpected form? {granule_id!r}")
 
 
 @click.command(help=__doc__)
