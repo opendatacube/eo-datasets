@@ -499,9 +499,10 @@ def _run_wagl(args):
         # The last line of output ends with the dataset path.
         words, reported_metadata = res.output.splitlines()[-1].rsplit(" ", 1)
 
-    assert (
-        res.exit_code == 0
-    ), f"WAGL returned error code. Output:\n{indent(res.output, ' '*4)}"
+        assert (
+            res.exit_code == 0
+        ), f"WAGL returned error code. Output:\n{indent(res.output, ' ' * 4)}"
+
     return reported_metadata
 
 
