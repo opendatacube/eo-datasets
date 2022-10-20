@@ -1,3 +1,6 @@
+
+# This gdal version should match the "gdal=="
+# line in setup.py's "docker"
 FROM osgeo/gdal:ubuntu-small-3.3.2
 
 ENV DEBIAN_FRONTEND=noninteractive \
