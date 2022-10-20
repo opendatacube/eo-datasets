@@ -31,6 +31,8 @@ EXTRAS_REQUIRE = {
     "ancillary": ["checksumdir", "netCDF4"],
     # Optional valid-data poly handling methods
     "algorithms": ["scikit-image"],
+    # Match the expected environment of our docker image
+    "docker": ["gdal==3.3.2"],
 }
 EXTRAS_REQUIRE["all"] = list(chain(EXTRAS_REQUIRE.values()))
 # Tests need all those optionals too.

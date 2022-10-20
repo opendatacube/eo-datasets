@@ -1,3 +1,6 @@
 pre-commit
 pytest-cov
 pip-tools
+# Needed because mercantile's setup fails without it
+pydantic
+pyproj

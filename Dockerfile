@@ -29,11 +29,12 @@ ARG ENVIRONMENT=test
 
 RUN echo "Environment is: $ENVIRONMENT"
 
-RUN pip install pip-tools pre-commit pytest-cov
 
 # Pip installation
 RUN mkdir -p /conf
 COPY requirements /conf/
+
+RUN pip install -r /conf/setup.txt
 
 ENV PATH=/usr/local/bin:$PATH
 
