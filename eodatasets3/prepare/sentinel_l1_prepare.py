@@ -149,11 +149,12 @@ def process_tile_metadata(contents: str) -> Dict:
     }
 
 
-def process_datastrip_metadata(contents: str) -> Dict:
+def process_datastrip_metadata(contents: str) -> Union[List[str], Dict]:
     """
     Datastrip metadata format, as described by
     xmlns https://psd-14.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Datastrip_Metadata.xsd
 
+    Returns a list of tile names in this datastrip, and the properties that could be extracted.
     """
     root = minidom.parseString(contents)
 
@@ -167,7 +168,11 @@ def process_datastrip_metadata(contents: str) -> Dict:
     else:
         raise ValueError("No resolution in datastrip metadata and unknown craft")
 
-    return {
+    tile_ids = [
+        tile_tag.attributes["tileId"] for tile_tag in root.getElementsByTagName("Tile")
+    ]
+
+    return tile_ids, {
         "sentinel:reception_station": _value(root, "RECEPTION_STATION"),
         "sentinel:processing_center": _value(root, "PROCESSING_CENTER"),
         "eo:gsd": resolution,
@@ -371,11 +376,28 @@ def _extract_esa_fields(
                 )
             return matches[0]
 
-        datastrip_md = one(r".*MTD_DS\.xml$", r"DATASTRIP/S2[^/]+/S2[^/]+\.xml$")
-        p.properties.update(
-            process_datastrip_metadata(z.read(datastrip_md).decode("utf-8"))
-        )
-        p.note_accessory_file("metadata:s2_datastrip", datastrip_md)
+        # If multiple datasetrips, find the one with this granule id?
+        datastrip_files = find(r".*MTD_DS\.xml$", r"DATASTRIP/S2[^/]+/S2[^/]+\.xml$")
+        if not datastrip_files:
+            raise ValueError(f"No datastrip metadatas found in input? {dataset}")
+
+        datastrip_md = None
+        for datastrip_file in datastrip_files:
+            inner_tiles, datastrip_md = process_datastrip_metadata(
+                z.read(datastrip_file).decode("utf-8")
+            )
+
+            if granule_id in inner_tiles:
+                # We found the datastrip for this tile.
+                break
+
+        if not datastrip_md:
+            raise ValueError(
+                f"None of the found datastrip metadatas cover this granule id {granule_id}"
+            )
+
+        p.properties.update(datastrip_md)
+        p.note_accessory_file("metadata:s2_datastrip", datastrip_file)
 
         # Get the specific granule metadata
         [*tile_mds] = find(
