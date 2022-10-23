@@ -1268,7 +1268,7 @@ def read_valid_mask_and_value_range(
             # Check if there's a non-empty array first
             if the_data.any():
                 low, high = numpy.percentile(
-                    the_data, calculate_percentiles, interpolation="nearest"
+                    the_data, calculate_percentiles, method="nearest"
                 )
                 calculated_range = (
                     max(low, calculated_range[0]),
