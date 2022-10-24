@@ -120,10 +120,7 @@ def test_invalid_crs(input_doc_folder: Path):
 
     with pytest.raises(RuntimeError) as exp:
         run_tostac(input_metadata_path)
-    assert (
-        str(exp.value) == "Expect string or any object with "
-        "`.to_epsg()` or `.to_wkt()` method"
-    )
+    assert "Expect string or any object with " in str(exp.value)
 
 
 def run_tostac(input_metadata_path: Path):
