@@ -1,7 +1,7 @@
 import operator
 from pathlib import Path
 from textwrap import indent
-from typing import Dict, Iterable
+from typing import Dict, Iterable, Union
 
 import pytest
 import rapidjson
@@ -9,6 +9,7 @@ from click.testing import CliRunner, Result
 from deepdiff import DeepDiff
 from deepdiff.model import DiffLevel
 from ruamel import yaml
+from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
 from eodatasets3 import DatasetDoc, serialise
@@ -99,9 +100,16 @@ def assert_expected_eo3(
 
 
 def assert_shapes_mostly_equal(
-    shape1: BaseGeometry, shape2: BaseGeometry, threshold: float
+    shape1: Union[BaseGeometry, dict],
+    shape2: Union[BaseGeometry, dict],
+    threshold: float,
 ):
     __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
+
+    if isinstance(shape1, dict):
+        shape1 = shape(shape1)
+    if isinstance(shape2, dict):
+        shape2 = shape(shape2)
 
     # Check area first, as it's a nicer error message when they're wildly different.
     assert shape1.area == pytest.approx(

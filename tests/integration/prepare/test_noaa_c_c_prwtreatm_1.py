@@ -8,7 +8,7 @@ from deepdiff import DeepDiff
 from eodatasets3 import serialise
 from eodatasets3.prepare import noaa_c_c_prwtreatm_1_prepare
 
-from tests.common import run_prepare_cli
+from tests.common import assert_shapes_mostly_equal, run_prepare_cli
 
 NCEP_PR_WTR_FILE: Path = (
     Path(__file__).parent.parent
@@ -129,9 +129,18 @@ def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
         docs = list(serialise.loads_yaml(f))
 
     for idx in range(len(expected_doc)):
+        expected = expected_doc[idx]
+        got = docs[idx]
+
+        # Compare their shapes as shapely objects
+        assert_shapes_mostly_equal(
+            expected.pop("geometry"), got.pop("geometry"), 0.0001
+        )
+
+        # Compare the rest of them exactly
         doc_diff = _diff(
-            expected_doc[idx],
-            docs[idx],
+            expected,
+            got,
             exclude_paths="root['properties']['odc:creation_datetime']",
         )
         assert doc_diff == {}, pformat(doc_diff)
