@@ -9,7 +9,7 @@ import versioneer
 
 HERE = pathlib.Path(__file__).parent.resolve()
 
-README = (HERE / "README.md").read_text()
+README = (HERE / "README.md").read_text(encoding='utf-8')
 
 
 tests_require = [
@@ -76,6 +76,7 @@ setup(
         "ciso8601",
         "click",
         "defusedxml",
+        "h5py",
         "jsonschema>=3",  # We want a Draft6Validator
         "numpy>=1.15.4",
         "pyproj",
