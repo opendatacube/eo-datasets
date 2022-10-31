@@ -225,7 +225,9 @@ def list_granules(dataset_location: Path) -> Optional[List[str]]:
     # Each granule is a directory. Get a unique list of all the granule directory names (ie. IDs).
     granules = set()
 
-    granule_folder_pattern = re.compile(r"/GRANULE/([^/]+)/")
+    # We only want granule directories containing imagery files.
+    # Some "null" datasets have been found with empty folders.
+    granule_folder_pattern = re.compile(r"/GRANULE/([^/]+)/.*jp2$")
 
     with zipfile.ZipFile(dataset_location, "r") as z:
         for name in z.namelist():
