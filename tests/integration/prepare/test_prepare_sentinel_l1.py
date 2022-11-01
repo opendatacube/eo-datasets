@@ -622,6 +622,11 @@ def test_nullable_granule(tmp_path: Path):
 
     check_input_dir_normal()
 
+    # This test dataset contains a "L1C_T56JMM_A015757_null/" folder
+    # inside the granule directory. We've seen this in real datasets.
+    #
+    # The packager should not try to package these null "granules"
+    #
     dataset = (
         DATA_PATH / "S2A_MSIL1C_20180629T000241_N0206_R030_T56JMM_20180629T012042.zip"
     )
