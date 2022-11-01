@@ -620,16 +620,17 @@ def test_nullable_granule(tmp_path: Path):
     out = tmp_path / "out"
     out.mkdir()
 
-    check_input_dir_normal()
-
     # This test dataset contains a "L1C_T56JMM_A015757_null/" folder
     # inside the granule directory. We've seen this in real datasets.
     #
     # The packager should not try to package these null "granules"
     #
     dataset = (
-        DATA_PATH / "S2A_MSIL1C_20180629T000241_N0206_R030_T56JMM_20180629T012042.zip"
+        DATA_PATH
+        / "s2_null_granule/S2A_MSIL1C_20180629T000241_N0206_R030_T56JMM_20180629T012042.zip"
     )
+
+    check_input_dir_normal(dataset)
 
     # Run an older zip file with multiple granules.
     res = run_prepare_cli(
@@ -645,7 +646,7 @@ def test_nullable_granule(tmp_path: Path):
     assert res.exit_code == 0, res.output
 
     # There should still be no sibling files in the input directory -- we're using an output folder.
-    check_input_dir_normal()
+    check_input_dir_normal(dataset)
 
     out_paths = sorted(s.relative_to(out).as_posix() for s in out.iterdir())
 
@@ -655,12 +656,10 @@ def test_nullable_granule(tmp_path: Path):
     ]
 
 
-def check_input_dir_normal():
+def check_input_dir_normal(zip_file=ESA_MULTIGRANULE_DATASET):
     # Sanity check: there should be no sibling files in the input directory
     non_zip_files = [
-        f
-        for f in ESA_MULTIGRANULE_DATASET.parent.rglob("*")
-        if f.is_file() and f.suffix != ".zip"
+        f for f in zip_file.parent.rglob("*") if f.is_file() and f.suffix != ".zip"
     ]
     assert not non_zip_files, (
         "Test data directory contains files that aren't zips. "
