@@ -569,7 +569,7 @@ def test_run_multigranule(tmp_path: Path):
     out = tmp_path / "out"
     out.mkdir()
 
-    check_input_dir_normal()
+    ensure_clean_zip_files(ESA_MULTIGRANULE_DATASET)
 
     # Run an older zip file with multiple granules.
     res = run_prepare_cli(
@@ -585,7 +585,7 @@ def test_run_multigranule(tmp_path: Path):
     assert res.exit_code == 0, res.output
 
     # There should still be no sibling files in the input directory -- we're using an output folder.
-    check_input_dir_normal()
+    ensure_clean_zip_files(ESA_MULTIGRANULE_DATASET)
 
     dataset_name = (
         "S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016"
@@ -630,7 +630,7 @@ def test_nullable_granule(tmp_path: Path):
         / "s2_null_granule/S2A_MSIL1C_20180629T000241_N0206_R030_T56JMM_20180629T012042.zip"
     )
 
-    check_input_dir_normal(dataset)
+    ensure_clean_zip_files(dataset)
 
     # Run an older zip file with multiple granules.
     res = run_prepare_cli(
@@ -646,7 +646,7 @@ def test_nullable_granule(tmp_path: Path):
     assert res.exit_code == 0, res.output
 
     # There should still be no sibling files in the input directory -- we're using an output folder.
-    check_input_dir_normal(dataset)
+    ensure_clean_zip_files(dataset)
 
     out_paths = sorted(s.relative_to(out).as_posix() for s in out.iterdir())
 
@@ -656,8 +656,13 @@ def test_nullable_granule(tmp_path: Path):
     ]
 
 
-def check_input_dir_normal(zip_file=ESA_MULTIGRANULE_DATASET):
-    # Sanity check: there should be no sibling files in the input directory
+def ensure_clean_zip_files(zip_file):
+    """
+    Sanity check: there should be no sibling files in the input directory.
+
+    This is to make sure files aren't being written to input directories
+    accidentally.
+    """
     non_zip_files = [
         f for f in zip_file.parent.rglob("*") if f.is_file() and f.suffix != ".zip"
     ]
@@ -673,7 +678,7 @@ def test_run_unusual_multigranule(tmp_path: Path):
     out = tmp_path / "out"
     out.mkdir()
 
-    check_input_dir_normal()
+    ensure_clean_zip_files(ESA_MULTIGRANULE_DATASET_ZIP)
 
     # Run an older zip file with multiple granules.
     res = run_prepare_cli(
@@ -688,7 +693,7 @@ def test_run_unusual_multigranule(tmp_path: Path):
 
     assert res.exit_code == 0, res.output
 
-    check_input_dir_normal()
+    ensure_clean_zip_files(ESA_MULTIGRANULE_DATASET_ZIP)
 
     dataset_name = (
         "S2A_OPER_PRD_MSIL1C_PDMC_20160210T005347_R002_V20160129T010047_20160129T010047"
