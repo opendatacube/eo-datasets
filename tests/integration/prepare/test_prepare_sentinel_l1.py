@@ -79,23 +79,24 @@ def test_subfolder_info_extraction():
     assert info is None
 
 
-ESA_INPUT_DATASET: Path = Path(__file__).parent.parent / (
-    "data/esa_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.zip"
+DATA_PATH = Path(__file__).parent.parent / "data"
+
+ESA_INPUT_DATASET: Path = DATA_PATH / (
+    "esa_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446.zip"
 )
-SINERGISE_INPUT_DATASET: Path = Path(__file__).parent.parent / (
-    "data/sinergise_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446"
+SINERGISE_INPUT_DATASET: Path = DATA_PATH / (
+    "sinergise_s2_l1c/S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446"
 )
 
 ESA_MULTIGRANULE_DATASET: Path = (
-    Path(__file__).parent.parent
-    / "data/multi-granule/S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016.zip"
+    DATA_PATH
+    / "multi-granule/S2A_OPER_PRD_MSIL1C_PDMC_20161213T162432_R088_V20151007T012016_20151007T012016.zip"
 )
 assert ESA_MULTIGRANULE_DATASET.exists()
 
 # This one has some quirky metadata. No resolution, etc.
 ESA_MULTIGRANULE_DATASET_ZIP: Path = (
-    Path(__file__).parent.parent
-    / "data/multi-granule/L1C/2016/2016-01/25S135E-30S140E/"
+    DATA_PATH / "multi-granule/L1C/2016/2016-01/25S135E-30S140E/"
     "S2A_OPER_PRD_MSIL1C_PDMC_20160210T005347_R002_V20160129T010047_20160129T010047.zip"
 )
 
@@ -608,6 +609,44 @@ def test_run_multigranule(tmp_path: Path):
         f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KMU_N02.04.odc-metadata.yaml",
         f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KNT_N02.04.odc-metadata.yaml",
         f"{dataset_name}.S2A_OPER_MSI_L1C_TL_EPA__20161211T082625_A001515_T53KNU_N02.04.odc-metadata.yaml",
+    ]
+
+
+def test_nullable_granule(tmp_path: Path):
+    """
+    Some S2 datasets have a "null" granule in their listings. Check that
+    it is ignored.
+    """
+    out = tmp_path / "out"
+    out.mkdir()
+
+    check_input_dir_normal()
+
+    dataset = (
+        DATA_PATH / "S2A_MSIL1C_20180629T000241_N0206_R030_T56JMM_20180629T012042.zip"
+    )
+
+    # Run an older zip file with multiple granules.
+    res = run_prepare_cli(
+        sentinel_l1_prepare.main,
+        "-v",
+        "--output-base",
+        out,
+        "--input-relative-to",
+        dataset.parent,
+        dataset,
+    )
+
+    assert res.exit_code == 0, res.output
+
+    # There should still be no sibling files in the input directory -- we're using an output folder.
+    check_input_dir_normal()
+
+    out_paths = sorted(s.relative_to(out).as_posix() for s in out.iterdir())
+
+    # It should have only one metadata file for the one "real" granule, named correctly.
+    assert out_paths == [
+        "S2A_MSIL1C_20180629T000241_N0206_R030_T56JMM_20180629T012042.odc-metadata.yaml"
     ]
 
 
