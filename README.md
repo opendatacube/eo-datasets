@@ -124,14 +124,17 @@ But all are optional for basic checks
 ### Eo3-validate docker github action
 #### Inputs
 
-`filepath`: **Required** The name of the person to greet. Default `"World"`.
+`command`: **Required** The command to run. Default `"eo3-validate"`.
+`filepath`: **Required** The filepath to odc documents. Default `""`.
 
 #### Example usage
 
+```
 uses: actions/eo3-validate@v1
 with:
+  command: 'eo3-validate'
   filepath: '/'
-
+```
 ### Disabling warnings
 
 ODC is very configurable, and sometimes the validator will be too strict

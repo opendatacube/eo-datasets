@@ -1,0 +1,40 @@
+---
+# Dataset
+$schema: https://schemas.opendatacube.org/dataset
+id: dd24140e-fba2-4f95-8b28-9587cf22d696
+
+label: level1_2019-07-04
+product:
+  name: level1
+
+crs: epsg:32655
+geometry:
+  type: Polygon
+  coordinates: [[[688909.3673333039, -3714585.0], [685647.6920251067, -3717468.346156044],
+      [641985.0, -3889797.3351159613], [641985.0, -3906446.160824098], [819969.5411349908,
+        -3953115.0], [831453.7930575205, -3953115.0], [879315.0, -3776857.8139976147],
+      [879315.0, -3761214.3020833335], [708011.4230769231, -3714585.0], [688909.3673333039,
+        -3714585.0]]]
+grids:
+  default:
+    shape: [60, 60]
+    transform: [3955.5, 0.0, 641985.0, 0.0, -3975.5000000000005, -3714585.0, 0.0,
+      0.0, 1.0]
+
+properties:
+  datetime: 2019-07-04 13:07:05Z
+  odc:processing_datetime: 2022-07-04 03:42:08.481682Z
+  odc:product_family: level1
+
+measurements:
+  blue:
+    path: LC08_L1TP_090084_20160121_20170405_01_T1_B2.TIF
+  red:
+    path: LC08_L1TP_090084_20160121_20170405_01_T1_B4.TIF
+
+accessories:
+  metadata:mtl:
+    path: LC08_L1TP_090084_20160121_20170405_01_T1_MTL.txt
+
+lineage: {}
+...
