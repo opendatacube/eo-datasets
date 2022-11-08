@@ -2,6 +2,10 @@
 name: 'eo3-validate'
 description: 'A lint-like checker to check ODC documents'
 inputs:
+  command:
+    description: 'command to run'
+    required: true
+    default: "eo3-validate"
   filepath:  # id of input
     description: 'path to files'
     required: true
@@ -13,4 +17,5 @@ runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
+    - ${{ input.command }}
     - ${{ inputs.filepath }}
