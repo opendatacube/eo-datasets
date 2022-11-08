@@ -121,7 +121,7 @@ But all are optional for basic checks
 	  --help                          Show this message and exit.
 
 
-### Eo3-validate docker github action
+### Eo3-validate github action (market place)
 #### Inputs
 
 `command`: **Required** The command to run. Default `"eo3-validate"`.
@@ -135,6 +135,18 @@ with:
   command: 'eo3-validate'
   filepath: '/'
 ```
+
+### Eo3-validate github action (docker)
+#### Example usage
+
+```
+name: Run eo3-validate
+run: |
+    docker run -v $PWD/:/code/odc-files opendatacube/eo-datasets:latest eo3-validate ./odc-files
+
+```
+
+
 ### Disabling warnings
 
 ODC is very configurable, and sometimes the validator will be too strict
