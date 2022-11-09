@@ -531,7 +531,7 @@ def validate_product(doc: Dict) -> ValidationMessages:
             dtype = measurement.get("dtype")
             nodata = measurement.get("nodata")
             if not numpy_value_fits_dtype(nodata, dtype):
-                yield _error(
+                yield _warning(
                     "unsuitable_nodata",
                     f"Measurement {measurement_name!r} nodata {nodata!r} does not fit a {dtype!r}",
                 )
