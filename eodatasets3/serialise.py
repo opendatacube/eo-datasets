@@ -25,6 +25,8 @@ from shapely.geometry.base import BaseGeometry
 from eodatasets3.model import ODC_DATASET_SCHEMA_URL, DatasetDoc, Eo3Dict
 from eodatasets3.properties import FileFormat
 
+converter = cattr.Converter()
+
 
 def _format_representer(dumper, data: FileFormat):
     return dumper.represent_scalar("tag:yaml.org,2002:str", f"{data.name}")
@@ -196,9 +198,7 @@ METADATA_TYPE_SCHEMA = _load_schema_validator(
 )
 
 
-def from_doc(
-    doc: Dict, skip_validation=False, normalise_properties=False
-) -> DatasetDoc:
+def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:
     """
     Parse a dictionary into an EO3 dataset.
 
@@ -220,18 +220,7 @@ def from_doc(
     if location:
         doc["locations"] = [location]
 
-    c = cattr.Converter()
-    c.register_structure_hook(uuid.UUID, _structure_as_uuid)
-    c.register_structure_hook(BaseGeometry, _structure_as_shape)
-    c.register_structure_hook(
-        Eo3Dict,
-        partial(_structure_as_stac_props, normalise_properties=normalise_properties),
-    )
-
-    c.register_structure_hook(Affine, _structure_as_affine)
-
-    c.register_unstructure_hook(Eo3Dict, _unstructure_as_stac_props)
-    return c.structure(doc, DatasetDoc)
+    return converter.structure(doc, DatasetDoc)
 
 
 def _structure_as_uuid(d, t):
@@ -272,6 +261,16 @@ def _unstructure_as_stac_props(v: Eo3Dict):
 
 def _structure_as_shape(d, t):
     return shape(d)
+
+
+converter.register_structure_hook(uuid.UUID, _structure_as_uuid)
+converter.register_structure_hook(BaseGeometry, _structure_as_shape)
+converter.register_structure_hook(
+    Eo3Dict,
+    partial(_structure_as_stac_props, normalise_properties=False),
+)
+converter.register_structure_hook(Affine, _structure_as_affine)
+converter.register_unstructure_hook(Eo3Dict, _unstructure_as_stac_props)
 
 
 def to_doc(d: DatasetDoc) -> Dict:

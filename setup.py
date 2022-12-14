@@ -9,7 +9,7 @@ import versioneer
 
 HERE = pathlib.Path(__file__).parent.resolve()
 
-README = (HERE / "README.md").read_text(encoding='utf-8')
+README = (HERE / "README.md").read_text(encoding="utf-8")
 
 
 tests_require = [
