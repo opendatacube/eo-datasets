@@ -86,7 +86,7 @@ properties:
   measurements:
     type: object
     propertyNames:
-      pattern: "^[a-z_][a-z0-9_]*$"
+      pattern: "^[a-zA-Z0-9_]*$"
     additionalProperties:
       title: Measurement
       type: object
