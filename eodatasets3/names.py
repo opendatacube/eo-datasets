@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Mapping, Optional, Sequence, Set, Union
-from urllib.parse import quote, urlparse, unquote
+from urllib.parse import quote, unquote, urlparse
 
 import datacube.utils.uris as dc_uris
 
