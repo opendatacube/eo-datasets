@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Mapping, Optional, Sequence, Set, Union
-from urllib.parse import quote, urlparse
+from urllib.parse import quote, urlparse, unquote
 
 import datacube.utils.uris as dc_uris
 
@@ -451,7 +451,7 @@ def resolve_location(path: Location) -> str:
     elif ".zip" in path.suffixes:
         return f"zip:{path}!/"
     else:
-        uri = path.as_uri()
+        uri = unquote(path.as_uri())
         # Base paths specified as directories must end in a slash,
         # so they will be url joined as subfolders. (pathlib strips them)
         if path.is_dir():
