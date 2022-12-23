@@ -209,12 +209,16 @@ def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:
     :param skip_validation: Optionally disable validation (it's faster, but I hope your
             doc is structured correctly)
     """
-
+    doc = doc.copy()
     if not skip_validation:
+        # don't error if properties 'extent' or 'grid_spatial' are present
+        if doc.get("extent"):
+            del doc["extent"]
+        if doc.get("grid_spatial"):
+            del doc["grid_spatial"]
         DATASET_SCHEMA.validate(doc)
 
     # TODO: stable cattrs (<1.0) balks at the $schema variable.
-    doc = doc.copy()
     del doc["$schema"]
     location = doc.pop("location", None)
     if location:
