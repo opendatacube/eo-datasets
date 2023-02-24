@@ -966,7 +966,7 @@ def main(
                         _LOG.info(
                             "Wrote dataset",
                             dataset_id=dataset.id,
-                            datsaset_path=path,
+                            dataset_path=path,
                             output_yaml=job.output_yaml_path,
                         )
 
