@@ -27,7 +27,6 @@ from eodatasets3 import DatasetAssembler
 with DatasetAssembler(
     Path("/some/output/collection/path"), naming_conventions="default"
 ) as p:
-
     # Add some common metadata fields.
     p.platform = "landsat-7"
     p.instrument = "ETM"

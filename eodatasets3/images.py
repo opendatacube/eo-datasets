@@ -901,7 +901,11 @@ class FileWrite:
         out_crs = ql_grid.crs
 
         # Scale and write as JPEG to the output.
-        (thumb_transform, thumb_width, thumb_height,) = calculate_default_transform(
+        (
+            thumb_transform,
+            thumb_width,
+            thumb_height,
+        ) = calculate_default_transform(
             out_crs,
             out_crs,
             ql_grid.shape[1],

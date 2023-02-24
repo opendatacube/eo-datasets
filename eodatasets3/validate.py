@@ -909,7 +909,6 @@ def _match_product(
 
     # We we have nothing, give up!
     if (not matching_products) and (not product):
-
         # Find the product that most closely matches it, to helpfully show the differences!
         closest_product_name = None
         closest_differences = None
@@ -1292,7 +1291,6 @@ def _load_remote_product_definitions(
     from_datacube: bool = False,
     from_explorer_url: Optional[str] = None,
 ) -> Dict[str, Dict]:
-
     product_definitions = {}
     # Load any remote products that were asked for.
     if from_explorer_url:

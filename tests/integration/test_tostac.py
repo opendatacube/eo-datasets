@@ -32,7 +32,6 @@ def expected_stac_doc(input_doc_folder: Path) -> Dict:
 
 
 def test_tostac(odc_dataset_path: Path, expected_stac_doc: Dict):
-
     run_tostac(odc_dataset_path)
 
     expected_output_path = odc_dataset_path.with_name(

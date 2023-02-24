@@ -921,7 +921,6 @@ def expected_lt05_l2_c2_folder():
 
 
 def expected_le07_l2_c2_folder():
-
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
         "id": "2184a390-3bfc-5393-91fa-e9dae7c3fe39",
