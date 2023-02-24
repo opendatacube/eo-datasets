@@ -670,7 +670,6 @@ class DatasetPrepare(Eo3Interface):
         source_dataset: DatasetDoc,
         inherit_skip_properties: Optional[List[str]] = None,
     ):
-
         if not inherit_skip_properties:
             # change the inherit_skip_properties to [] if it is None. Make the 'in list check' easier.
             inherit_skip_properties = []

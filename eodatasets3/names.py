@@ -655,7 +655,6 @@ class NamingConventions:
         dataset_separator_field: Optional[str] = None,
         allow_unknown_abbreviations: bool = True,
     ) -> None:
-
         #: The default base URI used in product URI generation
         #:
         #: Example: ``https://collections.dea.ga.gov.au/``

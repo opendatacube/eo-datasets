@@ -43,13 +43,11 @@ def _normalise_datetime_props(generated_doc):
 
 
 def test_location_serialisation(l1_ls8_folder_md_expected: Dict):
-
     l1_ls8_folder_md_expected["location"] = "s3://test/url/metadata.txt"
     assert_unchanged_after_roundstrip(l1_ls8_folder_md_expected)
 
 
 def test_location_single_serialisation(tmp_path: Path, l1_ls8_folder_md_expected: Dict):
-
     # Always serialises a single location as 'location'
     location = "https://some/test/path"
 

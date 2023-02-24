@@ -481,7 +481,6 @@ def test_whole_landsat_wagl_package(
 
 
 def _run_wagl(args):
-
     from eodatasets3.scripts import packagewagl
 
     # No warnings should be logged during package.
@@ -1145,7 +1144,6 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
 
 
 def test_sinergise_sentinel_wagl_package(tmp_path: Path):
-
     _run_wagl(
         (
             WAGL_SINERGISE_SENTINEL_OUTPUT,

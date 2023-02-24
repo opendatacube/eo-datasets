@@ -92,7 +92,6 @@ def _unpack_products(
     for product in product_list:
         with sub_product(product, p):
             for pathname in [p for p in img_paths if f"/{product.upper()}/" in p]:
-
                 with do(f"Path {pathname!r}"):
                     dataset = h5group[pathname]
                     band_name = utils.normalise_band_name(dataset.attrs["alias"])
@@ -225,7 +224,6 @@ def get_oa_resolution_group(
     platform: str,
     oa_resolution: Optional[Tuple[float, float]],
 ) -> h5py.Group:
-
     # None specified? Figure out a default.
 
     if oa_resolution is None:
@@ -532,7 +530,6 @@ def _load_level1_doc(
     user_specified_l1_path: Optional[Path] = None,
     allow_missing_provenance=False,
 ):
-
     if user_specified_l1_path:
         if not user_specified_l1_path.exists():
             raise ValueError(

@@ -366,7 +366,6 @@ def test_africa_naming_conventions(tmp_path: Path):
     Minimal fields needed for DEAfrica naming conventions
     """
     with DatasetAssembler(tmp_path, naming_conventions="deafrica") as p:
-
         # Just the fields listed in required_fields.
         p.producer = "digitalearthafrica.org"
         p.datetime = datetime(1998, 7, 30)
@@ -385,7 +384,6 @@ def test_africa_naming_conventions(tmp_path: Path):
     )
 
     with DatasetAssembler(tmp_path, naming_conventions="deafrica") as p:
-
         # Just the fields listed in required_fields.
         p.producer = "digitalearthafrica.org"
         p.datetime = datetime(1998, 7, 30)

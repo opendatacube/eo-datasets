@@ -296,7 +296,6 @@ def read_mtl(fp: Iterable[Union[str, bytes]], root_element=None) -> Tuple[Dict, 
         lines: Iterable[Union[str, bytes]],
         key_transform: Callable[[str], str] = lambda s: s.lower(),
     ) -> dict:
-
         tree = {}
         for line in lines:
             # If line is bytes-like convert to str
