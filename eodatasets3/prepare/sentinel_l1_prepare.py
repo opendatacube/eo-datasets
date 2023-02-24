@@ -763,12 +763,10 @@ def main(
             )
 
     def find_jobs() -> Iterable[Job]:
-
         region_lookup = RegionLookup()
 
         nonlocal input_relative_to, embed_location
         for input_path in datasets:
-
             first = True
             for found_dataset in find_inputs_in_path(input_path):
                 _LOG.debug("found_dataset", name=found_dataset.name)
@@ -954,6 +952,10 @@ def main(
                             output_yaml_path=job.output_yaml_path,
                         )
                     else:
+                        file_already_existed = (
+                            overwrite_existing and job.output_yaml_path.exists()
+                        )
+
                         dataset, path = prepare_and_write(
                             job.dataset_path,
                             job.output_yaml_path,
@@ -962,9 +964,22 @@ def main(
                             embed_location=job.embed_location,
                         )
                         _LOG.info(
-                            "Wrote dataset", dataset_id=dataset.id, datsaset_path=path
+                            "Wrote dataset",
+                            dataset_id=dataset.id,
+                            datsaset_path=path,
+                            output_yaml=job.output_yaml_path,
                         )
-                        on_success(dataset, path)
+
+                        try:
+                            on_success(dataset, path)
+                        except Exception:
+                            # If the post-processing function fails, we don't want this "unfinished" file still around.
+                            # We'd rather let it be re-created next time.
+                            if not file_already_existed:
+                                job.output_yaml_path.unlink()
+
+                            raise
+
                     successes += 1
                 except Exception:
                     _LOG.exception("failed_job", job=job)
@@ -1013,7 +1028,7 @@ def _write_dataset_safe(job: Job) -> Union[Tuple[DatasetDoc, Path], str]:
     A wrapper around `prepare_and_write` that catches exceptions and makes them
     serialisable as error strings.
 
-    (for use in multiprocessing pools etc)
+    (for use in multiprocessing pools etc.)
     """
     try:
         dataset, path = prepare_and_write(
