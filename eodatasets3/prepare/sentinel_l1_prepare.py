@@ -976,6 +976,10 @@ def main(
                             # If the post-processing function fails, we don't want this "unfinished" file still around.
                             # We'd rather let it be re-created next time.
                             if not file_already_existed:
+                                _LOG.info(
+                                    "Cleaning new file due to indexing failure.",
+                                    output_yaml=job.output_yaml_path,
+                                )
                                 job.output_yaml_path.unlink()
 
                             raise
