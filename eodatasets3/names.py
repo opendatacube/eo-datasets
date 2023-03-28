@@ -306,7 +306,7 @@ class LazyDestinationFolder:
             parts.append(c.time_folder)
 
         if self.include_platform:
-            parts.append(self.include_platform.KNOWN_PLATFORM_ABBREVIATIONS)
+            parts.append(c.platform_abbreviated)
 
         if self.include_non_final_maturity:
             # If it's not a final product, append the maturity to the folder.
