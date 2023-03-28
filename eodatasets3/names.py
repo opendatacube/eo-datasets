@@ -904,7 +904,7 @@ class DEADerivativesNamingConventions(DEANamingConventions):
     product_name = LazyProductName(include_instrument=False, include_collection=True)
 
     platform_abbreviated = LazyPlatformAbbreviation(
-        show_specific_platform=False,
+        show_specific_platform=True,
         allow_unknown_abbreviations=False,
     )
 

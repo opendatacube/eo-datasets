@@ -75,7 +75,7 @@ def test_dea_s2_derivate_names(tmp_path: Path):
             "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09",
         },
         expect_label="esa_s2_eucalyptus_3_55HFA_2018-11-04_final",
-        expect_metadata_path="esa_s2_eucalyptus_3/1-2-3/55/HFA/2018/11/04/20201011T011446/"
+        expect_metadata_path="esa_s2_eucalyptus_3/1-2-3/55/HFA/2018/11/04/20201011T011446/s2a/"
         "esa_s2_eucalyptus_3_55HFA_2018-11-04_final.odc-metadata.yaml",
     )
 
