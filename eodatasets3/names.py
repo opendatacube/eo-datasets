@@ -915,8 +915,6 @@ class DEADerivativesNamingConventions(DEANamingConventions):
     )
 
 
-
-
 class DEAS2DerivativesNamingConventions(DEADerivativesNamingConventions):
     """
     Sentinel-2-based DEA derivative naming conventions. Unlike regular
