@@ -311,7 +311,7 @@ def test_dea_c3_naming_conventions(tmp_path: Path):
     metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
     assert (
         metadata_path_offset
-        == "ga_ls_wo_3/1-6-0/090/081/1998/07/30/ga_ls_wo_3_090081_1998-07-30_interim.odc-metadata.yaml"
+        == "ga_ls_wo_3/1-6-0/090/081/1998/07/30/ls7/ga_ls_wo_3_090081_1998-07-30_interim.odc-metadata.yaml"
     )
 
 

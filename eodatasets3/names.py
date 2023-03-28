@@ -278,10 +278,12 @@ class LazyDestinationFolder:
         self,
         include_version=False,
         include_non_final_maturity=True,
+        include_platform=None,
     ) -> None:
         super().__init__()
         self.include_version = include_version
         self.include_non_final_maturity = include_non_final_maturity
+        self.include_platform = include_platform
 
     def __get__(self, c: "NamingConventions", owner) -> str:
         """The folder hierarchy the datasets files go into.
@@ -302,6 +304,9 @@ class LazyDestinationFolder:
             parts.append(c.region_folder)
         if c.time_folder is not None:
             parts.append(c.time_folder)
+
+        if self.include_platform:
+            parts.append(self.include_platform)
 
         if self.include_non_final_maturity:
             # If it's not a final product, append the maturity to the folder.
@@ -860,7 +865,7 @@ class DEADerivativesNamingConventions(DEANamingConventions):
 
     Example file structure (note version number in folder):
 
-        ga_ls_wo_3/1-6-0/090/081/1998/07/30/ga_ls_wo_3_090081_1998-07-30_interim.odc-metadata.yaml
+        ga_ls_wo_3/1-6-0/090/081/1998/07/30/ls7/ga_ls_wo_3_090081_1998-07-30_interim.odc-metadata.yaml
 
     Derivatives have a slightly different folder structure.
 
@@ -898,15 +903,18 @@ class DEADerivativesNamingConventions(DEANamingConventions):
     dataset_label = LazyLabel(include_version=False)
     product_name = LazyProductName(include_instrument=False, include_collection=True)
 
-    dataset_folder = LazyDestinationFolder(
-        include_version=True,
-        include_non_final_maturity=False,
-    )
-
     platform_abbreviated = LazyPlatformAbbreviation(
         show_specific_platform=False,
         allow_unknown_abbreviations=False,
     )
+
+    dataset_folder = LazyDestinationFolder(
+        include_version=True,
+        include_non_final_maturity=False,
+        include_platform=platform_abbreviated,
+    )
+
+
 
 
 class DEAS2DerivativesNamingConventions(DEADerivativesNamingConventions):
