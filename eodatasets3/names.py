@@ -305,9 +305,6 @@ class LazyDestinationFolder:
         if c.time_folder is not None:
             parts.append(c.time_folder)
 
-        if self.include_platform:
-            parts.append(self.include_platform.KNOWN_PLATFORM_ABBREVIATIONS[d.platform])
-
         if self.include_non_final_maturity:
             # If it's not a final product, append the maturity to the folder.
             maturity: str = d.properties.get("dea:dataset_maturity")
@@ -320,6 +317,10 @@ class LazyDestinationFolder:
             if isinstance(val, datetime):
                 val = f"{val:%Y%m%dT%H%M%S}"
             parts.append(val)
+
+        if self.include_platform:
+            parts.append(self.include_platform.KNOWN_PLATFORM_ABBREVIATIONS[d.platform])
+
         return Path(*parts).as_posix()
 
 
