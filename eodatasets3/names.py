@@ -306,7 +306,7 @@ class LazyDestinationFolder:
             parts.append(c.time_folder)
 
         if self.include_platform:
-            parts.append(c.platform_abbreviated)
+            parts.append(self.include_platform)
 
         if self.include_non_final_maturity:
             # If it's not a final product, append the maturity to the folder.
@@ -904,14 +904,17 @@ class DEADerivativesNamingConventions(DEANamingConventions):
     product_name = LazyProductName(include_instrument=False, include_collection=True)
 
     platform_abbreviated = LazyPlatformAbbreviation(
-        show_specific_platform=True,
+        show_specific_platform=False,
         allow_unknown_abbreviations=False,
     )
 
     dataset_folder = LazyDestinationFolder(
         include_version=True,
         include_non_final_maturity=False,
-        include_platform=platform_abbreviated,
+        include_platform=LazyPlatformAbbreviation(
+            show_specific_platform=True,
+            allow_unknown_abbreviations=False,
+        ),
     )
 
 
