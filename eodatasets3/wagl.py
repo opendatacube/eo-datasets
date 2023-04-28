@@ -11,6 +11,7 @@ import re
 import sys
 from datetime import datetime, timedelta
 from enum import Enum
+from math import isnan
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from uuid import UUID
@@ -793,7 +794,7 @@ def _read_gqa_doc(p: DatasetAssembler, doc: Dict):
 def _read_fmask_doc(p: DatasetAssembler, doc: Dict):
     for name, value in doc["percent_class_distribution"].items():
         # From Josh: fmask cloud cover trumps the L1 cloud cover.
-        if name == "cloud":
+        if name == "cloud" and not isnan(value):
             if "eo:cloud_cover" in p.properties:
                 del p.properties["eo:cloud_cover"]
             p.properties["eo:cloud_cover"] = value
