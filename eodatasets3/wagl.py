@@ -506,6 +506,8 @@ class Granule:
                         )
                 else:
                     tesp_doc_path = wagl_hdf5.with_name(f"{granule_name}.tesp.yaml")
+
+                tesp_doc = None
                 if tesp_doc_path.exists():
                     with tesp_doc_path.open("r") as fl:
                         [tesp_doc] = loads_yaml(fl)
