@@ -26,5 +26,3 @@ package was originally forked.
     pip istall eo-datasets
 
 Python 3.8+ is supported.
-
-
