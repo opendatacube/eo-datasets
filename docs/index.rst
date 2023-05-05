@@ -56,7 +56,7 @@ The measurement is converted to a `COG`_ image when written to the package:
 
 .. testcode ::
 
-   from eodatasets3 import DatasetAssembler
+   from eo3 import DatasetAssembler
 
    with DatasetAssembler(collection, naming_conventions='default') as p:
       p.product_family = "blues"
@@ -89,7 +89,7 @@ Writing only a metadata doc
 
 (ie. "I already have appropriate imagery files!")
 
-Example of generating a metadata document with :class:`DatasetPrepare <eodatasets3.DatasetPrepare>`:
+Example of generating a metadata document with :class:`DatasetPrepare <eo3.DatasetPrepare>`:
 
 .. testcode ::
 
@@ -97,7 +97,7 @@ Example of generating a metadata document with :class:`DatasetPrepare <eodataset
 
 .. testcode ::
 
-   from eodatasets3 import DatasetPrepare
+   from eo3 import DatasetPrepare
 
    usgs_level1 = collection_path / 'LC08_L1TP_090084_20160121_20170405_01_T1'
    metadata_path = usgs_level1 / 'odc-metadata.yaml'
@@ -160,7 +160,7 @@ And known properties are automatically normalised::
    metadata.
 
    You can allow absolute paths in your metadata document using a field on construction
-   (:meth:`DatasetPrepare() <eodatasets3.DatasetPrepare.__init__>`)::
+   (:meth:`DatasetPrepare() <eo3.DatasetPrepare.__init__>`)::
 
        with DatasetPrepare(
           dataset_location=usgs_level1,
@@ -192,7 +192,7 @@ We can record them as source datasets, and the assembler can optionally copy any
 
 
 In these situations, we often write our new pixels as a numpy array, inheriting the existing
-:class:`grid spatial information <eodatasets3.GridSpec>` of our input dataset::
+:class:`grid spatial information <eo3.GridSpec>` of our input dataset::
 
       # Write a measurement from a numpy array, using the source dataset's grid spec.
       p.write_measurement_numpy(
@@ -204,7 +204,7 @@ In these situations, we often write our new pixels as a numpy array, inheriting 
 
 Other ways to reference your source datasets:
 
-* As an in-memory :class:`DatasetDoc <eodatasets3.DatasetDoc>` using :func:`p.add_source_dataset() <eodatasets3.DatasetPrepare.add_source_dataset>`
+* As an in-memory :class:`DatasetDoc <eo3.DatasetDoc>` using :func:`p.add_source_dataset() <eo3.DatasetPrepare.add_source_dataset>`
 * Or as raw uuids, using :func:`p.note_source_datasets() <eodatasets3.DatasetPrepare.note_source_datasets>` (without property inheritance)
 
 
