@@ -475,11 +475,11 @@ class NamingConventions:
     These are generated based on a given set of naming conventions, but a user
     can manually override any properties to avoid generation.
 
-    Create an instance by calling :meth:`eodatasets3.namer`:
+    Create an instance by calling :meth:`eo3.namer`:
 
     .. testcode ::
 
-        from eodatasets3 import namer
+        from eo3 import namer
 
         properties = {
             'eo:platform': 'sentinel-2a',
@@ -495,7 +495,7 @@ class NamingConventions:
 
     .. note ::
 
-       You may want to use an :class:`eodatasets3.DatasetDoc` instance rather than a dict for
+       You may want to use an :class:`eo3.DatasetDoc` instance rather than a dict for
        properties, to get convenience methods such as ``.platform = 'sentinel-2a'``, `.properties`, automatic
        property normalisation etc.
 

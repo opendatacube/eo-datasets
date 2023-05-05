@@ -205,7 +205,7 @@ In these situations, we often write our new pixels as a numpy array, inheriting 
 Other ways to reference your source datasets:
 
 * As an in-memory :class:`DatasetDoc <eo3.DatasetDoc>` using :func:`p.add_source_dataset() <eo3.DatasetPrepare.add_source_dataset>`
-* Or as raw uuids, using :func:`p.note_source_datasets() <eodatasets3.DatasetPrepare.note_source_datasets>` (without property inheritance)
+* Or as raw uuids, using :func:`p.note_source_datasets() <eo3.DatasetPrepare.note_source_datasets>` (without property inheritance)
 
 
 Creating documents in-memory
@@ -218,7 +218,7 @@ in the document will be relative to this location:
 
 .. testsetup:: inmem
 
-   from eodatasets3 import GridSpec
+   from eo3 import GridSpec
 
    import tempfile
 
@@ -252,8 +252,8 @@ in the document will be relative to this location:
 
 
 Normally when a measurement is added, the image will be opened to read
-grid and size informaation. You can avoid this by giving a :class:`GridSpec <eodatasets3.GridSpec>`
-yourself (see :class:`GridSpec doc <eodatasets3.GridSpec>` for creation):
+grid and size informaation. You can avoid this by giving a :class:`GridSpec <eo3.GridSpec>`
+yourself (see :class:`GridSpec doc <eo3.GridSpec>` for creation):
 
 .. doctest:: inmem
 
@@ -271,11 +271,11 @@ yourself (see :class:`GridSpec doc <eodatasets3.GridSpec>` for creation):
 
    If you're writing your own image files manually, you may still want to use eodataset's
    name generation. You can ask for suitable paths from
-   :attr:`p.names <eodatasets3.DatasetPrepare.names>`:
+   :attr:`p.names <eo3.DatasetPrepare.names>`:
 
    See the :ref:`the naming section<names_n_paths>` for examples.
 
-Now finish it as a :class:`DatasetDoc <eodatasets3.DatasetDoc>`:
+Now finish it as a :class:`DatasetDoc <eo3.DatasetDoc>`:
 
 .. doctest:: inmem
 
@@ -296,8 +296,8 @@ such as conversion to a dictionary:
    >>> doc['label']
    'loch_ness_sightings_2019-07-04'
 
-Or convert it to a formatted yaml: :meth:`serialise.to_path(path, dataset) <eodatasets3.serialise.to_path>` or
-:meth:`serialise.to_stream(stream, dataset) <eodatasets3.serialise.to_stream>`.
+Or convert it to a formatted yaml: :meth:`serialise.to_path(path, dataset) <eo3.serialise.to_path>` or
+:meth:`serialise.to_stream(stream, dataset) <eo3.serialise.to_stream>`.
 
 
 Avoiding geometry calculation
@@ -309,8 +309,8 @@ all measurements.
 By default, the assembler will create this geometry by reading the pixels from your
 measurements, and calculate a geometry vector on completion.
 
-This can be configured by setting the :attr:`p.valid_data_method <eodatasets3.DatasetPrepare.valid_data_method>`
-to a different :class:`ValidDataMethod<eodatasets3.ValidDataMethod>` value.
+This can be configured by setting the :attr:`p.valid_data_method <eo3.DatasetPrepare.valid_data_method>`
+to a different :class:`ValidDataMethod<eo3.ValidDataMethod>` value.
 
 But you may want to avoid these reads and calculations entirely, in which case you can set
 a geometry yourself::
@@ -338,9 +338,9 @@ You can use the naming module alone to find file paths:
 
 .. testcode::
 
-   import eodatasets3
+   import eo3
    from pathlib import Path
-   from eodatasets3 import DatasetDoc
+   from eo3 import DatasetDoc
 
 Create some properties.
 
@@ -357,14 +357,14 @@ Create some properties.
    d.properties.update({"odc:file_format": "GeoTIFF"})
 
 .. note::
-   You can use a plain dict if you prefer. But we use an :class:`DatasetDoc() <eodatasets3.DatasetDoc>` here, which has
-   convenience methods similar to :class:`DatasetAssembler <eodatasets3.DatasetAssembler>` for building properties.
+   You can use a plain dict if you prefer. But we use an :class:`DatasetDoc() <eo3.DatasetDoc>` here, which has
+   convenience methods similar to :class:`DatasetAssembler <eo3.DatasetAssembler>` for building properties.
 
 Now create a `namer` instance with our properties (and chosen naming conventions):
 
 .. testcode::
 
-   names = eodatasets3.namer(d, conventions="default")
+   names = eo3.namer(d, conventions="default")
 
 We can see some generated names:
 
@@ -394,7 +394,7 @@ This location is called the `collection_prefix`, and we can create our namer wit
 
    collection_path = Path('/datacube/collections')
 
-   names = eodatasets3.namer(d, collection_prefix=collection_path)
+   names = eo3.namer(d, collection_prefix=collection_path)
 
    print("The dataset location is always a URL:")
    print(names.dataset_location)
@@ -427,7 +427,7 @@ This location is called the `collection_prefix`, and we can create our namer wit
 .. testcode::
    :hide:
 
-   from eodatasets3 import DatasetAssembler
+   from eo3 import DatasetAssembler
 
    import tempfile
    collection_path = Path(tempfile.mkdtemp())
@@ -477,12 +477,12 @@ Naming things yourself
 Names and paths are only auto-generated if they have not been set manually
 by the user.
 
-You can set properties yourself on the :class:`NamingConventions <eodatasets3.NamingConventions>`
+You can set properties yourself on the :class:`NamingConventions <eo3.NamingConventions>`
 to avoid automatic generation (or to avoid their finicky metadata requirements).
 
 .. testsetup:: nametest
 
-   from eodatasets3 import DatasetPrepare
+   from eo3 import DatasetPrepare
    from pathlib import Path
    import tempfile
 
@@ -501,7 +501,7 @@ to avoid automatic generation (or to avoid their finicky metadata requirements).
    >>> p.names.product_name
    's2_ard'
 
-See more examples in the assembler :attr:`.names <eodatasets3.DatasetPrepare.names>` property.
+See more examples in the assembler :attr:`.names <eo3.DatasetPrepare.names>` property.
 
 .. _data_hates_metadata:
 
@@ -631,7 +631,7 @@ But you usually don't need to give them explicitly. They will be inferred if mis
 
 In the third case, the folder and file names are generated from your
 metadata properties and chosen naming convention. You can
-also :attr:`set folders, files and parts yourself <eodatasets3.DatasetPrepare.names>`.
+also :attr:`set folders, files and parts yourself <eo3.DatasetPrepare.names>`.
 
 Specifying a collection path::
 
@@ -642,8 +642,8 @@ Let's print out a table of example default paths for each built-in naming conven
 
 .. testcode ::
 
-   from eodatasets3 import namer, DatasetDoc
-   import eodatasets3.names
+   from eo3 import namer, DatasetDoc
+   import eo3.names
 
    # Build an example dataset
    p = DatasetDoc()
@@ -665,7 +665,7 @@ Let's print out a table of example default paths for each built-in naming conven
    header = f"{'convention':20} {'metadata_file':64} dataset_location"
    print(header)
    print('-' * len(header))
-   for conventions in eodatasets3.names.KNOWN_CONVENTIONS.keys():
+   for conventions in eo3.names.KNOWN_CONVENTIONS.keys():
        n = namer(p, conventions=conventions, collection_prefix=collection_prefix)
        print(f"{conventions:20} {str(n.metadata_file):64} {n.dataset_location}")
 
@@ -695,14 +695,14 @@ Result:
 Dataset Prepare class reference
 -------------------------------
 
-.. autoclass:: eodatasets3.DatasetPrepare
+.. autoclass:: eo3.DatasetPrepare
    :members:
    :special-members: __init__
 
 Dataset Assembler class reference
 ---------------------------------
 
-.. autoclass:: eodatasets3.DatasetAssembler
+.. autoclass:: eo3.DatasetAssembler
    :members:
    :special-members: __init__
 
@@ -711,21 +711,21 @@ Dataset Assembler class reference
 Reading/Writing YAMLs
 ---------------------
 
-Methods for parsing and outputting EO3 docs as a :class:`eodatasets3.DatasetDoc`
+Methods for parsing and outputting EO3 docs as a :class:`eo3.DatasetDoc`
 
 Parsing
 ^^^^^^^
 
-.. autofunction:: eodatasets3.serialise.from_path
-.. autofunction:: eodatasets3.serialise.from_doc
+.. autofunction:: eo3.serialise.from_path
+.. autofunction:: eo3.serialise.from_doc
 
 
 Writing
 ^^^^^^^
 
-.. autofunction:: eodatasets3.serialise.to_path
-.. autofunction:: eodatasets3.serialise.to_stream
-.. autofunction:: eodatasets3.serialise.to_doc
+.. autofunction:: eo3.serialise.to_path
+.. autofunction:: eo3.serialise.to_stream
+.. autofunction:: eo3.serialise.to_doc
 
 Name Generation API
 -------------------
@@ -733,16 +733,16 @@ Name Generation API
 You may want to use the name generation alone, for instance
 to tell if a dataset has already been written before you assemble it.
 
-.. autofunction:: eodatasets3.namer
+.. autofunction:: eo3.namer
 
-.. autoclass:: eodatasets3.NamingConventions
+.. autoclass:: eo3.NamingConventions
    :members:
    :inherited-members:
 
 EO Metadata API
 ---------------
 
-.. autoclass:: eodatasets3.properties.Eo3Interface
+.. autoclass:: eo3.properties.Eo3Interface
    :members:
 
 
@@ -752,7 +752,7 @@ Misc Types
 ..
   Catch any types we didn't add explicitly above
 
-.. automodule:: eodatasets3
+.. automodule:: eo3
    :members:
    :member-order: bysource
    :exclude-members: DatasetAssembler, DatasetPrepare, NamingConventions, namer
