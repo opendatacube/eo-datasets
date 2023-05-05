@@ -88,7 +88,7 @@ setup(
         "xarray",
         "datacube",
         "python-rapidjson",
-        "pystac>=1.1.0",
+        "pystac>=1.7",
     ],
     tests_require=tests_require,
     extras_require=EXTRAS_REQUIRE,
@@ -101,7 +101,7 @@ setup(
         eo3-to-stac=eo3.scripts.tostac:run
     """,
     project_urls={
-        "Bug Reports": "https://github.com/GeoscienceAustralia/eo-datasets/issues",
-        "Source": "https://github.com/GeoscienceAustralia/eo-datasets",
+        "Bug Reports": "https://github.com/opendatacube/eo3/issues",
+        "Source": "https://github.com/opendatacube/eo3",
     },
 )
