@@ -43,7 +43,7 @@ EXTRAS_REQUIRE["deployment"] = EXTRAS_REQUIRE["wagl"]
 
 setup(
     name="eo3",
-    description="Formal specification of, and extensible library for validating and manipulating OpenDataCube EO3 datasets",
+    description="Formal specification of, and extensible library for manipulating OpenDataCube EO3 datasets",
     long_description=README,
     long_description_content_type="text/markdown",
     author="Open Data Cube",
