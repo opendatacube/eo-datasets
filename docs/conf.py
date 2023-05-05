@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("."))
 is_on_readthedocs = os.environ.get("READTHEDOCS", None) == "True"
 
-project = "eodatasets3"
+project = "eo3"
 copyright = f"{datetime.now().year}, Geoscience Australia"
 author = "Geoscience Australia"
 

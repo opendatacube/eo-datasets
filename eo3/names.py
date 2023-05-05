@@ -6,9 +6,9 @@ from urllib.parse import quote, unquote, urlparse
 
 import datacube.utils.uris as dc_uris
 
-from eodatasets3 import utils
-from eodatasets3.model import DEA_URI_PREFIX, Location
-from eodatasets3.properties import Eo3Dict, Eo3Interface
+from eo3 import utils
+from eo3.model import DEA_URI_PREFIX, Location
+from eo3.properties import Eo3Dict, Eo3Interface
 
 # Needed when packaging zip or tar files.
 dc_uris.register_scheme("zip", "tar")
@@ -506,7 +506,7 @@ class NamingConventions:
 
     .. doctest ::
 
-        >>> from eodatasets3 import DatasetDoc
+        >>> from eo3 import DatasetDoc
         >>> p = DatasetDoc()
         >>> p.platform = 'landsat-7'
         >>> p.product_family = 'nbar'
@@ -990,7 +990,7 @@ def namer(
     Conventions: 'default', 'dea', 'deafrica', ...
 
     You usually give it existing properties, but you can use the return value's
-    :attr:`.metadata <eodatasets3.NamingConventions.metadata>` field to set properties afterwards.
+    :attr:`.metadata <eo3.NamingConventions.metadata>` field to set properties afterwards.
 
     """
     if conventions not in KNOWN_CONVENTIONS:

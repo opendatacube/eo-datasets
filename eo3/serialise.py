@@ -22,8 +22,8 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets3.model import ODC_DATASET_SCHEMA_URL, DatasetDoc, Eo3Dict
-from eodatasets3.properties import FileFormat
+from eo3.model import ODC_DATASET_SCHEMA_URL, DatasetDoc, Eo3Dict
+from eo3.properties import FileFormat
 
 converter = cattr.Converter()
 

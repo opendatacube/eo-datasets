@@ -11,7 +11,7 @@ from urllib.parse import urlencode
 import ciso8601
 from ruamel.yaml.timestamp import TimeStamp as RuamelTimeStamp
 
-from eodatasets3.utils import default_utc
+from eo3.utils import default_utc
 
 
 class FileFormat(Enum):
@@ -477,7 +477,7 @@ class Eo3Interface:
     on DatasetAssemblers and within other naming APIs.
 
     (This is abstract. If you want one of these of your own, you probably want to create
-    an :class:`eodatasets3.DatasetDoc`)
+    an :class:`eo3.DatasetDoc`)
 
     """
 

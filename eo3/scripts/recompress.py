@@ -32,8 +32,8 @@ from structlog.processors import (
     format_exc_info,
 )
 
-from eodatasets3.ui import PathPath
-from eodatasets3.verify import PackageChecksum
+from eo3.ui import PathPath
+from eo3.verify import PackageChecksum
 
 _PREDICTOR_TABLE = {
     "int8": 2,

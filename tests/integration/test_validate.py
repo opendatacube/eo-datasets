@@ -9,11 +9,11 @@ import rasterio
 from click.testing import CliRunner, Result
 from rasterio.io import DatasetWriter
 
-from eodatasets3 import serialise, validate
-from eodatasets3.model import DatasetDoc
+from eo3 import serialise, validate
+from eo3.model import DatasetDoc
 
 # Either a dict or a path to a document
-from eodatasets3.validate import DocKind, filename_doc_kind, guess_kind_from_contents
+from eo3.validate import DocKind, filename_doc_kind, guess_kind_from_contents
 
 Doc = Union[Dict, Path]
 

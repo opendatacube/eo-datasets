@@ -5,7 +5,7 @@ from typing import Callable, Dict
 
 import pytest
 
-from eodatasets3.prepare import landsat_l1_prepare
+from eo3.prepare import landsat_l1_prepare
 
 from tests.common import check_prepare_outputs, run_prepare_cli
 

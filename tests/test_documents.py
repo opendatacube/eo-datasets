@@ -2,7 +2,7 @@
 Module
 """
 
-from eodatasets3.documents import _find_any_metadata_suffix, find_metadata_path
+from eo3.documents import _find_any_metadata_suffix, find_metadata_path
 
 from tests import write_files
 

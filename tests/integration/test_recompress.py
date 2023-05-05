@@ -6,8 +6,8 @@ from typing import Dict, List, Tuple
 import pytest
 from click.testing import CliRunner, Result
 
-from eodatasets3 import verify
-from eodatasets3.scripts import recompress
+from eo3 import verify
+from eo3.scripts import recompress
 
 this_folder = Path(__file__).parent
 packaged_base: Path = this_folder / "data/recompress_packed"

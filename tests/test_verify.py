@@ -2,7 +2,7 @@ import hashlib
 import unittest
 from textwrap import dedent
 
-from eodatasets3 import verify
+from eo3 import verify
 
 from tests import write_files
 

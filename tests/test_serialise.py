@@ -1,6 +1,6 @@
 from io import StringIO
 
-from eodatasets3 import serialise
+from eo3 import serialise
 
 
 def test_dumps_yaml_scientific_notation():

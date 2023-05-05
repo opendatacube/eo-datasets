@@ -42,8 +42,8 @@ EXTRAS_REQUIRE["test"] = EXTRAS_REQUIRE["all"]
 EXTRAS_REQUIRE["deployment"] = EXTRAS_REQUIRE["wagl"]
 
 setup(
-    name="eodatasets3",
-    description="Packaging, metadata and provenance for OpenDataCube EO3 datasets",
+    name="eo3",
+    description="Formal specification of, and extensible library for validating and manipulating OpenDataCube EO3 datasets",
     long_description=README,
     long_description_content_type="text/markdown",
     author="Open Data Cube",
@@ -52,10 +52,10 @@ setup(
     packages=find_packages(exclude=("tests", "tests.*")),
     package_data={
         "": ["*.json", "*.yaml", "*.db"],
-        "eodatasets3": ["eodatasets3/py.typed"],
+        "eo3": ["eo3/py.typed"],
     },
     license="Apache Software License 2.0",
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
@@ -65,7 +65,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Operating System :: OS Independent",
     ],
-    url="https://github.com/GeoscienceAustralia/eo-datasets",
+    url="https://github.com/opendatacube/eo3",
     install_requires=[
         "affine",
         "attrs>=18.1",  # 18.1 adds 'factory' syntactic sugar
@@ -94,11 +94,11 @@ setup(
     extras_require=EXTRAS_REQUIRE,
     entry_points="""
         [console_scripts]
-        eo3-validate=eodatasets3.validate:run
-        eo3-prepare=eodatasets3.scripts.prepare:run
-        eo3-recompress-tar=eodatasets3.scripts.recompress:main
-        eo3-package-wagl=eodatasets3.scripts.packagewagl:run
-        eo3-to-stac=eodatasets3.scripts.tostac:run
+        eo3-validate=eo3.validate:run
+        eo3-prepare=eo3.scripts.prepare:run
+        eo3-recompress-tar=eo3.scripts.recompress:main
+        eo3-package-wagl=eo3.scripts.packagewagl:run
+        eo3-to-stac=eo3.scripts.tostac:run
     """,
     project_urls={
         "Bug Reports": "https://github.com/GeoscienceAustralia/eo-datasets/issues",

@@ -5,9 +5,9 @@ from uuid import UUID
 from affine import Affine
 from shapely.geometry import shape
 
-from eodatasets3 import DatasetDoc, Eo3Dict
-from eodatasets3.model import GridDoc, MeasurementDoc, ProductDoc
-from eodatasets3.prepare.esri_land_cover_prepare import as_eo3
+from eo3 import DatasetDoc, Eo3Dict
+from eo3.model import GridDoc, MeasurementDoc, ProductDoc
+from eo3.prepare.esri_land_cover_prepare import as_eo3
 
 from tests.common import assert_expected_eo3
 

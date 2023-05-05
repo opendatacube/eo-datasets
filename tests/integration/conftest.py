@@ -6,9 +6,9 @@ from typing import Callable, Dict
 
 import pytest
 
-from eodatasets3 import serialise
-from eodatasets3.model import DatasetDoc
-from eodatasets3.prepare.landsat_l1_prepare import normalise_nci_symlinks
+from eo3 import serialise
+from eo3.model import DatasetDoc
+from eo3.prepare.landsat_l1_prepare import normalise_nci_symlinks
 
 L71GT_TARBALL_PATH: Path = (
     Path(__file__).parent / "data" / "LE07_L1TP_104078_20130429_20161124_01_T1.tar"

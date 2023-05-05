@@ -4,10 +4,10 @@ from contextlib import contextmanager
 
 import pytest
 
-from eodatasets3 import Eo3Dict, namer
-from eodatasets3.model import DatasetDoc
-from eodatasets3.names import NamingConventions
-from eodatasets3.properties import PropertyOverrideWarning
+from eo3 import Eo3Dict, namer
+from eo3.model import DatasetDoc
+from eo3.names import NamingConventions
+from eo3.properties import PropertyOverrideWarning
 
 
 def test_multi_platform_fields():

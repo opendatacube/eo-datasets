@@ -3,7 +3,7 @@ from uuid import UUID
 
 import pytest
 
-from eodatasets3.wagl import _load_level1_doc
+from eo3.wagl import _load_level1_doc
 
 # data/LC08_L1TP_090084_20160121_20200907_02_T1/LC08_L1TP_090084_20160121_20200907_02_T1.odc-metadata.yaml
 

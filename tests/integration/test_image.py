@@ -1,6 +1,6 @@
 import numpy as np
 
-from eodatasets3 import images
+from eo3 import images
 
 
 def test_rescale_intensity():
@@ -124,7 +124,7 @@ def test_calc_range():
         ]
     )
 
-    mask = np.ones(r_array.shape, dtype=np.bool)
+    mask = np.ones(r_array.shape, dtype=np.bool_)
     calculated_range = images.read_valid_mask_and_value_range(
         mask,
         ((r_array, no), (g_array, no), (b_array, no)),

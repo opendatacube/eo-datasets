@@ -5,8 +5,8 @@ from typing import Dict
 
 import pytest
 
-from eodatasets3 import serialise
-from eodatasets3.scripts import tostac
+from eo3 import serialise
+from eo3.scripts import tostac
 
 from tests.common import assert_same, run_prepare_cli
 
@@ -42,6 +42,7 @@ def test_tostac(odc_dataset_path: Path, expected_stac_doc: Dict):
 
     output_doc = json.load(expected_output_path.open())
 
+    assert expected_stac_doc["stac_extensions"][1] == output_doc["stac_extensions"][1]
     assert_same(expected_stac_doc, output_doc)
 
 

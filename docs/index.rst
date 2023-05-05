@@ -234,7 +234,16 @@ in the document will be relative to this location:
 
 .. doctest:: inmem
 
-   >>> from eodatasets3 import DatasetPrepare
+   >>> from eo3 import DatasetPrepare
+      >>>
+      >>> p = DatasetPrepare(dataset_location=dataset_location)
+      >>> p.datetime = datetime(2019, 7, 4, 13, 7, 5)
+      >>> p.product_name = "loch_ness_sightings"
+      >>> p.processed = datetime(2019, 7, 4, 13, 8, 7)
+
+
+   Normally when a measurement is added, the image will be opened to read
+   grid and size informaation. You can avoid this by giving a
    >>>
    >>> p = DatasetPrepare(dataset_location=dataset_location)
    >>> p.datetime = datetime(2019, 7, 4, 13, 7, 5)
@@ -277,7 +286,12 @@ such as conversion to a dictionary:
 
 .. doctest:: inmem
 
-   >>> from eodatasets3 import serialise
+   >>> from eo3 import serialise
+      >>> doc: dict = serialise.to_doc(dataset)
+      >>> doc['label']
+      'loch_ness_sightings_2019-07-04'
+
+   Or convert it to a formatted yaml:
    >>> doc: dict = serialise.to_doc(dataset)
    >>> doc['label']
    'loch_ness_sightings_2019-07-04'

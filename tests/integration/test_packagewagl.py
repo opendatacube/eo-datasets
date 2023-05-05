@@ -12,8 +12,8 @@ from rasterio import DatasetReader
 from rasterio.enums import Compression
 from rio_cogeo import cogeo
 
-import eodatasets3
-from eodatasets3.model import DatasetDoc
+import eo3
+from eo3.model import DatasetDoc
 
 from . import assert_image
 from tests import assert_file_structure
@@ -22,7 +22,7 @@ from tests.common import assert_expected_eo3_path, assert_same_as_file
 h5py = pytest.importorskip(
     "h5py",
     reason="Extra dependencies needed to run wagl package test. "
-    "Try pip install eodatasets3[wagl]",
+    "Try pip install eo3[wagl]",
 )
 
 # These test datasets come from running `tests/integration/h5downsample.py` on a real
@@ -419,9 +419,9 @@ def test_whole_landsat_wagl_package(
                     "version": "0.6.1",
                 },
                 {
-                    "name": "eodatasets3",
+                    "name": "eo3",
                     "url": "https://github.com/GeoscienceAustralia/eo-datasets",
-                    "version": eodatasets3.__version__,
+                    "version": eo3.__version__,
                 },
             ],
         },
@@ -481,7 +481,7 @@ def test_whole_landsat_wagl_package(
 
 
 def _run_wagl(args):
-    from eodatasets3.scripts import packagewagl
+    from eo3.scripts import packagewagl
 
     # No warnings should be logged during package.
     # We could tighten this to specific warnings if it proves too noisy, but it's
@@ -570,7 +570,7 @@ def test_landsat_wagl_package_provisional_file_structure(
 
 
 def test_maturity_calculation():
-    from eodatasets3 import wagl
+    from eo3 import wagl
 
     # Simplified. Only a few ancillary parts that matter to us.
     wagl_doc = {
@@ -1128,9 +1128,9 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
                     "version": "0.6.2",
                 },
                 {
-                    "name": "eodatasets3",
+                    "name": "eo3",
                     "url": "https://github.com/GeoscienceAustralia/eo-datasets",
-                    "version": eodatasets3.__version__,
+                    "version": eo3.__version__,
                 },
             ],
         },
@@ -1560,9 +1560,9 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path):
                     "version": "0.7.2.dev1+ga559f47",
                 },
                 {
-                    "name": "eodatasets3",
+                    "name": "eo3",
                     "url": "https://github.com/GeoscienceAustralia/eo-datasets",
-                    "version": eodatasets3.__version__,
+                    "version": eo3.__version__,
                 },
             ],
         },

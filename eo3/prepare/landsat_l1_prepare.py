@@ -16,9 +16,9 @@ from typing import Callable, Dict, Generator, Iterable, List, Optional, Tuple, U
 import click
 import rasterio
 
-from eodatasets3 import DatasetPrepare, serialise, utils
-from eodatasets3.properties import FileFormat
-from eodatasets3.ui import PathPath
+from eo3 import DatasetPrepare, serialise, utils
+from eo3.properties import FileFormat
+from eo3.ui import PathPath
 
 _COPYABLE_MTL_FIELDS = {}
 _COPYABLE_MTL_FIELDS["C1"] = [
