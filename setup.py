@@ -55,7 +55,7 @@ setup(
         "eodatasets3": ["eodatasets3/py.typed"],
     },
     license="Apache Software License 2.0",
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
@@ -65,7 +65,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Operating System :: OS Independent",
     ],
-    url="https://github.com/GeoscienceAustralia/eo-datasets",
+    url="https://github.com/opendatacube/eo-datasets",
     install_requires=[
         "affine",
         "attrs>=18.1",  # 18.1 adds 'factory' syntactic sugar
@@ -88,7 +88,7 @@ setup(
         "xarray",
         "datacube",
         "python-rapidjson",
-        "pystac>=1.1.0",
+        "pystac>=1.7",
     ],
     tests_require=tests_require,
     extras_require=EXTRAS_REQUIRE,
@@ -101,7 +101,7 @@ setup(
         eo3-to-stac=eodatasets3.scripts.tostac:run
     """,
     project_urls={
-        "Bug Reports": "https://github.com/GeoscienceAustralia/eo-datasets/issues",
-        "Source": "https://github.com/GeoscienceAustralia/eo-datasets",
+        "Bug Reports": "https://github.com/opendatacube/eo-datasets/issues",
+        "Source": "https://github.com/opendatacube/eo-datasets",
     },
 )
