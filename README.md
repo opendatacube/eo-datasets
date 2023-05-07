@@ -8,12 +8,12 @@ This package contains:
 
 1. A [draft specification](SPECIFICATION.md) for the EO3 format.
 2. Extensible libraries to easily read, write, validate and convert [ODC](https://github.com/opendatacube/datacube-core)
-datasets. 
+datasets.
 
-This package is designed to ignore all metadata except that directly interpreted by 
-[ODC](https://github.com/opendatacube/datacube-core)  
+This package is designed to ignore all metadata except that directly interpreted by
+[ODC](https://github.com/opendatacube/datacube-core)
 
-Other metadata validation, creation, conversion, etc. can be handled by 
+Other metadata validation, creation, conversion, etc. can be handled by
 [eo-datasets](https://github.com/opendatacube/eo-datasets), from which this
 package was originally forked.
 
@@ -21,7 +21,7 @@ package was originally forked.
 
     git clone git@github.com:opendatacube/eo3.git
     pip install -e ./eo3
-    
+
     # optional
     pip istall eo-datasets
 
