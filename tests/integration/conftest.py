@@ -8,7 +8,7 @@ import pytest
 
 from eo3 import serialise
 from eo3.model import DatasetDoc
-from eo3.prepare.landsat_l1_prepare import normalise_nci_symlinks
+# from eo3.prepare.landsat_l1_prepare import normalise_nci_symlinks
 
 L71GT_TARBALL_PATH: Path = (
     Path(__file__).parent / "data" / "LE07_L1TP_104078_20130429_20161124_01_T1.tar"
@@ -49,12 +49,12 @@ S1_EO3_PATH: Path = (
 WOFS_PATH: Path = Path(__file__).parent / "data" / "wofs"
 
 
-def path_offset(base: Path, offset: str):
-    return str(normalise_nci_symlinks(base.absolute().joinpath(offset)))
+# def path_offset(base: Path, offset: str):
+#    return str(normalise_nci_symlinks(base.absolute().joinpath(offset)))
 
 
-def tar_offset(tar: Path, offset: str):
-    return "tar:" + str(normalise_nci_symlinks(tar.absolute())) + "!" + offset
+# def tar_offset(tar: Path, offset: str):
+#     return "tar:" + str(normalise_nci_symlinks(tar.absolute())) + "!" + offset
 
 
 def relative_offset(base, offset):
@@ -138,9 +138,9 @@ def l1_ls8_ga_expected(l1_ls8_folder) -> Dict:
     )
 
 
-@pytest.fixture
-def l1_ls8_folder_md_expected_absolute(l1_ls8_folder) -> Dict:
-    return expected_l1_ls8_folder(l1_ls8_folder, path_offset)
+# @pytest.fixture
+# def l1_ls8_folder_md_expected_absolute(l1_ls8_folder) -> Dict:
+#     return expected_l1_ls8_folder(l1_ls8_folder, path_offset)
 
 
 @pytest.fixture

@@ -36,10 +36,7 @@ import toolz
 from attr import Factory, define, field, frozen
 from boltons.iterutils import get_path
 from click import echo, secho, style
-from datacube import Datacube
 from datacube.index.eo3 import prep_eo3
-from datacube.utils import InvalidDocException, changes, is_url, read_documents
-from datacube.utils.documents import load_documents
 from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.errors import CRSError
@@ -48,7 +45,8 @@ from shapely.validation import explain_validity
 from eo3 import model, serialise, utils
 from eo3.model import DatasetDoc
 from eo3.ui import bool_style, is_absolute, uri_resolve
-from eo3.utils import EO3_SCHEMA, default_utc
+from eo3.utils import EO3_SCHEMA, default_utc, load_documents, read_documents, InvalidDocException, contains
+from eo3.uris import is_url
 
 DEFAULT_NULLABLE_FIELDS = ("label",)
 DEFAULT_OPTIONAL_FIELDS = (
@@ -904,7 +902,7 @@ def _match_product(
     matching_products = {
         name: definition
         for name, definition in product_definitions.items()
-        if changes.contains(dataset_doc, definition["metadata"])
+        if contains(dataset_doc, definition["metadata"])
     }
 
     # We we have nothing, give up!
@@ -1300,11 +1298,13 @@ def _load_remote_product_definitions(
 
     if from_datacube:
         # The normal datacube environment variables can be used to choose alternative configs.
-        with Datacube(app="eo3-validate") as dc:
-            for product in dc.index.products.get_all():
-                product_definitions[product.name] = product.definition
-
-        secho(f"{len(product_definitions)} ODC products", err=True)
+        #with Datacube(app="eo3-validate") as dc:
+        #    for product in dc.index.products.get_all():
+        #        product_definitions[product.name] = product.definition
+        #
+        # secho(f"{len(product_definitions)} ODC products", err=True)
+        # TODO CORE Cannot just hit ODC here.
+        raise Exception("Cannot pull product from ODC here")
     return product_definitions
 
 

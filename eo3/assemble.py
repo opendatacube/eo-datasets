@@ -26,10 +26,11 @@ from eo3 import documents, images, serialise, validate
 from eo3.documents import find_and_read_documents
 from eo3.images import FileWrite, GridSpec, MeasurementBundler, ValidDataMethod
 from eo3.model import AccessoryDoc, DatasetDoc, Location, ProductDoc
-from eo3.names import NamingConventions, dc_uris, namer, resolve_location
+from eo3.names import NamingConventions, namer, resolve_location
 from eo3.properties import Eo3Dict, Eo3Interface
 from eo3.validate import Level, ValidationExpectations, ValidationMessage
 from eo3.verify import PackageChecksum
+from eo3.uris import is_url, uri_resolve
 
 
 class IfExists(Enum):
@@ -133,7 +134,7 @@ def _default_metadata_path(dataset_url: str):
     # Otherwise a sibling file to the dataset file.
     base_url, file_name = dataset_url.rsplit("/", maxsplit=1)
     file_stem = file_name.split(".")[0]
-    return dc_uris.uri_resolve(dataset_url, f"{base_url}/{file_stem}.odc-metadata.yaml")
+    return uri_resolve(dataset_url, f"{base_url}/{file_stem}.odc-metadata.yaml")
 
 
 class DatasetPrepare(Eo3Interface):
@@ -829,7 +830,7 @@ class DatasetPrepare(Eo3Interface):
                     p = p.as_posix()
 
             # Is it an (absolute) URL
-            if dc_uris.is_url(p):
+            if is_url(p):
                 return relative_url(
                     dataset_location,
                     p,

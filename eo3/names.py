@@ -4,14 +4,14 @@ from pathlib import Path
 from typing import Dict, Mapping, Optional, Sequence, Set, Union
 from urllib.parse import quote, unquote, urlparse
 
-import datacube.utils.uris as dc_uris
 
 from eo3 import utils
 from eo3.model import DEA_URI_PREFIX, Location
 from eo3.properties import Eo3Dict, Eo3Interface
+from eo3.uris import register_scheme, is_url, is_vsipath, normalise_path, uri_resolve
 
 # Needed when packaging zip or tar files.
-dc_uris.register_scheme("zip", "tar")
+register_scheme("zip", "tar")
 
 
 class LazyProductName:
@@ -438,14 +438,14 @@ def resolve_location(path: Location) -> str:
     Users may specify a pathlib.Path(), and we'll convert it as needed.
     """
     if isinstance(path, str):
-        if not dc_uris.is_url(path) and not dc_uris.is_vsipath(path):
+        if not is_url(path) and not is_vsipath(path):
             raise ValueError(
                 "A string location is expected to be a URL or VSI path. "
                 "Perhaps you want to give it as a local pathlib.Path()?"
             )
         return path
 
-    path = dc_uris.normalise_path(path)
+    path = normalise_path(path)
     if ".tar" in path.suffixes:
         return f"tar:{path}!/"
     elif ".zip" in path.suffixes:
@@ -738,7 +738,7 @@ class NamingConventions:
             path = path.as_posix()
 
         location = self.dataset_location
-        resolved = dc_uris.uri_resolve(location, path)
+        resolved = uri_resolve(location, path)
         return resolved
 
     def resolve_path(self, path: Location) -> Path:

@@ -1,0 +1,69 @@
+"$schema": "http://json-schema.org/draft-04/schema#"
+# TODO CORE Copied from datacube/models/schema
+description: Schema for metadata types.
+type: object
+
+properties:
+    name:
+        type: string
+    description:
+        type: string
+    dataset:
+        type: object
+        properties:
+            id:
+                "$ref": "#/definitions/offset"
+            creation_dt:
+                "$ref": "#/definitions/offset"
+            label:
+                "$ref": "#/definitions/offset"
+            sources:
+                "$ref": "#/definitions/offset"
+            # Optional
+            measurements:
+                "$ref": "#/definitions/offset"
+            format:
+                "$ref": "#/definitions/offset"
+            grid_spatial:
+                "$ref": "#/definitions/offset"
+            search_fields:
+                type: object
+                patternProperties:
+                    "[a-zA-Z0-9_]+":
+                        type: object
+                        properties:
+                            description:
+                                type: string
+                            offset:
+                                "$ref": "#/definitions/offset"
+                            type:
+                                type: string
+                            indexed:
+                                type: boolean
+                            min_offset:
+                                type: array
+                                items:
+                                    "$ref": "#/definitions/offset"
+                            max_offset:
+                                type: array
+                                items:
+                                    "$ref": "#/definitions/offset"
+                        additionalProperties: false
+        required:
+            - id
+            - creation_dt
+            - label
+            - sources
+            - search_fields
+        additionalProperties: false
+required:
+    - name
+    - description
+    - dataset
+additionalProperties: false
+
+definitions:
+    offset:
+        type: array
+        items:
+            type: string

@@ -5,7 +5,7 @@ from typing import Optional, Union
 from urllib.parse import urljoin, urlparse
 
 import click
-from datacube.utils.uris import normalise_path
+from eo3.uris import normalise_path
 
 
 class PathPath(click.Path):

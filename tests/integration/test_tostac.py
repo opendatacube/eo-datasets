@@ -108,7 +108,7 @@ def test_add_property(input_doc_folder: Path):
     assert actual_doc["properties"]["test"] == input_doc["properties"]["test"]
 
 
-def test_invalid_crs(input_doc_folder: Path):
+def test_no_crs(input_doc_folder: Path):
     input_metadata_path = input_doc_folder.joinpath(ODC_METADATA_FILE)
     assert input_metadata_path.exists()
 
@@ -120,7 +120,22 @@ def test_invalid_crs(input_doc_folder: Path):
 
     with pytest.raises(RuntimeError) as exp:
         run_tostac(input_metadata_path)
-    assert "Expect string or any object with " in str(exp.value)
+    assert "Unexpected input encountered" in str(exp.value)
+
+
+def test_invalid_crs(input_doc_folder: Path):
+    input_metadata_path = input_doc_folder.joinpath(ODC_METADATA_FILE)
+    assert input_metadata_path.exists()
+
+    input_doc = serialise.load_yaml(input_metadata_path)
+    input_doc["crs"] = "I-CANT-BELIEVE-ITS-NOT-A-VALID-CRS:4236"
+
+    serialise.dump_yaml(input_metadata_path, input_doc)
+    assert input_metadata_path.exists()
+
+    with pytest.raises(RuntimeError) as exp:
+        run_tostac(input_metadata_path)
+    assert "Invalid projection" in str(exp.value)
 
 
 def run_tostac(input_metadata_path: Path):

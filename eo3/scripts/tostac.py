@@ -10,12 +10,12 @@ from uuid import UUID
 
 import click
 from click import echo, style
-from datacube.utils import jsonify_document
 
 import eo3.stac as eo3stac
 from eo3 import serialise
 from eo3.model import DatasetDoc
 from eo3.ui import PathPath
+from eo3.utils import jsonify_document
 
 
 @click.command(help=__doc__)
