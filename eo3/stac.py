@@ -19,7 +19,7 @@ from pystac.extensions.projection import ProjectionExtension
 from pystac.extensions.view import ViewExtension
 from pystac.utils import datetime_to_str
 
-from eodatasets3.model import DatasetDoc, GridDoc
+from eo3.model import DatasetDoc, GridDoc
 
 # Mapping between EO3 field names and STAC properties object field names
 MAPPING_EO3_TO_STAC = {

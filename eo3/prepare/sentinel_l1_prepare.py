@@ -26,11 +26,11 @@ from datacube.ui.click import config_option, environment_option
 from datacube.utils.uris import normalise_path
 from defusedxml import minidom
 
-from eodatasets3 import DatasetDoc, DatasetPrepare, names, serialise
-from eodatasets3.prepare.s2_common import FolderInfo, RegionLookup
-from eodatasets3.properties import Eo3Interface
-from eodatasets3.ui import PathPath
-from eodatasets3.utils import pass_config
+from eo3 import DatasetDoc, DatasetPrepare, names, serialise
+from eo3.prepare.s2_common import FolderInfo, RegionLookup
+from eo3.properties import Eo3Interface
+from eo3.ui import PathPath
+from eo3.utils import pass_config
 
 # Static namespace to generate uuids for datacube indexing
 S2_UUID_NAMESPACE = uuid.UUID("9df23adf-fc90-4ec7-9299-57bd536c7590")

@@ -6,9 +6,9 @@ from typing import Dict, Tuple
 
 import pytest
 
-from eodatasets3.prepare import sentinel_l1_prepare
-from eodatasets3.prepare.s2_common import RegionLookup
-from eodatasets3.prepare.sentinel_l1_prepare import FolderInfo
+from eo3.prepare import sentinel_l1_prepare
+from eo3.prepare.s2_common import RegionLookup
+from eo3.prepare.sentinel_l1_prepare import FolderInfo
 
 from tests.common import (
     assert_expected_eo3_path,

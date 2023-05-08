@@ -26,20 +26,20 @@ from rasterio import DatasetReader
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
 
-from eodatasets3 import DatasetAssembler, images, serialise, utils
-from eodatasets3.images import GridSpec
-from eodatasets3.model import DatasetDoc
-from eodatasets3.properties import Eo3Interface
-from eodatasets3.serialise import loads_yaml
-from eodatasets3.ui import bool_style
-from eodatasets3.utils import default_utc, flatten_dict
+from eo3 import DatasetAssembler, images, serialise, utils
+from eo3.images import GridSpec
+from eo3.model import DatasetDoc
+from eo3.properties import Eo3Interface
+from eo3.serialise import loads_yaml
+from eo3.ui import bool_style
+from eo3.utils import default_utc, flatten_dict
 
 try:
     import h5py
 except ImportError:
     sys.stderr.write(
-        "eodatasets3 has not been installed with the wagl extras. \n"
-        "    Try `pip install eodatasets3[wagl]\n"
+        "eo3 has not been installed with the wagl extras. \n"
+        "    Try `pip install eo3[wagl]\n"
     )
     raise
 

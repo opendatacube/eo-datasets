@@ -8,7 +8,7 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 # Run tests, taking coverage.
 # Users can specify extra folders as arguments.
-pytest --cov eodatasets3 --cov-report=xml --durations=5 "${script_dir}" $@
+pytest --cov eo3 --cov-report=xml --durations=5 "${script_dir}" $@
 
 # Run sphinx inline tests
 #

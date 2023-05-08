@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 
 from boltons import iterutils
 
-from eodatasets3 import serialise
+from eo3 import serialise
 
 _DOCUMENT_EXTENSIONS = (".yaml", ".yml", ".json")
 _COMPRESSION_EXTENSIONS = ("", ".gz")

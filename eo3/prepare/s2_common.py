@@ -8,7 +8,7 @@ import click
 from attr import define
 from click import echo, pass_obj
 
-from eodatasets3.ui import PathPath
+from eo3.ui import PathPath
 
 NCI_L1C_LOCATION = Path("/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C")
 

@@ -7,7 +7,7 @@ from typing import Mapping
 import pytest
 from ruamel import yaml
 
-from eodatasets3 import DatasetAssembler, DatasetDoc, namer
+from eo3 import DatasetAssembler, DatasetDoc, namer
 
 from tests.common import assert_expected_eo3_path
 

@@ -14,9 +14,9 @@ import numpy
 import pytest
 from ruamel import yaml
 
-from eodatasets3 import DatasetAssembler, DatasetPrepare, namer, serialise
-from eodatasets3.images import GridSpec
-from eodatasets3.model import DatasetDoc
+from eo3 import DatasetAssembler, DatasetPrepare, namer, serialise
+from eo3.images import GridSpec
+from eo3.model import DatasetDoc
 
 from tests import assert_file_structure
 from tests.common import assert_expected_eo3_path, assert_same
@@ -57,7 +57,7 @@ def test_dea_style_package(
 
         # Alternatively, all measurements could be by reference rather that a copy:
         # p.note_measurement("external_blue", blue_geotiff_path)
-        # (See an example of referencing in eodatasets3/prepare/landsat_l1_prepare.py )
+        # (See an example of referencing in eo3/prepare/landsat_l1_prepare.py )
 
         # Write a thumbnail using the given bands as r/g/b.
         p.write_thumbnail("ones", "ones", "blue")
@@ -470,7 +470,7 @@ def test_dataset_given_properties(tmp_path: Path):
     ids=["inherit geom from dataset", "don't inherit geom"],
 )
 def test_add_source_dataset(tmp_path: Path, inherit_geom):
-    from eodatasets3 import serialise
+    from eo3 import serialise
 
     p = DatasetAssembler(tmp_path, naming_conventions="dea_c3")
     source_dataset = serialise.from_path(

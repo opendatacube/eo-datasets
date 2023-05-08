@@ -21,15 +21,15 @@ from rasterio.enums import Resampling
 from ruamel.yaml.comments import CommentedMap
 from shapely.geometry.base import BaseGeometry
 
-import eodatasets3
-from eodatasets3 import documents, images, serialise, validate
-from eodatasets3.documents import find_and_read_documents
-from eodatasets3.images import FileWrite, GridSpec, MeasurementBundler, ValidDataMethod
-from eodatasets3.model import AccessoryDoc, DatasetDoc, Location, ProductDoc
-from eodatasets3.names import NamingConventions, dc_uris, namer, resolve_location
-from eodatasets3.properties import Eo3Dict, Eo3Interface
-from eodatasets3.validate import Level, ValidationExpectations, ValidationMessage
-from eodatasets3.verify import PackageChecksum
+import eo3
+from eo3 import documents, images, serialise, validate
+from eo3.documents import find_and_read_documents
+from eo3.images import FileWrite, GridSpec, MeasurementBundler, ValidDataMethod
+from eo3.model import AccessoryDoc, DatasetDoc, Location, ProductDoc
+from eo3.names import NamingConventions, dc_uris, namer, resolve_location
+from eo3.properties import Eo3Dict, Eo3Interface
+from eo3.validate import Level, ValidationExpectations, ValidationMessage
+from eo3.verify import PackageChecksum
 
 
 class IfExists(Enum):
@@ -226,7 +226,7 @@ class DatasetPrepare(Eo3Interface):
         and calculating names and paths.
 
         In addition to the below documented methods, metadata fields can read and set using
-        :class:`Eo3Interface's <eodatasets3.properties.Eo3Interface>` fields.
+        :class:`Eo3Interface's <eo3.properties.Eo3Interface>` fields.
 
 
         There are three optional paths that can be specified. At least one must be specified. Collection,
@@ -285,7 +285,7 @@ class DatasetPrepare(Eo3Interface):
 
         #: What method to use to calculate the valid data geometry?
         #:
-        #: Defaults to :attr:`eodatasets3.ValidDataMethod.thorough`
+        #: Defaults to :attr:`eo3.ValidDataMethod.thorough`
         #:
         #: You may change this property before finishing your package.
         #:
@@ -334,7 +334,7 @@ class DatasetPrepare(Eo3Interface):
             # Our properties should come from the given names instance.
             dataset.properties = names.metadata.properties
 
-        #: The name generator  (an instance of :class:`NamingConventions <eodatasets3.NamingConventions>`)
+        #: The name generator  (an instance of :class:`NamingConventions <eo3.NamingConventions>`)
         #:
         #: By default, all names will be generated based on metadata
         #: fields and the chosen naming conventions.
@@ -406,7 +406,7 @@ class DatasetPrepare(Eo3Interface):
         #:
         #:     p.names.product_uri = "https://collections.earth.test.example/product/my-product"
         #:
-        #: A full list of fields can be seen on :class:`eodatasets3.NamingConventions`
+        #: A full list of fields can be seen on :class:`eo3.NamingConventions`
         self.names: NamingConventions = names
 
         if collection_location:
@@ -814,10 +814,10 @@ class DatasetPrepare(Eo3Interface):
         expect: ValidationExpectations = None,
     ) -> DatasetDoc:
         """
-        Create the metadata doc as an in-memory :class:`eodatasets3.DatasetDoc` instance.
+        Create the metadata doc as an in-memory :class:`eo3.DatasetDoc` instance.
 
-        (You can manually write this out using :func:`serialise.to_path(): <eodatasets3.serialise.to_path>`
-        or :func:`serialise.to_stream() <eodatasets3.serialise.to_stream>`)
+        (You can manually write this out using :func:`serialise.to_path(): <eo3.serialise.to_path>`
+        or :func:`serialise.to_stream() <eo3.serialise.to_stream>`)
         """
         dataset_location = dataset_location or self.names.dataset_location
 
@@ -1086,7 +1086,7 @@ class DatasetAssembler(DatasetPrepare):
     Assemble a package of a dataset, including metadata, writing COG images, thumbnails,
     checksums etc.
 
-    You may want to use :class:`eodatasets3.DatasetPrepare` if you only need a metadata document.
+    You may want to use :class:`eo3.DatasetPrepare` if you only need a metadata document.
     """
 
     def __init__(
@@ -1107,7 +1107,7 @@ class DatasetAssembler(DatasetPrepare):
         Assemble a dataset with ODC metadata, writing metadata and (optionally) its imagery as COGs.
 
         In addition to the below documented methods, metadata can read and set using
-        :class:`Eo3Interface's <eodatasets3.properties.Eo3Interface>` fields.
+        :class:`Eo3Interface's <eo3.properties.Eo3Interface>` fields.
 
         There are three optional paths that can be specified. At least one must be specified. Collection,
         dataset or metadata path.
@@ -1642,9 +1642,9 @@ class DatasetAssembler(DatasetPrepare):
         dataset_location = self.names.dataset_location
 
         self.note_software_version(
-            "eodatasets3",
+            "eo3",
             "https://github.com/GeoscienceAustralia/eo-datasets",
-            eodatasets3.__version__,
+            eo3.__version__,
         )
 
         tmp_metadata_path = self._work_path / self.names.metadata_file

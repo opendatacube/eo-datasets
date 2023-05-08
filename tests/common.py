@@ -12,7 +12,7 @@ from ruamel import yaml
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 
-from eodatasets3 import DatasetDoc, serialise
+from eo3 import DatasetDoc, serialise
 
 
 def check_prepare_outputs(

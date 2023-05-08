@@ -13,8 +13,8 @@ import rasterio
 import rasterio.crs
 from rasterio.io import DatasetReader
 
-from eodatasets3 import serialise
-from eodatasets3.utils import ItemProvider, read_paths_from_file
+from eo3 import serialise
+from eo3.utils import ItemProvider, read_paths_from_file
 
 from ..metadata.valid_region import valid_region
 

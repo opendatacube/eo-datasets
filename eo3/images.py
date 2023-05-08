@@ -38,8 +38,8 @@ from scipy.ndimage import binary_fill_holes
 from shapely.geometry import box
 from shapely.geometry.base import CAP_STYLE, JOIN_STYLE, BaseGeometry
 
-from eodatasets3.model import DatasetDoc, GridDoc, MeasurementDoc
-from eodatasets3.properties import FileFormat
+from eo3.model import DatasetDoc, GridDoc, MeasurementDoc
+from eo3.properties import FileFormat
 
 DEFAULT_OVERVIEWS = (8, 16, 32)
 
@@ -92,7 +92,7 @@ class GridSpec:
 
     To create one manually:
 
-    >>> from eodatasets3 import GridSpec
+    >>> from eo3 import GridSpec
     >>> from affine import Affine
     >>> from rasterio.crs import CRS
     >>> g = GridSpec(shape=(7721, 7621),

@@ -12,10 +12,10 @@ import click
 from click import echo, style
 from datacube.utils import jsonify_document
 
-import eodatasets3.stac as eo3stac
-from eodatasets3 import serialise
-from eodatasets3.model import DatasetDoc
-from eodatasets3.ui import PathPath
+import eo3.stac as eo3stac
+from eo3 import serialise
+from eo3.model import DatasetDoc
+from eo3.ui import PathPath
 
 
 @click.command(help=__doc__)
@@ -77,7 +77,7 @@ def dc_to_stac(
     Backwards compatibility wrapper as some other projects started using this
     method of the script.
 
-    It's better to call eodatasets3.stac.to_stac_item() directly.
+    It's better to call eo3.stac.to_stac_item() directly.
     """
 
     stac_destination_url = urljoin(stac_base_url, output_path.name)

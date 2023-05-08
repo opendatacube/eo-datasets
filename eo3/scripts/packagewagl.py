@@ -12,8 +12,8 @@ import click
 import rasterio
 from click import secho
 
-from eodatasets3 import wagl
-from eodatasets3.ui import PathPath
+from eo3 import wagl
+from eo3.ui import PathPath
 
 DEFAULT_MATURITY = wagl.ProductMaturity.stable
 

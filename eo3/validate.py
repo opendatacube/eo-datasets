@@ -45,10 +45,10 @@ from rasterio.crs import CRS
 from rasterio.errors import CRSError
 from shapely.validation import explain_validity
 
-from eodatasets3 import model, serialise, utils
-from eodatasets3.model import DatasetDoc
-from eodatasets3.ui import bool_style, is_absolute, uri_resolve
-from eodatasets3.utils import EO3_SCHEMA, default_utc
+from eo3 import model, serialise, utils
+from eo3.model import DatasetDoc
+from eo3.ui import bool_style, is_absolute, uri_resolve
+from eo3.utils import EO3_SCHEMA, default_utc
 
 DEFAULT_NULLABLE_FIELDS = ("label",)
 DEFAULT_OPTIONAL_FIELDS = (

@@ -21,8 +21,8 @@ def valid_region(images, mask_value=None):
         from scipy import ndimage
     except ImportError:
         sys.stderr.write(
-            "eodatasets3 has not been installed with the ancillary extras. \n"
-            "    Try `pip install eodatasets3[ancillary]\n"
+            "eo3 has not been installed with the ancillary extras. \n"
+            "    Try `pip install eo3[ancillary]\n"
         )
         raise
     mask = None

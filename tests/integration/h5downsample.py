@@ -15,8 +15,8 @@ import click
 import h5py
 from click import secho, style
 
-from eodatasets3.ui import PathPath
-from eodatasets3.wagl import find_a_granule_name
+from eo3.ui import PathPath
+from eo3.wagl import find_a_granule_name
 
 
 def find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> List[str]:

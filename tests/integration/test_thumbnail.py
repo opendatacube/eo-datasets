@@ -3,7 +3,7 @@ from pathlib import Path
 
 import rasterio
 
-from eodatasets3.images import FileWrite, GridSpec
+from eo3.images import FileWrite, GridSpec
 
 from . import assert_image
 
