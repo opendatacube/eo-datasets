@@ -197,7 +197,7 @@ pydantic==1.10.2
     #   rio-cogeo
 pyflakes==2.5.0
     # via flake8
-pygments==2.13.0
+pygments==2.15.0
     # via sphinx
 pyparsing==3.0.9
     # via
