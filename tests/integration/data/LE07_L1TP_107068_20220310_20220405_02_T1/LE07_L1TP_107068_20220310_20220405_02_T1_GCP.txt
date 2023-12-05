@@ -1,0 +1,27 @@
+Tue. Apr.  5, 2022             LANDSAT 7                 Time: 05:33
+                         Image Assessment System
+                           GCP Residual Report
+----------------------------------------------------------------------------
+WOID: L46487578            Path/Row: 107 / 068
+
+L0R Reference Image: L74ASA1122069000100_HDF.220950956
+Acquisition Date: Mar 10, 2022
+
+Band Number:  5
+
+GLS date for each WRS-2 path/row used:
+Path  Row   Date
+106   068   11-01-2000, 08-25-2013
+
+
+Point_ID         Latitude  Longitude    Height       Across    Along    Residual  Residual
+                                                      Scan      Scan      In y      in x
+                                                    Residual  Residual    dir       dir
+                   (deg)     (deg)     (meters)     (meters)  (meters)  (meters)  (meters)
+
+1060680031_01  -11.757362  130.040269    51.000      -7.654   -10.182    -6.122   -11.163
+1060680108_01  -11.487262  130.149851    54.111      14.971    -4.163    15.407    -1.992
+1060680402_01  -11.450563  130.174187    56.000      -4.198    -3.183    -3.699    -3.747
+1060680415_01  -11.755633  130.059286    51.000       0.827     3.191     0.365     3.276
+1060680458_01  -11.757857  130.040296    57.000      -0.786    -9.991     0.646    -9.998
+1060680516_01  -11.481045  130.148465    56.000     -11.556     2.843   -11.837     1.171
