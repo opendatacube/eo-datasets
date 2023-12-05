@@ -1087,16 +1087,16 @@ def expected_le07_l2_c2_folder():
 
 def expected_le07_l1_c2_folder():
     return {
-        '$schema': 'https://schemas.opendatacube.org/dataset',
-        'id': '0c2c8288-90ca-549b-8e62-5a7549418bc2',
-        'label': 'usgs_ls7e_level1_2-0-20220405_107068_2022-03-10',
-        'product': {
-            'name': 'usgs_ls7e_level1_2',
-            'href': 'https://collections.dea.ga.gov.au/product/usgs_ls7e_level1_2',
+        "$schema": "https://schemas.opendatacube.org/dataset",
+        "id": "0c2c8288-90ca-549b-8e62-5a7549418bc2",
+        "label": "usgs_ls7e_level1_2-0-20220405_107068_2022-03-10",
+        "product": {
+            "name": "usgs_ls7e_level1_2",
+            "href": "https://collections.dea.ga.gov.au/product/usgs_ls7e_level1_2",
         },
-        'crs': 'epsg:32652',
-        'geometry': {
-            'coordinates': [
+        "crs": "epsg:32652",
+        "geometry": {
+            "coordinates": [
                 [
                     [399758.2322122816, -1256249.4492277203],
                     [399802.7308200066, -1256137.087806672],
@@ -1122,12 +1122,12 @@ def expected_le07_l1_c2_folder():
                     [399758.2322122816, -1256249.4492277203],
                 ],
             ],
-            'type': 'Polygon',
-        },  
-        'grids': {
-            'default': {
-                'shape': [20, 20],
-                'transform': [
+            "type": "Polygon",
+        },
+        "grids": {
+            "default": {
+                "shape": [20, 20],
+                "transform": [
                     12181.5,
                     0.0,
                     399585.0,
@@ -1139,9 +1139,9 @@ def expected_le07_l1_c2_folder():
                     1.0,
                 ],
             },
-            'panchromatic': {
-                'shape': [20, 20],
-                'transform': [
+            "panchromatic": {
+                "shape": [20, 20],
+                "transform": [
                     12180.75,
                     0.0,
                     399592.5,
@@ -1154,56 +1154,68 @@ def expected_le07_l1_c2_folder():
                 ],
             },
         },
-        'properties': {
-            'datetime': '2022-03-10T00:09:40.814477',
-            'eo:cloud_cover': 5.0,
-            'eo:gsd': 15.0,
-            'eo:instrument': 'ETM',
-            'eo:platform': 'landsat-7',
-            'eo:sun_azimuth': 85.98764472,
-            'eo:sun_elevation': 39.0330312,
-            'landsat:collection_category': 'T1',
-            'landsat:collection_number': 2,
-            'landsat:data_type': 'L1TP',
-            'landsat:geometric_rmse_model_x': 8.516,
-            'landsat:geometric_rmse_model_y': 6.445,
-            'landsat:ground_control_points_model': 6,
-            'landsat:ground_control_points_version': 5,
-            'landsat:landsat_product_id': 'LE07_L1TP_107068_20220310_20220405_02_T1',
-            'landsat:landsat_scene_id': 'LE71070682022069ASA00',
-            'landsat:processing_software_version': 'LPGS_15.6.0',
-            'landsat:station_id': 'ASA',
-            'landsat:wrs_path': 107,
-            'landsat:wrs_row': 68,
-            'odc:dataset_version': '2.0.20220405',
-            'odc:file_format': 'GeoTIFF',
-            'odc:processing_datetime': '2022-04-05T10:37:54',
-            'odc:producer': 'usgs.gov',
-            'odc:product_family': 'level1',
-            'odc:region_code': '107068',
+        "properties": {
+            "datetime": "2022-03-10T00:09:40.814477",
+            "eo:cloud_cover": 5.0,
+            "eo:gsd": 15.0,
+            "eo:instrument": "ETM",
+            "eo:platform": "landsat-7",
+            "eo:sun_azimuth": 85.98764472,
+            "eo:sun_elevation": 39.0330312,
+            "landsat:collection_category": "T1",
+            "landsat:collection_number": 2,
+            "landsat:data_type": "L1TP",
+            "landsat:geometric_rmse_model_x": 8.516,
+            "landsat:geometric_rmse_model_y": 6.445,
+            "landsat:ground_control_points_model": 6,
+            "landsat:ground_control_points_version": 5,
+            "landsat:landsat_product_id": "LE07_L1TP_107068_20220310_20220405_02_T1",
+            "landsat:landsat_scene_id": "LE71070682022069ASA00",
+            "landsat:processing_software_version": "LPGS_15.6.0",
+            "landsat:station_id": "ASA",
+            "landsat:wrs_path": 107,
+            "landsat:wrs_row": 68,
+            "odc:dataset_version": "2.0.20220405",
+            "odc:file_format": "GeoTIFF",
+            "odc:processing_datetime": "2022-04-05T10:37:54",
+            "odc:producer": "usgs.gov",
+            "odc:product_family": "level1",
+            "odc:region_code": "107068",
         },
-        'measurements': {
-            'blue': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_B1.TIF'},
-            'green': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_B2.TIF'},
-            'nir': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_B4.TIF'},
-            'panchromatic': {
-                'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_B8.TIF',
-                'grid': 'panchromatic',
+        "measurements": {
+            "blue": {"path": "LE07_L1TP_107068_20220310_20220405_02_T1_B1.TIF"},
+            "green": {"path": "LE07_L1TP_107068_20220310_20220405_02_T1_B2.TIF"},
+            "nir": {"path": "LE07_L1TP_107068_20220310_20220405_02_T1_B4.TIF"},
+            "panchromatic": {
+                "path": "LE07_L1TP_107068_20220310_20220405_02_T1_B8.TIF",
+                "grid": "panchromatic",
             },
-            'qa_radsat': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_QA_RADSAT.TIF'},
-            'quality': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_QA_PIXEL.TIF'},
-            'red': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_B3.TIF'},
-            'solar_azimuth': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_SAA.TIF'},
-            'solar_zenith': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_SZA.TIF'},
-            'swir_1': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_B5.TIF'},
-            'swir_2': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_B7.TIF'},
-            'tir_1': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_B6_VCID_1.TIF'},
-            'tir_2': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_B6_VCID_2.TIF'},
-            'view_azimuth': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_VAA.TIF'},
-            'view_zenith': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_VZA.TIF'},
+            "qa_radsat": {
+                "path": "LE07_L1TP_107068_20220310_20220405_02_T1_QA_RADSAT.TIF"
+            },
+            "quality": {
+                "path": "LE07_L1TP_107068_20220310_20220405_02_T1_QA_PIXEL.TIF"
+            },
+            "red": {"path": "LE07_L1TP_107068_20220310_20220405_02_T1_B3.TIF"},
+            "solar_azimuth": {
+                "path": "LE07_L1TP_107068_20220310_20220405_02_T1_SAA.TIF"
+            },
+            "solar_zenith": {
+                "path": "LE07_L1TP_107068_20220310_20220405_02_T1_SZA.TIF"
+            },
+            "swir_1": {"path": "LE07_L1TP_107068_20220310_20220405_02_T1_B5.TIF"},
+            "swir_2": {"path": "LE07_L1TP_107068_20220310_20220405_02_T1_B7.TIF"},
+            "tir_1": {"path": "LE07_L1TP_107068_20220310_20220405_02_T1_B6_VCID_1.TIF"},
+            "tir_2": {"path": "LE07_L1TP_107068_20220310_20220405_02_T1_B6_VCID_2.TIF"},
+            "view_azimuth": {
+                "path": "LE07_L1TP_107068_20220310_20220405_02_T1_VAA.TIF"
+            },
+            "view_zenith": {"path": "LE07_L1TP_107068_20220310_20220405_02_T1_VZA.TIF"},
         },
-        'accessories': {
-            'metadata:landsat_mtl': {'path': 'LE07_L1TP_107068_20220310_20220405_02_T1_MTL.txt'},
+        "accessories": {
+            "metadata:landsat_mtl": {
+                "path": "LE07_L1TP_107068_20220310_20220405_02_T1_MTL.txt"
+            },
         },
-        'lineage': {},
+        "lineage": {},
     }
