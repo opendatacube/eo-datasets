@@ -88,7 +88,7 @@ setup(
         "xarray",
         "datacube",
         "python-rapidjson",
-        "pystac>=1.7",
+        "pystac==1.8.4",
     ],
     tests_require=tests_require,
     extras_require=EXTRAS_REQUIRE,
