@@ -155,6 +155,10 @@ LANDSAT_xTM_BAND_ALIASES = {
     "emissivity": "emissivity",
     "emissivity_stdev": "emissivity_stdev",
     "cloud_distance": "cloud_distance",
+    "angle_sensor_azimuth_band_4": "view_azimuth",
+    "angle_sensor_zenith_band_4": "view_zenith",
+    "angle_solar_azimuth_band_4": "solar_azimuth",
+    "angle_solar_zenith_band_4": "solar_zenith",
 }
 
 MTL_PAIRS_RE = re.compile(r"(\w+)\s=\s(.*)")

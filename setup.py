@@ -77,7 +77,7 @@ setup(
         "click",
         "defusedxml",
         "h5py",
-        "jsonschema>=3",  # We want a Draft6Validator
+        "jsonschema>=4.18",  # We want a Draft6Validator
         "numpy>=1.15.4",
         "pyproj",
         "rasterio",
@@ -88,7 +88,7 @@ setup(
         "xarray",
         "datacube",
         "python-rapidjson",
-        "pystac>=1.7",
+        "pystac==1.8.4",
     ],
     tests_require=tests_require,
     extras_require=EXTRAS_REQUIRE,
