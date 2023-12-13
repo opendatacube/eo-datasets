@@ -15,6 +15,10 @@ from math import isnan
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from uuid import UUID
+from osgeo import gdal, ogr
+import xml.etree.ElementTree as ET
+import zipfile
+import fiona
 
 import attr
 import numpy
@@ -28,7 +32,7 @@ from rasterio.enums import Resampling
 
 from eodatasets3 import DatasetAssembler, images, serialise, utils
 from eodatasets3.images import GridSpec
-from eodatasets3.model import DatasetDoc
+from eodatasets3.model import DatasetDoc, AccessoryDoc
 from eodatasets3.properties import Eo3Interface
 from eodatasets3.serialise import loads_yaml
 from eodatasets3.ui import bool_style
@@ -80,9 +84,8 @@ def _find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> List[str]:
     h5_obj.visititems(_find)
     return items
 
-
 def _unpack_products(
-    p: DatasetAssembler, product_list: Iterable[str], h5group: h5py.Group
+    p: DatasetAssembler, product_list: Iterable[str], h5group: h5py.Group, granule,
 ) -> None:
     """
     Unpack and package the NBAR and NBART products.
@@ -90,16 +93,24 @@ def _unpack_products(
     # listing of all datasets of IMAGE CLASS type
     img_paths = _find_h5_paths(h5group, "IMAGE")
 
+    # Are there missing packets? 
+    if p.platform.startswith("sentinel"):
+        mtd_children = missing_packets_xml(granule)
+    elif p.platform.startswith("landsat"): 
+        mtd_children = None 
+
     for product in product_list:
         with sub_product(product, p):
             for pathname in [p for p in img_paths if f"/{product.upper()}/" in p]:
                 with do(f"Path {pathname!r}"):
                     dataset = h5group[pathname]
                     band_name = utils.normalise_band_name(dataset.attrs["alias"])
-                    write_measurement_h5(
+                    write_measurement_h5_mask(
                         p,
                         f"{product}:{band_name}",
                         dataset,
+                        granule,
+                        mtd_children,
                         overview_resampling=Resampling.average,
                         file_id=_file_id(dataset),
                     )
@@ -120,6 +131,116 @@ def _unpack_products(
                         path=p.names.thumbnail_filename(),
                     )
 
+def missing_packets_xml(granule): 
+    """
+    Return children xml document if missing packets and None if not
+    """
+    l1_zip_path = Path(granule.wagl_metadata["source_datasets"]["source_level1"])
+    xml_file_path = Path(granule.source_level1_metadata.accessories['metadata:s2_tile'].path)
+
+    # Parse tile metadata xml file
+    with zipfile.ZipFile(l1_zip_path, "r") as z:
+        tree = ET.ElementTree(ET.fromstring(z.read(xml_file_path.as_posix())))
+        root = tree.getroot()
+        msi_data_percentage = float(root[2][0][1].text)
+        if msi_data_percentage > 0.0: 
+            children = root[2][1]
+            return children
+        else: 
+            return None
+
+def mask_or_not(dataset: h5py.Dataset, granule): 
+    """
+    Determine whether to mask h5 dataset
+    """
+    # Define bands to be masked
+    band_ids_mask = {str(i) for i in range(0, 13)}
+    band_ids_mask.add("8A")
+    band_bool = dataset.attrs["band_id"] in band_ids_mask 
+    platform_bool = "sentinel" in granule.wagl_metadata["source_datasets"]["platform_id"].lower() 
+
+    if platform_bool:
+        xml_bool = False if missing_packets_xml(granule) is None else True
+    else: 
+        return False
+
+    # Mask only if all are True
+    return True if all([band_bool, platform_bool, xml_bool]) else False
+
+def mask_h5(dataset,granule,children): 
+    l1_zip_path = Path(granule.wagl_metadata["source_datasets"]["source_level1"])
+
+    
+    # elements = [e for e in children.findall(".//*[@bandId='8']") if e.attrib["type"] in ("MSK_QUALIT", "MSK_TECQUA")]
+    # elements[0].text.split("_B")[-1].replace(".jp2", "")
+    #[e for e in children if 'bandId' in e.attrib and e.attrib["type"] in ("MSK_QUALIT", "MSK_TECQUA") and e.attrib["bandId"] == esa_band]
+
+    # Map wagl dataset band IDs to ESA MTD.xml Band IDs 
+    band_mapping = {'1': '0', '2': '1', '3': '2', '4': '3', '5': '4', '6': '5', '7': '6', '8': '7', '8A': '8', '9': '9', '10': '10', '11': '11', '12': '12'}
+    esa_band = band_mapping[dataset.attrs['band_id']]
+
+    with zipfile.ZipFile(l1_zip_path, "r") as z: 
+        elements = [e for e in children if 'bandId' in e.attrib and e.attrib["type"] in ("MSK_QUALIT", "MSK_TECQUA") and e.attrib["bandId"] == esa_band]
+        if len(elements) != 1:
+            raise ValueError("Combination of mask and band should be unique. Number of elements found with mask type and bandId in MTD.xml file is " + str(len(elements)) + ".")
+        else:
+            pass
+
+        child = elements[0]
+        path = child.text
+        type = child.attrib["type"]
+
+        if type == "MSK_TECQUA": 
+            mask_string_path = f"{l1_zip_path.name.replace('.zip', '.SAFE')}/{path}"
+            return mask_h5_vector(dataset, l1_zip_path, mask_string_path,)
+        elif type == "MSK_QUALIT":                    
+            mask_string_path = f"{l1_zip_path.name.replace('.zip', '.SAFE')}/{path}"
+            return mask_h5_raster(dataset, granule, z, mask_string_path, l1_zip_path)
+
+def mask_h5_vector(
+    dataset: h5py.Dataset,
+    l1_zip_file,
+    mask_string_path,
+    ):
+    """
+    Mask a hdf5 dataset using the gml files provided in the path.
+    """ 
+
+    data_array = dataset[:] if hasattr(dataset, "chunks") else dataset
+    vp = f"zip+file://{l1_zip_file.as_posix()}!/{mask_string_path}"
+
+    # Open the gml file
+    try:
+        with fiona.open(vp) as gml:
+            shapes = [feature["geometry"] for feature in gml]
+            mask_array = rasterio.features.rasterize(shapes, out_shape=data_array.shape, fill=0, transform=Affine.from_gdal(*dataset.attrs["geotransform"]))
+            return numpy.where(mask_array == 0, data_array, dataset.attrs['no_data_value']) 
+    except ValueError:
+        return data_array
+
+def mask_h5_raster(
+    dataset: h5py.Dataset,
+    granule,
+    z,
+    mask_string_path,
+    l1_zip_file,
+    ):
+    """
+    Mask a hdf5 dataset using the gml files provided in the path.
+    """ 
+
+    data_array = dataset[:] if hasattr(dataset, "chunks") else dataset
+
+    # Open the .jp2 file
+    sp = f"zip+file://{l1_zip_file.as_posix()}!/{mask_string_path}"
+
+    with rasterio.open(sp) as source_ds:
+        source_layer1 = source_ds.read(3)
+        source_layer2 = source_ds.read(4)
+        # Mask where missing OR degraded packets
+        source_layer = source_layer1 | source_layer2
+        masked_data = numpy.where(source_layer == 0, data_array, dataset.attrs['no_data_value'])
+        return masked_data
 
 def write_measurement_h5(
     p: DatasetAssembler,
@@ -146,6 +267,45 @@ def write_measurement_h5(
             transform=Affine.from_gdal(*g.attrs["geotransform"]),
             crs=CRS.from_wkt(g.attrs["crs_wkt"]),
         ),
+        nodata=g.attrs.get("no_data_value"),
+        overviews=overviews,
+        overview_resampling=overview_resampling,
+        expand_valid_data=expand_valid_data,
+        file_id=file_id,
+        # Because of our strange sub-products and filename standards, we want the
+        # product_name to be included in the recorded band metadata,
+        # but not in its filename.
+        # So we manually calculate a filename without the extra product name prefix.
+        name=full_name,
+        path=p.names.measurement_filename(band_name, "tif", file_id=file_id),
+    )
+
+def write_measurement_h5_mask(
+    p: DatasetAssembler,
+    full_name: str,
+    g: h5py.Dataset,
+    granule,
+    mtd_children,
+    overviews=images.DEFAULT_OVERVIEWS,
+    overview_resampling=Resampling.nearest,
+    expand_valid_data=True,
+    file_id: str = None,
+):
+    """
+    Write a measurement by copying it from a hdf5 dataset.
+    """
+    data_array = g[:] if hasattr(g, "chunks") else g
+    data = mask_h5(g, granule, mtd_children) if mask_or_not(g, granule) else data_array
+    
+    product_name, band_name = full_name.split(":")
+    grid_spec_feed = images.GridSpec(
+            shape=g.shape,
+            transform=Affine.from_gdal(*g.attrs["geotransform"]),
+            crs=CRS.from_wkt(g.attrs["crs_wkt"]),
+        )
+    p.write_measurement_numpy(
+        array=data,
+        grid_spec=grid_spec_feed,
         nodata=g.attrs.get("no_data_value"),
         overviews=overviews,
         overview_resampling=overview_resampling,
@@ -257,36 +417,42 @@ def _create_contiguity(
     timedelta_data: numpy.ndarray = None,
 ):
     """
-    Create the contiguity (all pixels valid) dataset.
+    Create the contiguity (all pixels across bands valid) dataset.
 
     Write a contiguity mask file based on the intersection of valid data pixels across all
     bands from the input files.
     """
     for product in product_list:
         contiguity = None
+        # A contiguity layer for each product
         for grid, band_name, path in p.iter_measurement_paths():
             if not band_name.startswith(f"{product.lower()}:"):
                 continue
             # Only our given res group (no pan band in Landsat)
             if grid.resolution_yx != resolution_yx:
                 continue
-
             with rasterio.open(path) as ds:
                 ds: DatasetReader
-                if contiguity is None:
-                    contiguity = numpy.ones((ds.height, ds.width), dtype="uint8")
-                    geobox = GridSpec.from_rio(ds)
-                elif ds.shape != contiguity.shape:
-                    raise NotImplementedError(
-                        "Contiguity from measurements of different shape"
-                    )
-
-                for band in ds.indexes:
-                    contiguity &= ds.read(band) > 0
+                out_shape = ds.shape
+                contiguity = numpy.ones(out_shape, dtype="uint8")
+                geobox = GridSpec.from_rio(ds)
+                break 
+            # Add logic here to make sure sentinel and landsat are treated separately and we get a 10m band to initialise
 
         if contiguity is None:
-            secho(f"No images found for requested product {product}", fg="red")
-            continue
+            raise ValueError(f"no matching band with resolution {resolution_yx}")
+
+        for grid, band_name, path in p.iter_measurement_paths():
+            if not band_name.startswith(f"{product.lower()}:"):
+                continue
+            # if (p.platform.startswith("landsat")) and (grid.resolution_yx != resolution_yx): 
+            #     continue 
+            with rasterio.open(path) as ds:
+                ds: DatasetReader
+                # upscale_factors_yx = tuple(elem_1 // elem_2 for elem_1, elem_2 in zip(ds.res, resolution_yx))
+                # assert upscale_factors_yx[0] == upscale_factors_yx[1], f"Unequal y and x upscale factor. {upscale_factors_yx[0]} and {upscale_factors_yx[1]}."
+                # upscale_factor = upscale_factors_yx[0]
+                contiguity &= ds.read(ds.count, out_shape=out_shape, resampling=Resampling.nearest) > 0
 
         p.write_measurement_numpy(
             f"oa:{product.lower()}_contiguity",
@@ -685,7 +851,7 @@ def package(
             if granule.tesp_doc:
                 _take_software_versions(p, granule.tesp_doc)
 
-            _unpack_products(p, included_products, granule_group)
+            _unpack_products(p, included_products, granule_group, granule)
 
             if include_oa:
                 with sub_product("oa", p):
