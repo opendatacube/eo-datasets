@@ -15,7 +15,6 @@ from math import isnan
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from uuid import UUID
-from osgeo import gdal, ogr
 import xml.etree.ElementTree as ET
 import zipfile
 import fiona
@@ -32,7 +31,7 @@ from rasterio.enums import Resampling
 
 from eodatasets3 import DatasetAssembler, images, serialise, utils
 from eodatasets3.images import GridSpec
-from eodatasets3.model import DatasetDoc, AccessoryDoc
+from eodatasets3.model import DatasetDoc
 from eodatasets3.properties import Eo3Interface
 from eodatasets3.serialise import loads_yaml
 from eodatasets3.ui import bool_style
@@ -169,11 +168,6 @@ def mask_or_not(dataset: h5py.Dataset, granule):
 
 def mask_h5(dataset,granule,children): 
     l1_zip_path = Path(granule.wagl_metadata["source_datasets"]["source_level1"])
-
-    
-    # elements = [e for e in children.findall(".//*[@bandId='8']") if e.attrib["type"] in ("MSK_QUALIT", "MSK_TECQUA")]
-    # elements[0].text.split("_B")[-1].replace(".jp2", "")
-    #[e for e in children if 'bandId' in e.attrib and e.attrib["type"] in ("MSK_QUALIT", "MSK_TECQUA") and e.attrib["bandId"] == esa_band]
 
     # Map wagl dataset band IDs to ESA MTD.xml Band IDs 
     band_mapping = {'1': '0', '2': '1', '3': '2', '4': '3', '5': '4', '6': '5', '7': '6', '8': '7', '8A': '8', '9': '9', '10': '10', '11': '11', '12': '12'}
@@ -437,7 +431,6 @@ def _create_contiguity(
                 contiguity = numpy.ones(out_shape, dtype="uint8")
                 geobox = GridSpec.from_rio(ds)
                 break 
-            # Add logic here to make sure sentinel and landsat are treated separately and we get a 10m band to initialise
 
         if contiguity is None:
             raise ValueError(f"no matching band with resolution {resolution_yx}")
