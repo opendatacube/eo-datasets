@@ -493,8 +493,11 @@ def _create_contiguity(
         for grid, band_name, path in p.iter_measurement_paths():
             if not band_name.startswith(f"{product.lower()}:"):
                 continue
-            # if (p.platform.startswith("landsat")) and (grid.resolution_yx != resolution_yx):
-            #     continue
+            # Only our given res group (no pan band in Landsat)
+            if (p.platform.startswith("landsat")) and (
+                grid.resolution_yx != resolution_yx
+            ):
+                continue
             with rasterio.open(path) as ds:
                 ds: DatasetReader
                 contiguity &= (
