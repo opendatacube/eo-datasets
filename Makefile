@@ -53,6 +53,7 @@ dependency-update:
 # This has to be run using the same Python interpreter we are deploying with.
 # ie. Use "make dependency-update" instead!
 internal-update:
+	pip install -U pip wheel pip-tools
 	pip-compile -r requirements/setup.in
 	pip-compile -r --extra docker --extra deployment -o requirements/deployment.txt
 	pip-compile -r --extra docker --extra test -o requirements/test.txt
