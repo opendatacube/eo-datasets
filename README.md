@@ -390,6 +390,16 @@ Most notably, all code is formatted using
 [pyflakes](https://github.com/PyCQA/pyflakes).
 
 
+## Docker dependencies
+
+To update the set of frozen dependencies inside docker:
+
+1) Ensure you have an existing, working image. ie, run `make build`. If the current image is broken,
+you may need to `git checkout` the last working version first.
+2) Run `make dependency-update`. This will recalculate the list of all dependencies from the definitions in setup.py.
+
+Note that this will run pip-compile _inside_ the docker container for maximum compatibility, hence the need for an existing container.
+
 ## Creating Releases
 
 First, draft [some release notes](https://github.com/GeoscienceAustralia/eo-datasets/releases)
