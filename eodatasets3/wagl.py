@@ -97,10 +97,7 @@ def _unpack_products(
     img_paths = _find_h5_paths(h5group, "IMAGE")
 
     # Are there missing packets?
-    if p.platform.startswith("sentinel"):
-        mtd_children = missing_packets_xml(granule)
-    elif p.platform.startswith("landsat"):
-        mtd_children = None
+    mtd_dict = missing_packets_xml(granule, p.platform)
 
     for product in product_list:
         with sub_product(product, p):
@@ -108,12 +105,13 @@ def _unpack_products(
                 with do(f"Path {pathname!r}"):
                     dataset = h5group[pathname]
                     band_name = utils.normalise_band_name(dataset.attrs["alias"])
-                    write_measurement_h5_mask(
+                    write_measurement_h5(
                         p,
                         f"{product}:{band_name}",
                         dataset,
-                        granule,
-                        mtd_children,
+                        mode="image",
+                        granule=granule,
+                        mtd_dict=mtd_dict,
                         overview_resampling=Resampling.average,
                         file_id=_file_id(dataset),
                     )
@@ -135,10 +133,16 @@ def _unpack_products(
                     )
 
 
-def missing_packets_xml(granule):
+def missing_packets_xml(granule, platform_name):
     """
-    Return children xml document if missing packets and None if not
+    If missing packets, returns metadata dict and None if not
     """
+
+    if platform_name.startswith("sentinel"):
+        pass
+    elif platform_name.startswith("landsat"):
+        return None
+
     l1_zip_path = Path(granule.wagl_metadata["source_datasets"]["source_level1"])
     xml_file_path = Path(
         granule.source_level1_metadata.accessories["metadata:s2_tile"].path
@@ -146,14 +150,18 @@ def missing_packets_xml(granule):
 
     # Parse tile metadata xml file
     with zipfile.ZipFile(l1_zip_path, "r") as z:
-        tree = Et.ElementTree(
-            Et.fromstring(z.read(xml_file_path.as_posix()), forbid_dtd=True)
-        )
-        root = tree.getroot()
+        root = Et.fromstring(z.read(xml_file_path.as_posix()), forbid_dtd=True)
         msi_data_percentage = float(root[2][0][1].text)
         if msi_data_percentage > 0.0:
             children = root[2][1]
-            return children
+            mtd_dict = {
+                # Append metadata bandId as key and mask type and path as tuple vals to dict
+                e.attrib["bandId"]: (e.attrib["type"], e.text)
+                for e in children
+                if "bandId" in e.attrib
+                and e.attrib["type"] in ("MSK_QUALIT", "MSK_TECQUA")
+            }
+            return mtd_dict
         else:
             return None
 
@@ -166,12 +174,13 @@ def mask_or_not(dataset: h5py.Dataset, granule):
     band_ids_mask = {str(i) for i in range(0, 13)}
     band_ids_mask.add("8A")
     band_bool = dataset.attrs["band_id"] in band_ids_mask
-    platform_bool = (
-        "sentinel" in granule.wagl_metadata["source_datasets"]["platform_id"].lower()
-    )
+    platform_name = granule.wagl_metadata["source_datasets"]["platform_id"].lower()
+    platform_bool = "sentinel" in platform_name
 
     if platform_bool:
-        xml_bool = False if missing_packets_xml(granule) is None else True
+        xml_bool = (
+            False if missing_packets_xml(granule, platform_name) is None else True
+        )
     else:
         return False
 
@@ -179,7 +188,7 @@ def mask_or_not(dataset: h5py.Dataset, granule):
     return True if all([band_bool, platform_bool, xml_bool]) else False
 
 
-def mask_h5(dataset, granule, children):
+def mask_h5(dataset, granule, mtd_dict):
     l1_zip_path = Path(granule.wagl_metadata["source_datasets"]["source_level1"])
 
     # Map wagl dataset band IDs to ESA MTD.xml Band IDs
@@ -199,39 +208,20 @@ def mask_h5(dataset, granule, children):
         "12": "12",
     }
     esa_band = band_mapping[dataset.attrs["band_id"]]
-
-    with zipfile.ZipFile(l1_zip_path, "r") as z:
-        elements = [
-            e
-            for e in children
-            if "bandId" in e.attrib
-            and e.attrib["type"] in ("MSK_QUALIT", "MSK_TECQUA")
-            and e.attrib["bandId"] == esa_band
-        ]
-        if len(elements) != 1:
-            raise ValueError(
-                "Combination of mask and band should be unique. "
-                "Number of elements found with mask type and bandId in MTD.xml file is "
-                + str(len(elements))
-                + "."
-            )
-        else:
-            pass
-
-        child = elements[0]
-        path = child.text
-        type = child.attrib["type"]
-
-        if type == "MSK_TECQUA":
-            mask_string_path = f"{l1_zip_path.name.replace('.zip', '.SAFE')}/{path}"
-            return mask_h5_vector(
-                dataset,
-                l1_zip_path,
-                mask_string_path,
-            )
-        elif type == "MSK_QUALIT":
-            mask_string_path = f"{l1_zip_path.name.replace('.zip', '.SAFE')}/{path}"
-            return mask_h5_raster(dataset, granule, z, mask_string_path, l1_zip_path)
+    type, path = mtd_dict[esa_band]
+    mask_string_path = f"{l1_zip_path.name.replace('.zip', '.SAFE')}/{path}"
+    if type == "MSK_TECQUA":
+        return mask_h5_vector(
+            dataset,
+            l1_zip_path,
+            mask_string_path,
+        )
+    elif type == "MSK_QUALIT":
+        return mask_h5_raster(
+            dataset,
+            l1_zip_path,
+            mask_string_path,
+        )
 
 
 def mask_h5_vector(
@@ -265,15 +255,12 @@ def mask_h5_vector(
 
 def mask_h5_raster(
     dataset: h5py.Dataset,
-    granule,
-    z,
-    mask_string_path,
     l1_zip_file,
+    mask_string_path,
 ):
     """
     Mask a hdf5 dataset using the gml files provided in the path.
     """
-
     data_array = dataset[:] if hasattr(dataset, "chunks") else dataset
 
     # Open the .jp2 file
@@ -294,6 +281,9 @@ def write_measurement_h5(
     p: DatasetAssembler,
     full_name: str,
     g: h5py.Dataset,
+    mode: str = ["image", "oa"],
+    granule=None,
+    mtd_dict: dict = None,
     overviews=images.DEFAULT_OVERVIEWS,
     overview_resampling=Resampling.nearest,
     expand_valid_data=True,
@@ -303,9 +293,27 @@ def write_measurement_h5(
     Write a measurement by copying it from a hdf5 dataset.
     """
     if hasattr(g, "chunks"):
-        data = g[:]
+        data_array = g[:]
     else:
-        data = g
+        data_array = g
+
+    if mode == "image":
+        if granule is None:
+            raise ValueError(
+                "Please provide granule for image writing mode to check for mask."
+            )
+        if mask_or_not(g, granule):
+            if mtd_dict is None:
+                raise ValueError(
+                    "Please provide metadata dictionary for image writing mode to check for mask."
+                )
+            data = mask_h5(g, granule, mtd_dict)
+        else:
+            data = data_array
+    elif mode == "oa":
+        data = data_array
+    else:
+        raise ValueError('Please provide one of "image" or "oa" modes.')
 
     product_name, band_name = full_name.split(":")
     p.write_measurement_numpy(
@@ -315,46 +323,6 @@ def write_measurement_h5(
             transform=Affine.from_gdal(*g.attrs["geotransform"]),
             crs=CRS.from_wkt(g.attrs["crs_wkt"]),
         ),
-        nodata=g.attrs.get("no_data_value"),
-        overviews=overviews,
-        overview_resampling=overview_resampling,
-        expand_valid_data=expand_valid_data,
-        file_id=file_id,
-        # Because of our strange sub-products and filename standards, we want the
-        # product_name to be included in the recorded band metadata,
-        # but not in its filename.
-        # So we manually calculate a filename without the extra product name prefix.
-        name=full_name,
-        path=p.names.measurement_filename(band_name, "tif", file_id=file_id),
-    )
-
-
-def write_measurement_h5_mask(
-    p: DatasetAssembler,
-    full_name: str,
-    g: h5py.Dataset,
-    granule,
-    mtd_children,
-    overviews=images.DEFAULT_OVERVIEWS,
-    overview_resampling=Resampling.nearest,
-    expand_valid_data=True,
-    file_id: str = None,
-):
-    """
-    Write a measurement by copying it from a hdf5 dataset.
-    """
-    data_array = g[:] if hasattr(g, "chunks") else g
-    data = mask_h5(g, granule, mtd_children) if mask_or_not(g, granule) else data_array
-
-    product_name, band_name = full_name.split(":")
-    grid_spec_feed = images.GridSpec(
-        shape=g.shape,
-        transform=Affine.from_gdal(*g.attrs["geotransform"]),
-        crs=CRS.from_wkt(g.attrs["crs_wkt"]),
-    )
-    p.write_measurement_numpy(
-        array=data,
-        grid_spec=grid_spec_feed,
         nodata=g.attrs.get("no_data_value"),
         overviews=overviews,
         overview_resampling=overview_resampling,
@@ -406,6 +374,7 @@ def _unpack_observation_attributes(
                     p,
                     f"oa:{measurement_name}",
                     res_grp[o],
+                    mode="oa",
                     # We only use the product bands for valid data calc, not supplementary.
                     # According to Josh: Supplementary pixels outside of the product bounds are implicitly invalid.
                     expand_valid_data=False,
