@@ -96,21 +96,21 @@ def _unpack_products(
     # listing of all datasets of IMAGE CLASS type
     img_paths = _find_h5_paths(h5group, "IMAGE")
 
-    # Are there missing packets?
-    mtd_dict = missing_packets_xml(granule, p.platform)
-
     for product in product_list:
         with sub_product(product, p):
             for pathname in [p for p in img_paths if f"/{product.upper()}/" in p]:
                 with do(f"Path {pathname!r}"):
                     dataset = h5group[pathname]
+                    mtd_dict = missing_packets(dataset, granule)
+                    l1_zip_path = Path(
+                        granule.wagl_metadata["source_datasets"]["source_level1"]
+                    )
                     band_name = utils.normalise_band_name(dataset.attrs["alias"])
                     write_measurement_h5(
                         p,
                         f"{product}:{band_name}",
                         dataset,
-                        mode="image",
-                        granule=granule,
+                        l1_zip_path=l1_zip_path,
                         mtd_dict=mtd_dict,
                         overview_resampling=Resampling.average,
                         file_id=_file_id(dataset),
@@ -133,14 +133,18 @@ def _unpack_products(
                     )
 
 
-def missing_packets_xml(granule, platform_name):
+def missing_packets(dataset: h5py.Dataset, granule):
     """
     If missing packets, returns metadata dict and None if not
     """
+    # Define bands to be masked
+    band_ids_mask = {str(i) for i in range(0, 13)}
+    band_ids_mask.add("8A")
+    if dataset.attrs["band_id"] not in band_ids_mask:
+        return None
 
-    if platform_name.startswith("sentinel"):
-        pass
-    elif platform_name.startswith("landsat"):
+    platform_name = granule.wagl_metadata["source_datasets"]["platform_id"].lower()
+    if "sentinel" not in platform_name:
         return None
 
     l1_zip_path = Path(granule.wagl_metadata["source_datasets"]["source_level1"])
@@ -150,47 +154,32 @@ def missing_packets_xml(granule, platform_name):
 
     # Parse tile metadata xml file
     with zipfile.ZipFile(l1_zip_path, "r") as z:
-        root = Et.fromstring(z.read(xml_file_path.as_posix()), forbid_dtd=True)
+        return missing_packets_from_xml(z.read(xml_file_path.as_posix()))
+
+
+def missing_packets_from_xml(xml: bytes):
+    root = Et.fromstring(xml, forbid_dtd=True)
+
+    try:
         msi_data_percentage = float(root[2][0][1].text)
-        if msi_data_percentage > 0.0:
-            children = root[2][1]
-            mtd_dict = {
-                # Append metadata bandId as key and mask type and path as tuple vals to dict
-                e.attrib["bandId"]: (e.attrib["type"], e.text)
-                for e in children
-                if "bandId" in e.attrib
-                and e.attrib["type"] in ("MSK_QUALIT", "MSK_TECQUA")
-            }
-            return mtd_dict
-        else:
-            return None
+    except IndexError:
+        return None
+
+    if msi_data_percentage <= 0.0:
+        return None
+
+    children = root[2][1]
+    return {
+        # Append metadata bandId as key and mask type and path as tuple vals to dict
+        e.attrib["bandId"]: (e.attrib["type"], e.text)
+        for e in children
+        if "bandId" in e.attrib
+        and "type" in e.attrib
+        and e.attrib["type"] in ("MSK_QUALIT", "MSK_TECQUA")
+    }
 
 
-def mask_or_not(dataset: h5py.Dataset, granule):
-    """
-    Determine whether to mask h5 dataset
-    """
-    # Define bands to be masked
-    band_ids_mask = {str(i) for i in range(0, 13)}
-    band_ids_mask.add("8A")
-    band_bool = dataset.attrs["band_id"] in band_ids_mask
-    platform_name = granule.wagl_metadata["source_datasets"]["platform_id"].lower()
-    platform_bool = "sentinel" in platform_name
-
-    if platform_bool:
-        xml_bool = (
-            False if missing_packets_xml(granule, platform_name) is None else True
-        )
-    else:
-        return False
-
-    # Mask only if all are True
-    return True if all([band_bool, platform_bool, xml_bool]) else False
-
-
-def mask_h5(dataset, granule, mtd_dict):
-    l1_zip_path = Path(granule.wagl_metadata["source_datasets"]["source_level1"])
-
+def mask_h5(dataset, l1_zip_path, mtd_dict):
     # Map wagl dataset band IDs to ESA MTD.xml Band IDs
     band_mapping = {
         "1": "0",
@@ -222,6 +211,8 @@ def mask_h5(dataset, granule, mtd_dict):
             l1_zip_path,
             mask_string_path,
         )
+    else:
+        raise ValueError(f"unknown mask type {type}")
 
 
 def mask_h5_vector(
@@ -281,8 +272,7 @@ def write_measurement_h5(
     p: DatasetAssembler,
     full_name: str,
     g: h5py.Dataset,
-    mode: str = ["image", "oa"],
-    granule=None,
+    l1_zip_path: Path = None,
     mtd_dict: dict = None,
     overviews=images.DEFAULT_OVERVIEWS,
     overview_resampling=Resampling.nearest,
@@ -297,23 +287,10 @@ def write_measurement_h5(
     else:
         data_array = g
 
-    if mode == "image":
-        if granule is None:
-            raise ValueError(
-                "Please provide granule for image writing mode to check for mask."
-            )
-        if mask_or_not(g, granule):
-            if mtd_dict is None:
-                raise ValueError(
-                    "Please provide metadata dictionary for image writing mode to check for mask."
-                )
-            data = mask_h5(g, granule, mtd_dict)
-        else:
-            data = data_array
-    elif mode == "oa":
-        data = data_array
+    if mtd_dict is not None:
+        data = mask_h5(g, l1_zip_path, mtd_dict)
     else:
-        raise ValueError('Please provide one of "image" or "oa" modes.')
+        data = data_array
 
     product_name, band_name = full_name.split(":")
     p.write_measurement_numpy(
@@ -374,7 +351,6 @@ def _unpack_observation_attributes(
                     p,
                     f"oa:{measurement_name}",
                     res_grp[o],
-                    mode="oa",
                     # We only use the product bands for valid data calc, not supplementary.
                     # According to Josh: Supplementary pixels outside of the product bounds are implicitly invalid.
                     expand_valid_data=False,
