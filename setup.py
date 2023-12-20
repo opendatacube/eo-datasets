@@ -76,6 +76,7 @@ setup(
         "ciso8601",
         "click",
         "defusedxml",
+        "fiona",
         "h5py",
         "jsonschema>=4.18",  # We want a Draft6Validator
         "numpy>=1.15.4",
