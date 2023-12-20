@@ -13,6 +13,7 @@ import zipfile
 from datetime import datetime, timedelta
 from enum import Enum
 from math import isnan
+from os.path import join
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from uuid import UUID
@@ -102,15 +103,11 @@ def _unpack_products(
                 with do(f"Path {pathname!r}"):
                     dataset = h5group[pathname]
                     mtd_dict = missing_packets(dataset, granule)
-                    l1_zip_path = Path(
-                        granule.wagl_metadata["source_datasets"]["source_level1"]
-                    )
                     band_name = utils.normalise_band_name(dataset.attrs["alias"])
                     write_measurement_h5(
                         p,
                         f"{product}:{band_name}",
                         dataset,
-                        l1_zip_path=l1_zip_path,
                         mtd_dict=mtd_dict,
                         overview_resampling=Resampling.average,
                         file_id=_file_id(dataset),
@@ -154,32 +151,42 @@ def missing_packets(dataset: h5py.Dataset, granule):
 
     # Parse tile metadata xml file
     with zipfile.ZipFile(l1_zip_path, "r") as z:
-        return missing_packets_from_xml(z.read(xml_file_path.as_posix()))
+        mtd_dict = missing_packets_from_xml(z.read(xml_file_path.as_posix()))
+        product_root = xml_file_path.parts[0]
+        for band_id in list(mtd_dict.keys()):
+            type, location = mtd_dict[band_id]
+            mask_string_path = join(product_root, location)
+            if mask_string_path not in z.namelist():
+                mask_string_path = str(xml_file_path.parent / "QI_DATA" / location)
+            mtd_dict[band_id] = (
+                type,
+                f"zip+file://{l1_zip_path.as_posix()}!/{mask_string_path}",
+            )
+        return mtd_dict
 
 
 def missing_packets_from_xml(xml: bytes):
     root = Et.fromstring(xml, forbid_dtd=True)
 
     try:
-        msi_data_percentage = float(root[2][0][1].text)
+        msi_data_percentage = float(root.find(".//DEGRADED_MSI_DATA_PERCENTAGE").text)
     except IndexError:
         return None
 
     if msi_data_percentage <= 0.0:
         return None
 
-    children = root[2][1]
     return {
         # Append metadata bandId as key and mask type and path as tuple vals to dict
         e.attrib["bandId"]: (e.attrib["type"], e.text)
-        for e in children
+        for e in root.findall(".//Pixel_Level_QI/MASK_FILENAME")
         if "bandId" in e.attrib
         and "type" in e.attrib
         and e.attrib["type"] in ("MSK_QUALIT", "MSK_TECQUA")
     }
 
 
-def mask_h5(dataset, l1_zip_path, mtd_dict):
+def mask_h5(dataset, mtd_dict):
     # Map wagl dataset band IDs to ESA MTD.xml Band IDs
     band_mapping = {
         "1": "0",
@@ -197,18 +204,15 @@ def mask_h5(dataset, l1_zip_path, mtd_dict):
         "12": "12",
     }
     esa_band = band_mapping[dataset.attrs["band_id"]]
-    type, path = mtd_dict[esa_band]
-    mask_string_path = f"{l1_zip_path.name.replace('.zip', '.SAFE')}/{path}"
+    type, mask_string_path = mtd_dict[esa_band]
     if type == "MSK_TECQUA":
         return mask_h5_vector(
             dataset,
-            l1_zip_path,
             mask_string_path,
         )
     elif type == "MSK_QUALIT":
         return mask_h5_raster(
             dataset,
-            l1_zip_path,
             mask_string_path,
         )
     else:
@@ -217,19 +221,15 @@ def mask_h5(dataset, l1_zip_path, mtd_dict):
 
 def mask_h5_vector(
     dataset: h5py.Dataset,
-    l1_zip_file,
     mask_string_path,
 ):
     """
     Mask a hdf5 dataset using the gml files provided in the path.
     """
-
     data_array = dataset[:] if hasattr(dataset, "chunks") else dataset
-    vp = f"zip+file://{l1_zip_file.as_posix()}!/{mask_string_path}"
-
     # Open the gml file
     try:
-        with fiona.open(vp) as gml:
+        with fiona.open(mask_string_path) as gml:
             shapes = [feature["geometry"] for feature in gml]
             mask_array = rasterio.features.rasterize(
                 shapes,
@@ -246,7 +246,6 @@ def mask_h5_vector(
 
 def mask_h5_raster(
     dataset: h5py.Dataset,
-    l1_zip_file,
     mask_string_path,
 ):
     """
@@ -255,10 +254,12 @@ def mask_h5_raster(
     data_array = dataset[:] if hasattr(dataset, "chunks") else dataset
 
     # Open the .jp2 file
-    sp = f"zip+file://{l1_zip_file.as_posix()}!/{mask_string_path}"
-
-    with rasterio.open(sp) as source_ds:
+    with rasterio.open(mask_string_path) as source_ds:
+        # Mask layer info:
+        # https://sentinel.esa.int/web/sentinel/technical-guides/sentinel-2-msi/level-1c/masks
+        # MSI lost data layer
         source_layer1 = source_ds.read(3)
+        # MSI degraded data layer
         source_layer2 = source_ds.read(4)
         # Mask where missing OR degraded packets
         source_layer = source_layer1 | source_layer2
@@ -272,7 +273,6 @@ def write_measurement_h5(
     p: DatasetAssembler,
     full_name: str,
     g: h5py.Dataset,
-    l1_zip_path: Path = None,
     mtd_dict: dict = None,
     overviews=images.DEFAULT_OVERVIEWS,
     overview_resampling=Resampling.nearest,
@@ -288,7 +288,7 @@ def write_measurement_h5(
         data_array = g
 
     if mtd_dict is not None:
-        data = mask_h5(g, l1_zip_path, mtd_dict)
+        data = mask_h5(g, mtd_dict)
     else:
         data = data_array
 
