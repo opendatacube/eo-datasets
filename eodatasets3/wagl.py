@@ -635,26 +635,6 @@ class Granule:
                     level1_data_path, level1_metadata_path, allow_missing_provenance
                 )
 
-                if not level1_data_path.exists():
-                    # If the data directory is a sibling, we can infer it.
-                    match = METADATA_DOC_STEM.match(level1_data_path.name)
-                    if not match:
-                        raise ValueError(
-                            f"Can't infer level1 data path from {level1_data_path}"
-                        )
-
-                    # For ESA: It may be at an identical path, with zip suffix instead of *.odc-metadata.yaml
-                    level1_data_path = level1_data_path.parent / (
-                        match.group("stem") + ".zip"
-                    )
-                    if not level1_data_path.exists():
-                        # Or it may be a sinergise directory, with no suffix.
-                        level1_data_path = level1_data_path.parent / match.group("stem")
-                        if not level1_data_path.exists():
-                            raise ValueError(
-                                f"Can't find level1 data for {level1_data_path}"
-                            )
-
                 fmask_image_path = fmask_image_path or wagl_hdf5.with_name(
                     f"{granule_name}.fmask.img"
                 )
@@ -668,6 +648,31 @@ class Granule:
                     [fmask_doc] = loads_yaml(fl)
 
                 if "sentinel" in wagl_doc["source_datasets"]["platform_id"].lower():
+                    # We need the level1 data for S2 in order to apply quality masks.
+                    if not level1_data_path.exists():
+                        # TODO: We could infer this from the 'location:' field of the metadata, when they
+                        #       have embedded locations
+                        # If the data directory is a sibling, we can infer it.
+                        match = METADATA_DOC_STEM.match(level1_metadata_path.name)
+                        if not match:
+                            raise ValueError(
+                                f"Can't infer level1 data path from {level1_data_path}"
+                            )
+
+                        # For ESA: It may be at an identical path, with zip suffix instead of *.odc-metadata.yaml
+                        level1_data_path = level1_metadata_path.parent / (
+                            match.group("stem") + ".zip"
+                        )
+                        if not level1_data_path.exists():
+                            # Or it may be a sinergise directory, with no suffix.
+                            level1_data_path = (
+                                level1_metadata_path.parent / match.group("stem")
+                            )
+                            if not level1_data_path.exists():
+                                raise ValueError(
+                                    f"Can't find level1 data for {level1_data_path}"
+                                )
+
                     s2cloudless_prob_path = (
                         s2cloudless_prob_path
                         or wagl_hdf5.with_name(f"{granule_name}.prob.s2cloudless.tif")
