@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><Earth_Explorer_File xmlns="http://gs2.esa.int/DATA_STRUCTURE/olqcReport">
+    <Earth_Explorer_Header>
+        <Fixed_Header>
+            <File_Name>GRANULE/L1C_T56JMQ_A021606_20210425T235239/QI_DATA/GEOMETRIC_QUALITY.xml</File_Name>
+            <File_Description>Report produced by OLQC-SC</File_Description>
+            <Notes/>
+            <Mission>S2B</Mission>
+            <File_Class>OPER</File_Class>
+            <File_Type>REP_OLQCPA</File_Type>
+            <Validity_Period>
+                <Validity_Start>UTC=2021-03-30T01:00:00</Validity_Start>
+                <Validity_Stop>UTC=2100-01-01T00:00:00</Validity_Stop>
+            </Validity_Period>
+            <File_Version>2</File_Version>
+            <Source>
+                <System>OLQC-SC</System>
+                <Creator>OLQC-SC</Creator>
+                <Creator_Version>01.07.00</Creator_Version>
+                <Creation_Date>UTC=2021-04-26T01:36:30</Creation_Date>
+            </Source>
+        </Fixed_Header>
+    </Earth_Explorer_Header>
+    <Data_Block type="xml">
+        <report date="2021-04-26T01:36:30.309Z" gippVersion="1.0" globalStatus="PASSED">
+            <checkList>
+                <parentID>S2B_OPER_GIP_OLQCPA_MPC__20210326T000023_V20210330T010000</parentID>
+                <name>GEOMETRIC_QUALITY</name>
+                <version>1.0</version>
+                <item class="http://www.esa.int/s2#pdi_level_1c_tile_container" className="PDI Level 1C Tile Folder" name="S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00" url="/gpfs/dpc/data/phoebus-share/PHOEBUS-4.5.004/wp_in_progress/l1c_20210426_14/app_data/steps_data/L1C/TILE/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/"/>
+                <check>
+                    <inspection creation="2021-04-26T01:36:30.176Z" duration="111" execution="2021-04-26T01:36:30.195Z" id="Solar_Angle_Azimuth" item="S2B_OPER_MTD_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ.xml" itemURL="/gpfs/dpc/data/phoebus-share/PHOEBUS-4.5.004/wp_in_progress/l1c_20210426_14/app_data/steps_data/L1C/TILE/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/S2B_OPER_MTD_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ.xml" name="Check the azimuth solar angle. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Azimuth solar angle (37.3808258881866) is in the limit of the threshold (360.0) </message>
+                    <extraValues>
+                        <value name="EXPECTED">360.0</value>
+                        <value name="SOLAR_AZIMUTH_ANGLE">37.3808258881866</value>
+                    </extraValues>
+                </check>
+                <check>
+                    <inspection creation="2021-04-26T01:36:32.780Z" duration="203" execution="2021-04-26T01:36:32.794Z" id="Granule_Dimensions_60m" item="S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00" itemURL="/gpfs/dpc/data/phoebus-share/PHOEBUS-4.5.004/wp_in_progress/l1c_20210426_14/app_data/steps_data/L1C/TILE/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/" name="Check the 60m consistency of granules/tiles. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">60m resolution granules/tiles dimensions are correct.</message>
+                </check>
+                <check>
+                    <inspection creation="2021-04-26T01:36:32.999Z" duration="161" execution="2021-04-26T01:36:33.008Z" id="Granule_Dimensions_20m" item="S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00" itemURL="/gpfs/dpc/data/phoebus-share/PHOEBUS-4.5.004/wp_in_progress/l1c_20210426_14/app_data/steps_data/L1C/TILE/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/" name="Check the 20m consistency of granules/tiles. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">20m resolution granules/tiles dimensions are correct.</message>
+                </check>
+                <check>
+                    <inspection creation="2021-04-26T01:36:33.170Z" duration="94" execution="2021-04-26T01:36:33.176Z" id="Granule_Dimensions_10m" item="S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00" itemURL="/gpfs/dpc/data/phoebus-share/PHOEBUS-4.5.004/wp_in_progress/l1c_20210426_14/app_data/steps_data/L1C/TILE/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/" name="Check the 10m consistency of granules/tiles. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">10m resolution granules/tiles dimensions are correct.</message>
+                </check>
+            </checkList>
+        </report>
+    </Data_Block>
+</Earth_Explorer_File>

@@ -1,0 +1,45 @@
+{
+  "path" : "tiles/56/J/MQ/2021/4/25/0",
+  "timestamp" : "2021-04-25T23:54:23.437Z",
+  "utmZone" : 56,
+  "latitudeBand" : "J",
+  "gridSquare" : "MQ",
+  "datastrip" : {
+    "id" : "S2B_OPER_MSI_L1C_DS_VGS4_20210426T010904_S20210425T235239_N03.00",
+    "path" : "products/2021/4/25/S2B_MSIL1C_20210425T235239_N0300_R130_T56JMQ_20210426T010904/datastrip/0"
+  },
+  "tileGeometry" : {
+    "type" : "Polygon",
+    "crs" : {
+      "type" : "name",
+      "properties" : {
+        "name" : "urn:ogc:def:crs:EPSG:8.8.1:32756"
+      }
+    },
+    "coordinates" : [ [ [ 399960.0, 7000000.0 ], [ 509760.0, 7000000.0 ], [ 509760.0, 6890200.0 ], [ 399960.0, 6890200.0 ], [ 399960.0, 7000000.0 ] ] ]
+  },
+  "tileDataGeometry" : {
+    "type" : "Polygon",
+    "crs" : {
+      "type" : "name",
+      "properties" : {
+        "name" : "urn:ogc:def:crs:EPSG:8.8.1:32756"
+      }
+    },
+    "coordinates" : [ [ [ 504363.7460779259, 6999999.0 ], [ 509759.0, 6999999.0 ], [ 509759.0, 6890201.0 ], [ 477444.2364240098, 6890201.0 ], [ 504363.7460779259, 6999999.0 ] ] ]
+  },
+  "tileOrigin" : {
+    "type" : "Point",
+    "crs" : {
+      "type" : "name",
+      "properties" : {
+        "name" : "urn:ogc:def:crs:EPSG:8.8.1:32756"
+      }
+    },
+    "coordinates" : [ 399960.0, 7000000.0 ]
+  },
+  "dataCoveragePercentage" : 17.17,
+  "cloudyPixelPercentage" : 0.32,
+  "productName" : "S2B_MSIL1C_20210425T235239_N0300_R130_T56JMQ_20210426T010904",
+  "productPath" : "products/2021/4/25/S2B_MSIL1C_20210425T235239_N0300_R130_T56JMQ_20210426T010904"
+}

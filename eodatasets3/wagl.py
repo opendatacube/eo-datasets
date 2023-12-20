@@ -144,31 +144,52 @@ def missing_packets(dataset: h5py.Dataset, granule):
     if "sentinel" not in platform_name:
         return None
 
-    l1_zip_path = Path(granule.wagl_metadata["source_datasets"]["source_level1"])
+    level1_data_path = granule.source_level1_data
+
     granule_metadata_xml = Path(
         granule.source_level1_metadata.accessories["metadata:s2_tile"].path
     )
+    product_root = granule_metadata_xml.parts[0]
 
-    # Parse tile metadata xml file
-    with zipfile.ZipFile(l1_zip_path, "r") as z:
-        mtd_dict = missing_packets_from_xml(z.read(granule_metadata_xml.as_posix()))
+    if not level1_data_path.exists():
+        raise ValueError(f"Input level 1 data not found {level1_data_path}")
 
-        if mtd_dict is None:
-            return mtd_dict
+    if level1_data_path.suffix == ".zip":
+        # Parse tile metadata xml file
+        with zipfile.ZipFile(level1_data_path, "r") as z:
+            mtd_dict = missing_packets_from_xml(z.read(granule_metadata_xml.as_posix()))
+            for band_id in list(mtd_dict.keys()):
+                type, location = mtd_dict[band_id]
+                mask_offset = join(product_root, location)
+                if mask_offset not in z.namelist():
+                    mask_offset = str(
+                        granule_metadata_xml.parent / "QI_DATA" / location
+                    )
+                mtd_dict[band_id] = (
+                    type,
+                    f"zip+file://{level1_data_path.as_posix()}!/{mask_offset}",
+                )
 
-        product_root = granule_metadata_xml.parts[0]
+    # Sinergise data comes as a directory.
+    elif level1_data_path.is_dir():
+        mtd_dict = missing_packets_from_xml(
+            (level1_data_path / granule_metadata_xml).read_bytes()
+        )
         for band_id in list(mtd_dict.keys()):
             type, location = mtd_dict[band_id]
-            mask_string_path = join(product_root, location)
-            if mask_string_path not in z.namelist():
-                mask_string_path = str(
-                    granule_metadata_xml.parent / "QI_DATA" / location
-                )
-            mtd_dict[band_id] = (
-                type,
-                f"zip+file://{l1_zip_path.as_posix()}!/{mask_string_path}",
-            )
-        return mtd_dict
+            mask_path = level1_data_path / product_root / location
+            # Sinergise use the original tile metdata document, but change the directory structure
+            # So the metadata mask locations are (always?) wrong.
+            # It's in a 'qi' folder with the original filename.
+            if not mask_path.exists():
+                mask_path = granule_metadata_xml.parent / "qi" / Path(location).name
+            mtd_dict[band_id] = (type, mask_path.as_posix())
+    else:
+        raise RuntimeError(
+            "Input level 1 data must be a zip file (ESA) or directory (Sinergise)"
+        )
+
+    return mtd_dict
 
 
 def missing_packets_from_xml(granule_metadata_xml: bytes):
@@ -551,6 +572,7 @@ class Granule:
     wagl_hdf5: Path
     wagl_metadata: Dict
     source_level1_metadata: Optional[DatasetDoc]
+    source_level1_data: Optional[Path] = None
 
     fmask_doc: Optional[Dict] = None
     fmask_image: Optional[Path] = None
@@ -566,6 +588,7 @@ class Granule:
         wagl_hdf5: Path,
         granule_names: Optional[Sequence[str]] = None,
         level1_metadata_path: Optional[Path] = None,
+        level1_data_path: Optional[Path] = None,
         fmask_image_path: Optional[Path] = None,
         fmask_doc_path: Optional[Path] = None,
         s2cloudless_prob_path: Optional[Path] = None,
@@ -603,9 +626,34 @@ class Granule:
 
                 [wagl_doc] = loads_yaml(wagl_doc_field[()])
 
-                level1 = _load_level1_doc(
-                    wagl_doc, level1_metadata_path, allow_missing_provenance
+                # If they don't specify a level1, default to the one in the wagl doc.
+                if not level1_data_path:
+                    level1_data_path = Path(
+                        get_path(wagl_doc, ("source_datasets", "source_level1"))
+                    )
+                level1_doc = _load_level1_doc(
+                    level1_data_path, level1_metadata_path, allow_missing_provenance
                 )
+
+                if not level1_data_path.exists():
+                    # If the data directory is a sibling, we can infer it.
+                    match = METADATA_DOC_STEM.match(level1_data_path.name)
+                    if not match:
+                        raise ValueError(
+                            f"Can't infer level1 data path from {level1_data_path}"
+                        )
+
+                    # For ESA: It may be at an identical path, with zip suffix instead of *.odc-metadata.yaml
+                    level1_data_path = level1_data_path.parent / (
+                        match.group("stem") + ".zip"
+                    )
+                    if not level1_data_path.exists():
+                        # Or it may be a sinergise directory, with no suffix.
+                        level1_data_path = level1_data_path.parent / match.group("stem")
+                        if not level1_data_path.exists():
+                            raise ValueError(
+                                f"Can't find level1 data for {level1_data_path}"
+                            )
 
                 fmask_image_path = fmask_image_path or wagl_hdf5.with_name(
                     f"{granule_name}.fmask.img"
@@ -679,7 +727,8 @@ class Granule:
                     name=granule_name,
                     wagl_hdf5=wagl_hdf5,
                     wagl_metadata=wagl_doc,
-                    source_level1_metadata=level1,
+                    source_level1_metadata=level1_doc,
+                    source_level1_data=level1_data_path,
                     fmask_doc=fmask_doc,
                     fmask_image=fmask_image_path,
                     s2cloudless_prob=s2cloudless_prob_path,
@@ -690,11 +739,17 @@ class Granule:
                 )
 
 
+# Get just  the stem of metadata documents (named 'docname.yaml' or 'docname.odc-metadata.yaml')
+METADATA_DOC_STEM = re.compile(
+    r"^(?P<stem>.+?)(?:\.odc-metadata)?\.yaml$", re.IGNORECASE
+)
+
+
 def _load_level1_doc(
-    wagl_doc: Dict,
+    level1_data_path: Path,
     user_specified_l1_path: Optional[Path] = None,
     allow_missing_provenance=False,
-):
+) -> DatasetDoc:
     if user_specified_l1_path:
         if not user_specified_l1_path.exists():
             raise ValueError(
@@ -702,7 +757,8 @@ def _load_level1_doc(
             )
         level1_path = user_specified_l1_path
     else:
-        level1_path = Path(get_path(wagl_doc, ("source_datasets", "source_level1")))
+        # We try to infer it from the data path
+        level1_path = level1_data_path
 
     # If a directory, assume "<dirname>.odc-metadata.yaml"
     if level1_path.is_dir():
