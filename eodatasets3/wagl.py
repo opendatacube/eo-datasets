@@ -152,6 +152,10 @@ def missing_packets(dataset: h5py.Dataset, granule):
     # Parse tile metadata xml file
     with zipfile.ZipFile(l1_zip_path, "r") as z:
         mtd_dict = missing_packets_from_xml(z.read(xml_file_path.as_posix()))
+
+        if mtd_dict is None:
+            return mtd_dict
+
         product_root = xml_file_path.parts[0]
         for band_id in list(mtd_dict.keys()):
             type, location = mtd_dict[band_id]
@@ -167,7 +171,6 @@ def missing_packets(dataset: h5py.Dataset, granule):
 
 def missing_packets_from_xml(xml: bytes):
     root = Et.fromstring(xml, forbid_dtd=True)
-
     try:
         msi_data_percentage = float(root.find(".//DEGRADED_MSI_DATA_PERCENTAGE").text)
     except IndexError:
