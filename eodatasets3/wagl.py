@@ -145,23 +145,25 @@ def missing_packets(dataset: h5py.Dataset, granule):
         return None
 
     l1_zip_path = Path(granule.wagl_metadata["source_datasets"]["source_level1"])
-    xml_file_path = Path(
+    granule_metadata_xml = Path(
         granule.source_level1_metadata.accessories["metadata:s2_tile"].path
     )
 
     # Parse tile metadata xml file
     with zipfile.ZipFile(l1_zip_path, "r") as z:
-        mtd_dict = missing_packets_from_xml(z.read(xml_file_path.as_posix()))
+        mtd_dict = missing_packets_from_xml(z.read(granule_metadata_xml.as_posix()))
 
         if mtd_dict is None:
             return mtd_dict
 
-        product_root = xml_file_path.parts[0]
+        product_root = granule_metadata_xml.parts[0]
         for band_id in list(mtd_dict.keys()):
             type, location = mtd_dict[band_id]
             mask_string_path = join(product_root, location)
             if mask_string_path not in z.namelist():
-                mask_string_path = str(xml_file_path.parent / "QI_DATA" / location)
+                mask_string_path = str(
+                    granule_metadata_xml.parent / "QI_DATA" / location
+                )
             mtd_dict[band_id] = (
                 type,
                 f"zip+file://{l1_zip_path.as_posix()}!/{mask_string_path}",
@@ -169,15 +171,8 @@ def missing_packets(dataset: h5py.Dataset, granule):
         return mtd_dict
 
 
-def missing_packets_from_xml(xml: bytes):
-    root = Et.fromstring(xml, forbid_dtd=True)
-    try:
-        msi_data_percentage = float(root.find(".//DEGRADED_MSI_DATA_PERCENTAGE").text)
-    except IndexError:
-        return None
-
-    if msi_data_percentage <= 0.0:
-        return None
+def missing_packets_from_xml(granule_metadata_xml: bytes):
+    root = Et.fromstring(granule_metadata_xml, forbid_dtd=True)
 
     return {
         # Append metadata bandId as key and mask type and path as tuple vals to dict
