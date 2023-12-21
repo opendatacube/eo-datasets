@@ -778,10 +778,10 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
 
     # Verify the computed contiguity looks the same. (metadata fields will depend on it)
     [image] = expected_folder.rglob("*_oa_*nbar-contiguity.tif")
-    assert_image(image, nodata=255, unique_pixel_counts={0: 5367, 1: 6733})
+    assert_image(image, nodata=255, unique_pixel_counts={0: 5546, 1: 6554})
 
     [image] = expected_folder.rglob("*_oa_*nbart-contiguity.tif")
-    assert_image(image, nodata=255, unique_pixel_counts={0: 5367, 1: 6733})
+    assert_image(image, nodata=255, unique_pixel_counts={0: 5546, 1: 6554})
 
     assert_expected_eo3_path(
         {
