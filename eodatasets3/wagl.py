@@ -86,6 +86,11 @@ class ProductMaturity(Enum):
     stable = "stable"
 
 
+# a dictionary of band_id: (mask_type, mask_uri)
+#     (the mask URI is a string loadable by fiona. Could be a URL or file path.)
+BandMasks = Dict[str, Tuple[str, str]]
+
+
 def _find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> List[str]:
     """
     Find all objects in a h5 of the given class, returning their path.
@@ -147,12 +152,6 @@ def _unpack_products(
                     )
 
 
-# a dictionary of band_id: (mask_type, mask_offset)
-#     (the offset is the file path within the data package. this might
-#     be within the zip file, or directory)
-BandMasks = Dict[str, Tuple[str, str]]
-
-
 def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
     """
     Get a dictionary of any quality masks to apply for each band (if any).
@@ -178,7 +177,11 @@ def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
     if level1_data_path.suffix == ".zip":
         # Parse tile metadata xml file
         with zipfile.ZipFile(level1_data_path, "r") as z:
-            mtd_dict = missing_packets_from_xml(z.read(granule_metadata_xml.as_posix()))
+            mtd_dict = raw_mask_offsets_from_granule_xml(
+                z.read(granule_metadata_xml.as_posix())
+            )
+            masks: BandMasks = {}
+            # Convert the raw mask offsets to loadable fiona paths.
             for band_id in list(mtd_dict.keys()):
                 type, location = mtd_dict[band_id]
                 mask_offset = join(product_root, location)
@@ -191,16 +194,17 @@ def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
                 # (Non-empty ones in our scan are all far larger than 1000bytes, so this doesn't need precision)
                 if info.file_size < 500:
                     continue
-                mtd_dict[band_id] = (
+                masks[band_id] = (
                     type,
                     f"zip+file://{level1_data_path.as_posix()}!/{mask_offset}",
                 )
-        return mtd_dict
+        return masks
     # Sinergise data comes as a directory.
     elif level1_data_path.is_dir():
-        mtd_dict = missing_packets_from_xml(
+        mtd_dict = raw_mask_offsets_from_granule_xml(
             (level1_data_path / granule_metadata_xml).read_bytes()
         )
+        masks: BandMasks = {}
         for band_id in list(mtd_dict.keys()):
             type, location = mtd_dict[band_id]
             mask_path = level1_data_path / product_root / location
@@ -209,15 +213,15 @@ def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
             # It's in a 'qi' folder with the original filename.
             if not mask_path.exists():
                 mask_path = level1_data_path / product_root / "qi" / Path(location).name
-            mtd_dict[band_id] = (type, mask_path.as_posix())
-        return mtd_dict
+            masks[band_id] = (type, mask_path.as_posix())
+        return masks
     else:
         raise RuntimeError(
             "Input level 1 data must be a zip file (ESA) or directory (Sinergise)"
         )
 
 
-def missing_packets_from_xml(granule_metadata_xml: bytes):
+def raw_mask_offsets_from_granule_xml(granule_metadata_xml: bytes):
     root = Et.fromstring(granule_metadata_xml, forbid_dtd=True)
 
     return {
