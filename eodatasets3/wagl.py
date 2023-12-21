@@ -236,8 +236,8 @@ def raw_mask_offsets_from_granule_xml(granule_metadata_xml: bytes):
 
 def load_and_mask_data(g: h5py.Dataset, masks: BandMasks):
     band_id = g.attrs["band_id"]
-    esa_band = WAGL_TO_ESA_BAND_NUMBER.get(band_id)
-    if (esa_band is None) or (esa_band not in masks):
+    esa_band = WAGL_TO_ESA_BAND_NUMBER[band_id]
+    if esa_band not in masks:
         # No mask needs to be applied.
         data_array = g[:] if hasattr(g, "chunks") else g
         return data_array
@@ -318,7 +318,10 @@ def write_measurement_h5(
     """
     Write a measurement by copying it from a hdf5 dataset.
     """
-    data = load_and_mask_data(g, band_masks or {})
+    if band_masks:
+        data = load_and_mask_data(g, band_masks)
+    else:
+        data = g[:] if hasattr(g, "chunks") else g
 
     product_name, band_name = full_name.split(":")
     p.write_measurement_numpy(
