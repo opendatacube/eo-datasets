@@ -191,7 +191,8 @@ def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
                     )
                 info = z.getinfo(mask_offset)
                 # Mask under 500 bytes are empty, which kills fiona on load.
-                # (Non-empty ones in our scan are all far larger than 1000bytes, so this doesn't need precision)
+                # (From scanning, non-empty ones in our collection are all far larger than 1000bytes,
+                #  so this doesn't need precision)
                 if info.file_size < 500:
                     continue
                 masks[band_id] = (
@@ -208,9 +209,9 @@ def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
         for band_id in list(mtd_dict.keys()):
             type, location = mtd_dict[band_id]
             mask_path = level1_data_path / location
-            # Sinergise use the original tile metdata document, but change the directory structure
+            # Sinergise use the original ESA metadata document, but have a new directory structure
             # So the metadata mask locations are (always?) wrong.
-            # It's in a 'qi' folder with the original filename.
+            # (It's in a 'qi' folder with the original filename)
             if not mask_path.exists():
                 mask_path = level1_data_path / "qi" / Path(location).name
 
