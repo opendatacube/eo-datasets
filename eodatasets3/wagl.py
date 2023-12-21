@@ -155,7 +155,7 @@ BandMasks = Dict[str, Tuple[str, str]]
 
 def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
     """
-    Get a dictionary of any quality masks to apply for each band.
+    Get a dictionary of any quality masks to apply for each band (if any).
     """
 
     if dataset.attrs["band_id"] not in WAGL_TO_ESA_BAND_NUMBER.keys():
@@ -208,7 +208,7 @@ def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
             # So the metadata mask locations are (always?) wrong.
             # It's in a 'qi' folder with the original filename.
             if not mask_path.exists():
-                mask_path = granule_metadata_xml.parent / "qi" / Path(location).name
+                mask_path = level1_data_path / product_root / "qi" / Path(location).name
             mtd_dict[band_id] = (type, mask_path.as_posix())
         return mtd_dict
     else:
