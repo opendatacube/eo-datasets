@@ -213,6 +213,10 @@ def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
             # It's in a 'qi' folder with the original filename.
             if not mask_path.exists():
                 mask_path = level1_data_path / "qi" / Path(location).name
+
+            # Skip small ones. See reasoning in ESA block above.
+            if mask_path.stat().st_size < 500:
+                continue
             masks[band_id] = (type, mask_path.as_posix())
         return masks
     else:
@@ -265,7 +269,6 @@ def mask_h5_vector(
     Mask a hdf5 dataset using the gml files provided in the path.
     """
     data_array = dataset[:] if hasattr(dataset, "chunks") else dataset
-
     # Open the gml file
     with fiona.open(mask_string_path) as gml:
         shapes = [feature["geometry"] for feature in gml]
