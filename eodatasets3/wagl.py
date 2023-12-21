@@ -169,12 +169,12 @@ def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
     granule_metadata_xml = Path(
         granule.source_level1_metadata.accessories["metadata:s2_tile"].path
     )
-    product_root = granule_metadata_xml.parts[0]
 
     if not level1_data_path.exists():
         raise ValueError(f"Input level 1 data not found {level1_data_path}")
 
     if level1_data_path.suffix == ".zip":
+        product_root = granule_metadata_xml.parts[0]
         # Parse tile metadata xml file
         with zipfile.ZipFile(level1_data_path, "r") as z:
             mtd_dict = raw_mask_offsets_from_granule_xml(
@@ -207,12 +207,12 @@ def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
         masks: BandMasks = {}
         for band_id in list(mtd_dict.keys()):
             type, location = mtd_dict[band_id]
-            mask_path = level1_data_path / product_root / location
+            mask_path = level1_data_path / location
             # Sinergise use the original tile metdata document, but change the directory structure
             # So the metadata mask locations are (always?) wrong.
             # It's in a 'qi' folder with the original filename.
             if not mask_path.exists():
-                mask_path = level1_data_path / product_root / "qi" / Path(location).name
+                mask_path = level1_data_path / "qi" / Path(location).name
             masks[band_id] = (type, mask_path.as_posix())
         return masks
     else:
