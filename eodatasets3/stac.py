@@ -243,8 +243,9 @@ def to_pystac_item(
     properties = eo3_to_stac_properties(dataset, title=dataset.label)
     properties.update(_lineage_fields(dataset.lineage))
 
-    dt = properties["datetime"]
-    del properties["datetime"]
+    dt = properties.get("datetime")
+    if dt is not None:
+        del properties["datetime"]
 
     # TODO: choose remote if there's multiple locations?
     # Without a dataset location, all paths will be relative.
