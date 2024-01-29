@@ -1,6 +1,7 @@
 """
 API for easily writing an ODC Dataset
 """
+
 import shutil
 import tempfile
 import uuid
@@ -452,8 +453,7 @@ class DatasetPrepare(Eo3Interface):
     def __enter__(self) -> "DatasetPrepare":
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        ...
+    def __exit__(self, exc_type, exc_val, exc_tb): ...
 
     @property
     def collection_location(self) -> Path:

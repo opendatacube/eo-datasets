@@ -3,6 +3,7 @@ Prepare eo3 metadata for Sentinel-2 Level 1C data produced by Sinergise or ESA.
 
 Takes ESA zipped datasets or Sinergise dataset directories
 """
+
 import fnmatch
 import json
 import os.path

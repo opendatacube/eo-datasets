@@ -1,6 +1,7 @@
 """
 Convert an EO3 metadata doc to a Stac Item. (BETA/Incomplete)
 """
+
 import datetime
 import math
 import mimetypes
