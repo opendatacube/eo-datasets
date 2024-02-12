@@ -1,6 +1,7 @@
 """
 Convert an EO3 metadata doc to a Stac Item.
 """
+
 import json
 from datetime import datetime
 from pathlib import Path

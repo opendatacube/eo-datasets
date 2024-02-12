@@ -1,6 +1,7 @@
 """
 Validate ODC dataset documents
 """
+
 import collections
 import enum
 import math
@@ -956,11 +957,13 @@ def _match_product(
             _error(
                 "product_match_clash",
                 "Multiple products match the given dataset",
-                hint=f"Maybe you need more fields in the 'metadata' section?\n"
-                f"Claims to be a {specified_product_name!r}, and matches {matching_names!r}"
-                if specified_product_name
-                else f"Maybe you need more fields in the 'metadata' section?\n"
-                f"Matches {matching_names!r}",
+                hint=(
+                    f"Maybe you need more fields in the 'metadata' section?\n"
+                    f"Claims to be a {specified_product_name!r}, and matches {matching_names!r}"
+                    if specified_product_name
+                    else f"Maybe you need more fields in the 'metadata' section?\n"
+                    f"Matches {matching_names!r}"
+                ),
             )
         )
         # (We wont pick one from the bunch here. Maybe they already matched one above to use in continuing validation.)

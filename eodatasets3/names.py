@@ -334,8 +334,7 @@ class LazyDatasetLocation:
         return f"{c.collection_prefix}/{offset}/"
 
 
-class MissingRequiredFields(ValueError):
-    ...
+class MissingRequiredFields(ValueError): ...
 
 
 class RequiredPropertyDict(Eo3Dict):

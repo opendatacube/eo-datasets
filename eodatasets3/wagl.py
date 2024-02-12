@@ -5,6 +5,7 @@ This converts the HDF5 file (and sibling fmask/gqa files) into
 GeoTIFFS (COGs) with datacube metadata using the DEA naming conventions
 for files.
 """
+
 import contextlib
 import os
 import re
@@ -870,9 +871,11 @@ def package(
             out_directory.absolute(),
             # WAGL stamps a good, random ID already.
             dataset_id=granule.wagl_metadata.get("id"),
-            naming_conventions="dea_s2"
-            if ("sentinel" in wagl_doc["source_datasets"]["platform_id"].lower())
-            else "dea",
+            naming_conventions=(
+                "dea_s2"
+                if ("sentinel" in wagl_doc["source_datasets"]["platform_id"].lower())
+                else "dea"
+            ),
         ) as p:
             _apply_wagl_metadata(p, wagl_doc)
 

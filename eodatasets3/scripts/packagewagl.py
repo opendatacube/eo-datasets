@@ -5,6 +5,7 @@ This will convert the HDF5 file (and sibling fmask/gqa files) into
 GeoTIFFS (COGs) with datacube metadata using the DEA naming conventions
 for files.
 """
+
 from pathlib import Path
 from typing import Optional, Sequence
 
