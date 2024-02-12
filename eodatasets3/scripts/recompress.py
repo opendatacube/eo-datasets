@@ -318,7 +318,7 @@ def _recompress_image(
     if len(input_image.indexes) != 1:
         raise ValueError(
             f"Expecting one-band-per-tif input (USGS packages). "
-            f"Input has multiple layers {repr(input_image.indexes)}"
+            f"Input has multiple layers {input_image.indexes!r}"
         )
 
     array: numpy.ndarray = input_image.read(1)
@@ -415,7 +415,7 @@ def main(
                 )
             else:
                 raise ValueError(
-                    f"Expected either tar.gz or a dataset folder. " f"Got: {repr(path)}"
+                    f"Expected either tar.gz or a dataset folder. " f"Got: {path!r}"
                 )
 
             if not success:

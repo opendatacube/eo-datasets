@@ -3,12 +3,11 @@ import unittest
 from textwrap import dedent
 
 from eodatasets3 import verify
-
 from tests import write_files
 
 
 class VerifyTests(unittest.TestCase):
-    def test_checksum(self):  # noqa: T003
+    def test_checksum(self):
         d = write_files({"test1.txt": "test"})
 
         test_file = d.joinpath("test1.txt")

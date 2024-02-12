@@ -187,9 +187,7 @@ class PackageChecksum:
         with output_file.open("wb") as f:
             f.writelines(
                 (
-                    "{}\t{}\n".format(
-                        str(hash_), str(filename.relative_to(output_file.parent))
-                    ).encode("utf-8")
+                    f"{hash_!s}\t{filename.relative_to(output_file.parent)!s}\n".encode()
                     for filename, hash_ in sorted(self._file_hashes.items())
                 )
             )

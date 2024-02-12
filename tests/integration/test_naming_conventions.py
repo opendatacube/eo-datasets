@@ -8,7 +8,6 @@ import pytest
 from ruamel import yaml
 
 from eodatasets3 import DatasetAssembler, DatasetDoc, namer
-
 from tests.common import assert_expected_eo3_path
 
 
@@ -111,9 +110,9 @@ def test_minimal_s2_dataset_normal(tmp_path: Path):
         p.datetime = datetime(2018, 11, 4)
         p.product_family = "blueberries"
         p.processed = "2018-11-05T12:23:23"
-        p.properties["sentinel:sentinel_tile_id"] = (
-            "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05"
-        )
+        p.properties[
+            "sentinel:sentinel_tile_id"
+        ] = "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05"
 
         dataset_id, metadata_path = p.done()
 
@@ -140,9 +139,9 @@ def test_s2_naming_conventions(tmp_path: Path):
     p.dataset_version = "1.0.0"
     p.region_code = "Oz"
     p.properties["odc:file_format"] = "GeoTIFF"
-    p.properties["sentinel:sentinel_tile_id"] = (
-        "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05"
-    )
+    p.properties[
+        "sentinel:sentinel_tile_id"
+    ] = "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05"
 
     p.note_source_datasets(
         "telemetry",

@@ -51,7 +51,7 @@ def assert_expected_eo3_path(
         expected_doc,
         expected_path,
         # We check the geometry below
-        ignore_fields=("geometry",) + tuple(ignore_fields),
+        ignore_fields=("geometry", *ignore_fields),
     )
 
     if "geometry" not in ignore_fields:
@@ -93,7 +93,7 @@ def assert_expected_eo3(
         )
     e = serialise.to_doc(expected_doc)
     g = serialise.to_doc(given_doc)
-    for f in ("geometry",) + ignore_fields:
+    for f in ("geometry", *ignore_fields):
         e.pop(f)
         g.pop(f)
     assert_same(g, e)
@@ -197,12 +197,12 @@ def format_doc_diffs(left: Dict, right: Dict) -> Iterable[str]:
         out.append("Added fields:")
         for offset in doc_diffs.tree["dictionary_item_added"].items:
             offset: DiffLevel
-            out.append(f"    {clean_offset(offset.path())} = {repr(offset.t2)}")
+            out.append(f"    {clean_offset(offset.path())} = {offset.t2!r}")
     if "dictionary_item_removed" in doc_diffs:
         out.append("Removed fields:")
         for offset in doc_diffs.tree["dictionary_item_removed"].items:
             offset: DiffLevel
-            out.append(f"    {clean_offset(offset.path())} = {repr(offset.t1)}")
+            out.append(f"    {clean_offset(offset.path())} = {offset.t1!r}")
     # Anything we missed from the (sometimes changing) diff api?
     if len(out) == 1:
         out.append(repr(doc_diffs))

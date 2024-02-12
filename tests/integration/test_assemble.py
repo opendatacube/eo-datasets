@@ -18,7 +18,6 @@ from ruamel import yaml
 from eodatasets3 import DatasetAssembler, DatasetPrepare, namer, serialise
 from eodatasets3.images import GridSpec
 from eodatasets3.model import DatasetDoc
-
 from tests import assert_file_structure
 from tests.common import assert_expected_eo3_path, assert_same
 
@@ -497,7 +496,7 @@ def test_add_source_dataset(tmp_path: Path, inherit_geom):
         / "data/wofs/ga_ls_wofs_3_099081_2020-07-26_interim_water_clipped.tif",
     )
 
-    id, path = p.done()
+    dataset_uuid, path = p.done()
 
     output = serialise.from_path(path)
     if inherit_geom:

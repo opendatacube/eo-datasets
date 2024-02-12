@@ -40,25 +40,25 @@ RES_GROUP_PATH = re.compile(r"(.*/RES-GROUP-\d+)/")
 
 
 @click.command(help=__doc__)
-@click.argument("input", type=PathPath(dir_okay=False, readable=True))
+@click.argument("input_path", type=PathPath(dir_okay=False, readable=True))
 @click.option("--factor", type=int, default=100)
 @click.option("--anti-alias/--no-anti-alias", is_flag=True, default=False)
-def downsample(input: Path, factor: int, anti_alias: bool):
+def downsample(input_path: Path, factor: int, anti_alias: bool):
     # Fail early if h5repack cli command is not available.
     from sh import gdal_translate, h5repack
 
-    granule_name = find_a_granule_name(input)
-    fmask_image = input.with_name(f"{granule_name}.fmask.img")
+    granule_name = find_a_granule_name(input_path)
+    fmask_image = input_path.with_name(f"{granule_name}.fmask.img")
 
     nbar_size = None
 
     # Create temporary directory
-    original = input.with_suffix(".original.h5")
+    original = input_path.with_suffix(".original.h5")
     secho(f"Creating backup to {original.name}")
-    shutil.copy(input, original)
+    shutil.copy(input_path, original)
 
     try:
-        with h5py.File(input, "r+") as f:
+        with h5py.File(input_path, "r+") as f:
             image_paths = find_h5_paths(f, "IMAGE")
             secho(f"Found {len(image_paths)} images")
             for i, image_path in enumerate(image_paths):
@@ -109,12 +109,12 @@ def downsample(input: Path, factor: int, anti_alias: bool):
             raise ValueError("No nbar image found?")
 
         # We need to repack the file to actually free up the space.
-        repacked = input.with_suffix(".repacked.h5")
-        h5repack("-f", "GZIP=5", input, repacked)
-        repacked.rename(input)
+        repacked = input_path.with_suffix(".repacked.h5")
+        h5repack("-f", "GZIP=5", input_path, repacked)
+        repacked.rename(input_path)
     except Exception:
         secho("Restoring backup")
-        original.rename(input)
+        original.rename(input_path)
         raise
 
     if fmask_image.exists():

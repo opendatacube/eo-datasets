@@ -43,7 +43,7 @@ def is_supported_document_type(path):
     False
     """
     return any(
-        [str(path).lower().endswith(suffix) for suffix in _ALL_SUPPORTED_EXTENSIONS]
+        str(path).lower().endswith(suffix) for suffix in _ALL_SUPPORTED_EXTENSIONS
     )
 
 
@@ -159,9 +159,7 @@ def read_documents(*paths: Path) -> Generator[Tuple[Path, Dict], None, None]:
                 yield path, json.load(f)
             else:
                 raise ValueError(
-                    "Unknown document type for {}; expected one of {!r}.".format(
-                        path.name, _ALL_SUPPORTED_EXTENSIONS
-                    )
+                    f"Unknown document type for {path.name}; expected one of {_ALL_SUPPORTED_EXTENSIONS!r}."
                 )
 
 

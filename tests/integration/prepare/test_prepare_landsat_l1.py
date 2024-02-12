@@ -6,7 +6,6 @@ from typing import Callable, Dict
 import pytest
 
 from eodatasets3.prepare import landsat_l1_prepare
-
 from tests.common import check_prepare_outputs, run_prepare_cli
 
 LC08_L2_C2_POST_20210507_INPUT_PATH: Path = (
@@ -857,7 +856,7 @@ def expected_lt05_l2_c2_folder():
             "eo:sun_elevation": 41.583_263_99,
             "landsat:algorithm_source_surface_reflectance": "LEDAPS_3.4.0",
             "landsat:collection_category": "T1",
-            "landsat:collection_number": int(2),
+            "landsat:collection_number": 2,
             "landsat:data_type": "L2SP",
             "landsat:geometric_rmse_model_x": 3.085,
             "landsat:geometric_rmse_model_y": 2.977,
@@ -983,7 +982,7 @@ def expected_le07_l2_c2_folder():
             "eo:sun_elevation": 31.970_873_9,
             "landsat:algorithm_source_surface_reflectance": "LEDAPS_3.4.0",
             "landsat:collection_category": "T1",
-            "landsat:collection_number": int(2),
+            "landsat:collection_number": 2,
             "landsat:data_type": "L2SP",
             "landsat:geometric_rmse_model_x": 3.08,
             "landsat:geometric_rmse_model_y": 3.663,

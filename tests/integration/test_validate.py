@@ -223,8 +223,8 @@ class ValidateRunner:
         ), f"Expected validation to fail.\n{self.result.output}"
 
         if codes is not None:
-            assert sorted(codes) == sorted(
-                self.messages.keys()
+            assert (
+                sorted(codes) == sorted(self.messages.keys())
             ), f"{sorted(codes)} != {sorted(self.messages.keys())}. Messages: {self.messages}"
         else:
             assert (

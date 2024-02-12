@@ -135,9 +135,9 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
     # Pytest has better error messages for strings than Paths.
     all_output_files = [str(p) for p in output_base.rglob("*") if p.is_file()]
 
-    assert (
-        len(all_output_files) == 1
-    ), "Expected one output tar file. Got: \n\t" + "\n\t".join(all_output_files)
+    assert len(all_output_files) == 1, (
+        "Expected one output tar file. Got: \n\t" + "\n\t".join(all_output_files)
+    )
     assert all_output_files == [str(expected_output)]
 
     assert (
@@ -218,9 +218,9 @@ def test_recompress_dirty_dataset(tmp_path: Path):
     # Pytest has better error messages for strings than Paths.
     all_output_files = [str(p) for p in output_base.rglob("*") if p.is_file()]
 
-    assert (
-        len(all_output_files) == 1
-    ), "Expected one output tar file. Got: \n\t" + "\n\t".join(all_output_files)
+    assert len(all_output_files) == 1, (
+        "Expected one output tar file. Got: \n\t" + "\n\t".join(all_output_files)
+    )
     assert all_output_files == [str(expected_output)]
 
     assert (

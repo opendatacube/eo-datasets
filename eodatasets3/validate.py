@@ -544,7 +544,7 @@ def validate_product(doc: Dict) -> ValidationMessages:
                 if measurements_with_this_name:
                     seen_in = " and ".join(
                         repr(s)
-                        for s in ([measurement_name] + measurements_with_this_name)
+                        for s in ([measurement_name, *measurements_with_this_name])
                     )
 
                     # If the same name is used by different measurements, its a hard error.

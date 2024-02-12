@@ -184,7 +184,7 @@ def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
             masks: BandMasks = {}
             # Convert the raw mask offsets to loadable fiona paths.
             for band_id in list(mtd_dict.keys()):
-                type, location = mtd_dict[band_id]
+                type_, location = mtd_dict[band_id]
                 mask_offset = join(product_root, location)
                 if mask_offset not in z.namelist():
                     mask_offset = str(
@@ -197,7 +197,7 @@ def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
                 if info.file_size < 500:
                     continue
                 masks[band_id] = (
-                    type,
+                    type_,
                     f"zip+file://{level1_data_path.as_posix()}!/{mask_offset}",
                 )
         return masks
@@ -208,7 +208,7 @@ def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
         )
         masks: BandMasks = {}
         for band_id in list(mtd_dict.keys()):
-            type, location = mtd_dict[band_id]
+            type_, location = mtd_dict[band_id]
             mask_path = level1_data_path / location
             # Sinergise use the original ESA metadata document, but have a new directory structure
             # So the metadata mask locations are (always?) wrong.
@@ -219,7 +219,7 @@ def get_quality_masks(dataset: h5py.Dataset, granule: "Granule") -> BandMasks:
             # Skip small ones. See reasoning in ESA block above.
             if mask_path.stat().st_size < 500:
                 continue
-            masks[band_id] = (type, mask_path.as_posix())
+            masks[band_id] = (type_, mask_path.as_posix())
         return masks
     else:
         raise RuntimeError(
@@ -248,19 +248,19 @@ def load_and_mask_data(g: h5py.Dataset, masks: BandMasks):
         data_array = g[:] if hasattr(g, "chunks") else g
         return data_array
 
-    type, mask_string_path = masks[esa_band]
-    if type == "MSK_TECQUA":
+    type_, mask_string_path = masks[esa_band]
+    if type_ == "MSK_TECQUA":
         return mask_h5_vector(
             g,
             mask_string_path,
         )
-    elif type == "MSK_QUALIT":
+    elif type_ == "MSK_QUALIT":
         return mask_h5_raster(
             g,
             mask_string_path,
         )
     else:
-        raise ValueError(f"unknown mask type {type}")
+        raise ValueError(f"unknown mask type {type_}")
 
 
 def mask_h5_vector(
@@ -1095,7 +1095,7 @@ def _read_wagl_metadata(granule_group: h5py.Group):
 
     for i, path in enumerate(ancil_paths, start=2):
         wagl_doc.setdefault(f"wagl_{i}", {}).update(
-            list(loads_yaml(granule_group[path][()]))[0]["ancillary"]
+            next(iter(loads_yaml(granule_group[path][()])))["ancillary"]
         )
     return wagl_doc
 

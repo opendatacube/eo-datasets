@@ -36,20 +36,20 @@ def parse_xml(filepath: Path):
     end_date = root.find("*//RangeDateTime/RangeEndingDate").text
     end_time = root.find("*//RangeDateTime/RangeEndingTime").text
     v_tile = (
-        [
+        next(
             ele
             for ele in root.findall("*//PSA")
             if ele.find("PSAName").text == "VERTICALTILENUMBER"
-        ][0]
+        )
         .find("PSAValue")
         .text
     )
     h_tile = (
-        [
+        next(
             ele
             for ele in root.findall("*//PSA")
             if ele.find("PSAName").text == "HORIZONTALTILENUMBER"
-        ][0]
+        )
         .find("PSAValue")
         .text
     )

@@ -10,7 +10,18 @@ from copy import deepcopy
 from enum import Enum, auto
 from pathlib import Path, PosixPath, PurePath
 from textwrap import dedent
-from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 from urllib.parse import urlsplit
 
 import numpy
@@ -147,7 +158,7 @@ class DatasetPrepare(Eo3Interface):
     #:
     #: These are fields that are inherent to the underlying observation, and so will
     #: still be relevant after most 1:1 processing.
-    INHERITABLE_PROPERTIES = {
+    INHERITABLE_PROPERTIES: ClassVar[Set[str]] = {
         "datetime",
         "dtr:end_datetime",
         "dtr:start_datetime",
@@ -453,7 +464,8 @@ class DatasetPrepare(Eo3Interface):
     def __enter__(self) -> "DatasetPrepare":
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb): ...
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        ...
 
     @property
     def collection_location(self) -> Path:
