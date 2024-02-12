@@ -7,7 +7,6 @@ import pytest
 
 from eodatasets3 import serialise
 from eodatasets3.scripts import tostac
-
 from tests.common import assert_same, run_prepare_cli
 
 TO_STAC_DATA: Path = Path(__file__).parent.joinpath("data/tostac")
@@ -77,10 +76,10 @@ def remove_stac_properties(doc: Dict, remove_properties=()):
     Remove the given fields from properties and assets.
     """
 
-    def remove_proj(dict: Dict):
-        for key in list(dict.keys()):
+    def remove_proj(d: Dict):
+        for key in list(d.keys()):
             if key in remove_properties:
-                del dict[key]
+                del d[key]
 
     remove_proj(doc["properties"])
     for name, asset in doc["assets"].items():

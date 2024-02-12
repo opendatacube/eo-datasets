@@ -262,7 +262,7 @@ def get_mtl_content(acquisition_path: Path, root_element=None) -> Tuple[Dict, st
                         mtl_doc, file_root_element = read_mtl(fp)
                         return mtl_doc, file_root_element, member.name
             else:
-                raise RuntimeError(f"MTL file not found in {str(acquisition_path)}")
+                raise RuntimeError(f"MTL file not found in {acquisition_path!s}")
 
     else:
         paths = list(acquisition_path.rglob("*_MTL.txt"))
@@ -318,7 +318,7 @@ def read_mtl(fp: Iterable[Union[str, bytes]], root_element=None) -> Tuple[Dict, 
 
     tree = _parse_group(fp)
     if root_element is None:
-        root_element = list(tree.keys())[0]
+        root_element = next(iter(tree.keys()))
     return tree[root_element], root_element
 
 
@@ -493,8 +493,7 @@ def prepare_and_write(
                     usgs_file_type.startswith("band_")
                     and (
                         # The older collection called quality a "band"
-                        "quality"
-                        not in usgs_file_type
+                        "quality" not in usgs_file_type
                     )
                 ),
             )

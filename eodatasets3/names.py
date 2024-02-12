@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Mapping, Optional, Sequence, Set, Union
+from typing import ClassVar, Dict, Mapping, Optional, Sequence, Set, Union
 from urllib.parse import quote, unquote, urlparse
 
 import datacube.utils.uris as dc_uris
@@ -98,7 +98,7 @@ class LazyLabel:
 
 class LazyPlatformAbbreviation:
     # The abbreviations mentioned in DEA naming conventions doc.
-    KNOWN_PLATFORM_ABBREVIATIONS = {
+    KNOWN_PLATFORM_ABBREVIATIONS: ClassVar[Dict[str, str]] = {
         "landsat-5": "ls5",
         "landsat-7": "ls7",
         "landsat-8": "ls8",
@@ -112,7 +112,7 @@ class LazyPlatformAbbreviation:
     }
 
     # If all platform (abbreviations) match a pattern, return this group name instead.
-    KNOWN_PLATFORM_GROUPINGS = {
+    KNOWN_PLATFORM_GROUPINGS: ClassVar[Dict[str, re.Pattern]] = {
         "ls": re.compile(r"ls\d+"),
         "s1": re.compile(r"s1[a-z]+"),
         "s2": re.compile(r"s2[a-z]+"),
@@ -227,7 +227,7 @@ class LazyInstrumentAbbreviation:
 
 
 class LazyProducerAbbreviation:
-    KNOWN_PRODUCER_ABBREVIATIONS = {
+    KNOWN_PRODUCER_ABBREVIATIONS: ClassVar[Dict[str, str]] = {
         "ga.gov.au": "ga",
         "usgs.gov": "usgs",
         "sinergise.com": "sinergise",
@@ -334,7 +334,8 @@ class LazyDatasetLocation:
         return f"{c.collection_prefix}/{offset}/"
 
 
-class MissingRequiredFields(ValueError): ...
+class MissingRequiredFieldsError(ValueError):
+    ...
 
 
 class RequiredPropertyDict(Eo3Dict):
@@ -349,7 +350,7 @@ class RequiredPropertyDict(Eo3Dict):
     """
 
     # Displayed to user for friendlier errors.
-    _REQUIRED_PROPERTY_HINTS = {
+    _REQUIRED_PROPERTY_HINTS: ClassVar[Dict[str, str]] = {
         "odc:product_family": 'eg. "wofs" or "level1"',
         "odc:processing_datetime": "Time of processing, perhaps datetime.utcnow()?",
         "odc:producer": "Creator of data, eg 'usgs.gov' or 'ga.gov.au'",
@@ -391,7 +392,7 @@ class RequiredPropertyDict(Eo3Dict):
                     hint = f" ({hint})"
                 examples.append(f"\n- {p!r}{hint}")
 
-            raise MissingRequiredFields(
+            raise MissingRequiredFieldsError(
                 f"Need more properties to fulfill naming conventions."
                 f"{''.join(examples)}"
             )
@@ -541,7 +542,7 @@ class NamingConventions:
 
     """
 
-    _ABSOLUTE_MINIMAL_PROPERTIES = {
+    _ABSOLUTE_MINIMAL_PROPERTIES: ClassVar[Set[str]] = {
         "odc:product_family",
         # Required by Stac regardless.
         "datetime",

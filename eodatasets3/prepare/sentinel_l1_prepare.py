@@ -899,8 +899,7 @@ def main(
 
                     if always_granule_id or (
                         # None means 'auto': ie. automatically include granule id when there are multiple granules
-                        always_granule_id is None
-                        and len(granule_offsets) > 1
+                        always_granule_id is None and len(granule_offsets) > 1
                     ):
                         yaml_filename = (
                             f"{found_dataset.name}.{granule_offset}.odc-metadata.yaml"

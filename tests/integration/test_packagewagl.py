@@ -14,10 +14,10 @@ from rio_cogeo import cogeo
 
 import eodatasets3
 from eodatasets3.model import DatasetDoc
-
-from . import assert_image
 from tests import assert_file_structure
 from tests.common import assert_expected_eo3_path, assert_same_as_file
+
+from . import assert_image
 
 h5py = pytest.importorskip(
     "h5py",

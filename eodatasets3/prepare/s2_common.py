@@ -150,7 +150,10 @@ class RegionLookup:
 
         def vals(path: Path):
             i = FolderInfo.for_path(path)
-            return i.area_tuple + (i.region_code,)
+            return (
+                *i.area_tuple,
+                i.region_code,
+            )
 
         res = s.executemany(
             "insert into regions values (?,?,?,?,?) on conflict do nothing",

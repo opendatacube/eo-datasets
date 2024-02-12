@@ -4,27 +4,15 @@ exclude: tests/integration/data
 
 repos:
     # Normalise all Python code. (Black + isort + pyupgrade + autoflake)
-    - repo: https://github.com/Zac-HD/shed
-      rev: 2023.6.1
+    - repo: https://github.com/astral-sh/ruff-pre-commit
+      rev: v0.2.1
       hooks:
-      - id: shed
-    - repo: https://github.com/PyCQA/flake8
-      # flake8 version should match .travis.yml
-      rev: 7.0.0
-      hooks:
-          - id: flake8
-            additional_dependencies:
-                  - dlint # Check common security issues
-                  - flake8-broken-line # Don't escape newlines. (surround in parens or simplify)
-                  - flake8-debugger # Don't commit debugger calls
-                  - flake8-executable # Check shebangs and executable permissions
-                  - flake8-logging-format # Use log arguments, not string format
-                  - flake8-pep3101 # Don't use old string % formatting
-                  - flake8-pytest # Use plain assert, not unittest assertions
-                  - pep8-naming # Follow pep8 naming rules (eg. function names lowercase)
+       - id: ruff
+         args: [--fix, --show-fixes, --output-format, grouped]
+       - id: ruff-format
     # Common Python security checks. (this is complementary to dlint in flake8)
     - repo: https://github.com/PyCQA/bandit
-      rev: '1.7.6'
+      rev: '1.7.7'
       hooks:
         - id: bandit
           exclude: '^tests/|_version.py|versioneer.py'

@@ -461,8 +461,8 @@ class ClickDatetime(click.ParamType):
         except ValueError:
             self.fail(
                 (
-                    "Invalid date string {!r}. Expected any ISO date/time format "
-                    '(eg. "2017-04-03" or "2014-05-14 12:34")'.format(value)
+                    f"Invalid date string {value!r}. Expected any ISO date/time format "
+                    '(eg. "2017-04-03" or "2014-05-14 12:34")'
                 ),
                 param,
                 ctx,

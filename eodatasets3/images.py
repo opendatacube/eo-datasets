@@ -7,6 +7,7 @@ from collections import defaultdict
 from enum import Enum, auto
 from pathlib import Path, PurePath
 from typing import (
+    ClassVar,
     Dict,
     Generator,
     Iterable,
@@ -563,7 +564,7 @@ class FileWrite:
     This code is derived from the old eugl packaging code and can probably be improved.
     """
 
-    PREDICTOR_DEFAULTS = {
+    PREDICTOR_DEFAULTS: ClassVar[Dict[str, int]] = {
         "int8": 2,
         "uint8": 2,
         "int16": 2,
