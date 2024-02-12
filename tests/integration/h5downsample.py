@@ -6,6 +6,7 @@ It modifies the file in-place!
 (Intended for creating test datasets where the pixels don't
 matter much but the structure does. The downsampling is dirty.)
 """
+
 import re
 import shutil
 from pathlib import Path

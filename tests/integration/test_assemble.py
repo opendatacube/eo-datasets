@@ -4,6 +4,7 @@ Basic tests of DatasetAssembler.
 Some features are testsed in other sibling test files, such as alternative
 naming conventions.
 """
+
 from datetime import datetime, timezone
 from pathlib import Path
 from pprint import pprint
