@@ -146,7 +146,7 @@ class GridSpec:
         return cls(
             shape=shape,
             transform=dataset.geobox.transform,
-            crs=CRS.from_wkt(dataset.geobox.crs.crs_str),
+            crs=CRS.from_wkt(str(dataset.geobox.crs)),
         )
 
     @classmethod
