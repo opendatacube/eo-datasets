@@ -1365,7 +1365,7 @@ class DatasetAssembler(DatasetPrepare):
         The main requirement is that the Dataset contains a CRS attribute
         and X/Y or lat/long dimensions and coordinates. These are used to
         create an ODC GeoBox.
-        
+
         Nodata values will be taken from the ".nodata" attribute on each
         individual array if it exists and no custom nodata value is provided.
 
@@ -1378,9 +1378,11 @@ class DatasetAssembler(DatasetPrepare):
         for name, dataarray in dataset.data_vars.items():
             name: str
 
-            # Get nodata attribute from array if nodata is not provided 
+            # Get nodata attribute from array if nodata is not provided
             # and attribute is not None
-            nodata_value = dataarray.attrs.get('nodata', None) if nodata is None else nodata
+            nodata_value = (
+                dataarray.attrs.get("nodata", None) if nodata is None else nodata
+            )
 
             self._write_measurement(
                 name,
