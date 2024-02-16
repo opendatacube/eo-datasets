@@ -1366,6 +1366,9 @@ class DatasetAssembler(DatasetPrepare):
         and X/Y or lat/long dimensions and coordinates. These are used to
         create an ODC GeoBox.
 
+        Nodata values will be taken from the ".nodata" attribute on each
+        individual array if it exists and no custom nodata value is provided.
+
         :param xarray.Dataset dataset: an xarray dataset (as returned by
                 :meth:`datacube.Datacube.load` and other methods)
 
@@ -1374,6 +1377,13 @@ class DatasetAssembler(DatasetPrepare):
         grid_spec = images.GridSpec.from_odc_xarray(dataset)
         for name, dataarray in dataset.data_vars.items():
             name: str
+
+            # Get nodata attribute from array if nodata is not provided
+            # and attribute is not None
+            nodata_value = (
+                dataarray.attrs.get("nodata", None) if nodata is None else nodata
+            )
+
             self._write_measurement(
                 name,
                 dataarray.data,
@@ -1385,7 +1395,7 @@ class DatasetAssembler(DatasetPrepare):
                 expand_valid_data=expand_valid_data,
                 overview_resampling=overview_resampling,
                 overviews=overviews,
-                nodata=nodata,
+                nodata=nodata_value,
             )
 
     def _write_measurement(
