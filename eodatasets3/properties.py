@@ -65,6 +65,15 @@ def datetime_type(value):
 def of_enum_type(
     vals: Union[EnumMeta, Tuple[str, ...]] = None, lower=False, upper=False, strict=True
 ) -> Callable[[str], str]:
+    """
+    A String value with a fixed set of known values.
+
+    :param vals: The set of allowed values. Can be an Enum class or a tuple of strings.
+    :param lower: Automatically normalise values to lowercase
+    :param upper: Automatically normalise values to uppercase
+    :param strict: raise a ValueError if the value is not in the list of allowed values
+                   (If not strict, you're just using this for warnings)
+    """
     if isinstance(vals, EnumMeta):
         vals = tuple(vals.__members__.keys())
 
@@ -282,6 +291,20 @@ _SENTINEL_EXTENDED_PROPS = {
     "sinergise_product_id": None,
 }
 
+_DERIVATIVE_PRODUCT_PROPS = {
+    "intertidal:category": of_enum_type(
+        ("mesotidal", "macrotidal", "microtidal"), lower=True, strict=False
+    ),
+    "intertidal:hat": float,
+    "intertidal:hot": float,
+    "intertidal:lat": float,
+    "intertidal:lot": float,
+    "intertidal:offset_high": float,
+    "intertidal:offset_low": float,
+    "intertidal:otr": float,
+    "intertidal:spread": float,
+    "intertidal:tr": float,
+}
 
 _STAC_MISC_PROPS = {
     "providers": None,  # https://github.com/radiantearth/stac-spec/blob/master/item-spec/common-metadata.md#provider,
@@ -342,6 +365,7 @@ class Eo3Dict(collections.abc.MutableMapping):
         **_LANDSAT_EXTENDED_PROPS,
         **_GQA_FMASK_PROPS,
         **_SENTINEL_EXTENDED_PROPS,
+        **_DERIVATIVE_PRODUCT_PROPS,
         **_STAC_MISC_PROPS,
     }
 
