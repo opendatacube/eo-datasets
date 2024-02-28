@@ -37,7 +37,7 @@ ignore = [
 # ...  but only enforce line length to be under this larger 120 limit.
 pycodestyle.max-line-length = 120
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "docs/conf.py" = ["A001"] # Variable `copyright` shadowing a Python builtin (needed for api)
 
 [tool.black]
