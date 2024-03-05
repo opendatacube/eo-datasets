@@ -21,7 +21,7 @@ def parse_xml(filepath: Path):
     Extracts metadata attributes from the xml document distributed
     alongside the MCD43A1 tiles.
     """
-    root = ElementTree.parse(str(filepath), forbid_dtd=True).getroot()
+    root = ElementTree.parse(str(filepath), forbid_dtd=False).getroot()
 
     granule_id = root.find("*//ECSDataGranule/LocalGranuleID").text
     instrument = root.find("*//Platform/Instrument/InstrumentShortName").text
