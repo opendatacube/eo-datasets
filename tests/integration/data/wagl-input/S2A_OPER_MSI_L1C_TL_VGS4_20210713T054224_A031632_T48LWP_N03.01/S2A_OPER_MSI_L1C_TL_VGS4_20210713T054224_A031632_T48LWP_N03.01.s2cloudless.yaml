@@ -1,0 +1,13 @@
+parameters:
+    average_over: 4
+    dilation_size: 2
+    threshold: 0.4
+percent_class_distribution:
+    clear: 27.831355574173696
+    cloud: 72.1686444258263
+software_versions:
+    eugl:
+        version: embedded
+    s2cloudless:
+        repo_url: null
+        version: 1.7.1

@@ -136,8 +136,7 @@ def assert_same_as_file(expected_doc: Dict, generated_file: Path, ignore_fields=
 
     assert generated_file.exists(), f"Expected file to exist {generated_file.name}"
 
-    with generated_file.open("r") as f:
-        generated_doc = yaml.YAML(typ="safe").load(f)
+    generated_doc = load_yaml(generated_file)
 
     expected_doc = dict(expected_doc)
     for field in ignore_fields:
@@ -149,6 +148,12 @@ def assert_same_as_file(expected_doc: Dict, generated_file: Path, ignore_fields=
     expected_doc = dump_roundtrip(expected_doc)
     generated_doc = dump_roundtrip(generated_doc)
     assert_same(generated_doc, expected_doc)
+
+
+def load_yaml(generated_file):
+    with generated_file.open("r") as f:
+        generated_doc = yaml.YAML(typ="safe").load(f)
+    return generated_doc
 
 
 def run_prepare_cli(invoke_script, *args, expect_success=True) -> Result:

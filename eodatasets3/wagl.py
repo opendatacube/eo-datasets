@@ -1102,9 +1102,13 @@ def _read_wagl_metadata(granule_group: h5py.Group):
 
 def _apply_wagl_metadata(p: DatasetAssembler, wagl_doc: Dict):
     source = wagl_doc["source_datasets"]
+
     p.datetime = source["acquisition_datetime"]
     p.platform = source["platform_id"]
     p.instrument = source["sensor_id"]
+
+    if "processing_region" in wagl_doc:
+        p.properties["dea:processing_region"] = wagl_doc["processing_region"]
 
     try:
         p.processed = get_path(wagl_doc, ("system_information", "time_processed"))
