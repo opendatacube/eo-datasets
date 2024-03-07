@@ -464,8 +464,7 @@ class DatasetPrepare(Eo3Interface):
     def __enter__(self) -> "DatasetPrepare":
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        ...
+    def __exit__(self, exc_type, exc_val, exc_tb): ...
 
     @property
     def collection_location(self) -> Path:
