@@ -430,14 +430,16 @@ class MeasurementBundler:
         grid_docs: Dict[str, GridDoc] = {}
         measurement_docs: Dict[str, MeasurementDoc] = {}
         crs = None
+
         for grid_name, (grid, measurements) in self._as_named_grids().items():
             # Validate assumption: All grids should have same CRS
             if crs is None:
                 crs = grid.crs
+
             # TODO: CRS equality is tricky. This may not work.
             #       We're assuming a group of measurements specify their CRS
             #       the same way if they are the same.
-            elif grid.crs != crs:
+            elif (grid.crs is not None) and grid.crs != crs:
                 raise ValueError(
                     f"Measurements have different CRSes in the same dataset:\n"
                     f"\t{crs.to_string()!r}\n"
