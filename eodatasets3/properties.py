@@ -331,6 +331,9 @@ class Eo3Dict(collections.abc.MutableMapping):
         "datetime": datetime_type,
         "dea:dataset_maturity": of_enum_type(("final", "interim", "nrt"), lower=True),
         "dea:product_maturity": of_enum_type(("stable", "provisional"), lower=True),
+        "dea:processing_region": of_enum_type(
+            ("continental_australia", "offshore_territories"), lower=True, strict=False
+        ),
         "dtr:end_datetime": datetime_type,
         "dtr:start_datetime": datetime_type,
         "eo:azimuth": float,

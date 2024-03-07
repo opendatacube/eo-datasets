@@ -15,7 +15,7 @@ from rio_cogeo import cogeo
 import eodatasets3
 from eodatasets3.model import DatasetDoc
 from tests import assert_file_structure
-from tests.common import assert_expected_eo3_path, assert_same_as_file
+from tests.common import assert_expected_eo3_path, assert_same_as_file, load_yaml
 
 from . import assert_image
 
@@ -27,36 +27,33 @@ h5py = pytest.importorskip(
 
 # These test datasets come from running `tests/integration/h5downsample.py` on a real
 # wagl output.
+_WAGL_TEST_DATA = Path(__file__).parent / "data/wagl-input"
 WAGL_LANDSAT_OUTPUT: Path = (
-    Path(__file__).parent
-    / "data/wagl-input/LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
+    _WAGL_TEST_DATA / "LC80920842016180LGN01/LC80920842016180LGN01.wagl.h5"
 )
 WAGL_ESA_SENTINEL_OUTPUT: Path = (
-    Path(__file__).parent
-    / "data/wagl-input/S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09/"
+    _WAGL_TEST_DATA / "S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09/"
     "S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09.wagl.h5"
 )
 
 WAGL_SINERGISE_SENTINEL_OUTPUT: Path = (
-    Path(__file__).parent
-    / "data/wagl-input/S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/"
+    _WAGL_TEST_DATA / "S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00/"
     "S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00.wagl.h5"
 )
 
 
 # The matching Level1 metadata (produced by landsat_l1_prepare.py)
 L1_METADATA_PATH: Path = (
-    Path(__file__).parent
-    / "data/wagl-input/LC08_L1TP_092084_20160628_20170323_01_T1.yaml"
+    _WAGL_TEST_DATA / "LC08_L1TP_092084_20160628_20170323_01_T1.yaml"
 )
 
 S2_ESA_L1_METADATA_PATH: Path = (
-    Path(__file__).parent
-    / "data/wagl-input/S2A_MSIL1C_20201031T004711_N0209_R102_T53JQJ_20201031T022859.odc-metadata.yaml"
+    _WAGL_TEST_DATA
+    / "S2A_MSIL1C_20201031T004711_N0209_R102_T53JQJ_20201031T022859.odc-metadata.yaml"
 )
 S2_SINERGISE_L1_METADATA_PATH: Path = (
-    Path(__file__).parent
-    / "data/wagl-input/S2B_MSIL1C_20210425T235239_N0300_R130_T56JMQ_20210426T010904.odc-metadata.yaml"
+    _WAGL_TEST_DATA
+    / "S2B_MSIL1C_20210425T235239_N0300_R130_T56JMQ_20210426T010904.odc-metadata.yaml"
 )
 
 
@@ -1569,3 +1566,30 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path):
         proc_info,
         ignore_fields=("gqa", "wagl"),
     )
+
+
+def test_offshore_wagl_package(tmp_path: Path):
+    """
+    It should translate the offshore territories tag when the dataset has one.
+    """
+    _run_wagl(
+        (
+            _WAGL_TEST_DATA
+            / "S2A_OPER_MSI_L1C_TL_VGS4_20210713T054224_A031632_T48LWP_N03.01"
+            / "S2A_OPER_MSI_L1C_TL_VGS4_20210713T054224_A031632_T48LWP_N03.01.wagl.h5",
+            "--level1",
+            _WAGL_TEST_DATA
+            / "S2A_MSIL1C_20210713T032051_N0301_R032_T48LWP_20210713T054224.odc-metadata.yaml",
+            "--output",
+            tmp_path,
+            # Our weird scaled test dataset resolution
+            "--oa-resolution",
+            998.1818181818181,
+            "--contiguity-resolution",
+            998.1818181818181,
+        )
+    )
+
+    [output_metadata] = (tmp_path / "ga_s2am_ard_3").rglob("*.odc-metadata.yaml")
+    doc = load_yaml(output_metadata)
+    assert doc["properties"]["dea:processing_region"] == "offshore_territories"

@@ -1,0 +1,16 @@
+parameters:
+    cloud_buffer_distance_metres: 0.0
+    cloud_shadow_buffer_distance_metres: 0.0
+    frantz_parallax_sentinel_2: false
+percent_class_distribution:
+    clear: 0.011040622935796248
+    cloud: 90.0387662717726
+    cloud_shadow: 0.4480671143142754
+    snow: 0.0013641263890381973
+    water: 9.500761864588277
+software_versions:
+    eugl:
+        version: embedded
+    fmask:
+        repo_url: https://www.pythonfmask.org/
+        version: 0.5.7

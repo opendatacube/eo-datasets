@@ -1,0 +1,43 @@
+colors:
+    blue: 0.0
+    green: 0.0
+    red: 14.0
+    teal: 0.0
+    yellow: 0.0
+error_message: no errors
+final_qa_count: 5
+granule: S2A_OPER_MSI_L1C_TL_VGS4_20210713T054224_A031632_T48LWP_N03.01
+ref_date: '2018-12-20T00:00:00+00:00'
+ref_source: GQA_v3
+ref_source_path: /g/data/v10/eoancillarydata-2/GCP/GQA_v3/wrs2/123/067/LC81230672018354LGN00_B6.TIF
+residual:
+    abs:
+        x: 4.15
+        xy: 16.41
+        y: 15.87
+    abs_iterative_mean:
+        x: 2.49
+        xy: 15.21
+        y: 15.0
+    cep90: 16.81
+    iterative_mean:
+        x: 1.19
+        xy: 15.05
+        y: 15.0
+    iterative_stddev:
+        x: 3.2
+        xy: 3.51
+        y: 1.44
+    mean:
+        x: 2.23
+        xy: 16.03
+        y: 15.87
+    stddev:
+        x: 4.48
+        xy: 6.19
+        y: 4.27
+software_versions:
+    eugl:
+        version: embedded
+    gverify:
+        version: v0.25c
