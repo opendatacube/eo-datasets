@@ -2,6 +2,7 @@ from binascii import crc32
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from pprint import pprint
 from textwrap import indent
 
 import pytest
@@ -1592,4 +1593,5 @@ def test_offshore_wagl_package(tmp_path: Path):
 
     [output_metadata] = (tmp_path / "ga_s2am_ard_3").rglob("*.odc-metadata.yaml")
     doc = load_yaml(output_metadata)
-    assert doc["properties"]["dea:processing_region"] == "offshore_territories"
+    pprint(doc)
+    assert doc["properties"]["dea:final_ancillaries"] == "nonstandard"
