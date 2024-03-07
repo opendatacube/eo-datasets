@@ -448,9 +448,9 @@ def test_filter_folder_structure_info(
     # Our output metadata is in a different place than the data, so we expect it to
     # embed the true location in the metadata (by default)
     if input_dataset_path.is_dir():
-        expected_metadata_doc[
-            "location"
-        ] = f"file://{input_dataset_path.as_posix()}/tileInfo.json"
+        expected_metadata_doc["location"] = (
+            f"file://{input_dataset_path.as_posix()}/tileInfo.json"
+        )
     else:
         expected_metadata_doc["location"] = f"zip:{input_dataset_path}!/"
 

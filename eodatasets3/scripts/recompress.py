@@ -7,6 +7,7 @@ They arrive as a *.tar.gz with inner uncompressed tiffs, which Josh's tests have
 We compress the inner tiffs and store them in an uncompressed tar. This allows random reads within the files.
 We also append a checksum file at the end of the tar.
 """
+
 import copy
 import io
 import socket
