@@ -292,7 +292,7 @@ _SENTINEL_EXTENDED_PROPS = {
 }
 
 _DERIVATIVE_PRODUCT_PROPS = {
-    "intertidal:category": of_enum_type(
+    "intertidal:tr_class": of_enum_type(
         ("mesotidal", "macrotidal", "microtidal"), lower=True, strict=False
     ),
     "intertidal:hat": float,
