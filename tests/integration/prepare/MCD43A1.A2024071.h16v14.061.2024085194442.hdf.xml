@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE GranuleMetaDataFile SYSTEM "http://ecsinfo.gsfc.nasa.gov/ECSInfo/ecsmetadata/dtds/DPL/ECS/ScienceGranuleMetadata.dtd">
+<GranuleMetaDataFile>
+    <DTDVersion>1.0</DTDVersion>
+    <DataCenterId>EDC</DataCenterId>
+    <GranuleURMetaData>
+        <GranuleUR>SC:MCD43A1.061:2685748605</GranuleUR>
+        <DbID>2685748605</DbID>
+        <InsertTime>2024-03-25 14:55:23.768</InsertTime>
+        <LastUpdate>2024-03-25 14:55:23.768</LastUpdate>
+        <CollectionMetaData>
+            <ShortName>MCD43A1</ShortName>
+            <VersionID>61</VersionID>
+        </CollectionMetaData>
+        <DataFiles>
+            <DataFileContainer>
+                <DistributedFileName>MCD43A1.A2024071.h16v14.061.2024085194442.hdf</DistributedFileName>
+                <FileSize>676452</FileSize>
+                <ChecksumType>MD5</ChecksumType>
+                <Checksum>4818ec003af27c35be711c08e142dd7a</Checksum>
+                <ChecksumOrigin>DPLIngst</ChecksumOrigin>
+            </DataFileContainer>
+        </DataFiles>
+        <ECSDataGranule>
+            <SizeMBECSDataGranule>0.645114898681641</SizeMBECSDataGranule>
+            <ReprocessingPlanned>further update is anticipated</ReprocessingPlanned>
+            <ReprocessingActual>processed once</ReprocessingActual>
+            <LocalGranuleID>MCD43A1.A2024071.h16v14.061.2024085194442.hdf</LocalGranuleID>
+            <DayNightFlag>Both</DayNightFlag>
+            <ProductionDateTime>2024-03-25 19:47:10</ProductionDateTime>
+            <LocalVersionID>6.1.34</LocalVersionID>
+        </ECSDataGranule>
+        <PGEVersionClass>
+            <PGEVersion>6.1.13</PGEVersion>
+        </PGEVersionClass>
+        <RangeDateTime>
+            <RangeEndingTime>23:59:59.999000</RangeEndingTime>
+            <RangeEndingDate>2024-03-18</RangeEndingDate>
+            <RangeBeginningTime>00:00:00.000000</RangeBeginningTime>
+            <RangeBeginningDate>2024-03-11</RangeBeginningDate>
+        </RangeDateTime>
+        <SpatialDomainContainer>
+            <HorizontalSpatialDomainContainer>
+                <GPolygon>
+                    <Boundary>
+                        <Point>
+                            <PointLongitude>-30.9862</PointLongitude>
+                            <PointLatitude>-49.7344</PointLatitude>
+                        </Point>
+                        <Point>
+                            <PointLongitude>-15.4217</PointLongitude>
+                            <PointLatitude>-49.7431</PointLatitude>
+                        </Point>
+                        <Point>
+                            <PointLongitude>-19.897</PointLongitude>
+                            <PointLatitude>-60.026</PointLatitude>
+                        </Point>
+                        <Point>
+                            <PointLongitude>-40</PointLongitude>
+                            <PointLatitude>-60</PointLatitude>
+                        </Point>
+                    </Boundary>
+                </GPolygon>
+            </HorizontalSpatialDomainContainer>
+        </SpatialDomainContainer>
+        <PSAs>
+            <PSA>
+                <PSAName>TileID</PSAName>
+                <PSAValue>51016014</PSAValue>
+            </PSA>
+            <PSA>
+                <PSAName>HORIZONTALTILENUMBER</PSAName>
+                <PSAValue>16</PSAValue>
+            </PSA>
+            <PSA>
+                <PSAName>VERTICALTILENUMBER</PSAName>
+                <PSAValue>14</PSAValue>
+            </PSA>
+            <PSA>
+                <PSAName>identifier_product_doi</PSAName>
+                <PSAValue>10.5067/MODIS/MCD43A1.061</PSAValue>
+            </PSA>
+            <PSA>
+                <PSAName>identifier_product_doi_authority</PSAName>
+                <PSAValue>http://dx.doi.org</PSAValue>
+            </PSA>
+        </PSAs>
+        <BrowseProduct>
+            <BrowseGranuleId>UR:10:DsShESDTUR:UR:15:DsShSciServerUR:13:[EDC:DSSDSRV]:24:BR:Browse.001:2685748666</BrowseGranuleId>
+        </BrowseProduct>
+    </GranuleURMetaData>
+</GranuleMetaDataFile>

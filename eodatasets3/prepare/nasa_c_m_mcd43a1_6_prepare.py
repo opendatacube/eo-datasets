@@ -24,13 +24,28 @@ def parse_xml(filepath: Path):
     root = ElementTree.parse(str(filepath), forbid_dtd=False).getroot()
 
     granule_id = root.find("*//ECSDataGranule/LocalGranuleID").text
-    instrument = root.find("*//Platform/Instrument/InstrumentShortName").text
-    platform = "+".join(
-        sorted(
-            (ele.text for ele in root.findall("*//Platform/PlatformShortName")),
-            reverse=True,
+
+    collection_name = root.find("*//CollectionMetaData/ShortName").text
+    collection_version = root.find("*//CollectionMetaData/VersionID").text
+
+    instrument_node = root.find("*//Platform/Instrument/InstrumentShortName")
+
+    if instrument_node is not None:
+        instrument = instrument_node.text
+        platform = "+".join(
+            sorted(
+                (ele.text for ele in root.findall("*//Platform/PlatformShortName")),
+                reverse=True,
+            )
         )
-    )
+    elif collection_name.startswith("MCD43"):
+        instrument = "MODIS"
+        platform = "Terra+Aqua"
+    else:
+        raise ValueError(
+            f"Could not determine instrument and platform from collection name {collection_name}"
+        )
+
     start_date = root.find("*//RangeDateTime/RangeBeginningDate").text
     start_time = root.find("*//RangeDateTime/RangeBeginningTime").text
     end_date = root.find("*//RangeDateTime/RangeEndingDate").text
@@ -57,6 +72,7 @@ def parse_xml(filepath: Path):
     creation_dt = root.find("*//InsertTime").text
 
     return {
+        "collection_version": collection_version,
         "granule_id": granule_id,
         "instrument": instrument,
         "platform": platform,
@@ -131,38 +147,42 @@ def process_datasets(input_path: Path, xml_file: Path) -> Iterable[Dict]:
     xml_md = parse_xml(xml_file)
     ds_props = _get_dataset_properties(datasets[0])
 
-    md = {}
-    md["id"] = str(uuid.uuid5(MCD43A1_NS, xml_md["granule_id"]))
-    md["product"] = {"href": "https://collections.dea.ga.gov.au/nasa_c_m_mcd43a1_6"}
-    md["crs"] = ds_props.pop("crs")
-    md["geometry"] = valid_region(datasets)
-    md["grids"] = ds_props.pop("grids")
-    md["lineage"] = {}
-    md["measurements"] = band_info
-    md["properties"] = {
-        "dtr:start_datetime": xml_md["from_dt"].isoformat(),
-        "dtr:end_datetime": xml_md["to_dt"].isoformat(),
-        "eo:instrument": xml_md["instrument"],
-        "eo:platform": xml_md["platform"],
-        "eo:gsd": ds_props.pop("eo:gsd"),
-        "eo:epsg": None,
-        "item:providers": [
-            {
-                "name": "National Aeronautics and Space Administration",
-                "roles": [ItemProvider.PRODUCER.value, ItemProvider.PROCESSOR.value],
-                "url": "https://modis.gsfc.nasa.gov/data/dataprod/mod43.php",
-            },
-            {
-                "name": "United States Geological Society",
-                "roles": [ItemProvider.PROCESSOR.value],
-                "url": "https://lpdaac.usgs.gov/products/mcd43a1v006/",
-            },
-        ],
-        "odc:creation_datetime": xml_md["creation_dt"].isoformat(),
-        "odc:file_format": "HDF4_EOS:EOS_GRID",
-        "odc:region_code": "h{}v{}".format(
-            xml_md["horizontal_tile"], xml_md["vertical_tile"]
-        ),
+    md = {
+        "id": str(uuid.uuid5(MCD43A1_NS, xml_md["granule_id"])),
+        "product": {"href": "https://collections.dea.ga.gov.au/nasa_c_m_mcd43a1_6"},
+        "crs": ds_props.pop("crs"),
+        "geometry": valid_region(datasets),
+        "grids": ds_props.pop("grids"),
+        "lineage": {},
+        "measurements": band_info,
+        "properties": {
+            "dtr:start_datetime": xml_md["from_dt"].isoformat(),
+            "dtr:end_datetime": xml_md["to_dt"].isoformat(),
+            "eo:instrument": xml_md["instrument"],
+            "eo:platform": xml_md["platform"],
+            "eo:gsd": ds_props.pop("eo:gsd"),
+            "eo:epsg": None,
+            "item:providers": [
+                {
+                    "name": "National Aeronautics and Space Administration",
+                    "roles": [
+                        ItemProvider.PRODUCER.value,
+                        ItemProvider.PROCESSOR.value,
+                    ],
+                    "url": "https://modis.gsfc.nasa.gov/data/dataprod/mod43.php",
+                },
+                {
+                    "name": "United States Geological Society",
+                    "roles": [ItemProvider.PROCESSOR.value],
+                    "url": "https://lpdaac.usgs.gov/products/mcd43a1v006/",
+                },
+            ],
+            "odc:creation_datetime": xml_md["creation_dt"].isoformat(),
+            "odc:file_format": "HDF4_EOS:EOS_GRID",
+            "odc:region_code": "h{}v{}".format(
+                xml_md["horizontal_tile"], xml_md["vertical_tile"]
+            ),
+        },
     }
 
     return [md]
