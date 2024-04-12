@@ -107,7 +107,7 @@ h5py==3.7.0
     # via eodatasets3 (setup.py)
 heapdict==1.0.1
     # via zict
-idna==3.4
+idna==3.7
     # via requests
 imageio==2.22.2
     # via scikit-image
