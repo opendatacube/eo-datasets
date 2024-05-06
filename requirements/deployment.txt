@@ -94,7 +94,7 @@ importlib-resources==6.1.1
     #   jsonschema
     #   jsonschema-specifications
     #   pystac
-jinja2==3.1.3
+jinja2==3.1.4
     # via distributed
 jmespath==1.0.1
     # via
