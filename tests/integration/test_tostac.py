@@ -118,7 +118,7 @@ def test_invalid_crs(input_doc_folder: Path):
 
     with pytest.raises(RuntimeError) as exp:
         run_tostac(input_metadata_path)
-    assert "Expect string or any object with " in str(exp.value)
+    assert "Unexpected input encountered" in str(exp.value)
 
 
 def run_tostac(input_metadata_path: Path):

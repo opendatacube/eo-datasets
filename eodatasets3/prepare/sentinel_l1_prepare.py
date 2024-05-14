@@ -20,7 +20,7 @@ from typing import Dict, Iterable, List, Mapping, Optional, Tuple, Union
 import click
 import structlog
 from attr import define
-from datacube.config import LocalConfig
+from datacube.cfg import ODCConfig
 from datacube.index import index_connect
 from datacube.model import Dataset
 from datacube.ui.click import config_option, environment_option
@@ -661,7 +661,7 @@ def get_region_code_from_granule_offset(granule_id: str) -> str:
 @config_option
 @pass_config(required=False)
 def main(
-    local_config: LocalConfig,
+    local_config: ODCConfig,
     output_base: Optional[Path],
     input_relative_to: Optional[Path],
     datasets: Tuple[Path],

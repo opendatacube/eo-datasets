@@ -12,7 +12,7 @@ from urllib.parse import urljoin
 
 import datacube.utils.uris as dc_uris
 import pystac
-from datacube.utils.geometry import CRS, Geometry
+from odc.geo.geom import CRS, Geometry
 from pystac import Asset, Item, Link, MediaType
 from pystac.errors import STACError
 from pystac.extensions.eo import Band, EOExtension
@@ -236,7 +236,7 @@ def to_pystac_item(
         wgs84_geometry = geom.to_crs(CRS("epsg:4326"), math.inf)
 
         geometry = wgs84_geometry.json
-        bbox = wgs84_geometry.boundingbox
+        bbox = wgs84_geometry.boundingbox.bbox
     else:
         geometry = None
         bbox = None
