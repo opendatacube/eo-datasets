@@ -8,7 +8,7 @@ from typing import Any, Dict, Iterable, Mapping, Tuple
 
 import ciso8601
 import click
-from datacube.cfg import ODCConfig, ConfigException
+from datacube.cfg import ConfigException, ODCConfig
 
 EO3_SCHEMA = "https://schemas.opendatacube.org/dataset"
 
@@ -213,8 +213,12 @@ def pass_config(*, required=True):
             parsed_config = None
 
             try:
-                parsed_config = ODCConfig().get_environment(config=paths, env=specific_environment)
-            except ConfigException as e:  # should we check for KeyError as well? due to cfg[env]
+                parsed_config = ODCConfig().get_environment(
+                    config=paths, env=specific_environment
+                )
+            except (
+                ConfigException
+            ) as e:  # should we check for KeyError as well? due to cfg[env]
                 if specific_environment:
                     raise click.ClickException(
                         f"No datacube config found for '{specific_environment}'"
