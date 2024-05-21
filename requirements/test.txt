@@ -262,7 +262,7 @@ referencing==0.31.1
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.31.0
+requests==2.32.0
     # via sphinx
 rio-cogeo==3.4.1
     # via eodatasets3 (setup.py)
