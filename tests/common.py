@@ -1,7 +1,7 @@
 import operator
+from collections.abc import Iterable
 from pathlib import Path
 from textwrap import indent
-from typing import Dict, Iterable, Union
 
 import pytest
 import rapidjson
@@ -18,7 +18,7 @@ from eodatasets3 import DatasetDoc, serialise
 def check_prepare_outputs(
     invoke_script,
     run_args,
-    expected_doc: Dict,
+    expected_doc: dict,
     expected_metadata_path: Path,
     ignore_fields=(),
 ):
@@ -34,7 +34,7 @@ def check_prepare_outputs(
 
 
 def assert_expected_eo3_path(
-    expected_doc: Dict,
+    expected_doc: dict,
     expected_path: Path,
     ignore_fields=(),
 ):
@@ -100,8 +100,8 @@ def assert_expected_eo3(
 
 
 def assert_shapes_mostly_equal(
-    shape1: Union[BaseGeometry, dict],
-    shape2: Union[BaseGeometry, dict],
+    shape1: BaseGeometry | dict,
+    shape2: BaseGeometry | dict,
     threshold: float,
 ):
     __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
@@ -121,7 +121,7 @@ def assert_shapes_mostly_equal(
     assert (s1 - s2).area < threshold, f"{s1} is not mostly equal to {s2}"
 
 
-def assert_same(expected_doc: Dict, generated_doc: Dict):
+def assert_same(expected_doc: dict, generated_doc: dict):
     """
     Assert two documents are the same, ignoring trivial float differences
     """
@@ -130,7 +130,7 @@ def assert_same(expected_doc: Dict, generated_doc: Dict):
     assert doc_diffs == {}, "\n".join(format_doc_diffs(expected_doc, generated_doc))
 
 
-def assert_same_as_file(expected_doc: Dict, generated_file: Path, ignore_fields=()):
+def assert_same_as_file(expected_doc: dict, generated_file: Path, ignore_fields=()):
     """Assert a file contains the given document content (after normalisation etc)"""
     __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
 
@@ -170,7 +170,7 @@ def run_prepare_cli(invoke_script, *args, expect_success=True) -> Result:
     return res
 
 
-def format_doc_diffs(left: Dict, right: Dict) -> Iterable[str]:
+def format_doc_diffs(left: dict, right: dict) -> Iterable[str]:
     """
     Get a human-readable list of differences in the given documents.
 

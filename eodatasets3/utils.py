@@ -2,9 +2,10 @@ import enum
 import functools
 import os
 import re
+from collections.abc import Iterable, Mapping
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, Mapping, Tuple
+from typing import Any
 
 import ciso8601
 import click
@@ -68,7 +69,7 @@ def default_utc(d: datetime) -> datetime:
     return d
 
 
-def subfolderise(code: str) -> Tuple[str, ...]:
+def subfolderise(code: str) -> tuple[str, ...]:
     """
     Cut a string folder name into subfolders if long.
 
@@ -143,7 +144,7 @@ def get_collection_number(
     )
 
 
-def is_doc_eo3(doc: Dict[str, Any]) -> bool:
+def is_doc_eo3(doc: dict[str, Any]) -> bool:
     """Is this document eo3?
 
     :param doc: Parsed ODC Dataset metadata document
@@ -172,7 +173,7 @@ def is_doc_eo3(doc: Dict[str, Any]) -> bool:
 
 def flatten_dict(
     d: Mapping, prefix: str = None, separator: str = "."
-) -> Iterable[Tuple[str, Any]]:
+) -> Iterable[tuple[str, Any]]:
     """
     Flatten a nested dicts into one level, with keys that show their original nested path ("a.b.c")
 

@@ -1,7 +1,6 @@
 import shutil
 import tarfile
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 import pytest
 from click.testing import CliRunner, Result
@@ -308,9 +307,9 @@ def _run_recompress(input_path: Path, *args, expected_return=0):
     return res
 
 
-def _get_checksums_members(out_tar: Path) -> Tuple[Dict, List[tarfile.TarInfo]]:
+def _get_checksums_members(out_tar: Path) -> tuple[dict, list[tarfile.TarInfo]]:
     with tarfile.open(out_tar, "r") as tar:
-        members: List[tarfile.TarInfo] = tar.getmembers()
+        members: list[tarfile.TarInfo] = tar.getmembers()
 
         # Checksum is last (can be calculated while streaming)
         checksum_member = members[-1]
@@ -411,7 +410,7 @@ class ExpectPathUnchanged:
             assert original_inode == new_inode, f"{msg} (replaced: {path_offset})"
 
 
-def _hash_all_files(path: Path) -> Dict[Path, Tuple[str, int]]:
+def _hash_all_files(path: Path) -> dict[Path, tuple[str, int]]:
     if path.is_dir():
         files = [p for p in path.rglob("*") if p.is_file()]
     else:

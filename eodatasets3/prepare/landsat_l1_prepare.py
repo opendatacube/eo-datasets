@@ -9,9 +9,9 @@ import os
 import re
 import tarfile
 import uuid
+from collections.abc import Callable, Generator, Iterable
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 import click
 import rasterio
@@ -193,7 +193,7 @@ LANDSAT_MTL_MAP = {
 }
 
 
-def get_band_alias_mappings(sat: str, instrument: str) -> Dict[str, str]:
+def get_band_alias_mappings(sat: str, instrument: str) -> dict[str, str]:
     """
     To load the band_names for referencing either LANDSAT8 or LANDSAT7 or LANDSAT5 bands
     Landsat7 and Landsat5 have same band names
@@ -232,7 +232,7 @@ def get_band_alias_mappings(sat: str, instrument: str) -> Dict[str, str]:
     )
 
 
-def get_mtl_content(acquisition_path: Path, root_element=None) -> Tuple[Dict, str, str]:
+def get_mtl_content(acquisition_path: Path, root_element=None) -> tuple[dict, str, str]:
     """
     Find MTL file for the given path. It could be a directory or a tar file.
 
@@ -278,8 +278,8 @@ def get_mtl_content(acquisition_path: Path, root_element=None) -> Tuple[Dict, st
             return mtl_doc, file_root_element, path.name
 
 
-def read_mtl(fp: Iterable[Union[str, bytes]], root_element=None) -> Tuple[Dict, str]:
-    def _parse_value(s: str) -> Union[int, float, str]:
+def read_mtl(fp: Iterable[str | bytes], root_element=None) -> tuple[dict, str]:
+    def _parse_value(s: str) -> int | float | str:
         """
         >>> _parse_value("asdf")
         'asdf'
@@ -297,7 +297,7 @@ def read_mtl(fp: Iterable[Union[str, bytes]], root_element=None) -> Tuple[Dict, 
         return s
 
     def _parse_group(
-        lines: Iterable[Union[str, bytes]],
+        lines: Iterable[str | bytes],
         key_transform: Callable[[str], str] = lambda s: s.lower(),
     ) -> dict:
         tree = {}
@@ -322,7 +322,7 @@ def read_mtl(fp: Iterable[Union[str, bytes]], root_element=None) -> Tuple[Dict, 
     return tree[root_element], root_element
 
 
-def _iter_image_paths(product_doc: Dict) -> Generator[Tuple[str, str], None, None]:
+def _iter_image_paths(product_doc: dict) -> Generator[tuple[str, str], None, None]:
     file_pattern = re.compile(r"file_name_([\w]+)")
     for name, filepath in product_doc.items():
         match = file_pattern.match(name)
@@ -340,7 +340,7 @@ def prepare_and_write(
     # TODO: Can we infer producer automatically? This is bound to cause mistakes othewise
     producer="usgs.gov",
     embed_location: bool = False,
-) -> Tuple[uuid.UUID, Path]:
+) -> tuple[uuid.UUID, Path]:
     """
     Prepare an eo3 metadata file for a Level1 dataset.
 
@@ -545,12 +545,12 @@ def prepare_and_write(
     help="Only process files newer than this date",
 )
 def main(
-    output_base: Optional[Path],
-    datasets: List[Path],
+    output_base: Path | None,
+    datasets: list[Path],
     overwrite_existing: bool,
     producer: str,
     embed_location: bool,
-    source_telemetry: Optional[Path],
+    source_telemetry: Path | None,
     newer_than: datetime,
 ):
     logging.basicConfig(

@@ -6,8 +6,8 @@ import gzip
 import json
 import os
 import posixpath
+from collections.abc import Generator
 from pathlib import Path, PurePath
-from typing import Dict, Generator, Tuple
 from urllib.parse import urlparse
 
 from boltons import iterutils
@@ -121,7 +121,7 @@ def _find_any_metadata_suffix(path):
     return existing_paths[0]
 
 
-def find_and_read_documents(*paths: Path) -> Generator[Tuple[Path, Dict], None, None]:
+def find_and_read_documents(*paths: Path) -> Generator[tuple[Path, dict], None, None]:
     # Scan all paths immediately so we can fail fast if some are wrong.
     metadata_paths = [(path, find_metadata_path(path)) for path in paths]
 
@@ -136,7 +136,7 @@ def find_and_read_documents(*paths: Path) -> Generator[Tuple[Path, Dict], None, 
         yield from read_documents(metadata_path)
 
 
-def read_documents(*paths: Path) -> Generator[Tuple[Path, Dict], None, None]:
+def read_documents(*paths: Path) -> Generator[tuple[Path, dict], None, None]:
     """
     Read & parse documents from the filesystem (yaml or json).
 
@@ -204,7 +204,7 @@ def docpath_set(doc, path, value):
 
 
 def make_paths_relative(
-    doc: Dict, base_directory: PurePath, allow_paths_outside_base=False
+    doc: dict, base_directory: PurePath, allow_paths_outside_base=False
 ):
     """
     Find all pathlib.Path values in a document structure and make them relative to the given path.

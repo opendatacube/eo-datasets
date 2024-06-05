@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Union
 from uuid import UUID
 
 import affine
@@ -35,7 +35,7 @@ class ProductDoc:
 class GridDoc:
     """The grid describing a measurement/band's pixels"""
 
-    shape: Tuple[int, int]
+    shape: tuple[int, int]
     transform: affine.Affine
 
 
@@ -46,8 +46,8 @@ class MeasurementDoc:
     """
 
     path: str
-    band: Optional[int] = 1
-    layer: Optional[str] = None
+    band: int | None = 1
+    layer: str | None = None
     grid: str = "default"
 
     name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
@@ -97,7 +97,7 @@ class DatasetDoc(Eo3Interface):
     #:
     #: All other paths in the document (measurements, accessories) are relative to the
     #: chosen location.
-    locations: List[str] = None
+    locations: list[str] = None
 
     #: CRS string. Eg. ``epsg:3577``
     crs: str = None
@@ -106,16 +106,16 @@ class DatasetDoc(Eo3Interface):
     #: (it must contain all non-empty pixels of the image)
     geometry: BaseGeometry = None
     #: Grid specifications for measurements
-    grids: Dict[str, GridDoc] = None
+    grids: dict[str, GridDoc] = None
     #: Raw properties
     properties: Eo3Dict = attr.ib(factory=Eo3Dict)
     #: Loadable measurements of the dataset
-    measurements: Dict[str, MeasurementDoc] = None
+    measurements: dict[str, MeasurementDoc] = None
     #: References to accessory files
     #:
     #: Such as thumbnails, checksums, other kinds of metadata files.
     #:
     #: (any files included in the dataset that are not measurements)
-    accessories: Dict[str, AccessoryDoc] = attr.ib(factory=CommentedMap)
+    accessories: dict[str, AccessoryDoc] = attr.ib(factory=CommentedMap)
     #: Links to source dataset uuids
-    lineage: Dict[str, List[UUID]] = attr.ib(factory=CommentedMap)
+    lineage: dict[str, list[UUID]] = attr.ib(factory=CommentedMap)

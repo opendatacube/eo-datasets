@@ -4,19 +4,11 @@ import string
 import sys
 import tempfile
 from collections import defaultdict
+from collections.abc import Generator, Iterable, Sequence
 from enum import Enum, auto
 from pathlib import Path, PurePath
 from typing import (
     ClassVar,
-    Dict,
-    Generator,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Union,
 )
 
 import attr
@@ -107,7 +99,7 @@ class GridSpec:
     """
 
     #:
-    shape: Tuple[int, int]
+    shape: tuple[int, int]
     #:
     transform: Affine
     #:
@@ -169,7 +161,7 @@ class GridSpec:
 
 def generate_tiles(
     samples: int, lines: int, xtile: int = None, ytile: int = None
-) -> Generator[Tuple[Tuple[int, int], Tuple[int, int]], None, None]:
+) -> Generator[tuple[tuple[int, int], tuple[int, int]], None, None]:
     """
     Generates a list of tile indices for a 2D array.
 
@@ -239,8 +231,8 @@ def _common_suffix(names: Iterable[str]) -> str:
 
 
 def _find_a_common_name(
-    group_of_names: Sequence[str], all_possible_names: Set[str] = None
-) -> Optional[str]:
+    group_of_names: Sequence[str], all_possible_names: set[str] = None
+) -> str | None:
     """
     If we have a list of band names, can we find a nice name for the group of them?
 
@@ -290,11 +282,11 @@ def _find_a_common_name(
 
 @attr.s(auto_attribs=True, slots=True)
 class _MeasurementLocation:
-    path: Union[Path, str]
+    path: Path | str
     layer: str = None
 
 
-_Measurements = Dict[str, _MeasurementLocation]
+_Measurements = dict[str, _MeasurementLocation]
 
 
 class MeasurementBundler:
@@ -306,18 +298,18 @@ class MeasurementBundler:
     def __init__(self):
         # The measurements grouped by their grid.
         # (value is band_name->Path)
-        self._measurements_per_grid: Dict[GridSpec, _Measurements] = defaultdict(dict)
+        self._measurements_per_grid: dict[GridSpec, _Measurements] = defaultdict(dict)
         # Valid data mask per grid, in pixel coordinates.
-        self.mask_by_grid: Dict[GridSpec, numpy.ndarray] = {}
+        self.mask_by_grid: dict[GridSpec, numpy.ndarray] = {}
 
     def record_image(
         self,
         name: str,
         grid: GridSpec,
-        path: Union[PurePath, str],
+        path: PurePath | str,
         img: numpy.ndarray,
-        layer: Optional[str] = None,
-        nodata: Optional[Union[float, int]] = None,
+        layer: str | None = None,
+        nodata: float | int | None = None,
         expand_valid_data=True,
     ):
         for measurements in self._measurements_per_grid.values():
@@ -332,7 +324,7 @@ class MeasurementBundler:
             self._expand_valid_data_mask(grid, img, nodata)
 
     def _expand_valid_data_mask(
-        self, grid: GridSpec, img: numpy.ndarray, nodata: Union[float, int]
+        self, grid: GridSpec, img: numpy.ndarray, nodata: float | int
     ):
         if nodata is None:
             nodata = float("nan") if numpy.issubdtype(img.dtype, numpy.floating) else 0
@@ -349,13 +341,13 @@ class MeasurementBundler:
             mask |= valid_values
         self.mask_by_grid[grid] = mask
 
-    def _as_named_grids(self) -> Dict[str, Tuple[GridSpec, _Measurements]]:
+    def _as_named_grids(self) -> dict[str, tuple[GridSpec, _Measurements]]:
         """Get our grids with sensible (hopefully!), names."""
 
         # Order grids from most to fewest measurements.
         # PyCharm's typing seems to get confused by the sorted() call.
         # noinspection PyTypeChecker
-        grids_by_frequency: List[Tuple[GridSpec, _Measurements]] = sorted(
+        grids_by_frequency: list[tuple[GridSpec, _Measurements]] = sorted(
             self._measurements_per_grid.items(), key=lambda k: len(k[1]), reverse=True
         )
 
@@ -421,14 +413,14 @@ class MeasurementBundler:
             },
         }
 
-    def as_geo_docs(self) -> Tuple[CRS, Dict[str, GridDoc], Dict[str, MeasurementDoc]]:
+    def as_geo_docs(self) -> tuple[CRS, dict[str, GridDoc], dict[str, MeasurementDoc]]:
         """Calculate combined geo information for metadata docs"""
 
         if not self._measurements_per_grid:
             return None, None, None
 
-        grid_docs: Dict[str, GridDoc] = {}
-        measurement_docs: Dict[str, MeasurementDoc] = {}
+        grid_docs: dict[str, GridDoc] = {}
+        measurement_docs: dict[str, MeasurementDoc] = {}
         crs = None
 
         for grid_name, (grid, measurements) in self._as_named_grids().items():
@@ -503,7 +495,7 @@ class MeasurementBundler:
             for band_name, _ in measurements.items():
                 yield band_name
 
-    def iter_paths(self) -> Generator[Tuple[GridSpec, str, Path], None, None]:
+    def iter_paths(self) -> Generator[tuple[GridSpec, str, Path], None, None]:
         """All current measurement paths on disk"""
         for grid, measurements in self._measurements_per_grid.items():
             for band_name, meas_path in measurements.items():
@@ -566,7 +558,7 @@ class FileWrite:
     This code is derived from the old eugl packaging code and can probably be improved.
     """
 
-    PREDICTOR_DEFAULTS: ClassVar[Dict[str, int]] = {
+    PREDICTOR_DEFAULTS: ClassVar[dict[str, int]] = {
         "int8": 2,
         "uint8": 2,
         "int16": 2,
@@ -581,8 +573,8 @@ class FileWrite:
 
     def __init__(
         self,
-        gdal_options: Dict = None,
-        overview_blocksize: Optional[int] = None,
+        gdal_options: dict = None,
+        overview_blocksize: int | None = None,
     ) -> None:
         super().__init__()
         self.options = gdal_options or {}
@@ -591,10 +583,10 @@ class FileWrite:
     @classmethod
     def from_existing(
         cls,
-        shape: Tuple[int, int],
+        shape: tuple[int, int],
         overviews: bool = True,
-        blocksize_yx: Optional[Tuple[int, int]] = None,
-        overview_blocksize: Optional[int] = None,
+        blocksize_yx: tuple[int, int] | None = None,
+        overview_blocksize: int | None = None,
         compress="deflate",
         zlevel=4,
     ) -> "FileWrite":
@@ -630,7 +622,7 @@ class FileWrite:
         geobox: GridSpec = None,
         nodata: int = None,
         overview_resampling=Resampling.nearest,
-        overviews: Optional[Tuple[int, ...]] = DEFAULT_OVERVIEWS,
+        overviews: tuple[int, ...] | None = DEFAULT_OVERVIEWS,
     ) -> WriteResult:
         """
         Writes a 2D/3D image to disk using rasterio.
@@ -790,12 +782,12 @@ class FileWrite:
 
     def create_thumbnail(
         self,
-        rgb: Tuple[Path, Path, Path],
+        rgb: tuple[Path, Path, Path],
         out: Path,
         out_scale=10,
         resampling=Resampling.average,
-        static_stretch: Tuple[int, int] = None,
-        percentile_stretch: Tuple[int, int] = (2, 98),
+        static_stretch: tuple[int, int] = None,
+        percentile_stretch: tuple[int, int] = (2, 98),
         compress_quality: int = 85,
         input_geobox: GridSpec = None,
     ):
@@ -872,11 +864,11 @@ class FileWrite:
 
     def create_thumbnail_from_numpy(
         self,
-        rgb: Tuple[numpy.array, numpy.array, numpy.array],
+        rgb: tuple[numpy.array, numpy.array, numpy.array],
         out_scale=10,
         resampling=Resampling.average,
-        static_stretch: Tuple[int, int] = None,
-        percentile_stretch: Tuple[int, int] = (2, 98),
+        static_stretch: tuple[int, int] = None,
+        percentile_stretch: tuple[int, int] = (2, 98),
         compress_quality: int = 85,
         input_geobox: GridSpec = None,
         nodata: int = -999,
@@ -955,7 +947,7 @@ class FileWrite:
         in_file: Path,
         out_file: Path,
         bit: int = None,
-        lookup_table: Dict[int, Tuple[int, int, int]] = None,
+        lookup_table: dict[int, tuple[int, int, int]] = None,
     ):
         """
         Write out a JPG thumbnail from a singleband image.
@@ -1003,7 +995,7 @@ class FileWrite:
         self,
         input_data: numpy.array,
         bit: int = None,
-        lookup_table: Dict[int, Tuple[int, int, int]] = None,
+        lookup_table: dict[int, tuple[int, int, int]] = None,
         input_geobox: GridSpec = None,
         nodata: int = -999,
     ) -> bytes:
@@ -1039,7 +1031,7 @@ class FileWrite:
         self,
         data: numpy.array,
         bit: int = None,
-        lookup_table: Dict[int, Tuple[int, int, int]] = None,
+        lookup_table: dict[int, tuple[int, int, int]] = None,
     ):
         """
         Apply bit or lookup_table to filter the numpy array
@@ -1066,8 +1058,8 @@ class FileWrite:
 def _write_to_numpy_array(
     rgb: Sequence[numpy.array],
     resampling: Resampling,
-    static_range: Tuple[int, int],
-    percentile_range: Tuple[int, int] = (2, 98),
+    static_range: tuple[int, int],
+    percentile_range: tuple[int, int] = (2, 98),
     input_geobox: GridSpec = None,
     nodata: int = -999,
 ) -> GridSpec:
@@ -1150,8 +1142,8 @@ def _write_quicklook(
     rgb: Sequence[Path],
     dest_path: Path,
     resampling: Resampling,
-    static_range: Tuple[int, int],
-    percentile_range: Tuple[int, int] = (2, 98),
+    static_range: tuple[int, int],
+    percentile_range: tuple[int, int] = (2, 98),
     input_geobox: GridSpec = None,
 ) -> GridSpec:
     """
@@ -1229,7 +1221,7 @@ def _write_quicklook(
     return reproj_grid
 
 
-LazyImages = Iterable[Tuple[numpy.ndarray, int]]
+LazyImages = Iterable[tuple[numpy.ndarray, int]]
 
 
 def _iter_images(rgb: Sequence[Path]) -> LazyImages:
@@ -1261,8 +1253,8 @@ def _iter_arrays(rgb: Sequence[numpy.array], nodata: int) -> LazyImages:
 def read_valid_mask_and_value_range(
     valid_data_mask: numpy.ndarray,
     images: LazyImages,
-    calculate_percentiles: Optional[Tuple[int, int]] = None,
-) -> Optional[Tuple[int, int]]:
+    calculate_percentiles: tuple[int, int] | None = None,
+) -> tuple[int, int] | None:
     """
     Read the given images, filling in a valid data mask and optional pixel percentiles.
     """
@@ -1294,8 +1286,8 @@ def read_valid_mask_and_value_range(
 
 def rescale_intensity(
     image: numpy.ndarray,
-    in_range: Tuple[int, int],
-    out_range: Optional[Tuple[int, int]] = None,
+    in_range: tuple[int, int],
+    out_range: tuple[int, int] | None = None,
     image_nodata: int = None,
     image_null_mask: numpy.ndarray = None,
     out_dtype=numpy.uint8,

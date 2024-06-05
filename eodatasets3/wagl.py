@@ -11,12 +11,13 @@ import os
 import re
 import sys
 import zipfile
+from collections.abc import Iterable, Sequence
 from datetime import datetime, timedelta
 from enum import Enum
 from math import isnan
 from os.path import join
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any
 from uuid import UUID
 
 import attr
@@ -89,10 +90,10 @@ class ProductMaturity(Enum):
 
 # a dictionary of band_id: (mask_type, mask_uri)
 #     (the mask URI is a string loadable by fiona. Could be a URL or file path.)
-BandMasks = Dict[str, Tuple[str, str]]
+BandMasks = dict[str, tuple[str, str]]
 
 
-def _find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> List[str]:
+def _find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> list[str]:
     """
     Find all objects in a h5 of the given class, returning their path.
 
@@ -314,7 +315,7 @@ def write_measurement_h5(
     p: DatasetAssembler,
     full_name: str,
     g: h5py.Dataset,
-    band_masks: Optional[BandMasks] = None,
+    band_masks: BandMasks | None = None,
     overviews=images.DEFAULT_OVERVIEWS,
     overview_resampling=Resampling.nearest,
     expand_valid_data=True,
@@ -411,9 +412,9 @@ def _unpack_observation_attributes(
 
 
 def get_oa_resolution_group(
-    resolution_groups: Dict[tuple, h5py.Group],
+    resolution_groups: dict[tuple, h5py.Group],
     platform: str,
-    oa_resolution: Optional[Tuple[float, float]],
+    oa_resolution: tuple[float, float] | None,
 ) -> h5py.Group:
     # None specified? Figure out a default.
 
@@ -442,7 +443,7 @@ def get_oa_resolution_group(
 def _create_contiguity(
     p: DatasetAssembler,
     product_list: Iterable[str],
-    resolution_yx: Tuple[float, float],
+    resolution_yx: tuple[float, float],
     timedelta_product: str = "nbar",
     timedelta_data: numpy.ndarray = None,
 ):
@@ -563,7 +564,7 @@ def sub_product(name: str, p: Eo3Interface):
         p.product_family = original_family
 
 
-def _extract_reference_code(p: DatasetAssembler, granule: str) -> Optional[str]:
+def _extract_reference_code(p: DatasetAssembler, granule: str) -> str | None:
     matches = None
     if p.platform.startswith("landsat"):
         matches = re.match(r"L\w\d(?P<reference_code>\d{6}).*", granule)
@@ -587,32 +588,32 @@ class Granule:
 
     name: str
     wagl_hdf5: Path
-    wagl_metadata: Dict
-    source_level1_metadata: Optional[DatasetDoc]
-    source_level1_data: Optional[Path] = None
+    wagl_metadata: dict
+    source_level1_metadata: DatasetDoc | None
+    source_level1_data: Path | None = None
 
-    fmask_doc: Optional[Dict] = None
-    fmask_image: Optional[Path] = None
-    s2cloudless_prob: Optional[Path] = None
-    s2cloudless_mask: Optional[Path] = None
-    s2cloudless_doc: Optional[Dict] = None
-    gqa_doc: Optional[Dict] = None
-    tesp_doc: Optional[Dict] = None
+    fmask_doc: dict | None = None
+    fmask_image: Path | None = None
+    s2cloudless_prob: Path | None = None
+    s2cloudless_mask: Path | None = None
+    s2cloudless_doc: dict | None = None
+    gqa_doc: dict | None = None
+    tesp_doc: dict | None = None
 
     @classmethod
     def for_path(
         cls,
         wagl_hdf5: Path,
-        granule_names: Optional[Sequence[str]] = None,
-        level1_metadata_path: Optional[Path] = None,
-        level1_data_path: Optional[Path] = None,
-        fmask_image_path: Optional[Path] = None,
-        fmask_doc_path: Optional[Path] = None,
-        s2cloudless_prob_path: Optional[Path] = None,
-        s2cloudless_mask_path: Optional[Path] = None,
-        s2cloudless_doc_path: Optional[Path] = None,
-        gqa_doc_path: Optional[Path] = None,
-        tesp_doc_path: Optional[Path] = None,
+        granule_names: Sequence[str] | None = None,
+        level1_metadata_path: Path | None = None,
+        level1_data_path: Path | None = None,
+        fmask_image_path: Path | None = None,
+        fmask_doc_path: Path | None = None,
+        s2cloudless_prob_path: Path | None = None,
+        s2cloudless_mask_path: Path | None = None,
+        s2cloudless_doc_path: Path | None = None,
+        gqa_doc_path: Path | None = None,
+        tesp_doc_path: Path | None = None,
         allow_missing_provenance: bool = False,
     ):
         """
@@ -769,7 +770,7 @@ METADATA_DOC_STEM = re.compile(
 
 def _load_level1_doc(
     level1_data_path: Path,
-    user_specified_l1_path: Optional[Path] = None,
+    user_specified_l1_path: Path | None = None,
     allow_missing_provenance=False,
 ) -> DatasetDoc:
     if user_specified_l1_path:
@@ -809,7 +810,7 @@ def package_file(
     hdf_file: Path,
     included_products: Iterable[str] = DEFAULT_PRODUCTS,
     include_oa: bool = True,
-) -> Dict[UUID, Path]:
+) -> dict[UUID, Path]:
     """
     Simple alternative to package().
 
@@ -838,9 +839,9 @@ def package(
     product_maturity: ProductMaturity = ProductMaturity.stable,
     included_products: Iterable[str] = DEFAULT_PRODUCTS,
     include_oa: bool = True,
-    oa_resolution: Optional[Tuple[float, float]] = None,
-    contiguity_resolution: Optional[Tuple[float, float]] = None,
-) -> Tuple[UUID, Path]:
+    oa_resolution: tuple[float, float] | None = None,
+    contiguity_resolution: tuple[float, float] | None = None,
+) -> tuple[UUID, Path]:
     """
     Package an L2 product.
 
@@ -1024,7 +1025,7 @@ def package(
                 return p.done()
 
 
-def _read_gqa_doc(p: DatasetAssembler, doc: Dict):
+def _read_gqa_doc(p: DatasetAssembler, doc: dict):
     _take_software_versions(p, doc)
     p.extend_user_metadata("gqa", doc)
 
@@ -1033,7 +1034,7 @@ def _read_gqa_doc(p: DatasetAssembler, doc: Dict):
         p.properties[f"gqa:{k}"] = v
 
 
-def _read_fmask_doc(p: DatasetAssembler, doc: Dict):
+def _read_fmask_doc(p: DatasetAssembler, doc: dict):
     for name, value in doc["percent_class_distribution"].items():
         # From Josh: fmask cloud cover trumps the L1 cloud cover.
         if name == "cloud" and not isnan(value):
@@ -1047,7 +1048,7 @@ def _read_fmask_doc(p: DatasetAssembler, doc: Dict):
     p.extend_user_metadata("fmask", doc)
 
 
-def _read_s2cloudless_doc(p: DatasetAssembler, doc: Dict):
+def _read_s2cloudless_doc(p: DatasetAssembler, doc: dict):
     for name, value in doc["percent_class_distribution"].items():
         p.properties[f"s2cloudless:{name}"] = value
 
@@ -1055,7 +1056,7 @@ def _read_s2cloudless_doc(p: DatasetAssembler, doc: Dict):
     p.extend_user_metadata("s2cloudless", doc)
 
 
-def _take_software_versions(p: DatasetAssembler, doc: Dict):
+def _take_software_versions(p: DatasetAssembler, doc: dict):
     versions = doc.pop("software_versions", {})
 
     for name, o in versions.items():
@@ -1100,7 +1101,7 @@ def _read_wagl_metadata(granule_group: h5py.Group):
     return wagl_doc
 
 
-def _apply_wagl_metadata(p: DatasetAssembler, wagl_doc: Dict):
+def _apply_wagl_metadata(p: DatasetAssembler, wagl_doc: dict):
     source = wagl_doc["source_datasets"]
 
     p.datetime = source["acquisition_datetime"]
@@ -1119,7 +1120,7 @@ def _apply_wagl_metadata(p: DatasetAssembler, wagl_doc: Dict):
     p.extend_user_metadata("wagl", wagl_doc)
 
 
-def _determine_maturity(acq_date: datetime, processed: datetime, wagl_doc: Dict):
+def _determine_maturity(acq_date: datetime, processed: datetime, wagl_doc: dict):
     """
     Determine maturity field of a dataset.
 

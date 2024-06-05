@@ -1,8 +1,8 @@
 import datetime
 import re
 import uuid
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, Iterable
 
 import click
 import rasterio
@@ -137,7 +137,7 @@ def _get_dataset_properties(rasterio_path: str):
     return props
 
 
-def process_datasets(input_path: Path, xml_file: Path) -> Iterable[Dict]:
+def process_datasets(input_path: Path, xml_file: Path) -> Iterable[dict]:
     """
     Generates a metadata document for each tile provided,
     requires a path to the input tile (hdf) and the

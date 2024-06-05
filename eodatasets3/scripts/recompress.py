@@ -16,11 +16,12 @@ import sys
 import tarfile
 import tempfile
 import traceback
+from collections.abc import Callable, Iterable
 from contextlib import suppress
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from typing import IO, Callable, Dict, Iterable, List, Tuple
+from typing import IO
 
 import click
 import numpy
@@ -50,7 +51,7 @@ _PREDICTOR_TABLE = {
 }
 
 # The info of a file, and a method to open the file for reading.
-ReadableMember = Tuple[tarfile.TarInfo, Callable[[], IO]]
+ReadableMember = tuple[tarfile.TarInfo, Callable[[], IO]]
 
 _LOG = structlog.get_logger()
 
@@ -103,7 +104,7 @@ def _create_tarinfo(path: Path, name=None) -> tarfile.TarInfo:
 
 def _tar_members(in_tar: tarfile.TarFile) -> Iterable[ReadableMember]:
     """Get readable files (members) from a tar"""
-    members: List[tarfile.TarInfo] = in_tar.getmembers()
+    members: list[tarfile.TarInfo] = in_tar.getmembers()
 
     for member in members:
         # We return a lambda/callable so that the file isn't opened until it's needed.
@@ -182,7 +183,7 @@ def repackage_tar(
 
 def _create_tar_with_files(
     input_path: Path,
-    members: List[ReadableMember],
+    members: list[ReadableMember],
     output_tar_path: Path,
     **compress_args,
 ) -> None:
@@ -238,7 +239,7 @@ def _create_tar_with_files(
 def _recompress_tar_member(
     readable_member: ReadableMember,
     out_tar: tarfile.TarFile,
-    compress_args: Dict,
+    compress_args: dict,
     verify: PackageChecksum,
     tmpdir: Path,
 ):
@@ -283,7 +284,7 @@ def _recompress_tar_member(
     del file_contents
 
 
-def _reorder_tar_members(members: List[ReadableMember], identifier: str):
+def _reorder_tar_members(members: list[ReadableMember], identifier: str):
     """
     Put the (tiny) MTL file at the beginning of the tar so that it's always quick to read.
     """
@@ -362,7 +363,7 @@ def _recompress_image(
 @click.option("-f", "input_file", help="Read paths from file", type=click.File("r"))
 @click.argument("paths", nargs=-1, type=PathPath(exists=True, readable=True))
 def main(
-    paths: List[Path],
+    paths: list[Path],
     input_file,
     output_base: Path,
     zlevel: int,

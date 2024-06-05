@@ -178,7 +178,7 @@ class PackageChecksum:
         for path in file_paths:
             self.add_file(path)
 
-    def write(self, output_file: typing.Union[Path, str]):
+    def write(self, output_file: Path | str):
         """
         Write checksums to the given file.
         :type output_file: Path or str

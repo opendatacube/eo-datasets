@@ -1,7 +1,7 @@
 import shutil
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Dict
 
 import pytest
 
@@ -59,7 +59,7 @@ def _make_copy(input_path, tmp_path):
 
 
 def test_prepare_l5_l1_usgs_tarball(
-    tmp_path: Path, l1_ls5_tarball_md_expected: Dict, l1_ls5_tarball: Path
+    tmp_path: Path, l1_ls5_tarball_md_expected: dict, l1_ls5_tarball: Path
 ):
     assert l1_ls5_tarball.exists(), "Test data missing(?)"
     output_path: Path = tmp_path / "out"
@@ -394,7 +394,7 @@ def l9_expected():
     }
 
 
-def test_prepare_l9_l1_c2(tmp_path: Path, l1_ls9_tarball: Path, l9_expected: Dict):
+def test_prepare_l9_l1_c2(tmp_path: Path, l1_ls9_tarball: Path, l9_expected: dict):
     """Run prepare script with a source telemetry data and unique producer."""
     assert l1_ls9_tarball.exists(), "Test data missing(?)"
 
@@ -536,7 +536,7 @@ def test_prepare_le07_l1_c2(
 
 
 def test_prepare_l8_l1_tarball_with_source(
-    tmp_path: Path, l1_ls8_folder: Path, ls8_telemetry_path, l1_ls8_ga_expected: Dict
+    tmp_path: Path, l1_ls8_folder: Path, ls8_telemetry_path, l1_ls8_ga_expected: dict
 ):
     """Run prepare script with a source telemetry data and unique producer."""
     assert l1_ls8_folder.exists(), "Test data missing(?)"
@@ -565,7 +565,7 @@ def test_prepare_l8_l1_tarball_with_source(
 
 
 def test_prepare_l7_l1_usgs_tarball(
-    l1_ls7_tarball: Path, l1_ls7_tarball_md_expected: Dict
+    l1_ls7_tarball: Path, l1_ls7_tarball_md_expected: dict
 ):
     assert l1_ls7_tarball.exists(), "Test data missing(?)"
 

@@ -1,8 +1,9 @@
 import re
 import sqlite3
+from collections.abc import Iterable
 from pathlib import Path
 from pprint import pprint
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Optional
 
 import click
 from attr import define
@@ -18,7 +19,7 @@ DEFAULT_DB = Path(__file__).parent / "s2_regions.db"
 _AREA_PARTS = re.compile(r"(\d+)([NS])(\d+)([EW])")
 
 
-def area_to_tuple(area: str) -> Tuple[int, int, int, int]:
+def area_to_tuple(area: str) -> tuple[int, int, int, int]:
     """
     >>> area_to_tuple('20S120E-25S125E')
     (-20, 120, -25, 125)
@@ -26,7 +27,7 @@ def area_to_tuple(area: str) -> Tuple[int, int, int, int]:
     (0, -160, -5, -155)
     """
 
-    def point(part: str) -> Tuple[int, int]:
+    def point(part: str) -> tuple[int, int]:
         match = _AREA_PARTS.match(part)
         if match is None:
             raise ValueError(f"Not an area? {part!r} to {_AREA_PARTS!r}")
@@ -51,7 +52,7 @@ class FolderInfo:
     year: int
     month: int
     area: str
-    region_code: Optional[str]
+    region_code: str | None
 
     # Compiled regexp for extracting year, month and region
     # Standard layout is of the form: 'L1C/{yyyy}/{yyyy}-{mm}/{area}/S2*_{region}_{timestamp}(.zip)'
@@ -94,7 +95,7 @@ class RegionLookup:
 
     def __init__(self, db_path: Path = None):
         self.db_path = db_path
-        self._db: Optional[sqlite3.Connection] = None
+        self._db: sqlite3.Connection | None = None
 
     def open(self):
         if self._db is None:
@@ -163,7 +164,7 @@ class RegionLookup:
         s.execute("commit")
         return insert_count
 
-    def get(self, area: str) -> List[str]:
+    def get(self, area: str) -> list[str]:
         """Get known region codes for an area"""
         self.open()
 
@@ -183,7 +184,7 @@ class RegionLookup:
         self.open()
         self._db.execute("vacuum")
 
-    def stats(self) -> Dict:
+    def stats(self) -> dict:
         """Get stats about the lookup table"""
         self.open()
         res = self._db.execute(

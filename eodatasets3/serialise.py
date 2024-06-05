@@ -1,8 +1,9 @@
 import uuid
+from collections.abc import Iterable, Mapping
 from datetime import datetime
 from functools import partial
 from pathlib import Path, PurePath
-from typing import IO, Dict, Iterable, Mapping, Tuple, Union
+from typing import IO
 from uuid import UUID
 
 import attr
@@ -118,7 +119,7 @@ def dumps_yaml(stream, *docs: Mapping) -> None:
     return yml.dump_all(docs, stream=stream)
 
 
-def load_yaml(p: Path) -> Dict:
+def load_yaml(p: Path) -> dict:
     with p.open() as f:
         return _yaml().load(f)
 
@@ -127,7 +128,7 @@ def _yaml():
     return YAML(typ="safe")
 
 
-def loads_yaml(stream: Union[str, IO]) -> Iterable[Dict]:
+def loads_yaml(stream: str | IO) -> Iterable[dict]:
     """Dump yaml through a stream, using the default deserialisation settings."""
     return _yaml().load_all(stream)
 
@@ -198,7 +199,7 @@ METADATA_TYPE_SCHEMA = _load_schema_validator(
 )
 
 
-def from_doc(doc: Dict, skip_validation=False) -> DatasetDoc:
+def from_doc(doc: dict, skip_validation=False) -> DatasetDoc:
     """
     Parse a dictionary into an EO3 dataset.
 
@@ -245,7 +246,7 @@ def _structure_as_stac_props(d, t, normalise_properties=False):
     )
 
 
-def _structure_as_affine(d: Tuple, t):
+def _structure_as_affine(d: tuple, t):
     if len(d) not in [6, 9]:
         raise ValueError(f"Expected 6 or 9 coefficients in transform. Got {d!r}")
 
@@ -277,7 +278,7 @@ converter.register_structure_hook(Affine, _structure_as_affine)
 converter.register_unstructure_hook(Eo3Dict, _unstructure_as_stac_props)
 
 
-def to_doc(d: DatasetDoc) -> Dict:
+def to_doc(d: DatasetDoc) -> dict:
     """
     Serialise a DatasetDoc to a dict
 

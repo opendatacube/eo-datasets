@@ -8,21 +8,14 @@ import math
 import multiprocessing
 import os
 import sys
+from collections import Counter
+from collections.abc import Generator, Iterable, Sequence
 from datetime import datetime
 from functools import partial
 from pathlib import Path
 from textwrap import indent
 from typing import (
-    Counter,
-    Dict,
-    Generator,
-    Iterable,
-    List,
     Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Union,
 )
 from urllib.parse import urljoin, urlparse
 from urllib.request import urlopen
@@ -91,7 +84,7 @@ SUFFIX_KINDS = {
 DOC_TYPE_SUFFIXES = {v: k for k, v in SUFFIX_KINDS.items()}
 
 
-def filename_doc_kind(path: Union[str, Path]) -> Optional["DocKind"]:
+def filename_doc_kind(path: str | Path) -> Optional["DocKind"]:
     """
     Get the expected file type for the given filename.
 
@@ -118,7 +111,7 @@ def filename_doc_kind(path: Union[str, Path]) -> Optional["DocKind"]:
     return None
 
 
-def guess_kind_from_contents(doc: Dict):
+def guess_kind_from_contents(doc: dict):
     """
     What sort of document do the contents look like?
     """
@@ -194,7 +187,7 @@ class ValidationExpectations:
         default=Factory(lambda: DEFAULT_OPTIONAL_FIELDS)
     )
 
-    def with_document_overrides(self, doc: Dict):
+    def with_document_overrides(self, doc: dict):
         """
         Return an instance with any overrides from the given document.
         """
@@ -219,11 +212,11 @@ class ValidationExpectations:
 
 
 def validate_dataset(
-    doc: Dict,
-    product_definition: Optional[Dict] = None,
-    metadata_type_definition: Optional[Dict] = None,
+    doc: dict,
+    product_definition: dict | None = None,
+    metadata_type_definition: dict | None = None,
     thorough: bool = False,
-    readable_location: Union[str, Path] = None,
+    readable_location: str | Path = None,
     expect: ValidationExpectations = None,
 ) -> ValidationMessages:
     """
@@ -321,7 +314,7 @@ def validate_dataset(
 
     yield from _validate_stac_properties(dataset)
 
-    required_measurements: Dict[str, ExpectedMeasurement] = {}
+    required_measurements: dict[str, ExpectedMeasurement] = {}
     if product_definition is not None:
         required_measurements.update(
             {
@@ -477,7 +470,7 @@ def validate_dataset(
                         )
 
 
-def _has_offset(doc: Dict, offset: List[str]) -> bool:
+def _has_offset(doc: dict, offset: list[str]) -> bool:
     """
     Is the given offset present in the document?
     """
@@ -488,7 +481,7 @@ def _has_offset(doc: Dict, offset: List[str]) -> bool:
     return True
 
 
-def validate_product(doc: Dict) -> ValidationMessages:
+def validate_product(doc: dict) -> ValidationMessages:
     """
     Check for common product mistakes
     """
@@ -566,7 +559,7 @@ def validate_product(doc: Dict) -> ValidationMessages:
                 seen_names_and_aliases[field_].append(measurement_name)
 
 
-def validate_metadata_type(doc: Dict) -> ValidationMessages:
+def validate_metadata_type(doc: dict) -> ValidationMessages:
     """
     Check for common metadata-type mistakes
     """
@@ -632,21 +625,21 @@ class ExpectedMeasurement:
     nodata: int
 
     @classmethod
-    def from_definition(cls, doc: Dict):
+    def from_definition(cls, doc: dict):
         return ExpectedMeasurement(doc["name"], doc.get("dtype"), doc.get("nodata"))
 
 
 # Name of a field and its possible offsets in the document.
-FieldNameOffsetS = Tuple[str, Set[List[str]]]
+FieldNameOffsetS = tuple[str, set[list[str]]]
 
 
 def validate_paths(
-    paths: List[str],
+    paths: list[str],
     thorough: bool = False,
-    product_definitions: Dict[str, Dict] = None,
-    metadata_type_definitions: Dict[str, Dict] = None,
+    product_definitions: dict[str, dict] = None,
+    metadata_type_definitions: dict[str, dict] = None,
     expect: ValidationExpectations = None,
-) -> Generator[Tuple[str, List[ValidationMessage]], None, None]:
+) -> Generator[tuple[str, list[ValidationMessage]], None, None]:
     """Validate the list of paths. Product documents can be specified before their datasets."""
 
     products = dict(product_definitions or {})
@@ -704,7 +697,7 @@ def validate_paths(
         yield url, messages
 
 
-def _get_field_offsets(metadata_type: Dict) -> Iterable[FieldNameOffsetS]:
+def _get_field_offsets(metadata_type: dict) -> Iterable[FieldNameOffsetS]:
     """
     Yield all fields and their possible document-offsets that are expected for this metadata type.
 
@@ -773,7 +766,7 @@ def _readable_doc_extension(uri: str):
 
 def read_paths(
     input_paths: Iterable[str],
-) -> Generator[Tuple[str, Union[Dict, str], bool], None, None]:
+) -> Generator[tuple[str, dict | str, bool], None, None]:
     """
     Read the given input paths, returning a URL, document, and whether
     it was explicitly given by the user.
@@ -795,7 +788,7 @@ def read_paths(
 
 def expand_paths_as_uris(
     input_paths: Iterable[str],
-) -> Generator[Tuple[Path, bool], None, None]:
+) -> Generator[tuple[Path, bool], None, None]:
     """
     For any paths that are directories, find inner documents that are known.
 
@@ -815,13 +808,13 @@ def expand_paths_as_uris(
 
 
 def validate_eo3_doc(
-    doc: Dict,
-    location: Union[str, Path],
-    products: Dict[str, Dict],
-    metadata_types: Dict[str, Dict],
+    doc: dict,
+    location: str | Path,
+    products: dict[str, dict],
+    metadata_types: dict[str, dict],
     thorough: bool = False,
     expect: ValidationExpectations = None,
-) -> List[ValidationMessage]:
+) -> list[ValidationMessage]:
     messages = []
 
     # TODO: follow ODC's match rules?
@@ -864,7 +857,7 @@ def validate_eo3_doc(
     return messages
 
 
-def _get_printable_differences(dict1: Dict, dict2: Dict):
+def _get_printable_differences(dict1: dict, dict2: dict):
     """
     Get a series of lines to print that show the reason that dict1 is not a superset of dict2
     """
@@ -877,7 +870,7 @@ def _get_printable_differences(dict1: Dict, dict2: Dict):
             yield f"{path}: {v1!r} != {v2!r}"
 
 
-def _get_product_mismatch_reasons(dataset_doc: Dict, product_definition: Dict):
+def _get_product_mismatch_reasons(dataset_doc: dict, product_definition: dict):
     """
     Which fields don't match the given dataset doc to a product definition?
 
@@ -887,8 +880,8 @@ def _get_product_mismatch_reasons(dataset_doc: Dict, product_definition: Dict):
 
 
 def _match_product(
-    dataset_doc: Dict, product_definitions: Dict[str, Dict]
-) -> Tuple[Optional[Dict], List[ValidationMessage]]:
+    dataset_doc: dict, product_definitions: dict[str, dict]
+) -> tuple[dict | None, list[ValidationMessage]]:
     """Match the given dataset to a product definition"""
 
     product = None
@@ -1101,7 +1094,7 @@ def _has_some_geo(dataset: DatasetDoc) -> bool:
 
 
 def display_result_console(
-    url: str, is_valid: bool, messages: List[ValidationMessage], quiet=False
+    url: str, is_valid: bool, messages: list[ValidationMessage], quiet=False
 ):
     """
     Print validation messages to the Console (using colour if available).
@@ -1130,7 +1123,7 @@ def display_result_console(
             echo(hint)
 
 
-def display_result_github(url: str, is_valid: bool, messages: List[ValidationMessage]):
+def display_result_github(url: str, is_valid: bool, messages: list[ValidationMessage]):
     """
     Print validation messages using Github Action's command language for warnings/errors.
     """
@@ -1219,7 +1212,7 @@ products first, and datasets later, to ensure they can be matched.
     help="Only print problems, one per line",
 )
 def run(
-    paths: List[str],
+    paths: list[str],
     strict_warnings,
     quiet,
     thorough: bool,
@@ -1292,8 +1285,8 @@ def run(
 
 def _load_remote_product_definitions(
     from_datacube: bool = False,
-    from_explorer_url: Optional[str] = None,
-) -> Dict[str, Dict]:
+    from_explorer_url: str | None = None,
+) -> dict[str, dict]:
     product_definitions = {}
     # Load any remote products that were asked for.
     if from_explorer_url:
@@ -1318,7 +1311,7 @@ def _load_doc(url):
 def _load_explorer_product_definitions(
     explorer_url: str,
     workers: int = 6,
-) -> Generator[Dict, None, None]:
+) -> Generator[dict, None, None]:
     """
     Read all product yamls from the given Explorer instance,
 

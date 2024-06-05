@@ -2,10 +2,11 @@ import collections.abc
 import warnings
 from abc import abstractmethod
 from collections import defaultdict
+from collections.abc import Callable, Mapping
 from datetime import datetime
 from enum import Enum, EnumMeta
 from textwrap import dedent
-from typing import Any, Callable, Dict, Mapping, Optional, Set, Tuple, Union
+from typing import Any, Union
 from urllib.parse import urlencode
 
 import ciso8601
@@ -21,7 +22,7 @@ class FileFormat(Enum):
     JPEG2000 = 4
 
 
-def nest_properties(d: Mapping[str, Any], separator=":") -> Dict[str, Any]:
+def nest_properties(d: Mapping[str, Any], separator=":") -> dict[str, Any]:
     """
     Split keys with embedded colons into sub dictionaries.
 
@@ -63,7 +64,7 @@ def datetime_type(value):
 
 
 def of_enum_type(
-    vals: Union[EnumMeta, Tuple[str, ...]] = None, lower=False, upper=False, strict=True
+    vals: EnumMeta | tuple[str, ...] = None, lower=False, upper=False, strict=True
 ) -> Callable[[str], str]:
     """
     A String value with a fixed set of known values.
@@ -105,7 +106,7 @@ def percent_type(value):
     return value
 
 
-def normalise_platforms(value: Union[str, list, set]):
+def normalise_platforms(value: str | list | set):
     """
     >>> normalise_platforms('LANDSAT_8')
     'landsat-8'
@@ -157,7 +158,7 @@ def producer_check(value):
     return value
 
 
-def parsed_sentinel_tile_id(tile_id) -> Tuple[str, Dict]:
+def parsed_sentinel_tile_id(tile_id) -> tuple[str, dict]:
     """Extract useful extra fields from a sentinel tile id
 
     >>> val, props = parsed_sentinel_tile_id("S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09")
@@ -179,7 +180,7 @@ def parsed_sentinel_tile_id(tile_id) -> Tuple[str, Dict]:
     return tile_id, extras
 
 
-def parsed_sentinel_datastrip_id(tile_id) -> Tuple[str, Dict]:
+def parsed_sentinel_datastrip_id(tile_id) -> tuple[str, dict]:
     """Extract useful extra fields from a sentinel datastrip id
 
     >>> val, props = parsed_sentinel_datastrip_id("S2B_OPER_MSI_L1C_DS_EPAE_20201011T011446_S20201011T000244_N02.09")
@@ -204,14 +205,14 @@ def parsed_sentinel_datastrip_id(tile_id) -> Tuple[str, Dict]:
 # The primitive types allowed as stac values.
 PrimitiveType = Union[str, int, float, datetime]
 
-ExtraProperties = Dict
+ExtraProperties = dict
 # A function to normalise a value.
 # (eg. convert to int, or make string lowercase).
 # They throw a ValueError if not valid.
 NormaliseValueFn = Callable[
     [Any],
     # It returns the normalised value, but can optionally also return extra property values extracted from it.
-    Union[PrimitiveType, Tuple[PrimitiveType, ExtraProperties]],
+    PrimitiveType | tuple[PrimitiveType, ExtraProperties],
 ]
 
 # Extras typically on the ARD product.
@@ -327,7 +328,7 @@ class Eo3Dict(collections.abc.MutableMapping):
     # Every property we've seen or dealt with so far. Feel free to expand with abandon...
     # This is to minimise minor typos, case differences, etc, which plagued previous systems.
     # Keep sorted.
-    KNOWN_PROPERTIES: Mapping[str, Optional[NormaliseValueFn]] = {
+    KNOWN_PROPERTIES: Mapping[str, NormaliseValueFn | None] = {
         "datetime": datetime_type,
         "dea:dataset_maturity": of_enum_type(("final", "interim", "nrt"), lower=True),
         "dea:product_maturity": of_enum_type(("stable", "provisional"), lower=True),
@@ -446,7 +447,7 @@ class Eo3Dict(collections.abc.MutableMapping):
             if normalise:
                 value = normalise(value)
                 # If the normaliser has extracted extra properties, we'll get two return values.
-                if isinstance(value, Tuple):
+                if isinstance(value, tuple):
                     value, extra_properties = value
                     for k, v in extra_properties.items():
                         if k == key:
@@ -514,7 +515,7 @@ class Eo3Interface:
         raise NotImplementedError
 
     @property
-    def platform(self) -> Optional[str]:
+    def platform(self) -> str | None:
         """
         Unique name of the specific platform the instrument is attached to.
 
@@ -532,7 +533,7 @@ class Eo3Interface:
         self.properties["eo:platform"] = value
 
     @property
-    def platforms(self) -> Set[str]:
+    def platforms(self) -> set[str]:
         """
         Get platform as a set (containing zero or more items).
 
@@ -543,7 +544,7 @@ class Eo3Interface:
         return set(self.properties.get("eo:platform", "").split(","))
 
     @platforms.setter
-    def platforms(self, value: Set[str]):
+    def platforms(self, value: set[str]):
         # The normaliser supports sets/lists
         self.properties["eo:platform"] = value
 
@@ -572,7 +573,7 @@ class Eo3Interface:
         self.properties["eo:constellation"] = value
 
     @property
-    def product_name(self) -> Optional[str]:
+    def product_name(self) -> str | None:
         """
         The ODC product name
         """
@@ -598,7 +599,7 @@ class Eo3Interface:
         self.properties["odc:producer"] = domain
 
     @property
-    def datetime_range(self) -> Tuple[datetime, datetime]:
+    def datetime_range(self) -> tuple[datetime, datetime]:
         """
         An optional date range for the dataset.
 
@@ -613,7 +614,7 @@ class Eo3Interface:
         )
 
     @datetime_range.setter
-    def datetime_range(self, val: Tuple[datetime, datetime]):
+    def datetime_range(self, val: tuple[datetime, datetime]):
         # TODO: string type conversion, better validation/errors
         start, end = val
         self.properties["dtr:start_datetime"] = start
@@ -628,7 +629,7 @@ class Eo3Interface:
         return self.properties.get("odc:processing_datetime")
 
     @processed.setter
-    def processed(self, value: Union[str, datetime]):
+    def processed(self, value: str | datetime):
         self.properties["odc:processing_datetime"] = value
 
     def processed_now(self):
@@ -707,7 +708,7 @@ class Eo3Interface:
         del self.properties["odc:product_family"]
 
     @property
-    def region_code(self) -> Optional[str]:
+    def region_code(self) -> str | None:
         """
         The "region" of acquisition. This is a platform-agnostic representation of things like
         the Landsat Path+Row. Datasets with the same Region Code will *roughly* (but usually

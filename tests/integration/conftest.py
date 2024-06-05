@@ -1,8 +1,8 @@
 import json
 import shutil
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Dict
 
 import pytest
 
@@ -117,17 +117,17 @@ def _make_copy(input_path, tmp_path):
 
 
 @pytest.fixture
-def l1_ls8_dataset(l1_ls8_folder_md_expected: Dict) -> DatasetDoc:
+def l1_ls8_dataset(l1_ls8_folder_md_expected: dict) -> DatasetDoc:
     return serialise.from_doc(l1_ls8_folder_md_expected)
 
 
 @pytest.fixture
-def l1_ls8_folder_md_expected(l1_ls8_folder) -> Dict:
+def l1_ls8_folder_md_expected(l1_ls8_folder) -> dict:
     return expected_l1_ls8_folder(l1_ls8_folder, relative_offset)
 
 
 @pytest.fixture
-def l1_ls8_ga_expected(l1_ls8_folder) -> Dict:
+def l1_ls8_ga_expected(l1_ls8_folder) -> dict:
     return expected_l1_ls8_folder(
         l1_ls8_folder,
         relative_offset,
@@ -139,7 +139,7 @@ def l1_ls8_ga_expected(l1_ls8_folder) -> Dict:
 
 
 @pytest.fixture
-def l1_ls8_folder_md_expected_absolute(l1_ls8_folder) -> Dict:
+def l1_ls8_folder_md_expected_absolute(l1_ls8_folder) -> dict:
     return expected_l1_ls8_folder(l1_ls8_folder, path_offset)
 
 
@@ -152,9 +152,9 @@ def ls8_telemetry_path(tmp_path: Path) -> Path:
 @pytest.fixture(params=("ls5", "ls7", "ls8"))
 def example_metadata(
     request,
-    l1_ls5_tarball_md_expected: Dict,
-    l1_ls7_tarball_md_expected: Dict,
-    l1_ls8_folder_md_expected: Dict,
+    l1_ls5_tarball_md_expected: dict,
+    l1_ls7_tarball_md_expected: dict,
+    l1_ls8_folder_md_expected: dict,
 ):
     """
     Test against arbitrary valid eo3 documents.
@@ -382,7 +382,7 @@ def expected_l1_ls8_folder(
 @pytest.fixture
 def l1_ls7_tarball_md_expected(
     l1_ls7_tarball, offset: Callable[[Path, str], str] = relative_offset
-) -> Dict:
+) -> dict:
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
         "id": "f23c5fa2-3321-5be9-9872-2be73fee12a6",
@@ -543,7 +543,7 @@ def l1_ls7_tarball_md_expected(
 @pytest.fixture
 def l1_ls5_tarball_md_expected(
     l1_ls5_tarball, offset: Callable[[Path, str], str] = relative_offset
-) -> Dict:
+) -> dict:
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
         "id": "b0d31709-dda4-5a67-9fdf-3ae026a99a72",

@@ -5,8 +5,8 @@ Create index files from the command-line
 import datetime
 import urllib.parse
 import uuid
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, Iterable
 
 import click
 import rasterio
@@ -42,7 +42,7 @@ def get_uuid(collection: DatasetReader, idx: int):
     )
 
 
-def process_datasets(dataset: Path) -> Iterable[Dict]:
+def process_datasets(dataset: Path) -> Iterable[dict]:
     """
     Generates a metadata document for each band available
     in the water vapour file.

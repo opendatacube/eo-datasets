@@ -2,7 +2,6 @@ import copy
 import datetime
 import shutil
 from pathlib import Path
-from typing import Dict, Tuple
 
 import pytest
 
@@ -419,7 +418,7 @@ def dataset_input_output(request, tmp_path):
 
 
 def test_filter_folder_structure_info(
-    tmp_path: Path, dataset_input_output: Tuple[Path, Dict, Path]
+    tmp_path: Path, dataset_input_output: tuple[Path, dict, Path]
 ):
     (
         input_dataset_path,
@@ -868,7 +867,7 @@ def test_run_unusual_multigranule(tmp_path: Path):
 
 
 def test_generate_expected_outputs(
-    tmp_path: Path, dataset_input_output: Tuple[Path, Dict, Path]
+    tmp_path: Path, dataset_input_output: tuple[Path, dict, Path]
 ):
     """
     Run prepare on our test input scenes, and check the created metadata matches expected.

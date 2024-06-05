@@ -13,9 +13,9 @@ import traceback
 import uuid
 import warnings
 import zipfile
+from collections.abc import Iterable, Mapping
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 import click
 import structlog
@@ -55,7 +55,7 @@ SENTINEL_MSI_BAND_ALIASES = {
 }
 
 
-def process_sinergise_product_info(product_path: Path) -> Dict:
+def process_sinergise_product_info(product_path: Path) -> dict:
     with product_path.open() as fp:
         product = json.load(fp)
 
@@ -118,7 +118,7 @@ def _value(root, *tags: str, type_=None):
     return value
 
 
-def process_tile_metadata(contents: str) -> Dict:
+def process_tile_metadata(contents: str) -> dict:
     """
     Tile xml metadata format, as described by
     xmlns https://psd-14.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Tile_Metadata.xsd
@@ -150,7 +150,7 @@ def process_tile_metadata(contents: str) -> Dict:
     }
 
 
-def process_datastrip_metadata(contents: str) -> Union[List[str], Dict]:
+def process_datastrip_metadata(contents: str) -> list[str] | dict:
     """
     Datastrip metadata format, as described by
     xmlns https://psd-14.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1C_Datastrip_Metadata.xsd
@@ -180,7 +180,7 @@ def process_datastrip_metadata(contents: str) -> Union[List[str], Dict]:
     }
 
 
-def process_user_product_metadata(contents: str, filename_stem: str = None) -> Dict:
+def process_user_product_metadata(contents: str, filename_stem: str = None) -> dict:
     root = minidom.parseString(contents)
 
     # - On newer datasets, get the product URI from metadata.
@@ -215,7 +215,7 @@ def _get_stable_id(p: Eo3Interface) -> uuid.UUID:
     )
 
 
-def list_granules(dataset_location: Path) -> Optional[List[str]]:
+def list_granules(dataset_location: Path) -> list[str] | None:
     """
     Get a list of granule ids if it's a dataset that may contain multiple.
     """
@@ -245,7 +245,7 @@ def prepare_and_write(
     producer: str,
     granule_id: str = None,
     embed_location: bool = None,
-) -> Tuple[DatasetDoc, Path]:
+) -> tuple[DatasetDoc, Path]:
     if embed_location is None:
         # Default to embedding the location if they're not in the same folder.
         embed_location = output_yaml.parent not in dataset_location.parents
@@ -486,7 +486,7 @@ class Job:
 
     dataset_path: Path
     output_yaml_path: Path
-    granule_id: Optional[str]
+    granule_id: str | None
 
     # "sinergise.com" / "esa.int"
     producer: str
@@ -502,11 +502,11 @@ class InputDataset:
     base_folder: Path
 
     @property
-    def metadata(self) -> Optional[FolderInfo]:
+    def metadata(self) -> FolderInfo | None:
         return FolderInfo.for_path(self.path)
 
     @property
-    def granule_offsets(self) -> Optional[List[str]]:
+    def granule_offsets(self) -> list[str] | None:
         """
         Get the list of granule offsets in the dataset.
 
@@ -662,21 +662,21 @@ def get_region_code_from_granule_offset(granule_id: str) -> str:
 @pass_config(required=False)
 def main(
     local_config: ODCConfig,
-    output_base: Optional[Path],
-    input_relative_to: Optional[Path],
-    datasets: Tuple[Path],
-    datasets_path: Optional[Path],
-    provider: Optional[str],
+    output_base: Path | None,
+    input_relative_to: Path | None,
+    datasets: tuple[Path],
+    datasets_path: Path | None,
+    provider: str | None,
     overwrite_existing: bool,
     verbose: bool,
     workers: int,
     thoroughly_check_existing: bool,
-    embed_location: Optional[bool],
-    only_regions_in_file: Optional[Path],
-    before_month: Optional[Tuple[int, int]],
-    after_month: Optional[Tuple[int, int]],
+    embed_location: bool | None,
+    only_regions_in_file: Path | None,
+    before_month: tuple[int, int] | None,
+    after_month: tuple[int, int] | None,
     dry_run: bool,
-    always_granule_id: Optional[bool],
+    always_granule_id: bool | None,
     index_to_odc: bool,
 ):
     if sys.argv[1] == "sentinel-l1c":
@@ -1011,7 +1011,7 @@ def main(
     sys.exit(errors)
 
 
-def _get_default_relative_folder_base(path: Path) -> Optional[Path]:
+def _get_default_relative_folder_base(path: Path) -> Path | None:
     for parent in path.parents:
         if parent.name.lower() == "l1c":
             input_relative_to = parent
@@ -1027,7 +1027,7 @@ def _get_default_relative_folder_base(path: Path) -> Optional[Path]:
     return input_relative_to
 
 
-def _write_dataset_safe(job: Job) -> Union[Tuple[DatasetDoc, Path], str]:
+def _write_dataset_safe(job: Job) -> tuple[DatasetDoc, Path] | str:
     """
     A wrapper around `prepare_and_write` that catches exceptions and makes them
     serialisable as error strings.

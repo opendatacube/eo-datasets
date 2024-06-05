@@ -6,6 +6,7 @@ import shutil
 import tempfile
 import uuid
 import warnings
+from collections.abc import Generator, Iterable
 from copy import deepcopy
 from enum import Enum, auto
 from pathlib import Path, PosixPath, PurePath
@@ -13,14 +14,6 @@ from textwrap import dedent
 from typing import (
     Any,
     ClassVar,
-    Dict,
-    Generator,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Union,
 )
 from urllib.parse import urlsplit
 
@@ -158,7 +151,7 @@ class DatasetPrepare(Eo3Interface):
     #:
     #: These are fields that are inherent to the underlying observation, and so will
     #: still be relevant after most 1:1 processing.
-    INHERITABLE_PROPERTIES: ClassVar[Set[str]] = {
+    INHERITABLE_PROPERTIES: ClassVar[set[str]] = {
         "datetime",
         "dtr:end_datetime",
         "dtr:start_datetime",
@@ -223,15 +216,15 @@ class DatasetPrepare(Eo3Interface):
 
     def __init__(
         self,
-        collection_location: Optional[Location] = None,
+        collection_location: Location | None = None,
         *,
-        dataset_location: Optional[Location] = None,
-        metadata_path: Optional[Location] = None,
-        dataset_id: Optional[uuid.UUID] = None,
+        dataset_location: Location | None = None,
+        metadata_path: Location | None = None,
+        dataset_id: uuid.UUID | None = None,
         allow_absolute_paths: bool = False,
-        naming_conventions: Optional[str] = None,
-        names: Optional[NamingConventions] = None,
-        dataset: Optional[DatasetDoc] = None,
+        naming_conventions: str | None = None,
+        names: NamingConventions | None = None,
+        dataset: DatasetDoc | None = None,
     ) -> None:
         """
         Build an EO3 metadata document, with functions for reading information from imagery
@@ -315,10 +308,10 @@ class DatasetPrepare(Eo3Interface):
         self._dataset = dataset
 
         #: The document that was written to disk, if any.
-        self.written_dataset_doc: Optional[CommentedMap] = None
+        self.written_dataset_doc: CommentedMap | None = None
 
         self._measurements = MeasurementBundler()
-        self._accessories: Dict[str, Location] = {}
+        self._accessories: dict[str, Location] = {}
 
         self._allow_absolute_paths = allow_absolute_paths
 
@@ -331,7 +324,7 @@ class DatasetPrepare(Eo3Interface):
         #: It will be computed automatically from measurements if not set
         #: manually. You can also inherit it from source datasets in the
         #: ``add_source_*()`` methods.
-        self.geometry: Optional[BaseGeometry] = None
+        self.geometry: BaseGeometry | None = None
 
         no_naming_specified = (
             (names is None)
@@ -482,7 +475,7 @@ class DatasetPrepare(Eo3Interface):
         return self._dataset.id
 
     @dataset_id.setter
-    def dataset_id(self, val: Union[uuid.UUID, str]):
+    def dataset_id(self, val: uuid.UUID | str):
         if isinstance(val, str):
             val = uuid.UUID(val)
         self._dataset.id = val
@@ -492,13 +485,13 @@ class DatasetPrepare(Eo3Interface):
         return self._dataset.properties
 
     @property
-    def measurements(self) -> Dict[str, Tuple[GridSpec, Path]]:
+    def measurements(self) -> dict[str, tuple[GridSpec, Path]]:
         return {
             name: (grid, path) for grid, name, path in self._measurements.iter_paths()
         }
 
     @property
-    def label(self) -> Optional[str]:
+    def label(self) -> str | None:
         """
         An optional displayable string to identify this dataset.
 
@@ -586,10 +579,10 @@ class DatasetPrepare(Eo3Interface):
     def add_source_dataset(
         self,
         dataset: DatasetDoc,
-        classifier: Optional[str] = None,
+        classifier: str | None = None,
         auto_inherit_properties: bool = False,
         inherit_geometry: bool = False,
-        inherit_skip_properties: Optional[str] = None,
+        inherit_skip_properties: str | None = None,
     ):
         """
         Record a source dataset using its metadata document.
@@ -641,7 +634,7 @@ class DatasetPrepare(Eo3Interface):
     def note_source_datasets(
         self,
         classifier: str,
-        *dataset_ids: Union[str, uuid.UUID],
+        *dataset_ids: str | uuid.UUID,
     ):
         """
         Expand the lineage with raw source dataset ids.
@@ -679,7 +672,7 @@ class DatasetPrepare(Eo3Interface):
     def _inherit_properties_from(
         self,
         source_dataset: DatasetDoc,
-        inherit_skip_properties: Optional[List[str]] = None,
+        inherit_skip_properties: list[str] | None = None,
     ):
         if not inherit_skip_properties:
             # change the inherit_skip_properties to [] if it is None. Make the 'in list check' easier.
@@ -714,7 +707,7 @@ class DatasetPrepare(Eo3Interface):
         relative_to_dataset_location=False,
         grid: GridSpec = None,
         pixels: numpy.ndarray = None,
-        nodata: Optional[Union[float, int]] = None,
+        nodata: float | int | None = None,
     ):
         """
         Reference a measurement from its existing path. It may be a Path or any URL
@@ -775,7 +768,7 @@ class DatasetPrepare(Eo3Interface):
         embed_location: bool = False,
         validate_correctness: bool = True,
         sort_measurements: bool = True,
-    ) -> Tuple[uuid.UUID, Path]:
+    ) -> tuple[uuid.UUID, Path]:
         """Write the prepared metadata document to the given output path."""
         metadata_path = path or self._target_metadata_path()
         dataset_location = self.names.dataset_location
@@ -806,8 +799,8 @@ class DatasetPrepare(Eo3Interface):
         self,
         validate_correctness: bool = True,
         sort_measurements: bool = True,
-        embed_location: Optional[bool] = False,
-    ) -> Tuple[uuid.UUID, Path]:
+        embed_location: bool | None = False,
+    ) -> tuple[uuid.UUID, Path]:
         """Write the prepared metadata document to the given output path."""
         return self.write_eo3(
             validate_correctness=validate_correctness,
@@ -817,7 +810,7 @@ class DatasetPrepare(Eo3Interface):
 
     def to_dataset_doc(
         self,
-        dataset_location: Optional[str] = None,
+        dataset_location: str | None = None,
         embed_location: bool = False,
         validate_correctness: bool = True,
         sort_measurements: bool = True,
@@ -988,7 +981,7 @@ class DatasetPrepare(Eo3Interface):
 
     def iter_measurement_paths(
         self,
-    ) -> Generator[Tuple[GridSpec, str, Path], None, None]:
+    ) -> Generator[tuple[GridSpec, str, Path], None, None]:
         """
 
         .. warning::
@@ -1017,7 +1010,7 @@ class DatasetPrepare(Eo3Interface):
         except ValueError:
             ...
 
-        def format_list(items: List, max_len=60):
+        def format_list(items: list, max_len=60):
             s = ", ".join(sorted(items))
             if len(s) > max_len:
                 return f"{s[:max_len]}..."
@@ -1102,17 +1095,17 @@ class DatasetAssembler(DatasetPrepare):
 
     def __init__(
         self,
-        collection_location: Optional[Path] = None,
+        collection_location: Path | None = None,
         *,
-        dataset_location: Optional[Location] = None,
-        metadata_path: Optional[Path] = None,
-        dataset_id: Optional[uuid.UUID] = None,
+        dataset_location: Location | None = None,
+        metadata_path: Path | None = None,
+        dataset_id: uuid.UUID | None = None,
         # By default, we complain if the output already exists.
         if_exists: IfExists = IfExists.ThrowError,
         allow_absolute_paths: bool = False,
         naming_conventions: str = "default",
-        names: Optional[NamingConventions] = None,
-        dataset: Optional[DatasetDoc] = None,
+        names: NamingConventions | None = None,
+        dataset: DatasetDoc | None = None,
     ) -> None:
         """
         Assemble a dataset with ODC metadata, writing metadata and (optionally) its imagery as COGs.
@@ -1159,10 +1152,10 @@ class DatasetAssembler(DatasetPrepare):
         """
         self._exists_behaviour = if_exists
         self._checksum = PackageChecksum()
-        self._tmp_work_path: Optional[Path] = None
+        self._tmp_work_path: Path | None = None
 
         self._user_metadata = {}
-        self._software_versions: List[Dict] = []
+        self._software_versions: list[dict] = []
 
         super().__init__(
             collection_location,
@@ -1233,7 +1226,7 @@ class DatasetAssembler(DatasetPrepare):
         self,
         name: str,
         input_path: Location,
-        index: Optional[int] = None,
+        index: int | None = None,
         overviews: Iterable[int] = images.DEFAULT_OVERVIEWS,
         overview_resampling: Resampling = Resampling.average,
         expand_valid_data: bool = True,
@@ -1272,7 +1265,7 @@ class DatasetAssembler(DatasetPrepare):
         self,
         name: str,
         ds: DatasetReader,
-        index: Optional[int] = None,
+        index: int | None = None,
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.average,
         expand_valid_data=True,
@@ -1309,7 +1302,7 @@ class DatasetAssembler(DatasetPrepare):
         name: str,
         array: numpy.ndarray,
         grid_spec: GridSpec,
-        nodata: Optional[Union[float, int]] = None,
+        nodata: float | int | None = None,
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.average,
         expand_valid_data=True,
@@ -1352,7 +1345,7 @@ class DatasetAssembler(DatasetPrepare):
     def write_measurements_odc_xarray(
         self,
         dataset: xarray.Dataset,
-        nodata: Optional[Union[float, int]] = None,
+        nodata: float | int | None = None,
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.average,
         expand_valid_data=True,
@@ -1404,9 +1397,9 @@ class DatasetAssembler(DatasetPrepare):
         grid: GridSpec,
         out_path: Path,
         expand_valid_data: bool,
-        nodata: Optional[Union[float, int]],
+        nodata: float | int | None,
         overview_resampling: Resampling,
-        overviews: Tuple[int, ...],
+        overviews: tuple[int, ...],
     ):
         _validate_property_name(name)
 
@@ -1448,11 +1441,11 @@ class DatasetAssembler(DatasetPrepare):
         green: str,
         blue: str,
         resampling: Resampling = Resampling.average,
-        static_stretch: Tuple[int, int] = None,
-        percentile_stretch: Tuple[int, int] = (2, 98),
+        static_stretch: tuple[int, int] = None,
+        percentile_stretch: tuple[int, int] = (2, 98),
         scale_factor: int = 10,
         kind: str = None,
-        path: Optional[Path] = None,
+        path: Path | None = None,
     ):
         """
         Write a thumbnail for the dataset using the given measurements (specified by name) as r/g/b.
@@ -1490,7 +1483,7 @@ class DatasetAssembler(DatasetPrepare):
                 )
             )
         rgbs = [self.measurements[b] for b in (red, green, blue)]
-        unique_grids: List[GridSpec] = list({grid for grid, path in rgbs})
+        unique_grids: list[GridSpec] = list({grid for grid, path in rgbs})
         if len(unique_grids) != 1:
             raise NotImplementedError(
                 "Thumbnails can only currently be created from measurements of the same grid spec."
@@ -1513,7 +1506,7 @@ class DatasetAssembler(DatasetPrepare):
         self,
         measurement: str,
         bit: int = None,
-        lookup_table: Dict[int, Tuple[int, int, int]] = None,
+        lookup_table: dict[int, tuple[int, int, int]] = None,
         kind: str = None,
     ):
         """
@@ -1566,7 +1559,7 @@ class DatasetAssembler(DatasetPrepare):
 
         self.note_thumbnail(thumb_path, kind)
 
-    def extend_user_metadata(self, section_name: str, doc: Dict[str, Any]):
+    def extend_user_metadata(self, section_name: str, doc: dict[str, Any]):
         """
         Record extra metadata from the processing of the dataset.
 
@@ -1623,8 +1616,8 @@ class DatasetAssembler(DatasetPrepare):
         self,
         validate_correctness: bool = True,
         sort_measurements: bool = True,
-        embed_location: Optional[bool] = False,
-    ) -> Tuple[uuid.UUID, Path]:
+        embed_location: bool | None = False,
+    ) -> tuple[uuid.UUID, Path]:
         """
         Write the dataset and move it into place.
 

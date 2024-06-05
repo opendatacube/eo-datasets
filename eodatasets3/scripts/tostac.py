@@ -3,9 +3,9 @@ Convert an EO3 metadata doc to a Stac Item.
 """
 
 import json
+from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable
 from urllib.parse import urljoin
 from uuid import UUID
 

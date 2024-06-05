@@ -7,7 +7,6 @@ import math
 import mimetypes
 import warnings
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 from urllib.parse import urljoin
 
 import datacube.utils.uris as dc_uris
@@ -84,7 +83,7 @@ def _media_type(path: Path) -> str:
         return "application/octet-stream"
 
 
-def _asset_roles_fields(asset_name: str) -> List[str]:
+def _asset_roles_fields(asset_name: str) -> list[str]:
     """
     Add roles of the asset object
     """
@@ -94,7 +93,7 @@ def _asset_roles_fields(asset_name: str) -> List[str]:
         return ["metadata"]
 
 
-def _asset_title_fields(asset_name: str) -> Optional[str]:
+def _asset_title_fields(asset_name: str) -> str | None:
     """
     Add title of the asset object
     """
@@ -104,7 +103,7 @@ def _asset_title_fields(asset_name: str) -> Optional[str]:
         return None
 
 
-def _proj_fields(grid: Dict[str, GridDoc], grid_name: str = "default") -> Dict:
+def _proj_fields(grid: dict[str, GridDoc], grid_name: str = "default") -> dict:
     """
     Get any proj (Stac projection extension) fields if we have them for the grid.
     """
@@ -121,7 +120,7 @@ def _proj_fields(grid: Dict[str, GridDoc], grid_name: str = "default") -> Dict:
     }
 
 
-def _lineage_fields(lineage: Dict) -> Dict:
+def _lineage_fields(lineage: dict) -> dict:
     """
     Add custom lineage field to a STAC Item
     """
@@ -138,8 +137,8 @@ def _lineage_fields(lineage: Dict) -> Dict:
 def _odc_links(
     explorer_base_url: str,
     dataset: DatasetDoc,
-    collection_url: Optional[str],
-) -> List[Link]:
+    collection_url: str | None,
+) -> list[Link]:
     """
     Add links for ODC product into a STAC Item
     """
@@ -174,7 +173,7 @@ def _odc_links(
         warnings.warn("No collection provided for Stac Item.")
 
 
-def _get_projection(dataset: DatasetDoc) -> Tuple[Optional[int], Optional[str]]:
+def _get_projection(dataset: DatasetDoc) -> tuple[int | None, str | None]:
     if dataset.crs is None:
         return None, None
 
@@ -190,8 +189,8 @@ def _get_projection(dataset: DatasetDoc) -> Tuple[Optional[int], Optional[str]]:
 
 
 def eo3_to_stac_properties(
-    dataset: DatasetDoc, crs: Optional[str] = None, title: str = None
-) -> Dict:
+    dataset: DatasetDoc, crs: str | None = None, title: str = None
+) -> dict:
     """
     Convert EO3 properties dictionary to the Stac equivalent.
     """
@@ -210,10 +209,10 @@ def eo3_to_stac_properties(
 def to_pystac_item(
     dataset: DatasetDoc,
     stac_item_destination_url: str,
-    dataset_location: Optional[str] = None,
-    odc_dataset_metadata_url: Optional[str] = None,
-    explorer_base_url: Optional[str] = None,
-    collection_url: Optional[str] = None,
+    dataset_location: str | None = None,
+    odc_dataset_metadata_url: str | None = None,
+    explorer_base_url: str | None = None,
+    collection_url: str | None = None,
 ) -> pystac.Item:
     """
     Convert the given ODC Dataset into a Stac Item document.
@@ -353,10 +352,10 @@ def to_pystac_item(
 def to_stac_item(
     dataset: DatasetDoc,
     stac_item_destination_url: str,
-    dataset_location: Optional[str] = None,
-    odc_dataset_metadata_url: Optional[str] = None,
-    explorer_base_url: Optional[str] = None,
-    collection_url: Optional[str] = None,
+    dataset_location: str | None = None,
+    odc_dataset_metadata_url: str | None = None,
+    explorer_base_url: str | None = None,
+    collection_url: str | None = None,
 ) -> dict:
     """
     Convert the given dataset to a stac item (as a dictionary).
@@ -374,7 +373,7 @@ def to_stac_item(
 
 
 def validate_item(
-    item_doc: Dict,
+    item_doc: dict,
     allow_cached_specs: bool = True,
 ):
     """

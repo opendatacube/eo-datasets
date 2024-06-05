@@ -1,7 +1,6 @@
 import json
 import shutil
 from pathlib import Path
-from typing import Dict
 
 import pytest
 
@@ -24,13 +23,13 @@ def odc_dataset_path(input_doc_folder: Path):
 
 
 @pytest.fixture
-def expected_stac_doc(input_doc_folder: Path) -> Dict:
+def expected_stac_doc(input_doc_folder: Path) -> dict:
     d = input_doc_folder.joinpath(STAC_EXPECTED_FILE)
     assert d.exists()
     return json.load(d.open())
 
 
-def test_tostac(odc_dataset_path: Path, expected_stac_doc: Dict):
+def test_tostac(odc_dataset_path: Path, expected_stac_doc: dict):
     run_tostac(odc_dataset_path)
 
     expected_output_path = odc_dataset_path.with_name(
@@ -44,7 +43,7 @@ def test_tostac(odc_dataset_path: Path, expected_stac_doc: Dict):
     assert_same(expected_stac_doc, output_doc)
 
 
-def test_tostac_no_grids(odc_dataset_path: Path, expected_stac_doc: Dict):
+def test_tostac_no_grids(odc_dataset_path: Path, expected_stac_doc: dict):
     """
     Converted EO1 datasets don't have grid information. Make sure it still outputs
     without falling over.
@@ -71,12 +70,12 @@ def test_tostac_no_grids(odc_dataset_path: Path, expected_stac_doc: Dict):
     assert_same(expected_stac_doc, output_doc)
 
 
-def remove_stac_properties(doc: Dict, remove_properties=()):
+def remove_stac_properties(doc: dict, remove_properties=()):
     """
     Remove the given fields from properties and assets.
     """
 
-    def remove_proj(d: Dict):
+    def remove_proj(d: dict):
         for key in list(d.keys()):
             if key in remove_properties:
                 del d[key]

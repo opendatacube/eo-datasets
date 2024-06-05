@@ -1,8 +1,8 @@
 import operator
 import uuid
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Mapping
 
 import pytest
 from ruamel import yaml

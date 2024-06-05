@@ -1,7 +1,6 @@
 import os
 import urllib.parse
 from pathlib import Path
-from typing import Optional, Union
 from urllib.parse import urljoin, urlparse
 
 import click
@@ -16,7 +15,7 @@ class PathPath(click.Path):
         return Path(normalise_path(super().convert(value, param, ctx)))
 
 
-def uri_resolve(base: Union[str, Path], path: Optional[str]) -> str:
+def uri_resolve(base: str | Path, path: str | None) -> str:
     """
     Backport of datacube.utils.uris.uri_resolve()
     """

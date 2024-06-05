@@ -10,7 +10,6 @@ matter much but the structure does. The downsampling is dirty.)
 import re
 import shutil
 from pathlib import Path
-from typing import List, Optional
 
 import click
 import h5py
@@ -20,7 +19,7 @@ from eodatasets3.ui import PathPath
 from eodatasets3.wagl import find_a_granule_name
 
 
-def find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> List[str]:
+def find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> list[str]:
     """
     Find all objects in a h5 of the given class, returning their path.
 
@@ -62,7 +61,7 @@ def downsample(input_path: Path, factor: int, anti_alias: bool):
             image_paths = find_h5_paths(f, "IMAGE")
             secho(f"Found {len(image_paths)} images")
             for i, image_path in enumerate(image_paths):
-                old_image: Optional[h5py.Dataset] = f[image_path]
+                old_image: h5py.Dataset | None = f[image_path]
 
                 def info(msg: str):
                     secho(
@@ -128,7 +127,7 @@ def downsample(input_path: Path, factor: int, anti_alias: bool):
         tmp.rename(fmask_image)
 
 
-def _get_res_group_path(image_path: str) -> Optional[str]:
+def _get_res_group_path(image_path: str) -> str | None:
     """
     >>> _get_res_group_path('LC80920842016180LGN01/RES-GROUP-1/STANDARDISED-PRODUCTS/REFLECTANCE/NBART/BAND-7')
     'LC80920842016180LGN01/RES-GROUP-1'

@@ -1,7 +1,8 @@
 import re
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, Dict, Mapping, Optional, Sequence, Set, Union
+from typing import ClassVar
 from urllib.parse import quote, unquote, urlparse
 
 import datacube.utils.uris as dc_uris
@@ -98,7 +99,7 @@ class LazyLabel:
 
 class LazyPlatformAbbreviation:
     # The abbreviations mentioned in DEA naming conventions doc.
-    KNOWN_PLATFORM_ABBREVIATIONS: ClassVar[Dict[str, str]] = {
+    KNOWN_PLATFORM_ABBREVIATIONS: ClassVar[dict[str, str]] = {
         "landsat-5": "ls5",
         "landsat-7": "ls7",
         "landsat-8": "ls8",
@@ -112,7 +113,7 @@ class LazyPlatformAbbreviation:
     }
 
     # If all platform (abbreviations) match a pattern, return this group name instead.
-    KNOWN_PLATFORM_GROUPINGS: ClassVar[Dict[str, re.Pattern]] = {
+    KNOWN_PLATFORM_GROUPINGS: ClassVar[dict[str, re.Pattern]] = {
         "ls": re.compile(r"ls\d+"),
         "s1": re.compile(r"s1[a-z]+"),
         "s2": re.compile(r"s2[a-z]+"),
@@ -121,8 +122,8 @@ class LazyPlatformAbbreviation:
     def __init__(
         self,
         *,
-        known_abbreviations: Dict = None,
-        grouped_abbreviations: Dict = None,
+        known_abbreviations: dict = None,
+        grouped_abbreviations: dict = None,
         show_specific_platform=True,
         allow_unknown_abbreviations=True,
     ) -> None:
@@ -136,7 +137,7 @@ class LazyPlatformAbbreviation:
 
         self.allow_unknown_abbreviations = allow_unknown_abbreviations
 
-    def __get__(self, c: "NamingConventions", owner) -> Optional[str]:
+    def __get__(self, c: "NamingConventions", owner) -> str | None:
         """Abbreviated form of a satellite, as used in dea product names. eg. 'ls7'."""
 
         p = c.metadata.platforms
@@ -184,7 +185,7 @@ class LazyPlatformAbbreviation:
 
 
 class LazyInstrumentAbbreviation:
-    def __get__(self, c: "NamingConventions", owner) -> Optional[str]:
+    def __get__(self, c: "NamingConventions", owner) -> str | None:
         """Abbreviated form of an instrument name, as used in dea product names. eg. 'c'."""
         if not c.metadata.instrument:
             return None
@@ -227,7 +228,7 @@ class LazyInstrumentAbbreviation:
 
 
 class LazyProducerAbbreviation:
-    KNOWN_PRODUCER_ABBREVIATIONS: ClassVar[Dict[str, str]] = {
+    KNOWN_PRODUCER_ABBREVIATIONS: ClassVar[dict[str, str]] = {
         "ga.gov.au": "ga",
         "usgs.gov": "usgs",
         "sinergise.com": "sinergise",
@@ -236,12 +237,12 @@ class LazyProducerAbbreviation:
         # Is there another organisation you want to use? Pull requests very welcome!
     }
 
-    def __init__(self, *, known_abbreviations: Dict = None) -> None:
+    def __init__(self, *, known_abbreviations: dict = None) -> None:
         self.known_abbreviations = (
             known_abbreviations or self.KNOWN_PRODUCER_ABBREVIATIONS
         )
 
-    def __get__(self, c: "NamingConventions", owner) -> Optional[str]:
+    def __get__(self, c: "NamingConventions", owner) -> str | None:
         """Abbreviated form of a producer, as used in dea product names. eg. 'ga', 'usgs'."""
         if not c.metadata.producer:
             return None
@@ -257,7 +258,7 @@ class LazyProducerAbbreviation:
 
 
 class LazyRegionOffset:
-    def __get__(self, c: "NamingConventions", owner) -> Optional[str]:
+    def __get__(self, c: "NamingConventions", owner) -> str | None:
         # Cut the region code in subfolders
         region_code = c.metadata.region_code
         if region_code:
@@ -269,7 +270,7 @@ class LazyTimeOffset:
     def __init__(self, date_folders_format="%Y/%m/%d") -> None:
         self.date_folders_format = date_folders_format
 
-    def __get__(self, c: "NamingConventions", owner) -> Optional[str]:
+    def __get__(self, c: "NamingConventions", owner) -> str | None:
         return c.metadata.datetime.strftime(self.date_folders_format)
 
 
@@ -349,7 +350,7 @@ class RequiredPropertyDict(Eo3Dict):
     """
 
     # Displayed to user for friendlier errors.
-    _REQUIRED_PROPERTY_HINTS: ClassVar[Dict[str, str]] = {
+    _REQUIRED_PROPERTY_HINTS: ClassVar[dict[str, str]] = {
         "odc:product_family": 'eg. "wofs" or "level1"',
         "odc:processing_datetime": "Time of processing, perhaps datetime.utcnow()?",
         "odc:producer": "Creator of data, eg 'usgs.gov' or 'ga.gov.au'",
@@ -358,7 +359,7 @@ class RequiredPropertyDict(Eo3Dict):
 
     def __init__(
         self,
-        required_fields: Set[str],
+        required_fields: set[str],
         properties=None,
     ) -> None:
         self.required_fields = required_fields
@@ -408,7 +409,7 @@ class EnforceRequirementProperties(Eo3Interface):
     def properties(self) -> Eo3Dict:
         return self._props
 
-    def __init__(self, properties: Mapping, required_fields: Set[str]) -> None:
+    def __init__(self, properties: Mapping, required_fields: set[str]) -> None:
         self._props = RequiredPropertyDict(required_fields, properties)
 
 
@@ -422,7 +423,7 @@ class LazyFileName:
 
 
 class LazyProductURI:
-    def __get__(self, n: "NamingConventions", owner) -> Optional[str]:
+    def __get__(self, n: "NamingConventions", owner) -> str | None:
         if not n.base_product_uri:
             return None
 
@@ -541,7 +542,7 @@ class NamingConventions:
 
     """
 
-    _ABSOLUTE_MINIMAL_PROPERTIES: ClassVar[Set[str]] = {
+    _ABSOLUTE_MINIMAL_PROPERTIES: ClassVar[set[str]] = {
         "odc:product_family",
         # Required by Stac regardless.
         "datetime",
@@ -602,7 +603,7 @@ class NamingConventions:
     #: Eg. ``'file:///my/dataset/collections'``
     #:
     #: (used if dataset_location is generated)
-    collection_prefix: Optional[str] = None
+    collection_prefix: str | None = None
 
     #: The region portion of dataset_folder
     #:
@@ -651,7 +652,7 @@ class NamingConventions:
         properties: Mapping,
         base_product_uri: str = None,
         required_fields: Sequence[str] = (),
-        dataset_separator_field: Optional[str] = None,
+        dataset_separator_field: str | None = None,
         allow_unknown_abbreviations: bool = True,
     ) -> None:
         #: The default base URI used in product URI generation
@@ -674,7 +675,7 @@ class NamingConventions:
         )
 
     @property
-    def displayed_collection_number(self) -> Optional[int]:
+    def displayed_collection_number(self) -> int | None:
         # An explicit collection number trumps all.
         if self.metadata.collection_number is not None:
             return int(self.metadata.collection_number)
@@ -750,7 +751,7 @@ class NamingConventions:
         return _as_path(self.resolve_file(path))
 
     @property
-    def dataset_path(self) -> Optional[Path]:
+    def dataset_path(self) -> Path | None:
         """
         Get the dataset location as a Path on the local filesystem, if possible.
 
@@ -759,7 +760,7 @@ class NamingConventions:
         return _as_path(self.dataset_location)
 
     @property
-    def collection_path(self) -> Optional[Path]:
+    def collection_path(self) -> Path | None:
         """
         Get the collection prefix as a Path on the local filesystem, if possible.
         """
@@ -804,7 +805,7 @@ class DEANamingConventions(NamingConventions):
             "odc:region_code",
             "odc:dataset_version",
         ),
-        dataset_separator_field: Optional[str] = None,
+        dataset_separator_field: str | None = None,
     ) -> None:
         # DEA wants consistency via the naming-conventions doc.
         allow_unknown_abbreviations = False
@@ -885,7 +886,7 @@ class DEADerivativesNamingConventions(DEANamingConventions):
             "odc:region_code",
             "dea:dataset_maturity",
         ),
-        dataset_separator_field: Optional[str] = None,
+        dataset_separator_field: str | None = None,
     ) -> None:
         super().__init__(
             properties,
@@ -978,7 +979,7 @@ KNOWN_CONVENTIONS = dict(
 
 
 def namer(
-    properties: Union[Eo3Dict, Eo3Interface, dict] = None,
+    properties: Eo3Dict | Eo3Interface | dict = None,
     *,
     collection_prefix: Location = None,
     conventions: str = "default",

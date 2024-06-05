@@ -19,9 +19,9 @@ def assert_image(
     image: Path,
     overviews=allow_anything,
     nodata=allow_anything,
-    unique_pixel_counts: Dict = allow_anything,
+    unique_pixel_counts: dict = allow_anything,
     bands=1,
-    shape: Tuple[int, int] = None,
+    shape: tuple[int, int] = None,
 ):
     __tracebackhide__ = True
     with rasterio.open(image) as d:

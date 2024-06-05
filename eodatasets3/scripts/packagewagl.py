@@ -6,8 +6,8 @@ GeoTIFFS (COGs) with datacube metadata using the DEA naming conventions
 for files.
 """
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence
 
 import click
 import rasterio
@@ -91,8 +91,8 @@ def run(
     with_oa: bool,
     product_maturity: wagl.ProductMaturity,
     allow_missing_provenance: bool,
-    oa_resolution: Optional[float],
-    contiguity_resolution: Optional[float],
+    oa_resolution: float | None,
+    contiguity_resolution: float | None,
 ):
     if products:
         products = {p.lower() for p in products}

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Dict
 
 import ciso8601
 
@@ -12,11 +11,11 @@ def test_stac_to_eo3_serialise(sentinel1_eo3):
     assert_unchanged_after_roundstrip(sentinel1_eo3)
 
 
-def test_valid_document_works(example_metadata: Dict):
+def test_valid_document_works(example_metadata: dict):
     assert_unchanged_after_roundstrip(example_metadata)
 
 
-def assert_unchanged_after_roundstrip(doc: Dict):
+def assert_unchanged_after_roundstrip(doc: dict):
     generated_doc = dump_roundtrip(doc)
 
     # Do a serialisation roundtrip and check that it's still identical.
@@ -41,12 +40,12 @@ def _normalise_datetime_props(generated_doc):
                 properties[key] = default_utc(ciso8601.parse_datetime(val)).isoformat()
 
 
-def test_location_serialisation(l1_ls8_folder_md_expected: Dict):
+def test_location_serialisation(l1_ls8_folder_md_expected: dict):
     l1_ls8_folder_md_expected["location"] = "s3://test/url/metadata.txt"
     assert_unchanged_after_roundstrip(l1_ls8_folder_md_expected)
 
 
-def test_location_single_serialisation(tmp_path: Path, l1_ls8_folder_md_expected: Dict):
+def test_location_single_serialisation(tmp_path: Path, l1_ls8_folder_md_expected: dict):
     # Always serialises a single location as 'location'
     location = "https://some/test/path"
 
