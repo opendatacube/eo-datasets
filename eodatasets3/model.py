@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Union
 from uuid import UUID
 
 import affine
@@ -14,7 +13,7 @@ ODC_DATASET_SCHEMA_URL = "https://schemas.opendatacube.org/dataset"
 
 # Either a local filesystem path or a string URI.
 # (the URI can use any scheme supported by rasterio, such as tar:// or https:// or ...)
-Location = Union[Path, str]
+Location = Path | str
 
 
 @attr.s(auto_attribs=True, slots=True)

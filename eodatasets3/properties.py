@@ -6,7 +6,7 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from enum import Enum, EnumMeta
 from textwrap import dedent
-from typing import Any, Union
+from typing import Any
 from urllib.parse import urlencode
 
 import ciso8601
@@ -120,7 +120,7 @@ def normalise_platforms(value: str | list | set):
     >>> normalise_platforms('landsat-5,landsat-5,LANDSAT-5')
     'landsat-5'
     """
-    if not isinstance(value, (list, set, tuple)):
+    if not isinstance(value, list | set | tuple):
         value = value.split(",")
 
     platforms = sorted({s.strip().lower().replace("_", "-") for s in value if s})
@@ -203,7 +203,7 @@ def parsed_sentinel_datastrip_id(tile_id) -> tuple[str, dict]:
 
 
 # The primitive types allowed as stac values.
-PrimitiveType = Union[str, int, float, datetime]
+PrimitiveType = str | int | float | datetime
 
 ExtraProperties = dict
 # A function to normalise a value.

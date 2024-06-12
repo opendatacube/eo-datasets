@@ -6,7 +6,6 @@ import binascii
 import hashlib
 import tempfile
 from pathlib import Path
-from typing import Dict, Tuple
 
 import numpy
 import rasterio
