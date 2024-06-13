@@ -214,7 +214,7 @@ def pass_config(*, required=True):
             parsed_config = None
 
             try:
-                parsed_config = ODCConfig().get_environment(
+                parsed_config = ODCConfig.get_environment(
                     config=paths, env=specific_environment
                 )
             except (
