@@ -58,11 +58,4 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # overwrite the builtin "default.css".
 # html_static_path = ["_static"]
 
-
-if is_on_readthedocs:
-    html_theme = "default"
-else:
-    import sphinx_rtd_theme
-
-    html_theme = "sphinx_rtd_theme"
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme = "sphinx_rtd_theme"
