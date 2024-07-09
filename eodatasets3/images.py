@@ -711,10 +711,8 @@ class FileWrite:
             "predictor": self.PREDICTOR_DEFAULTS[dtype],
         }
         # Ensure 'nan' is always tagged as nodata for floating point types
-        if nodata is None:
-            nodata = (
-                float("nan") if numpy.issubdtype(array.dtype, numpy.floating) else 0
-            )
+        if nodata is None and numpy.issubdtype(array.dtype, numpy.floating):
+            nodata = float("nan")
 
         if nodata is not None:
             rio_args["nodata"] = nodata
