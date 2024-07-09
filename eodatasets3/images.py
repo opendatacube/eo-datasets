@@ -710,6 +710,10 @@ class FileWrite:
             "driver": "GTiff",
             "predictor": self.PREDICTOR_DEFAULTS[dtype],
         }
+	# Ensure 'nan' is always tagged as nodata for floating point types
+        if nodata is None:
+            nodata = float("nan") if numpy.issubdtype(img.dtype, numpy.floating) else 0
+
         if nodata is not None:
             rio_args["nodata"] = nodata
 
