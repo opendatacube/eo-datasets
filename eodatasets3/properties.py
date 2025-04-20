@@ -64,7 +64,10 @@ def datetime_type(value):
 
 
 def of_enum_type(
-    vals: EnumMeta | tuple[str, ...] = None, lower=False, upper=False, strict=True
+    vals: EnumMeta | tuple[str, ...] | None = None,
+    lower: bool = False,
+    upper: bool = False,
+    strict: bool = True,
 ) -> Callable[[str], str]:
     """
     A String value with a fixed set of known values.
@@ -376,7 +379,7 @@ class Eo3Dict(collections.abc.MutableMapping):
     # For backwards compatibility, in case users are extending at runtime.
     KNOWN_STAC_PROPERTIES = KNOWN_PROPERTIES
 
-    def __init__(self, properties: Mapping = None, normalise_input=True) -> None:
+    def __init__(self, properties: Mapping | None = None, normalise_input=True) -> None:
         if properties is None:
             properties = {}
         self._props = properties
@@ -597,7 +600,7 @@ class Eo3Interface:
         self.properties["odc:producer"] = domain
 
     @property
-    def datetime_range(self) -> tuple[datetime, datetime]:
+    def datetime_range(self) -> tuple[datetime.datetime, datetime.datetime]:
         """
         An optional date range for the dataset.
 

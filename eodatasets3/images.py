@@ -160,7 +160,7 @@ class GridSpec:
 
 
 def generate_tiles(
-    samples: int, lines: int, xtile: int = None, ytile: int = None
+    samples: int, lines: int, xtile: int | None = None, ytile: int | None = None
 ) -> Generator[tuple[tuple[int, int], tuple[int, int]], None, None]:
     """
     Generates a list of tile indices for a 2D array.
@@ -231,7 +231,7 @@ def _common_suffix(names: Iterable[str]) -> str:
 
 
 def _find_a_common_name(
-    group_of_names: Sequence[str], all_possible_names: set[str] = None
+    group_of_names: Sequence[str], all_possible_names: set[str] | None = None
 ) -> str | None:
     """
     If we have a list of band names, can we find a nice name for the group of them?
@@ -283,7 +283,7 @@ def _find_a_common_name(
 @attr.s(auto_attribs=True, slots=True)
 class _MeasurementLocation:
     path: Path | str
-    layer: str = None
+    layer: str | None = None
 
 
 _Measurements = dict[str, _MeasurementLocation]
@@ -413,7 +413,12 @@ class MeasurementBundler:
             },
         }
 
-    def as_geo_docs(self) -> tuple[CRS, dict[str, GridDoc], dict[str, MeasurementDoc]]:
+    def as_geo_docs(
+        self,
+    ) -> (
+        tuple[CRS, dict[str, GridDoc], dict[str, MeasurementDoc]]
+        | tuple[None, None, None]
+    ):
         """Calculate combined geo information for metadata docs"""
 
         if not self._measurements_per_grid:
@@ -573,7 +578,7 @@ class FileWrite:
 
     def __init__(
         self,
-        gdal_options: dict = None,
+        gdal_options: dict | None = None,
         overview_blocksize: int | None = None,
     ) -> None:
         super().__init__()
@@ -619,8 +624,8 @@ class FileWrite:
         self,
         array: numpy.ndarray,
         out_filename: Path,
-        geobox: GridSpec = None,
-        nodata: int = None,
+        geobox: GridSpec | None = None,
+        nodata: int | None = None,
         overview_resampling=Resampling.nearest,
         overviews: tuple[int, ...] | None = DEFAULT_OVERVIEWS,
     ) -> WriteResult:
@@ -657,7 +662,7 @@ class FileWrite:
             )
 
         # TODO: Old packager never passed in tags. Perhaps we want some?
-        tags = {}
+        tags: dict = {}
 
         dtype = array.dtype.name
 
@@ -786,10 +791,10 @@ class FileWrite:
         out: Path,
         out_scale=10,
         resampling=Resampling.average,
-        static_stretch: tuple[int, int] = None,
+        static_stretch: tuple[int, int] | None = None,
         percentile_stretch: tuple[int, int] = (2, 98),
         compress_quality: int = 85,
-        input_geobox: GridSpec = None,
+        input_geobox: GridSpec | None = None,
     ):
         """
         Generate a thumbnail jpg image using the given three paths as red,green, blue.
@@ -867,10 +872,10 @@ class FileWrite:
         rgb: tuple[numpy.array, numpy.array, numpy.array],
         out_scale=10,
         resampling=Resampling.average,
-        static_stretch: tuple[int, int] = None,
+        static_stretch: tuple[int, int] | None = None,
         percentile_stretch: tuple[int, int] = (2, 98),
         compress_quality: int = 85,
-        input_geobox: GridSpec = None,
+        input_geobox: GridSpec | None = None,
         nodata: int = -999,
     ):
         """
@@ -946,8 +951,8 @@ class FileWrite:
         self,
         in_file: Path,
         out_file: Path,
-        bit: int = None,
-        lookup_table: dict[int, tuple[int, int, int]] = None,
+        bit: int | None = None,
+        lookup_table: dict[int, tuple[int, int, int]] | None = None,
     ):
         """
         Write out a JPG thumbnail from a singleband image.
@@ -994,9 +999,9 @@ class FileWrite:
     def create_thumbnail_singleband_from_numpy(
         self,
         input_data: numpy.array,
-        bit: int = None,
-        lookup_table: dict[int, tuple[int, int, int]] = None,
-        input_geobox: GridSpec = None,
+        bit: int | None = None,
+        lookup_table: dict[int, tuple[int, int, int]] | None = None,
+        input_geobox: GridSpec | None = None,
         nodata: int = -999,
     ) -> bytes:
         """
@@ -1030,8 +1035,8 @@ class FileWrite:
     def _filter_singleband_data(
         self,
         data: numpy.array,
-        bit: int = None,
-        lookup_table: dict[int, tuple[int, int, int]] = None,
+        bit: int | None = None,
+        lookup_table: dict[int, tuple[int, int, int]] | None = None,
     ):
         """
         Apply bit or lookup_table to filter the numpy array
@@ -1060,7 +1065,7 @@ def _write_to_numpy_array(
     resampling: Resampling,
     static_range: tuple[int, int],
     percentile_range: tuple[int, int] = (2, 98),
-    input_geobox: GridSpec = None,
+    input_geobox: GridSpec | None = None,
     nodata: int = -999,
 ) -> GridSpec:
     """
@@ -1144,7 +1149,7 @@ def _write_quicklook(
     resampling: Resampling,
     static_range: tuple[int, int],
     percentile_range: tuple[int, int] = (2, 98),
-    input_geobox: GridSpec = None,
+    input_geobox: GridSpec | None = None,
 ) -> GridSpec:
     """
     Write an intensity-scaled wgs84 image using the given files as bands.
@@ -1288,8 +1293,8 @@ def rescale_intensity(
     image: numpy.ndarray,
     in_range: tuple[int, int],
     out_range: tuple[int, int] | None = None,
-    image_nodata: int = None,
-    image_null_mask: numpy.ndarray = None,
+    image_nodata: int | None = None,
+    image_null_mask: numpy.ndarray | None = None,
     out_dtype=numpy.uint8,
     out_nodata=0,
 ) -> numpy.ndarray:

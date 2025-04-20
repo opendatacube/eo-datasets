@@ -21,7 +21,7 @@ from contextlib import suppress
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from typing import IO
+from typing import IO, Any
 
 import click
 import numpy
@@ -111,7 +111,9 @@ def _tar_members(in_tar: tarfile.TarFile) -> Iterable[ReadableMember]:
         yield member, partial(in_tar.extractfile, member)
 
 
-def _folder_members(path: Path, base_path: Path = None) -> Iterable[ReadableMember]:
+def _folder_members(
+    path: Path, base_path: Path | None = None
+) -> Iterable[tuple[ReadableMember, Any]]:
     """
     Get readable files (presented as tar members) from a directory.
     """

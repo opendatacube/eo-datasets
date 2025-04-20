@@ -138,9 +138,9 @@ class ValidationMessage:
     level: Level
     code: str
     reason: str
-    hint: str = None
+    hint: str | None = None
     #: What was assumed when validating this? Eg: dict(product='ls7_nbar', metadata_type='eo3')
-    context: dict = None
+    context: dict | None = None
 
     def __str__(self) -> str:
         hint = ""
@@ -149,15 +149,15 @@ class ValidationMessage:
         return f"{self.code}: {self.reason}{hint}"
 
 
-def _info(code: str, reason: str, hint: str = None):
+def _info(code: str, reason: str, hint: str | None = None):
     return ValidationMessage(Level.info, code, reason, hint=hint)
 
 
-def _warning(code: str, reason: str, hint: str = None):
+def _warning(code: str, reason: str, hint: str | None = None):
     return ValidationMessage(Level.warning, code, reason, hint=hint)
 
 
-def _error(code: str, reason: str, hint: str = None):
+def _error(code: str, reason: str, hint: str | None = None):
     return ValidationMessage(Level.error, code, reason, hint=hint)
 
 
@@ -216,8 +216,8 @@ def validate_dataset(
     product_definition: dict | None = None,
     metadata_type_definition: dict | None = None,
     thorough: bool = False,
-    readable_location: str | Path = None,
-    expect: ValidationExpectations = None,
+    readable_location: str | Path | None = None,
+    expect: ValidationExpectations | None = None,
 ) -> ValidationMessages:
     """
     Validate a dataset document, optionally against the given product.
@@ -240,19 +240,19 @@ def validate_dataset(
         validation_context["product"] = product_definition["name"]
 
     # noinspection PyShadowingNames
-    def _info(code: str, reason: str, hint: str = None):
+    def _info(code: str, reason: str, hint: str | None = None):
         return ValidationMessage(
             Level.info, code, reason, hint=hint, context=validation_context
         )
 
     # noinspection PyShadowingNames
-    def _warning(code: str, reason: str, hint: str = None):
+    def _warning(code: str, reason: str, hint: str | None = None):
         return ValidationMessage(
             Level.warning, code, reason, hint=hint, context=validation_context
         )
 
     # noinspection PyShadowingNames
-    def _error(code: str, reason: str, hint: str = None):
+    def _error(code: str, reason: str, hint: str | None = None):
         return ValidationMessage(
             Level.error, code, reason, hint=hint, context=validation_context
         )
@@ -639,9 +639,9 @@ FieldNameOffsetS = tuple[str, set[list[str]]]
 def validate_paths(
     paths: list[str],
     thorough: bool = False,
-    product_definitions: dict[str, dict] = None,
-    metadata_type_definitions: dict[str, dict] = None,
-    expect: ValidationExpectations = None,
+    product_definitions: dict[str, dict] | None = None,
+    metadata_type_definitions: dict[str, dict] | None = None,
+    expect: ValidationExpectations | None = None,
 ) -> Generator[tuple[str, list[ValidationMessage]], None, None]:
     """Validate the list of paths. Product documents can be specified before their datasets."""
 
@@ -816,7 +816,7 @@ def validate_eo3_doc(
     products: dict[str, dict],
     metadata_types: dict[str, dict],
     thorough: bool = False,
-    expect: ValidationExpectations = None,
+    expect: ValidationExpectations | None = None,
 ) -> list[ValidationMessage]:
     messages = []
 
