@@ -26,8 +26,8 @@ class ProductDoc:
     href is intended as a more global unique "identifier" uri for the product.
     """
 
-    name: str = None
-    href: str = None
+    name: str | None = None
+    href: str | None = None
 
 
 @attr.s(auto_attribs=True, slots=True, hash=True)
@@ -63,7 +63,7 @@ class AccessoryDoc:
     """
 
     path: str
-    type: str = None
+    type: str | None = None
     name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
 
 
@@ -83,11 +83,11 @@ class DatasetDoc(Eo3Interface):
     """
 
     #: Dataset UUID
-    id: UUID = None
+    id: UUID | None = None
     #: Human-readable identifier for the dataset
-    label: str = None
+    label: str | None = None
     #: The product name (local) and/or url (global)
-    product: ProductDoc = None
+    product: ProductDoc | None = None
     #: Location(s) where this dataset is stored.
     #:
     #: (ODC supports multiple locations when the same dataset is stored in multiple places)
@@ -96,20 +96,20 @@ class DatasetDoc(Eo3Interface):
     #:
     #: All other paths in the document (measurements, accessories) are relative to the
     #: chosen location.
-    locations: list[str] = None
+    locations: list[str] | None = None
 
     #: CRS string. Eg. ``epsg:3577``
-    crs: str = None
+    crs: str | None = None
     #: Shapely geometry of the valid data coverage
     #:
     #: (it must contain all non-empty pixels of the image)
-    geometry: BaseGeometry = None
+    geometry: BaseGeometry | None = None
     #: Grid specifications for measurements
-    grids: dict[str, GridDoc] = None
+    grids: dict[str, GridDoc] | None = None
     #: Raw properties
     properties: Eo3Dict = attr.ib(factory=Eo3Dict)
     #: Loadable measurements of the dataset
-    measurements: dict[str, MeasurementDoc] = None
+    measurements: dict[str, MeasurementDoc] | None = None
     #: References to accessory files
     #:
     #: Such as thumbnails, checksums, other kinds of metadata files.

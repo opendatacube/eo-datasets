@@ -529,7 +529,7 @@ class DatasetPrepare(Eo3Interface):
     def add_source_path(
         self,
         *paths: Path,
-        classifier: str = None,
+        classifier: str | None = None,
         auto_inherit_properties: bool = False,
         inherit_geometry: bool = False,
     ):
@@ -705,8 +705,8 @@ class DatasetPrepare(Eo3Interface):
         path: Location,
         expand_valid_data=True,
         relative_to_dataset_location=False,
-        grid: GridSpec = None,
-        pixels: numpy.ndarray = None,
+        grid: GridSpec | None = None,
+        pixels: numpy.ndarray | None = None,
         nodata: float | int | None = None,
     ):
         """
@@ -764,7 +764,7 @@ class DatasetPrepare(Eo3Interface):
 
     def write_eo3(
         self,
-        path: Path = None,
+        path: Path | None = None,
         embed_location: bool = False,
         validate_correctness: bool = True,
         sort_measurements: bool = True,
@@ -815,7 +815,7 @@ class DatasetPrepare(Eo3Interface):
         validate_correctness: bool = True,
         sort_measurements: bool = True,
         expect_geometry: bool = True,
-        expect: ValidationExpectations = None,
+        expect: ValidationExpectations | None = None,
     ) -> DatasetDoc:
         """
         Create the metadata doc as an in-memory :class:`eodatasets3.DatasetDoc` instance.
@@ -967,7 +967,7 @@ class DatasetPrepare(Eo3Interface):
             )
         self._accessories[name] = path
 
-    def note_thumbnail(self, thumb_path: Path, kind: str = None):
+    def note_thumbnail(self, thumb_path: Path, kind: str | None = None):
         """
         Record a reference to a thumbnail path.
 
@@ -1025,7 +1025,7 @@ class DatasetPrepare(Eo3Interface):
         """
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
     def add_accessory_file(self, *args, **kwargs):
@@ -1230,8 +1230,8 @@ class DatasetAssembler(DatasetPrepare):
         overviews: Iterable[int] = images.DEFAULT_OVERVIEWS,
         overview_resampling: Resampling = Resampling.average,
         expand_valid_data: bool = True,
-        file_id: str = None,
-        path: Path = None,
+        file_id: str | None = None,
+        path: Path | None = None,
     ):
         """
         Write a measurement by copying it from a file path.
@@ -1270,7 +1270,7 @@ class DatasetAssembler(DatasetPrepare):
         overview_resampling=Resampling.average,
         expand_valid_data=True,
         file_id=None,
-        path: Path = None,
+        path: Path | None = None,
     ):
         """
         Write a measurement by reading it from an open rasterio dataset
@@ -1306,8 +1306,8 @@ class DatasetAssembler(DatasetPrepare):
         overviews=images.DEFAULT_OVERVIEWS,
         overview_resampling=Resampling.average,
         expand_valid_data=True,
-        file_id: str = None,
-        path: Path = None,
+        file_id: str | None = None,
+        path: Path | None = None,
     ):
         """
         Write a measurement from a numpy array and grid spec.
@@ -1441,10 +1441,10 @@ class DatasetAssembler(DatasetPrepare):
         green: str,
         blue: str,
         resampling: Resampling = Resampling.average,
-        static_stretch: tuple[int, int] = None,
+        static_stretch: tuple[int, int] | None = None,
         percentile_stretch: tuple[int, int] = (2, 98),
         scale_factor: int = 10,
-        kind: str = None,
+        kind: str | None = None,
         path: Path | None = None,
     ):
         """
@@ -1505,9 +1505,9 @@ class DatasetAssembler(DatasetPrepare):
     def write_thumbnail_singleband(
         self,
         measurement: str,
-        bit: int = None,
-        lookup_table: dict[int, tuple[int, int, int]] = None,
-        kind: str = None,
+        bit: int | None = None,
+        lookup_table: dict[int, tuple[int, int, int]] | None = None,
+        kind: str | None = None,
     ):
         """
         Write a singleband thumbnail out, taking in an input measurement and

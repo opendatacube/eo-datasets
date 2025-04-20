@@ -336,7 +336,7 @@ def _iter_image_paths(product_doc: dict) -> Generator[tuple[str, str], None, Non
 def prepare_and_write(
     ds_path: Path,
     output_yaml_path: Path,
-    source_telemetry: Path = None,
+    source_telemetry: Path | None = None,
     # TODO: Can we infer producer automatically? This is bound to cause mistakes othewise
     producer="usgs.gov",
     embed_location: bool = False,

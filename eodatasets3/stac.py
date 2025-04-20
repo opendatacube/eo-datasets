@@ -6,6 +6,7 @@ import datetime
 import math
 import mimetypes
 import warnings
+from collections.abc import Iterable
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -138,7 +139,7 @@ def _odc_links(
     explorer_base_url: str,
     dataset: DatasetDoc,
     collection_url: str | None,
-) -> list[Link]:
+) -> Iterable[Link]:
     """
     Add links for ODC product into a STAC Item
     """
@@ -189,7 +190,7 @@ def _get_projection(dataset: DatasetDoc) -> tuple[int | None, str | None]:
 
 
 def eo3_to_stac_properties(
-    dataset: DatasetDoc, crs: str | None = None, title: str = None
+    dataset: DatasetDoc, crs: str | None = None, title: str | None = None
 ) -> dict:
     """
     Convert EO3 properties dictionary to the Stac equivalent.

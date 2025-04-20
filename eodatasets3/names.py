@@ -16,7 +16,9 @@ dc_uris.register_scheme("zip", "tar")
 
 
 class LazyProductName:
-    def __init__(self, include_instrument=True, include_collection=False) -> None:
+    def __init__(
+        self, include_instrument: bool = True, include_collection: bool = False
+    ) -> None:
         super().__init__()
         self.include_instrument = include_instrument
         self.include_collection = include_collection
@@ -65,7 +67,9 @@ def _strip_major_version(version: str) -> str:
 
 
 class LazyLabel:
-    def __init__(self, include_version=True, strip_major_version=False) -> None:
+    def __init__(
+        self, include_version: bool = True, strip_major_version: bool = False
+    ) -> None:
         super().__init__()
         self.strip_major_version = strip_major_version
         self.include_version = include_version
@@ -123,10 +127,10 @@ class LazyPlatformAbbreviation:
     def __init__(
         self,
         *,
-        known_abbreviations: dict = None,
-        grouped_abbreviations: dict = None,
-        show_specific_platform=True,
-        allow_unknown_abbreviations=True,
+        known_abbreviations: dict | None = None,
+        grouped_abbreviations: dict | None = None,
+        show_specific_platform: bool = True,
+        allow_unknown_abbreviations: bool = True,
     ) -> None:
         self.known_abbreviations = (
             known_abbreviations or self.KNOWN_PLATFORM_ABBREVIATIONS
@@ -238,7 +242,7 @@ class LazyProducerAbbreviation:
         # Is there another organisation you want to use? Pull requests very welcome!
     }
 
-    def __init__(self, *, known_abbreviations: dict = None) -> None:
+    def __init__(self, *, known_abbreviations: dict | None = None) -> None:
         self.known_abbreviations = (
             known_abbreviations or self.KNOWN_PRODUCER_ABBREVIATIONS
         )
@@ -651,8 +655,8 @@ class NamingConventions:
     def __init__(
         self,
         properties: Mapping,
-        base_product_uri: str = None,
-        required_fields: Sequence[str] = (),
+        base_product_uri: str | None = None,
+        required_fields: Sequence[str] = [],
         dataset_separator_field: str | None = None,
         allow_unknown_abbreviations: bool = True,
     ) -> None:
@@ -690,7 +694,7 @@ class NamingConventions:
         return self.filename(kind, suffix)
 
     def measurement_filename(
-        self, measurement_name: str, suffix: str = "tif", file_id: str = None
+        self, measurement_name: str, suffix: str = "tif", file_id: str | None = None
     ) -> str:
         """
         Generate the path to a measurement for the current naming conventions.:::
@@ -719,7 +723,7 @@ class NamingConventions:
         file_id = "_" + file_id.replace("_", "-") if file_id else ""
         return self.filename_pattern.format(file_id=file_id, suffix=suffix, n=self)
 
-    def thumbnail_filename(self, kind: str = None, suffix: str = "jpg") -> str:
+    def thumbnail_filename(self, kind: str | None = None, suffix: str = "jpg") -> str:
         """
         Get a thumbnail file path (optionally with the given kind and/or suffix.)
         """
@@ -980,9 +984,9 @@ KNOWN_CONVENTIONS = dict(
 
 
 def namer(
-    properties: Eo3Dict | Eo3Interface | dict = None,
+    properties: Eo3Dict | Eo3Interface | dict | None = None,
     *,
-    collection_prefix: Location = None,
+    collection_prefix: Location | None = None,
     conventions: str = "default",
 ) -> "NamingConventions":
     """

@@ -334,7 +334,7 @@ def write_measurement_h5(
     overviews=images.DEFAULT_OVERVIEWS,
     overview_resampling=Resampling.nearest,
     expand_valid_data=True,
-    file_id: str = None,
+    file_id: str | None = None,
 ):
     """
     Write a measurement by copying it from a hdf5 dataset.
@@ -460,7 +460,7 @@ def _create_contiguity(
     product_list: Iterable[str],
     resolution_yx: tuple[float, float],
     timedelta_product: str = "nbar",
-    timedelta_data: numpy.ndarray = None,
+    timedelta_data: numpy.ndarray | None = None,
 ):
     """
     Create the contiguity (all pixels valid) dataset.
@@ -787,7 +787,7 @@ def _load_level1_doc(
     level1_data_path: Path,
     user_specified_l1_path: Path | None = None,
     allow_missing_provenance=False,
-) -> DatasetDoc:
+) -> DatasetDoc | None:
     if user_specified_l1_path:
         if not user_specified_l1_path.exists():
             raise ValueError(

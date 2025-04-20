@@ -93,7 +93,7 @@ class RegionLookup:
     The table is stored as an sqlite database.
     """
 
-    def __init__(self, db_path: Path = None):
+    def __init__(self, db_path: Path | None = None):
         self.db_path = db_path
         self._db: sqlite3.Connection | None = None
 

@@ -172,7 +172,7 @@ def is_doc_eo3(doc: dict[str, Any]) -> bool:
 
 
 def flatten_dict(
-    d: Mapping, prefix: str = None, separator: str = "."
+    d: Mapping, prefix: str | None = None, separator: str = "."
 ) -> Iterable[tuple[str, Any]]:
     """
     Flatten a nested dicts into one level, with keys that show their original nested path ("a.b.c")

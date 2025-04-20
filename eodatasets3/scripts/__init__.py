@@ -1,7 +1,7 @@
 import logging
 
 
-def init_logging(debug):
+def init_logging(debug: bool) -> None:
     logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s")
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)

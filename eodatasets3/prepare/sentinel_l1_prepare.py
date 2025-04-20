@@ -179,7 +179,9 @@ def process_datastrip_metadata(contents: str) -> list[str] | dict:
     }
 
 
-def process_user_product_metadata(contents: str, filename_stem: str = None) -> dict:
+def process_user_product_metadata(
+    contents: str, filename_stem: str | None = None
+) -> dict:
     root = minidom.parseString(contents)
 
     # - On newer datasets, get the product URI from metadata.
@@ -242,8 +244,8 @@ def prepare_and_write(
     dataset_location: Path,
     output_yaml: Path,
     producer: str,
-    granule_id: str = None,
-    embed_location: bool = None,
+    granule_id: str | None = None,
+    embed_location: bool | None = None,
 ) -> tuple[DatasetDoc, Path]:
     if embed_location is None:
         # Default to embedding the location if they're not in the same folder.

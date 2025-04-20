@@ -105,7 +105,7 @@ def dc_to_stac(
     return doc
 
 
-def json_fallback(o):
+def json_fallback(o) -> str:
     """
     This function is needed here for backwards compatibility.
 
