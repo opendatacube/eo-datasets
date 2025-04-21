@@ -215,7 +215,9 @@ class ValidateRunner:
                 + "\n".join(f"{k}: {v}" for k, v in self.messages.items())
             )
 
-    def assert_invalid(self, *docs: Doc, codes: Sequence[str] = None, suffix=".yaml"):
+    def assert_invalid(
+        self, *docs: Doc, codes: Sequence[str] | None = None, suffix=".yaml"
+    ) -> None:
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
         self.run_validate(docs, suffix=suffix)
         assert self.result.exit_code != 0, (
@@ -231,7 +233,7 @@ class ValidateRunner:
                 f"Expected error code 1 for 1 invalid path. Got {sorted(self.messages.items())}"
             )
 
-    def run_validate(self, docs: Sequence[Doc], suffix=".yaml"):
+    def run_validate(self, docs: Sequence[Doc], suffix=".yaml") -> None:
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
 
         args = ("-f", "plain")
@@ -296,7 +298,9 @@ class ValidateRunner:
         }
 
 
-def test_valid_document_works(eo_validator: ValidateRunner, example_metadata: dict):
+def test_valid_document_works(
+    eo_validator: ValidateRunner, example_metadata: dict
+) -> None:
     """All of our example metadata files should validate"""
     eo_validator.assert_valid(example_metadata)
 
@@ -306,7 +310,7 @@ def test_multi_document_works(
     eo_validator: ValidateRunner,
     l1_ls5_tarball_md_expected: dict,
     l1_ls7_tarball_md_expected: dict,
-):
+) -> None:
     """We should support multiple documents in one yaml file, and validate all of them"""
 
     # Two valid documents in one file, should succeed.
@@ -324,14 +328,16 @@ def test_multi_document_works(
     eo_validator.assert_invalid(md_path)
 
 
-def test_missing_field(eo_validator: ValidateRunner, example_metadata: dict):
+def test_missing_field(eo_validator: ValidateRunner, example_metadata: dict) -> None:
     """when a required field (id) is missing, validation should fail"""
     del example_metadata["id"]
     eo_validator.assert_invalid(example_metadata, codes=["structure"])
     assert "'id' is a required property" in eo_validator.messages["structure"]
 
 
-def test_invalid_ls8_schema(eo_validator: ValidateRunner, example_metadata: dict):
+def test_invalid_ls8_schema(
+    eo_validator: ValidateRunner, example_metadata: dict
+) -> None:
     """When there's no eo3 $schema defined"""
     del example_metadata["$schema"]
     eo_validator.assert_invalid(
@@ -339,7 +345,9 @@ def test_invalid_ls8_schema(eo_validator: ValidateRunner, example_metadata: dict
     )
 
 
-def test_allow_optional_geo(eo_validator: ValidateRunner, example_metadata: dict):
+def test_allow_optional_geo(
+    eo_validator: ValidateRunner, example_metadata: dict
+) -> None:
     """A doc can omit all geo fields and be valid."""
     del example_metadata["crs"]
     del example_metadata["geometry"]
@@ -355,13 +363,17 @@ def test_allow_optional_geo(eo_validator: ValidateRunner, example_metadata: dict
     eo_validator.assert_valid(example_metadata)
 
 
-def test_missing_geo_fields(eo_validator: ValidateRunner, example_metadata: dict):
+def test_missing_geo_fields(
+    eo_validator: ValidateRunner, example_metadata: dict
+) -> None:
     """If you have one gis field, you should have all of them"""
     del example_metadata["crs"]
     eo_validator.assert_invalid(example_metadata, codes=["incomplete_crs"])
 
 
-def test_warn_bad_formatting(eo_validator: ValidateRunner, example_metadata: dict):
+def test_warn_bad_formatting(
+    eo_validator: ValidateRunner, example_metadata: dict
+) -> None:
     """A warning if fields aren't formatted in standard manner."""
     example_metadata["properties"]["eo:platform"] = example_metadata["properties"][
         "eo:platform"
@@ -370,14 +382,14 @@ def test_warn_bad_formatting(eo_validator: ValidateRunner, example_metadata: dic
     eo_validator.assert_invalid(example_metadata, codes=["property_formatting"])
 
 
-def test_missing_grid_def(eo_validator: ValidateRunner, example_metadata: dict):
+def test_missing_grid_def(eo_validator: ValidateRunner, example_metadata: dict) -> None:
     """A Measurement refers to a grid that doesn't exist"""
     a_measurement, *_ = list(example_metadata["measurements"])
     example_metadata["measurements"][a_measurement]["grid"] = "unknown_grid"
     eo_validator.assert_invalid(example_metadata, codes=["invalid_grid_ref"])
 
 
-def test_invalid_shape(eo_validator: ValidateRunner, example_metadata: dict):
+def test_invalid_shape(eo_validator: ValidateRunner, example_metadata: dict) -> None:
     """the geometry must be a valid shape"""
 
     # Points are in an invalid order.
@@ -398,7 +410,7 @@ def test_invalid_shape(eo_validator: ValidateRunner, example_metadata: dict):
     assert "not a valid shape" in eo_validator.messages["invalid_geometry"]
 
 
-def test_crs_as_wkt(eo_validator: ValidateRunner, example_metadata: dict):
+def test_crs_as_wkt(eo_validator: ValidateRunner, example_metadata: dict) -> None:
     """A CRS should be in epsg form if an EPSG exists, not WKT"""
     example_metadata["crs"] = dedent(
         """PROJCS["WGS 84 / UTM zone 55N",
@@ -440,7 +452,7 @@ def test_crs_as_wkt(eo_validator: ValidateRunner, example_metadata: dict):
 
 def test_valid_with_product_doc(
     eo_validator: ValidateRunner, l1_ls8_metadata_path: Path, product: dict
-):
+) -> None:
     """When a product is specified, it will validate that the measurements match the product"""
 
     # Document is valid on its own.
@@ -452,7 +464,7 @@ def test_valid_with_product_doc(
 
 def test_odc_product_schema(
     eo_validator: ValidateRunner, l1_ls8_metadata_path: Path, product: dict
-):
+) -> None:
     """
     If a product fails against ODC's schema, it's an error.
     """
@@ -464,7 +476,7 @@ def test_odc_product_schema(
 
 def test_warn_bad_product_license(
     eo_validator: ValidateRunner, l1_ls8_metadata_path: Path, product: dict
-):
+) -> None:
     # Missing license is a warning.
     del product["license"]
     eo_validator.assert_valid(product, expect_no_messages=False)
@@ -480,7 +492,7 @@ def test_warn_bad_product_license(
 def test_warn_duplicate_measurement_name(
     eo_validator: ValidateRunner,
     l1_ls8_product: dict,
-):
+) -> None:
     """When a product is specified, it will validate that names are not repeated between measurements and aliases."""
     product = l1_ls8_product
     # We have the "blue" measurement twice.
@@ -536,7 +548,7 @@ def test_warn_duplicate_measurement_name(
 
 def test_dtype_compare_with_product_doc(
     eo_validator: ValidateRunner, l1_ls8_metadata_path: Path, product: dict
-):
+) -> None:
     """'thorough' validation should check the dtype of measurements against the product"""
 
     product["measurements"] = [dict(name="blue", dtype="uint8", units="1", nodata=255)]
@@ -556,7 +568,7 @@ def test_nodata_compare_with_product_doc(
     l1_ls8_dataset: DatasetDoc,
     l1_ls8_metadata_path: Path,
     l1_ls8_product: dict,
-):
+) -> None:
     """'thorough' validation should check the nodata of measurements against the product"""
     eo_validator.thorough = True
     eo_validator.record_informational_messages = True
@@ -586,7 +598,7 @@ def test_measurements_compare_with_nans(
     l1_ls8_dataset: DatasetDoc,
     l1_ls8_metadata_path: Path,
     l1_ls8_product: dict,
-):
+) -> None:
     """When dataset and product have NaN nodata values, it should handle them correctly"""
     product = l1_ls8_product
     eo_validator.thorough = True
@@ -620,7 +632,7 @@ def _measurement(product: dict, name: str):
     raise ValueError(f"Measurement {name} not found?")
 
 
-def _create_dummy_tif(blue_tif, nodata=None, dtype="float32", **opts):
+def _create_dummy_tif(blue_tif, nodata=None, dtype="float32", **opts) -> None:
     with rasterio.open(
         blue_tif,
         "w",
@@ -640,7 +652,7 @@ def test_missing_measurement_from_product(
     eo_validator: ValidateRunner,
     l1_ls8_metadata_path: Path,
     product: dict,
-):
+) -> None:
     """Validator should notice a missing measurement from the product def"""
     product["name"] = "test_with_extra_measurement"
     product["measurements"] = [
@@ -657,7 +669,7 @@ def test_supports_measurementless_products(
     eo_validator: ValidateRunner,
     l1_ls8_metadata_path: Path,
     product: dict,
-):
+) -> None:
     """
     Validator should support products without any measurements in the document.
 
@@ -673,7 +685,7 @@ def test_complains_about_measurement_lists(
     eo_validator: ValidateRunner,
     l1_ls8_metadata_path: Path,
     product: dict,
-):
+) -> None:
     """
     Complain when product measurements are a dict.
 
@@ -692,7 +704,7 @@ def test_complains_about_product_not_matching(
     eo_validator: ValidateRunner,
     l1_ls8_metadata_path: Path,
     product: dict,
-):
+) -> None:
     """
     Complains when we're given products but they don't match the dataset
     """
@@ -711,7 +723,7 @@ def test_complains_about_impossible_nodata_vals(
     eo_validator: ValidateRunner,
     l1_ls8_metadata_path: Path,
     product: dict,
-):
+) -> None:
     """Complain if a product nodata val cannot be represented in the dtype"""
 
     product["measurements"].append(
@@ -731,7 +743,7 @@ def test_complains_about_impossible_nodata_vals(
 
 def test_complains_when_no_product(
     eo_validator: ValidateRunner, l1_ls8_metadata_path: Path
-):
+) -> None:
     """When a product is specified, it will validate that the measurements match the product"""
     # Thorough checking should fail when there's no product provided
     eo_validator.thorough = True
@@ -739,7 +751,9 @@ def test_complains_when_no_product(
     eo_validator.assert_invalid(l1_ls8_metadata_path, codes=["no_product"])
 
 
-def test_validate_metadata_type(eo_validator: ValidateRunner, metadata_type: Doc):
+def test_validate_metadata_type(
+    eo_validator: ValidateRunner, metadata_type: Doc
+) -> None:
     eo_validator.assert_valid(metadata_type, suffix=".odc-type.yaml")
     eo_validator.assert_valid(metadata_type)
     del metadata_type["dataset"]["id"]
@@ -748,7 +762,7 @@ def test_validate_metadata_type(eo_validator: ValidateRunner, metadata_type: Doc
     )
 
 
-def test_is_product():
+def test_is_product() -> None:
     """Product documents should be correctly identified as products"""
     product = dict(
         name="minimal_product", metadata_type="eo3", measurements=[dict(name="blue")]
@@ -756,7 +770,7 @@ def test_is_product():
     assert guess_kind_from_contents(product) == DocKind.product
 
 
-def test_dataset_is_not_a_product(example_metadata: dict):
+def test_dataset_is_not_a_product(example_metadata: dict) -> None:
     """
     Datasets should not be identified as products
 
@@ -766,7 +780,7 @@ def test_dataset_is_not_a_product(example_metadata: dict):
     assert filename_doc_kind(Path("asdf.odc-metadata.yaml")) == DocKind.dataset
 
 
-def test_get_field_offsets(metadata_type: dict):
+def test_get_field_offsets(metadata_type: dict) -> None:
     """
     Test the get_field_offsets function.
     """

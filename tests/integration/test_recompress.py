@@ -2,6 +2,7 @@ import shutil
 import tarfile
 import warnings
 from pathlib import Path
+from types import TracebackType
 
 import pytest
 from click.testing import CliRunner, Result
@@ -18,7 +19,7 @@ unpackaged_offset = "USGS/L1/Landsat/C1/092_091/LT50920911991126"
 unpackaged_path = unpackaged_base / unpackaged_offset
 
 
-def please_copy(src: Path, dst: Path):
+def please_copy(src: Path, dst: Path) -> None:
     dst.parent.mkdir(parents=True, exist_ok=True)
     if src.is_dir():
         shutil.copytree(str(src), str(dst))
@@ -31,7 +32,7 @@ def please_copy(src: Path, dst: Path):
     [(packaged_base, packaged_offset), (unpackaged_base, unpackaged_offset)],
     ids=("packaged", "unpackaged"),
 )
-def test_recompress_dataset(base_in_path: Path, in_offset: str, tmp_path: Path):
+def test_recompress_dataset(base_in_path: Path, in_offset: str, tmp_path: Path) -> None:
     test_dataset = base_in_path / in_offset
     assert test_dataset.exists()
 
@@ -114,7 +115,7 @@ def test_recompress_dataset(base_in_path: Path, in_offset: str, tmp_path: Path):
     assert member_sizes["LT05_L1GS_092091_19910506_20170126_01_T2_ANG.txt"] == 34884
 
 
-def test_recompress_gap_mask_dataset(tmp_path: Path):
+def test_recompress_gap_mask_dataset(tmp_path: Path) -> None:
     input_path = this_folder.joinpath(
         "data/recompress_packed/USGS/L1/Landsat/C1/091_080/LE70910802008014",
         "LE07_L1GT_091080_20080114_20161231_01_T2.tar.gz",
@@ -192,7 +193,7 @@ def test_recompress_gap_mask_dataset(tmp_path: Path):
         _run_recompress(input_path, "--clean-inputs", "--output-base", str(output_base))
 
 
-def test_recompress_dirty_dataset(tmp_path: Path):
+def test_recompress_dirty_dataset(tmp_path: Path) -> None:
     # We found some datasets that have been "expanded" and later retarred.
     # They have extra tifs and jpegs created from the bands.
     # The TIFs have compression and multiple bands, unlike USGS tifs.
@@ -266,7 +267,7 @@ def test_recompress_dirty_dataset(tmp_path: Path):
     ]
 
 
-def test_run_with_corrupt_data(tmp_path: Path):
+def test_run_with_corrupt_data(tmp_path: Path) -> None:
     output_path = tmp_path / "out"
     output_path.mkdir()
 
@@ -320,7 +321,7 @@ def _get_checksums_members(out_tar: Path) -> tuple[dict, list[tarfile.TarInfo]]:
     return checksums, members
 
 
-def test_calculate_out_path(tmp_path: Path):
+def test_calculate_out_path(tmp_path: Path) -> None:
     out_base = tmp_path / "out"
 
     # When input is a tar file, use the same name on output.
@@ -377,16 +378,21 @@ class ExpectPathUnchanged:
         self.msg = msg
         assert path.exists(), "'unchanging' path doesn't exist originally"
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         __tracebackhide__ = True
         self.original_hashes = _hash_all_files(self.path)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         __tracebackhide__ = True
         self._check(self.path, self.msg, self.original_hashes)
 
     @staticmethod
-    def _check(path, msg, original_hashes):
+    def _check(path, msg, original_hashes) -> None:
         __tracebackhide__ = True
         assert path.exists(), f"{msg} (deleted! {path})"
         new_hashes = _hash_all_files(path)
@@ -420,7 +426,7 @@ def _hash_all_files(path: Path) -> dict[Path, tuple[str, int]]:
     return hashes
 
 
-def assert_path_eq(p1: Path, p2: Path):
+def assert_path_eq(p1: Path, p2: Path) -> None:
     """Assert two pathlib paths are equal, with reasonable error output."""
     __tracebackhide__ = True
     # Pytest's error messages are far better for strings than Paths.

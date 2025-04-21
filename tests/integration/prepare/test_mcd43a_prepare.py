@@ -10,7 +10,7 @@ POST_24_XML = (
 )
 
 
-def test_parse_pre24_xml():
+def test_parse_pre24_xml() -> None:
     result = parse_xml(POST_24_XML)
 
     pprint(result)
@@ -31,7 +31,7 @@ def test_parse_pre24_xml():
     }
 
 
-def test_parse_post24_xml():
+def test_parse_post24_xml() -> None:
     result = parse_xml(PRE_24_XML)
     pprint(result)
     assert result == {

@@ -24,7 +24,7 @@ from tests.common import assert_expected_eo3_path, assert_same
 
 def test_dea_style_package(
     l1_ls8_dataset: DatasetDoc, l1_ls8_dataset_path: Path, tmp_path: Path
-):
+) -> None:
     out = tmp_path
 
     [blue_geotiff_path] = l1_ls8_dataset_path.rglob("L*_B2.TIF")
@@ -194,7 +194,7 @@ def test_dea_style_package(
     )
 
 
-def test_minimal_package_with_product_name(tmp_path: Path, l1_ls8_folder: Path):
+def test_minimal_package_with_product_name(tmp_path: Path, l1_ls8_folder: Path) -> None:
     """
     You can specify an ODC product name manually to avoid most of the name generation.
     """
@@ -233,7 +233,7 @@ def test_minimal_package_with_product_name(tmp_path: Path, l1_ls8_folder: Path):
     )
 
 
-def test_in_memory_dataset(tmp_path: Path, l1_ls8_folder: Path):
+def test_in_memory_dataset(tmp_path: Path, l1_ls8_folder: Path) -> None:
     """
     You can create metadata fully in-memory, without touching paths.
     """
@@ -320,7 +320,7 @@ def test_in_memory_dataset(tmp_path: Path, l1_ls8_folder: Path):
     )
 
 
-def test_minimal_generated_naming_package(tmp_path: Path, l1_ls8_folder: Path):
+def test_minimal_generated_naming_package(tmp_path: Path, l1_ls8_folder: Path) -> None:
     """
     What's the minimum number of fields we can set and still generate file/product
     names to produce a package?
@@ -372,7 +372,7 @@ def test_minimal_generated_naming_package(tmp_path: Path, l1_ls8_folder: Path):
     )
 
 
-def test_generated_metadata_path(l1_ls7_tarball: Path):
+def test_generated_metadata_path(l1_ls7_tarball: Path) -> None:
     """
     We can specify a dataset_location alone, such as a compressed tarball.
 
@@ -426,7 +426,7 @@ def test_generated_metadata_path(l1_ls7_tarball: Path):
     )
 
 
-def test_dataset_no_measurements(tmp_path: Path):
+def test_dataset_no_measurements(tmp_path: Path) -> None:
     """Can we make a dataset with no measurements? (eg. telemetry data)"""
     with DatasetAssembler(tmp_path) as p:
         # A custom label too.
@@ -443,7 +443,7 @@ def test_dataset_no_measurements(tmp_path: Path):
     assert doc["label"] == "chipmonk_sightings_2019", "Couldn't override label field"
 
 
-def test_dataset_given_properties(tmp_path: Path):
+def test_dataset_given_properties(tmp_path: Path) -> None:
     """Can we give existing properties to the assembler?"""
 
     properties = {
@@ -469,7 +469,7 @@ def test_dataset_given_properties(tmp_path: Path):
     [True, False],
     ids=["inherit geom from dataset", "don't inherit geom"],
 )
-def test_add_source_dataset(tmp_path: Path, inherit_geom):
+def test_add_source_dataset(tmp_path: Path, inherit_geom) -> None:
     from eodatasets3 import serialise
 
     p = DatasetAssembler(tmp_path, naming_conventions="dea_c3")

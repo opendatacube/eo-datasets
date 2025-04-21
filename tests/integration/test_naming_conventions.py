@@ -17,9 +17,9 @@ def assert_names_match(
     conventions,
     properties: Mapping,
     # Then expect:
-    expect_metadata_path: str = None,
-    expect_label: str = None,
-):
+    expect_metadata_path: str | None = None,
+    expect_label: str | None = None,
+) -> None:
     __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
     """
     Easily test a set of naming conventions: Do certain properties lead to expected file names?
@@ -41,7 +41,7 @@ def assert_names_match(
         assert doc["label"] == expect_label, "Unexpected dataset label"
 
 
-def test_minimal_s1_dataset(tmp_path: Path):
+def test_minimal_s1_dataset(tmp_path: Path) -> None:
     assert_names_match(
         tmp_path,
         conventions="default",
@@ -57,7 +57,7 @@ def test_minimal_s1_dataset(tmp_path: Path):
     )
 
 
-def test_dea_s2_derivate_names(tmp_path: Path):
+def test_dea_s2_derivate_names(tmp_path: Path) -> None:
     assert_names_match(
         tmp_path,
         conventions="dea_s2_derivative",
@@ -79,7 +79,7 @@ def test_dea_s2_derivate_names(tmp_path: Path):
     )
 
 
-def test_minimal_provisional_dea_dataset(tmp_path: Path):
+def test_minimal_provisional_dea_dataset(tmp_path: Path) -> None:
     assert_names_match(
         tmp_path,
         conventions="dea",
@@ -102,7 +102,7 @@ def test_minimal_provisional_dea_dataset(tmp_path: Path):
     )
 
 
-def test_minimal_s2_dataset_normal(tmp_path: Path):
+def test_minimal_s2_dataset_normal(tmp_path: Path) -> None:
     """A minimal dataset with sentinel platform/instrument"""
     with DatasetAssembler(tmp_path) as p:
         p.platform = "sentinel-2a"
@@ -127,7 +127,7 @@ def test_minimal_s2_dataset_normal(tmp_path: Path):
     assert doc["label"] == "s2am_blueberries_2018-11-04", "Unexpected dataset label"
 
 
-def test_s2_naming_conventions(tmp_path: Path):
+def test_s2_naming_conventions(tmp_path: Path) -> None:
     """A minimal dataset with sentinel platform/instrument"""
     p = DatasetAssembler(tmp_path, naming_conventions="dea_s2")
     p.platform = "sentinel-2a"
@@ -199,7 +199,7 @@ def test_s2_naming_conventions(tmp_path: Path):
     )
 
 
-def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
+def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path) -> None:
     """
     It should complain immediately if I add a file without enough metadata to write the filename.
 
@@ -250,7 +250,7 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path):
             )
 
 
-def test_dea_interim_folder_calculation(tmp_path: Path):
+def test_dea_interim_folder_calculation(tmp_path: Path) -> None:
     """
     DEA Naming conventions should include maturity in the folder name
     when it's not a 'final' dataset.
@@ -279,7 +279,7 @@ def test_dea_interim_folder_calculation(tmp_path: Path):
     )
 
 
-def test_dea_c3_naming_conventions(tmp_path: Path):
+def test_dea_c3_naming_conventions(tmp_path: Path) -> None:
     """
     A sample scene for Alchemist C3 processing that tests the naming conventions.
     """
@@ -314,7 +314,7 @@ def test_dea_c3_naming_conventions(tmp_path: Path):
     )
 
 
-def test_dataset_multi_platform(tmp_path: Path):
+def test_dataset_multi_platform(tmp_path: Path) -> None:
     """Can we make a dataset derived from multiple platforms?"""
 
     # No platform is included in names when there's a mix.
@@ -360,7 +360,7 @@ def test_dataset_multi_platform(tmp_path: Path):
     )
 
 
-def test_africa_naming_conventions(tmp_path: Path):
+def test_africa_naming_conventions(tmp_path: Path) -> None:
     """
     Minimal fields needed for DEAfrica naming conventions
     """
@@ -401,7 +401,7 @@ def test_africa_naming_conventions(tmp_path: Path):
     )
 
 
-def test_names_alone(tmp_path: Path):
+def test_names_alone(tmp_path: Path) -> None:
     p = _basic_properties_set()
     convention = namer(p, conventions="dea", collection_prefix="s3://test-bucket")
 
@@ -427,7 +427,7 @@ def test_names_alone(tmp_path: Path):
         "s3://test-bucket/ga_s2am_tester_1/x023y543/years/2013/"
     )
 
-    convention.dataset_folder = Path("custom/dataset/offset/")
+    convention.dataset_folder = "custom/dataset/offset"
     # Now the generated metadata path will be inside it:
     assert convention.dataset_location == "s3://test-bucket/custom/dataset/offset/"
 
@@ -439,7 +439,7 @@ def test_names_alone(tmp_path: Path):
     )
 
 
-def test_local_path_naming(tmp_path: Path):
+def test_local_path_naming(tmp_path: Path) -> None:
     p = _basic_properties_set()
     # The collection prefix can be given as a local path:
 
@@ -468,13 +468,13 @@ def _basic_properties_set() -> DatasetDoc:
     return p
 
 
-def test_custom_naming(tmp_path: Path):
+def test_custom_naming(tmp_path: Path) -> None:
     """
     We can create naming conventions separately, and later give it to assembler.
     """
     p = _basic_properties_set()
     convention = namer(properties=p)
-    convention.dataset_folder = Path("my/custom/folder/")
+    convention.dataset_folder = "my/custom/folder/"
 
     with DatasetAssembler(tmp_path, names=convention) as a:
         dataset_id, metadata_path = a.done()

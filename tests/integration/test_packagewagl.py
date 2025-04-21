@@ -60,7 +60,7 @@ S2_SINERGISE_L1_METADATA_PATH: Path = (
 
 def test_whole_landsat_wagl_package(
     l1_ls8_dataset: DatasetDoc, l1_ls8_folder: Path, tmp_path: Path
-):
+) -> None:
     out = tmp_path
 
     reported_metadata = _run_wagl(
@@ -498,7 +498,7 @@ def _run_wagl(args):
 
 def test_landsat_wagl_package_provisional_file_structure(
     l1_ls8_dataset: DatasetDoc, l1_ls8_folder: Path, tmp_path: Path
-):
+) -> None:
     """
     When given the 'provisional' flag, the files and product should contain it.
     """
@@ -560,7 +560,7 @@ def test_landsat_wagl_package_provisional_file_structure(
     [output_metadata] = expected_folder.rglob("*.odc-metadata.yaml")
 
 
-def test_maturity_calculation():
+def test_maturity_calculation() -> None:
     from eodatasets3 import wagl
 
     # Simplified. Only a few ancillary parts that matter to us.
@@ -680,7 +680,7 @@ def expect_no_warnings():
         yield
 
 
-def test_esa_sentinel_wagl_package(tmp_path: Path):
+def test_esa_sentinel_wagl_package(tmp_path: Path) -> None:
     _run_wagl(
         (
             WAGL_ESA_SENTINEL_OUTPUT,
@@ -1129,7 +1129,7 @@ def test_esa_sentinel_wagl_package(tmp_path: Path):
         assert cogeo.cog_validate(image), f"Failed COG validation: {image}"
 
 
-def test_sinergise_sentinel_wagl_package(tmp_path: Path):
+def test_sinergise_sentinel_wagl_package(tmp_path: Path) -> None:
     _run_wagl(
         (
             WAGL_SINERGISE_SENTINEL_OUTPUT,
@@ -1557,7 +1557,7 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path):
     )
 
 
-def test_offshore_wagl_package(tmp_path: Path):
+def test_offshore_wagl_package(tmp_path: Path) -> None:
     """
     It should translate the offshore territories tag when the dataset has one.
     """

@@ -27,7 +27,7 @@ def find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> list[str]:
     """
     items = []
 
-    def _find(name, obj):
+    def _find(name, obj) -> None:
         if obj.attrs.get("CLASS") == dataset_class:
             items.append(name)
 
@@ -63,7 +63,7 @@ def downsample(input_path: Path, factor: int, anti_alias: bool):
             for i, image_path in enumerate(image_paths):
                 old_image: h5py.Dataset | None = f[image_path]
 
-                def info(msg: str):
+                def info(msg: str) -> None:
                     secho(
                         f"{i: 4}/{len(image_paths)} {style(repr(image_path), fg='blue')}: {msg}"
                     )
