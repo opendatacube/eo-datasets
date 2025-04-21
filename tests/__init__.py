@@ -21,7 +21,7 @@ def assert_same(o1, o2, prefix=""):
     """
     __tracebackhide__ = True
 
-    def _compare(k, val1, val2):
+    def _compare(k, val1, val2) -> None:
         assert_same(val1, val2, prefix=prefix + "." + str(k))
 
     if isinstance(o1, list) and isinstance(o2, list):
@@ -41,7 +41,9 @@ def assert_same(o1, o2, prefix=""):
         raise AssertionError(f"Mismatch for property {prefix!r}:  {o1!r} != {o2!r}")
 
 
-def assert_file_structure(folder, expected_structure, root=""):
+def assert_file_structure(
+    folder: Path, expected_structure: dict[str, str | dict], root=""
+) -> None:
     """
     Assert that the contents of a folder (filenames and subfolder names recursively)
     match the given nested dictionary structure.
@@ -94,7 +96,7 @@ def assert_file_structure(folder, expected_structure, root=""):
             )
 
 
-def write_files(file_dict):
+def write_files(file_dict: dict) -> Path:
     """
     Convenience method for writing a bunch of files to a temporary directory.
 
@@ -111,7 +113,7 @@ def write_files(file_dict):
     containing_dir = tempfile.mkdtemp(suffix="neotestrun")
     _write_files_to_dir(containing_dir, file_dict)
 
-    def remove_if_exists(path):
+    def remove_if_exists(path) -> None:
         if os.path.exists(path):
             shutil.rmtree(path)
 
@@ -119,7 +121,7 @@ def write_files(file_dict):
     return pathlib.Path(containing_dir)
 
 
-def _write_files_to_dir(directory_path, file_dict):
+def _write_files_to_dir(directory_path, file_dict) -> None:
     """
     Convenience method for writing a bunch of files to a given directory.
 
@@ -141,7 +143,7 @@ def _write_files_to_dir(directory_path, file_dict):
                     raise Exception(f"Unexpected file contents: {type(contents)}")
 
 
-def temp_dir():
+def temp_dir() -> Path:
     """
     Create and return a temporary directory that will be deleted automatically on exit.
 
@@ -150,7 +152,7 @@ def temp_dir():
     return write_files({})
 
 
-def file_of_size(path, size_mb):
+def file_of_size(path, size_mb) -> None:
     """
     Create a blank file of the given size.
     """
@@ -159,7 +161,7 @@ def file_of_size(path, size_mb):
         f.write(b"\0")
 
 
-def as_file_list(path):
+def as_file_list(path) -> list[str]:
     """
     Build a flat list of filenames relative to the given folder
     (similar to the contents of package.sha1 files)

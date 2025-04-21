@@ -3,7 +3,7 @@ from io import StringIO
 from eodatasets3 import serialise
 
 
-def test_dumps_yaml_scientific_notation():
+def test_dumps_yaml_scientific_notation() -> None:
     stream = StringIO()
     serialise.dumps_yaml(stream, {"response": [7e-06, 7e-06, 8e-06]})
     assert isinstance(stream.getvalue(), str)

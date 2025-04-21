@@ -20,8 +20,8 @@ def assert_image(
     nodata=allow_anything,
     unique_pixel_counts: dict = allow_anything,
     bands=1,
-    shape: tuple[int, int] = None,
-):
+    shape: tuple[int, int] | None = None,
+) -> None:
     __tracebackhide__ = True
     with rasterio.open(image) as d:
         d: DatasetReader
@@ -59,7 +59,7 @@ def hardlink_arg(path1, path2):
     return "--hard-link" if on_same_filesystem(path1, path2) else "--no-hard-link"
 
 
-def directory_size(directory):
+def directory_size(directory: Path) -> int:
     """
     Total size of files in the given directory.
     :type file_paths: Path
@@ -69,7 +69,7 @@ def directory_size(directory):
 
 
 class FakeAncilFile:
-    def __init__(self, base_folder, type_, filename, folder_offset=()):
+    def __init__(self, base_folder, type_, filename, folder_offset=()) -> None:
         """
         :type base_folder: pathlib.Path
         :type type_: str
@@ -82,7 +82,7 @@ class FakeAncilFile:
         self.filename = filename
         self.folder_offset = folder_offset
 
-    def create(self):
+    def create(self) -> None:
         """Create our dummy ancillary file"""
         self.containing_folder.mkdir(parents=True)
         with self.file_path.open("wb") as f:

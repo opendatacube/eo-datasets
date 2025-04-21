@@ -3,7 +3,7 @@ import numpy as np
 from eodatasets3 import images
 
 
-def test_rescale_intensity():
+def test_rescale_intensity() -> None:
     # Example was generated via:
     #     scipy.ndimage.rotate(np.arange(1000, 8000, 100).reshape((7,10)), 45, cval=-99)
 
@@ -61,7 +61,7 @@ def test_rescale_intensity():
     assert np.array_equal(staticly_rescaled, expected_static_rescale)
 
 
-def test_calc_range():
+def test_calc_range() -> None:
     # Test that the correct value range and valid data arrays are calculated.
 
     # Test arrays generated via:

@@ -37,7 +37,7 @@ def assert_expected_eo3_path(
     expected_doc: dict,
     expected_path: Path,
     ignore_fields=(),
-):
+) -> None:
     """
     Check an output path of an EO3 dataset matches an expected document.
 
@@ -77,7 +77,7 @@ def assert_expected_eo3(
     given_doc: DatasetDoc,
     *,
     ignore_fields=(),
-):
+) -> None:
     """
     Do the two DatasetDocs match?
 
@@ -103,7 +103,7 @@ def assert_shapes_mostly_equal(
     shape1: BaseGeometry | dict,
     shape2: BaseGeometry | dict,
     threshold: float,
-):
+) -> None:
     __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
 
     if isinstance(shape1, dict):
@@ -121,7 +121,7 @@ def assert_shapes_mostly_equal(
     assert (s1 - s2).area < threshold, f"{s1} is not mostly equal to {s2}"
 
 
-def assert_same(expected_doc: dict, generated_doc: dict):
+def assert_same(expected_doc: dict, generated_doc: dict) -> None:
     """
     Assert two documents are the same, ignoring trivial float differences
     """
@@ -130,7 +130,9 @@ def assert_same(expected_doc: dict, generated_doc: dict):
     assert doc_diffs == {}, "\n".join(format_doc_diffs(expected_doc, generated_doc))
 
 
-def assert_same_as_file(expected_doc: dict, generated_file: Path, ignore_fields=()):
+def assert_same_as_file(
+    expected_doc: dict, generated_file: Path, ignore_fields=()
+) -> None:
     """Assert a file contains the given document content (after normalisation etc)"""
     __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
 

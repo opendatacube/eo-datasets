@@ -6,7 +6,7 @@ from eodatasets3.documents import _find_any_metadata_suffix, find_metadata_path
 from tests import write_files
 
 
-def test_find_metadata_path():
+def test_find_metadata_path() -> None:
     files = write_files(
         {
             "directory_dataset": {
@@ -68,7 +68,7 @@ def test_find_metadata_path():
     )
 
 
-def test_find_any_metatadata_suffix():
+def test_find_any_metatadata_suffix() -> None:
     files = write_files(
         {
             "directory_dataset": {

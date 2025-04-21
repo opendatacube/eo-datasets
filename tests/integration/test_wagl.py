@@ -27,17 +27,17 @@ L1_C2_METADATA_TAR_YAML: Path = (
 )
 
 
-def test_get_level1_metadata_path_yaml_in_dir():
+def test_get_level1_metadata_path_yaml_in_dir() -> None:
     doc = _load_level1_doc(L1_C2_METADATA_DIR)
     assert doc.id == UUID("d9221c40-24c3-5356-ab22-4dcac2bf2d70")
 
 
-def test_get_level1_metadata_path_yaml_alongside_tar():
+def test_get_level1_metadata_path_yaml_alongside_tar() -> None:
     doc = _load_level1_doc(L1_C2_METADATA_TAR)
     assert doc.id == UUID("f23c5fa2-3321-5be9-9872-2be73fee12a6")
 
 
-def test_get_level1_metadata_no_source():
+def test_get_level1_metadata_no_source() -> None:
     # Complain when the embedded level1 reference doesn't exist.
     with pytest.raises(
         ValueError,

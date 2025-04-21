@@ -15,7 +15,7 @@ ESRI_ANTIMERIDIAN_OVERLAP_TIF: Path = (
 )
 
 
-def test_esri_prepare():
+def test_esri_prepare() -> None:
     tif_url = ESRI_ANTIMERIDIAN_OVERLAP_TIF.resolve().as_uri()
     dataset_doc = as_eo3(tif_url)
 

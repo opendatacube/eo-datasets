@@ -15,7 +15,7 @@ from tests.common import (
 )
 
 
-def test_subfolder_info_extraction():
+def test_subfolder_info_extraction() -> None:
     info = FolderInfo.for_path(
         Path(
             "2019/2019-01/25S125E-30S130/S2A_MSIL1C_20190101T000000_N0206_R065_T32UJ_20190101T002651.zip"
@@ -77,7 +77,7 @@ def test_subfolder_info_extraction():
     assert info is None
 
 
-def test_s2c_folder_extraction():
+def test_s2c_folder_extraction() -> None:
     # Our new s2c paths should work too.
     p = Path(
         "/g/data/fj7/Copernicus/Sentinel-2/MSI/L1C/2025/2025-02/35S130E-40S135E/"
@@ -429,7 +429,7 @@ def dataset_input_output(request, tmp_path):
 
 def test_filter_folder_structure_info(
     tmp_path: Path, dataset_input_output: tuple[Path, dict, Path]
-):
+) -> None:
     (
         input_dataset_path,
         expected_metadata_doc,
@@ -573,7 +573,7 @@ def test_filter_folder_structure_info(
     )
 
 
-def test_run_multigranule(tmp_path: Path):
+def test_run_multigranule(tmp_path: Path) -> None:
     out = tmp_path / "out"
     out.mkdir()
 
@@ -620,7 +620,7 @@ def test_run_multigranule(tmp_path: Path):
     ]
 
 
-def test_nullable_granule(tmp_path: Path):
+def test_nullable_granule(tmp_path: Path) -> None:
     """
     Some S2 datasets have a "null" granule in their listings. Check that
     it is ignored.
@@ -664,7 +664,7 @@ def test_nullable_granule(tmp_path: Path):
     ]
 
 
-def ensure_clean_zip_files(zip_file):
+def ensure_clean_zip_files(zip_file) -> None:
     """
     Sanity check: there should be no sibling files in the input directory.
 
@@ -680,7 +680,7 @@ def ensure_clean_zip_files(zip_file):
     )
 
 
-def test_run_unusual_multigranule(tmp_path: Path):
+def test_run_unusual_multigranule(tmp_path: Path) -> None:
     """This older dataset has metadata that missed some fields, like resolution."""
 
     out = tmp_path / "out"
@@ -878,7 +878,7 @@ def test_run_unusual_multigranule(tmp_path: Path):
 
 def test_generate_expected_outputs(
     tmp_path: Path, dataset_input_output: tuple[Path, dict, Path]
-):
+) -> None:
     """
     Run prepare on our test input scenes, and check the created metadata matches expected.
     """

@@ -18,7 +18,7 @@ NCEP_PR_WTR_FILE: Path = (
 _diff = partial(DeepDiff, significant_digits=6)
 
 
-def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir):
+def test_prepare_ncep_reanalysis1_pr_wtr(tmpdir) -> None:
     output_path = Path(tmpdir)
     expected_metadata_path = output_path / "pr_wtr.eatm.2018.test.ga-md.yaml"
 

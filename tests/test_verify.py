@@ -7,7 +7,7 @@ from tests import write_files
 
 
 class VerifyTests(unittest.TestCase):
-    def test_checksum(self):
+    def test_checksum(self) -> None:
         d = write_files({"test1.txt": "test"})
 
         test_file = d.joinpath("test1.txt")
@@ -21,7 +21,7 @@ class VerifyTests(unittest.TestCase):
         crc32_checksum = verify.calculate_file_crc32(test_file)
         assert crc32_checksum == "d87f7e0c"
 
-    def test_package_checksum(self):
+    def test_package_checksum(self) -> None:
         d = write_files(
             {
                 "test1.txt": "test",

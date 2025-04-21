@@ -7,15 +7,15 @@ from eodatasets3.utils import default_utc
 from tests.common import dump_roundtrip
 
 
-def test_stac_to_eo3_serialise(sentinel1_eo3):
+def test_stac_to_eo3_serialise(sentinel1_eo3) -> None:
     assert_unchanged_after_roundstrip(sentinel1_eo3)
 
 
-def test_valid_document_works(example_metadata: dict):
+def test_valid_document_works(example_metadata: dict) -> None:
     assert_unchanged_after_roundstrip(example_metadata)
 
 
-def assert_unchanged_after_roundstrip(doc: dict):
+def assert_unchanged_after_roundstrip(doc: dict) -> None:
     generated_doc = dump_roundtrip(doc)
 
     # Do a serialisation roundtrip and check that it's still identical.
@@ -30,7 +30,7 @@ def assert_unchanged_after_roundstrip(doc: dict):
     assert serialise.from_doc(generated_doc) == serialise.from_doc(reserialised_doc)
 
 
-def _normalise_datetime_props(generated_doc):
+def _normalise_datetime_props(generated_doc) -> None:
     properties = generated_doc.get("properties", {})
     for key in properties:
         if "datetime" in key:
@@ -40,12 +40,14 @@ def _normalise_datetime_props(generated_doc):
                 properties[key] = default_utc(ciso8601.parse_datetime(val)).isoformat()
 
 
-def test_location_serialisation(l1_ls8_folder_md_expected: dict):
+def test_location_serialisation(l1_ls8_folder_md_expected: dict) -> None:
     l1_ls8_folder_md_expected["location"] = "s3://test/url/metadata.txt"
     assert_unchanged_after_roundstrip(l1_ls8_folder_md_expected)
 
 
-def test_location_single_serialisation(tmp_path: Path, l1_ls8_folder_md_expected: dict):
+def test_location_single_serialisation(
+    tmp_path: Path, l1_ls8_folder_md_expected: dict
+) -> None:
     # Always serialises a single location as 'location'
     location = "https://some/test/path"
 

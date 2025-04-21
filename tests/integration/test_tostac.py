@@ -29,7 +29,7 @@ def expected_stac_doc(input_doc_folder: Path) -> dict:
     return json.load(d.open())
 
 
-def test_tostac(odc_dataset_path: Path, expected_stac_doc: dict):
+def test_tostac(odc_dataset_path: Path, expected_stac_doc: dict) -> None:
     run_tostac(odc_dataset_path)
 
     expected_output_path = odc_dataset_path.with_name(
@@ -43,7 +43,7 @@ def test_tostac(odc_dataset_path: Path, expected_stac_doc: dict):
     assert_same(expected_stac_doc, output_doc)
 
 
-def test_tostac_no_grids(odc_dataset_path: Path, expected_stac_doc: dict):
+def test_tostac_no_grids(odc_dataset_path: Path, expected_stac_doc: dict) -> None:
     """
     Converted EO1 datasets don't have grid information. Make sure it still outputs
     without falling over.
@@ -70,12 +70,12 @@ def test_tostac_no_grids(odc_dataset_path: Path, expected_stac_doc: dict):
     assert_same(expected_stac_doc, output_doc)
 
 
-def remove_stac_properties(doc: dict, remove_properties=()):
+def remove_stac_properties(doc: dict, remove_properties=()) -> None:
     """
     Remove the given fields from properties and assets.
     """
 
-    def remove_proj(d: dict):
+    def remove_proj(d: dict) -> None:
         for key in list(d.keys()):
             if key in remove_properties:
                 del d[key]
@@ -85,7 +85,7 @@ def remove_stac_properties(doc: dict, remove_properties=()):
         remove_proj(asset)
 
 
-def test_add_property(input_doc_folder: Path):
+def test_add_property(input_doc_folder: Path) -> None:
     input_metadata_path = input_doc_folder.joinpath(ODC_METADATA_FILE)
     assert input_metadata_path.exists()
 
@@ -105,7 +105,7 @@ def test_add_property(input_doc_folder: Path):
     assert actual_doc["properties"]["test"] == input_doc["properties"]["test"]
 
 
-def test_invalid_crs(input_doc_folder: Path):
+def test_invalid_crs(input_doc_folder: Path) -> None:
     input_metadata_path = input_doc_folder.joinpath(ODC_METADATA_FILE)
     assert input_metadata_path.exists()
 
@@ -120,7 +120,7 @@ def test_invalid_crs(input_doc_folder: Path):
     assert "Unexpected input encountered" in str(exp.value)
 
 
-def run_tostac(input_metadata_path: Path):
+def run_tostac(input_metadata_path: Path) -> None:
     run_prepare_cli(
         tostac.run,
         "-u",

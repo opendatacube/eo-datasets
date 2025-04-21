@@ -10,7 +10,7 @@ from eodatasets3.names import NamingConventions
 from eodatasets3.properties import PropertyOverrideWarning
 
 
-def test_multi_platform_fields():
+def test_multi_platform_fields() -> None:
     """
     Multiple platforms can be specified.
 
@@ -42,7 +42,7 @@ def ignore_property_overrides():
         yield
 
 
-def test_naming_abbreviations():
+def test_naming_abbreviations() -> None:
     d = DatasetDoc()
     names = NamingConventions(d.properties)
 
@@ -64,7 +64,7 @@ def test_naming_abbreviations():
         assert names.platform_abbreviated is None
 
 
-def test_unknown_abbreviations():
+def test_unknown_abbreviations() -> None:
     d = DatasetDoc()
     names = NamingConventions(d.properties)
 
@@ -87,7 +87,7 @@ def test_unknown_abbreviations():
             print(names.platform_abbreviated)
 
 
-def test_normalise_input_fields():
+def test_normalise_input_fields() -> None:
     """
     When properties are constructed manually, they should be normalised, including
     sometimes the generation of new, parsed properties, without failing.

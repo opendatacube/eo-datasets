@@ -60,7 +60,7 @@ def _make_copy(input_path, tmp_path):
 
 def test_prepare_l5_l1_usgs_tarball(
     tmp_path: Path, l1_ls5_tarball_md_expected: dict, l1_ls5_tarball: Path
-):
+) -> None:
     assert l1_ls5_tarball.exists(), "Test data missing(?)"
     output_path: Path = tmp_path / "out"
     output_path.mkdir()
@@ -81,7 +81,7 @@ def test_prepare_l5_l1_usgs_tarball(
     )
 
 
-def test_prepare_l8_l1_usgs_tarball(l1_ls8_folder, l1_ls8_folder_md_expected):
+def test_prepare_l8_l1_usgs_tarball(l1_ls8_folder, l1_ls8_folder_md_expected) -> None:
     assert l1_ls8_folder.exists(), "Test data missing(?)"
 
     # No output path defined,so it will default to being a sibling to the input.
@@ -99,7 +99,7 @@ def test_prepare_l8_l1_usgs_tarball(l1_ls8_folder, l1_ls8_folder_md_expected):
     )
 
 
-def test_prepare_l8_l1_c2(tmp_path: Path, l1_c2_ls8_folder: Path):
+def test_prepare_l8_l1_c2(tmp_path: Path, l1_c2_ls8_folder: Path) -> None:
     """Run prepare script with a source telemetry data and unique producer."""
     assert l1_c2_ls8_folder.exists(), "Test data missing(?)"
 
@@ -394,7 +394,9 @@ def l9_expected():
     }
 
 
-def test_prepare_l9_l1_c2(tmp_path: Path, l1_ls9_tarball: Path, l9_expected: dict):
+def test_prepare_l9_l1_c2(
+    tmp_path: Path, l1_ls9_tarball: Path, l9_expected: dict
+) -> None:
     """Run prepare script with a source telemetry data and unique producer."""
     assert l1_ls9_tarball.exists(), "Test data missing(?)"
 
@@ -421,7 +423,7 @@ def test_prepare_l9_l1_c2(tmp_path: Path, l1_ls9_tarball: Path, l9_expected: dic
 def test_prepare_lc08_l2_c2_post_20210507(
     tmp_path: Path,
     lc08_l2_c2_post_20210507_folder: Path,
-):
+) -> None:
     """Support a functionality baseline for the enhancements to expand landsat
     prepare (YAML) logic to support USGS level 2 - PR#159:
      LC08 C2 L2 post 7th May 2021."""
@@ -451,7 +453,7 @@ def test_prepare_lc08_l2_c2_post_20210507(
 def test_prepare_lt05_l2_c2(
     tmp_path: Path,
     lt05_l2_c2_folder: Path,
-):
+) -> None:
     """Support a functionality baseline for the enhancements to expand landsat
     prepare (YAML) logic to support USGS level 2 - PR#159:
      LT05 C2 L2."""
@@ -481,7 +483,7 @@ def test_prepare_lt05_l2_c2(
 def test_prepare_le07_l2_c2(
     tmp_path: Path,
     le07_l2_c2_folder: Path,
-):
+) -> None:
     """Support a functionality baseline for the enhancements to expand landsat
     prepare (YAML) logic to support USGS level 2 - PR#159:
      LE07 C2 L2."""
@@ -511,7 +513,7 @@ def test_prepare_le07_l2_c2(
 def test_prepare_le07_l1_c2(
     tmp_path: Path,
     le07_l1_c2_folder: Path,
-):
+) -> None:
     assert le07_l1_c2_folder.exists(), "Test data missing(?)"
 
     output_path = tmp_path
@@ -537,7 +539,7 @@ def test_prepare_le07_l1_c2(
 
 def test_prepare_l8_l1_tarball_with_source(
     tmp_path: Path, l1_ls8_folder: Path, ls8_telemetry_path, l1_ls8_ga_expected: dict
-):
+) -> None:
     """Run prepare script with a source telemetry data and unique producer."""
     assert l1_ls8_folder.exists(), "Test data missing(?)"
 
@@ -566,7 +568,7 @@ def test_prepare_l8_l1_tarball_with_source(
 
 def test_prepare_l7_l1_usgs_tarball(
     l1_ls7_tarball: Path, l1_ls7_tarball_md_expected: dict
-):
+) -> None:
     assert l1_ls7_tarball.exists(), "Test data missing(?)"
 
     expected_metadata_path = (
@@ -582,7 +584,7 @@ def test_prepare_l7_l1_usgs_tarball(
     )
 
 
-def test_skips_old_datasets(l1_ls7_tarball):
+def test_skips_old_datasets(l1_ls7_tarball) -> None:
     """Prepare should skip datasets older than the given date"""
     expected_metadata_path = (
         l1_ls7_tarball.parent
@@ -614,7 +616,7 @@ def test_skips_old_datasets(l1_ls7_tarball):
 
 
 def expected_lc08_l2_c2_post_20210507_folder(
-    l2_c2_ls8_folder: Path = None,
+    l2_c2_ls8_folder: Path | None = None,
     offset: Callable[[Path, str], str] = relative_offset,
     organisation="usgs.gov",
     collection="2",

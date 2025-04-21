@@ -8,7 +8,7 @@ from eodatasets3.images import FileWrite, GridSpec
 from . import assert_image
 
 
-def test_thumbnail_bitflag(input_uint8_tif: Path):
+def test_thumbnail_bitflag(input_uint8_tif: Path) -> None:
     writer = FileWrite()
 
     outfile = Path(tempfile.gettempdir()) / "test-bitflag.jpg"
@@ -20,7 +20,7 @@ def test_thumbnail_bitflag(input_uint8_tif: Path):
     assert_image(outfile, bands=3)
 
 
-def test_thumbnail_lookuptable(input_uint8_tif_2: Path):
+def test_thumbnail_lookuptable(input_uint8_tif_2: Path) -> None:
     writer = FileWrite()
 
     outfile = Path(tempfile.gettempdir()) / "test-lookuptable.jpg"
@@ -44,7 +44,7 @@ def test_thumbnail_lookuptable(input_uint8_tif_2: Path):
     assert_image(outfile, bands=3)
 
 
-def test_thumbnail_from_numpy_bitflag(input_uint8_tif: Path):
+def test_thumbnail_from_numpy_bitflag(input_uint8_tif: Path) -> None:
     writer = FileWrite()
     outfile = Path(tempfile.gettempdir()) / "test-bitflag.jpg"
     water = 128
@@ -63,7 +63,7 @@ def test_thumbnail_from_numpy_bitflag(input_uint8_tif: Path):
         assert_image(outfile, bands=3)
 
 
-def test_thumbnail_from_numpy_lookuptable(input_uint8_tif_2: Path):
+def test_thumbnail_from_numpy_lookuptable(input_uint8_tif_2: Path) -> None:
     writer = FileWrite()
     outfile = Path(tempfile.gettempdir()) / "test-lookuptable.jpg"
     wofs_lookup = {
