@@ -35,6 +35,6 @@ jobs:
           pytest --cov eodatasets3 --cov-report=xml --durations=5 -n auto
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: false
