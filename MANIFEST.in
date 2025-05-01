@@ -1,0 +1,4 @@
+
+global-exclude .*
+prune tests
+prune requirements

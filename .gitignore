@@ -34,3 +34,5 @@ build
 
 # STAC schema cache
 stac_schema_cache.sqlite
+
+_version.py
