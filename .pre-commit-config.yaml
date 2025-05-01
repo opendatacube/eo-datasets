@@ -9,14 +9,14 @@ repos:
       hooks:
        - id: ruff
          args: [--fix, --show-fixes, --output-format, grouped]
-         exclude: '_version.py|versioneer.py'
+         exclude: '_version.py'
        - id: ruff-format
     # Common Python security checks. (this is complementary to dlint in flake8)
     - repo: https://github.com/PyCQA/bandit
       rev: '1.8.3'
       hooks:
         - id: bandit
-          exclude: '^tests/|_version.py|versioneer.py'
+          exclude: '^tests/'
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v5.0.0
       hooks:

@@ -18,7 +18,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-# Core dependencies (formerly install_requires)
 dependencies = [
     "affine",
     "attrs>=18.1", # 18.1 adds 'factory' syntactic sugar
@@ -63,99 +62,116 @@ algorithms = ["scikit-image"]
 ancillary = ["checksumdir", "netCDF4"]
 # If packaging ard/wagl.
 wagl = ["h5py"] # h5py is already in core, but list it here for clarity if needed.
-# The original setup.py had 'all' as the union of wagl, ancillary, algorithms
-# And 'test' was defined as the same as 'all'.
-# We need to list the dependencies explicitly here in TOML.
-# Combined dependencies: h5py, checksumdir, netCDF4, scikit-image, deepdiff, mock, pep8-naming, pytest, rio_cogeo, sphinx-autodoc-typehints, sphinx_rtd_theme, pytest-xdist, pytest-cov
 all = [
-    "h5py", # From wagl (and core)
     "checksumdir", "netCDF4", # From ancillary
-    "scikit-image", # From algorithms
-    # Add test dependencies from setup.py's tests_require, as test was all
     "deepdiff>=8.0",
+    "h5py", # From wagl (and core)
     "mock",
     "pep8-naming",
+    "pytest-cov",
+    "pytest-xdist",
     "pytest",
     "rio_cogeo",
-    "sphinx-autodoc-typehints",
+    "scikit-image", # From algorithms
     "sphinx_rtd_theme",
-    "pytest-xdist",
-    "pytest-cov",
+    "sphinx-autodoc-typehints",
 ]
-# As per setup.py logic: EXTRAS_REQUIRE["test"] = EXTRAS_REQUIRE["all"]
 test = [
-    "h5py", # From wagl (and core)
     "checksumdir", "netCDF4", # From ancillary
-    "scikit-image", # From algorithms
-    # Add test dependencies from setup.py's tests_require
     "deepdiff>=8.0",
+    "h5py", # From wagl (and core)
     "mock",
     "pep8-naming",
+    "pytest-cov",
+    "pytest-xdist",
     "pytest",
     "rio_cogeo",
-    "sphinx-autodoc-typehints",
+    "scikit-image", # From algorithms
     "sphinx_rtd_theme",
-    "pytest-xdist",
-    "pytest-cov",
+    "sphinx-autodoc-typehints",
 ]
 # Prod deployment just adds the optional wagl depenencies.
 deployment = ["h5py"] # h5py is already in core, but list it here for clarity if needed.
 
+[dependency-groups]
+dev = [
+    "checksumdir>=1.2.0",
+    "deepdiff>=8.4.2",
+    "h5py>=3.13.0",
+    "mock>=5.2.0",
+    "netcdf4>=1.7.2",
+    "pytest>=8.3.5",
+    "pytest-cov>=6.1.1",
+    "pytest-xdist>=3.6.1",
+    "rio-cogeo>=5.4.1",
+    "scikit-image>=0.25.2",
+]
+
 # --- Setuptools configuration ---
 [tool.setuptools]
-# Let setuptools find packages automatically
-# Equivalent to find_packages(exclude=("tests", "tests.*"))
-# packages = ["eodatasets3"] # Specify main package to include
 
 [tool.setuptools.packages.find]
-# where = ["."] # Search in the current directory
 exclude = ["tests", "tests.*"]
 
 [tool.setuptools.package-data]
-# Equivalent to package_data dictionary
 "*" = ["*.json", "*.yaml", "*.db"]
 "eodatasets3" = ["eodatasets3/py.typed"]
 
 
-# --- setuptools-scm configuration (replaces versioneer) ---
 [tool.setuptools_scm]
 # Where to write the version file
 write_to = "eodatasets3/_version.py"
-# Configure versioning based on git tags
-# Matches tags starting with eodatasets3- (like versioneer's tag_prefix)
 tag_regex = "^eodatasets3-(.*)"
 
 # --- Tool Configurations (from setup.cfg) ---
 
-[tool.pytest]
-testpaths = ["eodatasets3", "tests"] # List of paths
-addopts = "--doctest-modules"
-filterwarnings = ["ignore::FutureWarning"] # List of strings
-norecursedirs = [".*", "build", "dist", ".git", "tmp*"] # List of strings
+# Python source code security analyzer
+[tool.bandit]
+exclude = 'tests'
 
-[tool.flake8]
-# max-complexity = 12 # Commented out as in original
-extend-ignore = [
-    "E203", # See https://github.com/PyCQA/pycodestyle/issues/373
-    "DUO130", # We're stuck with SHA1 for compatibily. Don't warn about it.
-]
-# Use a nested table for per-file-ignores
-per-file-ignores = { "tests/__init__.py" = ["S001"], "tests/test_verify.py" = ["PT009"] }
-max-line-length = 120
-no-accept-encodings = true # boolean
+[tool.black]
+line-length = 88
+target_version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
 
 [tool.coverage.run]
-source = ["eodatasets3"] # List of strings
-branch = true # boolean
+source = ["eodatasets3"]
+branch = true
 
 [tool.coverage.report]
-precision = 2 # integer
+precision = 2
 exclude_lines = [
     "pragma: no cover",
     "raise NotImplementedError",
     "raise NotImplemented",
     "if __name__ == .__main__.:",
-] # List of strings
+]
+
+[tool.flake8]
+extend-ignore = [
+    "E203", # See https://github.com/PyCQA/pycodestyle/issues/373
+    "DUO130", # We're stuck with SHA1 for compatibily. Don't warn about it.
+]
+max-line-length = 120
+no-accept-encodings = true
+
+[tool.flake8.per-file-ignores]
+"tests/__init__.py" = ["S001"]
+"tests/test_verify.py" = ["PT009"]
 
 [tool.isort]
 line_length = 88
@@ -164,14 +180,19 @@ include_trailing_comma = true
 force_grid_wrap = 0
 # isort groups imports in three groups, but sometimes guesses wrong.
 # Adding more packages here is better than commiting an unnecessary reorder.
-known_standard_library = ["dataclasses"] # List of strings
-known_third_party = ["rapidjson", "flask_themes", "dateutil"] # List of strings
-known_first_party = ["eodatasets3"] # List of strings
+known_standard_library = ["dataclasses"]
+known_third_party = ["rapidjson", "flask_themes", "dateutil"]
+known_first_party = ["eodatasets3"]
+
+[tool.pytest]
+testpaths = ["eodatasets3", "tests"]
+addopts = "--doctest-modules"
+filterwarnings = ["ignore::FutureWarning"]
+norecursedirs = [".*", "build", "dist", ".git", "tmp*"]
 
 [tool.ruff]
 extend-exclude = [
     "eodatasets3/_version.py",
-    "versioneer.py"
 ]
 target-version = "py310"
 
@@ -209,40 +230,3 @@ pycodestyle.max-line-length = 120
 
 [tool.ruff.lint.per-file-ignores]
 "docs/conf.py" = ["A001"] # Variable `copyright` shadowing a Python builtin (needed for api)
-
-[tool.black]
-line-length = 88
-target_version = ['py310', 'py311', 'py312']
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
-
-# Python source code security analyzer
-[tool.bandit]
-exclude = 'tests'
-
-[dependency-groups]
-dev = [
-    "checksumdir>=1.2.0",
-    "deepdiff>=8.4.2",
-    "h5py>=3.13.0",
-    "mock>=5.2.0",
-    "netcdf4>=1.7.2",
-    "pytest>=8.3.5",
-    "pytest-cov>=6.1.1",
-    "pytest-xdist>=3.6.1",
-    "rio-cogeo>=5.4.1",
-    "scikit-image>=0.25.2",
-]
