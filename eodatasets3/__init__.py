@@ -1,5 +1,4 @@
-from . import _version
-from ._version import get_versions
+from ._version import __version__
 from .assemble import DatasetAssembler, DatasetPrepare, IfExists, IncompleteDatasetError
 from .images import GridSpec, ValidDataMethod
 from .model import DatasetDoc
@@ -8,8 +7,6 @@ from .properties import Eo3Dict
 
 REPO_URL = "https://github.com/GeoscienceAustralia/eo-datasets.git"
 
-__version__ = get_versions()["version"]
-del get_versions
 
 __all__ = (
     "REPO_URL",
@@ -26,4 +23,3 @@ __all__ = (
     "namer",
 )
 
-__version__ = _version.get_versions()["version"]
