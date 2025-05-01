@@ -1,17 +1,16 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel", "setuptools-scm[git]>=6.2"]
+requires = ["setuptools>=61.0", "setuptools-scm[git]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "eodatasets3"
 description = "Packaging, metadata and provenance for OpenDataCube EO3 datasets"
-readme = "README.md" # setuptools finds this automatically if named README.md
+readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "Apache Software License 2.0"} # Or {file = "LICENSE"} if you have a LICENSE file
+license = "Apache-2.0"
 authors = [{name = "Open Data Cube"}]
 dynamic = ["version"]
 classifiers = [
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -109,7 +108,7 @@ deployment = ["h5py"] # h5py is already in core, but list it here for clarity if
 # packages = ["eodatasets3"] # Specify main package to include
 
 [tool.setuptools.packages.find]
-where = ["."] # Search in the current directory
+# where = ["."] # Search in the current directory
 exclude = ["tests", "tests.*"]
 
 [tool.setuptools.package-data]
@@ -125,10 +124,6 @@ write_to = "eodatasets3/_version.py"
 # Configure versioning based on git tags
 # Matches tags starting with eodatasets3- (like versioneer's tag_prefix)
 tag_regex = "^eodatasets3-(.*)"
-# Use PEP 440 compliant versioning
-version_scheme = "pep440"
-# Use pep440-compliant local versioning for non-tagged commits
-local_scheme = "dirty-tag" # Common scheme, similar to versioneer's default
 
 # --- Tool Configurations (from setup.cfg) ---
 
@@ -234,6 +229,6 @@ exclude = '''
 )/
 '''
 
+# Python source code security analyzer
 [tool.bandit]
-
 exclude = 'tests'
