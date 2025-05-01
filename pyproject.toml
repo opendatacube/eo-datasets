@@ -232,3 +232,17 @@ exclude = '''
 # Python source code security analyzer
 [tool.bandit]
 exclude = 'tests'
+
+[dependency-groups]
+dev = [
+    "checksumdir>=1.2.0",
+    "deepdiff>=8.4.2",
+    "h5py>=3.13.0",
+    "mock>=5.2.0",
+    "netcdf4>=1.7.2",
+    "pytest>=8.3.5",
+    "pytest-cov>=6.1.1",
+    "pytest-xdist>=3.6.1",
+    "rio-cogeo>=5.4.1",
+    "scikit-image>=0.25.2",
+]
