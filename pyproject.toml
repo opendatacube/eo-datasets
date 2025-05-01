@@ -1,5 +1,177 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61.0", "wheel", "setuptools-scm[git]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eodatasets3"
+description = "Packaging, metadata and provenance for OpenDataCube EO3 datasets"
+readme = "README.md" # setuptools finds this automatically if named README.md
+requires-python = ">=3.10"
+license = {text = "Apache Software License 2.0"} # Or {file = "LICENSE"} if you have a LICENSE file
+authors = [{name = "Open Data Cube"}]
+dynamic = ["version"]
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+
+# Core dependencies (formerly install_requires)
+dependencies = [
+    "affine",
+    "attrs>=18.1", # 18.1 adds 'factory' syntactic sugar
+    "boltons",
+    "botocore",  # missing from datacube
+    "boto3",
+    "cattrs",
+    "ciso8601",
+    "click",
+    "defusedxml",
+    "fiona",
+    "h5py",
+    "jsonschema>=4.18", # We want a Draft6Validator
+    "numpy>=1.15.4",
+    "pyproj",
+    "rasterio",
+    "ruamel.yaml<0.18", # Pinning as per original, although >=0.18 is the latest
+    "scipy",
+    "shapely",
+    "structlog",
+    "xarray",
+    "datacube>=1.9.0",
+    "python-rapidjson",
+    "pystac>=1.8.4,<1.12",
+]
+
+[project.urls]
+"Bug Reports" = "https://github.com/opendatacube/eo-datasets/issues"
+"Source" = "https://github.com/opendatacube/eo-datasets"
+
+[project.scripts]
+eo3-validate = "eodatasets3.validate:run"
+eo3-prepare = "eodatasets3.scripts.prepare:run"
+eo3-recompress-tar = "eodatasets3.scripts.recompress:main"
+eo3-package-wagl = "eodatasets3.scripts.packagewagl:run"
+eo3-to-stac = "eodatasets3.scripts.tostac:run"
+
+[project.optional-dependencies]
+# Optional valid-data poly handling methods
+algorithms = ["scikit-image"]
+# The (legacy) prepare scripts
+ancillary = ["checksumdir", "netCDF4"]
+# If packaging ard/wagl.
+wagl = ["h5py"] # h5py is already in core, but list it here for clarity if needed.
+# The original setup.py had 'all' as the union of wagl, ancillary, algorithms
+# And 'test' was defined as the same as 'all'.
+# We need to list the dependencies explicitly here in TOML.
+# Combined dependencies: h5py, checksumdir, netCDF4, scikit-image, deepdiff, mock, pep8-naming, pytest, rio_cogeo, sphinx-autodoc-typehints, sphinx_rtd_theme, pytest-xdist, pytest-cov
+all = [
+    "h5py", # From wagl (and core)
+    "checksumdir", "netCDF4", # From ancillary
+    "scikit-image", # From algorithms
+    # Add test dependencies from setup.py's tests_require, as test was all
+    "deepdiff>=8.0",
+    "mock",
+    "pep8-naming",
+    "pytest",
+    "rio_cogeo",
+    "sphinx-autodoc-typehints",
+    "sphinx_rtd_theme",
+    "pytest-xdist",
+    "pytest-cov",
+]
+# As per setup.py logic: EXTRAS_REQUIRE["test"] = EXTRAS_REQUIRE["all"]
+test = [
+    "h5py", # From wagl (and core)
+    "checksumdir", "netCDF4", # From ancillary
+    "scikit-image", # From algorithms
+    # Add test dependencies from setup.py's tests_require
+    "deepdiff>=8.0",
+    "mock",
+    "pep8-naming",
+    "pytest",
+    "rio_cogeo",
+    "sphinx-autodoc-typehints",
+    "sphinx_rtd_theme",
+    "pytest-xdist",
+    "pytest-cov",
+]
+# Prod deployment just adds the optional wagl depenencies.
+deployment = ["h5py"] # h5py is already in core, but list it here for clarity if needed.
+
+# --- Setuptools configuration ---
+[tool.setuptools]
+# Let setuptools find packages automatically
+# Equivalent to find_packages(exclude=("tests", "tests.*"))
+# packages = ["eodatasets3"] # Specify main package to include
+
+[tool.setuptools.packages.find]
+where = ["."] # Search in the current directory
+exclude = ["tests", "tests.*"]
+
+[tool.setuptools.package-data]
+# Equivalent to package_data dictionary
+"*" = ["*.json", "*.yaml", "*.db"]
+"eodatasets3" = ["eodatasets3/py.typed"]
+
+
+# --- setuptools-scm configuration (replaces versioneer) ---
+[tool.setuptools_scm]
+# Where to write the version file
+write_to = "eodatasets3/_version.py"
+# Configure versioning based on git tags
+# Matches tags starting with eodatasets3- (like versioneer's tag_prefix)
+tag_regex = "^eodatasets3-(.*)"
+# Use PEP 440 compliant versioning
+version_scheme = "pep440"
+# Use pep440-compliant local versioning for non-tagged commits
+local_scheme = "dirty-tag" # Common scheme, similar to versioneer's default
+
+# --- Tool Configurations (from setup.cfg) ---
+
+[tool.pytest]
+testpaths = ["eodatasets3", "tests"] # List of paths
+addopts = "--doctest-modules"
+filterwarnings = ["ignore::FutureWarning"] # List of strings
+norecursedirs = [".*", "build", "dist", ".git", "tmp*"] # List of strings
+
+[tool.flake8]
+# max-complexity = 12 # Commented out as in original
+extend-ignore = [
+    "E203", # See https://github.com/PyCQA/pycodestyle/issues/373
+    "DUO130", # We're stuck with SHA1 for compatibily. Don't warn about it.
+]
+# Use a nested table for per-file-ignores
+per-file-ignores = { "tests/__init__.py" = ["S001"], "tests/test_verify.py" = ["PT009"] }
+max-line-length = 120
+no-accept-encodings = true # boolean
+
+[tool.coverage.run]
+source = ["eodatasets3"] # List of strings
+branch = true # boolean
+
+[tool.coverage.report]
+precision = 2 # integer
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "raise NotImplemented",
+    "if __name__ == .__main__.:",
+] # List of strings
+
+[tool.isort]
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+# isort groups imports in three groups, but sometimes guesses wrong.
+# Adding more packages here is better than commiting an unnecessary reorder.
+known_standard_library = ["dataclasses"] # List of strings
+known_third_party = ["rapidjson", "flask_themes", "dateutil"] # List of strings
+known_first_party = ["eodatasets3"] # List of strings
 
 [tool.ruff]
 extend-exclude = [
