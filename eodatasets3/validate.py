@@ -1322,7 +1322,7 @@ def _load_explorer_product_definitions(
     """
     product_urls = [
         urljoin(explorer_url, f"/products/{name.strip()}.odc-product.yaml")
-        for name in urlopen(urljoin(explorer_url, "products.txt"))  # nosec
+        for name in urlopen(urljoin(explorer_url, "products.txt"))  # nosec # noqa: S310
         .read()
         .decode("utf-8")
         .split("\n")

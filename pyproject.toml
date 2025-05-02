@@ -125,10 +125,6 @@ tag_regex = "^eodatasets3-(.*)"
 
 # --- Tool Configurations (from setup.cfg) ---
 
-# Python source code security analyzer
-[tool.bandit]
-exclude = 'tests'
-
 [tool.coverage.run]
 source = ["eodatasets3"]
 branch = true
@@ -178,9 +174,8 @@ select = [
     "ICN",  # Use standard import names, like np for numpy
     "N",  # pep8-naming
     "NPY",  # Numpy
-    "RUF",  # Ruf-specific python rules
-    # We're using a separate pre-commit hook for this.
-    # "S",  # Bandit (security)
+    "RUF",  # Ruff-specific python rules
+    "S",  # Bandit (security)
     "UP"  # pyupgrade
 ]
 
@@ -190,6 +185,7 @@ ignore = [
     "C408", # Unnecessary `dict` call (rewrite as a literal)
     "ICN001", #  `numpy` should be imported as `np`
     "N818", # Exception name should be named with an Error suffix
+    "S324", # SHA1 is required for compatibility.
 ]
 
 # Matching old behaviour: We auto-format with the smaller line default
@@ -198,3 +194,4 @@ pycodestyle.max-line-length = 120
 
 [tool.ruff.lint.per-file-ignores]
 "docs/conf.py" = ["A001"] # Variable `copyright` shadowing a Python builtin (needed for api)
+"tests/*.py" = ["S101"] # Tests are supposed to assert.
