@@ -88,7 +88,6 @@ test = [
     "sphinx_rtd_theme",
     "sphinx-autodoc-typehints",
 ]
-# Prod deployment just adds the optional wagl depenencies.
 deployment = ["h5py"] # h5py is already in core, but list it here for clarity if needed.
 
 [dependency-groups]
@@ -105,7 +104,6 @@ dev = [
     "scikit-image>=0.25.2",
 ]
 
-# --- Setuptools configuration ---
 [tool.setuptools]
 
 [tool.setuptools.packages.find]
@@ -115,13 +113,10 @@ exclude = ["tests", "tests.*"]
 "*" = ["*.json", "*.yaml", "*.db"]
 "eodatasets3" = ["eodatasets3/py.typed"]
 
-
 [tool.setuptools_scm]
-# Where to write the version file
 write_to = "eodatasets3/_version.py"
 tag_regex = "^eodatasets3-(.*)"
 
-# --- Tool Configurations (from setup.cfg) ---
 
 [tool.coverage.run]
 source = ["eodatasets3"]
@@ -148,7 +143,6 @@ extend-exclude = [
 ]
 
 [tool.ruff.lint]
-# Which checkers to enable?
 select = [
     "A",  # Don't shadow built-ins
     "C4",  # Use list comprehensions etc
