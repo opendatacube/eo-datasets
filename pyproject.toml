@@ -67,7 +67,6 @@ all = [
     "deepdiff>=8.0",
     "h5py", # From wagl (and core)
     "mock",
-    "pep8-naming",
     "pytest-cov",
     "pytest-xdist",
     "pytest",
@@ -81,7 +80,6 @@ test = [
     "deepdiff>=8.0",
     "h5py", # From wagl (and core)
     "mock",
-    "pep8-naming",
     "pytest-cov",
     "pytest-xdist",
     "pytest",
@@ -137,18 +135,6 @@ exclude_lines = [
     "raise NotImplemented",
     "if __name__ == .__main__.:",
 ]
-
-[tool.flake8]
-extend-ignore = [
-    "E203", # See https://github.com/PyCQA/pycodestyle/issues/373
-    "DUO130", # We're stuck with SHA1 for compatibily. Don't warn about it.
-]
-max-line-length = 120
-no-accept-encodings = true
-
-[tool.flake8.per-file-ignores]
-"tests/__init__.py" = ["S001"]
-"tests/test_verify.py" = ["PT009"]
 
 [tool.pytest.ini_options]
 testpaths = ["eodatasets3", "tests"]
