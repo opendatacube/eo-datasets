@@ -385,10 +385,8 @@ Your code will now be formatted and validated before each commit. You can also i
 
 This allows you to immediately catch and fix issues before you raise a pull request that fails.
 
-Most notably, all code is formatted using
-[black](https://github.com/ambv/black), and checked with
-[pyflakes](https://github.com/PyCQA/pyflakes).
-
+Most notably, all code is formatted and checked with
+[Ruff](https://astral.sh/ruff).
 
 ## Docker dependencies
 
