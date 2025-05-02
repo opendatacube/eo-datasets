@@ -129,25 +129,6 @@ tag_regex = "^eodatasets3-(.*)"
 [tool.bandit]
 exclude = 'tests'
 
-[tool.black]
-line-length = 88
-target_version = ['py310', 'py311', 'py312']
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
-
 [tool.coverage.run]
 source = ["eodatasets3"]
 branch = true
@@ -172,17 +153,6 @@ no-accept-encodings = true
 [tool.flake8.per-file-ignores]
 "tests/__init__.py" = ["S001"]
 "tests/test_verify.py" = ["PT009"]
-
-[tool.isort]
-line_length = 88
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-# isort groups imports in three groups, but sometimes guesses wrong.
-# Adding more packages here is better than commiting an unnecessary reorder.
-known_standard_library = ["dataclasses"]
-known_third_party = ["rapidjson", "flask_themes", "dateutil"]
-known_first_party = ["eodatasets3"]
 
 [tool.pytest.ini_options]
 testpaths = ["eodatasets3", "tests"]

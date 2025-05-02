@@ -3,7 +3,7 @@
 exclude: tests/integration/data
 
 repos:
-    # Normalise all Python code. (Black + isort + pyupgrade + autoflake)
+    # Normalise all Python code (formatting/linting).
     - repo: https://github.com/astral-sh/ruff-pre-commit
       rev: v0.11.7
       hooks:
