@@ -164,8 +164,6 @@ norecursedirs = [".*", "build", "dist", ".git", "tmp*"]
 extend-exclude = [
     "eodatasets3/_version.py",
 ]
-target-version = "py310"
-
 
 [tool.ruff.lint]
 # Which checkers to enable?
