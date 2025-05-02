@@ -71,6 +71,7 @@ all = [
     "pytest-xdist",
     "pytest",
     "rio_cogeo",
+    "ruff",
     "scikit-image", # From algorithms
     "sphinx_rtd_theme",
     "sphinx-autodoc-typehints",
@@ -84,6 +85,7 @@ test = [
     "pytest-xdist",
     "pytest",
     "rio_cogeo",
+    "ruff",
     "scikit-image", # From algorithms
     "sphinx_rtd_theme",
     "sphinx-autodoc-typehints",
@@ -101,6 +103,7 @@ dev = [
     "pytest-cov>=6.1.1",
     "pytest-xdist>=3.6.1",
     "rio-cogeo>=5.4.1",
+    "ruff>=0.11.8",
     "scikit-image>=0.25.2",
 ]
 
