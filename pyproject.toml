@@ -184,7 +184,7 @@ known_standard_library = ["dataclasses"]
 known_third_party = ["rapidjson", "flask_themes", "dateutil"]
 known_first_party = ["eodatasets3"]
 
-[tool.pytest]
+[tool.pytest.ini_options]
 testpaths = ["eodatasets3", "tests"]
 addopts = "--doctest-modules"
 filterwarnings = ["ignore::FutureWarning"]
