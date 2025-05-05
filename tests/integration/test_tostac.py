@@ -61,10 +61,10 @@ def test_tostac_no_grids(odc_dataset_path: Path, expected_stac_doc: dict) -> Non
 
     # No longer expect proj  fields (they come from grids).
     remove_stac_properties(
-        expected_stac_doc, ("proj:shape", "proj:transform", "proj:epsg")
+        expected_stac_doc, ("proj:shape", "proj:transform", "proj:code")
     )
     # But we do still expect a global CRS.
-    expected_stac_doc["properties"]["proj:epsg"] = 32656
+    expected_stac_doc["properties"]["proj:code"] = "EPSG:32656"
 
     output_doc = json.load(expected_output_path.open())
     assert_same(expected_stac_doc, output_doc)

@@ -1,6 +1,6 @@
 {
   "type": "Feature",
-  "stac_version": "1.0.0",
+  "stac_version": "1.1.0",
   "id": "2aa69fcf-aa55-4747-9d95-3652f9fe79b0",
   "properties": {
       "title": "ga_ls8c_ard_3-1-0_088080_2020-05-25_final",
@@ -57,7 +57,7 @@
               "b5f234fe-bba8-5483-9bc0-250360d429cf"
           ]
       },
-      "proj:epsg": 32656,
+      "proj:code": "EPSG:32656",
       "proj:shape": [
           7841, 
           7781
@@ -209,7 +209,7 @@
                   "name": "nbar_blue"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -238,7 +238,7 @@
                   "name": "nbar_coastal_aerosol"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -267,7 +267,7 @@
                   "name": "nbar_green"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -296,7 +296,7 @@
                   "name": "nbar_nir"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -325,7 +325,7 @@
                   "name": "nbar_panchromatic"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               15681,
               15561
@@ -354,7 +354,7 @@
                   "name": "nbar_red"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -383,7 +383,7 @@
                   "name": "nbar_swir_1"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -412,7 +412,7 @@
                   "name": "nbar_swir_2"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -441,7 +441,7 @@
                   "name": "nbart_blue"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -470,7 +470,7 @@
                   "name": "nbart_coastal_aerosol"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -499,7 +499,7 @@
                   "name": "nbart_green"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -528,7 +528,7 @@
                   "name": "nbart_nir"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -557,7 +557,7 @@
                   "name": "nbart_panchromatic"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               15681,
               15561
@@ -586,7 +586,7 @@
                   "name": "nbart_red"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -615,7 +615,7 @@
                   "name": "nbart_swir_1"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -644,7 +644,7 @@
                   "name": "nbart_swir_2"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -673,7 +673,7 @@
                   "name": "oa_azimuthal_exiting"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -702,7 +702,7 @@
                   "name": "oa_azimuthal_incident"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -731,7 +731,7 @@
                   "name": "oa_combined_terrain_shadow"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -760,7 +760,7 @@
                   "name": "oa_exiting_angle"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -789,7 +789,7 @@
                   "name": "oa_fmask"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -818,7 +818,7 @@
                   "name": "oa_incident_angle"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -847,7 +847,7 @@
                   "name": "oa_nbar_contiguity"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -876,7 +876,7 @@
                   "name": "oa_nbart_contiguity"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -905,7 +905,7 @@
                   "name": "oa_relative_azimuth"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -934,7 +934,7 @@
                   "name": "oa_relative_slope"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -963,7 +963,7 @@
                   "name": "oa_satellite_azimuth"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -992,7 +992,7 @@
                   "name": "oa_satellite_view"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -1021,7 +1021,7 @@
                   "name": "oa_solar_azimuth"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -1050,7 +1050,7 @@
                   "name": "oa_solar_zenith"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -1079,7 +1079,7 @@
                   "name": "oa_time_delta"
               }
           ],
-          "proj:epsg": 32656,
+          "proj:code": "EPSG:32656",
           "proj:shape": [
               7841,
               7781
@@ -1138,7 +1138,7 @@
   ],
   "stac_extensions": [
       "https://stac-extensions.github.io/eo/v1.1.0/schema.json",
-      "https://stac-extensions.github.io/projection/v1.1.0/schema.json",
+      "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
       "https://stac-extensions.github.io/view/v1.0.0/schema.json"
   ],
   "collection": "ga_ls8c_ard_3"

@@ -313,6 +313,7 @@ _DERIVATIVE_PRODUCT_PROPS = {
 _STAC_MISC_PROPS = {
     "providers": None,  # https://github.com/radiantearth/stac-spec/blob/master/item-spec/common-metadata.md#provider,
     # Projection extension
+    "proj:code": str,
     "proj:epsg": int,
     "proj:shape": None,
     "proj:transform": None,
