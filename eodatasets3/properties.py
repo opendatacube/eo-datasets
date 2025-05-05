@@ -637,7 +637,9 @@ class Eo3Interface:
         """
         Shorthand for when the dataset was processed right now on the current system.
         """
-        self.properties["odc:processing_datetime"] = datetime.datetime.now(datetime.UTC)
+        self.properties["odc:processing_datetime"] = datetime.datetime.now(
+            datetime.timezone.utc
+        )
 
     @property
     def dataset_version(self) -> str:
