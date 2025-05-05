@@ -5,7 +5,7 @@ from .model import DatasetDoc
 from .names import NamingConventions, namer
 from .properties import Eo3Dict
 
-REPO_URL = "https://github.com/GeoscienceAustralia/eo-datasets.git"
+REPO_URL = "https://github.com/opendatacube/eo-datasets.git"
 
 
 __all__ = (
