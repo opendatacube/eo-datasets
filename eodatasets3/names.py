@@ -155,7 +155,7 @@ class LazyPlatformAbbreviation:
                 raise ValueError(
                     f"We don't know the DEA abbreviation for platforms {unknowns!r}. "
                     f"We'd love to add more! Raise an issue on Github: "
-                    f"https://github.com/GeoscienceAustralia/eo-datasets/issues/new' "
+                    f"https://github.com/opendatacube/eo-datasets/issues/new' "
                 )
 
         abbreviations = sorted(
@@ -184,7 +184,7 @@ class LazyPlatformAbbreviation:
                 f"Satellite constellation abbreviation is not known for platforms {p}. "
                 f"(for DEA derivative naming conventions.)"
                 f"    Is this a mistake? We'd love to add more! Raise an issue on Github: "
-                f"https://github.com/GeoscienceAustralia/eo-datasets/issues/new' "
+                f"https://github.com/opendatacube/eo-datasets/issues/new' "
             )
         return None
 
@@ -228,7 +228,7 @@ class LazyInstrumentAbbreviation:
         raise NotImplementedError(
             f"Instrument abbreviations aren't supported for platform {p!r}. "
             f"We'd love to add more support! Raise an issue on Github: "
-            f"https://github.com/GeoscienceAustralia/eo-datasets/issues/new' "
+            f"https://github.com/opendatacube/eo-datasets/issues/new' "
         )
 
 
@@ -258,7 +258,7 @@ class LazyProducerAbbreviation:
             raise NotImplementedError(
                 f"We don't know how to abbreviate organisation domain name {c.metadata.producer!r}. "
                 f"We'd love to add more orgs! Raise an issue on Github: "
-                f"https://github.com/GeoscienceAustralia/eo-datasets/issues/new' "
+                f"https://github.com/opendatacube/eo-datasets/issues/new' "
             )
 
 

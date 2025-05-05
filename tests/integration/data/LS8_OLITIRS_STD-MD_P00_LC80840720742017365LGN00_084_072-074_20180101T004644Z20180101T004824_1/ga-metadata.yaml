@@ -32,6 +32,6 @@ lineage:
     machine:
         software_versions:
             eodatasets:
-                repo_url: https://github.com/GeoscienceAustralia/eo-datasets.git
+                repo_url: https://github.com/opendatacube/eo-datasets.git
                 version: '0.8'
     source_datasets: {}

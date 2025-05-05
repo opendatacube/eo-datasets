@@ -789,4 +789,4 @@ def _github_suggest_new_property_url(key: str, value: object) -> str:
             ),
         )
     )
-    return f"https://github.com/GeoscienceAustralia/eo-datasets/issues/new?{issue_parameters}"
+    return f"https://github.com/opendatacube/eo-datasets/issues/new?{issue_parameters}"

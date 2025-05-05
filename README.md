@@ -1,8 +1,7 @@
 ## EO Datasets
 
-[![Linting](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/lint.yml/badge.svg)](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/lint.yml)
-[![Tests](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/test.yml/badge.svg)](https://github.com/GeoscienceAustralia/eo-datasets/actions/workflows/test.yml)
-[![Coverage Status](https://img.shields.io/codecov/c/github/GeoscienceAustralia/eo-datasets)](https://app.codecov.io/gh/GeoscienceAustralia/eo-datasets)
+[![Tests](https://github.com/opendatacube/eo-datasets/actions/workflows/ci.yml/badge.svg)](https://github.com/opendatacube/eo-datasets/actions/workflows/ci.yml)
+[![Coverage Status](https://img.shields.io/codecov/c/github/opendatacube/eo-datasets)](https://app.codecov.io/gh/opendatacube/eo-datasets)
 
 A tool to easily write, validate and convert [ODC](https://github.com/opendatacube/datacube-core)
 datasets and metadata.
@@ -400,7 +399,7 @@ Note that this will run pip-compile _inside_ the docker container for maximum co
 
 ## Creating Releases
 
-First, draft [some release notes](https://github.com/GeoscienceAustralia/eo-datasets/releases)
+First, draft [some release notes](https://github.com/opendatacube/eo-datasets/releases)
 for users of the library.
 
 Now tag and upload:

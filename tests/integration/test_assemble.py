@@ -71,7 +71,7 @@ def test_dea_style_package(
         # Note any software versions important to this created data.
         p.note_software_version(
             "numerus-unus-processor",
-            "https://github.com/GeoscienceAustralia/eo-datasets",
+            "https://github.com/opendatacube/eo-datasets",
             "1.2.3",
         )
 

@@ -1657,7 +1657,7 @@ class DatasetAssembler(DatasetPrepare):
 
         self.note_software_version(
             "eodatasets3",
-            "https://github.com/GeoscienceAustralia/eo-datasets",
+            "https://github.com/opendatacube/eo-datasets",
             eodatasets3.__version__,
         )
 

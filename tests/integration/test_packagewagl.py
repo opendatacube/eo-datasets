@@ -418,7 +418,7 @@ def test_whole_landsat_wagl_package(
                 },
                 {
                     "name": "eodatasets3",
-                    "url": "https://github.com/GeoscienceAustralia/eo-datasets",
+                    "url": "https://github.com/opendatacube/eo-datasets",
                     "version": eodatasets3.__version__,
                 },
             ],
@@ -1115,7 +1115,7 @@ def test_esa_sentinel_wagl_package(tmp_path: Path) -> None:
                 },
                 {
                     "name": "eodatasets3",
-                    "url": "https://github.com/GeoscienceAustralia/eo-datasets",
+                    "url": "https://github.com/opendatacube/eo-datasets",
                     "version": eodatasets3.__version__,
                 },
             ],
@@ -1547,7 +1547,7 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path) -> None:
                 },
                 {
                     "name": "eodatasets3",
-                    "url": "https://github.com/GeoscienceAustralia/eo-datasets",
+                    "url": "https://github.com/opendatacube/eo-datasets",
                     "version": eodatasets3.__version__,
                 },
             ],
