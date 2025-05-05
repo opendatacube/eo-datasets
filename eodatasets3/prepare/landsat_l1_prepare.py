@@ -551,7 +551,7 @@ def main(
     producer: str,
     embed_location: bool,
     source_telemetry: Path | None,
-    newer_than: datetime,
+    newer_than: datetime | None,
 ):
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO
