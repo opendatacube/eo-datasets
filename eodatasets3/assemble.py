@@ -1643,8 +1643,8 @@ class DatasetAssembler(DatasetPrepare):
             warnings.warn(
                 "Using DatasetAssembler for pure metadata is deprecated. "
                 "Replace DatasetAssembler() with DatasetPrepare(): "
-                "it should be a drop-in replacement. (unless you're setting fields that were previously"
-                "being ignored).",
+                "it should be a drop-in replacement (unless you're setting fields "
+                "that were previously being ignored).",
                 category=DeprecationWarning,
             )
             return super().done(
