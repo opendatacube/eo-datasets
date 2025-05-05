@@ -574,6 +574,7 @@ all = [
     { name = "h5py" },
     { name = "mock" },
     { name = "netcdf4" },
+    { name = "pystac" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
@@ -597,6 +598,7 @@ test = [
     { name = "h5py" },
     { name = "mock" },
     { name = "netcdf4" },
+    { name = "pystac" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
@@ -657,7 +659,9 @@ requires-dist = [
     { name = "netcdf4", marker = "extra == 'test'" },
     { name = "numpy", specifier = ">=1.15.4" },
     { name = "pyproj" },
-    { name = "pystac", specifier = ">=1.8.4,<1.12" },
+    { name = "pystac", specifier = ">=1.8.4" },
+    { name = "pystac", marker = "extra == 'all'", specifier = ">=1.12" },
+    { name = "pystac", marker = "extra == 'test'", specifier = ">=1.12" },
     { name = "pytest", marker = "extra == 'all'" },
     { name = "pytest", marker = "extra == 'test'" },
     { name = "pytest-cov", marker = "extra == 'all'" },
@@ -1594,14 +1598,14 @@ wheels = [
 
 [[package]]
 name = "pystac"
-version = "1.11.0"
+version = "1.13.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-dateutil" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/90/4f/f6f89956aabffd1211fa9c9130293ac67f774c66fab7944bfe33dc317f18/pystac-1.11.0.tar.gz", hash = "sha256:acb1e04be398a0cda2d8870ab5e90457783a8014a206590233171d8b2ae0d9e7", size = 141392, upload-time = "2024-10-03T19:54:32.101Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/59/52/a2f882be13f3947f4e3330d59926d844f3a9c2eb07e1391c3f90ab4653eb/pystac-1.13.0.tar.gz", hash = "sha256:9e5d908a390eed800228a956d7f3577c8f0cbac49806aaa0b14b7c4e06520b8c", size = 162558, upload-time = "2025-04-15T18:14:09.713Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/71/5b/60dc94cbf6af2fd3a3d3fae52de7e294819af2dfe7a1bea4d246beb7e0b6/pystac-1.11.0-py3-none-any.whl", hash = "sha256:10ac7c7b4ea6c5ec8333829a09ec1a33b596f02d1a97ffbbd72cd1b6c10598c1", size = 183925, upload-time = "2024-10-03T19:54:30.751Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/7c/1b361a24d3087cd922ec1f6dfe02f230507d800ada3f922532f1f906a09e/pystac-1.13.0-py3-none-any.whl", hash = "sha256:fa22cc04e58bbbc22c8d049e715a37ab803802d8d1334afc48e6eab64c5946e4", size = 206821, upload-time = "2025-04-15T18:14:07.855Z" },
 ]
 
 [[package]]

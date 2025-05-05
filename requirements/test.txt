@@ -100,6 +100,10 @@ docutils==0.21.2
     # via
     #   sphinx
     #   sphinx-rtd-theme
+exceptiongroup==1.2.2
+    # via
+    #   cattrs
+    #   pytest
 execnet==2.1.1
     # via pytest-xdist
 fiona==1.10.1
@@ -118,6 +122,8 @@ imageio==2.37.0
     # via scikit-image
 imagesize==1.4.1
     # via sphinx
+importlib-metadata==8.7.0
+    # via dask
 iniconfig==2.1.0
     # via pytest
 jinja2==3.1.6
@@ -221,7 +227,7 @@ pyproj==3.7.1
     #   datacube
     #   morecantile
     #   odc-geo
-pystac==1.11.0
+pystac==1.13.0
     # via eodatasets3 (pyproject.toml)
 pytest==8.3.5
     # via
@@ -326,6 +332,11 @@ tblib==3.1.0
     # via distributed
 tifffile==2025.3.30
     # via scikit-image
+tomli==2.2.1
+    # via
+    #   coverage
+    #   pytest
+    #   sphinx
 toolz==1.0.0
     # via
     #   dask
@@ -337,10 +348,12 @@ tornado==6.4.2
 typing-extensions==4.13.2
     # via
     #   alembic
+    #   cattrs
     #   pydantic
     #   pydantic-core
     #   referencing
     #   sqlalchemy
+    #   structlog
     #   typing-inspection
 typing-inspection==0.4.0
     # via pydantic
@@ -359,3 +372,5 @@ xarray==2025.3.1
     #   datacube
 zict==3.0.0
     # via distributed
+zipp==3.21.0
+    # via importlib-metadata

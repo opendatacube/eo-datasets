@@ -41,7 +41,7 @@ dependencies = [
     "xarray",
     "datacube>=1.9.0",
     "python-rapidjson",
-    "pystac>=1.8.4,<1.12",
+    "pystac>=1.8.4",
 ]
 
 [project.urls]
@@ -67,6 +67,7 @@ all = [
     "deepdiff>=8.0",
     "h5py", # From wagl (and core)
     "mock",
+    "pystac>=1.12",
     "pytest-cov",
     "pytest-xdist",
     "pytest",
@@ -81,6 +82,7 @@ test = [
     "deepdiff>=8.0",
     "h5py", # From wagl (and core)
     "mock",
+    "pystac>=1.12",
     "pytest-cov",
     "pytest-xdist",
     "pytest",
