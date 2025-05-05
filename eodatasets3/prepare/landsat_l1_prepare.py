@@ -10,7 +10,7 @@ import re
 import tarfile
 import uuid
 from collections.abc import Callable, Generator, Iterable
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import click
@@ -569,7 +569,7 @@ def main(
 
             ds_path = _normalise_dataset_path(Path(ds).absolute())
             (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(ds)
-            create_date = datetime.utcfromtimestamp(ctime)
+            create_date = datetime.fromtimestamp(ctime, timezone.utc)
             if newer_than and (create_date <= newer_than):
                 logging.info(
                     "Creation time %s older than start date %s ...SKIPPING %s",
