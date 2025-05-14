@@ -34,7 +34,7 @@ dependencies = [
     "numpy>=1.15.4",
     "pyproj",
     "rasterio",
-    "ruamel.yaml<0.18", # Pinning as per original, although >=0.18 is the latest
+    "ruamel.yaml",
     "scipy",
     "shapely",
     "structlog",
