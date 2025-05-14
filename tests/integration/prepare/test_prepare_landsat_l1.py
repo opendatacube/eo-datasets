@@ -1,6 +1,6 @@
 import shutil
 from collections.abc import Callable
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -176,7 +176,7 @@ def test_prepare_l8_l1_c2(tmp_path: Path, l1_c2_ls8_folder: Path) -> None:
             ),
         },
         "properties": {
-            "datetime": "2022-05-06T23:39:59.285133",
+            "datetime": datetime.fromisoformat("2022-05-06T23:39:59.285133Z"),
             "eo:cloud_cover": 86.35,
             "eo:gsd": 15.0,
             "eo:instrument": "OLI_TIRS",
@@ -194,7 +194,7 @@ def test_prepare_l8_l1_c2(tmp_path: Path, l1_c2_ls8_folder: Path) -> None:
             "landsat:wrs_row": 74,
             "odc:dataset_version": "2.0.20220512",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": "2022-05-12T14:00:17",
+            "odc:processing_datetime": datetime.fromisoformat("2022-05-12T14:00:17Z"),
             "odc:producer": "usgs.gov",
             "odc:product_family": "level1",
             "odc:region_code": "089074",
@@ -324,7 +324,7 @@ def l9_expected():
             },
         },
         "properties": {
-            "datetime": "2022-02-09T02:05:18.736033",
+            "datetime": datetime.fromisoformat("2022-02-09T02:05:18.736033Z"),
             "eo:cloud_cover": 0.12,
             "eo:gsd": 15.0,
             "eo:instrument": "OLI_TIRS",
@@ -346,7 +346,7 @@ def l9_expected():
             "landsat:wrs_row": 81,
             "odc:dataset_version": "2.0.20220209",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": "2022-02-09T04:08:31",
+            "odc:processing_datetime": datetime.fromisoformat("2022-02-09T04:08:31Z"),
             "odc:producer": "usgs.gov",
             "odc:product_family": "level1",
             "odc:region_code": "112081",
@@ -626,7 +626,7 @@ def expected_lc08_l2_c2_post_20210507_folder(
     """ """
     org_code = organisation.split(".")[0]
     product_name = f"{org_code}_ls8c_level{leveln_collection}_{collection}"
-    processing_datetime = datetime(2021, 5, 8, 11, 5, 47)
+    processing_datetime = datetime(2021, 5, 8, 11, 5, 47, tzinfo=UTC)
     processing_date = processing_datetime.strftime("%Y%m%d")
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
@@ -637,7 +637,7 @@ def expected_lc08_l2_c2_post_20210507_folder(
             "href": f"https://collections.dea.ga.gov.au/product/{product_name}",
         },
         "properties": {
-            "datetime": datetime(2021, 5, 3, 0, 39, 15, 718295),
+            "datetime": datetime(2021, 5, 3, 0, 39, 15, 718295, tzinfo=UTC),
             # The minor version comes from the processing date,
             # as used in filenames to distinguish reprocesses.
             "odc:dataset_version": f"{collection}.0.{processing_date}",
@@ -841,12 +841,12 @@ def expected_lt05_l2_c2_folder():
             "href": "https://collections.dea.ga.gov.au/product/usgs_ls5t_level2_2",
         },
         "properties": {
-            "datetime": datetime(1998, 3, 8, 23, 26, 47, 294081),
+            "datetime": datetime(1998, 3, 8, 23, 26, 47, 294081, tzinfo=UTC),
             # The minor version comes from the processing date,
             # as used in filenames to distinguish reprocesses.
             "odc:dataset_version": "2.0.20200909",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": (datetime(2020, 9, 9, 10, 36, 59)),
+            "odc:processing_datetime": datetime(2020, 9, 9, 10, 36, 59, tzinfo=UTC),
             "odc:producer": "usgs.gov",
             "odc:product_family": "level2",
             "odc:region_code": "090084",
@@ -967,12 +967,12 @@ def expected_le07_l2_c2_folder():
             "href": "https://collections.dea.ga.gov.au/product/usgs_ls7e_level2_2",
         },
         "properties": {
-            "datetime": datetime(2021, 3, 31, 23, 1, 59, 738020),
+            "datetime": datetime(2021, 3, 31, 23, 1, 59, 738020, tzinfo=UTC),
             # The minor version comes from the processing date,
             # as used in filenames to distinguish reprocesses.
             "odc:dataset_version": "2.0.20210426",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": (datetime(2021, 4, 26, 10, 52, 29)),
+            "odc:processing_datetime": datetime(2021, 4, 26, 10, 52, 29, tzinfo=UTC),
             "odc:producer": "usgs.gov",
             "odc:product_family": "level2",
             "odc:region_code": "090084",
@@ -1156,7 +1156,7 @@ def expected_le07_l1_c2_folder():
             },
         },
         "properties": {
-            "datetime": "2022-03-10T00:09:40.814477",
+            "datetime": datetime.fromisoformat("2022-03-10T00:09:40.814477Z"),
             "eo:cloud_cover": 5.0,
             "eo:gsd": 15.0,
             "eo:instrument": "ETM",
@@ -1178,7 +1178,7 @@ def expected_le07_l1_c2_folder():
             "landsat:wrs_row": 68,
             "odc:dataset_version": "2.0.20220405",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": "2022-04-05T10:37:54",
+            "odc:processing_datetime": datetime.fromisoformat("2022-04-05T10:37:54Z"),
             "odc:producer": "usgs.gov",
             "odc:product_family": "level1",
             "odc:region_code": "107068",

@@ -1,7 +1,7 @@
 import json
 import shutil
 from collections.abc import Callable
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -185,7 +185,7 @@ def expected_l1_ls8_folder(
     org_code = organisation.split(".")[0]
     product_name = f"{org_code}_ls8c_level1_{collection}"
     if collection == "2":
-        processing_datetime = datetime(2020, 9, 7, 19, 30, 5)
+        processing_datetime = datetime(2020, 9, 7, 19, 30, 5, tzinfo=UTC)
         cloud_cover = 93.28
         points_model = 125
         points_version = 5
@@ -195,7 +195,7 @@ def expected_l1_ls8_folder(
         uuid = "d9221c40-24c3-5356-ab22-4dcac2bf2d70"
         quality_tag = "QA_PIXEL"
     else:
-        processing_datetime = datetime(2017, 4, 5, 11, 17, 36)
+        processing_datetime = datetime(2017, 4, 5, 11, 17, 36, tzinfo=UTC)
         cloud_cover = 93.22
         points_model = 66
         points_version = 4
@@ -214,7 +214,7 @@ def expected_l1_ls8_folder(
             "href": f"https://collections.dea.ga.gov.au/product/{product_name}",
         },
         "properties": {
-            "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435),
+            "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435, tzinfo=UTC),
             # The minor version comes from the processing date (as used in filenames to distinguish reprocesses).
             "odc:dataset_version": f"{collection}.0.{processing_date}",
             "odc:file_format": "GeoTIFF",
@@ -393,10 +393,10 @@ def l1_ls7_tarball_md_expected(
         },
         "crs": "epsg:32652",
         "properties": {
-            "datetime": datetime(2013, 4, 29, 1, 10, 20, 336_104),
+            "datetime": datetime(2013, 4, 29, 1, 10, 20, 336_104, tzinfo=UTC),
             "odc:dataset_version": "1.0.20161124",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": datetime(2016, 11, 24, 8, 26, 33),
+            "odc:processing_datetime": datetime(2016, 11, 24, 8, 26, 33, tzinfo=UTC),
             "odc:producer": "usgs.gov",
             "odc:product_family": "level1",
             "odc:region_code": "104078",
@@ -554,10 +554,10 @@ def l1_ls5_tarball_md_expected(
         },
         "crs": "epsg:32655",
         "properties": {
-            "datetime": datetime(1997, 4, 6, 23, 17, 43, 102_000),
+            "datetime": datetime(1997, 4, 6, 23, 17, 43, 102_000, tzinfo=UTC),
             "odc:dataset_version": "1.0.20161231",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": datetime(2016, 12, 31, 15, 54, 58),
+            "odc:processing_datetime": datetime(2016, 12, 31, 15, 54, 58, tzinfo=UTC),
             "odc:producer": "usgs.gov",
             "odc:product_family": "level1",
             "odc:region_code": "090085",
