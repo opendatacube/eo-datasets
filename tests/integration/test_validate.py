@@ -252,7 +252,7 @@ class ValidateRunner:
                 doc = md_path
             args += (doc,)
 
-        self.result = CliRunner(mix_stderr=False).invoke(
+        self.result = CliRunner().invoke(
             validate.run, [str(a) for a in args], catch_exceptions=False
         )
 
