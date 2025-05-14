@@ -56,13 +56,6 @@ DEFAULT_MATURITY = wagl.ProductMaturity.stable
     callback=lambda c, p, v: wagl.ProductMaturity[v.lower()] if v else None,
 )
 @click.option(
-    "--with-oa/--no-oa",
-    "with_oa",
-    help="Include observation attributes (default: true)",
-    is_flag=True,
-    default=True,
-)
-@click.option(
     "--allow-missing-provenance/--require-provenance",
     "allow_missing_provenance",
     help="Allow there to be no Level 1 provenance. (default: false)",
