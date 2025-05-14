@@ -399,25 +399,11 @@ Note that this will run pip-compile _inside_ the docker container for maximum co
 
 ## Creating Releases
 
-First, draft [some release notes](https://github.com/opendatacube/eo-datasets/releases)
-for users of the library.
+Create a [new release within GitHub](https://github.com/opendatacube/eo-datasets/releases).
 
-Now tag and upload:
+Specify a new tag name similar to `eodatasets3-1.9.2` replacing 1.9.2 with the new version number.
 
-```
-# Be up-to-date.
-git fetch origin
+Publish the release.
 
-# Create a tag for the new version
-# (using semantic versioning https://semver.org/)
-git tag eodatasets3-<version> origin/eodatasets3
+GitHub Actions will build the release, and upload it to [PyPI](https://pypi.org/project/eodatasets3/).
 
-# Create package
-python3 setup.py sdist bdist_wheel
-
-# Upload it (Jeremy, Damien, Kirill have pypi ownership)
-python3 -m twine upload  dist/*
-
-# Push tag to main repository
-git push origin --tags
-```
