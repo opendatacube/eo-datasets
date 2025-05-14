@@ -406,4 +406,3 @@ Specify a new tag name similar to `eodatasets3-1.9.2` replacing 1.9.2 with the n
 Publish the release.
 
 GitHub Actions will build the release, and upload it to [PyPI](https://pypi.org/project/eodatasets3/).
-
