@@ -226,5 +226,9 @@ def dump_roundtrip(generated_doc):
     is identical once produced.
     """
     return rapidjson.loads(
-        rapidjson.dumps(generated_doc, datetime_mode=True, uuid_mode=True)
+        rapidjson.dumps(
+            generated_doc,
+            datetime_mode=rapidjson.DM_ISO8601 | rapidjson.DM_SHIFT_TO_UTC,
+            uuid_mode=rapidjson.UM_CANONICAL,
+        )
     )
