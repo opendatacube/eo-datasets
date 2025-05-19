@@ -1,7 +1,7 @@
 import warnings
 from binascii import crc32
 from contextlib import contextmanager
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from pprint import pprint
 from textwrap import indent
@@ -209,13 +209,15 @@ def test_whole_landsat_wagl_package(
                 },
             },
             "properties": {
-                "datetime": datetime(2016, 6, 28, 0, 2, 28, 624_635, tzinfo=UTC),
+                "datetime": datetime(
+                    2016, 6, 28, 0, 2, 28, 624_635, tzinfo=timezone.utc
+                ),
                 "dea:dataset_maturity": "final",
                 "dtr:end_datetime": datetime(
-                    2016, 6, 28, 0, 2, 43, 114_771, tzinfo=UTC
+                    2016, 6, 28, 0, 2, 43, 114_771, tzinfo=timezone.utc
                 ),
                 "dtr:start_datetime": datetime(
-                    2016, 6, 28, 0, 2, 14, 25815, tzinfo=UTC
+                    2016, 6, 28, 0, 2, 14, 25815, tzinfo=timezone.utc
                 ),
                 "eo:cloud_cover": 63.069_613_577_531_236,
                 "eo:gsd": 1490.480_769_230_769_3,
@@ -256,7 +258,7 @@ def test_whole_landsat_wagl_package(
                 "odc:dataset_version": "3.2.1",
                 "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": datetime(
-                    2019, 7, 11, 23, 29, 29, 21245, tzinfo=UTC
+                    2019, 7, 11, 23, 29, 29, 21245, tzinfo=timezone.utc
                 ),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ard",

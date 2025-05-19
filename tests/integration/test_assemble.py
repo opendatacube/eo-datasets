@@ -5,7 +5,7 @@ Some features are testsed in other sibling test files, such as alternative
 naming conventions.
 """
 
-from datetime import UTC, datetime, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from pprint import pprint
 from textwrap import dedent
@@ -143,7 +143,9 @@ def test_dea_style_package(
                 "ones": {"path": "ga_ls8c_ones_3-0-0_090084_2016-01-21_final_ones.tif"},
             },
             "properties": {
-                "datetime": datetime(2016, 1, 21, 23, 50, 23, 54435, tzinfo=UTC),
+                "datetime": datetime(
+                    2016, 1, 21, 23, 50, 23, 54435, tzinfo=timezone.utc
+                ),
                 "dea:dataset_maturity": "final",
                 "odc:dataset_version": "3.0.0",
                 "odc:file_format": "GeoTIFF",

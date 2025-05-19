@@ -1,7 +1,7 @@
 import operator
 import uuid
 from collections.abc import Mapping
-from datetime import UTC, datetime, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -176,19 +176,19 @@ def test_s2_naming_conventions(tmp_path: Path) -> None:
                 "name": "ga_s2am_blueberries_1",
             },
             "properties": {
-                "datetime": datetime(2018, 11, 4, 0, 0, tzinfo=UTC),
+                "datetime": datetime(2018, 11, 4, 0, 0, tzinfo=timezone.utc),
                 "eo:instrument": "msi",
                 "eo:platform": "sentinel-2a",
                 "odc:dataset_version": "1.0.0",
                 "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": datetime(
-                    2018, 11, 5, 12, 23, 23, tzinfo=UTC
+                    2018, 11, 5, 12, 23, 23, tzinfo=timezone.utc
                 ),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "blueberries",
                 "odc:region_code": "Oz",
                 "sentinel:datatake_start_datetime": datetime(
-                    2017, 8, 22, 1, 56, 26, tzinfo=UTC
+                    2017, 8, 22, 1, 56, 26, tzinfo=timezone.utc
                 ),
                 "sentinel:sentinel_tile_id": "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05",
             },
