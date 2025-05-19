@@ -109,14 +109,13 @@ dev = [
     "scikit-image>=0.25.2",
 ]
 
-[tool.setuptools]
 
-[tool.setuptools.packages.find]
-exclude = ["tests", "tests.*"]
-
-[tool.setuptools.package-data]
-"*" = ["*.json", "*.yaml", "*.db"]
-"eodatasets3" = ["eodatasets3/py.typed"]
+# IMPORTANT
+#
+# Leave Setuptools Defaults Alone to enable Automatic Discovery
+# https://setuptools.pypa.io/en/latest/userguide/package_discovery.html#automatic-discovery
+#
+# Otherwise we end up with extra unwanted files in the distribution packages.
 
 [tool.setuptools_scm]
 write_to = "eodatasets3/_version.py"
