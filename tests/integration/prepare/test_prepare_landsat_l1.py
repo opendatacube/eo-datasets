@@ -176,7 +176,9 @@ def test_prepare_l8_l1_c2(tmp_path: Path, l1_c2_ls8_folder: Path) -> None:
             ),
         },
         "properties": {
-            "datetime": datetime.fromisoformat("2022-05-06T23:39:59.285133Z"),
+            "datetime": datetime.fromisoformat("2022-05-06T23:39:59.285133").replace(
+                tzinfo=timezone.utc
+            ),
             "eo:cloud_cover": 86.35,
             "eo:gsd": 15.0,
             "eo:instrument": "OLI_TIRS",
@@ -194,7 +196,9 @@ def test_prepare_l8_l1_c2(tmp_path: Path, l1_c2_ls8_folder: Path) -> None:
             "landsat:wrs_row": 74,
             "odc:dataset_version": "2.0.20220512",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": datetime.fromisoformat("2022-05-12T14:00:17Z"),
+            "odc:processing_datetime": datetime.fromisoformat(
+                "2022-05-12T14:00:17"
+            ).replace(tzinfo=timezone.utc),
             "odc:producer": "usgs.gov",
             "odc:product_family": "level1",
             "odc:region_code": "089074",
@@ -324,7 +328,9 @@ def l9_expected():
             },
         },
         "properties": {
-            "datetime": datetime.fromisoformat("2022-02-09T02:05:18.736033Z"),
+            "datetime": datetime.fromisoformat("2022-02-09T02:05:18.736033").replace(
+                tzinfo=timezone.utc
+            ),
             "eo:cloud_cover": 0.12,
             "eo:gsd": 15.0,
             "eo:instrument": "OLI_TIRS",
@@ -346,7 +352,9 @@ def l9_expected():
             "landsat:wrs_row": 81,
             "odc:dataset_version": "2.0.20220209",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": datetime.fromisoformat("2022-02-09T04:08:31Z"),
+            "odc:processing_datetime": datetime.fromisoformat(
+                "2022-02-09T04:08:31"
+            ).replace(tzinfo=timezone.utc),
             "odc:producer": "usgs.gov",
             "odc:product_family": "level1",
             "odc:region_code": "112081",
@@ -1160,7 +1168,9 @@ def expected_le07_l1_c2_folder():
             },
         },
         "properties": {
-            "datetime": datetime.fromisoformat("2022-03-10T00:09:40.814477Z"),
+            "datetime": datetime.fromisoformat("2022-03-10T00:09:40.814477").replace(
+                tzinfo=timezone.utc
+            ),
             "eo:cloud_cover": 5.0,
             "eo:gsd": 15.0,
             "eo:instrument": "ETM",
@@ -1182,7 +1192,9 @@ def expected_le07_l1_c2_folder():
             "landsat:wrs_row": 68,
             "odc:dataset_version": "2.0.20220405",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": datetime.fromisoformat("2022-04-05T10:37:54Z"),
+            "odc:processing_datetime": datetime.fromisoformat(
+                "2022-04-05T10:37:54"
+            ).replace(tzinfo=timezone.utc),
             "odc:producer": "usgs.gov",
             "odc:product_family": "level1",
             "odc:region_code": "107068",

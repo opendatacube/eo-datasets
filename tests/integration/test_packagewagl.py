@@ -863,7 +863,9 @@ def test_esa_sentinel_wagl_package(tmp_path: Path) -> None:
                 },
             },
             "properties": {
-                "datetime": datetime.fromisoformat("2020-10-31T00:55:10.954414Z"),
+                "datetime": datetime.fromisoformat(
+                    "2020-10-31T00:55:10.954414"
+                ).replace(tzinfo=timezone.utc),
                 "dea:dataset_maturity": "final",
                 "eo:cloud_cover": 11.063428320692061,
                 "eo:gsd": 998.1818181818181,
@@ -900,8 +902,8 @@ def test_esa_sentinel_wagl_package(tmp_path: Path) -> None:
                 "odc:dataset_version": "3.2.1",
                 "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": datetime.fromisoformat(
-                    "2021-02-10T03:25:22.635668Z"
-                ),
+                    "2021-02-10T03:25:22.635668"
+                ).replace(tzinfo=timezone.utc),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ard",
                 "odc:region_code": "53JQJ",
@@ -911,8 +913,8 @@ def test_esa_sentinel_wagl_package(tmp_path: Path) -> None:
                 "sentinel:sentinel_tile_id": "S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09",
                 "sentinel:product_name": "S2A_MSIL1C_20201031T004711_N0209_R102_T53JQJ_20201031T022859",
                 "sentinel:datatake_start_datetime": datetime.fromisoformat(
-                    "2020-10-31T02:28:59Z"
-                ),
+                    "2020-10-31T02:28:59"
+                ).replace(tzinfo=timezone.utc),
             },
             "measurements": {
                 "nbar_blue": {
@@ -1298,7 +1300,9 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path) -> None:
                 },
             },
             "properties": {
-                "datetime": datetime.fromisoformat("2021-04-25T23:54:23.437224Z"),
+                "datetime": datetime.fromisoformat(
+                    "2021-04-25T23:54:23.437224"
+                ).replace(tzinfo=timezone.utc),
                 "dea:dataset_maturity": "final",
                 "eo:cloud_cover": 2.7936189093810837,
                 "eo:gsd": 998.1818181818181,
@@ -1335,15 +1339,15 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path) -> None:
                 "odc:dataset_version": "3.2.1",
                 "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": datetime.fromisoformat(
-                    "2021-05-21T07:51:09.439427Z"
-                ),
+                    "2021-05-21T07:51:09.439427"
+                ).replace(tzinfo=timezone.utc),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ard",
                 "odc:region_code": "56JMQ",
                 "sentinel:datastrip_id": "S2B_OPER_MSI_L1C_DS_VGS4_20210426T010904_S20210425T235239_N03.00",
                 "sentinel:datatake_start_datetime": datetime.fromisoformat(
-                    "2021-04-26T01:09:04Z"
-                ),
+                    "2021-04-26T01:09:04"
+                ).replace(tzinfo=timezone.utc),
                 "sentinel:grid_square": "MQ",
                 "sentinel:latitude_band": "J",
                 "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00",

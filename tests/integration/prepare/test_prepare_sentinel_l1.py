@@ -763,7 +763,9 @@ def test_run_unusual_multigranule(tmp_path: Path) -> None:
                 }
             },
             "properties": {
-                "datetime": datetime.fromisoformat("2016-01-29T01:00:47.667000Z"),
+                "datetime": datetime.fromisoformat(
+                    "2016-01-29T01:00:47.667000"
+                ).replace(tzinfo=timezone.utc),
                 "eo:cloud_cover": 18.0896,
                 "eo:constellation": "sentinel-2",
                 "eo:gsd": 10,
@@ -774,8 +776,8 @@ def test_run_unusual_multigranule(tmp_path: Path) -> None:
                 "odc:dataset_version": "0.0.20160209",
                 "odc:file_format": "JPEG2000",
                 "odc:processing_datetime": datetime.fromisoformat(
-                    "2016-02-09T14:32:42.340511Z"
-                ),
+                    "2016-02-09T14:32:42.340511"
+                ).replace(tzinfo=timezone.utc),
                 "odc:producer": "esa.int",
                 "odc:product_family": "level1",
                 "odc:region_code": "53JMH",
@@ -783,8 +785,8 @@ def test_run_unusual_multigranule(tmp_path: Path) -> None:
                 "sat:relative_orbit": 2,
                 "sentinel:datastrip_id": "S2A_OPER_MSI_L1C_DS_MTI__20160209T133001_S20160129T010047_N02.01",
                 "sentinel:datatake_start_datetime": datetime.fromisoformat(
-                    "2016-02-09T13:30:01Z"
-                ),
+                    "2016-02-09T13:30:01"
+                ).replace(tzinfo=timezone.utc),
                 "sentinel:datatake_type": "INS-NOBS",
                 "sentinel:processing_baseline": "02.01",
                 "sentinel:processing_center": "MTI_",
