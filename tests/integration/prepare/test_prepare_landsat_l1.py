@@ -1,6 +1,6 @@
 import shutil
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -626,7 +626,7 @@ def expected_lc08_l2_c2_post_20210507_folder(
     """ """
     org_code = organisation.split(".")[0]
     product_name = f"{org_code}_ls8c_level{leveln_collection}_{collection}"
-    processing_datetime = datetime(2021, 5, 8, 11, 5, 47, tzinfo=UTC)
+    processing_datetime = datetime(2021, 5, 8, 11, 5, 47, tzinfo=timezone.utc)
     processing_date = processing_datetime.strftime("%Y%m%d")
     return {
         "$schema": "https://schemas.opendatacube.org/dataset",
@@ -637,7 +637,7 @@ def expected_lc08_l2_c2_post_20210507_folder(
             "href": f"https://collections.dea.ga.gov.au/product/{product_name}",
         },
         "properties": {
-            "datetime": datetime(2021, 5, 3, 0, 39, 15, 718295, tzinfo=UTC),
+            "datetime": datetime(2021, 5, 3, 0, 39, 15, 718295, tzinfo=timezone.utc),
             # The minor version comes from the processing date,
             # as used in filenames to distinguish reprocesses.
             "odc:dataset_version": f"{collection}.0.{processing_date}",
@@ -841,12 +841,14 @@ def expected_lt05_l2_c2_folder():
             "href": "https://collections.dea.ga.gov.au/product/usgs_ls5t_level2_2",
         },
         "properties": {
-            "datetime": datetime(1998, 3, 8, 23, 26, 47, 294081, tzinfo=UTC),
+            "datetime": datetime(1998, 3, 8, 23, 26, 47, 294081, tzinfo=timezone.utc),
             # The minor version comes from the processing date,
             # as used in filenames to distinguish reprocesses.
             "odc:dataset_version": "2.0.20200909",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": datetime(2020, 9, 9, 10, 36, 59, tzinfo=UTC),
+            "odc:processing_datetime": datetime(
+                2020, 9, 9, 10, 36, 59, tzinfo=timezone.utc
+            ),
             "odc:producer": "usgs.gov",
             "odc:product_family": "level2",
             "odc:region_code": "090084",
@@ -967,12 +969,14 @@ def expected_le07_l2_c2_folder():
             "href": "https://collections.dea.ga.gov.au/product/usgs_ls7e_level2_2",
         },
         "properties": {
-            "datetime": datetime(2021, 3, 31, 23, 1, 59, 738020, tzinfo=UTC),
+            "datetime": datetime(2021, 3, 31, 23, 1, 59, 738020, tzinfo=timezone.utc),
             # The minor version comes from the processing date,
             # as used in filenames to distinguish reprocesses.
             "odc:dataset_version": "2.0.20210426",
             "odc:file_format": "GeoTIFF",
-            "odc:processing_datetime": datetime(2021, 4, 26, 10, 52, 29, tzinfo=UTC),
+            "odc:processing_datetime": datetime(
+                2021, 4, 26, 10, 52, 29, tzinfo=timezone.utc
+            ),
             "odc:producer": "usgs.gov",
             "odc:product_family": "level2",
             "odc:region_code": "090084",
