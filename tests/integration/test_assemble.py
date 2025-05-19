@@ -150,8 +150,8 @@ def test_dea_style_package(
                 "odc:dataset_version": "3.0.0",
                 "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": datetime.fromisoformat(
-                    "2016-03-04T14:23:30Z"
-                ),
+                    "2016-03-04T14:23:30"
+                ).replace(tzinfo=timezone.utc),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ones",
                 # The remaining fields were inherited from the source dataset
