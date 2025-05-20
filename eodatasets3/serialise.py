@@ -13,12 +13,10 @@ import click
 import jsonschema
 import numpy
 import shapely
-import shapely.affinity
-import shapely.ops
 from affine import Affine
 from datacube.model import SCHEMA_PATH as DATACUBE_SCHEMAS_PATH
 from datacube.utils import read_documents
-from ruamel.yaml import YAML, Representer
+from ruamel.yaml import YAML, Representer, RoundTripRepresenter
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
@@ -29,70 +27,82 @@ from eodatasets3.properties import FileFormat
 converter = cattr.Converter()
 
 
-def _format_representer(dumper, data: FileFormat):
-    return dumper.represent_scalar("tag:yaml.org,2002:str", f"{data.name}")
+class EODatasetsRepresentor(RoundTripRepresenter):
+    def format_representer(self, data: FileFormat):
+        return self.represent_scalar("tag:yaml.org,2002:str", f"{data.name}")
+
+    def uuid_representer(self, data):
+        """
+        :type data: uuid.UUID
+        :rtype: yaml.nodes.Node
+        """
+        return self.represent_scalar("tag:yaml.org,2002:str", f"{data}")
+
+    def represent_datetime(self, data: datetime):
+        """
+        The default Ruamel representer strips 'Z' suffixes for UTC.
+
+        But we like to be explicit.
+        """
+        # If there's a non-utc timezone, use it.
+        if data.tzinfo is not None and (data.utcoffset().total_seconds() > 0):
+            value = data.isoformat(" ")
+        else:
+            # Otherwise it's UTC (including when tz==null).
+            value = data.replace(tzinfo=None).isoformat(" ") + "Z"
+        return self.represent_scalar("tag:yaml.org,2002:timestamp", value)
+
+    def represent_numpy_datetime(self, data: numpy.datetime64):
+        return self.represent_datetime(data.astype("M8[ms]").tolist())
+
+    def represent_paths(self, data: PurePath):
+        return self.represent_str(data.as_posix())
+
+    def represent_float(self, data: float):
+        float_text = numpy.format_float_scientific(data)
+        return self.represent_scalar("tag:yaml.org,2002:float", float_text)
 
 
-def _uuid_representer(dumper, data):
-    """
-    :type dumper: yaml.representer.BaseRepresenter
-    :type data: uuid.UUID
-    :rtype: yaml.nodes.Node
-    """
-    return dumper.represent_scalar("tag:yaml.org,2002:str", f"{data}")
+EODatasetsRepresentor.add_representer(
+    FileFormat, EODatasetsRepresentor.format_representer
+)
+EODatasetsRepresentor.add_multi_representer(
+    UUID, EODatasetsRepresentor.uuid_representer
+)
+EODatasetsRepresentor.add_representer(
+    datetime, EODatasetsRepresentor.represent_datetime
+)
+EODatasetsRepresentor.add_multi_representer(
+    PurePath, EODatasetsRepresentor.represent_paths
+)
 
+# WAGL spits out many numpy primitives in docs.
+EODatasetsRepresentor.add_representer(numpy.int8, Representer.represent_int)
+EODatasetsRepresentor.add_representer(numpy.uint8, Representer.represent_int)
+EODatasetsRepresentor.add_representer(numpy.int16, Representer.represent_int)
+EODatasetsRepresentor.add_representer(numpy.uint16, Representer.represent_int)
+EODatasetsRepresentor.add_representer(numpy.int32, Representer.represent_int)
+EODatasetsRepresentor.add_representer(numpy.uint32, Representer.represent_int)
+EODatasetsRepresentor.add_representer(numpy.int64, Representer.represent_int)
+EODatasetsRepresentor.add_representer(numpy.uint64, Representer.represent_int)
+# Representer.represent_float is currently incompatible with numpy2 floats
+EODatasetsRepresentor.add_representer(
+    numpy.float32, EODatasetsRepresentor.represent_float
+)
+EODatasetsRepresentor.add_representer(
+    numpy.float64, EODatasetsRepresentor.represent_float
+)
+EODatasetsRepresentor.add_representer(float, EODatasetsRepresentor.represent_float)
 
-def _represent_datetime(self, data: datetime):
-    """
-    The default Ruamel representer strips 'Z' suffixes for UTC.
-
-    But we like to be explicit.
-    """
-    # If there's a non-utc timezone, use it.
-    if data.tzinfo is not None and (data.utcoffset().total_seconds() > 0):
-        value = data.isoformat(" ")
-    else:
-        # Otherwise it's UTC (including when tz==null).
-        value = data.replace(tzinfo=None).isoformat(" ") + "Z"
-    return self.represent_scalar("tag:yaml.org,2002:timestamp", value)
-
-
-def _represent_numpy_datetime(self, data: numpy.datetime64):
-    return _represent_datetime(self, data.astype("M8[ms]").tolist())
-
-
-def _represent_paths(self, data: PurePath):
-    return Representer.represent_str(self, data.as_posix())
-
-
-def _represent_float(self, data: float):
-    float_text = numpy.format_float_scientific(data)
-    return self.represent_scalar("tag:yaml.org,2002:float", float_text)
+EODatasetsRepresentor.add_representer(numpy.ndarray, Representer.represent_list)
+EODatasetsRepresentor.add_representer(
+    numpy.datetime64, EODatasetsRepresentor.represent_numpy_datetime
+)
 
 
 def _init_yaml() -> YAML:
     yaml = YAML()
-
-    yaml.representer.add_representer(FileFormat, _format_representer)
-    yaml.representer.add_multi_representer(UUID, _uuid_representer)
-    yaml.representer.add_representer(datetime, _represent_datetime)
-    yaml.representer.add_multi_representer(PurePath, _represent_paths)
-
-    # WAGL spits out many numpy primitives in docs.
-    yaml.representer.add_representer(numpy.int8, Representer.represent_int)
-    yaml.representer.add_representer(numpy.uint8, Representer.represent_int)
-    yaml.representer.add_representer(numpy.int16, Representer.represent_int)
-    yaml.representer.add_representer(numpy.uint16, Representer.represent_int)
-    yaml.representer.add_representer(numpy.int32, Representer.represent_int)
-    yaml.representer.add_representer(numpy.uint32, Representer.represent_int)
-    yaml.representer.add_representer(numpy.int64, Representer.represent_int)
-    yaml.representer.add_representer(numpy.uint64, Representer.represent_int)
-    # Representer.represent_float is currently incompatible with numpy2 floats
-    yaml.representer.add_representer(numpy.float32, _represent_float)
-    yaml.representer.add_representer(numpy.float64, _represent_float)
-
-    yaml.representer.add_representer(numpy.ndarray, Representer.represent_list)
-    yaml.representer.add_representer(numpy.datetime64, _represent_numpy_datetime)
+    yaml.Representer = EODatasetsRepresentor
 
     # Match yamllint default expectations. (Explicit start/end are recommended to tell if a file is cut off)
     yaml.width = 80
@@ -116,7 +126,6 @@ def dump_yaml(output_yaml: Path, *docs: Mapping) -> None:
 def dumps_yaml(stream, *docs: Mapping) -> None:
     """Dump yaml through a stream, using the default serialisation settings."""
     yml = _init_yaml()
-    yml.representer.add_representer(float, _represent_float)
     return yml.dump_all(docs, stream=stream)
 
 
