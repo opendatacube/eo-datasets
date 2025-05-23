@@ -343,7 +343,7 @@ toolz==1.0.0
     #   datacube
     #   distributed
     #   partd
-tornado==6.4.2
+tornado==6.5.1
     # via distributed
 typing-extensions==4.13.2
     # via
