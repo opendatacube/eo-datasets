@@ -35,7 +35,9 @@ pip-tools==7.4.1
 platformdirs==4.3.7
     # via virtualenv
 pluggy==1.5.0
-    # via pytest
+    # via
+    #   pytest
+    #   pytest-cov
 pre-commit==4.2.0
     # via -r requirements/setup.in
 pydantic==2.11.4
@@ -50,7 +52,7 @@ pyproject-hooks==1.2.0
     #   pip-tools
 pytest==8.3.5
     # via pytest-cov
-pytest-cov==6.1.1
+pytest-cov==6.2.1
     # via -r requirements/setup.in
 pyyaml==6.0.2
     # via pre-commit
