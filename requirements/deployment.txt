@@ -228,7 +228,7 @@ typing-extensions==4.13.2
     #   structlog
 tzdata==2025.2
     # via pandas
-urllib3==2.4.0
+urllib3==2.5.0
     # via
     #   botocore
     #   distributed
