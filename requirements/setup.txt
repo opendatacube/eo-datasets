@@ -30,7 +30,7 @@ packaging==24.2
     #   pytest
 pip==25.1
     # via pip-tools
-pip-tools==7.4.1
+pip-tools==7.5.0
     # via -r requirements/setup.in
 platformdirs==4.3.7
     # via virtualenv
