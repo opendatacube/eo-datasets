@@ -5,13 +5,13 @@ exclude: tests/integration/data
 repos:
     # Normalise all Python code (formatting/linting).
     - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.12.7
+      rev: v0.12.8
       hooks:
        - id: ruff-check
          args: [--fix, --show-fixes, --output-format, grouped]
        - id: ruff-format
     - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v5.0.0
+      rev: v6.0.0
       hooks:
         - id: check-added-large-files # We don't want huge files. (Cut down test data!)
           args: ['--maxkb=3000']
