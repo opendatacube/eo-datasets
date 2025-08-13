@@ -16,6 +16,7 @@ jobs:
   # Always build & lint package.
   build-package:
     name: Build & verify package
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -31,6 +32,7 @@ jobs:
   # Upload to real PyPI on GitHub Releases.
   release-pypi:
     name: Publish released package to pypi.org
+    timeout-minutes: 15
     environment: pypi
     if: github.repository_owner == 'opendatacube' && github.event.action == 'published'
     runs-on: ubuntu-latest

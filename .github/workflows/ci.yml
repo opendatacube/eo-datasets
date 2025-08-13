@@ -13,6 +13,7 @@ permissions: {}
 jobs:
 
   integration-tests:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
 
     strategy:
