@@ -24,7 +24,7 @@ dependencies = [
     "boltons",
     "botocore",  # missing from datacube
     "boto3",
-    "cattrs",
+    "cattrs>=1.0",
     "ciso8601",
     "click",
     "defusedxml",
