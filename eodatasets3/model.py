@@ -49,8 +49,8 @@ class MeasurementDoc:
     layer: str | None = None
     grid: str = "default"
 
-    name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
-    alias: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
+    name: str | None = attr.ib(metadata=dict(doc_exclude=True), default=None)
+    alias: str | None = attr.ib(metadata=dict(doc_exclude=True), default=None)
 
 
 @attr.s(auto_attribs=True, slots=True)
@@ -64,7 +64,7 @@ class AccessoryDoc:
 
     path: str
     type: str | None = None
-    name: str = attr.ib(metadata=dict(doc_exclude=True), default=None)
+    name: str | None = attr.ib(metadata=dict(doc_exclude=True), default=None)
 
 
 @attr.s(auto_attribs=True, slots=True)
