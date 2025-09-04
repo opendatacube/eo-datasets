@@ -88,7 +88,7 @@ dask==2025.4.1
     #   distributed
 datacube==1.9.3
     # via eodatasets3 (pyproject.toml)
-deepdiff==8.4.2
+deepdiff==8.6.1
     # via eodatasets3 (pyproject.toml)
 defusedxml==0.7.1
     # via eodatasets3 (pyproject.toml)
