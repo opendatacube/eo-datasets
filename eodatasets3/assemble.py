@@ -522,7 +522,7 @@ class DatasetPrepare(Eo3Interface):
         ):
             raise TypeError(
                 f"Cannot set new field '{name}' on an assembler. "
-                f"(Perhaps you meant to set it on the .properties?)"
+                "(Perhaps you meant to set it on the .properties?)"
             )
         super().__setattr__(name, value)
 
@@ -871,7 +871,7 @@ class DatasetPrepare(Eo3Interface):
         new_crs = self._crs_str(crs) if crs is not None else None
         if dataset.crs and dataset.crs != new_crs:
             raise AssemblyError(
-                f"New measurements have a different CRS to the underlying dataset. "
+                "New measurements have a different CRS to the underlying dataset. "
                 f"Old: {dataset.crs!r}, New: {new_crs!r}"
             )
         dataset.crs = dataset.crs or new_crs
@@ -892,7 +892,7 @@ class DatasetPrepare(Eo3Interface):
                 if name in dataset.grids:
                     raise NotImplementedError(
                         f"Recorded grid name already exists in the underlying dataset: {name!r},"
-                        f"and we don't yet support merging of grids."
+                        " and we don't yet support merging of grids."
                     )
                 dataset.grids[name] = doc
 
@@ -1419,7 +1419,7 @@ class DatasetAssembler(DatasetPrepare):
 
         if file_format != self.properties["odc:file_format"]:
             raise RuntimeError(
-                f"Inconsistent file formats between bands. "
+                "Inconsistent file formats between bands. "
                 f"Was {self.properties['odc:file_format']!r}, now {file_format!r}"
             )
 

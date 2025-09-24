@@ -80,7 +80,7 @@ def _create_tarinfo(path: Path, name=None) -> tarfile.TarInfo:
         info.size = 0
     else:
         raise NotImplementedError(
-            f"Only regular files and directories are supported for extracted datasets. "
+            "Only regular files and directories are supported for extracted datasets. "
             f"({path.name} in {path.absolute().parent})"
         )
 
@@ -321,7 +321,7 @@ def _recompress_image(
 
     if len(input_image.indexes) != 1:
         raise ValueError(
-            f"Expecting one-band-per-tif input (USGS packages). "
+            "Expecting one-band-per-tif input (USGS packages). "
             f"Input has multiple layers {input_image.indexes!r}"
         )
 

@@ -399,7 +399,7 @@ class Eo3Dict(collections.abc.MutableMapping):
         if hasattr(self, "_finished_init_") and not hasattr(self, name):
             raise TypeError(
                 f"Cannot set new field '{name}' on a dict. "
-                f"(Perhaps you meant to set it as a dictionary field??)"
+                "(Perhaps you meant to set it as a dictionary field??)"
             )
         super().__setattr__(name, value)
 
@@ -442,7 +442,7 @@ class Eo3Dict(collections.abc.MutableMapping):
         if key not in self.KNOWN_PROPERTIES:
             warnings.warn(
                 f"Unknown Stac property {key!r}. "
-                f"If this is valid property, please tell us on Github here so we can add it: "
+                "If this is valid property, please tell us on Github here so we can add it: "
                 f"\n\t{_github_suggest_new_property_url(key, value)}"
             )
 

@@ -154,8 +154,8 @@ class LazyPlatformAbbreviation:
             if unknowns:
                 raise ValueError(
                     f"We don't know the DEA abbreviation for platforms {unknowns!r}. "
-                    f"We'd love to add more! Raise an issue on Github: "
-                    f"https://github.com/opendatacube/eo-datasets/issues/new' "
+                    "We'd love to add more! Raise an issue on Github: "
+                    "https://github.com/opendatacube/eo-datasets/issues/new"
                 )
 
         abbreviations = sorted(
@@ -182,9 +182,9 @@ class LazyPlatformAbbreviation:
         if not self.allow_unknown_abbreviations:
             raise NotImplementedError(
                 f"Satellite constellation abbreviation is not known for platforms {p}. "
-                f"(for DEA derivative naming conventions.)"
-                f"    Is this a mistake? We'd love to add more! Raise an issue on Github: "
-                f"https://github.com/opendatacube/eo-datasets/issues/new' "
+                "(for DEA derivative naming conventions.)"
+                "    Is this a mistake? We'd love to add more! Raise an issue on Github: "
+                "https://github.com/opendatacube/eo-datasets/issues/new"
             )
         return None
 
@@ -227,8 +227,8 @@ class LazyInstrumentAbbreviation:
         # Otherwise, it's unknown.
         raise NotImplementedError(
             f"Instrument abbreviations aren't supported for platform {p!r}. "
-            f"We'd love to add more support! Raise an issue on Github: "
-            f"https://github.com/opendatacube/eo-datasets/issues/new' "
+            "We'd love to add more support! Raise an issue on Github: "
+            "https://github.com/opendatacube/eo-datasets/issues/new"
         )
 
 
@@ -257,8 +257,8 @@ class LazyProducerAbbreviation:
         except KeyError:
             raise NotImplementedError(
                 f"We don't know how to abbreviate organisation domain name {c.metadata.producer!r}. "
-                f"We'd love to add more orgs! Raise an issue on Github: "
-                f"https://github.com/opendatacube/eo-datasets/issues/new' "
+                "We'd love to add more orgs! Raise an issue on Github: "
+                "https://github.com/opendatacube/eo-datasets/issues/new"
             )
 
 
@@ -398,7 +398,7 @@ class RequiredPropertyDict(Eo3Dict):
                 examples.append(f"\n- {p!r}{hint}")
 
             raise MissingRequiredFieldsError(
-                f"Need more properties to fulfill naming conventions."
+                "Need more properties to fulfill naming conventions."
                 f"{''.join(examples)}"
             )
 

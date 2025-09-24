@@ -756,7 +756,7 @@ def main(
         if not found_something:
             raise ValueError(
                 f"No S2 datasets found in given path {input_path}. "
-                f"Expected either Sinergise (productInfo.json) files or ESA zip files to be contained in it."
+                "Expected either Sinergise (productInfo.json) files or ESA zip files to be contained in it."
             )
 
     def find_jobs() -> Iterable[Job]:
@@ -779,7 +779,7 @@ def main(
                     if info is None:
                         raise ValueError(
                             f"Cannot filter from non-standard folder layout: {found_dataset.path} "
-                            f" expected of form L1C/yyyy/yyyy-mm/area/S2_.."
+                            "expected of form L1C/yyyy/yyyy-mm/area/S2_.."
                         )
 
                     if included_regions:
