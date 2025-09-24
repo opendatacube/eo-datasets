@@ -388,12 +388,12 @@ This location is called the `collection_prefix`, and we can create our namer wit
    print()
 
    a_file_name = names.measurement_filename('water')
-   print(f"We can resolve our previous file name to a dataset URL:")
+   print("We can resolve our previous file name to a dataset URL:")
    print(names.resolve_file(a_file_name))
 
    print()
 
-   print(f"Or a local path (if it's file://):")
+   print("Or a local path (if it's file://):")
    print(repr(names.resolve_path(a_file_name)))
 
 .. testoutput ::

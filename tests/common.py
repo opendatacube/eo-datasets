@@ -60,7 +60,7 @@ def assert_expected_eo3_path(
         expected_dataset = serialise.from_doc(expected_doc, skip_validation=True)
         if expected_dataset.geometry is None:
             assert produced_dataset.geometry is None, (
-                f"Expected a null geometry, "
+                "Expected a null geometry, "
                 f"but output included one: {produced_dataset.geometry.__geo_interface__!r}"
             )
         else:

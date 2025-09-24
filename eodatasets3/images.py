@@ -438,7 +438,7 @@ class MeasurementBundler:
             #       the same way if they are the same.
             elif (grid.crs is not None) and grid.crs != crs:
                 raise ValueError(
-                    f"Measurements have different CRSes in the same dataset:\n"
+                    "Measurements have different CRSes in the same dataset:\n"
                     f"\t{crs.to_string()!r}\n"
                     f"\t{grid.crs.to_string()!r}\n"
                 )

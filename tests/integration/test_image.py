@@ -150,7 +150,7 @@ def test_calc_range() -> None:
     )
 
     assert np.array_equal(expected_combined_mask, mask), (
-        f"Combined mask isn't as expected. "
+        "Combined mask isn't as expected. "
         f"Diff: {np.logical_xor(expected_combined_mask, mask)!r}"
     )
 

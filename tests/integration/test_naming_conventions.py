@@ -250,7 +250,7 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path) -> N
         for needed_field_name in expected_extra_fields_needed:
             assert needed_field_name in got_error.value.args[0], (
                 f"Expected field {needed_field_name} to "
-                f"be listed as mandatory in the error message"
+                "be listed as mandatory in the error message"
             )
 
 

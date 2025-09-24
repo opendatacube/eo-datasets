@@ -261,7 +261,7 @@ def validate_dataset(
     if schema is None:
         yield _error(
             "no_schema",
-            f"No $schema field. "
+            "No $schema field. "
             f"You probably want an ODC dataset schema {model.ODC_DATASET_SCHEMA_URL!r}",
         )
         return
@@ -499,7 +499,7 @@ def validate_product(doc: dict) -> ValidationMessages:
     if (measurements is not None) and not isinstance(measurements, Sequence):
         yield _error(
             "measurements_list",
-            f"Product measurements should be a list/sequence "
+            "Product measurements should be a list/sequence "
             f"(Found a {type(measurements).__name__!r}).",
         )
 
@@ -544,7 +544,7 @@ def validate_product(doc: dict) -> ValidationMessages:
                     yield _error(
                         "duplicate_measurement_name",
                         f"Name {new_field_name!r} is used by multiple measurements",
-                        hint=f"It's duplicated in an alias. "
+                        hint="It's duplicated in an alias. "
                         f"Seen in measurement(s) {seen_in}",
                     )
 
@@ -954,10 +954,10 @@ def _match_product(
                 "product_match_clash",
                 "Multiple products match the given dataset",
                 hint=(
-                    f"Maybe you need more fields in the 'metadata' section?\n"
+                    "Maybe you need more fields in the 'metadata' section?\n"
                     f"Claims to be a {specified_product_name!r}, and matches {matching_names!r}"
                     if specified_product_name
-                    else f"Maybe you need more fields in the 'metadata' section?\n"
+                    else "Maybe you need more fields in the 'metadata' section?\n"
                     f"Matches {matching_names!r}"
                 ),
             )

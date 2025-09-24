@@ -867,7 +867,7 @@ def test_run_unusual_multigranule(tmp_path: Path) -> None:
                 "metadata:s2_datastrip": {
                     "path": (
                         f"{inner_offset}/DATASTRIP/S2A_OPER_MSI_L1C_DS_MTI__20160209T133001_S20160129T010047_N02.01/"
-                        f"S2A_OPER_MTD_L1C_DS_MTI__20160209T133001_S20160129T010047.xml"
+                        "S2A_OPER_MTD_L1C_DS_MTI__20160209T133001_S20160129T010047.xml"
                     )
                 },
                 "metadata:s2_tile": {
@@ -878,7 +878,7 @@ def test_run_unusual_multigranule(tmp_path: Path) -> None:
                 "metadata:s2_user_product": {
                     "path": (
                         f"{inner_offset}/"
-                        f"S2A_OPER_MTD_SAFL1C_PDMC_20160210T005347_R002_V20160129T010047_20160129T010047.xml"
+                        "S2A_OPER_MTD_SAFL1C_PDMC_20160210T005347_R002_V20160129T010047_20160129T010047.xml"
                     )
                 },
             },

@@ -65,7 +65,7 @@ def test_recompress_dataset(base_in_path: Path, in_offset: str, tmp_path: Path) 
 
     assert len(all_output_files) == 1, (
         f"Expected one output tar file. Got: {len(all_output_files)}"
-        f"\n\t" + "\n\t".join(all_output_files)
+        "\n\t" + "\n\t".join(all_output_files)
     )
     assert all_output_files == {str(expected_output.relative_to(output_base))}
 
