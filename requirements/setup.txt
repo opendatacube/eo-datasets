@@ -10,7 +10,7 @@ cfgv==3.4.0
     # via pre-commit
 click==8.1.8
     # via pip-tools
-coverage==7.8.0
+coverage[toml]==7.8.0
     # via pytest-cov
 distlib==0.3.9
     # via virtualenv
@@ -20,6 +20,8 @@ filelock==3.18.0
     # via virtualenv
 identify==2.6.9
     # via pre-commit
+importlib-metadata==8.7.0
+    # via build
 iniconfig==2.1.0
     # via pytest
 nodeenv==1.9.1
@@ -28,10 +30,8 @@ packaging==24.2
     # via
     #   build
     #   pytest
-pip==25.1
-    # via pip-tools
 pip-tools==7.5.0
-    # via -r requirements/setup.in
+    # via -r setup.in
 platformdirs==4.3.7
     # via virtualenv
 pluggy==1.5.0
@@ -39,13 +39,13 @@ pluggy==1.5.0
     #   pytest
     #   pytest-cov
 pre-commit==4.3.0
-    # via -r requirements/setup.in
+    # via -r setup.in
 pydantic==2.11.9
-    # via -r requirements/setup.in
+    # via -r setup.in
 pydantic-core==2.33.2
     # via pydantic
-pyproj==3.7.1
-    # via -r requirements/setup.in
+pyproj==3.6.1
+    # via -r setup.in
 pyproject-hooks==1.2.0
     # via
     #   build
@@ -53,11 +53,9 @@ pyproject-hooks==1.2.0
 pytest==8.3.5
     # via pytest-cov
 pytest-cov==6.2.1
-    # via -r requirements/setup.in
+    # via -r setup.in
 pyyaml==6.0.2
     # via pre-commit
-setuptools==80.1.0
-    # via pip-tools
 tomli==2.2.1
     # via
     #   build
@@ -75,3 +73,5 @@ virtualenv==20.30.0
     # via pre-commit
 wheel==0.45.1
     # via pip-tools
+zipp==3.23.0
+    # via importlib-metadata
