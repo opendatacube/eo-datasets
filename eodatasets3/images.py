@@ -462,7 +462,7 @@ class MeasurementBundler:
         """
         Consume the stored grids and produce the valid data for them.
 
-        (they are consumed in order to to minimise peak memory usage)
+        (they are consumed in order to minimise peak memory usage)
 
         :param valid_data_method: How to calculate the valid-data polygon?
         """
