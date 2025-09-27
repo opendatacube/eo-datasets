@@ -6,7 +6,7 @@ from collections import defaultdict
 from collections.abc import Callable, Mapping
 from enum import Enum, EnumMeta
 from textwrap import dedent
-from typing import Any
+from typing import Any, TypeAlias
 from urllib.parse import urlencode
 
 import ciso8601
@@ -206,13 +206,13 @@ def parsed_sentinel_datastrip_id(tile_id) -> tuple[str, dict]:
 
 
 # The primitive types allowed as stac values.
-PrimitiveType = str | int | float | datetime.datetime
+PrimitiveType: TypeAlias = str | int | float | datetime.datetime
 
-ExtraProperties = dict
+ExtraProperties: TypeAlias = dict
 # A function to normalise a value.
 # (eg. convert to int, or make string lowercase).
 # They throw a ValueError if not valid.
-NormaliseValueFn = Callable[
+NormaliseValueFn: TypeAlias = Callable[
     [Any],
     # It returns the normalised value, but can optionally also return extra property values extracted from it.
     PrimitiveType | tuple[PrimitiveType, ExtraProperties],

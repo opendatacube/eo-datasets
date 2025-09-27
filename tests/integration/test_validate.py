@@ -2,6 +2,7 @@ import operator
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from textwrap import dedent
+from typing import TypeAlias
 
 import numpy as np
 import pytest
@@ -15,7 +16,7 @@ from eodatasets3.model import DatasetDoc
 # Either a dict or a path to a document
 from eodatasets3.validate import DocKind, filename_doc_kind, guess_kind_from_contents
 
-Doc = dict | Path
+Doc: TypeAlias = dict | Path
 
 
 @pytest.fixture()

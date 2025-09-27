@@ -17,7 +17,7 @@ from enum import Enum
 from math import isnan
 from os.path import join
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeAlias
 from uuid import UUID
 
 import attr
@@ -90,7 +90,7 @@ class ProductMaturity(Enum):
 
 # a dictionary of band_id: (mask_type, mask_uri)
 #     (the mask URI is a string loadable by fiona. Could be a URL or file path.)
-BandMasks = dict[str, tuple[str, str]]
+BandMasks: TypeAlias = dict[str, tuple[str, str]]
 
 
 def _find_h5_paths(h5_obj: h5py.Group, dataset_class: str = "") -> list[str]:
