@@ -7,9 +7,7 @@ from collections import defaultdict
 from collections.abc import Generator, Iterable, Sequence
 from enum import Enum, auto
 from pathlib import Path, PurePath
-from typing import (
-    ClassVar,
-)
+from typing import ClassVar, TypeAlias
 
 import attr
 import numpy
@@ -286,7 +284,7 @@ class _MeasurementLocation:
     layer: str | None = None
 
 
-_Measurements = dict[str, _MeasurementLocation]
+_Measurements: TypeAlias = dict[str, _MeasurementLocation]
 
 
 class MeasurementBundler:
@@ -1226,7 +1224,7 @@ def _write_quicklook(
     return reproj_grid
 
 
-LazyImages = Iterable[tuple[numpy.ndarray, int]]
+LazyImages: TypeAlias = Iterable[tuple[numpy.ndarray, int]]
 
 
 def _iter_images(rgb: Sequence[Path]) -> LazyImages:

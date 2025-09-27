@@ -21,7 +21,7 @@ from contextlib import suppress
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from typing import IO, Any
+from typing import IO, Any, TypeAlias
 
 import click
 import numpy
@@ -51,7 +51,7 @@ _PREDICTOR_TABLE = {
 }
 
 # The info of a file, and a method to open the file for reading.
-ReadableMember = tuple[tarfile.TarInfo, Callable[[], IO]]
+ReadableMember: TypeAlias = tuple[tarfile.TarInfo, Callable[[], IO]]
 
 _LOG = structlog.get_logger()
 

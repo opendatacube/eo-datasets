@@ -14,9 +14,7 @@ from datetime import datetime
 from functools import partial
 from pathlib import Path
 from textwrap import indent
-from typing import (
-    Optional,
-)
+from typing import Optional, TypeAlias
 from urllib.parse import urljoin, urlparse
 from urllib.request import urlopen
 
@@ -161,7 +159,7 @@ def _error(code: str, reason: str, hint: str | None = None):
     return ValidationMessage(Level.error, code, reason, hint=hint)
 
 
-ValidationMessages = Generator[ValidationMessage, None, None]
+ValidationMessages: TypeAlias = Generator[ValidationMessage, None, None]
 
 
 @frozen(init=True)
@@ -633,7 +631,7 @@ class ExpectedMeasurement:
 
 
 # Name of a field and its possible offsets in the document.
-FieldNameOffsetS = tuple[str, set[list[str]]]
+FieldNameOffsetS: TypeAlias = tuple[str, set[list[str]]]
 
 
 def validate_paths(
