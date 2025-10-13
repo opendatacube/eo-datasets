@@ -40,9 +40,9 @@ pluggy==1.5.0
     #   pytest-cov
 pre-commit==4.3.0
     # via -r requirements/setup.in
-pydantic==2.11.10
+pydantic==2.12.0
     # via -r requirements/setup.in
-pydantic-core==2.33.2
+pydantic-core==2.41.1
     # via pydantic
 pyproj==3.6.1
     # via -r requirements/setup.in
@@ -64,12 +64,12 @@ tomli==2.2.1
     #   coverage
     #   pip-tools
     #   pytest
-typing-extensions==4.13.1
+typing-extensions==4.15.0
     # via
     #   pydantic
     #   pydantic-core
     #   typing-inspection
-typing-inspection==0.4.0
+typing-inspection==0.4.2
     # via pydantic
 virtualenv==20.30.0
     # via pre-commit
