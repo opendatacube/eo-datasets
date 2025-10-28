@@ -127,6 +127,53 @@ def test_minimal_s2_dataset_normal(tmp_path: Path) -> None:
     assert doc["label"] == "s2am_blueberries_2018-11-04", "Unexpected dataset label"
 
 
+def test_dea_new_derivative_s2(tmp_path: Path) -> None:
+    assert_names_match(
+        tmp_path,
+        conventions="dea_versioned",
+        properties={
+            "eo:platform": "sentinel-2a",
+            "eo:instrument": "MSI",
+            "datetime": datetime(2020, 10, 11, 12, 23, 3),
+            "odc:product_family": "cme",
+            "odc:processing_datetime": "2025-10-29T12:23:23",
+            "odc:collection_number": 3,
+            "dea:dataset_maturity": "final",
+            "odc:dataset_version": "1.2.3",
+            "sentinel:datatake_start_datetime": "2025-10-21T05:22:20",
+            "odc:producer": "ga.gov.au",
+            "odc:region_code": "54JHQ",
+            "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09",
+        },
+        expect_label="ga_s2_cme_3_v1-1-0_54JHQ_2020-10-11_final",
+        expect_metadata_path="ga_s2_cme_3_v1/54/JHQ/2020/10/11/20201011T11446/"
+        "ga_s2_cme_3_v1-1-0_54JHQ_2020-10-11_final.odc-metadata.yaml",
+    )
+
+
+def test_dea_new_derivative_ls(tmp_path: Path) -> None:
+    assert_names_match(
+        tmp_path,
+        conventions="dea_versioned",
+        properties={
+            "eo:platform": "landsat-8",
+            "eo:instrument": "OLI_TIRS",
+            "datetime": datetime(2025, 9, 16, 5, 23, 3),
+            "odc:product_family": "cme",
+            "odc:processing_datetime": "2025-09-20T12:23:23",
+            "odc:collection_number": 3,
+            "dea:dataset_maturity": "final",
+            "odc:dataset_version": "1.2.3",
+            "landsat:landsat_product_id": "LC08_L1TP_093076_20250916_20250920_02_T1",
+            "odc:producer": "ga.gov.au",
+            "odc:region_code": "093076",
+        },
+        expect_label="ga_ls8c_cme_3_v1-2-3_093076_2025-10-22_final",
+        expect_metadata_path="ga_ls8c_cme_3_v1/092/084/2025/10/22/"
+        "ga_ls8c_cme_3_v1-1-0_093076_2025-10-22_final.odc-metadata.yaml",
+    )
+
+
 def test_s2_naming_conventions(tmp_path: Path) -> None:
     """A minimal dataset with sentinel platform/instrument"""
     p = DatasetAssembler(tmp_path, naming_conventions="dea_s2")
