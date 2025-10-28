@@ -930,6 +930,14 @@ class DEAS2DerivativesNamingConventions(DEADerivativesNamingConventions):
         )
 
 
+class DEAVersionedNamingConventions(DEANamingConventions):
+    """
+    TODO
+    """
+
+    ...
+
+
 class AfricaProductName:
     def __get__(self, c: "NamingConventions", owner) -> str:
         if c.metadata.product_name:
@@ -976,6 +984,7 @@ class DEAfricaNamingConventions(NamingConventions):
 KNOWN_CONVENTIONS = dict(
     default=NamingConventions,
     dea=DEANamingConventions,
+    dea_versioned=DEAVersionedNamingConventions,
     dea_s2=DEAS2NamingConventions,
     dea_s2_derivative=DEAS2DerivativesNamingConventions,
     dea_c3=DEADerivativesNamingConventions,
