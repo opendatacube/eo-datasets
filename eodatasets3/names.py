@@ -6,6 +6,7 @@ from typing import ClassVar
 from urllib.parse import quote, unquote, urlparse
 
 import datacube.utils.uris as dc_uris
+from packaging.version import Version
 
 from eodatasets3 import utils
 from eodatasets3.model import DEA_URI_PREFIX, Location
@@ -17,11 +18,15 @@ dc_uris.register_scheme("zip", "tar")
 
 class LazyProductName:
     def __init__(
-        self, include_instrument: bool = True, include_collection: bool = False
+        self,
+        include_instrument: bool = True,
+        include_collection: bool = False,
+        include_version: bool = False,
     ) -> None:
         super().__init__()
         self.include_instrument = include_instrument
         self.include_collection = include_collection
+        self.include_version = include_version
 
     def __get__(self, c: "NamingConventions", owner) -> str:
         if c.metadata.product_name:
@@ -47,6 +52,7 @@ class LazyProductName:
                     )
                     else None
                 ),
+                (f"v{c.dataset_version.major}" if self.include_version else None),
             )
             if p
         )
@@ -690,6 +696,10 @@ class NamingConventions:
             return None
         return int(self.metadata.dataset_version.split(".")[0])
 
+    @property
+    def dataset_version(self) -> Version:
+        return Version(self.metadata.dataset_version)
+
     def metadata_filename(self, kind: str = "", suffix: str = "yaml") -> str:
         return self.filename(kind, suffix)
 
@@ -932,10 +942,22 @@ class DEAS2DerivativesNamingConventions(DEADerivativesNamingConventions):
 
 class DEAVersionedNamingConventions(DEANamingConventions):
     """
-    TODO
+    DEA with a version in the product, eg "ga_ls8_cme_3_v1"
+
+    (Sentinel2 needs an extra folder to distinguidh gradules: use s2 versioned for sentinel 2)
     """
 
-    ...
+    product_name: str = LazyProductName(include_collection=True, include_version=True)
+
+
+class DEAS2VersionedNamingConventions(DEAS2NamingConventions):
+    """
+    DEA with a version in the product name, eg "ga_s2_cme_3_v1"
+
+    This is for Sentinel 2, which has an extra subfolder to distinguish granules within a day+region
+    """
+
+    product_name: str = LazyProductName(include_collection=True, include_version=True)
 
 
 class AfricaProductName:
@@ -986,6 +1008,7 @@ KNOWN_CONVENTIONS = dict(
     dea=DEANamingConventions,
     dea_versioned=DEAVersionedNamingConventions,
     dea_s2=DEAS2NamingConventions,
+    dea_s2_versioned=DEAS2VersionedNamingConventions,
     dea_s2_derivative=DEAS2DerivativesNamingConventions,
     dea_c3=DEADerivativesNamingConventions,
     deafrica=DEAfricaNamingConventions,
