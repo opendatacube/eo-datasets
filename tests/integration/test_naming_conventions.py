@@ -130,7 +130,7 @@ def test_minimal_s2_dataset_normal(tmp_path: Path) -> None:
 def test_dea_new_derivative_s2(tmp_path: Path) -> None:
     assert_names_match(
         tmp_path,
-        conventions="dea_versioned",
+        conventions="dea_s2_versioned",
         properties={
             "eo:platform": "sentinel-2a",
             "eo:instrument": "MSI",
@@ -145,9 +145,9 @@ def test_dea_new_derivative_s2(tmp_path: Path) -> None:
             "odc:region_code": "54JHQ",
             "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09",
         },
-        expect_label="ga_s2_cme_3_v1-1-0_54JHQ_2020-10-11_final",
-        expect_metadata_path="ga_s2_cme_3_v1/54/JHQ/2020/10/11/20201011T11446/"
-        "ga_s2_cme_3_v1-1-0_54JHQ_2020-10-11_final.odc-metadata.yaml",
+        expect_label="ga_s2am_cme_3_v1-2-3_54JHQ_2020-10-11_final",
+        expect_metadata_path="ga_s2am_cme_3_v1/54/JHQ/2020/10/11/20201011T011446/"
+        "ga_s2am_cme_3_v1-2-3_54JHQ_2020-10-11_final.odc-metadata.yaml",
     )
 
 
