@@ -127,7 +127,7 @@ def test_minimal_s2_dataset_normal(tmp_path: Path) -> None:
     assert doc["label"] == "s2am_blueberries_2018-11-04", "Unexpected dataset label"
 
 
-def test_dea_new_derivative_s2(tmp_path: Path) -> None:
+def test_dea_versioned_s2(tmp_path: Path) -> None:
     assert_names_match(
         tmp_path,
         conventions="dea_s2_versioned",
@@ -151,7 +151,7 @@ def test_dea_new_derivative_s2(tmp_path: Path) -> None:
     )
 
 
-def test_dea_new_derivative_ls(tmp_path: Path) -> None:
+def test_dea_versioned_ls(tmp_path: Path) -> None:
     assert_names_match(
         tmp_path,
         conventions="dea_versioned",
@@ -168,9 +168,9 @@ def test_dea_new_derivative_ls(tmp_path: Path) -> None:
             "odc:producer": "ga.gov.au",
             "odc:region_code": "093076",
         },
-        expect_label="ga_ls8c_cme_3_v1-2-3_093076_2025-10-22_final",
-        expect_metadata_path="ga_ls8c_cme_3_v1/092/084/2025/10/22/"
-        "ga_ls8c_cme_3_v1-1-0_093076_2025-10-22_final.odc-metadata.yaml",
+        expect_label="ga_ls8c_cme_3_v1-2-3_093076_2025-09-16_final",
+        expect_metadata_path="ga_ls8c_cme_3_v1/093/076/2025/09/16/"
+        "ga_ls8c_cme_3_v1-2-3_093076_2025-09-16_final.odc-metadata.yaml",
     )
 
 
