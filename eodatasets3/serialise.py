@@ -367,7 +367,7 @@ def _stac_key_order(key: str):
 
 def _eo3_key_order(keyval: str):
     """
-    Order keys in an an EO3 document.
+    Order keys in an EO3 document.
 
     Suitable for sorted() func usage.
     """
