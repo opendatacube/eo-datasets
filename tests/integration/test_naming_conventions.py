@@ -217,7 +217,7 @@ def test_complain_about_missing_fields(tmp_path: Path, l1_ls8_folder: Path) -> N
 
     # Default simple naming conventions need at least a date and family...
     with pytest.raises(
-        ValueError, match="Need more properties to fulfill naming conventions."
+        ValueError, match="Need more properties to fulfill naming conventions\."
     ):
         with DatasetAssembler(out) as p:
             p.write_measurement("blue", blue_geotiff_path)
@@ -298,7 +298,7 @@ def test_dea_c3_naming_conventions(tmp_path: Path) -> None:
 
     # Try missing few fields and expect ValueError
     with pytest.raises(
-        ValueError, match="Need more properties to fulfill naming conventions."
+        ValueError, match="Need more properties to fulfill naming conventions\."
     ):
         p.done()
 
