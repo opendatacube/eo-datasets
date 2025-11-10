@@ -1,7 +1,7 @@
 """
 Basic tests of DatasetAssembler.
 
-Some features are testsed in other sibling test files, such as alternative
+Some features are tested in other sibling test files, such as alternative
 naming conventions.
 """
 
@@ -431,7 +431,7 @@ def test_generated_metadata_path(l1_ls7_tarball: Path) -> None:
 
 
 def test_dataset_no_measurements(tmp_path: Path) -> None:
-    """Can we make a dataset with no measurements? (eg. telemetry data)"""
+    """Can we make a dataset with no measurements? (e.g. telemetry data)"""
     with DatasetAssembler(tmp_path) as p:
         # A custom label too.
         p.label = "chipmonk_sightings_2019"
