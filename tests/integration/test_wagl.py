@@ -41,7 +41,7 @@ def test_get_level1_metadata_no_source() -> None:
     # Complain when the embedded level1 reference doesn't exist.
     with pytest.raises(
         ValueError,
-        match="No level1 found or provided. WAGL said it was at path '/no/where/good'*",
+        match=r"No level1 found or provided. WAGL said it was at path '/no/where/good'*",
     ):
         _load_level1_doc(Path("/no/where/good"))
 
