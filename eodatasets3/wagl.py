@@ -344,7 +344,7 @@ def write_measurement_h5(
     else:
         data = g[:] if hasattr(g, "chunks") else g
 
-    product_name, band_name = full_name.split(":")
+    _, band_name = full_name.split(":")
     p.write_measurement_numpy(
         array=data,
         grid_spec=images.GridSpec(

@@ -214,7 +214,7 @@ def test_minimal_package_with_product_name(tmp_path: Path, l1_ls8_folder: Path) 
 
         p.write_measurement("blue", blue_geotiff_path)
 
-        dataset_id, metadata_path = p.done()
+        dataset_id, _ = p.done()
 
     assert dataset_id is not None
     assert_file_structure(
@@ -353,7 +353,7 @@ def test_minimal_generated_naming_package(tmp_path: Path, l1_ls8_folder: Path) -
         )
 
         # p.done() will validate the dataset and write it to the destination atomically.
-        dataset_id, metadata_path = p.done()
+        dataset_id, _ = p.done()
 
     assert dataset_id is not None
     assert_file_structure(
@@ -403,7 +403,7 @@ def test_generated_metadata_path(l1_ls7_tarball: Path) -> None:
             relative_to_dataset_location=True,
         )
 
-        dataset_id, metadata_path = p.done(embed_location=True)
+        _, metadata_path = p.done(embed_location=True)
 
     # The generated metadata-path has the same name as the tar, but with ".odc-metadata.yaml" suffix.
     assert (
@@ -439,7 +439,7 @@ def test_dataset_no_measurements(tmp_path: Path) -> None:
         p.product_family = "chipmonk_sightings"
         p.processed_now()
 
-        dataset_id, metadata_path = p.done()
+        _, metadata_path = p.done()
 
     with metadata_path.open("r") as f:
         doc = yaml.YAML(typ="safe").load(f)
@@ -460,7 +460,7 @@ def test_dataset_given_properties(tmp_path: Path) -> None:
         # It should have normalised properties!
         assert p.processed == datetime(2021, 6, 15, 1, 33, 43, 378850, timezone.utc)
 
-        dataset_id, metadata_path = p.done()
+        _, metadata_path = p.done()
 
     relative_path = metadata_path.relative_to(tmp_path)
     assert relative_path == Path(
@@ -500,7 +500,7 @@ def test_add_source_dataset(tmp_path: Path, inherit_geom) -> None:
         / "data/wofs/ga_ls_wofs_3_099081_2020-07-26_interim_water_clipped.tif",
     )
 
-    dataset_uuid, path = p.done()
+    _, path = p.done()
 
     output = serialise.from_path(path)
     if inherit_geom:

@@ -371,7 +371,7 @@ def _eo3_key_order(keyval: str):
 
     Suitable for sorted() func usage.
     """
-    key, val = keyval
+    key, _ = keyval
     try:
         i = _EO3_PROPERTY_ORDER.index(key)
         if i == -1:

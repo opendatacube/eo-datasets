@@ -302,7 +302,7 @@ def prepare_and_write(
                 relative_to_dataset_location=True,
             )
 
-        dataset_id, metadata_path = p.done(embed_location=embed_location)
+        _, metadata_path = p.done(embed_location=embed_location)
         doc = serialise.from_doc(p.written_dataset_doc, skip_validation=True)
         if not doc.locations:
             doc.locations = [names.resolve_location(dataset_location)]

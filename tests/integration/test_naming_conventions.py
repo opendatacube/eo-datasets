@@ -28,7 +28,7 @@ def assert_names_match(
     with DatasetAssembler(tmp_path, naming_conventions=conventions) as p:
         p.properties.update(properties)
 
-        dataset_id, metadata_path = p.done()
+        _, metadata_path = p.done()
 
     if expect_metadata_path:
         metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
@@ -114,7 +114,7 @@ def test_minimal_s2_dataset_normal(tmp_path: Path) -> None:
             "S2A_OPER_MSI_L1C_TL_SGS__20170822T015626_A011310_T54KYU_N02.05"
         )
 
-        dataset_id, metadata_path = p.done()
+        _, metadata_path = p.done()
 
     with metadata_path.open("r") as f:
         doc = yaml.YAML(typ="safe").load(f)
@@ -310,7 +310,7 @@ def test_dea_c3_naming_conventions(tmp_path: Path) -> None:
     assert p.collection_number == 3
 
     # Success case
-    dataset_id, metadata_path = p.done()
+    _, metadata_path = p.done()
     metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
     assert (
         metadata_path_offset
@@ -330,7 +330,7 @@ def test_dataset_multi_platform(tmp_path: Path) -> None:
         p.product_family = "peanuts"
         p.processed_now()
 
-        dataset_id, metadata_path = p.done()
+        _, metadata_path = p.done()
 
     with metadata_path.open("r") as f:
         doc = yaml.YAML(typ="safe").load(f)
@@ -351,7 +351,7 @@ def test_dataset_multi_platform(tmp_path: Path) -> None:
         p.product_family = "peanuts"
         p.processed_now()
 
-        dataset_id, metadata_path = p.done()
+        _, metadata_path = p.done()
 
     with metadata_path.open("r") as f:
         doc = yaml.YAML(typ="safe").load(f)
@@ -378,7 +378,7 @@ def test_africa_naming_conventions(tmp_path: Path) -> None:
         p.processed_now()
         p.dataset_version = "0.1.2"
 
-        dataset_id, metadata_path = p.done()
+        _, metadata_path = p.done()
 
     metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
     assert (
@@ -396,7 +396,7 @@ def test_africa_naming_conventions(tmp_path: Path) -> None:
         p.processed_now()
         p.dataset_version = "0.1.2"
 
-        dataset_id, metadata_path = p.done()
+        _, metadata_path = p.done()
 
     metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
     assert (
@@ -481,7 +481,7 @@ def test_custom_naming(tmp_path: Path) -> None:
     convention.dataset_folder = "my/custom/folder/"
 
     with DatasetAssembler(tmp_path, names=convention) as a:
-        dataset_id, metadata_path = a.done()
+        _, metadata_path = a.done()
 
     metadata_path_offset = metadata_path.relative_to(tmp_path).as_posix()
     assert (
