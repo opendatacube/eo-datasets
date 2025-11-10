@@ -20,8 +20,6 @@ filelock==3.20.0
     # via virtualenv
 identify==2.6.15
     # via pre-commit
-importlib-metadata==8.7.0
-    # via build
 iniconfig==2.3.0
     # via pytest
 nodeenv==1.9.1
@@ -40,7 +38,7 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
-pre-commit==4.3.0
+pre-commit==4.4.0
     # via -r requirements/setup.in
 pydantic==2.12.3
     # via -r requirements/setup.in
@@ -81,5 +79,3 @@ virtualenv==20.35.4
     # via pre-commit
 wheel==0.45.1
     # via pip-tools
-zipp==3.23.0
-    # via importlib-metadata
