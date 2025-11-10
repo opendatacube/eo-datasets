@@ -495,7 +495,7 @@ def _run_wagl(args):
             catch_exceptions=False,
         )
         # The last line of output ends with the dataset path.
-        words, reported_metadata = res.output.splitlines()[-1].rsplit(" ", 1)
+        _, reported_metadata = res.output.splitlines()[-1].rsplit(" ", 1)
 
         assert res.exit_code == 0, (
             f"WAGL returned error code. Output:\n{indent(res.output, ' ' * 4)}"
@@ -565,7 +565,7 @@ def test_landsat_wagl_package_provisional_file_structure(
             "ga_ls8c_oa_provisional_3-2-1_092084_2016-06-28_final_time-delta.tif": "",
         },
     )
-    [output_metadata] = expected_folder.rglob("*.odc-metadata.yaml")
+    [_] = expected_folder.rglob("*.odc-metadata.yaml")
 
 
 def test_maturity_calculation() -> None:

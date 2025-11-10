@@ -111,7 +111,7 @@ def run(
                 gqa=bool(granule.gqa_doc),
                 oa=with_oa,
             ):
-                dataset_id, dataset_path = wagl.package(
+                _, dataset_path = wagl.package(
                     out_directory=output,
                     granule=granule,
                     product_maturity=product_maturity,

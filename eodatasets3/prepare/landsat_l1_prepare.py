@@ -568,7 +568,7 @@ def main(
                 output = ds.absolute().parent
 
             ds_path = _normalise_dataset_path(Path(ds).absolute())
-            (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(ds)
+            _, _, _, _, _, _, _, _, _, ctime = os.stat(ds)
             create_date = datetime.fromtimestamp(ctime, timezone.utc)
             if newer_than and (create_date <= newer_than):
                 logging.info(

@@ -76,7 +76,7 @@ class FolderInfo:
         if not m:
             return None
 
-        year, year2, month, area, region_code, extension = m.groups()
+        year, year2, month, area, region_code, _ = m.groups()
         if year != year2:
             raise ValueError(f"Year mismatch in {path}")
 

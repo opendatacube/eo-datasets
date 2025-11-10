@@ -146,7 +146,7 @@ def test_recompress_gap_mask_dataset(tmp_path: Path) -> None:
     )
 
     # It should contain all of our files
-    checksums, members = _get_checksums_members(expected_output)
+    _, members = _get_checksums_members(expected_output)
 
     member_names = [(m.name, f"{m.mode:o}") for m in members]
 
