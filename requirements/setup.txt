@@ -38,7 +38,7 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
-pre-commit==4.4.0
+pre-commit==4.5.0
     # via -r requirements/setup.in
 pydantic==2.12.4
     # via -r requirements/setup.in
