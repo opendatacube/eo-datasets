@@ -5,7 +5,7 @@ exclude: tests/integration/data
 repos:
     # Normalise all Python code (formatting/linting).
     - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.14.6
+      rev: v0.14.7
       hooks:
        - id: ruff-check
          args: [--fix, --show-fixes, --output-format, grouped]
