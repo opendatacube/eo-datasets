@@ -23,18 +23,30 @@ def parse_xml(filepath: Path):
     """
     root = ElementTree.parse(str(filepath), forbid_dtd=False).getroot()
 
-    granule_id = root.find("*//ECSDataGranule/LocalGranuleID").text
+    # Handle both old and new XML formats
+    granule_id_elem = root.find(".//ECSDataGranule/LocalGranuleID")
+    if granule_id_elem is not None:
+        granule_id = granule_id_elem.text
+    else:
+        # New CMR format
+        granule_id = root.find(".//GranuleUR").text
 
-    collection_name = root.find("*//CollectionMetaData/ShortName").text
-    collection_version = root.find("*//CollectionMetaData/VersionID").text
+    collection_name_elem = root.find(".//CollectionMetaData/ShortName")
+    if collection_name_elem is not None:
+        collection_name = collection_name_elem.text
+        collection_version = root.find(".//CollectionMetaData/VersionID").text
+    else:
+        # New CMR format
+        collection_name = root.find(".//Collection/ShortName").text
+        collection_version = root.find(".//Collection/VersionId").text
 
-    instrument_node = root.find("*//Platform/Instrument/InstrumentShortName")
+    instrument_node = root.find(".//Platform/Instrument/InstrumentShortName")
 
     if instrument_node is not None:
         instrument = instrument_node.text
         platform = "+".join(
             sorted(
-                (ele.text for ele in root.findall("*//Platform/PlatformShortName")),
+                (ele.text for ele in root.findall(".//Platform/PlatformShortName")),
                 reverse=True,
             )
         )
@@ -46,30 +58,88 @@ def parse_xml(filepath: Path):
             f"Could not determine instrument and platform from collection name {collection_name}"
         )
 
-    start_date = root.find("*//RangeDateTime/RangeBeginningDate").text
-    start_time = root.find("*//RangeDateTime/RangeBeginningTime").text
-    end_date = root.find("*//RangeDateTime/RangeEndingDate").text
-    end_time = root.find("*//RangeDateTime/RangeEndingTime").text
-    v_tile = (
-        next(
-            ele
-            for ele in root.findall("*//PSA")
-            if ele.find("PSAName").text == "VERTICALTILENUMBER"
-        )
-        .find("PSAValue")
-        .text
-    )
-    h_tile = (
-        next(
-            ele
-            for ele in root.findall("*//PSA")
-            if ele.find("PSAName").text == "HORIZONTALTILENUMBER"
-        )
-        .find("PSAValue")
-        .text
-    )
+    # Handle both old and new temporal formats
+    start_date_elem = root.find(".//RangeDateTime/RangeBeginningDate")
+    if start_date_elem is not None:
+        # Old format: separate date and time elements
+        start_date = start_date_elem.text
+        start_time = root.find(".//RangeDateTime/RangeBeginningTime").text
+        end_date = root.find(".//RangeDateTime/RangeEndingDate").text
+        end_time = root.find(".//RangeDateTime/RangeEndingTime").text
+    else:
+        # New CMR format: combined date-time elements
+        beginning_dt = root.find(".//RangeDateTime/BeginningDateTime").text
+        ending_dt = root.find(".//RangeDateTime/EndingDateTime").text
+        # Split the datetime into date and time components
+        start_date, start_time = beginning_dt.replace("Z", "").split("T")
+        end_date, end_time = ending_dt.replace("Z", "").split("T")
 
-    creation_dt = root.find("*//InsertTime").text
+    psa_elements = root.findall(".//PSA")
+    if psa_elements:
+        # Old format: PSA elements with PSAName and PSAValue
+        v_tile = (
+            next(
+                ele
+                for ele in psa_elements
+                if ele.find("PSAName").text == "VERTICALTILENUMBER"
+            )
+            .find("PSAValue")
+            .text
+        )
+        h_tile = (
+            next(
+                ele
+                for ele in psa_elements
+                if ele.find("PSAName").text == "HORIZONTALTILENUMBER"
+            )
+            .find("PSAValue")
+            .text
+        )
+    else:
+        # New CMR format: AdditionalAttribute elements with Name and Values/Value
+        additional_attrs = root.findall(".//AdditionalAttribute")
+        v_tile = (
+            next(
+                ele
+                for ele in additional_attrs
+                if ele.find("Name").text == "VERTICALTILENUMBER"
+            )
+            .find("Values/Value")
+            .text
+        )
+        h_tile = (
+            next(
+                ele
+                for ele in additional_attrs
+                if ele.find("Name").text == "HORIZONTALTILENUMBER"
+            )
+            .find("Values/Value")
+            .text
+        )
+
+    creation_dt = root.find(".//InsertTime").text
+    if start_date_elem is not None:
+        # Old format: separate date and time components
+        from_dt = datetime.datetime.strptime(
+            start_date + " " + start_time, "%Y-%m-%d %H:%M:%S.%f"
+        ).replace(tzinfo=datetime.timezone.utc)
+        to_dt = datetime.datetime.strptime(
+            end_date + " " + end_time, "%Y-%m-%d %H:%M:%S.%f"
+        ).replace(tzinfo=datetime.timezone.utc)
+        creation_dt_parsed = datetime.datetime.strptime(
+            creation_dt, "%Y-%m-%d %H:%M:%S.%f"
+        ).replace(tzinfo=datetime.timezone.utc)
+    else:
+        # New CMR format: ISO format with Z timezone
+        from_dt = datetime.datetime.strptime(
+            start_date + " " + start_time, "%Y-%m-%d %H:%M:%S.%f"
+        ).replace(tzinfo=datetime.timezone.utc)
+        to_dt = datetime.datetime.strptime(
+            end_date + " " + end_time, "%Y-%m-%d %H:%M:%S.%f"
+        ).replace(tzinfo=datetime.timezone.utc)
+        creation_dt_parsed = datetime.datetime.strptime(
+            creation_dt, "%Y-%m-%dT%H:%M:%S.%fZ"
+        ).replace(tzinfo=datetime.timezone.utc)
 
     return {
         "collection_version": collection_version,
@@ -78,15 +148,9 @@ def parse_xml(filepath: Path):
         "platform": platform,
         "vertical_tile": int(v_tile),
         "horizontal_tile": int(h_tile),
-        "from_dt": datetime.datetime.strptime(
-            start_date + " " + start_time, "%Y-%m-%d %H:%M:%S.%f"
-        ).replace(tzinfo=datetime.timezone.utc),
-        "to_dt": datetime.datetime.strptime(
-            end_date + " " + end_time, "%Y-%m-%d %H:%M:%S.%f"
-        ).replace(tzinfo=datetime.timezone.utc),
-        "creation_dt": datetime.datetime.strptime(
-            creation_dt, "%Y-%m-%d %H:%M:%S.%f"
-        ).replace(tzinfo=datetime.timezone.utc),
+        "from_dt": from_dt,
+        "to_dt": to_dt,
+        "creation_dt": creation_dt_parsed,
     }
 
 
