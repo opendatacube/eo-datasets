@@ -75,7 +75,7 @@ typing-extensions==4.15.0
     #   virtualenv
 typing-inspection==0.4.2
     # via pydantic
-virtualenv==20.35.4
+virtualenv==20.36.1
     # via pre-commit
 wheel==0.45.1
     # via pip-tools
