@@ -11,6 +11,8 @@ alembic==1.17.1
     # via datacube
 antimeridian==0.4.3
     # via datacube
+arrow==1.4.0
+    # via isoduration
 attrs==25.4.0
     # via
     #   eodatasets3 (pyproject.toml)
@@ -71,7 +73,7 @@ dask==2026.1.1
     #   distributed
     #   odc-loader
     #   odc-stac
-datacube==1.9.10
+datacube==1.9.13
     # via eodatasets3 (pyproject.toml)
 defusedxml==0.7.1
     # via eodatasets3 (pyproject.toml)
@@ -83,6 +85,8 @@ exceptiongroup==1.3.0
     # via cattrs
 fiona==1.10.1
     # via eodatasets3 (pyproject.toml)
+fqdn==1.5.1
+    # via jsonschema
 fsspec==2025.10.0
     # via dask
 geoalchemy2==0.18.0
@@ -91,14 +95,22 @@ greenlet==3.2.4
     # via sqlalchemy
 h5py==3.15.1
     # via eodatasets3 (pyproject.toml)
+idna==3.11
+    # via jsonschema
+imageio==2.37.2
+    # via scikit-image
 importlib-metadata==8.7.0
     # via dask
+isoduration==20.11.0
+    # via jsonschema
 jinja2==3.1.6
     # via distributed
 jmespath==1.0.1
     # via
     #   boto3
     #   botocore
+jsonpointer==3.0.0
+    # via jsonschema
 jsonschema==4.25.1
     # via
     #   eodatasets3 (pyproject.toml)
@@ -106,7 +118,11 @@ jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
     # via jsonschema
 lark==1.3.1
-    # via datacube
+    # via
+    #   datacube
+    #   rfc3987-syntax
+lazy-loader==0.4
+    # via scikit-image
 locket==1.0.0
     # via
     #   distributed
@@ -119,6 +135,8 @@ markupsafe==3.0.3
     #   mako
 msgpack==1.1.2
     # via distributed
+networkx==3.4.2
+    # via scikit-image
 numpy==2.2.6
     # via
     #   eodatasets3 (pyproject.toml)
@@ -126,24 +144,27 @@ numpy==2.2.6
     #   dask
     #   datacube
     #   h5py
+    #   imageio
     #   odc-geo
     #   odc-loader
     #   odc-stac
     #   pandas
     #   rasterio
+    #   scikit-image
     #   scipy
     #   shapely
+    #   tifffile
     #   xarray
-odc-geo==0.4.10
+odc-geo==0.5.0
     # via
     #   datacube
     #   odc-loader
     #   odc-stac
-odc-loader==0.5.1
+odc-loader==0.6.4
     # via
     #   datacube
     #   odc-stac
-odc-stac==0.4.0
+odc-stac==0.5.2
     # via datacube
 packaging==25.0
     # via
@@ -151,6 +172,8 @@ packaging==25.0
     #   datacube
     #   distributed
     #   geoalchemy2
+    #   lazy-loader
+    #   scikit-image
     #   xarray
 pandas==2.3.3
     # via
@@ -159,6 +182,10 @@ pandas==2.3.3
     #   xarray
 partd==1.4.2
     # via dask
+pillow==12.1.0
+    # via
+    #   imageio
+    #   scikit-image
 psutil==7.1.3
     # via distributed
 pyparsing==3.2.5
@@ -174,6 +201,7 @@ pystac==1.14.1
     #   odc-stac
 python-dateutil==2.9.0.post0
     # via
+    #   arrow
     #   botocore
     #   datacube
     #   pandas
@@ -185,7 +213,7 @@ pyyaml==6.0.3
     #   dask
     #   datacube
     #   distributed
-rasterio==1.4.3
+rasterio==1.4.4
     # via
     #   eodatasets3 (pyproject.toml)
     #   datacube
@@ -195,6 +223,12 @@ referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
+rfc3339-validator==0.1.4
+    # via jsonschema
+rfc3986-validator==0.1.1
+    # via jsonschema
+rfc3987-syntax==1.1.0
+    # via jsonschema
 rpds-py==0.28.0
     # via
     #   jsonschema
@@ -207,8 +241,12 @@ ruamel-yaml-clib==0.2.14
     # via ruamel-yaml
 s3transfer==0.14.0
     # via boto3
+scikit-image==0.25.2
+    # via datacube
 scipy==1.15.3
-    # via eodatasets3 (pyproject.toml)
+    # via
+    #   eodatasets3 (pyproject.toml)
+    #   scikit-image
 shapely==2.1.2
     # via
     #   eodatasets3 (pyproject.toml)
@@ -216,7 +254,9 @@ shapely==2.1.2
     #   datacube
     #   odc-geo
 six==1.17.0
-    # via python-dateutil
+    # via
+    #   python-dateutil
+    #   rfc3339-validator
 sortedcontainers==2.4.0
     # via distributed
 sqlalchemy==2.0.44
@@ -226,8 +266,10 @@ sqlalchemy==2.0.44
     #   geoalchemy2
 structlog==25.5.0
     # via eodatasets3 (pyproject.toml)
-tblib==3.2.1
+tblib==3.2.2
     # via distributed
+tifffile==2025.5.10
+    # via scikit-image
 tomli==2.3.0
     # via alembic
 toolz==1.1.0
@@ -244,22 +286,30 @@ typing-extensions==4.15.0
     #   alembic
     #   cattrs
     #   exceptiongroup
+    #   odc-loader
     #   odc-stac
     #   referencing
     #   sqlalchemy
     #   structlog
 tzdata==2025.2
-    # via pandas
+    # via
+    #   arrow
+    #   pandas
+uri-template==1.3.0
+    # via jsonschema
 urllib3==2.6.3
     # via
     #   botocore
     #   distributed
+webcolors==25.10.0
+    # via jsonschema
 wrapt==1.17.3
     # via deprecat
 xarray==2025.6.1
     # via
     #   eodatasets3 (pyproject.toml)
     #   datacube
+    #   odc-geo
     #   odc-loader
     #   odc-stac
 zict==3.0.0
