@@ -308,10 +308,12 @@ def to_doc(d: DatasetDoc) -> dict:
         recurse=True,
         dict_factory=dict,
         # Exclude fields that are the default.
-        filter=lambda attr, value: "doc_exclude" not in attr.metadata
-        and value != attr.default
-        # Exclude any fields set to None. The distinction should never matter in our docs.
-        and value is not None,
+        filter=lambda attr, value: (
+            "doc_exclude" not in attr.metadata
+            and value != attr.default
+            # Exclude any fields set to None. The distinction should never matter in our docs.
+            and value is not None
+        ),
         retain_collection_types=False,
     )
     doc["$schema"] = ODC_DATASET_SCHEMA_URL
