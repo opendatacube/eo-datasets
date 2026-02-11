@@ -230,7 +230,7 @@ pandas==2.3.3
     #   xarray
 partd==1.4.2
     # via dask
-pillow==12.0.0
+pillow==12.1.1
     # via
     #   imageio
     #   scikit-image
