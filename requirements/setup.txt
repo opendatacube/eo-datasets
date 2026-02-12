@@ -31,7 +31,7 @@ packaging==25.0
     #   wheel
 pip==26.0
     # via pip-tools
-pip-tools==7.5.2
+pip-tools==7.5.3
     # via -r requirements/setup.in
 platformdirs==4.5.1
     # via virtualenv
@@ -59,7 +59,7 @@ pytest-cov==7.0.0
     # via -r requirements/setup.in
 pyyaml==6.0.3
     # via pre-commit
-setuptools==80.10.2
+setuptools==82.0.0
     # via pip-tools
 tomli==2.3.0
     # via
