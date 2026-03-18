@@ -93,7 +93,7 @@ dask==2026.1.1
     #   odc-stac
 datacube==1.9.13
     # via eodatasets3 (pyproject.toml)
-deepdiff==8.6.1
+deepdiff==8.6.2
     # via eodatasets3 (pyproject.toml)
 defusedxml==0.7.1
     # via eodatasets3 (pyproject.toml)
