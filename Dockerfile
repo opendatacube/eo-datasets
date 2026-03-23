@@ -1,7 +1,7 @@
 
 # This gdal version should match the "gdal=="
 # line in setup.py's "docker"
-FROM ghcr.io/osgeo/gdal:ubuntu-small-3.12.2@sha256:885caba325a405ab08793feba1510170ef19d9758c41849f8554ac97e7221dd3 AS base
+FROM ghcr.io/osgeo/gdal:ubuntu-small-3.12.3@sha256:a82193802ff7a3510bd6214d47898cd194267ec608d23ef532ace07c3d07352d AS base
 
 ENV DEBIAN_FRONTEND=noninteractive \
     LC_ALL=C.UTF-8 \
