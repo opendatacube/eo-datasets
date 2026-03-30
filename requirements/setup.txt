@@ -45,7 +45,7 @@ pydantic==2.12.5
     # via -r requirements/setup.in
 pydantic-core==2.41.5
     # via pydantic
-pygments==2.19.2
+pygments==2.20.0
     # via pytest
 pyproj==3.7.1
     # via -r requirements/setup.in
