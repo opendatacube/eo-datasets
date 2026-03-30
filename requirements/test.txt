@@ -246,7 +246,7 @@ pydantic==2.12.3
     #   rio-cogeo
 pydantic-core==2.41.4
     # via pydantic
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   pytest
     #   sphinx
