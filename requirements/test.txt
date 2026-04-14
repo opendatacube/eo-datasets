@@ -262,7 +262,7 @@ pystac==1.14.1
     # via
     #   eodatasets3 (pyproject.toml)
     #   odc-stac
-pytest==8.4.2
+pytest==9.0.3
     # via
     #   eodatasets3 (pyproject.toml)
     #   pytest-cov
