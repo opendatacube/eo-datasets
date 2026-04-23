@@ -8,7 +8,7 @@ certifi==2025.11.12
     # via pyproj
 cfgv==3.5.0
     # via pre-commit
-click==8.3.2
+click==8.3.3
     # via pip-tools
 coverage==7.13.0
     # via pytest-cov
@@ -39,11 +39,11 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
-pre-commit==4.5.1
+pre-commit==4.6.0
     # via -r requirements/setup.in
-pydantic==2.13.1
+pydantic==2.13.3
     # via -r requirements/setup.in
-pydantic-core==2.46.1
+pydantic-core==2.46.3
     # via pydantic
 pygments==2.20.0
     # via pytest
