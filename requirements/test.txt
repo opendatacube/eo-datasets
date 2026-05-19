@@ -123,7 +123,7 @@ greenlet==3.2.4
     # via sqlalchemy
 h5py==3.15.1
     # via eodatasets3 (pyproject.toml)
-idna==3.11
+idna==3.15
     # via
     #   jsonschema
     #   requests
