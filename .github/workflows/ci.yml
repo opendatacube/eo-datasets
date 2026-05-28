@@ -43,7 +43,7 @@ jobs:
           uv run --python ${{ matrix.python-version }} pytest --cov eodatasets3 --cov-report=xml --durations=5 -n auto
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           use_oidc: true
           fail_ci_if_error: false
