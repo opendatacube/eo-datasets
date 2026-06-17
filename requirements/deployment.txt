@@ -279,7 +279,7 @@ toolz==1.1.0
     #   distributed
     #   odc-stac
     #   partd
-tornado==6.5.6
+tornado==6.5.7
     # via distributed
 typing-extensions==4.15.0
     # via
