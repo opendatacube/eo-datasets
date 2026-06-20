@@ -173,7 +173,7 @@ mock==5.2.0
     # via eodatasets3 (pyproject.toml)
 morecantile==6.2.0
     # via rio-cogeo
-msgpack==1.1.2
+msgpack==1.2.1
     # via distributed
 netcdf4==1.7.3
     # via eodatasets3 (pyproject.toml)
