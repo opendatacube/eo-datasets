@@ -458,8 +458,8 @@ def _create_contiguity(
     p: DatasetAssembler,
     product_list: Iterable[str],
     resolution_yx: Tuple[float, float],
-    timedelta_product: str = "nbar",
-    timedelta_data: numpy.ndarray = None,
+    timedelta_products: Iterable[str] = ("nbar", "nbart"),
+    timedelta_data: Optional[numpy.ndarray] = None,
 ):
     """
     Create the contiguity (all pixels valid) dataset.
@@ -467,6 +467,13 @@ def _create_contiguity(
     Write a contiguity mask file based on the intersection of valid data pixels across all
     bands from the input files.
     """
+
+    # Calculate the time range from the first that we have available
+    timedelta_product = next(
+        (preferred for preferred in timedelta_products if preferred in product_list),
+        None,
+    )
+
     for product in product_list:
         contiguity = None
         # A contiguity layer for each product
