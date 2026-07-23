@@ -31,7 +31,7 @@ packaging==25.0
     #   wheel
 pip==26.1.1
     # via pip-tools
-pip-tools==7.5.3
+pip-tools==7.6.0
     # via -r requirements/setup.in
 platformdirs==4.5.1
     # via virtualenv
@@ -39,7 +39,7 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
-pre-commit==4.6.0
+pre-commit==4.6.1
     # via -r requirements/setup.in
 pydantic==2.13.4
     # via -r requirements/setup.in
