@@ -29,7 +29,7 @@ packaging==25.0
     #   build
     #   pytest
     #   wheel
-pip==26.1.1
+pip==26.2.1
     # via pip-tools
 pip-tools==7.6.0
     # via -r requirements/setup.in
