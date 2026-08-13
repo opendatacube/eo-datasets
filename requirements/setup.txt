@@ -59,7 +59,7 @@ pytest-cov==7.1.0
     # via -r requirements/setup.in
 pyyaml==6.0.3
     # via pre-commit
-setuptools==83.0.0
+setuptools==84.0.0
     # via pip-tools
 tomli==2.3.0
     # via
