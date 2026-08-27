@@ -31,7 +31,7 @@ packaging==25.0
     #   wheel
 pip==26.2.1
     # via pip-tools
-pip-tools==7.6.0
+pip-tools==7.6.1
     # via -r requirements/setup.in
 platformdirs==4.5.1
     # via virtualenv
@@ -39,7 +39,7 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
-pre-commit==4.6.1
+pre-commit==4.6.2
     # via -r requirements/setup.in
 pydantic==2.13.4
     # via -r requirements/setup.in
@@ -59,7 +59,7 @@ pytest-cov==7.1.0
     # via -r requirements/setup.in
 pyyaml==6.0.3
     # via pre-commit
-setuptools==83.0.0
+setuptools==84.0.0
     # via pip-tools
 tomli==2.3.0
     # via
@@ -70,6 +70,7 @@ tomli==2.3.0
 typing-extensions==4.15.0
     # via
     #   exceptiongroup
+    #   pip-tools
     #   pydantic
     #   pydantic-core
     #   typing-inspection
