@@ -370,6 +370,7 @@ class Eo3Dict(collections.abc.MutableMapping):
         "odc:product_family": identifier_type,
         "odc:region_code": None,
         "odc:sat_row": None,  # When a dataset has a range of rows (... telemetry)
+        "processing:datetime": None,
         **_LANDSAT_EXTENDED_PROPS,
         **_GQA_FMASK_PROPS,
         **_SENTINEL_EXTENDED_PROPS,
