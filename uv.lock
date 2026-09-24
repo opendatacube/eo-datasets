@@ -957,7 +957,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "affine" },
+    { name = "affine", specifier = "<3.0" },
     { name = "attrs", specifier = ">=18.1" },
     { name = "boltons" },
     { name = "boto3" },
