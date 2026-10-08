@@ -22,8 +22,6 @@ filelock==4.0.8
     #   virtualenv
 identify==2.6.15
     # via pre-commit
-importlib-metadata==9.0.1
-    # via build
 iniconfig==2.3.0
     # via pytest
 nodeenv==1.10.0
@@ -36,7 +34,7 @@ packaging==25.0
     #   wheel
 pip==26.2.1
     # via pip-tools
-pip-tools==7.6.0
+pip-tools==7.6.1
     # via -r requirements/setup.in
 platformdirs==4.5.1
     # via virtualenv
@@ -44,11 +42,11 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
-pre-commit==4.6.1
+pre-commit==4.6.2
     # via -r requirements/setup.in
-pydantic==2.13.4
+pydantic==2.13.5
     # via -r requirements/setup.in
-pydantic-core==2.46.4
+pydantic-core==2.46.5
     # via pydantic
 pygments==2.20.0
     # via pytest
@@ -66,7 +64,7 @@ python-discovery==1.6.1
     # via virtualenv
 pyyaml==6.0.3
     # via pre-commit
-setuptools==83.0.0
+setuptools==84.0.0
     # via pip-tools
 tomli==2.3.0
     # via
@@ -77,6 +75,7 @@ tomli==2.3.0
 typing-extensions==4.15.0
     # via
     #   exceptiongroup
+    #   pip-tools
     #   pydantic
     #   pydantic-core
     #   typing-inspection
@@ -87,5 +86,3 @@ virtualenv==21.14.2
     # via pre-commit
 wheel==0.46.3
     # via pip-tools
-zipp==4.1.0
-    # via importlib-metadata
