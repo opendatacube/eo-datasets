@@ -480,11 +480,11 @@ class StacPropertyView(Eo3Dict):
 
     Use the identical 'Eo3Dict' instead.
 
-    These were called  "StacProperties" in Stac 0.6, but many of them have
-    changed in newer versions and we're sticking to the old names for consistency
+    These were called "StacProperties" in STAC 0.6, but many of them have
+    changed in newer versions, and we're sticking to the old names for consistency
     and backwards-compatibility. So they're now EO3 Properties.
 
-    (The eo3-to-stac tool to convert EO3 properties to real Stac properties.)
+    (The eo3-to-stac tool to convert EO3 properties to real STAC properties.)
     """
 
     def __init__(self, properties=None) -> None:
@@ -648,7 +648,7 @@ class Eo3Interface:
         """
         The version of the dataset.
 
-        Typically digits separated by a dot. Eg. `1.0.0`
+        Typically, digits separated by a dot. E.g. `1.0.0`
 
         The first digit is usually the collection number for
         this 'producer' organisation, such as USGS Collection 1 or
@@ -776,7 +776,7 @@ class Eo3Interface:
 
 
 def _github_suggest_new_property_url(key: str, value: object) -> str:
-    """Get a URL to create a Github issue suggesting new properties to be added."""
+    """Get a URL to create a GitHub issue suggesting new properties to be added."""
     issue_parameters = urlencode(
         dict(
             title=f"Include property {key!r}",
