@@ -75,12 +75,15 @@ def test_unknown_abbreviations() -> None:
 
         # Constellation can be used as a fallback grouping.
         d.platforms = ["clippings-1a", "clippings-2b"]
-        d.properties["constellation"] = "clippings"
-        assert names.platform_abbreviated == "clippings"
+        with pytest.warns(
+            UserWarning, match=r"Unknown Stac property 'constellation'\..*"
+        ):
+            d.properties["constellation"] = "clippings"
+            assert names.platform_abbreviated == "clippings"
 
-        # Unless unknown platforms aren't allowed
-        # (DEA wants to be stricter and add real abbreviations for everything.)
-        names = namer(d.properties, conventions="dea")
+            # Unless unknown platforms aren't allowed
+            # (DEA wants to be stricter and add real abbreviations for everything.)
+            names = namer(d.properties, conventions="dea")
         with pytest.raises(
             ValueError, match="don't know the DEA abbreviation for platform"
         ):
@@ -95,7 +98,7 @@ def test_normalise_input_fields() -> None:
     (this matches usage by Alchemist)
     """
     # Manually constructed properties that will need normalisation.
-    # (this is what Alechmist does)
+    # (this is what Alchemist does)
     properties = Eo3Dict(
         {
             "odc:region_code": "234343",
