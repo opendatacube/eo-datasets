@@ -171,6 +171,7 @@ ignore = [
     "C408", # Unnecessary `dict` call (rewrite as a literal)
     "ICN001", #  `numpy` should be imported as `np`
     "N818", # Exception name should be named with an Error suffix
+    "RUF071", # Code uses commonpath for getting a char-based common prefix
     "S324", # SHA1 is required for compatibility.
 ]
 
