@@ -770,7 +770,12 @@ class FileWrite:
 
                 # overviews/pyramids to disk
                 if overviews:
-                    outds.build_overviews(overviews, overview_resampling)
+                    # increase GDAL chunking strategy to prevent GDAL defaulting to
+                    # multi-band codepath, which doesn't support all overview resampling
+                    # strategies (e.g. "mode", used by WO)
+                    # For Landsat scenes or S2 granules 256Mb should be plenty.
+                    with rasterio.Env(GDAL_OVR_CHUNK_MAX_SIZE=256 * 1024 * 1024):
+                        outds.build_overviews(overviews, overview_resampling)
 
             if overviews:
                 # Move the overviews to the start of the file, as required to be COG-compliant.
