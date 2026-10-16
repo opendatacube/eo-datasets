@@ -648,6 +648,18 @@ class FileWrite:
             from `rasterio.enums.Resampling`
             Default is `Resampling.nearest`.
 
+        :param gdal_ovr_chunk_size:
+            Optionally set the GDAL overview processing chunk size.  This is needed
+            for "large" rasters using the "mode" overview resampling strategy. (e.g.
+            wofs).  256 Megabytes (256 * 1024 * 1024) is big enough for either landsat
+            scenes or S2 granules.
+
+            (The default chunk size is rather small 10Mb.  If the raster is bigger than
+            the chunk size, GDAL drops to a chunked multi-band implementation, which
+            does not support "mode" resampling. If the chunk size is bigger than the
+            raster GDAL will use a non-chunked single-band implementation which DOES
+            support "mode" resampling.)
+
         :notes:
             If array is an instance of a `h5py.Dataset`, then the output
             file will include blocksizes based on the `h5py.Dataset's`
