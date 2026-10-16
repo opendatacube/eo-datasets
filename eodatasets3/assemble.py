@@ -1350,6 +1350,7 @@ class DatasetAssembler(DatasetPrepare):
         overview_resampling=Resampling.average,
         expand_valid_data=True,
         file_id=None,
+        gdal_ovr_chunk_size: int | None = None,
     ):
         """
         Write measurements from an ODC :class:`xarray.Dataset`
@@ -1388,6 +1389,7 @@ class DatasetAssembler(DatasetPrepare):
                 overview_resampling=overview_resampling,
                 overviews=overviews,
                 nodata=nodata_value,
+                gdal_ovr_chunk_size=gdal_ovr_chunk_size,
             )
 
     def _write_measurement(
@@ -1400,6 +1402,7 @@ class DatasetAssembler(DatasetPrepare):
         nodata: float | int | None,
         overview_resampling: Resampling,
         overviews: tuple[int, ...],
+        gdal_ovr_chunk_size: int | None = None,
     ):
         _validate_property_name(name)
 
@@ -1410,6 +1413,7 @@ class DatasetAssembler(DatasetPrepare):
             nodata=nodata,
             overview_resampling=overview_resampling,
             overviews=overviews,
+            gdal_ovr_chunk_size=gdal_ovr_chunk_size,
         )
 
         # Ensure the file_format field is set to what we're writing.
