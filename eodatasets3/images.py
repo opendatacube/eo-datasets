@@ -626,6 +626,7 @@ class FileWrite:
         nodata: int | None = None,
         overview_resampling=Resampling.nearest,
         overviews: tuple[int, ...] | None = DEFAULT_OVERVIEWS,
+        gdal_ovr_chunk_size: int | None = None,
     ) -> WriteResult:
         """
         Writes a 2D/3D image to disk using rasterio.
@@ -770,11 +771,10 @@ class FileWrite:
 
                 # overviews/pyramids to disk
                 if overviews:
-                    # increase GDAL chunking strategy to prevent GDAL defaulting to
-                    # multi-band codepath, which doesn't support all overview resampling
-                    # strategies (e.g. "mode", used by WO)
-                    # For Landsat scenes or S2 granules 256Mb should be plenty.
-                    with rasterio.Env(GDAL_OVR_CHUNK_MAX_SIZE=256 * 1024 * 1024):
+                    if gdal_ovr_chunk_size is not None:
+                        with rasterio.Env(GDAL_OVR_CHUNK_MAX_SIZE=gdal_ovr_chunk_size):
+                            outds.build_overviews(overviews, overview_resampling)
+                    else:
                         outds.build_overviews(overviews, overview_resampling)
 
             if overviews:
