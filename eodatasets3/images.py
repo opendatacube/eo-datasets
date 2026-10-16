@@ -626,6 +626,7 @@ class FileWrite:
         nodata: int | None = None,
         overview_resampling=Resampling.nearest,
         overviews: tuple[int, ...] | None = DEFAULT_OVERVIEWS,
+        gdal_ovr_chunk_size: int | None = None,
     ) -> WriteResult:
         """
         Writes a 2D/3D image to disk using rasterio.
@@ -646,6 +647,18 @@ class FileWrite:
             If levels is set, build overviews using a resampling method
             from `rasterio.enums.Resampling`
             Default is `Resampling.nearest`.
+
+        :param gdal_ovr_chunk_size:
+            Optionally set the GDAL overview processing chunk size.  This is needed
+            for "large" rasters using the "mode" overview resampling strategy. (e.g.
+            wofs).  256 Megabytes (256 * 1024 * 1024) is big enough for either landsat
+            scenes or S2 granules.
+
+            (The default chunk size is rather small 10Mb.  If the raster is bigger than
+            the chunk size, GDAL drops to a chunked multi-band implementation, which
+            does not support "mode" resampling. If the chunk size is bigger than the
+            raster GDAL will use a non-chunked single-band implementation which DOES
+            support "mode" resampling.)
 
         :notes:
             If array is an instance of a `h5py.Dataset`, then the output
@@ -770,7 +783,11 @@ class FileWrite:
 
                 # overviews/pyramids to disk
                 if overviews:
-                    outds.build_overviews(overviews, overview_resampling)
+                    if gdal_ovr_chunk_size is not None:
+                        with rasterio.Env(GDAL_OVR_CHUNK_MAX_SIZE=gdal_ovr_chunk_size):
+                            outds.build_overviews(overviews, overview_resampling)
+                    else:
+                        outds.build_overviews(overviews, overview_resampling)
 
             if overviews:
                 # Move the overviews to the start of the file, as required to be COG-compliant.
