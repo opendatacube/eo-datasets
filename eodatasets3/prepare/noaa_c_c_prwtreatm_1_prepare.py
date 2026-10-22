@@ -54,7 +54,7 @@ def process_datasets(dataset: Path) -> Iterable[dict]:
 
     """
     datasets = []
-    creation_dt = datetime.datetime.now(datetime.timezone.utc)
+    creation_dt = datetime.datetime.now(datetime.UTC)
     geometry = valid_region([str(dataset)])
 
     with rasterio.open(str(dataset), "r") as collection:
@@ -66,7 +66,7 @@ def process_datasets(dataset: Path) -> Iterable[dict]:
             time_in_hours = int(collection.tags(_idx)["NETCDF_DIM_time"])
             ds_dt = (
                 collection_start_date + datetime.timedelta(hours=time_in_hours)
-            ).replace(tzinfo=datetime.timezone.utc)
+            ).replace(tzinfo=datetime.UTC)
 
             md = {}
             md["id"] = str(get_uuid(collection, _idx))

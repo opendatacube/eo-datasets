@@ -1,6 +1,6 @@
 import copy
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -231,7 +231,7 @@ ESA_EXPECTED_METADATA = {
     },
     "product": {"name": "esa_s2bm_level1_0"},
     "properties": {
-        "datetime": datetime(2020, 10, 11, 0, 6, 49, 882566, tzinfo=timezone.utc),
+        "datetime": datetime(2020, 10, 11, 0, 6, 49, 882566, tzinfo=UTC),
         "eo:cloud_cover": 24.9912,
         "eo:gsd": 10,
         "eo:instrument": "MSI",
@@ -241,9 +241,7 @@ ESA_EXPECTED_METADATA = {
         "eo:sun_elevation": 37.3713908882192,
         "odc:dataset_version": "0.0.20201011",
         "odc:file_format": "JPEG2000",
-        "odc:processing_datetime": datetime(
-            2020, 10, 11, 1, 47, 4, 112949, tzinfo=timezone.utc
-        ),
+        "odc:processing_datetime": datetime(2020, 10, 11, 1, 47, 4, 112949, tzinfo=UTC),
         "odc:producer": "esa.int",
         "odc:product_family": "level1",
         "odc:region_code": "55HFA",
@@ -254,7 +252,7 @@ ESA_EXPECTED_METADATA = {
         "sat:orbit_state": "descending",
         "sat:relative_orbit": 30,
         "sentinel:datatake_start_datetime": datetime(
-            2020, 10, 11, 1, 14, 46, tzinfo=timezone.utc
+            2020, 10, 11, 1, 14, 46, tzinfo=UTC
         ),
         "sentinel:processing_baseline": "02.09",
         "sentinel:processing_center": "EPAE",
@@ -367,7 +365,7 @@ SINERGISE_EXPECTED_METADATA = {
         },
     },
     "properties": {
-        "datetime": datetime(2020, 10, 11, 0, 6, 49, 882566, tzinfo=timezone.utc),
+        "datetime": datetime(2020, 10, 11, 0, 6, 49, 882566, tzinfo=UTC),
         "eo:cloud_cover": 24.9912,
         "eo:gsd": 10,
         "eo:instrument": "MSI",
@@ -377,9 +375,7 @@ SINERGISE_EXPECTED_METADATA = {
         "eo:sun_elevation": 37.3713908882192,
         "odc:dataset_version": "0.0.20201011",
         "odc:file_format": "JPEG2000",
-        "odc:processing_datetime": datetime(
-            2020, 10, 11, 1, 47, 4, 112949, tzinfo=timezone.utc
-        ),
+        "odc:processing_datetime": datetime(2020, 10, 11, 1, 47, 4, 112949, tzinfo=UTC),
         "odc:producer": "sinergise.com",
         "odc:product_family": "level1",
         "odc:region_code": "55HFA",
@@ -390,7 +386,7 @@ SINERGISE_EXPECTED_METADATA = {
         "sentinel:product_name": "S2B_MSIL1C_20201011T000249_N0209_R030_T55HFA_20201011T011446",
         "sentinel:datastrip_id": "S2B_OPER_MSI_L1C_DS_EPAE_20201011T011446_S20201011T000244_N02.09",
         "sentinel:datatake_start_datetime": datetime(
-            2020, 10, 11, 1, 14, 46, tzinfo=timezone.utc
+            2020, 10, 11, 1, 14, 46, tzinfo=UTC
         ),
         "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_EPAE_20201011T011446_A018789_T55HFA_N02.09",
     },
@@ -765,7 +761,7 @@ def test_run_unusual_multigranule(tmp_path: Path) -> None:
             "properties": {
                 "datetime": datetime.fromisoformat(
                     "2016-01-29T01:00:47.667000"
-                ).replace(tzinfo=timezone.utc),
+                ).replace(tzinfo=UTC),
                 "eo:cloud_cover": 18.0896,
                 "eo:constellation": "sentinel-2",
                 "eo:gsd": 10,
@@ -777,7 +773,7 @@ def test_run_unusual_multigranule(tmp_path: Path) -> None:
                 "odc:file_format": "JPEG2000",
                 "odc:processing_datetime": datetime.fromisoformat(
                     "2016-02-09T14:32:42.340511"
-                ).replace(tzinfo=timezone.utc),
+                ).replace(tzinfo=UTC),
                 "odc:producer": "esa.int",
                 "odc:product_family": "level1",
                 "odc:region_code": "53JMH",
@@ -786,7 +782,7 @@ def test_run_unusual_multigranule(tmp_path: Path) -> None:
                 "sentinel:datastrip_id": "S2A_OPER_MSI_L1C_DS_MTI__20160209T133001_S20160129T010047_N02.01",
                 "sentinel:datatake_start_datetime": datetime.fromisoformat(
                     "2016-02-09T13:30:01"
-                ).replace(tzinfo=timezone.utc),
+                ).replace(tzinfo=UTC),
                 "sentinel:datatake_type": "INS-NOBS",
                 "sentinel:processing_baseline": "02.01",
                 "sentinel:processing_center": "MTI_",

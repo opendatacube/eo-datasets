@@ -122,24 +122,24 @@ def parse_xml(filepath: Path):
         # Old format: separate date and time components
         from_dt = datetime.datetime.strptime(
             start_date + " " + start_time, "%Y-%m-%d %H:%M:%S.%f"
-        ).replace(tzinfo=datetime.timezone.utc)
+        ).replace(tzinfo=datetime.UTC)
         to_dt = datetime.datetime.strptime(
             end_date + " " + end_time, "%Y-%m-%d %H:%M:%S.%f"
-        ).replace(tzinfo=datetime.timezone.utc)
+        ).replace(tzinfo=datetime.UTC)
         creation_dt_parsed = datetime.datetime.strptime(
             creation_dt, "%Y-%m-%d %H:%M:%S.%f"
-        ).replace(tzinfo=datetime.timezone.utc)
+        ).replace(tzinfo=datetime.UTC)
     else:
         # New CMR format: ISO format with Z timezone
         from_dt = datetime.datetime.strptime(
             start_date + " " + start_time, "%Y-%m-%d %H:%M:%S.%f"
-        ).replace(tzinfo=datetime.timezone.utc)
+        ).replace(tzinfo=datetime.UTC)
         to_dt = datetime.datetime.strptime(
             end_date + " " + end_time, "%Y-%m-%d %H:%M:%S.%f"
-        ).replace(tzinfo=datetime.timezone.utc)
+        ).replace(tzinfo=datetime.UTC)
         creation_dt_parsed = datetime.datetime.strptime(
             creation_dt, "%Y-%m-%dT%H:%M:%S.%fZ"
-        ).replace(tzinfo=datetime.timezone.utc)
+        ).replace(tzinfo=datetime.UTC)
 
     return {
         "collection_version": collection_version,

@@ -11,7 +11,7 @@ datasets and metadata.
 
     pip install eodatasets3
 
-Python 3.10+ is supported.
+Python 3.12+ is supported.
 
 ## Dataset assembly
 

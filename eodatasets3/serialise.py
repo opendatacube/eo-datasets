@@ -1,6 +1,6 @@
 import uuid
 from collections.abc import Iterable, Mapping
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path, PurePath
 from typing import IO
@@ -479,7 +479,7 @@ class ClickDatetime(click.ParamType):
 
         try:
             d = ciso8601.parse_datetime(value)
-            return d if d.tzinfo is not None else d.replace(tzinfo=timezone.utc)
+            return d if d.tzinfo is not None else d.replace(tzinfo=UTC)
         except ValueError:
             self.fail(
                 (
