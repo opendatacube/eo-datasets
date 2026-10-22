@@ -1,7 +1,7 @@
 import warnings
 from binascii import crc32
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from pprint import pprint
 from textwrap import indent
@@ -209,15 +209,13 @@ def test_whole_landsat_wagl_package(
                 },
             },
             "properties": {
-                "datetime": datetime(
-                    2016, 6, 28, 0, 2, 28, 624_635, tzinfo=timezone.utc
-                ),
+                "datetime": datetime(2016, 6, 28, 0, 2, 28, 624_635, tzinfo=UTC),
                 "dea:dataset_maturity": "final",
                 "dtr:end_datetime": datetime(
-                    2016, 6, 28, 0, 2, 43, 114_771, tzinfo=timezone.utc
+                    2016, 6, 28, 0, 2, 43, 114_771, tzinfo=UTC
                 ),
                 "dtr:start_datetime": datetime(
-                    2016, 6, 28, 0, 2, 14, 25815, tzinfo=timezone.utc
+                    2016, 6, 28, 0, 2, 14, 25815, tzinfo=UTC
                 ),
                 "eo:cloud_cover": 63.069_613_577_531_236,
                 "eo:gsd": 1490.480_769_230_769_3,
@@ -258,7 +256,7 @@ def test_whole_landsat_wagl_package(
                 "odc:dataset_version": "3.2.1",
                 "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": datetime(
-                    2019, 7, 11, 23, 29, 29, 21245, tzinfo=timezone.utc
+                    2019, 7, 11, 23, 29, 29, 21245, tzinfo=UTC
                 ),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ard",
@@ -625,9 +623,9 @@ def test_maturity_calculation() -> None:
 
     # July 2002 is when we consider our BRDF to be good enough: both Aqua
     # and Terra satellites were now operational.
-    acq_before_brdf = datetime(2002, 6, 29, tzinfo=timezone.utc)
+    acq_before_brdf = datetime(2002, 6, 29, tzinfo=UTC)
 
-    acq_after_brdf = datetime(2002, 7, 1, tzinfo=timezone.utc)
+    acq_after_brdf = datetime(2002, 7, 1, tzinfo=UTC)
     proc_after_brdf = acq_after_brdf + timedelta(days=7)
 
     # Normal, final dataset. Processed just outside of NRT window.
@@ -865,7 +863,7 @@ def test_esa_sentinel_wagl_package(tmp_path: Path) -> None:
             "properties": {
                 "datetime": datetime.fromisoformat(
                     "2020-10-31T00:55:10.954414"
-                ).replace(tzinfo=timezone.utc),
+                ).replace(tzinfo=UTC),
                 "dea:dataset_maturity": "final",
                 "eo:cloud_cover": 11.063428320692061,
                 "eo:gsd": 998.1818181818181,
@@ -903,7 +901,7 @@ def test_esa_sentinel_wagl_package(tmp_path: Path) -> None:
                 "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": datetime.fromisoformat(
                     "2021-02-10T03:25:22.635668"
-                ).replace(tzinfo=timezone.utc),
+                ).replace(tzinfo=UTC),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ard",
                 "odc:region_code": "53JQJ",
@@ -914,7 +912,7 @@ def test_esa_sentinel_wagl_package(tmp_path: Path) -> None:
                 "sentinel:product_name": "S2A_MSIL1C_20201031T004711_N0209_R102_T53JQJ_20201031T022859",
                 "sentinel:datatake_start_datetime": datetime.fromisoformat(
                     "2020-10-31T02:28:59"
-                ).replace(tzinfo=timezone.utc),
+                ).replace(tzinfo=UTC),
             },
             "measurements": {
                 "nbar_blue": {
@@ -1302,7 +1300,7 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path) -> None:
             "properties": {
                 "datetime": datetime.fromisoformat(
                     "2021-04-25T23:54:23.437224"
-                ).replace(tzinfo=timezone.utc),
+                ).replace(tzinfo=UTC),
                 "dea:dataset_maturity": "final",
                 "eo:cloud_cover": 2.7936189093810837,
                 "eo:gsd": 998.1818181818181,
@@ -1340,14 +1338,14 @@ def test_sinergise_sentinel_wagl_package(tmp_path: Path) -> None:
                 "odc:file_format": "GeoTIFF",
                 "odc:processing_datetime": datetime.fromisoformat(
                     "2021-05-21T07:51:09.439427"
-                ).replace(tzinfo=timezone.utc),
+                ).replace(tzinfo=UTC),
                 "odc:producer": "ga.gov.au",
                 "odc:product_family": "ard",
                 "odc:region_code": "56JMQ",
                 "sentinel:datastrip_id": "S2B_OPER_MSI_L1C_DS_VGS4_20210426T010904_S20210425T235239_N03.00",
                 "sentinel:datatake_start_datetime": datetime.fromisoformat(
                     "2021-04-26T01:09:04"
-                ).replace(tzinfo=timezone.utc),
+                ).replace(tzinfo=UTC),
                 "sentinel:grid_square": "MQ",
                 "sentinel:latitude_band": "J",
                 "sentinel:sentinel_tile_id": "S2B_OPER_MSI_L1C_TL_VGS4_20210426T010904_A021606_T56JMQ_N03.00",

@@ -4,6 +4,7 @@ import warnings
 from abc import abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Mapping
+from datetime import UTC
 from enum import Enum, EnumMeta
 from textwrap import dedent
 from typing import Any, TypeAlias
@@ -639,9 +640,7 @@ class Eo3Interface:
         """
         Shorthand for when the dataset was processed right now on the current system.
         """
-        self.properties["odc:processing_datetime"] = datetime.datetime.now(
-            datetime.timezone.utc
-        )
+        self.properties["odc:processing_datetime"] = datetime.datetime.now(UTC)
 
     @property
     def dataset_version(self) -> str:

@@ -21,12 +21,12 @@ def test_parse_pre24_xml() -> None:
         "platform": "Terra+Aqua",
         "horizontal_tile": 19,
         "vertical_tile": 16,
-        "from_dt": datetime.datetime(2024, 3, 2, 0, 0, tzinfo=datetime.timezone.utc),
+        "from_dt": datetime.datetime(2024, 3, 2, 0, 0, tzinfo=datetime.UTC),
         "to_dt": datetime.datetime(
-            2024, 3, 17, 23, 59, 59, 999999, tzinfo=datetime.timezone.utc
+            2024, 3, 17, 23, 59, 59, 999999, tzinfo=datetime.UTC
         ),
         "creation_dt": datetime.datetime(
-            2024, 3, 18, 22, 52, 25, 228000, tzinfo=datetime.timezone.utc
+            2024, 3, 18, 22, 52, 25, 228000, tzinfo=datetime.UTC
         ),
     }
 
@@ -41,11 +41,11 @@ def test_parse_post24_xml() -> None:
         "platform": "Terra+Aqua",
         "horizontal_tile": 16,
         "vertical_tile": 14,
-        "from_dt": datetime.datetime(2024, 3, 11, 0, 0, tzinfo=datetime.timezone.utc),
+        "from_dt": datetime.datetime(2024, 3, 11, 0, 0, tzinfo=datetime.UTC),
         "to_dt": datetime.datetime(
-            2024, 3, 18, 23, 59, 59, 999000, tzinfo=datetime.timezone.utc
+            2024, 3, 18, 23, 59, 59, 999000, tzinfo=datetime.UTC
         ),
         "creation_dt": datetime.datetime(
-            2024, 3, 25, 14, 55, 23, 768000, tzinfo=datetime.timezone.utc
+            2024, 3, 25, 14, 55, 23, 768000, tzinfo=datetime.UTC
         ),
     }

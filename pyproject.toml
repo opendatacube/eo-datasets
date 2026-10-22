@@ -6,15 +6,15 @@ build-backend = "setuptools.build_meta"
 name = "eodatasets3"
 description = "Packaging, metadata and provenance for OpenDataCube EO3 datasets"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = "Apache-2.0"
 authors = [{name = "Open Data Cube"}]
 dynamic = ["version"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
 ]
 
@@ -173,6 +173,7 @@ ignore = [
     "N818", # Exception name should be named with an Error suffix
     "RUF071", # Code uses commonpath for getting a char-based common prefix
     "S324", # SHA1 is required for compatibility.
+    "UP040",  # Core still needs TypeAlias, so keep it here as well.
 ]
 
 # Matching old behaviour: We auto-format with the smaller line default

@@ -3,7 +3,7 @@ import functools
 import os
 import re
 from collections.abc import Iterable, Mapping
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -65,7 +65,7 @@ def read_paths_from_file(listing: Path) -> Iterable[Path]:
 
 def default_utc(d: datetime) -> datetime:
     if d.tzinfo is None:
-        return d.replace(tzinfo=timezone.utc)
+        return d.replace(tzinfo=UTC)
     return d
 
 

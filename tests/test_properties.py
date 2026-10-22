@@ -113,7 +113,7 @@ def test_normalise_input_fields() -> None:
     )
 
     assert dict(properties) == {
-        "datetime": datetime.datetime(2014, 3, 4, 0, 0, tzinfo=datetime.timezone.utc),
+        "datetime": datetime.datetime(2014, 3, 4, 0, 0, tzinfo=datetime.UTC),
         "eo:instrument": "MSI",
         # Was normalised.
         "eo:platform": "sentinel-2",
@@ -121,7 +121,7 @@ def test_normalise_input_fields() -> None:
         "odc:region_code": "234343",
         # Was read from the tile id.
         "sentinel:datatake_start_datetime": datetime.datetime(
-            2020, 10, 31, 2, 28, 59, tzinfo=datetime.timezone.utc
+            2020, 10, 31, 2, 28, 59, tzinfo=datetime.UTC
         ),
         "sentinel:sentinel_tile_id": "S2A_OPER_MSI_L1C_TL_EPAE_20201031T022859_A027984_T53JQJ_N02.09",
     }

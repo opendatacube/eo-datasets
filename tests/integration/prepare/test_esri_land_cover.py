@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID
 
@@ -34,11 +34,9 @@ def test_esri_prepare() -> None:
             ],
             properties=Eo3Dict(
                 {
-                    "datetime": datetime(2020, 1, 1, 0, 0, tzinfo=timezone.utc),
-                    "dtr:end_datetime": datetime(2021, 1, 1, 0, 0, tzinfo=timezone.utc),
-                    "dtr:start_datetime": datetime(
-                        2020, 1, 1, 0, 0, tzinfo=timezone.utc
-                    ),
+                    "datetime": datetime(2020, 1, 1, 0, 0, tzinfo=UTC),
+                    "dtr:end_datetime": datetime(2021, 1, 1, 0, 0, tzinfo=UTC),
+                    "dtr:start_datetime": datetime(2020, 1, 1, 0, 0, tzinfo=UTC),
                     "odc:product": "esri_land_cover",
                     "odc:region_code": "60K",
                 }
