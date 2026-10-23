@@ -21,7 +21,7 @@ classifiers = [
 dependencies = [
     # Test suite failures with Affine 3 on multiple tests with what looks
     # like type errors. First file with failures is test_prepare_landsat_l1.py.
-    "affine<3.0",
+    "affine<4.0",
     "attrs>=18.1", # 18.1 adds 'factory' syntactic sugar
     "boltons",
     "botocore",  # missing from datacube
