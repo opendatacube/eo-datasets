@@ -10,7 +10,7 @@ cfgv==3.5.0
     # via pre-commit
 click==8.5.0
     # via pip-tools
-coverage==7.16.2
+coverage[toml]==7.16.2
     # via pytest-cov
 distlib==0.4.4
     # via virtualenv
@@ -30,10 +30,8 @@ packaging==26.3
     #   pytest
     #   virtualenv
     #   wheel
-pip==26.2.2
-    # via pip-tools
 pip-tools==7.6.2
-    # via -r requirements/setup.in
+    # via -r setup.in
 platformdirs==4.13.5
     # via virtualenv
 pluggy==1.7.0
@@ -41,15 +39,15 @@ pluggy==1.7.0
     #   pytest
     #   pytest-cov
 pre-commit==4.7.0
-    # via -r requirements/setup.in
+    # via -r setup.in
 pydantic==2.14.1
-    # via -r requirements/setup.in
+    # via -r setup.in
 pydantic-core==2.50.1
     # via pydantic
 pygments==2.21.0
     # via pytest
 pyproj==3.8.0
-    # via -r requirements/setup.in
+    # via -r setup.in
 pyproject-hooks==1.3.3
     # via
     #   build
@@ -57,13 +55,11 @@ pyproject-hooks==1.3.3
 pytest==9.1.1
     # via pytest-cov
 pytest-cov==7.1.0
-    # via -r requirements/setup.in
+    # via -r setup.in
 python-discovery==1.6.4
     # via virtualenv
 pyyaml==6.0.3
     # via pre-commit
-setuptools==84.2.1
-    # via pip-tools
 typing-extensions==4.16.0
     # via
     #   pydantic
@@ -71,7 +67,7 @@ typing-extensions==4.16.0
     #   typing-inspection
 typing-inspection==0.4.4
     # via pydantic
-virtualenv==21.14.12
+virtualenv==21.14.13
     # via pre-commit
 wheel==0.48.0
     # via pip-tools
