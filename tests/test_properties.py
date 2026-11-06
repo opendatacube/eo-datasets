@@ -50,17 +50,17 @@ def test_naming_abbreviations() -> None:
         assert names.platform_abbreviated is None
 
         # A single platform uses its known abbreviation.
-        d.platforms = ["landsat-5"]
+        d.platforms = {"landsat-5"}
         assert names.platform_abbreviated == "ls5"
 
         # Multiple platforms from a known group use the group name.
-        d.platforms = ["landsat-5", "landsat_7"]
+        d.platforms = {"landsat-5", "landsat_7"}
         assert names.platform_abbreviated == "ls"
-        d.platforms = ["sentinel-2a", "sentinel-2b"]
+        d.platforms = {"sentinel-2a", "sentinel-2b"}
         assert names.platform_abbreviated == "s2"
 
         # Non-groupable platforms are dash-separated.
-        d.platforms = ["landsat-5", "sentinel-2a"]
+        d.platforms = {"landsat-5", "sentinel-2a"}
         assert names.platform_abbreviated is None
 
 
@@ -74,7 +74,7 @@ def test_unknown_abbreviations() -> None:
         assert names.platform_abbreviated == "grover1"
 
         # Constellation can be used as a fallback grouping.
-        d.platforms = ["clippings-1a", "clippings-2b"]
+        d.platforms = {"clippings-1a", "clippings-2b"}
         with pytest.warns(
             UserWarning, match=r"Unknown Stac property 'constellation'\..*"
         ):
