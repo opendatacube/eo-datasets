@@ -205,6 +205,7 @@ class ValidateRunner:
     def assert_valid(self, *docs: Doc, expect_no_messages=True, suffix=None):
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
         self.run_validate(docs, suffix=suffix or ".yaml")
+        assert self.result is not None
         was_successful = self.result.exit_code == 0
         assert was_successful, (
             f"Expected validation to succeed. Output:\n{self.result.output}"
@@ -221,6 +222,7 @@ class ValidateRunner:
     ) -> None:
         __tracebackhide__ = operator.methodcaller("errisinstance", AssertionError)
         self.run_validate(docs, suffix=suffix)
+        assert self.result is not None
         assert self.result.exit_code != 0, (
             f"Expected validation to fail.\n{self.result.output}"
         )
@@ -274,6 +276,7 @@ class ValidateRunner:
                 return None, None
             return (severity, code), " ".join(message)
 
+        assert self.result is not None
         messages = dict(
             _read_message(line)
             for line in self.result.stdout.split("\n")
@@ -575,7 +578,9 @@ def test_nodata_compare_with_product_doc(
     eo_validator.record_informational_messages = True
 
     # Remake the tiff with a 'nodata' set.
-    blue_tif = l1_ls8_metadata_path.parent / l1_ls8_dataset.measurements["blue"].path
+    measurements = l1_ls8_dataset.measurements
+    assert measurements is not None
+    blue_tif = l1_ls8_metadata_path.parent / measurements["blue"].path
     _create_dummy_tif(
         blue_tif,
         dtype="uint16",
@@ -604,7 +609,9 @@ def test_measurements_compare_with_nans(
     product = l1_ls8_product
     eo_validator.thorough = True
     eo_validator.record_informational_messages = True
-    blue_tif = l1_ls8_metadata_path.parent / l1_ls8_dataset.measurements["blue"].path
+    measurements = l1_ls8_dataset.measurements
+    assert measurements is not None
+    blue_tif = l1_ls8_metadata_path.parent / measurements["blue"].path
 
     # When both are NaN, it should be valid
     blue = _measurement(product, "blue")
