@@ -194,10 +194,10 @@ def format_doc_diffs(left: dict, right: dict) -> Iterable[str]:
         return offset
 
     if "values_changed" in doc_diffs:
-        for offset, change in doc_diffs["values_changed"].items():
+        for off, change in doc_diffs["values_changed"].items():
             out.extend(
                 (
-                    f"   {clean_offset(offset)}: ",
+                    f"   {clean_offset(off)}: ",
                     f"          {change['old_value']!r}",
                     f"       != {change['new_value']!r}",
                 )
