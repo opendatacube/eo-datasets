@@ -174,7 +174,7 @@ def get_quality_masks(
         granule.source_level1_metadata.accessories["metadata:s2_tile"].path
     )
 
-    if not level1_data_path.exists():
+    if level1_data_path is None or not level1_data_path.exists():
         raise ValueError(f"Input level 1 data not found {level1_data_path}")
 
     if level1_data_path.suffix == ".zip":
