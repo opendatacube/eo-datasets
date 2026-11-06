@@ -587,6 +587,8 @@ def sub_product(name: str, p: Eo3Interface):
 
 
 def _extract_reference_code(p: DatasetAssembler, granule: str) -> str | None:
+    if p.platform is None:
+        return None
     matches = None
     if p.platform.startswith("landsat"):
         matches = re.match(r"L\w\d(?P<reference_code>\d{6}).*", granule)
