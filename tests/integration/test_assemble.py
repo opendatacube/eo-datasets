@@ -258,7 +258,7 @@ def test_in_memory_dataset(tmp_path: Path, l1_ls8_folder: Path) -> None:
         pretend_path,
         # We give it grid information, so it doesn't have to read it itself.
         # (reading will fail if it tries, because the path is fake!)
-        grid=GridSpec.from_path(blue_geotiff_path),
+        grid=GridSpec.from_path(str(blue_geotiff_path)),
         pixels=numpy.ones((60, 60), numpy.int16),
         nodata=-1,
     )
