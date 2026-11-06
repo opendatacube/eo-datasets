@@ -55,6 +55,7 @@ def test_subfolder_info_extraction() -> None:
             "S2A_OPER_PRD_MSIL1C_PDMC_20151225T022834_R072_V20151224T223838_20151224T223838.zip"
         )
     )
+    assert info is not None
     assert info == FolderInfo(2015, 12, "30S170E-35S175E", None)
     # But it can be looked up?
     assert "59HPB" in RegionLookup().get(info.area)
