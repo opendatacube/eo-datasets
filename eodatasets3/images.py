@@ -1040,7 +1040,7 @@ class FileWrite:
         out_data, stretch = self._filter_singleband_data(input_data, bit, lookup_table)
 
         if bit:
-            rgb = [out_data, out_data, out_data]
+            rgb = (out_data, out_data, out_data)
         else:
             rgb = out_data
 
