@@ -753,7 +753,7 @@ def test_complains_when_no_product(
 
 
 def test_validate_metadata_type(
-    eo_validator: ValidateRunner, metadata_type: Doc
+    eo_validator: ValidateRunner, metadata_type: dict
 ) -> None:
     eo_validator.assert_valid(metadata_type, suffix=".odc-type.yaml")
     eo_validator.assert_valid(metadata_type)
