@@ -26,15 +26,15 @@ def test_thumbnail_lookuptable(input_uint8_tif_2: Path) -> None:
     outfile = Path(tempfile.gettempdir()) / "test-lookuptable.jpg"
 
     wofs_lookup = {
-        0: [150, 150, 110],  # dry
-        1: [255, 255, 255],  # nodata,
-        16: [119, 104, 87],  # terrain
-        32: [89, 88, 86],  # cloud_shadow
-        64: [216, 215, 214],  # cloud
-        80: [242, 220, 180],  # cloudy terrain
-        128: [79, 129, 189],  # water
-        160: [51, 82, 119],  # shady water
-        192: [186, 211, 242],  # cloudy water
+        0: (150, 150, 110),  # dry
+        1: (255, 255, 255),  # nodata,
+        16: (119, 104, 87),  # terrain
+        32: (89, 88, 86),  # cloud_shadow
+        64: (216, 215, 214),  # cloud
+        80: (242, 220, 180),  # cloudy terrain
+        128: (79, 129, 189),  # water
+        160: (51, 82, 119),  # shady water
+        192: (186, 211, 242),  # cloudy water
     }
 
     writer.create_thumbnail_singleband(
@@ -67,15 +67,15 @@ def test_thumbnail_from_numpy_lookuptable(input_uint8_tif_2: Path) -> None:
     writer = FileWrite()
     outfile = Path(tempfile.gettempdir()) / "test-lookuptable.jpg"
     wofs_lookup = {
-        0: [150, 150, 110],  # dry
-        1: [255, 255, 255],  # nodata,
-        16: [119, 104, 87],  # terrain
-        32: [89, 88, 86],  # cloud_shadow
-        64: [216, 215, 214],  # cloud
-        80: [242, 220, 180],  # cloudy terrain
-        128: [79, 129, 189],  # water
-        160: [51, 82, 119],  # shady water
-        192: [186, 211, 242],  # cloudy water
+        0: (150, 150, 110),  # dry
+        1: (255, 255, 255),  # nodata,
+        16: (119, 104, 87),  # terrain
+        32: (89, 88, 86),  # cloud_shadow
+        64: (216, 215, 214),  # cloud
+        80: (242, 220, 180),  # cloudy terrain
+        128: (79, 129, 189),  # water
+        160: (51, 82, 119),  # shady water
+        192: (186, 211, 242),  # cloudy water
     }
 
     with rasterio.open(input_uint8_tif_2) as ds:
