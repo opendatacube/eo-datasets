@@ -64,6 +64,7 @@ def assert_expected_eo3_path(
                 f"but output included one: {produced_dataset.geometry.__geo_interface__!r}"
             )
         else:
+            assert produced_dataset.geometry is not None, "Output is missing geometry"
             assert_shapes_mostly_equal(
                 produced_dataset.geometry,
                 expected_dataset.geometry,
@@ -88,6 +89,7 @@ def assert_expected_eo3(
     if expected_doc.geometry is None:
         assert given_doc.geometry is None, "Expected no geometry"
     else:
+        assert given_doc.geometry is not None, "Output is missing geometry"
         assert_shapes_mostly_equal(
             given_doc.geometry, expected_doc.geometry, 0.00000001
         )
@@ -192,10 +194,10 @@ def format_doc_diffs(left: dict, right: dict) -> Iterable[str]:
         return offset
 
     if "values_changed" in doc_diffs:
-        for offset, change in doc_diffs["values_changed"].items():
+        for off, change in doc_diffs["values_changed"].items():
             out.extend(
                 (
-                    f"   {clean_offset(offset)}: ",
+                    f"   {clean_offset(off)}: ",
                     f"          {change['old_value']!r}",
                     f"       != {change['new_value']!r}",
                 )

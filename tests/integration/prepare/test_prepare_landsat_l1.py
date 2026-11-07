@@ -453,7 +453,9 @@ def test_prepare_lc08_l2_c2_post_20210507(
             "usgs.gov",
             lc08_l2_c2_post_20210507_folder,
         ],
-        expected_doc=expected_lc08_l2_c2_post_20210507_folder(),
+        expected_doc=expected_lc08_l2_c2_post_20210507_folder(
+            lc08_l2_c2_post_20210507_folder
+        ),
         expected_metadata_path=expected_metadata_path,
     )
 
@@ -624,7 +626,7 @@ def test_skips_old_datasets(l1_ls7_tarball) -> None:
 
 
 def expected_lc08_l2_c2_post_20210507_folder(
-    l2_c2_ls8_folder: Path | None = None,
+    l2_c2_ls8_folder: Path,
     offset: Callable[[Path, str], str] = relative_offset,
     organisation="usgs.gov",
     collection="2",

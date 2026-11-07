@@ -313,7 +313,9 @@ def _get_checksums_members(out_tar: Path) -> tuple[dict, list[tarfile.TarInfo]]:
         checksum_member = members[-1]
         assert checksum_member.name == "package.sha1"
         checksums = {}
-        for line in tar.extractfile(checksum_member).readlines():
+        file = tar.extractfile(checksum_member)
+        assert file is not None
+        for line in file.readlines():
             chksum, path = line.decode("utf-8").split("\t")
             path = path.strip()
             assert path not in checksums, f"Path is repeated in checksum file: {path}"

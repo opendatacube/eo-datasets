@@ -150,7 +150,7 @@ def _unpack_products(
                         # but not in the filename.
                         # So we manually calculate a filename without the 'kind' field included.
                         kind=product,
-                        path=p.names.thumbnail_filename(),
+                        path=Path(p.names.thumbnail_filename()),
                     )
 
 
@@ -174,7 +174,7 @@ def get_quality_masks(
         granule.source_level1_metadata.accessories["metadata:s2_tile"].path
     )
 
-    if not level1_data_path.exists():
+    if level1_data_path is None or not level1_data_path.exists():
         raise ValueError(f"Input level 1 data not found {level1_data_path}")
 
     if level1_data_path.suffix == ".zip":
@@ -522,7 +522,7 @@ def _create_contiguity(
             # 'oa_' prefix to be included in the recorded band metadata,
             # but not in its filename.
             # So we manually calculate a filename without the extra prefix.
-            path=p.names.measurement_filename(f"{product.lower()}_contiguity"),
+            path=Path(p.names.measurement_filename(f"{product.lower()}_contiguity")),
         )
 
         # masking the timedelta_data with contiguity mask to get max and min timedelta within the NBAR product
@@ -587,6 +587,8 @@ def sub_product(name: str, p: Eo3Interface):
 
 
 def _extract_reference_code(p: DatasetAssembler, granule: str) -> str | None:
+    if p.platform is None:
+        return None
     matches = None
     if p.platform.startswith("landsat"):
         matches = re.match(r"L\w\d(?P<reference_code>\d{6}).*", granule)
